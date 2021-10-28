@@ -70,7 +70,7 @@ public class ActivityEmbeddingUtil {
     public static final float DEFAULT_SPLIT_RATIO = 0.5f;
 
     @NonNull
-    public static SplitPairRule createWildcardSplitPairRule() {
+    public static SplitPairRule createWildcardSplitPairRule(boolean shouldClearTop) {
         // Any activity be split with any activity
         final Predicate<Pair<Activity, Activity>> activityPairPredicate =
                 activityActivityPair -> true;
@@ -82,14 +82,21 @@ public class ActivityEmbeddingUtil {
         // Build the split pair rule
         return new SplitPairRule.Builder(activityPairPredicate,
                 activityIntentPredicate, parentWindowMetricsPredicate).setSplitRatio(
-                DEFAULT_SPLIT_RATIO).build();
+                DEFAULT_SPLIT_RATIO).setShouldClearTop(shouldClearTop).build();
     }
 
-    public static Activity startActivityAndVerifySplit(
-            TestFirstValueConsumer<List<SplitInfo>> splitInfoConsumer, Activity primaryActivity,
-            Class secondActivityClass, SplitPairRule splitPairRule, String secondActivityId) {
-        // Must reset consumer so that most recent split info update can be received
-        splitInfoConsumer.reset();
+    @NonNull
+    public static SplitPairRule createWildcardSplitPairRule() {
+        return createWildcardSplitPairRule(false /* shouldClearTop */);
+    }
+
+    public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
+            @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
+            @NonNull String secondActivityId,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer,
+            int expectedCallbackCount) {
+        // Set the expected callback count
+        splitInfoConsumer.setCount(expectedCallbackCount);
 
         // Start second activity
         startActivityFromActivity(primaryActivity, secondActivityClass, secondActivityId);
@@ -100,10 +107,6 @@ public class ActivityEmbeddingUtil {
             activeSplitStates = splitInfoConsumer.waitAndGet();
         } catch (InterruptedException e) {
             fail("startActivityAndVerifySplit() InterruptedException");
-        } catch (ExecutionException e) {
-            fail("startActivityAndVerifySplit() ExecutionException");
-        } catch (TimeoutException e) {
-            fail("startActivityAndVerifySplit() TimeoutException");
         }
 
         // Get second activity from split info
@@ -115,6 +118,14 @@ public class ActivityEmbeddingUtil {
 
         // Return second activity for easy access in calling method
         return secondActivity;
+    }
+
+    public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
+            @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
+            @NonNull String secondActivityId,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
+        return startActivityAndVerifySplit(primaryActivity, secondActivityClass, splitPairRule,
+                secondActivityId, splitInfoConsumer, 1 /* expectedCallbackCount */);
     }
 
     @Nullable

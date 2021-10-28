@@ -69,29 +69,30 @@ public class PhotoPickerAssertionsUtils {
                 MediaStore.Files.FileColumns.MEDIA_TYPE};
         final Context context = InstrumentationRegistry.getTargetContext();
         final ContentResolver resolver = context.getContentResolver();
-        final Cursor c = resolver.query(uri, projection, null, null);
-        assertThat(c).isNotNull();
-        assertThat(c.moveToFirst()).isTrue();
+        try (Cursor c = resolver.query(uri, projection, null, null)) {
+            assertThat(c).isNotNull();
+            assertThat(c.moveToFirst()).isTrue();
 
-        boolean canCheckRedacted = false;
-        // If the file is inserted by this test case, we can check the redaction.
-        // To avoid checking the redaction on the other media file.
-        if (c.getString(0).startsWith(DISPLAY_NAME_PREFIX)) {
-            canCheckRedacted = true;
-        } else {
-            Log.d(TAG, uri + " is not the test file we expected, don't check the redaction");
-        }
+            boolean canCheckRedacted = false;
+            // If the file is inserted by this test case, we can check the redaction.
+            // To avoid checking the redaction on the other media file.
+            if (c.getString(0).startsWith(DISPLAY_NAME_PREFIX)) {
+                canCheckRedacted = true;
+            } else {
+                Log.d(TAG, uri + " is not the test file we expected, don't check the redaction");
+            }
 
-        final int mediaType = c.getInt(1);
-        switch (mediaType) {
-            case MEDIA_TYPE_IMAGE:
-                assertImageRedactedReadOnlyAccess(uri, canCheckRedacted, resolver);
-                break;
-            case MEDIA_TYPE_VIDEO:
-                assertVideoRedactedReadOnlyAccess(uri, canCheckRedacted, resolver);
-                break;
-            default:
-                fail("The media type is not as expected: " + mediaType);
+            final int mediaType = c.getInt(1);
+            switch (mediaType) {
+                case MEDIA_TYPE_IMAGE:
+                    assertImageRedactedReadOnlyAccess(uri, canCheckRedacted, resolver);
+                    break;
+                case MEDIA_TYPE_VIDEO:
+                    assertVideoRedactedReadOnlyAccess(uri, canCheckRedacted, resolver);
+                    break;
+                default:
+                    fail("The media type is not as expected: " + mediaType);
+            }
         }
     }
 

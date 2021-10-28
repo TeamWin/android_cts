@@ -58,7 +58,7 @@ import android.graphics.Rect;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
-import android.server.wm.jetpack.utils.TestFirstValueConsumer;
+import android.server.wm.jetpack.utils.TestValueCountConsumer;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.annotation.NonNull;
@@ -113,8 +113,8 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
 
     @Test
     public void testWindowLayoutComponent_WindowLayoutInfoListener() {
-        TestFirstValueConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
-                new TestFirstValueConsumer<>();
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
         // Test that adding and removing callback succeeds
         mWindowLayoutComponent.addWindowLayoutInfoListener(mActivity, windowLayoutInfoConsumer);
         mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);

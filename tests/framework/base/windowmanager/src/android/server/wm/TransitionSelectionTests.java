@@ -137,9 +137,9 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testOpenFreeformTask_BottomWallpaper_TopNonResizable() {
+    public void testOpenFreeformTask_BottomWallpaper_TopResizable() {
         assumeTrue(supportsFreeform());
-        testOpenTask(true /*bottomWallpaper*/, false /*topWallpaper*/, false /* topResizable */,
+        testOpenTask(true /*bottomWallpaper*/, false /*topWallpaper*/, true /* topResizable */,
                 false /*slowStop*/, TRANSIT_TASK_OPEN, WINDOWING_MODE_FREEFORM);
     }
 
@@ -150,9 +150,9 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testCloseFreeformTask_BottomWallpaper_TopNonResizable() {
+    public void testCloseFreeformTask_BottomWallpaper_TopResizable() {
         assumeTrue(supportsFreeform());
-        testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/, false /* topResizable */,
+        testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/, true /* topResizable */,
                 false /*slowStop*/, TRANSIT_TASK_CLOSE, WINDOWING_MODE_FREEFORM);
     }
 
@@ -209,9 +209,9 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testCloseFreeformTask_BottomWallpaper_TopNonResizable_SlowStop() {
+    public void testCloseFreeformTask_BottomWallpaper_TopResizable_SlowStop() {
         assumeTrue(supportsFreeform());
-        testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/, false /* topResizable */,
+        testCloseTask(true /*bottomWallpaper*/, false /*topWallpaper*/, true /* topResizable */,
                 true /*slowStop*/, TRANSIT_TASK_CLOSE, WINDOWING_MODE_FREEFORM);
     }
 

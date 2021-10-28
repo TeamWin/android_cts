@@ -22,6 +22,8 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.TAG;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 
 import android.app.Activity;
@@ -29,7 +31,7 @@ import android.util.Log;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
-import android.server.wm.jetpack.utils.TestFirstValueConsumer;
+import android.server.wm.jetpack.utils.TestValueCountConsumer;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.WindowExtensions;
@@ -56,7 +58,7 @@ import java.util.List;
 public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
 
     private ActivityEmbeddingComponent mActivityEmbeddingComponent;
-    private TestFirstValueConsumer<List<SplitInfo>> mSplitInfoConsumer;
+    private TestValueCountConsumer<List<SplitInfo>> mSplitInfoConsumer;
 
     @Before
     public void setUp() {
@@ -71,7 +73,7 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
             }
         });
         assumeNotNull(mActivityEmbeddingComponent);
-        mSplitInfoConsumer = new TestFirstValueConsumer<>();
+        mSplitInfoConsumer = new TestValueCountConsumer<>();
         mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
     }
 
@@ -89,8 +91,54 @@ public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
         // all successfully split with the primary activity.
         final int numActivitiesToLaunch = 4;
         for (int i = 0; i < numActivitiesToLaunch; i++) {
-            Activity secondaryActivity = startActivityAndVerifySplit(mSplitInfoConsumer,
-                    primaryActivity, TestActivityWithId.class, splitPairRule, Integer.toString(i));
+            Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+                    TestActivityWithId.class, splitPairRule,
+                    Integer.toString(i) /* secondActivityId */, mSplitInfoConsumer);
         }
+    }
+
+    /**
+     * Tests launching activities to the side from the primary activity where the secondary stack
+     * is cleared after each launch.
+     */
+    @Test
+    public void testPrimaryActivityLaunchToSideClearTop() {
+        Activity primaryActivity = startActivityNewTask(TestConfigChangeHandlingActivity.class);
+
+        SplitPairRule splitPairRule = createWildcardSplitPairRule(true /* shouldClearTop */);
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
+
+        Activity secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+                TestActivityWithId.class, splitPairRule,
+                "initialSecondaryActivity" /* secondActivityId */, mSplitInfoConsumer);
+
+        // Launch multiple activities to the side from the primary activity and verify that they
+        // all successfully split with the primary activity and that the previous secondary activity
+        // is finishing.
+        final int numActivitiesToLaunch = 4;
+        Activity prevSecondaryActivity;
+        for (int i = 0; i < numActivitiesToLaunch; i++) {
+            prevSecondaryActivity = secondaryActivity;
+            // Expect the split info consumer to return a value after the 3rd callback because the
+            // 1st callback will return empty split states due to clearing the previous secondary
+            // container, the 2nd callback will return a non-empty primary container with an empty
+            // secondary container because the primary container was just registered, and finally
+            // the 3rd callback will contain the secondary activity in the secondary container.
+            secondaryActivity = startActivityAndVerifySplit(primaryActivity,
+                    TestActivityWithId.class, splitPairRule,
+                    Integer.toString(i) /* secondActivityId */, mSplitInfoConsumer,
+                    3 /* expectedCallbackCount */);
+            // The previous secondary activity should be finishing because shouldClearTop was set
+            // to true, which clears the secondary container before launching the next secondary
+            // activity.
+            assertTrue(prevSecondaryActivity.isFinishing());
+        }
+
+        // Verify that the last reported split info only contains the final split
+        final List<SplitInfo> lastReportedSplitInfo = mSplitInfoConsumer.getLastReportedValue();
+        assertEquals(1, lastReportedSplitInfo.size());
+        final SplitInfo splitInfo = lastReportedSplitInfo.get(0);
+        assertEquals(1, splitInfo.getPrimaryActivityStack().getActivities().size());
+        assertEquals(1, splitInfo.getSecondaryActivityStack().getActivities().size());
     }
 }
