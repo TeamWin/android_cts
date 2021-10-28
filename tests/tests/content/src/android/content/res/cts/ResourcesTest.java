@@ -414,7 +414,10 @@ public class ResourcesTest extends AndroidTestCase {
 
         final Drawable mdpi = mResources.getDrawableForDensity(
                 R.drawable.density_test, DisplayMetrics.DENSITY_MEDIUM);
-        assertEquals(200, mdpi.getIntrinsicWidth());
+        // The selected drawable in this can be either the mdpi one (width 200) or the any
+        // resolution one (width 1). This is because any is treated the same as mdpi and it is
+        // arbitrary which is chosen.
+        assertEquals(201, mdpi.getIntrinsicWidth() | 201);
 
         final Drawable hdpi = mResources.getDrawableForDensity(
                 R.drawable.density_test, DisplayMetrics.DENSITY_HIGH);
