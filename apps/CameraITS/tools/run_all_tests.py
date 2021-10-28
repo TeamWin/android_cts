@@ -250,7 +250,7 @@ def get_config_file_contents():
     config_file_contents: a dict read from config.yml
   """
   with open(CONFIG_FILE) as file:
-    config_file_contents = yaml.load(file, yaml.FullLoader)
+    config_file_contents = yaml.safe_load(file)
   return config_file_contents
 
 
