@@ -57,18 +57,17 @@ atest CtsAppSecurityHostTestCases:android.appsecurity.cts.ApkVerityInstallTest
 How to update the prebuilts
 ===========================
 
-1. Download android-cts.zip. The current prebuilts are downloaded from the links below.
-   TODO(157658439): update the links once we have the correct build target.
+1. Download CtsApkVerityTestApp\*.apk. The current prebuilts are downloaded from the links below.
 
 ```
-https://android-build.googleplex.com/builds/submitted/6472922/test_suites_arm64/latest/android-cts.zip
-https://android-build.googleplex.com/builds/submitted/6472922/test_suites_x86_64/latest/android-cts.zip
+https://android-build.googleplex.com/builds/submitted/7843451/test_suites_arm64/latest/
+https://android-build.googleplex.com/builds/submitted/7843451/test_suites_x86_64/latest/
 ```
 
-2. Extract CtsApkVerityTestApp\*.{apk,dm} and ask the key owner to sign
-   (example: b/152753442).
+2. Ask the key owner to sign .apk and .dm files with the "fsverity-release" key
+   (example: b/203031246).
 3. Receive the release signature .fsv\_sig.
-4. Override CtsApkVerityTestApp2 to create a bad signature.
+4. Override CtsApkVerityTestApp2 to create a bad signature (note the "Split").
 
 ```
 cp CtsApkVerityTestApp.apk CtsApkVerityTestApp2.apk
