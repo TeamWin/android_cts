@@ -20,7 +20,7 @@ import numpy as np
 
 GGAIN_TOL = 0.1
 FD_TOL = 0.1
-ISO_EXP_TOL = 0.1
+ISO_EXP_TOL = 0.2
 NUM_TEST_ITERATIONS = 3
 
 
