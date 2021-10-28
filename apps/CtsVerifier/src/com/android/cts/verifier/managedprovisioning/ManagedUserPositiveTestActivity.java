@@ -24,8 +24,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
@@ -56,13 +58,15 @@ public class ManagedUserPositiveTestActivity extends PassFailButtons.TestListAct
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (ACTION_CHECK_AFFILIATED_PROFILE_OWNER.equals(getIntent().getAction())) {
+        Intent intent = getIntent();
+        Log.d(TAG, "onCreate(" + UserHandle.myUserId() + "): intent=" + intent);
+        if (ACTION_CHECK_AFFILIATED_PROFILE_OWNER.equals(intent.getAction())) {
             DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
             if (dpm.isProfileOwnerApp(getPackageName()) && dpm.isAffiliatedUser()) {
-                TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                TestResult.setPassedResult(this, intent.getStringExtra(EXTRA_TEST_ID),
                         null, null);
             } else {
-                TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                TestResult.setFailedResult(this, intent.getStringExtra(EXTRA_TEST_ID),
                         getString(R.string.managed_user_incorrect_managed_user), null);
             }
             finish();
@@ -97,8 +101,10 @@ public class ManagedUserPositiveTestActivity extends PassFailButtons.TestListAct
             // Pass and fail buttons are known to call finish() when clicked,
             // and this is when we want to remove the managed owner.
             DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
+            Log.i(TAG, "Calling logoutUser() on user " + UserHandle.myUserId());
             dpm.logoutUser(DeviceAdminTestReceiver.getReceiverComponentName());
         }
+        Log.i(TAG, "So long and thanks for all the finish()!");
         super.finish();
     }
 
