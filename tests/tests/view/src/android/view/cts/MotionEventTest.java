@@ -580,7 +580,7 @@ public class MotionEventTest {
         // PHASE 3 - add one more new batch of data to our event
         PointerCoordsBuilder coordsBuilderLast0 =
                 withCoords(18.0f, 28.0f).withPressure(1.1f).withSize(2.9f).withTool(1.5f, 1.9f).
-                        withTouch(1.2f, 5.0f).withOrientation(3.2f).withGenericAxis1(1.4f);
+                        withTouch(1.2f, 5.0f).withOrientation(3.1f).withGenericAxis1(1.4f);
         PointerCoordsBuilder coordsBuilderLast1 =
                 withCoords(38.0f, 48.0f).withPressure(1.2f).withSize(2.5f).withTool(0.2f, 0.4f).
                         withTouch(2.7f, 4.6f).withOrientation(0.2f).withGenericAxis1(5.4f);
@@ -680,7 +680,8 @@ public class MotionEventTest {
             originalRawCoords[i] = new PointerCoords(c);
         }
         final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE,
-                pointerCount, pointerIds, pointerCoords, 0, 0, 0, 0, 0, 0, 0);
+                pointerCount, pointerIds, pointerCoords, 0, 0, 0, 0, 0,
+                InputDevice.SOURCE_TOUCHSCREEN, 0);
         dump("Original points.", event);
 
         // Check original raw X and Y assumption.
