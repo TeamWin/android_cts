@@ -143,6 +143,16 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
 
     private TestConfig mTestConfig;
 
+    private static boolean isPreferredAbi() {
+        boolean prefers64Bit = false;
+        if (Build.SUPPORTED_64_BIT_ABIS.length > 0 &&
+                Build.SUPPORTED_ABIS.length > 0 &&
+                Build.SUPPORTED_ABIS[0].equals(Build.SUPPORTED_64_BIT_ABIS[0])) {
+            prefers64Bit = true;
+        }
+        return android.os.Process.is64Bit() ? prefers64Bit : !prefers64Bit;
+    }
+
     @Override
     protected void setUp() throws Exception {
         mEncodedOutputBuffer = new LinkedList<Pair<ByteBuffer, BufferInfo>>();
@@ -702,6 +712,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         if (MediaUtils.onFrankenDevice()) {
             mTestConfig.mMaxTimeMs /= 10;
         }
+        Log.i(TAG, "current ABI is " + (isPreferredAbi() ? "" : "not ") + "a preferred one");
 
         mVideoWidth = w;
         mVideoHeight = h;
@@ -811,7 +822,14 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
             String error = MediaPerfUtils.verifyAchievableFrameRates(
                     encoderName, mimeType, w, h, measuredFps);
             // Performance numbers only make sense on real devices, so skip on non-real devices
-            if (MediaUtils.onFrankenDevice() && error != null) {
+            //
+            // Also ignore verification on non-preferred ABIs due to the possibility of
+            // this being emulated. On some CPU-s 32-bit mode is emulated using big cores
+            // that results in the SW codecs also running much faster (perhaps they are
+            // scheduled for the big cores as well)
+            // TODO: still verify lower bound.
+            if ((MediaUtils.onFrankenDevice() || (infoEnc.mIsSoftware && !isPreferredAbi()))
+                    && error != null) {
                 // ensure there is data, but don't insist that it is correct
                 assertFalse(error, error.startsWith("Failed to get "));
             } else {
