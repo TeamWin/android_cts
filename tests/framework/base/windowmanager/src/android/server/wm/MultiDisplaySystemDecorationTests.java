@@ -17,6 +17,8 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.server.wm.BarTestUtils.assumeHasBars;
+import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -28,8 +30,6 @@ import static android.server.wm.app.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.TEST_LIVE_WALLPAPER_SERVICE;
 import static android.server.wm.app.Components.TestLiveWallpaperKeys.COMPONENT;
 import static android.server.wm.app.Components.TestLiveWallpaperKeys.ENGINE_DISPLAY_ID;
-import static android.server.wm.BarTestUtils.assumeHasBars;
-import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_HIDE;
@@ -64,8 +64,8 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.intent.Activities;
 import android.text.TextUtils;
@@ -740,9 +740,14 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 .setShowSystemDecorations(true)
                 .setDisplayImePolicy(DISPLAY_IME_POLICY_LOCAL)
                 .setSimulateDisplay(true)
+                .setResizeDisplay(false)
                 .createDisplays(2);
         final DisplayContent firstDisplay = newDisplays.get(0);
         final DisplayContent secondDisplay = newDisplays.get(1);
+
+        // Skip if the test environment somehow didn't create 2 displays with identical size.
+        assumeTrue("Skip the test if the size of the created displays aren't identical",
+                firstDisplay.getDisplayRect().equals(secondDisplay.getDisplayRect()));
 
         // Initialize IME test environment
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
@@ -764,38 +769,48 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
-        // Launch Ime must not lead to configuration changes.
-        waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
+        try {
+            // Launch Ime must not lead to configuration changes.
+            waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
 
-        // Tap secondDisplay to change it to the top focused display.
-        tapOnDisplayCenter(secondDisplay.mId);
+            // Tap secondDisplay to change it to the top focused display.
+            tapOnDisplayCenter(secondDisplay.mId);
 
-        // Move ImeTestActivity from firstDisplay to secondDisplay.
-        getLaunchActivityBuilder()
-                .setUseInstrumentation()
-                .setTargetActivity(imeTestActivitySession.getActivity().getComponentName())
-                .setIntentFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .allowMultipleInstances(false)
-                .setDisplayId(secondDisplay.mId).execute();
+            // Move ImeTestActivity from firstDisplay to secondDisplay.
+            getLaunchActivityBuilder()
+                    .setUseInstrumentation()
+                    .setTargetActivity(imeTestActivitySession.getActivity().getComponentName())
+                    .setIntentFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .allowMultipleInstances(false)
+                    .setDisplayId(secondDisplay.mId).execute();
 
-        // Make sure ImeTestActivity is move from the firstDisplay to the secondDisplay
-        waitAndAssertTopResumedActivity(imeTestActivitySession.getActivity().getComponentName(),
-                secondDisplay.mId, "ImeTestActivity must be top-resumed on display#"
-                + secondDisplay.mId);
-        assertThat(mWmState.hasActivityInDisplay(firstDisplay.mId,
-                imeTestActivitySession.getActivity().getComponentName())).isFalse();
+            // Make sure ImeTestActivity is move from the firstDisplay to the secondDisplay
+            waitAndAssertTopResumedActivity(imeTestActivitySession.getActivity().getComponentName(),
+                    secondDisplay.mId, "ImeTestActivity must be top-resumed on display#"
+                            + secondDisplay.mId);
+            assertThat(mWmState.hasActivityInDisplay(firstDisplay.mId,
+                    imeTestActivitySession.getActivity().getComponentName())).isFalse();
 
-        // Show soft input again to trigger IME movement.
-        imeTestActivitySession.runOnMainSyncAndWait(
-                imeTestActivitySession.getActivity()::showSoftInput);
+            // Show soft input again to trigger IME movement.
+            imeTestActivitySession.runOnMainSyncAndWait(
+                    imeTestActivitySession.getActivity()::showSoftInput);
 
-        waitOrderedImeEventsThenAssertImeShown(stream, secondDisplay.mId,
-                editorMatcher("onStartInput",
-                        imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
-                event -> "showSoftInput".equals(event.getEventName()));
-        // Moving IME to the display with the same display metrics must not trigger
-        // onConfigurationChanged callback.
-        waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
+            waitOrderedImeEventsThenAssertImeShown(stream, secondDisplay.mId,
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
+                    event -> "showSoftInput".equals(event.getEventName()));
+
+            // Moving IME to the display with the same display metrics must not trigger
+            // onConfigurationChanged callback.
+            waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
+        } catch (AssertionError e) {
+            mWmState.computeState();
+            final Rect displayRect1 = mWmState.getDisplay(firstDisplay.mId).getDisplayRect();
+            final Rect displayRect2 = mWmState.getDisplay(secondDisplay.mId).getDisplayRect();
+            assumeTrue("Skip test since the size of one or both displays happens unexpected change",
+                    displayRect1.equals(displayRect2));
+            throw e;
+        }
     }
 
     public static class ImeTestActivity extends Activity {
