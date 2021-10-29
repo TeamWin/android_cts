@@ -17,7 +17,7 @@ from pathlib import Path
 import subprocess
 import queue
 from src.library.main.proto.testapp_protos_pb2 import TestAppIndex, AndroidApp, UsesSdk,\
-    Permission, Activity, IntentFilter, Action, Service, Metadata
+    Permission, Activity, IntentFilter, Service, Metadata
 
 ELEMENT = "E"
 ATTRIBUTE = "A"
@@ -184,22 +184,29 @@ def parse_activities(application_element, android_app):
         parse_intent_filters(activity_element, activity)
         android_app.activities.append(activity)
 
-def parse_intent_filters(activity_element, activity):
-    for intent_filter_element in find_elements(activity_element.children, "intent-filter"):
+def parse_intent_filters(element, parent):
+    for intent_filter_element in find_elements(element.children, "intent-filter"):
         intent_filter = IntentFilter()
+
         parse_intent_filter_actions(intent_filter_element, intent_filter)
-        activity.intent_filters.append(intent_filter)
+        parse_intent_filter_category(intent_filter_element, intent_filter)
+        parent.intent_filters.append(intent_filter)
 
 def parse_intent_filter_actions(intent_filter_element, intent_filter):
     for action_element in find_elements(intent_filter_element.children, "action"):
-        action = Action()
-        action.name = action_element.attributes["name"]
+        action = action_element.attributes["name"]
         intent_filter.actions.append(action)
+
+def parse_intent_filter_category(intent_filter_element, intent_filter):
+    for category_element in find_elements(intent_filter_element.children, "category"):
+        category = category_element.attributes["name"]
+        intent_filter.categories.append(category)
 
 def parse_services(application_element, android_app):
     for service_element in find_elements(application_element.children, "service"):
         service = Service()
         service.name = service_element.attributes["name"]
+        parse_intent_filters(service_element, service)
         android_app.services.append(service)
 
 def parse_metadata(application_element, android_app):

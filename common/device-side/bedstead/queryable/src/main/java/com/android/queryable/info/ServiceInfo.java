@@ -17,6 +17,10 @@
 package com.android.queryable.info;
 
 import android.app.Service;
+import android.content.IntentFilter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -25,6 +29,8 @@ import android.app.Service;
  * <p>This is used instead of {@link Service} so that it can be easily serialized.
  */
 public final class ServiceInfo extends ClassInfo {
+
+    private final Set<IntentFilter> mIntentFilters;
 
     /** Return a new builder for {@link ServiceInfo}. */
     public static Builder builder() {
@@ -37,20 +43,32 @@ public final class ServiceInfo extends ClassInfo {
                 .serviceClass(serviceInfo.name);
     }
 
-    private ServiceInfo(String serviceClass) {
+    private ServiceInfo(String serviceClass, Set<IntentFilter> intentFilters) {
         super(serviceClass);
+        if (intentFilters == null) {
+            mIntentFilters = new HashSet<>();
+        } else {
+            mIntentFilters = intentFilters;
+        }
+    }
+
+    /** Return the intent filters of this service.*/
+    public Set<IntentFilter> intentFilters() {
+        return mIntentFilters;
     }
 
     @Override
     public String toString() {
         return "Service{"
                 + "class=" + super.toString()
+                + "intentFilters=" + mIntentFilters
                 + "}";
     }
 
     /** Builder for {@link ServiceInfo}. */
     public static final class Builder {
         String mServiceClass;
+        Set<IntentFilter> mIntentFilters;
 
         /** Set the serviceClassName with the class name provided. */
         public Builder serviceClass(String serviceClassName) {
@@ -68,10 +86,17 @@ public final class ServiceInfo extends ClassInfo {
             return serviceClass(serviceClass.getName());
         }
 
+        /** Set the intent filters with the set of intent filters provided */
+        public ServiceInfo.Builder intentFilters(Set<IntentFilter> intentFilters) {
+            mIntentFilters = intentFilters;
+            return this;
+        }
+
         /** Build the {@link ServiceInfo}*/
         public ServiceInfo build() {
             return new ServiceInfo(
-                    mServiceClass
+                    mServiceClass,
+                    mIntentFilters
             );
         }
     }
