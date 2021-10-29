@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verify;
 
 import android.media.AudioAttributes;
 import android.os.SystemClock;
+import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
@@ -73,6 +74,10 @@ public class VibratorTest {
             new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
+    private static final VibrationAttributes VIBRATION_ATTRIBUTES =
+            new VibrationAttributes.Builder()
+                    .setUsage(VibrationAttributes.USAGE_TOUCH)
                     .build();
     private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
     private static final int[] PREDEFINED_EFFECTS = new int[]{
@@ -256,6 +261,12 @@ public class VibratorTest {
                 assertStartsVibrating();
             }
         }
+    }
+
+    @Test
+    public void testVibrateWithAttributes() {
+        mVibrator.vibrate(VibrationEffect.createOneShot(10, 10), VIBRATION_ATTRIBUTES);
+        assertStartsVibrating();
     }
 
     @Test
