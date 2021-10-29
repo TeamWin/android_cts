@@ -76,53 +76,6 @@ android_library {
     target_sdk_version: "31",
 }
 
-android_library {
-    name: "cts-media-drm-common",
-    srcs: [
-        "common/src/android/media/cts/AudioHelper.java",
-        "common/src/android/media/cts/AudioManagerStub.java",
-        "common/src/android/media/cts/AudioManagerStubHelper.java",
-        "common/src/android/media/cts/AudioRecordNative.java",
-        "common/src/android/media/cts/AudioTrackNative.java",
-        "common/src/android/media/cts/CodecState.java",
-        "common/src/android/media/cts/ConnectionStatus.java",
-        "common/src/android/media/cts/IConnectionStatus.java",
-        "common/src/android/media/cts/InputSurface.java",
-        "common/src/android/media/cts/InputSurfaceInterface.java",
-        "common/src/android/media/cts/MediaCodecBlockModelHelper.java",
-        "common/src/android/media/cts/MediaCodecClearKeyPlayer.java",
-        "common/src/android/media/cts/MediaCodecPlayerTestBase.java",
-        "common/src/android/media/cts/MediaCodecWrapper.java",
-        "common/src/android/media/cts/MediaTimeProvider.java",
-        "common/src/android/media/cts/MediaStubActivity.java",
-        "common/src/android/media/cts/NdkInputSurface.java",
-        "common/src/android/media/cts/NdkMediaCodec.java",
-        "common/src/android/media/cts/NonBlockingAudioTrack.java",
-        "common/src/android/media/cts/NonMediaMainlineTest.java",
-        "common/src/android/media/cts/OutputSurface.java",
-        "common/src/android/media/cts/Preconditions.java",
-        "common/src/android/media/cts/TestMediaDataSource.java",
-        "common/src/android/media/cts/TestUtils.java",
-        "common/src/android/media/cts/TextureRender.java",
-    ],
-    static_libs: [
-        "androidx.heifwriter_heifwriter",
-        "androidx.test.core",
-        "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "junit",
-        "platform-test-annotations",
-    ],
-    platform_apis: true,
-    libs: [
-        "org.apache.http.legacy",
-        "android.test.base",
-        "android.test.runner",
-    ],
-    min_sdk_version: "29",
-    target_sdk_version: "31",
-}
-
 android_test {
     name: "CtsMediaTestCases",
     defaults: ["cts_defaults"],
