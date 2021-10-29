@@ -45,6 +45,7 @@ public class PreferenceActivityFlowLandscapeTest extends PreferenceActivityFlowT
         mActivity = launchActivity(null);
         mTestUtils = new TestUtils(mActivityRule);
         mActivity.finish();
+        mTestUtils.waitForIdle();
     }
 
     /**
