@@ -22,7 +22,6 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.log.LogUtil.CLog;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -103,16 +102,6 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
             CLog.d("Stopping and removing user " + userId);
             getDevice().stopUser(userId, true, true);
             assertTrue("Couldn't remove user", getDevice().removeUser(userId));
-        }
-    }
-
-    private void removeUser(int userId) throws Exception  {
-        if (mDevice.listUsers().contains(userId) && userId != USER_SYSTEM) {
-            // Don't log output, as tests sometimes set no debug user restriction, which
-            // causes this to fail, we should still continue and remove the user.
-            CLog.d("Stopping and removing user " + userId);
-            mDevice.stopUser(userId, true, true);
-            assertTrue("Couldn't remove user", mDevice.removeUser(userId));
         }
     }
 }
