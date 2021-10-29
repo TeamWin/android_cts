@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -338,6 +339,34 @@ public class RemoteViewsRecyclingTest {
     @Test
     public void doesntRecycleWhenViewIdDoesntMatchAsync() throws Throwable {
         doesntRecycleWhenViewIdDoesntMatch(true /* async */);
+    }
+
+    private void recycleWhenViewIdDoesntMatchFailsInMultipleLayout(boolean async) throws Throwable {
+        RemoteViews childRv = createRemoteViews(R.layout.remoteviews_recycle, 2);
+        RemoteViews rv = new RemoteViews(childRv, childRv);
+        applyRemoteViews(rv);
+
+        RemoteViews childRv2 = createRemoteViews(R.layout.remoteviews_recycle, 3);
+        RemoteViews rv2 = new RemoteViews(childRv2, childRv2);
+
+        try {
+            reapplyRemoteViews(rv2, async);
+        } catch (RuntimeException ex) {
+            return; // success
+        } catch (Throwable t) {
+            fail("Excepted a RuntimeException, received " + t.toString());
+        }
+        fail("Excepted a RuntimeException, no exception received.");
+    }
+
+    @Test
+    public void recycleWhenViewIdDoesntMatchFailsInMultipleLayoutSync() throws Throwable {
+        recycleWhenViewIdDoesntMatchFailsInMultipleLayout(false /* async */);
+    }
+
+    @Test
+    public void recycleWhenViewIdDoesntMatchFailsInMultipleLayoutAsync() throws Throwable {
+        recycleWhenViewIdDoesntMatchFailsInMultipleLayout(true /* async */);
     }
 
     private void recycleWhenRemovingFromEndAndInsertInMiddleAtManyLevels(boolean async)
