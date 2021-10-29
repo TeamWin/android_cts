@@ -126,7 +126,7 @@ public class KeyManagementTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("TODO(b/204544463): Enable when the key can be serialized")
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
     public void installKeyPair_withAutomatedAccess_aliasIsGranted() throws Exception {
@@ -135,8 +135,9 @@ public class KeyManagementTest {
             sDeviceState.dpc().devicePolicyManager().installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY,
                     CERTIFICATES, RSA_ALIAS, /* requestAccess = */ true);
 
-            // TODO(b/198407955): Call KeyChain.getPrivateKey with the DPC context and verify
-            // the private key is not null
+            // TODO(b/204544478): Remove the null context
+            assertThat(sDeviceState.dpc().keyChain().getPrivateKey(/* context= */ null, RSA_ALIAS))
+                    .isNotNull();
         } finally {
             // Remove keypair
             sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
@@ -144,7 +145,6 @@ public class KeyManagementTest {
     }
 
     @Test
-    @Ignore
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
     public void installKeyPair_withoutAutomatedAccess_aliasIsNotGranted() throws Exception {
@@ -153,8 +153,9 @@ public class KeyManagementTest {
             sDeviceState.dpc().devicePolicyManager().installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY,
                     CERTIFICATES, RSA_ALIAS, /* requestAccess = */ false);
 
-            // TODO(b/198407955): Call KeyChain.getPrivateKey with the DPC context and verify
-            // the private key is null
+            // TODO(b/204544478): Remove the null context
+            assertThat(sDeviceState.dpc().keyChain().getPrivateKey(/* context= */ null, RSA_ALIAS))
+                    .isNull();
         } finally {
             // Remove keypair
             sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);

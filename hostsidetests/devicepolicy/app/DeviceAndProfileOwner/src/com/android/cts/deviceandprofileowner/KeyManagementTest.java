@@ -136,34 +136,27 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         super.tearDown();
     }
 
+    // TODO(b/204544463): Remove when installKeyPair_withAutomatedAccess_aliasIsGranted is enabled
     public void testCanInstallWithAutomaticAccess() throws Exception {
         final String grant = "com.android.test.autogrant-key-1";
-        final String withhold = "com.android.test.nongrant-key-1";
 
-        // Install keypairs.
+        // Install keypair.
         assertThat(
                 mDevicePolicyManager.installKeyPair(
                         getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, grant, true))
                 .isTrue();
-        assertThat(
-                mDevicePolicyManager.installKeyPair(
-                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, withhold, false))
-                .isTrue();
         try {
-            // Verify only the requested key was actually granted.
+            // Verify the requested key was actually granted.
             assertGranted(grant, true);
-            assertGranted(withhold, false);
 
             // Verify the granted key is actually obtainable in PrivateKey form.
             assertThat(KeyChain.getPrivateKey(mActivity, grant).getAlgorithm()).isEqualTo("RSA");
         } finally {
-            // Delete both keypairs.
+            // Delete the keypair.
             assertThat(mDevicePolicyManager.removeKeyPair(getWho(), grant)).isTrue();
-            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), withhold)).isTrue();
         }
-        // Verify they're actually gone.
+        // Verify it's actually gone.
         assertGranted(grant, false);
-        assertGranted(withhold, false);
     }
 
     private List<Certificate> loadCertificateChain(String assetName) throws Exception {
