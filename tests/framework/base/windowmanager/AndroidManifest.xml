@@ -357,6 +357,8 @@
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$ImmersiveFullscreenTestActivity"
              android:documentLaunchMode="always"
              android:theme="@style/no_animation"/>
+        <activity android:name="android.server.wm.WindowInsetsPolicyTest$NaturalOrientationTestActivity"
+                  android:screenOrientation="nosensor"/>
         <activity android:name="android.server.wm.LayoutTests$TestActivity"
              android:theme="@style/no_animation"/>
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
