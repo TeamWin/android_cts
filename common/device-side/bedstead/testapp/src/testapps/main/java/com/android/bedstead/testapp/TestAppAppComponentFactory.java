@@ -31,6 +31,7 @@ import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.HardwarePropertiesManager;
 import android.os.UserManager;
+import android.security.KeyChain;
 import android.util.Log;
 
 import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
@@ -50,9 +51,11 @@ import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
                 @FrameworkClass(frameworkClass = LauncherApps.class, constructor = "context.getSystemService(android.content.pm.LauncherApps.class)"),
                 @FrameworkClass(frameworkClass = AccountManager.class, constructor = "context.getSystemService(android.accounts.AccountManager.class)"),
                 @FrameworkClass(frameworkClass = Context.class, constructor = "context"),
-                @FrameworkClass(frameworkClass = ContentResolver.class, constructor = "context.getContentResolver()")
+                @FrameworkClass(frameworkClass = ContentResolver.class, constructor = "context.getContentResolver()"),
+                @FrameworkClass(frameworkClass = KeyChain.class, constructor = "null") // KeyChain can not be instantiated - all calls are static
         }
-)public final class TestAppAppComponentFactory extends AppComponentFactory {
+)
+public final class TestAppAppComponentFactory extends AppComponentFactory {
 
     private static final String LOG_TAG = "TestAppACF";
 

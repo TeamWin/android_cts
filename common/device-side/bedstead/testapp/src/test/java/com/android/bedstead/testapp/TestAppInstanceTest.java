@@ -387,4 +387,11 @@ public class TestAppInstanceTest {
                     .isNotNull();
         }
     }
+
+    @Test
+    public void keyChain_returnsUsableInstance() {
+        try (TestAppInstance testAppInstance = sTestApp.install(sUser)) {
+            assertThat(testAppInstance.keyChain().isKeyAlgorithmSupported("A")).isFalse();
+        }
+    }
 }

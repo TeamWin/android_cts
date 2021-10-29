@@ -86,8 +86,9 @@ public final class MethodSignature {
         parts = string.split(" ", 2);
 
         TypeMirror returnType;
-        if (parts[0].equals("abstract") || parts[0].equals("final")) {
-            // Doesn't matter - we're wrapping anyway
+        while (parts[0].equals("abstract") || parts[0].equals("final")
+                || parts[0].equals("static")) {
+            // These don't affect the signature in ways we care about
             string = parts[1];
             parts = string.split(" ", 2);
         }

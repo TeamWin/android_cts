@@ -83,7 +83,8 @@ public final class Processor extends AbstractProcessor {
             "android.accounts.AccountManager",
             "android.app.Activity",
             "android.content.Context",
-            "android.content.ContentResolver"
+            "android.content.ContentResolver",
+            "android.security.KeyChain"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
@@ -305,6 +306,9 @@ public final class Processor extends AbstractProcessor {
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> isCredentialsUpdateSuggested(android.accounts.Account, String, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> removeAccount(android.accounts.Account, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)",
+
+            // Uses android.accounts.AccountManager
+            "public static android.accounts.AccountManager get(android.content.Context)",
 
             // Activity
 
@@ -568,7 +572,11 @@ public final class Processor extends AbstractProcessor {
             "public abstract boolean moveDatabaseFrom(android.content.Context, String)",
             "public abstract boolean moveSharedPreferencesFrom(android.content.Context, String)",
 
-            // ContentProvider
+            // ContentResolver
+
+            // Uses Object
+            "public static Object addStatusChangeListener(int, android.content.SyncStatusObserver)",
+            "public static void removeStatusChangeListener(Object)",
 
             // Uses android.content.ContentProviderClient
             "@Nullable public final android.content.ContentProviderClient acquireContentProviderClient(@NonNull android.net.Uri)",
@@ -587,6 +595,8 @@ public final class Processor extends AbstractProcessor {
             "@Deprecated public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver, boolean)",
             "public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver, int)",
             "public void notifyChange(@NonNull java.util.Collection<android.net.Uri>, @Nullable android.database.ContentObserver, int)",
+            "public final void registerContentObserver(@NonNull android.net.Uri, boolean, @NonNull android.database.ContentObserver)",
+            "public final void unregisterContentObserver(@NonNull android.database.ContentObserver)",
 
             // Uses android.os.CancellationSignal
             "@Nullable public final android.content.res.AssetFileDescriptor openAssetFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
@@ -609,9 +619,17 @@ public final class Processor extends AbstractProcessor {
             "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable String, @Nullable String[], @Nullable String, @Nullable android.os.CancellationSignal)",
             "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal)",
 
-            // Uses android.database.ContentObserver
-            "public final void registerContentObserver(@NonNull android.net.Uri, boolean, @NonNull android.database.ContentObserver)",
-            "public final void unregisterContentObserver(@NonNull android.database.ContentObserver)"
+            // Uses android.content.ContentResolver
+            "@NonNull public static android.content.ContentResolver wrap(@NonNull android.content.ContentProvider)",
+            "@NonNull public static android.content.ContentResolver wrap(@NonNull android.content.ContentProviderClient)",
+
+
+            // KeyChain
+
+            // Uses android.app.Activity
+            "public static void choosePrivateKeyAlias(@NonNull android.app.Activity, @NonNull android.security.KeyChainAliasCallback, @Nullable String[], @Nullable java.security.Principal[], @Nullable String, int, @Nullable String)",
+            "public static void choosePrivateKeyAlias(@NonNull android.app.Activity, @NonNull android.security.KeyChainAliasCallback, @Nullable String[], @Nullable java.security.Principal[], @Nullable android.net.Uri, @Nullable String)"
+
 
 
 
@@ -933,20 +951,26 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
+            String frameworkClassName = "mFrameworkClass";
+
+            if (method.getModifiers().contains(Modifier.STATIC)) {
+                frameworkClassName = frameworkClass.getQualifiedName().toString();
+            }
+
             if (signatureReturnOverrides.containsKey(signature)) {
                 methodBuilder.returns(signatureReturnOverrides.get(signature));
                 methodBuilder.addStatement(
-                        "return new $TImpl(mFrameworkClass.$L($L))",
-                        signatureReturnOverrides.get(signature),
+                        "return new $TImpl($L.$L($L))",
+                        signatureReturnOverrides.get(signature), frameworkClassName,
                         method.getSimpleName(), String.join(", ", paramNames));
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
-                        "mFrameworkClass.$L($L)",
-                        method.getSimpleName(), String.join(", ", paramNames));
+                        "$L.$L($L)",
+                        frameworkClassName, method.getSimpleName(), String.join(", ", paramNames));
             } else {
                 methodBuilder.addStatement(
-                        "return mFrameworkClass.$L($L)",
-                        method.getSimpleName(), String.join(", ", paramNames));
+                        "return $L.$L($L)",
+                        frameworkClassName, method.getSimpleName(), String.join(", ", paramNames));
             }
 
             classBuilder.addMethod(methodBuilder.build());
@@ -1005,11 +1029,17 @@ public final class Processor extends AbstractProcessor {
                 .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
                 .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
                 .forEach(e -> {
-                    methods.put(e.getSimpleName().toString(), e);
+                    methods.put(methodHash(e), e);
                 });
 
         interfaceClass.getInterfaces().stream()
                 .map(m -> elements.getTypeElement(m.toString()))
                 .forEach(m -> getMethods(methods, m, elements));
+    }
+
+    private String methodHash(ExecutableElement method) {
+        return method.getSimpleName() + "(" + method.getParameters().stream()
+                .map(p -> p.asType().toString()).collect(
+                Collectors.joining(",")) + ")";
     }
 }

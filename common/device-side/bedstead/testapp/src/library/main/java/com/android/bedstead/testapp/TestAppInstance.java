@@ -44,6 +44,9 @@ import android.os.RemoteHardwarePropertiesManagerWrapper;
 import android.os.RemoteUserManager;
 import android.os.RemoteUserManagerWrapper;
 import android.os.UserManager;
+import android.security.KeyChain;
+import android.security.RemoteKeyChain;
+import android.security.RemoteKeyChainWrapper;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.ProcessReference;
@@ -352,6 +355,15 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteContext context() {
         return new RemoteContextWrapper(mConnector);
+    }
+
+    /**
+     * Access the {@link KeyChain} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteKeyChain keyChain() {
+        return new RemoteKeyChainWrapper(mConnector);
     }
 
     @Override

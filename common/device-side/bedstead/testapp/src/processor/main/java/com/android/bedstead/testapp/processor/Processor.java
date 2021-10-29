@@ -55,6 +55,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
@@ -133,6 +134,23 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName REMOTE_CONTENT_RESOLVER_WRAPPER_CLASSNAME =
             ClassName.get("android.content",
                     "RemoteContentResolverWrapper");
+
+    /**
+     * Extract classes provided in an annotation.
+     *
+     * <p>The {@code runnable} should call the annotation method that the classes are being
+     * extracted for.
+     */
+    public static List<TypeElement> extractClassesFromAnnotation(Types types, Runnable runnable) {
+        try {
+            runnable.run();
+        } catch (MirroredTypesException e) {
+            return e.getTypeMirrors().stream()
+                    .map(t -> (TypeElement) types.asElement(t))
+                    .collect(Collectors.toList());
+        }
+        throw new AssertionError("Could not extract classes from annotation");
+    }
 
     /**
      * Extract a class provided in an annotation.
@@ -254,13 +272,18 @@ public final class Processor extends AbstractProcessor {
             List<String> params = new ArrayList<>();
 
             for (VariableElement param : method.getParameters()) {
+
                 ParameterSpec parameterSpec =
                         ParameterSpec.builder(ClassName.get(param.asType()),
                                 param.getSimpleName().toString()).build();
+                methodBuilder.addParameter(parameterSpec);
+
+                if (param.asType().toString().equals("android.content.Context")) {
+                    // Context is auto-provided so not passed in
+                    continue;
+                }
 
                 params.add(param.getSimpleName().toString());
-
-                methodBuilder.addParameter(parameterSpec);
             }
 
 
@@ -763,11 +786,17 @@ public final class Processor extends AbstractProcessor {
                 .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
                 .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
                 .forEach(e -> {
-                    methods.put(e.getSimpleName().toString(), e);
+                    methods.put(methodHash(e), e);
                 });
 
         interfaceClass.getInterfaces().stream()
                 .map(m -> elements.getTypeElement(m.toString()))
                 .forEach(m -> getMethods(methods, m, elements));
+    }
+
+    private String methodHash(ExecutableElement method) {
+        return method.getSimpleName() + "(" + method.getParameters().stream()
+                .map(p -> p.asType().toString()).collect(
+                Collectors.joining(",")) + ")";
     }
 }

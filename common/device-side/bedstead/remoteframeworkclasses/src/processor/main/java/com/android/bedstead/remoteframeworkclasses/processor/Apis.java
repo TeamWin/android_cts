@@ -98,6 +98,8 @@ public final class Apis {
 
     private static Set<MethodSignature> parseApiTxt(
             String filename, String apiTxt, String className, Types types, Elements elements) {
+        System.out.println("Parsing for " + className);
+
         int separatorPosition = className.lastIndexOf(".");
         String packageName = className.substring(0, separatorPosition);
         String simpleClassName = className.substring(separatorPosition + 1);
@@ -131,10 +133,6 @@ public final class Apis {
             if (!methodLine.startsWith("method")) {
                 return methodSignatures;
             }
-            if (methodLine.contains(" static ")) {
-                continue; // We don't expose static methods
-            }
-
 
             try {
                 // Strip "method" and semicolon
