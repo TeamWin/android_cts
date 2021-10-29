@@ -500,14 +500,22 @@ public class CameraTestUtils extends Assert {
     public static class ImageVerifierListener implements ImageReader.OnImageAvailableListener {
         private Size mSize;
         private int mFormat;
+        // Whether the parent ImageReader is valid or not. If the parent ImageReader
+        // is destroyed, the acquired Image may become invalid.
+        private boolean mReaderIsValid;
 
         public ImageVerifierListener(Size sz, int format) {
             mSize = sz;
             mFormat = format;
+            mReaderIsValid = true;
+        }
+
+        public synchronized void onReaderDestroyed() {
+            mReaderIsValid = false;
         }
 
         @Override
-        public void onImageAvailable(ImageReader reader) {
+        public synchronized void onImageAvailable(ImageReader reader) {
             Image image = null;
             try {
                 image = reader.acquireNextImage();
@@ -517,7 +525,11 @@ public class CameraTestUtils extends Assert {
                     // could be closed asynchronously, which will close all images acquired from
                     // this ImageReader.
                     checkImage(image, mSize.getWidth(), mSize.getHeight(), mFormat);
-                    checkAndroidImageFormat(image);
+                    // checkAndroidImageFormat calls into underlying Image object, which could
+                    // become invalid if the ImageReader is destroyed.
+                    if (mReaderIsValid) {
+                        checkAndroidImageFormat(image);
+                    }
                     image.close();
                 }
             }
