@@ -231,4 +231,24 @@ public class TestAppProviderTest {
 
         assertThat(testApp.activities()).isEmpty();
     }
+
+    @Test
+    public void query_isDeviceAdmin_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereIsDeviceAdmin().isTrue()
+                .get();
+
+        assertThat(testApp.packageName()).isEqualTo(
+                "com.android.bedstead.testapp.DeviceAdminTestApp");
+    }
+
+    @Test
+    public void query_isNotDeviceAdmin_returnsMatching() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereIsDeviceAdmin().isFalse()
+                .get();
+
+        assertThat(testApp.packageName()).isNotEqualTo(
+                "com.android.bedstead.testapp.DeviceAdminTestApp");
+    }
 }

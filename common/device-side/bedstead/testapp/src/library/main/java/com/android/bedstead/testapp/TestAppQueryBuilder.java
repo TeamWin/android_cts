@@ -48,6 +48,7 @@ public final class TestAppQueryBuilder implements Queryable {
             new SetQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ServiceInfo, ServiceQuery<?>> mServices =
             new SetQueryHelper<>(this);
+    BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -107,6 +108,13 @@ public final class TestAppQueryBuilder implements Queryable {
      */
     public BooleanQuery<TestAppQueryBuilder> whereTestOnly() {
         return mTestOnly;
+    }
+
+    /**
+     * Query for an app which is a device admin.
+     */
+    public BooleanQuery<TestAppQueryBuilder> whereIsDeviceAdmin() {
+        return mIsDeviceAdmin;
     }
 
     /**
@@ -183,6 +191,13 @@ public final class TestAppQueryBuilder implements Queryable {
         }
 
         if (!BooleanQueryHelper.matches(mTestOnly, details.mApp.getTestOnly())) {
+            return false;
+        }
+
+        // TODO(b/198419895): Actually query for the correct receiver + metadata
+        boolean isDeviceAdmin = details.mApp.getPackageName().equals(
+                "com.android.bedstead.testapp.DeviceAdminTestApp");
+        if (!BooleanQueryHelper.matches(mIsDeviceAdmin, isDeviceAdmin)) {
             return false;
         }
 

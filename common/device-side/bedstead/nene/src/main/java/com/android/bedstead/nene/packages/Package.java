@@ -516,6 +516,10 @@ public final class Package {
             throw new NeneException("Error getting requestedPermissions, does not exist");
         }
 
+        if (packageInfo.requestedPermissions == null) {
+            return new HashSet<>();
+        }
+
         return new HashSet<>(Arrays.asList(packageInfo.requestedPermissions));
     }
 

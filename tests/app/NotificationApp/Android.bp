@@ -17,7 +17,7 @@ package {
 }
 
 android_test_helper_app {
-    name: "NotificationDelegator",
+    name: "NotificationApp",
     defaults: ["cts_support_defaults"],
     srcs: ["**/*.java"],
     // Tag this module as a cts test artifact

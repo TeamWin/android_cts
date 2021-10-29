@@ -15,9 +15,12 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-     package="com.android.test.notificationdelegator">
-    <application android:label="Notification Delegator">
-        <activity android:name="com.android.test.notificationdelegator.NotificationDelegator"
+     package="com.android.test.notificationapp">
+    <!-- for calling matchesCallFilter -->
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
+
+    <application android:label="Notification Test App">
+        <activity android:name="com.android.test.notificationapp.NotificationDelegator"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -26,7 +29,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.android.test.notificationdelegator.NotificationRevoker"
+        <activity android:name="com.android.test.notificationapp.NotificationRevoker"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -34,13 +37,32 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.android.test.notificationdelegator.NotificationDelegateAndPost"
+        <activity android:name="com.android.test.notificationapp.NotificationDelegateAndPost"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.android.test.notificationapp.MatchesCallFilterTestActivity"
+            android:excludeFromRecents="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <service android:name="com.android.test.notificationapp.TestNotificationListener"
+                 android:exported="true"
+                 android:label="TestNotificationListener"
+                 android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService"/>
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>
