@@ -26,6 +26,8 @@ import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.DeviceState.UserType.WORK_PROFILE;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
+import static com.android.queryable.queries.ActivityQuery.activity;
+import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -64,10 +66,12 @@ public class CrossProfileSharingTest {
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
-    // TODO(b/198420874): rather than querying by package name, query apps by intents they need to
-    // handle: "com.android.testapp.SOME_ACTION" and "android.intent.action.PICK"
-    private static final TestApp sTestApp = sTestAppProvider.query().wherePackageName()
-            .isEqualTo("com.android.bedstead.testapp.EmptyTestApp2").get();
+    private static final TestApp sTestApp = sTestAppProvider.query().whereActivities().contains(
+            activity().intentFilters().contains(
+                    intentFilter().actions().contains("com.android.testapp.SOME_ACTION"),
+                    intentFilter().actions().contains("android.intent.action.PICK")
+            )
+    ).get();
 
     // Known action that is handled in the opposite profile, used to query forwarder activity.
     private static final String CROSS_PROFILE_ACTION = "com.android.testapp.SOME_ACTION";
