@@ -22,10 +22,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 
+import static java.util.Collections.singleton;
+
 import android.content.Context;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Process;
 import android.security.KeyChain;
 import android.security.KeyChainException;
 
@@ -45,20 +46,22 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testng.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
 
 /**
  * Test that a DPC can manage keys and certificate on a device by installing, generating and
@@ -68,6 +71,9 @@ import java.util.concurrent.Executors;
 @RunWith(BedsteadJUnit4.class)
 public class KeyManagementTest {
 
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
     private static final String RSA = "RSA";
     private static final String RSA_ALIAS = "com.android.test.valid-rsa-key-1";
     private static final PrivateKey PRIVATE_KEY =
@@ -75,18 +81,61 @@ public class KeyManagementTest {
     private static final Certificate CERTIFICATE =
             generateCertificate(FakeKeys.FAKE_RSA_1.caCertificate);
     private static final Certificate[] CERTIFICATES = new Certificate[]{CERTIFICATE};
+    private static final String NON_EXISTENT_ALIAS = "KeyManagementTest-nonexistent";
+    private static final Context sContext = TestApis.context().instrumentedContext();
 
-    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private static Uri getUri(String alias) {
+        try {
+            return Uri.parse("https://example.org/?alias=" + URLEncoder.encode(alias, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError("Unable to parse URI." + e);
+        }
+    }
 
-    @ClassRule
-    @Rule
-    public static final DeviceState sDeviceState = new DeviceState();
+    private static void choosePrivateKeyAlias(KeyChainAliasCallback callback, String alias) {
+        /* Pass the alias as a GET to an imaginary server instead of explicitly asking for it,
+         * to make sure the DPC actually has to do some work to grant the cert.
+         */
+        try {
+            ActivityContext.runWithContext(
+                    (activity) -> KeyChain.choosePrivateKeyAlias(activity, callback, /* keyTypes= */
+                            null, /* issuers= */ null, getUri(alias), /* alias = */ null)
+            );
+        } catch (InterruptedException e) {
+            throw new AssertionError("Unable to choose private key alias." + e);
+        }
+    }
+
+    private static PrivateKey getPrivateKey(Context context, String alias) {
+        try {
+            return KeyChain.getPrivateKey(context, alias);
+        } catch (KeyChainException | InterruptedException e) {
+            throw new AssertionError("Failed to get private key." + e);
+        }
+    }
+
+    private static PrivateKey generatePrivateKey(final byte[] key, String type) {
+        try {
+            return KeyFactory.getInstance(type).generatePrivate(
+                    new PKCS8EncodedKeySpec(key));
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            throw new AssertionError("Unable to get private key." + e);
+        }
+    }
+
+    private static Certificate generateCertificate(byte[] cert) {
+        try {
+            return CertificateFactory.getInstance("X.509").generateCertificate(
+                    new ByteArrayInputStream(cert));
+        } catch (CertificateException e) {
+            throw new AssertionError("Unable to get certificate." + e);
+        }
+    }
 
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
-    public void installKeyPair_validRsaKeyPair_success() throws Exception {
+    public void installKeyPair_validRsaKeyPair_success() {
         try {
             // Install keypair
             assertThat(sDeviceState.dpc().devicePolicyManager()
@@ -101,7 +150,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
-    public void installKeyPair_nullPrivateKey_throwException() throws Exception {
+    public void installKeyPair_nullPrivateKey_throwException() {
         assertThrows(NullPointerException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
                         DPC_COMPONENT_NAME, /* privKey = */ null, CERTIFICATE, RSA_ALIAS));
@@ -110,7 +159,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
-    public void installKeyPair_nullCertificate_throwException() throws Exception {
+    public void installKeyPair_nullCertificate_throwException() {
         assertThrows(NullPointerException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
                         DPC_COMPONENT_NAME, PRIVATE_KEY, /* cert = */ null, RSA_ALIAS));
@@ -119,7 +168,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
-    public void installKeyPair_nullAdminComponent_throwException() throws Exception {
+    public void installKeyPair_nullAdminComponent_throwException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().installKeyPair(
                         /* admin = */ null, PRIVATE_KEY, CERTIFICATE, RSA_ALIAS));
@@ -128,7 +177,7 @@ public class KeyManagementTest {
     @Test
     @Ignore("TODO(b/204544463): Enable when the key can be serialized")
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @CanSetPolicyTest(policy = KeyManagement.class)
     public void installKeyPair_withAutomatedAccess_aliasIsGranted() throws Exception {
         try {
             // Install keypair with automated access
@@ -146,7 +195,7 @@ public class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @CanSetPolicyTest(policy = KeyManagement.class)
     public void installKeyPair_withoutAutomatedAccess_aliasIsNotGranted() throws Exception {
         try {
             // Install keypair with automated access
@@ -165,7 +214,7 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
-    public void removeKeyPair_validRsaKeyPair_success() throws Exception {
+    public void removeKeyPair_validRsaKeyPair_success() {
         try {
             // Install keypair
             sDeviceState.dpc().devicePolicyManager()
@@ -180,14 +229,15 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
-    public void hasKeyPair_nonExistentAlias_false() throws Exception {
-        assertThat(sDeviceState.dpc().devicePolicyManager().hasKeyPair(RSA_ALIAS)).isFalse();
+    public void hasKeyPair_nonExistentAlias_false() {
+        assertThat(
+                sDeviceState.dpc().devicePolicyManager().hasKeyPair(NON_EXISTENT_ALIAS)).isFalse();
     }
 
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
-    public void hasKeyPair_installedAlias_true() throws Exception {
+    public void hasKeyPair_installedAlias_true() {
         try {
             // Install keypair
             sDeviceState.dpc().devicePolicyManager()
@@ -282,60 +332,232 @@ public class KeyManagementTest {
         }
     }
 
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void install_wasPreviouslyGrantedOnPreviousInstall_grantDoesNotPersist()
+            throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES, RSA_ALIAS, true);
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+
+            sDeviceState.dpc().devicePolicyManager()
+                    .installKeyPair(DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES, RSA_ALIAS,
+                            false);
+
+            assertThat(sDeviceState.dpc().keyChain().getPrivateKey(
+                    TestApis.context().instrumentedContext(), RSA_ALIAS))
+                    .isNull();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
+    public void getKeyPairGrants_nonExistent_throwsIllegalArgumentException() {
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .getKeyPairGrants(NON_EXISTENT_ALIAS));
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void getKeyPairGrants_doesNotIncludeNotGranted() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+
+            assertThat(
+                    sDeviceState.dpc().devicePolicyManager().getKeyPairGrants(RSA_ALIAS)).isEmpty();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void getKeyPairGrants_includesGrantedAtInstall() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ true);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().getKeyPairGrants(RSA_ALIAS))
+                    .isEqualTo(Map.of(sDeviceState.dpc().process().uid(),
+                            singleton(sDeviceState.dpc().componentName().getPackageName())));
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @PositivePolicyTest(policy = KeyManagement.class)
+    public void getKeyPairGrants_includesGrantedExplicitly() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToApp(
+                    DPC_COMPONENT_NAME, RSA_ALIAS,
+                    sContext.getPackageName());
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().getKeyPairGrants(RSA_ALIAS))
+                    .isEqualTo(Map.of(Process.myUid(),
+                            singleton(sContext.getPackageName())));
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void getKeyPairGrants_doesNotIncludeRevoked() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ true);
+            sDeviceState.dpc().devicePolicyManager().revokeKeyPairFromApp(
+                    DPC_COMPONENT_NAME, RSA_ALIAS,
+                    sDeviceState.dpc().componentName().getPackageName());
+
+            assertThat(
+                    sDeviceState.dpc().devicePolicyManager().getKeyPairGrants(RSA_ALIAS)).isEmpty();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void isKeyPairGrantedToWifiAuth_default_returnsFalse() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+
+            assertThat(
+                    sDeviceState.dpc().devicePolicyManager().isKeyPairGrantedToWifiAuth(RSA_ALIAS))
+                    .isFalse();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void isKeyPairGrantedToWifiAuth_granted_returnsTrue() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToWifiAuth(RSA_ALIAS);
+
+            assertThat(
+                    sDeviceState.dpc().devicePolicyManager().isKeyPairGrantedToWifiAuth(RSA_ALIAS))
+                    .isTrue();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = KeyManagement.class)
+    public void isKeyPairGrantedToWifiAuth_revoked_returnsFalse() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToWifiAuth(RSA_ALIAS);
+            sDeviceState.dpc().devicePolicyManager().revokeKeyPairFromWifiAuth(RSA_ALIAS);
+
+            assertThat(
+                    sDeviceState.dpc().devicePolicyManager().isKeyPairGrantedToWifiAuth(RSA_ALIAS))
+                    .isFalse();
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @PositivePolicyTest(policy = KeyManagement.class)
+    public void grantKeyPair_keyUsable() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToApp(
+                    DPC_COMPONENT_NAME, RSA_ALIAS, sContext.getPackageName()
+            );
+
+            PrivateKey key = KeyChain.getPrivateKey(sContext, RSA_ALIAS);
+
+            signDataWithKey("SHA256withRSA", key); // Doesn't throw exception
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @PositivePolicyTest(policy = KeyManagement.class)
+    public void revokeKeyPairFromApp_keyNotUsable() throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    DPC_COMPONENT_NAME, PRIVATE_KEY, CERTIFICATES,
+                    RSA_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToApp(
+                    DPC_COMPONENT_NAME, RSA_ALIAS, sContext.getPackageName()
+            );
+            // Key is requested from KeyChain prior to revoking the grant.
+            PrivateKey key = KeyChain.getPrivateKey(sContext, RSA_ALIAS);
+
+            sDeviceState.dpc().devicePolicyManager().revokeKeyPairFromApp(
+                    DPC_COMPONENT_NAME, RSA_ALIAS, sContext.getPackageName());
+
+            // Key shouldn't be valid after the grant is revoked.
+            Assert.assertThrows(
+                    InvalidKeyException.class, () -> signDataWithKey("SHA256withRSA", key));
+        } finally {
+            // Remove keypair
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
+        }
+    }
+
+    private byte[] signDataWithKey(String algoIdentifier, PrivateKey privateKey) throws Exception {
+        byte[] data = "hello".getBytes();
+        Signature sign = Signature.getInstance(algoIdentifier);
+        sign.initSign(privateKey);
+        sign.update(data);
+        return sign.sign();
+    }
+
     private static class KeyChainAliasCallback extends BlockingCallback<String> implements
             android.security.KeyChainAliasCallback {
 
         @Override
         public void alias(final String chosenAlias) {
             callbackTriggered(chosenAlias);
-        }
-    }
-
-    private static Uri getUri(String alias) {
-        try {
-            return Uri.parse("https://example.org/?alias=" + URLEncoder.encode(alias, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new AssertionError("Unable to parse URI." + e);
-        }
-    }
-
-    private static void choosePrivateKeyAlias(KeyChainAliasCallback callback, String alias) {
-        /* Pass the alias as a GET to an imaginary server instead of explicitly asking for it,
-         * to make sure the DPC actually has to do some work to grant the cert.
-         */
-        try {
-            ActivityContext.runWithContext(
-                    (activity) -> KeyChain.choosePrivateKeyAlias(activity, callback, /* keyTypes= */
-                            null, /* issuers= */ null, getUri(alias), /* alias = */ null)
-            );
-        } catch (InterruptedException e) {
-            throw new AssertionError("Unable to choose private key alias." + e);
-        }
-    }
-
-    private static PrivateKey getPrivateKey(Context context, String alias) {
-        try {
-            return KeyChain.getPrivateKey(context, alias);
-        } catch (KeyChainException | InterruptedException e) {
-            throw new AssertionError("Failed to get private key." + e);
-        }
-    }
-
-    private static PrivateKey generatePrivateKey(final byte[] key, String type) {
-        try {
-            return KeyFactory.getInstance(type).generatePrivate(
-                    new PKCS8EncodedKeySpec(key));
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            throw new AssertionError("Unable to get private key." + e);
-        }
-    }
-
-    private static Certificate generateCertificate(byte[] cert) {
-        try {
-            return CertificateFactory.getInstance("X.509").generateCertificate(
-                    new ByteArrayInputStream(cert));
-        } catch (CertificateException e) {
-            throw new AssertionError("Unable to get certificate." + e);
         }
     }
 }

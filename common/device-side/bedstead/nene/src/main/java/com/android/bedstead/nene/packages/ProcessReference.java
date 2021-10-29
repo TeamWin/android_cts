@@ -23,15 +23,17 @@ import com.android.bedstead.nene.users.UserReference;
 public final class ProcessReference {
 
     private final Package mPackage;
-    private final int mProcessId;
+    private final int mPid;
+    private final int mUid;
     private final UserReference mUser;
 
-    ProcessReference(Package pkg, int processId, UserReference user) {
+    ProcessReference(Package pkg, int pid, int uid, UserReference user) {
         if (pkg == null) {
             throw new NullPointerException();
         }
         mPackage = pkg;
-        mProcessId = processId;
+        mPid = pid;
+        mUid = uid;
         mUser = user;
     }
 
@@ -46,7 +48,14 @@ public final class ProcessReference {
      * Get the pid of this process.
      */
     public int pid() {
-        return mProcessId;
+        return mPid;
+    }
+
+    /**
+     * Get the uid of this process.
+     */
+    public int uid() {
+        return mUid;
     }
 
     /**
@@ -60,7 +69,7 @@ public final class ProcessReference {
 
     @Override
     public int hashCode() {
-        return mPackage.hashCode() + mProcessId + mUser.hashCode();
+        return mPackage.hashCode() + mPid + mUser.hashCode();
     }
 
     @Override
@@ -71,12 +80,13 @@ public final class ProcessReference {
 
         ProcessReference other = (ProcessReference) obj;
         return other.mUser.equals(mUser)
-                && other.mProcessId == mProcessId
+                && other.mPid == mPid
                 && other.mPackage.equals(mPackage);
     }
 
     @Override
     public String toString() {
-        return "ProcessReference{package=" + mPackage + ", processId=" + mProcessId + ", user=" + mUser + "}";
+        return "ProcessReference{package=" + mPackage
+                + ", processId=" + mPid + ", user=" + mUser + "}";
     }
 }
