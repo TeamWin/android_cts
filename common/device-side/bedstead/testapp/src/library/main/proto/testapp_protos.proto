@@ -34,16 +34,14 @@ message Activity {
 }
 
 message IntentFilter {
-  repeated Action actions = 1;
-}
-
-message Action {
-  string name = 1;
+  repeated string actions = 1;
+  repeated string categories = 2;
 }
 
 message Service {
   string name = 1;
   bool exported = 2;
+  repeated IntentFilter intent_filters = 3;
 }
 
 message Metadata {
