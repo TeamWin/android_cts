@@ -16,6 +16,8 @@
 
 package com.android.queryable.queries;
 
+import android.content.IntentFilter;
+
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ServiceInfo;
 
@@ -28,15 +30,19 @@ public final class ServiceQueryHelper<E extends Queryable> implements ServiceQue
 
     private final E mQuery;
     private final ClassQueryHelper<E> mServiceClassQueryHelper;
+    private final SetQueryHelper<E, IntentFilter, IntentFilterQuery<?>>
+            mIntentFiltersQueryHelper;
 
     ServiceQueryHelper() {
         mQuery = (E) this;
         mServiceClassQueryHelper = new ClassQueryHelper<>(mQuery);
+        mIntentFiltersQueryHelper = new SetQueryHelper<>(mQuery);
     }
 
     public ServiceQueryHelper(E query) {
         mQuery = query;
         mServiceClassQueryHelper = new ClassQueryHelper<>(query);
+        mIntentFiltersQueryHelper = new SetQueryHelper<>(query);
     }
 
     @Override
@@ -45,14 +51,21 @@ public final class ServiceQueryHelper<E extends Queryable> implements ServiceQue
     }
 
     @Override
+    public SetQuery<E, IntentFilter, IntentFilterQuery<?>> intentFilters() {
+        return mIntentFiltersQueryHelper;
+    }
+
+    @Override
     public boolean matches(ServiceInfo value) {
-        return mServiceClassQueryHelper.matches(value);
+        return mServiceClassQueryHelper.matches(value)
+                && mIntentFiltersQueryHelper.matches(value.intentFilters());
     }
 
     @Override
     public String describeQuery(String fieldName) {
         return Queryable.joinQueryStrings(
-                mServiceClassQueryHelper.describeQuery(fieldName + ".service")
+                mServiceClassQueryHelper.describeQuery(fieldName + ".service"),
+                mIntentFiltersQueryHelper.describeQuery(fieldName + ".intentFilters")
         );
     }
 

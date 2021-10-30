@@ -27,6 +27,7 @@ import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.hardware.SensorPrivacyManager.Sources.OTHER
 import android.os.PowerManager
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.AsbSecurityTest
 import android.support.test.uiautomator.By
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
@@ -330,6 +331,7 @@ abstract class SensorPrivacyBaseTest(
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = [199550934])
     fun testTapjacking() {
         setSensor(true)
         startTestOverlayApp(false)

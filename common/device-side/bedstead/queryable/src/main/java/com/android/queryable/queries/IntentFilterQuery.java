@@ -16,27 +16,25 @@
 
 package com.android.queryable.queries;
 
-import android.app.Service;
 import android.content.IntentFilter;
 
 import com.android.queryable.Queryable;
-import com.android.queryable.info.ServiceInfo;
 
 /**
- * Query for an {@link Service}.
+ * Query for an {@link IntentFilter}.
  *
  * @param <E> Type of query.
  */
-public interface ServiceQuery<E extends Queryable> extends Query<ServiceInfo>  {
+public interface IntentFilterQuery<E extends Queryable> extends Query<IntentFilter> {
 
-    /** Create a {@link ServiceQueryHelper}. */
-    static ServiceQuery<ServiceQuery<?>> service() {
-        return new ServiceQueryHelper<>();
+    /** Create a {@link IntentFilterQueryHelper}*/
+    static IntentFilterQuery<IntentFilterQuery<?>> intentFilter() {
+        return new IntentFilterQueryHelper<>();
     }
 
-    /** Used to query the class name of a service. */
-    ClassQuery<E> serviceClass();
+    /** Query for the actions on a intent filter.*/
+    SetQuery<E, String, StringQuery<?>> actions();
 
-    /** Query the intent-filters on an activity. */
-    SetQuery<E, IntentFilter, IntentFilterQuery<?>> intentFilters();
+    /** Query for the categories of an intent filter.*/
+    SetQuery<E, String, StringQuery<?>> categories();
 }
