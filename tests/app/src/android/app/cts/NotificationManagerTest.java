@@ -85,7 +85,6 @@ import android.app.role.RoleManager;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
-import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
 import android.app.stubs.SendBubbleActivity;
 import android.app.stubs.TestNotificationListener;
@@ -186,12 +185,9 @@ public class NotificationManagerTest extends AndroidTestCase {
     final boolean DEBUG = false;
     static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
-    private static final String TEST_APP = "com.android.test.notificationapp";
-    private static final String DELEGATE_POST_CLASS = TEST_APP + ".NotificationDelegateAndPost";
-    private static final String REVOKE_CLASS = TEST_APP + ".NotificationRevoker";
-    private static final String MATCHES_CALL_FILTER_CLASS =
-            TEST_APP + ".MatchesCallFilterTestActivity";
-    private static final String MINIMAL_LISTENER_CLASS = TEST_APP + ".TestNotificationListener";
+    private static final String DELEGATOR = "com.android.test.notificationdelegator";
+    private static final String DELEGATE_POST_CLASS = DELEGATOR + ".NotificationDelegateAndPost";
+    private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
     private static final String SHARE_SHORTCUT_ID = "shareShortcut";
     private static final String SHARE_SHORTCUT_CATEGORY =
             "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
@@ -223,12 +219,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String BOB = "Bob";
     private static final String BOB_PHONE = "+16175553434";
     private static final String BOB_EMAIL = "bob@_foo._bar";
-
-    // Constants for GetResultActivity and return codes from MatchesCallFilterTestActivity
-    // the permitted/not permitted values need to stay the same as in the test activity.
-    private static final int REQUEST_CODE = 42;
-    private static final int MATCHES_CALL_FILTER_NOT_PERMITTED = 0;
-    private static final int MATCHES_CALL_FILTER_PERMITTED = 1;
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
@@ -774,24 +764,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
-    private boolean hasReadContactsPermission(String pkgName) {
-        return mPackageManager.checkPermission(
-                Manifest.permission.READ_CONTACTS, pkgName)
-                == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void toggleReadContactsPermission(String pkgName, boolean on) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            if (on) {
-                mInstrumentation.getUiAutomation().grantRuntimePermission(pkgName,
-                        "android.permission.READ_CONTACTS");
-            } else {
-                mInstrumentation.getUiAutomation().revokeRuntimePermission(pkgName,
-                        "android.permission.READ_CONTACTS");
-            }
-        });
-    }
-
     private void setBubblesGlobal(boolean enabled)
             throws InterruptedException {
         SystemUtil.runWithShellPermissionIdentity(() ->
@@ -992,17 +964,6 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void cleanupSendBubbleActivity() {
         mContext.unregisterReceiver(mBubbleBroadcastReceiver);
-    }
-
-    // Creates a GetResultActivity into which one can call startActivityForResult with
-    // in order to test the outcome of an activity that returns a result code.
-    private GetResultActivity setUpGetResultActivity() {
-        final Intent intent = new Intent(mContext, GetResultActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        GetResultActivity activity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
-        mInstrumentation.waitForIdleSync();
-        activity.clearResult();
-        return activity;
     }
 
     private void sendTrampolineMessage(ComponentName component, int message,
@@ -2628,7 +2589,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testNotificationDelegate_grantAndPost() throws Exception {
         // grant this test permission to post
         final Intent activityIntent = new Intent();
-        activityIntent.setPackage(TEST_APP);
+        activityIntent.setPackage(DELEGATOR);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2641,11 +2602,11 @@ public class NotificationManagerTest extends AndroidTestCase {
         Notification n = new Notification.Builder(mContext, "channel")
                 .setSmallIcon(android.R.id.icon)
                 .build();
-        mNotificationManager.notifyAsPackage(TEST_APP, "tag", 0, n);
+        mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
 
         assertNotNull(findPostedNotification(0, false));
         final Intent revokeIntent = new Intent();
-        revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
         Thread.sleep(1000);
@@ -2654,7 +2615,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testNotificationDelegate_grantAndPostAndCancel() throws Exception {
         // grant this test permission to post
         final Intent activityIntent = new Intent();
-        activityIntent.setPackage(TEST_APP);
+        activityIntent.setPackage(DELEGATOR);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2667,12 +2628,12 @@ public class NotificationManagerTest extends AndroidTestCase {
         Notification n = new Notification.Builder(mContext, "channel")
                 .setSmallIcon(android.R.id.icon)
                 .build();
-        mNotificationManager.notifyAsPackage(TEST_APP, "toBeCanceled", 10000, n);
+        mNotificationManager.notifyAsPackage(DELEGATOR, "toBeCanceled", 10000, n);
         assertNotNull(findPostedNotification(10000, false));
-        mNotificationManager.cancelAsPackage(TEST_APP, "toBeCanceled", 10000);
+        mNotificationManager.cancelAsPackage(DELEGATOR, "toBeCanceled", 10000);
         assertNotificationCancelled(10000, false);
         final Intent revokeIntent = new Intent();
-        revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
         Thread.sleep(1000);
@@ -2688,7 +2649,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         // grant this test permission to post
         final Intent activityIntent = new Intent();
-        activityIntent.setClassName(TEST_APP, DELEGATE_POST_CLASS);
+        activityIntent.setClassName(DELEGATOR, DELEGATE_POST_CLASS);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(activityIntent);
@@ -2698,7 +2659,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertNotNull(findPostedNotification(9, true));
 
         try {
-            mNotificationManager.cancelAsPackage(TEST_APP, null, 9);
+            mNotificationManager.cancelAsPackage(DELEGATOR, null, 9);
             fail("Delegate should not be able to cancel notification they did not post");
         } catch (SecurityException e) {
             // yay
@@ -2708,7 +2669,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertNotNull(findPostedNotification(9, true));
 
         final Intent revokeIntent = new Intent();
-        revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
         Thread.sleep(1000);
@@ -2717,7 +2678,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testNotificationDelegate_grantAndReadChannels() throws Exception {
         // grant this test permission to post
         final Intent activityIntent = new Intent();
-        activityIntent.setPackage(TEST_APP);
+        activityIntent.setPackage(DELEGATOR);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2727,14 +2688,14 @@ public class NotificationManagerTest extends AndroidTestCase {
         Thread.sleep(500);
 
         List<NotificationChannel> channels =
-                mContext.createPackageContextAsUser(TEST_APP, /* flags= */ 0, mContext.getUser())
+                mContext.createPackageContextAsUser(DELEGATOR, /* flags= */ 0, mContext.getUser())
                         .getSystemService(NotificationManager.class)
                         .getNotificationChannels();
 
         assertNotNull(channels);
 
         final Intent revokeIntent = new Intent();
-        revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
         Thread.sleep(500);
@@ -2743,7 +2704,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testNotificationDelegate_grantAndReadChannel() throws Exception {
         // grant this test permission to post
         final Intent activityIntent = new Intent();
-        activityIntent.setPackage(TEST_APP);
+        activityIntent.setPackage(DELEGATOR);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2753,14 +2714,14 @@ public class NotificationManagerTest extends AndroidTestCase {
         Thread.sleep(2000);
 
         NotificationChannel channel =
-                mContext.createPackageContextAsUser(TEST_APP, /* flags= */ 0, mContext.getUser())
+                mContext.createPackageContextAsUser(DELEGATOR, /* flags= */ 0, mContext.getUser())
                         .getSystemService(NotificationManager.class)
                         .getNotificationChannel("channel");
 
         assertNotNull(channel);
 
         final Intent revokeIntent = new Intent();
-        revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
         Thread.sleep(500);
@@ -2769,7 +2730,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testNotificationDelegate_grantAndRevoke() throws Exception {
         // grant this test permission to post
         final Intent activityIntent = new Intent();
-        activityIntent.setPackage(TEST_APP);
+        activityIntent.setPackage(DELEGATOR);
         activityIntent.setAction(Intent.ACTION_MAIN);
         activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2777,10 +2738,10 @@ public class NotificationManagerTest extends AndroidTestCase {
         mContext.startActivity(activityIntent);
         Thread.sleep(500);
 
-        assertTrue(mNotificationManager.canNotifyAsPackage(TEST_APP));
+        assertTrue(mNotificationManager.canNotifyAsPackage(DELEGATOR));
 
         final Intent revokeIntent = new Intent();
-        revokeIntent.setClassName(TEST_APP, REVOKE_CLASS);
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(revokeIntent);
         Thread.sleep(500);
@@ -2790,7 +2751,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             Notification n = new Notification.Builder(mContext, "channel")
                     .setSmallIcon(android.R.id.icon)
                     .build();
-            mNotificationManager.notifyAsPackage(TEST_APP, "tag", 0, n);
+            mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
             fail("Should not be able to post as a delegate when permission revoked");
         } catch (SecurityException e) {
             // yay
@@ -2875,91 +2836,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         toggleListenerAccess(true);
         // no exception this time
         mNotificationManager.shouldHideSilentStatusBarIcons();
-    }
-
-    public void testMatchesCallFilter_noPermissions() {
-        // make sure we definitely don't have contacts access
-        boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
-        try {
-            toggleReadContactsPermission(TEST_APP, false);
-
-            // start an activity that has no permissions, which will run matchesCallFilter on
-            // a meaningless uri. The result code indicates whether or not the method call was
-            // permitted.
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
-            mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
-            GetResultActivity grActivity = setUpGetResultActivity();
-            grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
-            UiDevice.getInstance(mInstrumentation).waitForIdle();
-
-            // with no permissions, this call should not have been permitted
-            GetResultActivity.Result result = grActivity.getResult();
-            assertEquals(REQUEST_CODE, result.requestCode);
-            assertEquals(MATCHES_CALL_FILTER_NOT_PERMITTED, result.resultCode);
-            grActivity.finishActivity(REQUEST_CODE);
-        } finally {
-            toggleReadContactsPermission(TEST_APP, hadReadPerm);
-        }
-    }
-
-    public void testMatchesCallFilter_listenerPermissionOnly() throws Exception {
-        boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
-        // minimal listener service so that it can be given listener permissions
-        final ComponentName listenerComponent =
-                new ComponentName(TEST_APP, MINIMAL_LISTENER_CLASS);
-        try {
-            // make surethat we don't for some reason have contacts access
-            toggleReadContactsPermission(TEST_APP, false);
-
-            // grant the notification app package notification listener access;
-            // give it time to succeed
-            toggleExternalListenerAccess(listenerComponent, true);
-            Thread.sleep(500);
-
-            // set up & run intent
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
-            mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
-            GetResultActivity grActivity = setUpGetResultActivity();
-            grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
-            UiDevice.getInstance(mInstrumentation).waitForIdle();
-
-            // with just listener permissions, this call should have been permitted
-            GetResultActivity.Result result = grActivity.getResult();
-            assertEquals(REQUEST_CODE, result.requestCode);
-            assertEquals(MATCHES_CALL_FILTER_PERMITTED, result.resultCode);
-            grActivity.finishActivity(REQUEST_CODE);
-        } finally {
-            // clean up listener access, reset read contacts access
-            toggleExternalListenerAccess(listenerComponent, false);
-            toggleReadContactsPermission(TEST_APP, hadReadPerm);
-        }
-    }
-
-    public void testMatchesCallFilter_contactsPermissionOnly() throws Exception {
-        // grant the notification app package contacts read access
-        boolean hadReadPerm = hasReadContactsPermission(TEST_APP);
-        try {
-            toggleReadContactsPermission(TEST_APP, true);
-
-            // set up & run intent
-            final Intent mcfIntent = new Intent();
-            mcfIntent.setPackage(TEST_APP);
-            mcfIntent.setClassName(TEST_APP, MATCHES_CALL_FILTER_CLASS);
-            GetResultActivity grActivity = setUpGetResultActivity();
-            grActivity.startActivityForResult(mcfIntent, REQUEST_CODE);
-            UiDevice.getInstance(mInstrumentation).waitForIdle();
-
-            // with just contacts read permissions, this call should have been permitted
-            GetResultActivity.Result result = grActivity.getResult();
-            assertEquals(REQUEST_CODE, result.requestCode);
-            assertEquals(MATCHES_CALL_FILTER_PERMITTED, result.resultCode);
-            grActivity.finishActivity(REQUEST_CODE);
-        } finally {
-            // clean up contacts access
-            toggleReadContactsPermission(TEST_APP, hadReadPerm);
-        }
     }
 
     public void testMatchesCallFilter_zenOff() throws Exception {

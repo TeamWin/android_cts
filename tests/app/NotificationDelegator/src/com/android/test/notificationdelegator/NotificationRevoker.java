@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.test.notificationapp;
+package com.android.test.notificationdelegator;
 
 import android.app.Activity;
 import android.app.NotificationManager;
