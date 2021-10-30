@@ -137,7 +137,12 @@ public class MediaPlayerDrmTestBase extends ActivityInstrumentationTestCase2<Med
 
     private static final String TAG = "MediaPlayerDrmTestBase";
 
-    protected static final int PLAY_TIME_MS = 60 * 1000;
+    // PLAY_TIME_MS dictates the total run time of the playback
+    // tests. To meet the under 30 seconds CTS quality bar,
+    // the first ten seconds plays the clear lead,
+    // the next 15 seconds verifies encrypted playback.
+    // This applies to both streaming and offline tests.
+    protected static final int PLAY_TIME_MS = 25 * 1000;
     protected byte[] mKeySetId;
     protected boolean mAudioOnly;
 

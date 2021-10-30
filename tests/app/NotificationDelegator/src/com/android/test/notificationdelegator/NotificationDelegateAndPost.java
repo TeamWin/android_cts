@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package com.android.test.notificationapp;
+package com.android.test.notificationdelegator;
 
 import static android.app.NotificationManager.IMPORTANCE_LOW;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Bundle;
 import android.util.Log;
 
-public class NotificationDelegator extends Activity {
-    private static final String TAG = "Delegator";
+public class NotificationDelegateAndPost extends Activity {
+    private static final String TAG = "DelegateAndPost";
     private static final String DELEGATE = "android.app.stubs";
     private static final String CHANNEL = "channel";
 
@@ -39,6 +40,16 @@ public class NotificationDelegator extends Activity {
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, CHANNEL, IMPORTANCE_LOW));
         nm.setNotificationDelegate(DELEGATE);
         Log.d(TAG, "Set delegate: " + nm.getNotificationDelegate());
+
+        Log.d(TAG, "Posting notification with id 9");
+
+        Notification n = new Notification.Builder(this, CHANNEL)
+                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .setContentTitle("posted by delegator")
+                .build();
+
+        nm.notify(9, n);
+
         finish();
     }
 }

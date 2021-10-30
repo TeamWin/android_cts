@@ -17,6 +17,7 @@
 package com.android.queryable.queries;
 
 import android.app.Service;
+import android.content.IntentFilter;
 
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ServiceInfo;
@@ -35,4 +36,7 @@ public interface ServiceQuery<E extends Queryable> extends Query<ServiceInfo>  {
 
     /** Used to query the class name of a service. */
     ClassQuery<E> serviceClass();
+
+    /** Query the intent-filters on an activity. */
+    SetQuery<E, IntentFilter, IntentFilterQuery<?>> intentFilters();
 }
