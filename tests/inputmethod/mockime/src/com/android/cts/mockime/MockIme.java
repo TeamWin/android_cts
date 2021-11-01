@@ -303,6 +303,9 @@ public final class MockIme extends InputMethodService {
                     case "performSpellCheck": {
                         return getMemorizedOrCurrentInputConnection().performSpellCheck();
                     }
+                    case "takeSnapshot": {
+                        return getMemorizedOrCurrentInputConnection().takeSnapshot();
+                    }
                     case "performPrivateCommand": {
                         final String action = command.getExtras().getString("action");
                         final Bundle data = command.getExtras().getBundle("data");
