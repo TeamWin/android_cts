@@ -105,9 +105,14 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
         }
     }
 
+    @Override
     protected void enableTestButtons(boolean enabled) {
         recordBtn.setEnabled(enabled);
         stopBtn.setEnabled(enabled);
+    }
+
+    @Override
+    protected void calculatePass() {
     }
 
     @Override
