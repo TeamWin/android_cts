@@ -34,7 +34,7 @@ public final class FeatureUtil {
      * Checks whether the device supports configing (e.g. disable, enable) location
      */
     public static boolean isConfigLocationSupported(Context context) {
-        return !isWatchOrAutomotive(context);
+        return !isWatch(context);
     }
 
     /**
@@ -70,6 +70,14 @@ public final class FeatureUtil {
      */
     public static boolean isConfigVpnSupported(Context context) {
         return !isWatchOrAutomotive(context);
+    }
+
+    /**
+     * Checks whether the device is watch .
+     */
+    private static boolean isWatch(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     /**
