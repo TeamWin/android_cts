@@ -219,6 +219,8 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_BLUETOOTH_ADVERTISE, 114);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECORD_INCOMING_PHONE_AUDIO, 115);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_NEARBY_WIFI_DEVICES, 116);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ESTABLISH_VPN_SERVICE, 117);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_ESTABLISH_VPN_MANAGER, 118);
     }
 
     @Test
