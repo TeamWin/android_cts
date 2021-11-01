@@ -323,6 +323,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testShowWhenLockedPipActivity() {
+        assumeFalse("Skip test: Keyguard cannot be dismissed in Automotive",
+                FeatureUtil.isAutomotive());
         assumeTrue(supportsPip());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
