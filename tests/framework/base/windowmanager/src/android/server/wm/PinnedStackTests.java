@@ -74,6 +74,7 @@ import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTAT
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.wm.app27.Components.SDK_27_LAUNCH_ENTER_PIP_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_PIP_ACTIVITY;
+import static android.util.DisplayMetrics.DENSITY_DEVICE_STABLE;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -165,6 +166,10 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int ABOVE_MAX_ASPECT_RATIO_NUMERATOR = MAX_ASPECT_RATIO_NUMERATOR + 1;
     // Corresponds to com.android.internal.R.dimen.overridable_minimal_size_pip_resizable_task
     private static final int OVERRIDABLE_MINIMAL_SIZE_PIP_RESIZABLE_TASK = 48;
+
+    // Corresponds to android:minWidth/Height of PipActivityWithMinimalSize
+    private static final int MIN_WIDTH_DP = 100;
+    private static final int MIN_HEIGHT_DP = 80;
 
     @Before
     @Override
@@ -270,11 +275,11 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPipAnimationComplete(PIP_ACTIVITY_WITH_MINIMAL_SIZE);
         assertPinnedStackExists();
 
-        // query the minimal size
-        final PackageManager pm = getInstrumentation().getTargetContext().getPackageManager();
-        final ActivityInfo info = pm.getActivityInfo(
-                PIP_ACTIVITY_WITH_MINIMAL_SIZE, 0 /* flags */);
-        final Size minSize = new Size(info.windowLayout.minWidth, info.windowLayout.minHeight);
+        // TODO(172096714): Query via {@link ActivityInfo.WindowLayout} once density-dependent
+        // values are supported in {@link ActivityInfo.WindowLayout}.
+        final int density = getActivityDensity(PIP_ACTIVITY_WITH_MINIMAL_SIZE);
+        final Size minSize = new Size(dpToPx(MIN_WIDTH_DP, density),
+                dpToPx(MIN_HEIGHT_DP, density));
 
         // compare the bounds with minimal size
         final Rect pipBounds = getPinnedStackBounds();
@@ -1410,6 +1415,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             return config.windowConfiguration.getAppBounds();
         }
         return null;
+    }
+
+    /** Get density in last applied configuration. */
+    private int getActivityDensity(ComponentName activityName) {
+        final Configuration config = TestJournalContainer.get(activityName).extras
+                .getParcelable(EXTRA_CONFIGURATION);
+        assertNotNull("Config must be non-null", config);
+        return config.densityDpi;
     }
 
     /**
