@@ -148,7 +148,7 @@ public final class Policy {
     // This must contain one key for every APPLIED_BY that is being used, and maps to the "default" for testing that DPC type
     // in general this will be a state which runs on the same user as the dpc.
     private static final ImmutableMap<Integer, Annotation> DPC_STATE_ANNOTATIONS = ImmutableMap.<Integer, Annotation>builder()
-            .put(APPLIED_BY_DEVICE_OWNER, includeRunOnDeviceOwnerUser())
+            .put(APPLIED_BY_DEVICE_OWNER, includeRunOnNonAffiliatedDeviceOwnerSecondaryUser())
             .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, includeRunOnAffiliatedProfileOwnerSecondaryUser())
             .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, includeRunOnProfileOwnerPrimaryUser())
             .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, includeRunOnProfileOwnerPrimaryUser())

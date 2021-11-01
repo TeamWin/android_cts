@@ -55,7 +55,7 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
                 return new UnresolvedTestAppActivity(mTestAppActivities.mInstance,
                         TestApis.packages().component(
                                 new ComponentName(
-                                        mTestAppActivities.mInstance.testApp().packageName(),
+                                        mTestAppActivities.mInstance.packageName(),
                                         activity.className())));
             }
         }

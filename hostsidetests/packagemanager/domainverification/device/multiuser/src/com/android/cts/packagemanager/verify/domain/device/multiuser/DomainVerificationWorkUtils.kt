@@ -38,7 +38,7 @@ internal fun RemoteDevicePolicyManager.setAppLinkPolicy(admin: ComponentName, al
 
 internal fun DeviceState.getWorkDevicePolicyManager() =
     profileOwner(workProfile(DeviceState.UserType.PRIMARY_USER))!!
-            .app().devicePolicyManager()
+            .devicePolicyManager()
 
 internal fun <T> withUserContext(user: UserReference, block: (context: Context) -> T) =
     TestApis.permissions()
