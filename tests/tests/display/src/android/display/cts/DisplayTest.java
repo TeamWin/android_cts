@@ -590,27 +590,29 @@ public class DisplayTest {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
 
-        // Create a deterministically shuffled list of display modes, which ends with the
-        // current active mode. We'll switch to the modes in this order. The active mode is last
-        // so we don't need an extra mode switch in case the test completes successfully.
-        Display.Mode activeMode = mDefaultDisplay.getMode();
-        List<Display.Mode> modesList = new ArrayList<>(modes.length);
-        for (Display.Mode mode : modes) {
-            if (mode.getModeId() != activeMode.getModeId()) {
-                modesList.add(mode);
-            }
-        }
-        Random random = new Random(42);
-        Collections.shuffle(modesList, random);
-        modesList.add(activeMode);
-
         try {
             mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
             assertTrue(mDisplayManager.shouldAlwaysRespectAppRequestedMode());
             mInitialRefreshRateSwitchingType =
                     DisplayUtil.getRefreshRateSwitchingType(mDisplayManager);
             mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
+
             final DisplayTestActivity activity = launchActivity(mRetainedDisplayTestActivity);
+
+            // Create a deterministically shuffled list of display modes, which ends with the
+            // current active mode. We'll switch to the modes in this order. The active mode is last
+            // so we don't need an extra mode switch in case the test completes successfully.
+            Display.Mode activeMode = mDefaultDisplay.getMode();
+            List<Display.Mode> modesList = new ArrayList<>(modes.length);
+            for (Display.Mode mode : modes) {
+                if (mode.getModeId() != activeMode.getModeId()) {
+                    modesList.add(mode);
+                }
+            }
+            Random random = new Random(42);
+            Collections.shuffle(modesList, random);
+            modesList.add(activeMode);
+
             for (Display.Mode mode : modesList) {
                 testSwitchToModeId(activity, mode);
             }
