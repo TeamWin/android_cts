@@ -24,6 +24,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
@@ -31,6 +32,13 @@ import android.view.Surface;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
+
+import com.android.compatibility.common.util.ReportLog;
+import com.android.compatibility.common.util.ReportLog.Metric;
+
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.After;
 import org.junit.Before;
@@ -62,6 +70,11 @@ import static org.junit.Assume.assumeTrue;
 public class EncoderInitializationLatencyTest {
     private static final String LOG_TAG = EncoderInitializationLatencyTest.class.getSimpleName();
     private static final boolean[] boolStates = {false, true};
+    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS = 50;
+    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS = 65;
+    private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_S_MS = 40;
+    private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_S_MS = 50;
+
     private static final int MAX_AUDIOENC_INITIALIZATION_LATENCY_MS;
     private static final int MAX_VIDEOENC_INITIALIZATION_LATENCY_MS;
     private static final String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
@@ -69,14 +82,15 @@ public class EncoderInitializationLatencyTest {
     private static final String AVC_TRANSCODE_FILE = "bbb_1280x720_3mbps_30fps_avc.mp4";
     private static String AVC_DECODER_NAME;
     private static String AVC_ENCODER_NAME;
+
     static {
         if (Utils.isRPerfClass()) {
-            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = 50;
-            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = 65;
+            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS;
+            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS;
         } else {
             // Performance class Build.VERSION_CODES.S and beyond
-            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = 40;
-            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = 50;
+            MAX_AUDIOENC_INITIALIZATION_LATENCY_MS = MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_S_MS;
+            MAX_VIDEOENC_INITIALIZATION_LATENCY_MS = MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_S_MS;
         }
     }
 
@@ -92,7 +106,8 @@ public class EncoderInitializationLatencyTest {
 
     @Before
     public void setUp() throws Exception {
-        assumeTrue("Test requires performance class.", Utils.isPerfClass());
+        Utils.assumeDeviceMeetsPerformanceClassPreconditions();
+
         ArrayList<String>  listOfAvcHwDecoders = selectHardwareCodecs(AVC, null, null, false);
         assumeFalse("Test requires h/w avc decoder", listOfAvcHwDecoders.isEmpty());
         AVC_DECODER_NAME = listOfAvcHwDecoders.get(0);
@@ -303,16 +318,34 @@ public class EncoderInitializationLatencyTest {
         Log.i(LOG_TAG, "Min " + statsLog + encoderInitializationLatencyMs[0]);
         Log.i(LOG_TAG, "Max " + statsLog + encoderInitializationLatencyMs[count - 1]);
         Log.i(LOG_TAG, "Avg " + statsLog + (sumOfEncoderInitializationLatencyMs / count));
-
-        String errorLog = String.format(
-                "CodecInitialization latency for mime: %s, Encoder: %s is not as expected. "
-                        + "act/exp in Ms :: %d/%d",
-                mMime, mEncoderName, encoderInitializationLatencyMs[percentile * count / 100],
-                expectedMaxCodecInitializationLatencyMs);
-        assertTrue(errorLog,
-                encoderInitializationLatencyMs[percentile * count / 100]
-                        <= expectedMaxCodecInitializationLatencyMs);
-
+        long initializationLatency = encoderInitializationLatencyMs[percentile * count / 100];
+        if (Utils.isPerfClass()) {
+            String errorLog = String.format(
+                    "CodecInitialization latency for mime: %s, Encoder: %s is not as expected. "
+                            + "act/exp in Ms :: %d/%d", mMime, mEncoderName, initializationLatency,
+                    expectedMaxCodecInitializationLatencyMs);
+            assertTrue(errorLog, initializationLatency <= expectedMaxCodecInitializationLatencyMs);
+        } else {
+            int pc = 0;
+            if (mMime.startsWith("audio/")) {
+                pc = initializationLatency < MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_S_MS
+                        ? Build.VERSION_CODES.S
+                        : initializationLatency < MAX_AUDIOENC_INITIALIZATION_LATENCY_PC_R_MS
+                                ? Build.VERSION_CODES.R : 0;
+            } else {
+                pc = initializationLatency < MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_S_MS
+                        ? Build.VERSION_CODES.S
+                        : initializationLatency < MAX_VIDEOENC_INITIALIZATION_LATENCY_PC_R_MS
+                                ? Build.VERSION_CODES.R : 0;
+            }
+            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",
+                    "InitializationLatency_" + mEncoderName);
+            log.addValue("encoder", mEncoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.addValue("initialization_latency", initializationLatency, ResultType.LOWER_BETTER,
+                    ResultUnit.NONE);
+            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
     }
 }
 
