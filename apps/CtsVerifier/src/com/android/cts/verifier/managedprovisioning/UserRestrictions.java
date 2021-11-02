@@ -283,6 +283,10 @@ public class UserRestrictions {
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_CONFIG_CREDENTIALS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+            case UserManager.DISALLOW_APPS_CONTROL:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+            case UserManager.DISALLOW_UNINSTALL_APPS:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             default:
                 return true;
         }
