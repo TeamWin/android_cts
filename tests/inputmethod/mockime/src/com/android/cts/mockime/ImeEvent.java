@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
 import android.view.View;
+import android.view.inputmethod.TextSnapshot;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -61,6 +62,9 @@ public final class ImeEvent {
             return ReturnType.KnownUnsupportedType;
         }
         if (object instanceof Handler) {
+            return ReturnType.KnownUnsupportedType;
+        }
+        if (object instanceof TextSnapshot) {
             return ReturnType.KnownUnsupportedType;
         }
         if (object instanceof Boolean) {

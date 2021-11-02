@@ -1528,6 +1528,9 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             return activity.getWindowingMode() == WINDOWING_MODE_PINNED
                     && activity.getState().equals(STATE_PAUSED);
         }, "checking activity windowing mode");
+        if (ENABLE_SHELL_TRANSITIONS) {
+            mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        }
     }
 
     /**

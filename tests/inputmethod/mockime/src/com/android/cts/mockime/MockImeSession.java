@@ -905,6 +905,22 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call {@link InputConnection#takeSnapshot()}.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().takeSnapshot()}.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callTakeSnapshot() {
+        return callCommandInternal("takeSnapshot", new Bundle());
+    }
+
+    /**
      * Lets {@link MockIme} to call {@link InputConnection#clearMetaKeyStates(int)} with the given
      * parameters.
      *

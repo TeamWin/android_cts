@@ -592,6 +592,7 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void clearAllPoliciesAndRestrictions() throws Exception {
+        Log.d(TAG, "clearAllPoliciesAndRestrictions() started");
         clearProfileOwnerRelatedPolicies();
         clearPolicyTransparencyUserRestriction(
                 PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER);
@@ -630,6 +631,7 @@ public class CommandReceiverActivity extends Activity {
 
         // Must wait until package is uninstalled to reset affiliation ids, otherwise the package
         // cannot be removed on headless system user mode (as caller must be an affiliated PO)
+        Log.d(TAG, "resetting affiliation ids");
         mDpm.setAffiliationIds(mAdmin, Collections.emptySet());
 
         removeManagedProfile();
@@ -637,6 +639,7 @@ public class CommandReceiverActivity extends Activity {
                 EnterprisePrivacyTestDefaultAppActivity.COMPONENT_NAME,
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
                 PackageManager.DONT_KILL_APP);
+        Log.d(TAG, "clearAllPoliciesAndRestrictions() finished");
     }
 
     private void clearProfileOwnerRelatedPoliciesAndRestrictions(int mode) {
@@ -645,11 +648,13 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void clearProfileOwnerRelatedPolicies() {
+        Log.d(TAG, "clearProfileOwnerRelatedPolicies() started");
         mDpm.setKeyguardDisabledFeatures(mAdmin, 0);
         mDpm.setPasswordQuality(mAdmin, 0);
         mDpm.setMaximumTimeToLock(mAdmin, 0);
         mDpm.setPermittedAccessibilityServices(mAdmin, null);
         mDpm.setPermittedInputMethods(mAdmin, null);
+        Log.d(TAG, "clearProfileOwnerRelatedPolicies() finished");
     }
 
     private void clearPolicyTransparencyUserRestriction(int mode) {
@@ -660,7 +665,8 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void removeManagedProfile() {
-        for (final UserHandle userHandle : mUm.getUserProfiles()) {
+        for (UserHandle userHandle : mUm.getUserProfiles()) {
+            Log.d(TAG, "removing managed profile for " + userHandle);
             mDpm.removeUser(mAdmin, userHandle);
         }
     }

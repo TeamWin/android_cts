@@ -119,7 +119,7 @@ public class StorageTest extends InstrumentationTestCase {
     private void clearSpaceGeneric(UiDevice device) throws UiObjectNotFoundException {
         UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
         try {
-            uiScrollable.scrollTextIntoView("internal storage");
+            uiScrollable.scrollIntoView(new UiSelector().textContains("internal storage"));
         } catch (UiObjectNotFoundException e) {
             // Scrolling can fail if the UI is not scrollable
         }

@@ -42,6 +42,10 @@
             </intent-filter>
         </activity>
 
+        <service android:name="android.media.tv.tuner.cts.SharedFilterTestService"
+             android:process=":SharedFilterTestService"
+             android:exported="true"/>
+
         <service android:name="android.media.tv.cts.StubTunerTvInputService"
              android:permission="android.permission.BIND_TV_INPUT"
              android:label="TV input stub"
