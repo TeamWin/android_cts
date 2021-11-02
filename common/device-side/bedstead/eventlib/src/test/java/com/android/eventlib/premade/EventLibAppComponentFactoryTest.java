@@ -97,6 +97,8 @@ public class EventLibAppComponentFactoryTest {
                         .whereService().serviceClass().className()
                             .isEqualTo(GENERATED_SERVICE_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
+
+        sContext.stopService(intent);
     }
 
 }

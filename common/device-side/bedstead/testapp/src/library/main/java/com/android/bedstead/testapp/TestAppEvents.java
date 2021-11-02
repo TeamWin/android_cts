@@ -54,10 +54,15 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserStartedEv
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserStoppedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserSwitchedEvent;
 import com.android.eventlib.events.services.ServiceBoundEvent;
+import com.android.eventlib.events.services.ServiceConfigurationChangedEvent;
 import com.android.eventlib.events.services.ServiceCreatedEvent;
 import com.android.eventlib.events.services.ServiceDestroyedEvent;
 import com.android.eventlib.events.services.ServiceEvents;
+import com.android.eventlib.events.services.ServiceLowMemoryEvent;
+import com.android.eventlib.events.services.ServiceMemoryTrimmedEvent;
+import com.android.eventlib.events.services.ServiceReboundEvent;
 import com.android.eventlib.events.services.ServiceStartedEvent;
+import com.android.eventlib.events.services.ServiceTaskRemovedEvent;
 import com.android.eventlib.events.services.ServiceUnboundEvent;
 
 /**
@@ -315,20 +320,6 @@ public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
     }
 
     @Override
-    public ServiceBoundEvent.ServiceBoundEventQuery serviceBound() {
-        return ServiceBoundEvent.queryPackage(
-                mTestApp.testApp().packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
-    public ServiceUnboundEvent.ServiceUnboundEventQuery serviceUnbound() {
-        return ServiceUnboundEvent.queryPackage(
-                mTestApp.testApp().packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
     public ServiceCreatedEvent.ServiceCreatedEventQuery serviceCreated() {
         return ServiceCreatedEvent.queryPackage(
                 mTestApp.testApp().packageName())
@@ -348,4 +339,55 @@ public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
                 mTestApp.testApp().packageName())
                 .onUser(mTestApp.user());
     }
+
+    @Override
+    public ServiceConfigurationChangedEvent.ServiceConfigurationChangedEventQuery
+            serviceConfigurationChanged() {
+        return ServiceConfigurationChangedEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
+    @Override
+    public ServiceLowMemoryEvent.ServiceLowMemoryEventQuery serviceLowMemory() {
+        return ServiceLowMemoryEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
+    @Override
+    public ServiceMemoryTrimmedEvent.ServiceMemoryTrimmedEventQuery serviceMemoryTrimmed() {
+        return ServiceMemoryTrimmedEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
+    @Override
+    public ServiceBoundEvent.ServiceBoundEventQuery serviceBound() {
+        return ServiceBoundEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
+    @Override
+    public ServiceUnboundEvent.ServiceUnboundEventQuery serviceUnbound() {
+        return ServiceUnboundEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
+    @Override
+    public ServiceReboundEvent.ServiceReboundEventQuery serviceRebound() {
+        return ServiceReboundEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
+    @Override
+    public ServiceTaskRemovedEvent.ServiceTaskRemovedEventQuery serviceTaskRemoved() {
+        return ServiceTaskRemovedEvent.queryPackage(
+                mTestApp.testApp().packageName())
+                .onUser(mTestApp.user());
+    }
+
 }
