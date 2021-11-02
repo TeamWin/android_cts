@@ -47,6 +47,7 @@ import android.util.Size;
 import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
 
+import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
 
 import org.junit.Before;
@@ -366,6 +367,32 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioForLandscapeActivity() {
         runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */ 0);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation isn't fixed.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY})
+    public void testOverrideMinAspectRatioForNonFixedOrientationActivityPortraitOnlyDisabled() {
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */
+                OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation is fixed to landscape.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY})
+    public void testOverrideMinAspectRatioForLandscapeActivityPortraitOnlyDisabled() {
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */
+                OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
     }
 
     /**
