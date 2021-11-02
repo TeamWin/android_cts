@@ -32,6 +32,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+
 /** Test MockModemService interfaces. */
 public class MockModemServiceTest {
     private static final String TAG = "MockModemServiceTest";
@@ -69,6 +72,31 @@ public class MockModemServiceTest {
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    @Test
+    public void testSimStateChange() throws Throwable {
+        Log.d(TAG, "MockModemServiceTest#testSimStateChange");
+
+        int simCardState = mTelephonyManager.getSimCardState();
+        Log.d(TAG, "Current SIM card state: " + simCardState);
+
+        assertTrue(
+                Arrays.asList(TelephonyManager.SIM_STATE_UNKNOWN, TelephonyManager.SIM_STATE_ABSENT)
+                        .contains(simCardState));
+
+        int slotId = 0;
+        sMockModem.setSimPresent(slotId);
+        sMockModem.resetState();
+
+        sMockModem.unsolSimSlotsStatusChanged();
+        assertTrue(
+                sMockModem.waitForLatchCountdown(TestMockModemService.LATCH_MOCK_MODEM_SIM_READY));
+
+        TimeUnit.SECONDS.sleep(1);
+        simCardState = mTelephonyManager.getSimCardState();
+        Log.d(TAG, "New SIM card state: " + simCardState);
+        assertEquals(TelephonyManager.SIM_STATE_PRESENT, simCardState);
     }
 
     @Test
