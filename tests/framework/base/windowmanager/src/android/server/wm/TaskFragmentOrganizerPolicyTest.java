@@ -293,9 +293,38 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
         assertEquals(1, info.getActivities().size());
     }
 
+    /**
+     * Verifies whether creating TaskFragment with non-resizeable {@link Activity} leads to
+     * {@link IllegalArgumentException} returned by
+     * {@link TaskFragmentOrganizer#onTaskFragmentError(IBinder, Throwable)}.
+     */
+    @Test
+    public void testCreateTaskFragmentWithNonResizeableActivity_ThrowException() {
+        // Pass non-resizeable Activity's token to TaskFragmentCreationParams and tries to
+        // create a TaskFragment with the params.
+        final Activity activity =
+                startNewActivity(CompatChangeTests.NonResizeablePortraitActivity.class);
+        final IBinder ownerToken = getActivityToken(activity);
+        final TaskFragmentCreationParams params =
+                mTaskFragmentOrganizer.generateTaskFragParams(ownerToken);
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(params);
+
+        mTaskFragmentOrganizer.applyTransaction(wct);
+
+        mTaskFragmentOrganizer.waitForTaskFragmentError();
+
+        assertThat(mTaskFragmentOrganizer.getThrowable())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private static Activity startNewActivity() {
+        return startNewActivity(TestActivity.class);
+    }
+
+    private static Activity startNewActivity(Class<?> className) {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        final Intent intent = new Intent(instrumentation.getTargetContext(), TestActivity.class)
+        final Intent intent = new Intent(instrumentation.getTargetContext(), className)
                 .addFlags(FLAG_ACTIVITY_NEW_TASK);
         return instrumentation.startActivitySync(intent);
     }
