@@ -35,9 +35,7 @@ import android.Manifest.permission;
 import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.os.Process;
-import android.os.UserHandle;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -50,8 +48,6 @@ import com.android.cts.devicepolicy.PermissionUtils;
 import com.google.android.collect.Sets;
 
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test Runtime Permissions APIs in DevicePolicyManager.
@@ -67,7 +63,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             = PERMISSION_APP_PACKAGE_NAME + ".PermissionActivity";
     private static final String CUSTOM_PERM_A_NAME = "com.android.cts.permissionapp.permA";
     private static final String CUSTOM_PERM_B_NAME = "com.android.cts.permissionapp.permB";
-    private static final String DEVELOPMENT_PERMISSION = "android.permission.INTERACT_ACROSS_USERS";
 
     private static final String ACTION_PERMISSION_RESULT
             = "com.android.cts.permission.action.PERMISSION_RESULT";
@@ -80,8 +75,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             .clazz(android.widget.TextView.class.getName())
             .pkg("android");
     private static final String CRASH_WATCHER_ID = "CRASH";
-    private static final String AUTO_GRANTED_PERMISSIONS_CHANNEL_ID =
-            "alerting auto granted permissions";
 
     private static final Set<String> LOCATION_PERMISSIONS = Sets.newHashSet(
             permission.ACCESS_FINE_LOCATION,
@@ -121,24 +114,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
         assertPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DENIED);
         assertCannotRequestPermissionFromActivity(READ_CONTACTS);
-    }
-
-    public void testPermissionGrantStateDenied_permissionRemainsDenied() throws Exception {
-        int grantState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, READ_CONTACTS);
-        try {
-            setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DENIED);
-
-            assertNoPermissionFromActivity(READ_CONTACTS);
-
-            // Should stay denied
-            setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DEFAULT);
-
-            assertNoPermissionFromActivity(READ_CONTACTS);
-        } finally {
-            // Restore original state
-            setPermissionGrantState(READ_CONTACTS, grantState);
-        }
     }
 
     public void testPermissionGrantStateDenied_mixedPolicies() throws Exception {
@@ -205,37 +180,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         assertCanRequestPermissionFromActivity(READ_CONTACTS);
     }
 
-    public void testPermissionGrantStateGranted_permissionRemainsGranted() throws Exception {
-        int grantState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, READ_CONTACTS);
-        Log.i(TAG, "testPermissionGrantStateGranted_permissionRemainsGranted(): "
-                + mDevicePolicyManager + ".getPermissionGrantState(" + ADMIN_RECEIVER_COMPONENT
-                + ", " + PERMISSION_APP_PACKAGE_NAME + ", " + READ_CONTACTS + ") returned "
-                + grantState + " (" + permissionGrantStateToString(grantState) + ")");
-        try {
-            Log.i(TAG, "Granting");
-            boolean granted = setPermissionGrantState(READ_CONTACTS,
-                    PERMISSION_GRANT_STATE_GRANTED);
-            assertWithMessage("granted %s to %s", READ_CONTACTS, PERMISSION_APP_PACKAGE_NAME)
-                    .that(granted).isTrue();
-
-            Log.i(TAG, "Checking");
-            assertHasPermissionFromActivity(READ_CONTACTS);
-
-            // Should stay granted
-            Log.i(TAG, "Reset to default");
-            granted = setPermissionGrantState(READ_CONTACTS, PERMISSION_GRANT_STATE_DEFAULT);
-            assertWithMessage("granted %s to %s", READ_CONTACTS, PERMISSION_APP_PACKAGE_NAME)
-                    .that(granted).isTrue();
-
-            Log.i(TAG, "Checking again");
-            assertHasPermissionFromActivity(READ_CONTACTS);
-        } finally {
-            // Restore original state
-            setPermissionGrantState(READ_CONTACTS, grantState);
-        }
-    }
-
     public void testPermissionGrantStateGranted_mixedPolicies() throws Exception {
         int grantState = mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, READ_CONTACTS);
@@ -263,49 +207,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             setPermissionGrantState(READ_CONTACTS, grantState);
             setPermissionPolicy(permissionPolicy);
         }
-    }
-
-    public void testPermissionGrantStateGranted_userNotifiedOfLocationPermission()
-            throws Exception {
-        Log.v(TAG, "testPermissionGrantStateGranted_userNotifiedOfLocationPermission() on user "
-                + UserHandle.myUserId());
-
-        // Needs to use the DPM of current user on headless system user, as device owner runs in the
-        // background and cannot receive notifications
-
-        DevicePolicyManager dpm = mContext.getSystemService(DevicePolicyManager.class);
-
-        assertWithMessage("%s.canAdminGrantSensorsPermissions()", dpm)
-                .that(dpm.canAdminGrantSensorsPermissions()).isTrue();
-
-        for (String locationPermission : LOCATION_PERMISSIONS) {
-            Log.d(TAG, "Checking permission " + locationPermission);
-
-            // TODO(b/161359841): move NotificationListener to app/common
-            CountDownLatch notificationLatch = initPermissionNotificationLatch();
-
-            setPermissionGrantState(dpm, locationPermission, PERMISSION_GRANT_STATE_GRANTED);
-            assertPermissionGrantState(dpm, locationPermission, PERMISSION_GRANT_STATE_GRANTED);
-
-            Log.d(TAG, "waiting 60s for notification");
-            assertTrue(String.format("Did not receive notification for permission %s",
-                    locationPermission), notificationLatch.await(60, TimeUnit.SECONDS));
-            NotificationListener.getInstance().clearListeners();
-        }
-    }
-
-    public void testPermissionGrantState_developmentPermission() {
-        assertCannotSetPermissionGrantStateDevelopmentPermission(PERMISSION_GRANT_STATE_DENIED);
-        assertCannotSetPermissionGrantStateDevelopmentPermission(PERMISSION_GRANT_STATE_DEFAULT);
-        assertCannotSetPermissionGrantStateDevelopmentPermission(PERMISSION_GRANT_STATE_GRANTED);
-    }
-
-    private void assertCannotSetPermissionGrantStateDevelopmentPermission(int value) {
-        unableToSetPermissionGrantState(DEVELOPMENT_PERMISSION, value);
-
-        assertPermissionGrantState(DEVELOPMENT_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
-        PermissionUtils.checkPermission(DEVELOPMENT_PERMISSION, PERMISSION_DENIED,
-                PERMISSION_APP_PACKAGE_NAME);
     }
 
     public void testPermissionGrantState_preMApp_preQDeviceAdmin() throws Exception {
@@ -478,37 +379,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 PERMISSION_APP_PACKAGE_NAME);
     }
 
-    public void testSensorsRelatedPermissionsCannotBeGranted() throws Exception {
-        for (String sensorPermission : SENSORS_PERMISSIONS) {
-            try {
-                // The permission cannot be granted.
-                assertFailedToSetPermissionGrantState(
-                        sensorPermission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
-
-                // But the user can grant it.
-                PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice,
-                        sensorPermission, PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME,
-                        PERMISSIONS_ACTIVITY_NAME);
-
-                // And the package manager should show it as granted.
-                PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
-                        PERMISSION_APP_PACKAGE_NAME);
-            } finally {
-                revokePermission(sensorPermission);
-            }
-        }
-    }
-
-    public void testSensorsRelatedPermissionsCanBeDenied() throws Exception {
-        for (String sensorPermission : SENSORS_PERMISSIONS) {
-            // The permission can be denied
-            setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DENIED);
-
-            assertPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DENIED);
-            assertCannotRequestPermissionFromActivity(sensorPermission);
-        }
-    }
-
     public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
         setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
         for (String sensorPermission : SENSORS_PERMISSIONS) {
@@ -530,25 +400,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         }
     }
 
-    public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
-        for (String sensorPermission : SENSORS_PERMISSIONS) {
-            try {
-                // The admin tries to grant the permission.
-                setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_GRANTED);
-
-                // But the user denies it.
-                PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice,
-                        sensorPermission, PERMISSION_DENIED, PERMISSION_APP_PACKAGE_NAME,
-                        PERMISSIONS_ACTIVITY_NAME);
-
-                // And the admin cannot learn of it.
-                assertPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DEFAULT);
-            } finally {
-                revokePermission(sensorPermission);
-            }
-        }
-    }
-
     private void revokePermission(String sensorPermission) {
         if (LOCATION_PERMISSIONS.contains(sensorPermission)) {
             mUiAutomation.revokeRuntimePermission(PERMISSION_APP_PACKAGE_NAME,
@@ -558,32 +409,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         } else {
             mUiAutomation.revokeRuntimePermission(PERMISSION_APP_PACKAGE_NAME, sensorPermission);
         }
-    }
-
-    private void assertFailedToSetPermissionGrantState(String permission, int value) {
-        assertTrue(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, permission, value));
-        assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, permission),
-                DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
-        assertEquals(mContext.getPackageManager().checkPermission(permission,
-                PERMISSION_APP_PACKAGE_NAME),
-                PackageManager.PERMISSION_DENIED);
-    }
-
-    private CountDownLatch initPermissionNotificationLatch() {
-        Log.v(TAG, "initPermissionNotificationLatch()");
-        CountDownLatch notificationCounterLatch = new CountDownLatch(1);
-        NotificationListener.getInstance().addListener((notification) -> {
-            Log.d(TAG, "received notification: " + notification);
-            if (notification.getPackageName().equals(
-                    mContext.getPackageManager().getPermissionControllerPackageName()) &&
-                    notification.getNotification().getChannelId().equals(
-                            AUTO_GRANTED_PERMISSIONS_CHANNEL_ID)) {
-                notificationCounterLatch.countDown();
-            }
-        });
-        return notificationCounterLatch;
     }
 
     private void setPermissionPolicy(int permissionPolicy) {
@@ -602,14 +427,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 + permissionGrantStateToString(grantState) + ") using DPM " + mDevicePolicyManager
                 + " on uid " + Process.myUid() + ", got " + result);
         return result;
-    }
-
-    private void unableToSetPermissionGrantState(String permission, int grantState) {
-        boolean granted = setPermissionGrantState(permission, grantState);
-
-        assertWithMessage("%s.setPermissionGrantState(%s, %s, %s, %s)",
-                mDevicePolicyManager, ADMIN_RECEIVER_COMPONENT, PERMISSION_APP_PACKAGE_NAME,
-                permission, permissionGrantStateToString(grantState)).that(granted).isFalse();
     }
 
     private void assertPermissionGrantState(String permission, int expectedState) {
@@ -647,20 +464,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
 
     private void assertCannotRequestPermissionFromActivity(String permission) throws Exception {
         PermissionUtils.launchActivityAndRequestPermission(
-                mReceiver, permission, PERMISSION_DENIED,
-                PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
-    }
-
-    private void assertHasPermissionFromActivity(String permission) throws Exception {
-        Log.d(TAG, "assertHasPermissionFromActivity(" + permission + ")");
-        PermissionUtils.launchActivityAndCheckPermission(
-                mReceiver, permission, PERMISSION_GRANTED,
-                PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
-    }
-
-    private void assertNoPermissionFromActivity(String permission) throws Exception {
-        Log.d(TAG, "assertNoPermissionFromActivity(" + permission + ")");
-        PermissionUtils.launchActivityAndCheckPermission(
                 mReceiver, permission, PERMISSION_DENIED,
                 PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
     }

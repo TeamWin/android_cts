@@ -29,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -49,11 +50,14 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireGmsInstrumentation;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
+import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
@@ -77,6 +81,7 @@ import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -193,6 +198,8 @@ public final class DeviceState implements TestRule {
                 try {
                     Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
 
+                    Tags.clearTags();
+                    Tags.addTag(Tags.USES_DEVICESTATE);
                     assumeFalse(mSkipTestsReason, mSkipTests);
                     assertFalse(mFailTestsReason, mFailTests);
 
@@ -301,6 +308,11 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
+            if (annotation instanceof TestTag) {
+                TestTag testTagAnnotation = (TestTag) annotation;
+                Tags.addTag(testTagAnnotation.value());
+            }
+
             RequireRunOnProfileAnnotation requireRunOnProfileAnnotation =
                     annotationType.getAnnotation(RequireRunOnProfileAnnotation.class);
             if (requireRunOnProfileAnnotation != null) {
@@ -394,6 +406,22 @@ public final class DeviceState implements TestRule {
                         (RequireGmsInstrumentation) annotation;
                 requireGmsInstrumentation(requireGmsInstrumentationAnnotation.min(),
                         requireGmsInstrumentationAnnotation.max());
+                continue;
+            }
+
+            if (annotation instanceof RequireLowRamDevice) {
+                RequireLowRamDevice requireLowRamDeviceAnnotation =
+                        (RequireLowRamDevice) annotation;
+                requireLowRamDevice(requireLowRamDeviceAnnotation.reason(),
+                        requireLowRamDeviceAnnotation.failureMode());
+                continue;
+            }
+
+            if (annotation instanceof RequireNotLowRamDevice) {
+                RequireNotLowRamDevice requireNotLowRamDeviceAnnotation =
+                        (RequireNotLowRamDevice) annotation;
+                requireNotLowRamDevice(requireNotLowRamDeviceAnnotation.reason(),
+                        requireNotLowRamDeviceAnnotation.failureMode());
                 continue;
             }
 
@@ -569,6 +597,9 @@ public final class DeviceState implements TestRule {
                 }
 
                 Log.d(LOG_TAG, "Preparing state for suite " + description.getClassName());
+
+                Tags.clearTags();
+                Tags.addTag(Tags.USES_DEVICESTATE);
 
                 boolean originalStopBgUsersOnSwitch =
                         TestApis.users().getStopBgUsersOnSwitch();
@@ -1735,5 +1766,21 @@ public final class DeviceState implements TestRule {
     private void requireHeadlessSystemUserMode() {
         assumeTrue("This test is only supported on headless system user devices",
                 TestApis.users().isHeadlessSystemUserMode());
+    }
+
+    private void requireLowRamDevice(String reason, FailureMode failureMode) {
+        checkFailOrSkip(reason,
+                TestApis.context().instrumentedContext()
+                        .getSystemService(ActivityManager.class)
+                        .isLowRamDevice(),
+                failureMode);
+    }
+
+    private void requireNotLowRamDevice(String reason, FailureMode failureMode) {
+        checkFailOrSkip(reason,
+                !TestApis.context().instrumentedContext()
+                        .getSystemService(ActivityManager.class)
+                        .isLowRamDevice(),
+                failureMode);
     }
 }

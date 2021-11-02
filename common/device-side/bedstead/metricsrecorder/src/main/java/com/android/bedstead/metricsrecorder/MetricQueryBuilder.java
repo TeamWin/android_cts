@@ -28,8 +28,6 @@ import com.android.queryable.queries.StringQueryHelper;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MetricQueryBuilder implements Queryable {
     private final EnterpriseMetricsRecorder mRecorder;
@@ -86,7 +84,10 @@ public class MetricQueryBuilder implements Queryable {
         hasStartedFetchingResults = true;
         for (EnterpriseMetricInfo m : mRecorder.fetchLatestData()) {
             if (matches(m)) {
-                return m;
+                skipResults -= 1;
+                if (skipResults < 0) {
+                    return m;
+                }
             }
         }
 

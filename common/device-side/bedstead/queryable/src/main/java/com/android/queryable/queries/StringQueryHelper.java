@@ -26,7 +26,7 @@ import java.util.List;
 public final class StringQueryHelper<E extends Queryable>
         implements StringQuery<E>, Serializable{
 
-    private final E mQuery;
+    private final transient E mQuery;
     private String mEqualsValue;
 
     StringQueryHelper() {
@@ -67,7 +67,7 @@ public final class StringQueryHelper<E extends Queryable>
     public String describeQuery(String fieldName) {
         List<String> queryStrings = new ArrayList<>();
         if (mEqualsValue != null) {
-            queryStrings.add(fieldName + "=" + mEqualsValue);
+            queryStrings.add(fieldName + "=\"" + mEqualsValue + "\"");
         }
 
         return Queryable.joinQueryStrings(queryStrings);
