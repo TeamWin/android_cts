@@ -12,7 +12,8 @@ android_library {
     manifest: "src/main/AndroidManifestInternal.xml",
     static_libs: [
         "compatibility-device-util-axt",
-        "guava"
+        "guava",
+        "Queryable"
     ],
     min_sdk_version: "27"
 }
@@ -26,7 +27,8 @@ android_library {
     manifest: "src/main/AndroidManifest.xml",
     static_libs: [
         "compatibility-device-util-axt",
-        "guava"
+        "guava",
+        "Queryable"
     ],
     min_sdk_version: "27"
 }
