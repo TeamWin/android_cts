@@ -22,6 +22,7 @@ import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -35,6 +36,8 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -144,6 +147,30 @@ public class TestActivity extends Activity {
     public static TestActivity startSync(
             @NonNull Function<TestActivity, View> activityInitializer) {
         return startSync(activityInitializer, 0 /* noAnimation */);
+    }
+
+    /**
+     * Similar to {@link TestActivity#startSync(Function)}, but with the given display ID to
+     * specify the launching target display.
+     * @param displayId The ID of the display
+     * @param activityInitializer initializer to supply {@link View} to be passed to
+     *                            {@link Activity#setContentView(View)}
+     * @return {@link TestActivity} launched
+     */
+    public static TestActivity startSync(int displayId,
+            @NonNull Function<TestActivity, View> activityInitializer) throws Exception {
+        sInitializer.set(activityInitializer);
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchDisplayId(displayId);
+        final Intent intent = new Intent()
+                .setAction(Intent.ACTION_MAIN)
+                .setClass(InstrumentationRegistry.getInstrumentation().getContext(),
+                        TestActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        return SystemUtil.callWithShellPermissionIdentity(
+                () -> (TestActivity) InstrumentationRegistry.getInstrumentation().startActivitySync(
+                        intent, options.toBundle()));
     }
 
     /**
