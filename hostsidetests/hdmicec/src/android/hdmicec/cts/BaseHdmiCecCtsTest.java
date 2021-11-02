@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.HdmiCecConstants.CecDeviceType;
@@ -361,5 +363,34 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     public String getDeviceList() throws Exception {
         return getDevice().executeShellCommand(
                 "dumpsys hdmi_control | sed -n '/mDeviceInfos/,/mCecController/{//!p;}'");
+    }
+
+    public void checkDeviceAsleep() throws Exception {
+        ITestDevice device = getDevice();
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
+        assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
+    }
+
+    public void sendDeviceToSleepAndValidate() throws Exception {
+        sendDeviceToSleep();
+        checkDeviceAsleep();
+    }
+
+    public void sendDeviceToSleep() throws Exception {
+        ITestDevice device = getDevice();
+        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+    }
+
+    public void wakeUpDevice() throws Exception {
+        ITestDevice device = getDevice();
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+    }
+
+    public void checkStandbyAndWakeUp() throws Exception {
+        checkDeviceAsleep();
+        wakeUpDevice();
     }
 }
