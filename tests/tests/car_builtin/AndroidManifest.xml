@@ -18,6 +18,8 @@
     package="android.car.cts.builtin">
     <uses-feature android:name="android.hardware.type.automotive" />
 
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
+
     <application android:description="@string/app_description">
         <uses-library android:name="android.test.runner" />
 
