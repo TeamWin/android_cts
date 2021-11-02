@@ -2051,6 +2051,59 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testReadSerializableWithClass_whenNull(){
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        p.writeSerializable(null);
+        p.setDataPosition(0);
+        assertNull(p.readSerializable(mcl, Exception.class));
+
+        p.setDataPosition(0);
+        assertNull(p.readSerializable(null, Exception.class));
+        p.recycle();
+    }
+
+    public void testReadSerializableWithClass_whenSameClass(){
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        Throwable throwable = new Throwable("test");
+        p.writeSerializable(throwable);
+        p.setDataPosition(0);
+        Object object = p.readSerializable(mcl, Throwable.class);
+        assertTrue(object instanceof Throwable);
+        Throwable t1 = (Throwable) object;
+        assertEquals("test", t1.getMessage());
+
+        p.setDataPosition(0);
+        Object object1 = p.readSerializable(null, Throwable.class);
+        assertTrue(object1 instanceof Throwable);
+        Throwable t2 = (Throwable) object1;
+        assertEquals("test", t2.getMessage());
+        p.recycle();
+    }
+
+    public void testReadSerializableWithClass_whenSubClass(){
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        Exception exception = new Exception("test");
+        p.writeSerializable(exception);
+        p.setDataPosition(0);
+        Object object = p.readSerializable(mcl, Throwable.class);
+        assertTrue(object instanceof Exception);
+        Exception e1 = (Exception) object;
+        assertEquals("test", e1.getMessage());
+
+        p.setDataPosition(0);
+        Object object1 = p.readSerializable(null, Throwable.class);
+        assertTrue(object1 instanceof Exception);
+        Exception e2 = (Exception) object1;
+        assertEquals("test", e2.getMessage());
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p.readSerializable(mcl, String.class));
+        p.recycle();
+    }
+
     public void testReadParcelable() {
         Parcel p;
         MockClassLoader mcl = new MockClassLoader();
