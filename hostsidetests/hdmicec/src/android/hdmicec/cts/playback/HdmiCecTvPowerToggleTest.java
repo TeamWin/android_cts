@@ -21,11 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -35,7 +32,6 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
-import static android.hdmicec.cts.HdmiCecConstants.TIMEOUT_SAFETY_MS;
 
 import java.util.concurrent.TimeUnit;
 
@@ -158,8 +154,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
                     CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
             TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+            sendDeviceToSleep();
             hdmiCecClient.clearClientOutput();
             device.executeShellCommand("input keyevent KEYCODE_TV_POWER");
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
@@ -191,8 +186,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
                     CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
             TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-            device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+            sendDeviceToSleep();
             hdmiCecClient.clearClientOutput();
             device.executeShellCommand("input keyevent KEYCODE_TV_POWER");
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);

@@ -16,8 +16,6 @@
 
 package android.hdmicec.cts.common;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -29,26 +27,22 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * HDMI CEC test to verify the device handles standby correctly (Section 11.1.3, 11.2.3)
- */
+/** HDMI CEC test to verify the device handles standby correctly (Section 11.1.3, 11.2.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
 
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
             "hdmi_control_auto_device_off_enabled";
-    private static final String POWER_CONTROL_MODE =
-            "send_standby_on_sleep";
-    private static final String POWER_CONTROL_MODE_NONE =
-            "none";
+    private static final String POWER_CONTROL_MODE = "send_standby_on_sleep";
+    private static final String POWER_CONTROL_MODE_NONE = "none";
 
     public List<LogicalAddress> mLogicalAddresses = new ArrayList<>();
     public boolean previousDeviceAutoOff;
@@ -56,8 +50,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
 
     @Rule
     public RuleChain ruleChain =
-            RuleChain
-                    .outerRule(CecRules.requiresCec(this))
+            RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
                     .around(hdmiCecClient);
 
@@ -71,7 +64,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     @After
     public void resetDutState() throws Exception {
         /* Wake up the device */
-        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        wakeUpDevice();
         setHdmiControlDeviceAutoOff(previousDeviceAutoOff);
         setPowerControlMode(previousPowerControlMode);
     }
@@ -87,8 +80,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
                 hdmiCecClient.sendCecMessage(source, LogicalAddress.BROADCAST, CecOperand.STANDBY);
-                checkDeviceAsleepAfterStandbySent();
-            }
+                checkStandbyAndWakeUp();
+    }
         }
     }
 
@@ -102,8 +95,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
                 hdmiCecClient.sendCecMessage(source, CecOperand.STANDBY);
-                checkDeviceAsleepAfterStandbySent();
-            }
+                checkStandbyAndWakeUp();
+    }
         }
     }
 
@@ -117,10 +110,9 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
          * CEC CTS does not specify for TV a no broadcast on standby test. On Android TVs, there is
          * a feature to turn off this standby broadcast and this test tests the same.
          */
-        ITestDevice device = getDevice();
-        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        hdmiCecClient.checkOutputDoesNotContainMessage(LogicalAddress.BROADCAST,
-                CecOperand.STANDBY);
+        sendDeviceToSleep();
+        hdmiCecClient.checkOutputDoesNotContainMessage(
+                LogicalAddress.BROADCAST, CecOperand.STANDBY);
     }
 
     private void defineLogicalAddressList() throws Exception {
@@ -132,7 +124,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         mLogicalAddresses.add(LogicalAddress.AUDIO_SYSTEM);
 
         if (hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)) {
-            //Add logical addresses 13, 14 only for TV panel tests.
+            // Add logical addresses 13, 14 only for TV panel tests.
             mLogicalAddresses.add(LogicalAddress.RESERVED_2);
             mLogicalAddresses.add(LogicalAddress.SPECIFIC_USE);
         }
@@ -153,14 +145,5 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         String val = getSettingsValue(POWER_CONTROL_MODE);
         setSettingsValue(POWER_CONTROL_MODE, valToSet);
         return val;
-    }
-
-    private void checkDeviceAsleepAfterStandbySent() throws Exception {
-        ITestDevice device = getDevice();
-        TimeUnit.SECONDS.sleep(5);
-        String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
-        assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
-        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        TimeUnit.SECONDS.sleep(5);
     }
 }
