@@ -20,6 +20,10 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.UiAutomation;
 import android.support.test.uiautomator.UiDevice;
+
+import static org.junit.Assume.assumeTrue;
+
+import android.os.SystemProperties;
 import android.util.Log;
 import android.view.SurfaceControl;
 
@@ -27,6 +31,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +52,12 @@ public class SetFrameRateTest {
 
     @Before
     public void setUp() throws Exception {
+        if (FeatureUtil.isTV()) {
+            assumeTrue("setFrameRate() is disabled by a sysprop, nothing to test.",
+                    SystemProperties.getBoolean("ro.vendor.surface_flinger.use_frame_rate_api",
+                            true));
+        }
+
         long frameRateFlexibilityToken = 0;
         final UiDevice uiDevice =
                 UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
