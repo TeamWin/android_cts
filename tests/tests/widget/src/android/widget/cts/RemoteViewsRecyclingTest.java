@@ -369,6 +369,31 @@ public class RemoteViewsRecyclingTest {
         recycleWhenViewIdDoesntMatchFailsInMultipleLayout(true /* async */);
     }
 
+    private void recycleWhenViewIdDoesntMatchFailsInSimpleLayout(boolean async) throws Throwable {
+        RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle, 2);
+        applyRemoteViews(rv);
+
+        RemoteViews rv2 = createRemoteViews(R.layout.remoteviews_recycle, 3);
+        try {
+            reapplyRemoteViews(rv2, async);
+        } catch (RuntimeException ex) {
+            return; // success
+        } catch (Throwable t) {
+            fail("Excepted a RuntimeException, received " + t.toString());
+        }
+        fail("Excepted a RuntimeException, no exception received.");
+    }
+
+    @Test
+    public void recycleWhenViewIdDoesntMatchFailsInSimpleLayoutSync() throws Throwable {
+        recycleWhenViewIdDoesntMatchFailsInSimpleLayout(false /* async */);
+    }
+
+    @Test
+    public void recycleWhenViewIdDoesntMatchFailsInSimpleLayoutAsync() throws Throwable {
+        recycleWhenViewIdDoesntMatchFailsInSimpleLayout(true /* async */);
+    }
+
     private void recycleWhenRemovingFromEndAndInsertInMiddleAtManyLevels(boolean async)
             throws Throwable {
         RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle);
