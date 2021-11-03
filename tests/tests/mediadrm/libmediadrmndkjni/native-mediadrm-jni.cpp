@@ -62,7 +62,10 @@ static bool gOnKeyChangeListenerOK = false;
 
 static const char kFileScheme[] = "file://";
 static constexpr size_t kFileSchemeStrLen = sizeof(kFileScheme) - 1;
-static constexpr size_t kPlayTimeSeconds = 30;
+// Test time must be under 30 seconds to meet CTS quality bar.
+// The first ten seconds in kPlayTimeSeconds plays the clear lead,
+// the next ten seconds verifies encrypted playback.
+static constexpr size_t kPlayTimeSeconds = 20;
 static constexpr size_t kUuidSize = 16;
 
 static const uint8_t kClearKeyUuid[kUuidSize] = {

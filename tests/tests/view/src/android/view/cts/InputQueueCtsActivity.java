@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,31 @@
  * limitations under the License.
  */
 
-package com.android.test.notificationdelegator;
+package android.view.cts;
 
 import android.app.Activity;
-import android.app.NotificationManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.InputQueue;
 
-public class NotificationRevoker extends Activity {
-    private static final String TAG = "Revoker";
+public class InputQueueCtsActivity extends Activity implements InputQueue.Callback {
+    private InputQueue mInputQueue;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity);
 
-        NotificationManager nm = getSystemService(NotificationManager.class);
-        nm.setNotificationDelegate(null);
-        Log.d(TAG, "Removed delegate: " + nm.getNotificationDelegate());
-        nm.cancelAll();
-        finish();
+        getWindow().takeInputQueue(this);
+    }
+
+    @Override
+    public void onInputQueueCreated(InputQueue inputQueue) {
+        mInputQueue = inputQueue;
+    }
+
+    @Override
+    public void onInputQueueDestroyed(InputQueue inputQueue) {}
+
+    public InputQueue getInputQueue() {
+        return mInputQueue;
     }
 }

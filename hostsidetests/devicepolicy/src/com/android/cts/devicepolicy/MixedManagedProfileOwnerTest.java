@@ -282,13 +282,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @PermissionsTest
     @Test
-    public void testPermissionGrant() throws Exception {
-        super.testPermissionGrant();
-    }
-
-    @Override
-    @PermissionsTest
-    @Test
     public void testPermissionMixedPolicies() throws Exception {
         super.testPermissionMixedPolicies();
     }

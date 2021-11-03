@@ -21,12 +21,16 @@ import static android.util.DisplayMetrics.DENSITY_400;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -67,15 +71,12 @@ public class PerformanceClassTest {
 
     @Test
     public void testMinimumMemory() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
-        if (Utils.isSPerfClass()) {
-            Context context = InstrumentationRegistry.getInstrumentation().getContext();
-
-            // Verify minimum screen density and resolution
-            assertMinDpiAndPixels(context, DENSITY_400, 1920, 1080);
-            // Verify minimum memory
-            assertMinMemoryMb(context, 6 * 1024);
-        }
+        // Verify minimum screen density and resolution
+        assertMinDpiAndPixels(context, DENSITY_400, 1920, 1080);
+        // Verify minimum memory
+        assertMinMemoryMb(context, 6 * 1024);
     }
 
     /** Asserts that the given values conform to the specs in CDD */
@@ -92,11 +93,22 @@ public class PerformanceClassTest {
         Log.i(TAG, String.format("minDpi=%d minSize=%dx%dpix", minDpi, minLong, minShort));
         Log.i(TAG, String.format("dpi=%d size=%dx%dpix", density, longPix, shortPix));
 
-        assertTrue("Display density " + density + " must be at least " + minDpi + "dpi",
-                   density >= minDpi);
-        assertTrue("Display resolution " + longPix + "x" + shortPix + "pix must be at least " +
-                   minLong + "x" + minShort + "pix",
-                   longPix >= minLong && shortPix >= minShort);
+        if (Utils.isPerfClass()) {
+            assertTrue("Display density " + density + " must be at least " + minDpi + "dpi",
+                    density >= minDpi);
+            assertTrue("Display resolution " + longPix + "x" + shortPix + "pix must be at least " +
+                            minLong + "x" + minShort + "pix",
+                    longPix >= minLong && shortPix >= minShort);
+        } else {
+            int pc = density >= minDpi && longPix >= minLong && shortPix >= minShort
+                    ? Build.VERSION_CODES.S : 0;
+            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",  "Display");
+            log.addValue("DisplayDensity", density, ResultType.LOWER_BETTER, ResultUnit.NONE);
+            log.addValue("ResolutionLong", longPix, ResultType.LOWER_BETTER, ResultUnit.NONE);
+            log.addValue("ResolutionShort", shortPix, ResultType.LOWER_BETTER, ResultUnit.NONE);
+            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
     }
 
     /** Asserts that the given values conform to the specs in CDD 7.6.1 */
@@ -107,9 +119,17 @@ public class PerformanceClassTest {
 
         Log.i(TAG, String.format("minMb=%,d", minMb));
         Log.i(TAG, String.format("totalMemoryMb=%,d", totalMemoryMb));
+        if (Utils.isPerfClass()) {
+            assertTrue(String.format("Does not meet minimum memory requirements (CDD 7.6.1)."
+                    + "Found = %d, Minimum = %d", totalMemoryMb, minMb), totalMemoryMb >= minMb);
+        } else {
+            int pc = totalMemoryMb >= minMb ? Build.VERSION_CODES.S : 0;
+            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",  "MinMemory");
+            log.addValue("MemoryMB", totalMemoryMb, ResultType.LOWER_BETTER, ResultUnit.NONE);
+            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
 
-        assertTrue(String.format("Does not meet minimum memory requirements (CDD 7.6.1)."
-                + "Found = %d, Minimum = %d", totalMemoryMb, minMb), totalMemoryMb >= minMb);
     }
 
     /**
