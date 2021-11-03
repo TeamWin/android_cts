@@ -20,6 +20,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.SplitActivityLifecycleTest.ActivityB.EXTRA_SHOW_WHEN_LOCKED;
+import static android.server.wm.WindowManagerState.STATE_STARTED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -44,6 +45,7 @@ import android.window.WindowContainerTransaction;
 
 import org.junit.Ignore;
 import org.junit.Test;
+
 /**
  * Tests that verify the behavior of split Activity.
  * <p>
@@ -520,9 +522,46 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
         // Launch Activity C without show-when-lock and verifies that both activities are stopped.
         mOwnerActivity.startActivity(mIntent);
-        waitAndAssertActivityState(mActivityA, STATE_STOPPED,"Activity A must be stopped");
-        waitAndAssertActivityState(mActivityC, STATE_STOPPED,"Activity C must be stopped");
+        waitAndAssertActivityState(mActivityA, STATE_STOPPED, "Activity A must be stopped");
+        waitAndAssertActivityState(mActivityC, STATE_STOPPED, "Activity C must be stopped");
+    }
 
+    /**
+     * Verifies an Activity below adjacent translucent TaskFragments is visible.
+     */
+    @Test
+    public void testTranslucentAdjacentTaskFragment() {
+        // Create ActivityB on top of ActivityA
+        Activity activityB = startActivity(ActivityB.class);
+        waitAndAssertResumedActivity(mActivityB, "Activity B must be resumed.");
+        waitAndAssertActivityState(mActivityA, STATE_STOPPED,
+                "Activity A is occluded by Activity B, so it must be stopped.");
+
+        // Create two adjacent TaskFragments, making ActivityB and TranslucentActivity
+        // displayed side-by-side (ActivityB|TranslucentActivity).
+        mOwnerActivity.getWindowManager().getCurrentWindowMetrics().getBounds()
+                .splitVertically(mPrimaryBounds, mSideBounds);
+        final TaskFragmentCreationParams primaryParams = generatePrimaryTaskFragParams();
+        final TaskFragmentCreationParams secondaryParams = generateSideTaskFragParams();
+        IBinder primaryToken = primaryParams.getFragmentToken();
+        IBinder secondaryToken = secondaryParams.getFragmentToken();
+
+        final ComponentName translucentActivity = new ComponentName(mContext,
+                TranslucentActivity.class);
+        final Intent intent = new Intent().setComponent(translucentActivity);
+        WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(primaryParams)
+                .reparentActivityToTaskFragment(primaryToken, getActivityToken(activityB))
+                .createTaskFragment(secondaryParams)
+                .setAdjacentTaskFragments(primaryToken, secondaryToken, null /* params */)
+                .startActivityInTaskFragment(secondaryToken, mOwnerToken, intent,
+                        null /* activityOptions */);
+        mTaskFragmentOrganizer.applyTransaction(wct);
+
+        waitAndAssertResumedActivity(translucentActivity, "TranslucentActivity must be resumed.");
+        waitAndAssertResumedActivity(mActivityB, "Activity B must be resumed.");
+        waitAndAssertActivityState(mActivityA, STATE_STARTED,
+                "Activity A is not fully occluded and must be visible and started");
     }
 
     private TaskFragmentCreationParams generatePrimaryTaskFragParams() {
@@ -562,6 +601,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public static class ActivityA extends SplitTestActivity {}
     public static class ActivityB extends SplitTestActivity {}
     public static class ActivityC extends SplitTestActivity {}
+    public static class TranslucentActivity extends SplitTestActivity {}
     public static class SplitTestActivity extends FocusableActivity {
         public static final String EXTRA_SHOW_WHEN_LOCKED = "showWhenLocked";
         @Override
