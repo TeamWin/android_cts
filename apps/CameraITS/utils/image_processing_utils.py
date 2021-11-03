@@ -50,7 +50,8 @@ TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 def convert_capture_to_rgb_image(cap,
                                  ccm_yuv_to_rgb=DEFAULT_YUV_TO_RGB_CCM,
                                  yuv_off=DEFAULT_YUV_OFFSETS,
-                                 props=None):
+                                 props=None,
+                                 apply_ccm_raw_to_rgb=True):
   """Convert a captured image object to a RGB image.
 
   Args:
@@ -59,6 +60,7 @@ def convert_capture_to_rgb_image(cap,
      yuv_off: (Optional) offsets to subtract from each of Y,U,V values.
      props: (Optional) camera properties object (of static values);
             required for processing raw images.
+     apply_ccm_raw_to_rgb: (Optional) boolean to apply color correction matrix.
 
   Returns:
         RGB float-3 image array, with pixel values in [0.0, 1.0].
@@ -83,7 +85,8 @@ def convert_capture_to_rgb_image(cap,
   elif cap['format'] == 'raw' or cap['format'] == 'rawStats':
     assert props is not None
     r, gr, gb, b = convert_capture_to_planes(cap, props)
-    return convert_raw_to_rgb_image(r, gr, gb, b, props, cap['metadata'])
+    return convert_raw_to_rgb_image(
+        r, gr, gb, b, props, cap['metadata'], apply_ccm_raw_to_rgb)
   elif cap['format'] == 'y8':
     y = cap['data'][0: w * h]
     return convert_y8_to_rgb_image(y, w, h)
@@ -348,7 +351,7 @@ def convert_capture_to_planes(cap, props=None):
 
 
 def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane, props,
-                             cap_res):
+                             cap_res, apply_ccm_raw_to_rgb=True):
   """Convert a Bayer raw-16 image to an RGB image.
 
   Includes some extremely rudimentary demosaicking and color processing
@@ -363,9 +366,10 @@ def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane, props,
             in the Bayer image, with pixels in the [0.0, 1.0] range.
    props: Camera properties object.
    cap_res: Capture result (metadata) object.
+   apply_ccm_raw_to_rgb: (Optional) boolean to apply color correction matrix.
 
   Returns:
-    RGB float-3 image array, with pixel values in [0.0, 1.0]
+   RGB float-3 image array, with pixel values in [0.0, 1.0]
   """
     # Values required for the RAW to RGB conversion.
   assert props is not None
@@ -396,7 +400,9 @@ def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane, props,
   h, w = r_plane.shape[:2]
   img = numpy.dstack([r_plane, (gr_plane + gb_plane) / 2.0, b_plane])
   img = (((img.reshape(h, w, 3) - black_levels) * scale) * gains).clip(0.0, 1.0)
-  img = numpy.dot(img.reshape(w * h, 3), ccm.T).reshape(h, w, 3).clip(0.0, 1.0)
+  if apply_ccm_raw_to_rgb:
+    img = numpy.dot(
+        img.reshape(w * h, 3), ccm.T).reshape(h, w, 3).clip(0.0, 1.0)
   return img
 
 
