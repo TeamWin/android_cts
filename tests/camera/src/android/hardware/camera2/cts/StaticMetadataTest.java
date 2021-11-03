@@ -435,6 +435,12 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
             case REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME:
                 // Tested in ExtendedCameraCharacteristicsTest
                 return;
+            case REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA:
+                if (isCapabilityAvailable) {
+                    mCollector.expectTrue("System camera shouldn't be available without" +
+                            " SYSTEM_CAMERA permissons", mAdoptShellPerm);
+                }
+                return;
             case REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA:
                 if (!isCapabilityAvailable) {
                     mCollector.expectTrue(
