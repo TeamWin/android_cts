@@ -20,6 +20,7 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSuppo
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityFromActivity;
 
 import static org.junit.Assert.assertEquals;
@@ -90,16 +91,16 @@ public class ActivityEmbeddingUtil {
         return createWildcardSplitPairRule(false /* shouldClearTop */);
     }
 
-    public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
-            @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
-            @NonNull String secondActivityId,
+    public static Activity startActivityAndVerifySplit(@NonNull Activity activityLaunchingFrom,
+            @NonNull Activity expectedPrimaryActivity, @NonNull Class secondActivityClass,
+            @NonNull SplitPairRule splitPairRule, @NonNull String secondActivityId,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer,
             int expectedCallbackCount) {
         // Set the expected callback count
         splitInfoConsumer.setCount(expectedCallbackCount);
 
         // Start second activity
-        startActivityFromActivity(primaryActivity, secondActivityClass, secondActivityId);
+        startActivityFromActivity(activityLaunchingFrom, secondActivityClass, secondActivityId);
 
         // Get updated split info
         List<SplitInfo> activeSplitStates = null;
@@ -110,14 +111,24 @@ public class ActivityEmbeddingUtil {
         }
 
         // Get second activity from split info
-        Activity secondActivity = getSecondActivity(activeSplitStates, primaryActivity,
+        Activity secondActivity = getSecondActivity(activeSplitStates, expectedPrimaryActivity,
                 secondActivityId);
         assertNotNull(secondActivity);
 
-        assertValidSplit(primaryActivity, secondActivity, splitPairRule);
+        assertValidSplit(expectedPrimaryActivity, secondActivity, splitPairRule);
 
         // Return second activity for easy access in calling method
         return secondActivity;
+    }
+
+    public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
+            @NonNull Class secondActivityClass, @NonNull SplitPairRule splitPairRule,
+            @NonNull String secondActivityId,
+            @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer,
+            int expectedCallbackCount) {
+        return startActivityAndVerifySplit(primaryActivity /* activityLaunchingFrom */,
+                primaryActivity, secondActivityClass, splitPairRule, secondActivityId,
+                splitInfoConsumer, 1 /* expectedCallbackCount */);
     }
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
@@ -186,6 +197,16 @@ public class ActivityEmbeddingUtil {
                 }
             }
             if (allActivitiesResumed) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean waitForResumed(@NonNull String activityId) {
+        final long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < WAIT_FOR_RESUMED_TIMEOUT_MS) {
+            if (getResumedActivityById(activityId) != null) {
                 return true;
             }
         }
