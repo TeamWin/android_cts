@@ -33,6 +33,7 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 import com.android.cts.verifier.TestResult;
+import com.android.cts.verifier.features.FeatureUtil;
 
 /**
  * Activity that lists all positive managed user tests.
@@ -135,20 +136,22 @@ public class ManagedUserPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setKeyguardDisabled
-        adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
-                R.string.device_owner_disable_keyguard_test,
-                R.string.device_owner_disable_keyguard_test_info,
-                new ButtonInfo[]{
-                        new ButtonInfo(
-                                R.string.device_owner_disable_keyguard_button,
-                                createManagedUserIntentWithBooleanParameter(
-                                        CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                        true)),
-                        new ButtonInfo(
-                                R.string.device_owner_reenable_keyguard_button,
-                                createManagedUserIntentWithBooleanParameter(
-                                        CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                        false))}));
+        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)) {
+            adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
+                    R.string.device_owner_disable_keyguard_test,
+                    R.string.device_owner_disable_keyguard_test_info,
+                    new ButtonInfo[]{
+                            new ButtonInfo(
+                                    R.string.device_owner_disable_keyguard_button,
+                                    createManagedUserIntentWithBooleanParameter(
+                                            CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
+                                            true)),
+                            new ButtonInfo(
+                                    R.string.device_owner_reenable_keyguard_button,
+                                    createManagedUserIntentWithBooleanParameter(
+                                            CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
+                                            false))}));
+        }
 
         // DISALLOW_REMOVE_USER
         adapter.add(createInteractiveTestItem(this, DISALLOW_REMOVE_USER_TEST_ID,

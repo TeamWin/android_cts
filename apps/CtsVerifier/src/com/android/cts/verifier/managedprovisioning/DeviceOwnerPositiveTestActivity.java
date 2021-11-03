@@ -389,7 +389,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setKeyguardDisabled
-        if (isKeyguardShownWhenUserDoesntHaveCredentials() && Utils.isLockscreenSupported(this)) {
+        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)
+                && Utils.isLockscreenSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
                     R.string.device_owner_disable_keyguard_test,
                     R.string.device_owner_disable_keyguard_test_info,
@@ -724,16 +725,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 && !isAutomotive() && !isTelevision();
     }
 
-    private boolean isKeyguardShownWhenUserDoesntHaveCredentials() {
-        return !isAutomotive();
-    }
-
     private boolean isSwipeToUnlockSupported() {
         return !isAutomotive();
     }
 
     private boolean isAutomotive() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        return FeatureUtil.isAutomotive(this);
     }
 
     private boolean isTelevision() {
