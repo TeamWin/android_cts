@@ -39,10 +39,16 @@ public @interface EnsureHasDelegate {
 
     enum AdminType {
         DEVICE_OWNER,
-        PROFILE_OWNER
+        PROFILE_OWNER,
+        PRIMARY
     }
 
-    /** The admin that should delegate this scope. */
+    /**
+     * The admin that should delegate this scope.
+     *
+     * <p>If this is set to {@link AdminType#PRIMARY} and {@link #isPrimary()} is true, then the
+     * delegate will replace the primary dpc as primary without error.
+     */
     AdminType admin();
 
     /** The scope being delegated. */

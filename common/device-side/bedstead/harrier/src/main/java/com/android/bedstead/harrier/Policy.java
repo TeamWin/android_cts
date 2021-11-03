@@ -28,9 +28,11 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_PARENT;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_OTHER_USERS;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_NEGATIVE_TESTS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
 
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedDeviceOwnerSecondaryUser;
@@ -50,17 +52,73 @@ import com.google.common.collect.ImmutableMap;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for enterprise policy tests.
  */
 public final class Policy {
+
+    // This is a map containing all Include* annotations and the flags which lead to them
+    // This is not validated - every state must have a single APPLIED_BY annotation
+    private static final ImmutableMap<Integer, Function<EnterprisePolicy, Set<Annotation>>>
+            STATE_ANNOTATIONS =
+            ImmutableMap.<Integer, Function<EnterprisePolicy, Set<Annotation>>>builder()
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnDeviceOwnerUser()))
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnDeviceOwnerUser(), /* isPrimary= */ true))
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND, singleAnnotation(includeRunOnBackgroundDeviceOwnerUser()))
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnBackgroundDeviceOwnerUser(), /* isPrimary= */ true))
+
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_UNAFFILIATED_OTHER_USERS, singleAnnotation(includeRunOnNonAffiliatedDeviceOwnerSecondaryUser()))
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_UNAFFILIATED_OTHER_USERS | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnNonAffiliatedDeviceOwnerSecondaryUser(), /* isPrimary= */ true))
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_AFFILIATED_OTHER_USERS, singleAnnotation(includeRunOnAffiliatedDeviceOwnerSecondaryUser()))
+                    .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_AFFILIATED_OTHER_USERS | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnAffiliatedDeviceOwnerSecondaryUser(), /* isPrimary= */ true))
+
+                    .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnAffiliatedProfileOwnerSecondaryUser()))
+                    .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnAffiliatedProfileOwnerSecondaryUser(), /* isPrimary= */ true))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnUnaffiliatedProfileOwnerSecondaryUser()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnUnaffiliatedProfileOwnerSecondaryUser(), /* isPrimary= */ true))
+                    .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
+                    .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnProfileOwnerPrimaryUser(), /* isPrimary= */ true))
+
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnProfileOwnerProfileWithNoDeviceOwner()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnProfileOwnerProfileWithNoDeviceOwner(), /* isPrimary= */ true))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT, singleAnnotation(includeRunOnParentOfProfileOwnerWithNoDeviceOwner()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnParentOfProfileOwnerWithNoDeviceOwner(), /* isPrimary= */ true))
+
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_UNAFFILIATED_OTHER_USERS, singleAnnotation(includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_UNAFFILIATED_OTHER_USERS | CAN_BE_DELEGATED, generateDelegateAnnotation(includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile(), /* isPrimary= */ true))
+                    .build();
+    // This must contain one key for every APPLIED_BY that is being used, and maps to the
+    // "default" for testing that DPC type
+    // in general this will be a state which runs on the same user as the dpc.
+    private static final ImmutableMap<Integer, Function<EnterprisePolicy, Set<Annotation>>>
+            DPC_STATE_ANNOTATIONS_BASE =
+            ImmutableMap.<Integer, Function<EnterprisePolicy, Set<Annotation>>>builder()
+                    .put(APPLIED_BY_DEVICE_OWNER, (flags) -> hasFlag(flags.dpc(), APPLIED_BY_DEVICE_OWNER | APPLIES_IN_BACKGROUND) ? Set.of(includeRunOnBackgroundDeviceOwnerUser()) : Set.of(includeRunOnDeviceOwnerUser()))
+                    .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, singleAnnotation(includeRunOnAffiliatedProfileOwnerSecondaryUser()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
+                    .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE, singleAnnotation(includeRunOnProfileOwnerProfileWithNoDeviceOwner()))
+                    .build();
+    private static final Map<Integer, Function<EnterprisePolicy, Set<Annotation>>>
+            DPC_STATE_ANNOTATIONS = DPC_STATE_ANNOTATIONS_BASE.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, Policy::addGeneratedStates));
+    private static final int APPLIED_BY_FLAGS =
+            APPLIED_BY_DEVICE_OWNER | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
+                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
+                    | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER
+                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
+    private static final Map<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>>
+            ANNOTATIONS_MAP = calculateAnnotationsMap(STATE_ANNOTATIONS);
 
     private Policy() {
 
@@ -126,49 +184,42 @@ public final class Policy {
         return new AutoAnnotation_Policy_includeRunOnBackgroundDeviceOwnerUser();
     }
 
-    // This is a map containing all Include* annotations and the flags which lead to them
-    // This is not validated - every state must have a single APPLIED_BY annotation
-    private static final ImmutableMap<Integer, Annotation> STATE_ANNOTATIONS = ImmutableMap.<Integer, Annotation>builder()
-            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER, includeRunOnDeviceOwnerUser())
-            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND, includeRunOnBackgroundDeviceOwnerUser())
+    @AutoAnnotation
+    private static EnsureHasDelegate ensureHasDelegate(EnsureHasDelegate.AdminType admin,
+            String[] scopes, boolean isPrimary) {
+        return new AutoAnnotation_Policy_ensureHasDelegate(admin, scopes, isPrimary);
+    }
 
-            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_UNAFFILIATED_OTHER_USERS, includeRunOnNonAffiliatedDeviceOwnerSecondaryUser())
-            .put(APPLIED_BY_DEVICE_OWNER | APPLIES_TO_AFFILIATED_OTHER_USERS, includeRunOnAffiliatedDeviceOwnerSecondaryUser())
+    private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(
+            Annotation annotation) {
+        return (i) -> Set.of(annotation);
+    }
 
-            .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER, includeRunOnAffiliatedProfileOwnerSecondaryUser())
-            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER | APPLIES_TO_OWN_USER, includeRunOnUnaffiliatedProfileOwnerSecondaryUser())
-            .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER, includeRunOnProfileOwnerPrimaryUser())
+    private static Function<EnterprisePolicy, Set<Annotation>> generateDelegateAnnotation(
+            Annotation annotation, boolean isPrimary) {
+        return (policy) -> {
+            Annotation[] existingAnnotations = annotation.annotationType().getAnnotations();
+            return Arrays.stream(policy.delegatedScopes())
+                    .map(scope -> {
+                        Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
+                                existingAnnotations.length + 1);
+                        newAnnotations[newAnnotations.length - 1] = ensureHasDelegate(
+                                EnsureHasDelegate.AdminType.PRIMARY, new String[]{scope},
+                                isPrimary);
 
-            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER, includeRunOnProfileOwnerProfileWithNoDeviceOwner())
-            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT, includeRunOnParentOfProfileOwnerWithNoDeviceOwner())
+                        return new DynamicParameterizedAnnotation(
+                                annotation.annotationType().getSimpleName() + "Delegate:" + scope,
+                                newAnnotations);
+                    }).collect(Collectors.toSet());
+        };
+    }
 
-            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_UNAFFILIATED_OTHER_USERS, includeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile())
-            .build();
+    private static Map<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> calculateAnnotationsMap(
+            Map<Integer, Function<EnterprisePolicy, Set<Annotation>>> annotations) {
+        Map<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> b = new HashMap<>();
 
-    // This must contain one key for every APPLIED_BY that is being used, and maps to the "default" for testing that DPC type
-    // in general this will be a state which runs on the same user as the dpc.
-    private static final ImmutableMap<Integer, Annotation> DPC_STATE_ANNOTATIONS = ImmutableMap.<Integer, Annotation>builder()
-            .put(APPLIED_BY_DEVICE_OWNER, includeRunOnNonAffiliatedDeviceOwnerSecondaryUser())
-            .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, includeRunOnAffiliatedProfileOwnerSecondaryUser())
-            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, includeRunOnProfileOwnerPrimaryUser())
-            .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, includeRunOnProfileOwnerPrimaryUser())
-            .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE, includeRunOnProfileOwnerProfileWithNoDeviceOwner())
-            .build();
-
-    private static final int APPLIED_BY_FLAGS =
-            APPLIED_BY_DEVICE_OWNER | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE
-                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
-                    | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER
-                    | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
-
-
-    private static final Map<Annotation, Set<Integer>> ANNOTATIONS_MAP = calculateAnnotationsMap(STATE_ANNOTATIONS);
-
-    private static Map<Annotation, Set<Integer>> calculateAnnotationsMap(
-            Map<Integer, Annotation> annotations) {
-        Map<Annotation, Set<Integer>> b = new HashMap<>();
-
-        for (Map.Entry<Integer, Annotation> i : annotations.entrySet()) {
+        for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> i :
+                annotations.entrySet()) {
             if (!b.containsKey(i.getValue())) {
                 b.put(i.getValue(), new HashSet<>());
             }
@@ -179,20 +230,39 @@ public final class Policy {
         return b;
     }
 
+    private static Function<EnterprisePolicy, Set<Annotation>> addGeneratedStates(
+            ImmutableMap.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> entry) {
+        return (policy) -> {
+            if (hasFlag(policy.dpc(), entry.getKey() | CAN_BE_DELEGATED)) {
+                Set<Annotation> results = new HashSet<>(entry.getValue().apply(policy));
+                results.addAll(results.stream().flatMap(
+                        t -> generateDelegateAnnotation(t, /* isPrimary= */ true).apply(
+                                policy).stream())
+                        .collect(Collectors.toSet()));
+
+                return results;
+            }
+
+            return entry.getValue().apply(policy);
+        };
+    }
+
 
     /**
-     * Get positive state annotations for the given policy.
+     * Get parameterized test runs for the given policy.
      *
      * <p>These are states which should be run where the policy is able to be applied.
      */
-    public static List<Annotation> positiveStates(String policyName, EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> positiveStates(String policyName,
+            EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
         validateFlags(policyName, enterprisePolicy.dpc());
 
-        for (Map.Entry<Annotation, Set<Integer>> annotation : ANNOTATIONS_MAP.entrySet()) {
+        for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
+                ANNOTATIONS_MAP.entrySet()) {
             if (isPositive(enterprisePolicy.dpc(), annotation.getValue())) {
-                annotations.add(annotation.getKey());
+                annotations.addAll(annotation.getKey().apply(enterprisePolicy));
             }
         }
 
@@ -215,13 +285,15 @@ public final class Policy {
 
     private static boolean isNegative(int[] policyFlags, Set<Integer> annotationFlags) {
         for (int annotationFlag : annotationFlags) {
-            if (hasFlag(annotationFlag, DO_NOT_APPLY_TO_NEGATIVE_TESTS, /* nonMatchingFlag= */ NO)) {
+            if (hasFlag(annotationFlag, DO_NOT_APPLY_TO_NEGATIVE_TESTS, /* nonMatchingFlag= */
+                    NO)) {
                 return false; // We don't support using this annotation for negative tests
             }
 
             int appliedByFlag = APPLIED_BY_FLAGS & annotationFlag;
             int otherFlags = annotationFlag ^ appliedByFlag; // remove the appliedByFlag
-            if (hasFlag(policyFlags, /* matchingFlag= */ appliedByFlag, /* nonMatchingFlag= */ otherFlags)) {
+            if (hasFlag(policyFlags, /* matchingFlag= */ appliedByFlag, /* nonMatchingFlag= */
+                    otherFlags)) {
                 return true;
             }
         }
@@ -230,18 +302,20 @@ public final class Policy {
     }
 
     /**
-     * Get negative state annotations for the given policy.
+     * Get negative parameterized test runs for the given policy.
      *
      * <p>These are states which should be run where the policy is not able to be applied.
      */
-    public static List<Annotation> negativeStates(String policyName, EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> negativeStates(String policyName,
+            EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
         validateFlags(policyName, enterprisePolicy.dpc());
 
-        for (Map.Entry<Annotation, Set<Integer>> annotation : ANNOTATIONS_MAP.entrySet()) {
+        for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
+                ANNOTATIONS_MAP.entrySet()) {
             if (isNegative(enterprisePolicy.dpc(), annotation.getValue())) {
-                annotations.add(annotation.getKey());
+                annotations.addAll(annotation.getKey().apply(enterprisePolicy));
             }
         }
 
@@ -254,9 +328,10 @@ public final class Policy {
     }
 
     /**
-     * Get state annotations where the policy cannot be set for the given policy.
+     * Get parameterized test runs where the policy cannot be set for the given policy.
      */
-    public static List<Annotation> cannotSetPolicyStates(String policyName, EnterprisePolicy enterprisePolicy) {
+    public static List<Annotation> cannotSetPolicyStates(String policyName,
+            EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
         validateFlags(policyName, enterprisePolicy.dpc());
@@ -268,9 +343,10 @@ public final class Policy {
             allFlags = allFlags | p;
         }
 
-        for (Map.Entry<Integer, Annotation> appliedByFlag : DPC_STATE_ANNOTATIONS.entrySet()) {
+        for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> appliedByFlag :
+                DPC_STATE_ANNOTATIONS.entrySet()) {
             if ((appliedByFlag.getKey() & allFlags) == 0) {
-                annotations.add(appliedByFlag.getValue());
+                annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
             }
         }
 
@@ -296,9 +372,10 @@ public final class Policy {
             allFlags = allFlags | p;
         }
 
-        for (Map.Entry<Integer, Annotation> appliedByFlag : DPC_STATE_ANNOTATIONS.entrySet()) {
+        for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> appliedByFlag :
+                DPC_STATE_ANNOTATIONS.entrySet()) {
             if ((appliedByFlag.getKey() & allFlags) == appliedByFlag.getKey()) {
-                annotations.add(appliedByFlag.getValue());
+                annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
             }
         }
 
@@ -311,8 +388,14 @@ public final class Policy {
 
         if (singleTestOnly) {
             // We select one annotation in an arbitrary but deterministic way
-            annotationList.sort(Comparator.comparing(a -> a.annotationType().getName()));
-            Annotation firstAnnotation = annotationList.get(0);
+            annotationList.sort(Comparator.comparing(
+                    a -> a instanceof DynamicParameterizedAnnotation
+                            ? "DynamicParameterizedAnnotation" : a.annotationType().getName()));
+
+            // We don't want a delegate to be the representative test
+            Annotation firstAnnotation = annotationList.stream()
+                    .filter(i -> !(i instanceof  DynamicParameterizedAnnotation))
+                    .findFirst().get();
             annotationList.clear();
             annotationList.add(firstAnnotation);
         }

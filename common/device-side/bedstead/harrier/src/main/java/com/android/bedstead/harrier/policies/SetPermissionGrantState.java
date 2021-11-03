@@ -21,12 +21,12 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_PERMISSION_GRANT;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
-import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DelegatedScope;
 
 /**
  * Policies around setting the grant state of a basic permission.
@@ -36,8 +36,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.Dele
  * granting permissions not covered by other policies.
  */
 @EnterprisePolicy(
-        dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER,
-        delegatedScopes = @DelegatedScope(
-                scope = DELEGATION_PERMISSION_GRANT, appliesTo = APPLIES_TO_OWN_USER))
+        dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED,
+        delegatedScopes = DELEGATION_PERMISSION_GRANT)
 public final class SetPermissionGrantState {
 }
