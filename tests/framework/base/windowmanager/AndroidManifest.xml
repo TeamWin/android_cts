@@ -514,6 +514,10 @@
                   android:exported="true"
                   android:taskAffinity=".TaskFragmentB.embeddedTask"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.SplitActivityLifecycleTest$TranslucentActivity"
+                  android:exported="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
