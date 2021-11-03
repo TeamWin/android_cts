@@ -1422,7 +1422,8 @@ public class TelephonyManagerTest {
             return;
         }
 
-        int[] allSubs = mSubscriptionManager.getActiveSubscriptionIdList();
+        int[] allSubs  = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (sm) ->sm.getActiveSubscriptionIdList());
         // generate a subscription that is valid (>0) but inactive (not part of active subId list)
         // A simple way to do this is sum the active subIds and add 1
         int inactiveValidSub = 1;
