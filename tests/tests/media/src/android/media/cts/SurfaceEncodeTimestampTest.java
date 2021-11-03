@@ -47,6 +47,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 @Presubmit
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @SmallTest
@@ -157,12 +159,14 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testCaptureFps() throws Throwable {
-        // test slow motion
-        testCaptureFps(120, false /*useFloatKey*/);
-        testCaptureFps(240, true /*useFloatKey*/);
+        if (PropertyUtil.isVendorApiLevelNewerThan(29)) {
+            // test slow motion
+            testCaptureFps(120, false /*useFloatKey*/);
+            testCaptureFps(240, true /*useFloatKey*/);
 
-        // test timelapse
-        testCaptureFps(1, false /*useFloatKey*/);
+            // test timelapse
+            testCaptureFps(1, false /*useFloatKey*/);
+        }
     }
 
     private void testCaptureFps(int captureFps, final boolean useFloatKey) throws Throwable {
