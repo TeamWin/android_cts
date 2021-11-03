@@ -16,13 +16,13 @@
 
 package android.security.cts;
 
-import com.android.tradefed.device.ITestDevice;
-import com.android.compatibility.common.util.CrashUtils;
-
 import android.platform.test.annotations.AsbSecurityTest;
+
+import com.android.compatibility.common.util.CrashUtils;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2020_0073 extends SecurityTestCase {
@@ -35,9 +35,10 @@ public class CVE_2020_0073 extends SecurityTestCase {
     @AsbSecurityTest(cveBugId = 147309942)
     public void testPocCVE_2020_0073() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
+        assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
         String binaryName = "CVE-2020-0073";
-        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String[] signals = {CrashUtils.SIGABRT};
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
         testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
         testConfig.config.setSignals(signals);
