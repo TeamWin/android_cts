@@ -16,10 +16,14 @@
 
 package android.os.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
@@ -30,9 +34,14 @@ import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.CommandStatus;
 
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildReceiver {
     private static final String ANDROID_JUNIT_RUNNER_CLASS =
@@ -42,6 +51,9 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             "CtsStaticSharedLibProviderRecursive.apk";
     private static final String STATIC_LIB_PROVIDER_RECURSIVE_PKG =
             "android.os.lib.provider.recursive";
+
+    private static final String STATIC_LIB_PROVIDER_RECURSIVE_NAME = "foo.bar.lib.recursive";
+    private static final String STATIC_LIB_PROVIDER_NAME = "foo.bar.lib";
 
     private static final String STATIC_LIB_PROVIDER1_APK = "CtsStaticSharedLibProviderApp1.apk";
     private static final String STATIC_LIB_PROVIDER1_PKG = "android.os.lib.provider";
@@ -87,6 +99,11 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             = "CtsStaticSharedNativeLibConsumer.apk";
     private static final String STATIC_LIB_NATIVE_CONSUMER_PKG
             = "android.os.lib.consumer";
+
+    private static final String SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD =
+            "unused_static_shared_lib_min_cache_period";
+
+    private static final long DEFAULT_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(15);
 
     private CompatibilityBuildHelper mBuildHelper;
     private boolean mInstantMode = false;
@@ -720,6 +737,56 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         }
     }
 
+    @AppModeFull
+    public void testPruneUnusedStaticSharedLibraries_reboot_fullMode()
+            throws Exception {
+        doTestPruneUnusedStaticSharedLibraries_reboot();
+    }
+
+    @AppModeInstant
+    public void testPruneUnusedStaticSharedLibraries_reboot_instantMode()
+            throws Exception {
+        mInstantMode = true;
+        doTestPruneUnusedStaticSharedLibraries_reboot();
+    }
+
+    private void doTestPruneUnusedStaticSharedLibraries_reboot()
+            throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER3_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER7_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        try {
+            // Install an unused library
+            assertThat(install(STATIC_LIB_PROVIDER_RECURSIVE_APK)).isNull();
+            assertThat(checkLibrary(STATIC_LIB_PROVIDER_RECURSIVE_NAME)).isTrue();
+
+            // Install the client and the corresponding library
+            assertThat(install(STATIC_LIB_PROVIDER7_APK)).isNull();
+            assertThat(install(STATIC_LIB_CONSUMER3_APK)).isNull();
+            assertThat(checkLibrary(STATIC_LIB_PROVIDER_NAME)).isTrue();
+
+            // Disallow to cache static shared library
+            setGlobalSetting(SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD,
+                    Integer.toString(0));
+
+            getDevice().reboot();
+
+            // Waits for the uninstallation of the unused library to ensure the job has be executed
+            // correctly.
+            PollingCheck.check("Library " + STATIC_LIB_PROVIDER_RECURSIVE_NAME
+                            + " should be uninstalled", DEFAULT_TIMEOUT_MILLIS,
+                    () -> !checkLibrary(STATIC_LIB_PROVIDER_RECURSIVE_NAME));
+            assertWithMessage(
+                    "Library " + STATIC_LIB_PROVIDER_NAME + " should not be uninstalled")
+                    .that(checkLibrary(STATIC_LIB_PROVIDER_NAME)).isTrue();
+        } finally {
+            setGlobalSetting(SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD, null);
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER3_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER7_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
+    }
+
     private String install(String apk) throws DeviceNotAvailableException, FileNotFoundException {
         return install(apk, false);
     }
@@ -727,5 +794,33 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             throws DeviceNotAvailableException, FileNotFoundException {
         return getDevice().installPackage(mBuildHelper.getTestFile(apk), reinstall, false,
                 apk.contains("consumer") && mInstantMode ? "--instant" : "");
+    }
+
+    private boolean checkLibrary(String libName) throws DeviceNotAvailableException {
+        final CommandResult result = getDevice().executeShellV2Command("pm list libraries");
+        if (result.getStatus() != CommandStatus.SUCCESS) {
+            fail("Failed to execute shell command: pm list libraries");
+        }
+        return Arrays.stream(result.getStdout().split("\n"))
+                .map(line -> line.split(":")[1])
+                .collect(Collectors.toList()).contains(libName);
+    }
+
+    private void setGlobalSetting(String key, String value) throws DeviceNotAvailableException {
+        final boolean deleteKey = (value == null);
+        final StringBuilder cmd = new StringBuilder("settings ");
+        if (deleteKey) {
+            cmd.append("delete ");
+        } else {
+            cmd.append("put ");
+        }
+        cmd.append("global ").append(key);
+        if (!deleteKey) {
+            cmd.append(" ").append(value);
+        }
+        final CommandResult res = getDevice().executeShellV2Command(cmd.toString());
+        if (res.getStatus() != CommandStatus.SUCCESS) {
+            fail("Failed to execute shell command: " + cmd);
+        }
     }
 }
