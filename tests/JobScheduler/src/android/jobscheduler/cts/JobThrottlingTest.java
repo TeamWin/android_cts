@@ -358,7 +358,7 @@ public class JobThrottlingTest {
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
 
-        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_MODERATE);
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_LIGHT);
         assertFalse("Job stopped below thermal throttling threshold",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
 
@@ -397,13 +397,14 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
 
         ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_SEVERE);
-        assertFalse("Job stopped below thermal throttling threshold",
-                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
-
-        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
         assertTrue("Job did not stop on thermal throttling",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         final long jobStopTime = System.currentTimeMillis();
+
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+        runJob();
+        assertFalse("Job started above thermal throttling threshold",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
 
         ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_EMERGENCY);
         runJob();
