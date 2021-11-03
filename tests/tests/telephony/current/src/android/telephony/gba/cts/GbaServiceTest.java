@@ -328,8 +328,11 @@ public final class GbaServiceTest {
                 PackageManager.FEATURE_TELEPHONY)) {
             return false;
         }
-        int[] activeSubs = InstrumentationRegistry.getContext().getSystemService(
-                SubscriptionManager.class).getActiveSubscriptionIdList();
+
+        SubscriptionManager subscriptionManager = InstrumentationRegistry.getContext()
+                .getSystemService(SubscriptionManager.class);
+        int[] activeSubs = ShellIdentityUtils.invokeMethodWithShellPermissions(subscriptionManager,
+                (sm) -> sm.getActiveSubscriptionIdList());
         if (activeSubs.length == 0) {
             return false;
         }
