@@ -25,6 +25,11 @@ public class CecMessage {
 
     private static final int HEXADECIMAL_RADIX = 16;
 
+    public static String buildCecMessage(
+            LogicalAddress source, LogicalAddress destination, CecOperand operand, int params) {
+        return "" + source + destination + ":" + operand + formatParams(params);
+    }
+
     public static String formatParams(String rawParams) {
         StringBuilder params = new StringBuilder("");
         int position = 0;
