@@ -398,11 +398,11 @@
              android:exported="true"/>
 
         <activity android:name=".ShowWhenLockedAttrActivity"
+             android:configChanges="keyboard|keyboardHidden|navigation"
              android:showWhenLocked="true"
              android:exported="true"/>
 
         <activity android:name=".ShowWhenLockedAttrRemoveAttrActivity"
-             android:configChanges="keyboard|keyboardHidden|navigation"
              android:showWhenLocked="true"
              android:exported="true"/>
 
