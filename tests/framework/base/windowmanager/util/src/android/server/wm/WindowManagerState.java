@@ -92,6 +92,7 @@ import java.util.stream.Stream;
 public class WindowManagerState {
 
     public static final String STATE_INITIALIZING = "INITIALIZING";
+    public static final String STATE_STARTED = "STARTED";
     public static final String STATE_RESUMED = "RESUMED";
     public static final String STATE_PAUSED = "PAUSED";
     public static final String STATE_STOPPED = "STOPPED";
