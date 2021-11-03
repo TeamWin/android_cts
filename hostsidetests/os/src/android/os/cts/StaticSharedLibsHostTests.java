@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.LargeTest;
+import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.PollingCheck;
@@ -44,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Presubmit
 public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildReceiver {
     private static final String ANDROID_JUNIT_RUNNER_CLASS =
             "androidx.test.runner.AndroidJUnitRunner";
