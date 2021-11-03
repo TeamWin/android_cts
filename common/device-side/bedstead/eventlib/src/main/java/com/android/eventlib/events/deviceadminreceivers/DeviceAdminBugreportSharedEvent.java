@@ -39,6 +39,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminBugreportSharedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminBugreportSharedEvent} events. */
     public static DeviceAdminBugreportSharedEventQuery queryPackage(String packageName) {
         return new DeviceAdminBugreportSharedEventQuery(packageName);

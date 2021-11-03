@@ -40,6 +40,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminPasswordSucceededEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminPasswordSucceededEvent} events. */
     public static DeviceAdminPasswordSucceededEventQuery queryPackage(String packageName) {
         return new DeviceAdminPasswordSucceededEventQuery(packageName);

@@ -31,6 +31,8 @@ import java.util.Map;
 public final class BundleQueryHelper<E extends Queryable> implements BundleQuery<E>,
         Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private final Map<String, BundleKeyQueryHelper<E>> mKeyQueryHelpers = new HashMap<>();
 
