@@ -469,7 +469,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
             }
 
             // Launch activity on new secondary display.
-            launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
+            launchActivityOnDisplay(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN, newDisplay.mId);
             waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                     "Test activity must be on secondary display");
 
