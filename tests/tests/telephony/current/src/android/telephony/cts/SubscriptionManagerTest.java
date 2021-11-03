@@ -232,8 +232,10 @@ public class SubscriptionManagerTest {
     public void testActiveSubscriptions() throws Exception {
         if (!isSupported()) return;
 
-        List<SubscriptionInfo> subList = mSm.getActiveSubscriptionInfoList();
-        int[] idList = mSm.getActiveSubscriptionIdList();
+        List<SubscriptionInfo> subList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfoList());
+        int[] idList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionIdList());
         // Assert when there is no sim card present or detected
         assertNotNull("Active subscriber required", subList);
         assertNotNull("Active subscriber required", idList);
