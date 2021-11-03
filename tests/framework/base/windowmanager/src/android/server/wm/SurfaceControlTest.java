@@ -44,6 +44,12 @@ import org.junit.rules.TestName;
 @Presubmit
 public class SurfaceControlTest {
     private static final int DEFAULT_SURFACE_SIZE = 100;
+    /**
+     * Use a rect that doesn't include 1 pixel in the border since some composers add blending at
+     * the edges. It's easier to just ignore those pixels and ensure the rest are correct.
+     */
+    private static final Rect DEFAULT_RECT = new Rect(1, 1, DEFAULT_SURFACE_SIZE - 1,
+            DEFAULT_SURFACE_SIZE - 1);
 
     @Rule
     public ActivityScenarioRule<ASurfaceControlTestActivity> mActivityRule =
@@ -153,7 +159,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
+                new RectChecker(DEFAULT_RECT, PixelColor.RED));
     }
 
     /**
@@ -172,7 +178,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.BLACK));
+                new RectChecker(DEFAULT_RECT, PixelColor.BLACK));
     }
 
     /**
@@ -189,7 +195,7 @@ public class SurfaceControlTest {
                         new SurfaceControl.Transaction().reparent(sc, null).apply();
                     }
                 },
-                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.BLACK));
+                new RectChecker(DEFAULT_RECT, PixelColor.BLACK));
       // Since the SurfaceControl is parented off-screen, if we release our reference
       // it may completely die. If this occurs while the render thread is still rendering
       // the RED background we could trigger a crash. For this test defer destroying the
@@ -217,7 +223,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
+                new RectChecker(DEFAULT_RECT, PixelColor.RED));
     }
 
     /**
@@ -241,7 +247,7 @@ public class SurfaceControlTest {
                         sc.release();
                     }
                 },
-                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.GREEN));
+                new RectChecker(DEFAULT_RECT, PixelColor.GREEN));
     }
 
     /**
@@ -262,7 +268,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by -50 pixels
-                new MultiRectChecker(new Rect(0, 0, 100, 100)) {
+                new MultiRectChecker(DEFAULT_RECT) {
                     final PixelColor red = new PixelColor(PixelColor.RED);
                     final PixelColor black = new PixelColor(PixelColor.BLACK);
                     @Override
@@ -295,7 +301,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by 50 pixels
-                new MultiRectChecker(new Rect(0, 0, 100, 100)) {
+                new MultiRectChecker(DEFAULT_RECT) {
                     final PixelColor red = new PixelColor(PixelColor.RED);
                     final PixelColor black = new PixelColor(PixelColor.BLACK);
                     @Override
@@ -328,6 +334,6 @@ public class SurfaceControlTest {
                     }
                 },
 
-                new RectChecker(new Rect(0, 0, 100, 100), PixelColor.RED));
+                new RectChecker(DEFAULT_RECT, PixelColor.RED));
     }
 }
