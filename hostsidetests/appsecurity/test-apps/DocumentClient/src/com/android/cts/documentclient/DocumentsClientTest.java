@@ -173,12 +173,13 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         return new UiObject(new UiSelector().resourceId("android:id/button1"));
     }
 
-    private void assertToolbarTitleEquals(String label) throws UiObjectNotFoundException {
+    private boolean checkToolbarTitleEquals(String label) throws UiObjectNotFoundException {
+
         final UiObject title = new UiObject(new UiSelector().resourceId(
                 getDocumentsUiPackageId() + ":id/toolbar").childSelector(
                 new UiSelector().className("android.widget.TextView").text(label)));
 
-        assertTrue(title.waitForExists(TIMEOUT));
+        return title.waitForExists(TIMEOUT);
     }
 
     private String getDeviceName() {
@@ -790,8 +791,11 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
 
+        // Toolbar title should be set to either device name or "Internal storage".
+        final String defaultTitle =  "Internal storage";
+
         // assert the default root is internal storage root
-        assertToolbarTitleEquals(getDeviceName());
+        assertTrue(checkToolbarTitleEquals(getDeviceName()) || checkToolbarTitleEquals(defaultTitle));
 
         // no Downloads root
         assertFalse(findRoot("Downloads").exists());
