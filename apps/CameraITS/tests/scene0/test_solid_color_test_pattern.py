@@ -226,8 +226,12 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
                         'testPatternData: %s', captured_pattern,
                         str(cap['metadata']['android.sensor.testPatternData']))
           # Save test pattern image
-          img = image_processing_utils.convert_capture_to_rgb_image(
-              cap, props=props)
+          if fmt['format'] == 'yuv':
+            img = image_processing_utils.convert_capture_to_rgb_image(
+                cap, props=props)
+          else:
+            img = image_processing_utils.convert_capture_to_rgb_image(
+                cap, props=props, apply_ccm_raw_to_rgb=False)
           captured_color = color['color']
           image_processing_utils.write_image(
               img,
