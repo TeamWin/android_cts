@@ -78,7 +78,7 @@ public final class TestUtils {
      * @param minVersion the minimum version
      * @throws AssumptionViolatedException if module version < minVersion
      */
-    static void assumeMainlineModuleAtLeast(String module, long minVersion) {
+    public static void assumeMainlineModuleAtLeast(String module, long minVersion) {
         try {
             long actualVersion = getModuleVersion(module);
             assumeTrue("Assume  module  " + module + " version " + actualVersion + " < minVersion"
