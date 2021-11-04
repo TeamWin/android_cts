@@ -722,7 +722,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         // Watches don't support the status bar so this is an ok proxy, but this is not the most
         // general test for that. TODO: add a test API to do a real check for status bar support.
         return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)
-                && !isAutomotive() && !isTelevision();
+                && !isTelevision();
     }
 
     private boolean isSwipeToUnlockSupported() {

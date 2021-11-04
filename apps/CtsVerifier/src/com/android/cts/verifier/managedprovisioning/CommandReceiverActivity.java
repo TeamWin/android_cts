@@ -249,6 +249,9 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_SET_STATUSBAR_DISABLED: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
+                    Log.d(TAG, "calling setStatusBarDisabled("
+                            + ComponentName.flattenToShortString(mAdmin) + ", " + enforced
+                            + ") using " + mDpm + " on user " + UserHandle.myUserId());
                     mDpm.setStatusBarDisabled(mAdmin, enforced);
                 } break;
                 case COMMAND_SET_LOCK_TASK_FEATURES: {
