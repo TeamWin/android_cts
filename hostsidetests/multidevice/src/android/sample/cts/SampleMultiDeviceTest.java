@@ -23,6 +23,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import com.google.common.truth.Truth;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,8 +34,13 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class SampleMultiDeviceTest extends BaseHostJUnit4Test {
 
+    /**
+     * Sample tests that showcase that we are receiving the multiple devices in the test side.
+     */
     @Test
     public void testMultiDeviceTest() throws Exception {
+        // Validate we are actually multi-devices
+        Truth.assertThat(getListDevices().size()).isGreaterThan(1);
         for (ITestDevice device : getListDevices()) {
             CLog.i("device '%s' is available.", device.getSerialNumber());
             String buildId = device.getProperty("ro.vendor.build.id");
