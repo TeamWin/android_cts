@@ -2944,6 +2944,22 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".notifications.NotificationPrivacyVerifierActivity"
+            android:exported="true"
+            android:label="@string/notif_privacy_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".notifications.ShowWhenLockedActivity"
+            android:exported="true"
+            android:showWhenLocked="true"
+            />
+
         <receiver android:name=".notifications.BlockChangeReceiver"
             android:exported="true">
             <intent-filter>
