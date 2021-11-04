@@ -87,10 +87,10 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
     private static final int COLOR_BLUE =  makeColor(0, 0, 100);
     private static final int COLOR_GREY =  makeColor(100, 100, 100);
 
-    static final int BITRATE_1080p = 20000000;
-    static final int BITRATE_720p = 14000000;
-    static final int BITRATE_800x480 = 14000000;
-    static final int BITRATE_DEFAULT = 10000000;
+    public static final int BITRATE_1080p = 20000000;
+    public static final int BITRATE_720p = 14000000;
+    public static final int BITRATE_800x480 = 14000000;
+    public static final int BITRATE_DEFAULT = 10000000;
 
     private static final int IFRAME_INTERVAL = 10;
 
@@ -139,14 +139,14 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
      * @param h
      * @throws Exception
      */
-    void runTestRenderingInSeparateThread(final Context context, final String mimeType,
+    public void runTestRenderingInSeparateThread(final Context context, final String mimeType,
             final int w, final int h, final boolean runRemotely, final boolean multipleWindows)
             throws Throwable {
         runTestRenderingInSeparateThread(
                 context, mimeType, w, h, runRemotely, multipleWindows, /* degrees */ 0, null);
     }
 
-    void runTestRenderingInSeparateThread(final Context context, final String mimeType,
+    public void runTestRenderingInSeparateThread(final Context context, final String mimeType,
             final int w, final int h, final boolean runRemotely, final boolean multipleWindows,
             final int degrees, final String decoderName) throws Throwable {
         mTestException = null;
@@ -435,7 +435,8 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
     private static final int NUM_CODEC_CREATION = 5;
     private static final int NUM_DISPLAY_CREATION = 10;
     private static final int NUM_RENDERING = 10;
-    void doTestVirtualDisplayRecycles(final Context context, int numDisplays) throws Exception {
+    public void doTestVirtualDisplayRecycles(final Context context, int numDisplays)
+            throws Exception {
         Size maxSize = getMaxSupportedEncoderSize();
         if (maxSize == null) {
             Log.i(TAG, "no codec found, skipping");
@@ -1470,7 +1471,7 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
      * Check is done for 4 different levels: 1080p, 720p, 800x480, 480p
      * (The last one is required by CDD.)
      */
-    Size checkMaxConcurrentEncodingDecodingResolution() {
+    public Size checkMaxConcurrentEncodingDecodingResolution() {
         if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 1920, 1080, BITRATE_1080p)) {
             return new Size(1920, 1080);
         } else if (isConcurrentEncodingDecodingSupported(MIME_TYPE, 1280, 720, BITRATE_720p)) {
@@ -1484,12 +1485,12 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
         return null;
     }
 
-    boolean isConcurrentEncodingDecodingSupported(
+    public boolean isConcurrentEncodingDecodingSupported(
             String mimeType, int w, int h, int bitRate) {
         return isConcurrentEncodingDecodingSupported(mimeType, w, h, bitRate, null);
     }
 
-    boolean isConcurrentEncodingDecodingSupported(
+    public boolean isConcurrentEncodingDecodingSupported(
             String mimeType, int w, int h, int bitRate, String decoderName) {
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaFormat testFormat = MediaFormat.createVideoFormat(mimeType, w, h);
