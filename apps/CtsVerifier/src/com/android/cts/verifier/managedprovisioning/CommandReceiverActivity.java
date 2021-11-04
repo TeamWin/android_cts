@@ -285,11 +285,12 @@ public class CommandReceiverActivity extends Activity {
                         return;
                     }
                     clearAllPoliciesAndRestrictions();
+                    Log.i(TAG, "Clearing device owner app " + getPackageName());
                     mDpm.clearDeviceOwnerApp(getPackageName());
 
-                    // TODO(b/179100903): temporarily removing PO, should be done automatically
                     if (UserManager.isHeadlessSystemUserMode()) {
-                        Log.i(TAG, "Disabling PO on user " + UserHandle.myUserId());
+                        Log.i(TAG, "Clearing profile owner app (" + mAdmin.flattenToString()
+                                + " on user " + UserHandle.myUserId());
                         DevicePolicyManager localDpm = getSystemService(DevicePolicyManager.class);
                         localDpm.clearProfileOwner(mAdmin);
                     }
