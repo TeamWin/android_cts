@@ -249,6 +249,9 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_SET_STATUSBAR_DISABLED: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
+                    Log.d(TAG, "calling setStatusBarDisabled("
+                            + ComponentName.flattenToShortString(mAdmin) + ", " + enforced
+                            + ") using " + mDpm + " on user " + UserHandle.myUserId());
                     mDpm.setStatusBarDisabled(mAdmin, enforced);
                 } break;
                 case COMMAND_SET_LOCK_TASK_FEATURES: {
@@ -285,11 +288,12 @@ public class CommandReceiverActivity extends Activity {
                         return;
                     }
                     clearAllPoliciesAndRestrictions();
+                    Log.i(TAG, "Clearing device owner app " + getPackageName());
                     mDpm.clearDeviceOwnerApp(getPackageName());
 
-                    // TODO(b/179100903): temporarily removing PO, should be done automatically
                     if (UserManager.isHeadlessSystemUserMode()) {
-                        Log.i(TAG, "Disabling PO on user " + UserHandle.myUserId());
+                        Log.i(TAG, "Clearing profile owner app (" + mAdmin.flattenToString()
+                                + " on user " + UserHandle.myUserId());
                         DevicePolicyManager localDpm = getSystemService(DevicePolicyManager.class);
                         localDpm.clearProfileOwner(mAdmin);
                     }
