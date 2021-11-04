@@ -268,7 +268,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by -50 pixels
-                new MultiRectChecker(new Rect(0, 0, 100, 100)) {
+                new MultiRectChecker(DEFAULT_RECT) {
                     final PixelColor red = new PixelColor(PixelColor.RED);
                     final PixelColor black = new PixelColor(PixelColor.BLACK);
                     @Override
@@ -301,7 +301,7 @@ public class SurfaceControlTest {
                 },
 
                 // The rect should be offset by 50 pixels
-                new MultiRectChecker(new Rect(0, 0, 100, 100)) {
+                new MultiRectChecker(DEFAULT_RECT) {
                     final PixelColor red = new PixelColor(PixelColor.RED);
                     final PixelColor black = new PixelColor(PixelColor.BLACK);
                     @Override

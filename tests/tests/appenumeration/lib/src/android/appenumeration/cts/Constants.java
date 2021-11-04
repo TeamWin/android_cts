@@ -187,7 +187,6 @@ public class Constants {
             PKG_BASE + "cts.action.AWAIT_PACKAGE_FULLY_REMOVED";
     public static final String ACTION_AWAIT_PACKAGE_DATA_CLEARED =
             PKG_BASE + "cts.action.AWAIT_PACKAGE_DATA_CLEARED";
-
     public static final String ACTION_QUERY_ACTIVITIES =
             PKG_BASE + "cts.action.QUERY_INTENT_ACTIVITIES";
     public static final String ACTION_QUERY_SERVICES =
@@ -247,6 +246,8 @@ public class Constants {
             PKG_BASE + "cts.action.PENDING_INTENT_GET_ACTIVITY";
     public static final String ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE =
             PKG_BASE + "cts.action.PENDING_INTENT_GET_CREATOR_PACKAGE";
+    public static final String ACTION_CHECK_PACKAGE =
+            PKG_BASE + "cts.action.CHECK_PACKAGE";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";

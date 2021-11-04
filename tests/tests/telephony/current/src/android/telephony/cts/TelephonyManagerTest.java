@@ -1422,7 +1422,8 @@ public class TelephonyManagerTest {
             return;
         }
 
-        int[] allSubs = mSubscriptionManager.getActiveSubscriptionIdList();
+        int[] allSubs  = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mSubscriptionManager, (sm) ->sm.getActiveSubscriptionIdList());
         // generate a subscription that is valid (>0) but inactive (not part of active subId list)
         // A simple way to do this is sum the active subIds and add 1
         int inactiveValidSub = 1;
@@ -1998,14 +1999,16 @@ public class TelephonyManagerTest {
         }
         String[] originalFplmns = mTelephonyManager.getForbiddenPlmns();
         try {
-            int numFplmnsSet = mTelephonyManager.setForbiddenPlmns(FPLMN_TEST);
+            int numFplmnsSet = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(FPLMN_TEST));
             String[] writtenFplmns = mTelephonyManager.getForbiddenPlmns();
             assertEquals("Wrong return value for setFplmns with less than required fplmns: "
                     + numFplmnsSet, FPLMN_TEST.size(), numFplmnsSet);
             assertEquals("Wrong Fplmns content written", FPLMN_TEST, Arrays.asList(writtenFplmns));
         } finally {
             // Restore
-            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(Arrays.asList(originalFplmns)));
         }
     }
 
@@ -2027,7 +2030,8 @@ public class TelephonyManagerTest {
             for (int i = MIN_FPLMN_NUM; i < MAX_FPLMN_NUM; i++) {
                 targetFplmns.add(PLMN_B);
             }
-            int numFplmnsSet = mTelephonyManager.setForbiddenPlmns(targetFplmns);
+            int numFplmnsSet = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(targetFplmns));
             String[] writtenFplmns = mTelephonyManager.getForbiddenPlmns();
             assertTrue("Wrong return value for setFplmns with overflowing fplmns: " + numFplmnsSet,
                     numFplmnsSet < MAX_FPLMN_NUM);
@@ -2037,7 +2041,8 @@ public class TelephonyManagerTest {
                     Arrays.asList(writtenFplmns));
         } finally {
             // Restore
-            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(Arrays.asList(originalFplmns)));
         }
     }
 
@@ -2056,19 +2061,22 @@ public class TelephonyManagerTest {
             for (int i = 0; i < MIN_FPLMN_NUM; i++) {
                 targetDummyFplmns.add(PLMN_A);
             }
-            mTelephonyManager.setForbiddenPlmns(targetDummyFplmns);
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(targetDummyFplmns));
             String[] writtenDummyFplmns = mTelephonyManager.getForbiddenPlmns();
             assertEquals(targetDummyFplmns, Arrays.asList(writtenDummyFplmns));
 
             List<String> targetFplmns = new ArrayList<>();
-            int numFplmnsSet = mTelephonyManager.setForbiddenPlmns(targetFplmns);
+            int numFplmnsSet = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(targetFplmns));
             String[] writtenFplmns = mTelephonyManager.getForbiddenPlmns();
             assertEquals("Wrong return value for setFplmns with empty list", 0, numFplmnsSet);
             assertEquals("Wrong number of Fplmns written", 0, writtenFplmns.length);
             // TODO wait for 10 minutes or so for the FPLMNS list to grow back
         } finally {
             // Restore
-            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(Arrays.asList(originalFplmns)));
         }
     }
 
@@ -2083,12 +2091,14 @@ public class TelephonyManagerTest {
         }
         String[] originalFplmns = mTelephonyManager.getForbiddenPlmns();
         try {
-            mTelephonyManager.setForbiddenPlmns(null);
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(null));
             fail("Expected IllegalArgumentException. Null input is not allowed");
         } catch (IllegalArgumentException expected) {
         } finally {
             // Restore
-            mTelephonyManager.setForbiddenPlmns(Arrays.asList(originalFplmns));
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.setForbiddenPlmns(Arrays.asList(originalFplmns)));
         }
     }
 

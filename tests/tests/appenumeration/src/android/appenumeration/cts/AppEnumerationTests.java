@@ -21,6 +21,7 @@ import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CA
 import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_SESSION_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CAN_PACKAGE_QUERY;
+import static android.appenumeration.cts.Constants.ACTION_CHECK_PACKAGE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_GET_ALL_PACKAGE_INSTALLER_SESSIONS;
@@ -128,11 +129,13 @@ import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
 import static android.content.Intent.EXTRA_PACKAGES;
+import static android.content.Intent.EXTRA_UID;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.content.pm.PackageManager.SIGNATURE_MATCH;
 import static android.content.pm.PackageManager.SIGNATURE_UNKNOWN_PACKAGE;
 import static android.os.Process.INVALID_UID;
+import static android.os.Process.ROOT_UID;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -1925,6 +1928,35 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void checkPackage_queriesNothing_validateFailed() {
+        // Using ROOT_UID here to pass the check in #verifyAndGetBypass, this is intended by design.
+        assertThrows(SecurityException.class,
+                () -> checkPackage(QUERIES_NOTHING, TARGET_FILTERS, ROOT_UID));
+    }
+
+    @Test
+    public void checkPackage_queriesNothing_targetIsNotExisting_validateFailed() {
+        // Using ROOT_UID here to pass the check in #verifyAndGetBypass, this is intended by design.
+        assertThrows(SecurityException.class,
+                () -> checkPackage(QUERIES_NOTHING, TEST_NONEXISTENT_PACKAGE_NAME_1, ROOT_UID));
+    }
+
+    @Test
+    public void checkPackage_queriesNothingHasPerm_validateSuccessful() throws Exception {
+        // Using ROOT_UID here to pass the check in #verifyAndGetBypass, this is intended by design.
+        assertThat(checkPackage(QUERIES_NOTHING_PERM, TARGET_FILTERS, ROOT_UID), is(true));
+    }
+
+    @Test
+    public void checkPackage_queriesNothingHasPerm_targetIsNotExisting_validateFailed()
+            throws Exception {
+        // Using ROOT_UID here to pass the check in #verifyAndGetBypass, this is intended by design.
+        assertThrows(SecurityException.class,
+                () -> checkPackage(QUERIES_NOTHING_PERM, TEST_NONEXISTENT_PACKAGE_NAME_1,
+                        ROOT_UID));
+    }
+
+    @Test
     public void pendingIntent_getCreatorPackage_queriesPackage_canSeeNoApi()
             throws Exception {
         final PendingIntent pendingIntent = getPendingIntentActivity(TARGET_NO_API);
@@ -2111,6 +2143,15 @@ public class AppEnumerationTests {
             certs.add(cert);
         }
         return certs;
+    }
+
+    private boolean checkPackage(String sourcePackageName, String targetPackageName, int targetUid)
+            throws Exception {
+        final Bundle extra = new Bundle();
+        extra.putInt(EXTRA_UID, targetUid);
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName, extra,
+                ACTION_CHECK_PACKAGE);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     private PackageInfo startForResult(String sourcePackageName, String targetPackageName)

@@ -219,4 +219,17 @@ public class WindowManagerJetpackTestBase {
             return sResumedActivities.contains(activity);
         }
     }
+
+    @Nullable
+    public static TestActivityWithId getResumedActivityById(@NonNull String activityId) {
+        synchronized (sResumedActivities) {
+            for (Activity activity : sResumedActivities) {
+                if (activity instanceof TestActivityWithId
+                        && activityId.equals(((TestActivityWithId) activity).getId())) {
+                    return (TestActivityWithId) activity;
+                }
+            }
+            return null;
+        }
+    }
 }

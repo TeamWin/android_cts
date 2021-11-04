@@ -164,11 +164,20 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         // Test all allowed constraints.
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setExpedited(true)
+                .setPriority(JobInfo.PRIORITY_HIGH)
                 .setPersisted(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setRequiresStorageNotLow(true)
                 .build();
         assertTrue(ji.isExpedited());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Confirm default priority for EJs.
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setExpedited(true)
+                .build();
+        assertEquals(JobInfo.PRIORITY_MAX, ji.getPriority());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -187,6 +196,14 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
                         .setPeriodic(15 * 60_000));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setPriority(JobInfo.PRIORITY_LOW));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setPriority(JobInfo.PRIORITY_DEFAULT));
         assertBuildFails(failureMessage,
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
@@ -216,6 +233,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                         .addTriggerContentUri(tcu));
     }
 
+    @SuppressWarnings("deprecation")
     public void testImportantWhileForeground() {
         // Assert the default value is false
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
@@ -228,6 +246,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setImportantWhileForeground(true)
                 .build();
         assertTrue(ji.isImportantWhileForeground());
+        assertEquals(JobInfo.PRIORITY_HIGH, ji.getPriority());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
 
@@ -384,6 +403,70 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                         .setMinimumLatency(60_000L)
                         .setOverrideDeadline(600_000L)
                         .setPrefetch(true));
+    }
+
+    public void testPriority() {
+        // Assert the default value is DEFAULT
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .build();
+        assertEquals(JobInfo.PRIORITY_DEFAULT, ji.getPriority());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_LOW)
+                .build();
+        assertEquals(JobInfo.PRIORITY_LOW, ji.getPriority());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setPriority(JobInfo.PRIORITY_MIN)
+                .build();
+        assertEquals(JobInfo.PRIORITY_MIN, ji.getPriority());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Attempt an invalid number
+        try {
+            // It's over 9000!!!
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setPriority(9001).build();
+            fail("Successfully built a job with an invalid priority level");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setPriority(-1).build();
+            fail("Successfully built a job with an invalid priority level");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setPriority(123).build();
+            fail("Successfully built a job with an invalid priority level");
+        } catch (Exception e) {
+            // Success
+        }
+
+        // Test other invalid configurations.
+        final String failureMessage =
+                "Successfully built a JobInfo object with disallowed priority configurations";
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setPriority(JobInfo.PRIORITY_MAX));
+        //noinspection deprecation
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setPriority(JobInfo.PRIORITY_LOW)
+                        .setImportantWhileForeground(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setPriority(JobInfo.PRIORITY_HIGH)
+                        .setPrefetch(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setPriority(JobInfo.PRIORITY_HIGH)
+                        .setPeriodic(JobInfo.getMinPeriodMillis()));
     }
 
     public void testRequiredNetwork() {

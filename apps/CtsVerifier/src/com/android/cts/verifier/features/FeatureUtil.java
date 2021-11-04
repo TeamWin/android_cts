@@ -90,10 +90,26 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether the device is automotive
+     */
+    public static boolean isAutomotive(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
      * Checks whether the device supports managed secondary users.
      */
     public static boolean supportManagedSecondaryUsers(Context context) {
         return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
                 || UserManager.isHeadlessSystemUserMode()) && UserManager.supportsMultipleUsers();
     }
+
+    /**
+     * Checks whether the device shows keyguard when the user doesn't have credentials.
+     */
+    public static boolean isKeyguardShownWhenUserDoesntHaveCredentials(Context context) {
+        return !isAutomotive(context);
+    }
+
 }

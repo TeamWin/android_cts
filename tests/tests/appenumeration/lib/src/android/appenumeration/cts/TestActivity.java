@@ -52,11 +52,14 @@ import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
 import static android.content.Intent.EXTRA_PACKAGES;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
+import static android.content.Intent.EXTRA_UID;
 import static android.content.pm.PackageManager.CERT_INPUT_RAW_X509;
 import static android.os.Process.INVALID_UID;
+import static android.os.Process.ROOT_UID;
 
 import android.accounts.Account;
 import android.app.Activity;
+import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
@@ -146,21 +149,21 @@ public class TestActivity extends Activity {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendPackageInfo(remoteCallback, packageName);
             } else if (ACTION_GET_PACKAGES_FOR_UID.equals(action)) {
-                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final int uid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 sendPackagesForUid(remoteCallback, uid);
             } else if (ACTION_GET_NAME_FOR_UID.equals(action)) {
-                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final int uid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 sendNameForUid(remoteCallback, uid);
             } else if (ACTION_GET_NAMES_FOR_UIDS.equals(action)) {
-                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final int uid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 sendNamesForUids(remoteCallback, uid);
             } else if (ACTION_CHECK_SIGNATURES.equals(action)) {
                 final int uid1 = getPackageManager().getApplicationInfo(
                         getPackageName(), /* flags */ 0).uid;
-                final int uid2 = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final int uid2 = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 sendCheckSignatures(remoteCallback, uid1, uid2);
             } else if (ACTION_HAS_SIGNING_CERTIFICATE.equals(action)) {
-                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final int uid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 final byte[] cert = intent.getBundleExtra(EXTRA_DATA).getByteArray(EXTRA_CERT);
                 sendHasSigningCertificate(remoteCallback, uid, cert, CERT_INPUT_RAW_X509);
             } else if (ACTION_START_FOR_RESULT.equals(action)) {
@@ -288,7 +291,7 @@ public class TestActivity extends Activity {
                         userId);
             } else if (Constants.ACTION_CHECK_URI_PERMISSION.equals(action)) {
                 final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
-                final int targetUid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final int targetUid = intent.getIntExtra(EXTRA_UID, INVALID_UID);
                 final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
                         .getString(EXTRA_AUTHORITY);
                 sendCheckUriPermission(remoteCallback, sourceAuthority, targetPackageName,
@@ -334,6 +337,12 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_PENDING_INTENT_GET_CREATOR_PACKAGE.equals(action)) {
                 sendPendingIntentGetCreatorPackage(remoteCallback,
                         intent.getParcelableExtra(EXTRA_PENDING_INTENT));
+            } else if (Constants.ACTION_CHECK_PACKAGE.equals(action)) {
+                // Using ROOT_UID as default value here to pass the check in #verifyAndGetBypass,
+                // this is intended by design.
+                final int uid = intent.getIntExtra(EXTRA_UID, ROOT_UID);
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                sendCheckPackageResult(remoteCallback, packageName, uid);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -864,6 +873,19 @@ public class TestActivity extends Activity {
         result.putString(Intent.EXTRA_PACKAGE_NAME, pendingIntent.getCreatorPackage());
         remoteCallback.sendResult(result);
         finish();
+    }
+
+    private void sendCheckPackageResult(RemoteCallback remoteCallback, String packageName,
+            int uid) {
+        try {
+            getSystemService(AppOpsManager.class).checkPackage(uid, packageName);
+            final Bundle result = new Bundle();
+            result.putBoolean(EXTRA_RETURN_RESULT, true);
+            remoteCallback.sendResult(result);
+            finish();
+        } catch (SecurityException e) {
+            sendError(remoteCallback, e);
+        }
     }
 
     @Override
