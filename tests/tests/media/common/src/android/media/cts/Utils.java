@@ -106,7 +106,7 @@ public class Utils {
         }
     }
 
-    protected static void toggleNotificationPolicyAccess(String packageName,
+    public static void toggleNotificationPolicyAccess(String packageName,
             Instrumentation instrumentation, boolean on) throws IOException {
 
         String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
