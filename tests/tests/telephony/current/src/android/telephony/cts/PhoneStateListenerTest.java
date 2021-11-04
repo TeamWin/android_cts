@@ -279,53 +279,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnSignalStrengthChangedCalled);
     }
 
-     /**
-     * Due to the corresponding API is hidden in R and will be public in S, this test
-     * is commented and will be un-commented in Android S.
-     *
-    @Test
-    public void testOnAlwaysReportedSignalStrengthChanged() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-
-        assertTrue(mSignalStrength == null);
-
-        mHandler.post(() -> {
-            mListener = new PhoneStateListener() {
-                @Override
-                public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-                    synchronized (mLock) {
-                        mSignalStrength = signalStrength;
-                        mLock.notify();
-                    }
-                }
-            };
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.listen(mListener,
-                            PhoneStateListener.LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH));
-        });
-        synchronized (mLock) {
-            if (mSignalStrength == null) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mSignalStrength != null);
-        // Call SignalStrength methods to make sure they do not throw any exceptions
-        mSignalStrength.getCdmaDbm();
-        mSignalStrength.getCdmaEcio();
-        mSignalStrength.getEvdoDbm();
-        mSignalStrength.getEvdoEcio();
-        mSignalStrength.getEvdoSnr();
-        mSignalStrength.getGsmBitErrorRate();
-        mSignalStrength.getGsmSignalStrength();
-        mSignalStrength.isGsm();
-        mSignalStrength.getLevel();
-    }
-    */
-
     @Test
     public void testOnSignalStrengthsChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
