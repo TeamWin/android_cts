@@ -165,8 +165,8 @@ public class DisplayTests extends MultiDisplayTestBase {
 
         // Apply new override values that don't match the physical metrics.
         final Size overrideSize = new Size(
-                (int) (originalDisplayMetrics.physicalSize.getWidth() * 1.5),
-                (int) (originalDisplayMetrics.physicalSize.getHeight() * 1.5));
+                (int) (originalDisplayMetrics.physicalSize.getWidth() * 0.9),
+                (int) (originalDisplayMetrics.physicalSize.getHeight() * 0.9));
         final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
         displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
 
