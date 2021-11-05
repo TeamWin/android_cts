@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.nn.benchmark.core.BenchmarkException;
@@ -91,6 +92,7 @@ public class NNAccuracyTest {
     }
 
     @Test
+    @RequiresDevice
     @LargeTest
     public void testNNAPI() throws BenchmarkException, IOException {
         List<String> accelerators = new ArrayList<>();
