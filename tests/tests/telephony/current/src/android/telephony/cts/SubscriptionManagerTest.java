@@ -66,6 +66,7 @@ import com.android.internal.util.ArrayUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -589,6 +590,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    @Ignore("b/181053462")
     public void testSubscriptionGroupingWithPermission() throws Exception {
         if (!isSupported()) return;
 
@@ -646,6 +648,7 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    @Ignore("b/181053462")
     public void testAddSubscriptionIntoNewGroupWithPermission() throws Exception {
         if (!isSupported()) return;
 
