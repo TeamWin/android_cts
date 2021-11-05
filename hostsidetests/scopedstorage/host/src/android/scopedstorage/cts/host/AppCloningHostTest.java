@@ -34,6 +34,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Runs the AppCloning tests.
  */
@@ -52,6 +55,7 @@ public class AppCloningHostTest extends BaseHostTestCase {
     public void setup() throws Exception {
         assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
         assumeTrue(isAtLeastS());
+        assumeFalse("Device uses sdcardfs", usesSdcardFs());
 
         String output = executeShellCommand(
                 "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
@@ -66,8 +70,10 @@ public class AppCloningHostTest extends BaseHostTestCase {
 
     @After
     public void tearDown() throws Exception {
-        if (isHeadlessSystemUserMode() || !isAtLeastS()) return;
-        mContentProviderHandler.tearDown();
+        if (isHeadlessSystemUserMode() || !isAtLeastS() || usesSdcardFs()) return;
+        if (mContentProviderHandler != null) {
+            mContentProviderHandler.tearDown();
+        }
         executeShellCommand("pm remove-user %s", mCloneUserId);
     }
 
@@ -128,5 +134,19 @@ public class AppCloningHostTest extends BaseHostTestCase {
         return executeShellV2Command("content %s --user %s --uri %s %s",
                 commandType, userId, fullUri, args);
     }
+
+    private boolean usesSdcardFs() throws Exception {
+        List<String> mounts = new ArrayList<>();
+        CommandResult out = executeShellV2Command("cat /proc/mounts");
+        assertThat(isSuccessful(out)).isTrue();
+        for (String line : out.getStdout().split("\n")) {
+            String[] split = line.split(" ");
+            if (split.length >= 3 && split[2].equals("sdcardfs")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }
