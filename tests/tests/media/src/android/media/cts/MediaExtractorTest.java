@@ -685,7 +685,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         private final long mSize;
         private TreeMap<Long, ByteBuffer> mMap = new TreeMap<Long, ByteBuffer>();
 
-        public ByteBufferDataSource(MediaCodecTest.ByteBufferStream bufferStream)
+        public ByteBufferDataSource(StreamUtils.ByteBufferStream bufferStream)
                 throws IOException {
             long size = 0;
             while (true) {
@@ -746,13 +746,13 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     /* package */ static class MediaExtractorStream
-                extends MediaCodecTest.ByteBufferStream implements Closeable {
+                extends StreamUtils.ByteBufferStream implements Closeable {
         public boolean mIsFloat;
         public boolean mSawOutputEOS;
         public MediaFormat mFormat;
 
         private MediaExtractor mExtractor;
-        private MediaCodecTest.MediaCodecStream mDecoderStream;
+        private StreamUtils.MediaCodecStream mDecoderStream;
 
         public MediaExtractorStream(
                 String inMime, String outMime,
@@ -770,7 +770,7 @@ public class MediaExtractorTest extends AndroidTestCase {
                 if (outMime.equals(actualMime)) {
                     break;
                 } else { // no matching mime, try to use decoder
-                    mDecoderStream = new MediaCodecTest.MediaCodecStream(
+                    mDecoderStream = new StreamUtils.MediaCodecStream(
                             mExtractor, mFormat);
                     Log.w(TAG, "fallback to input mime type with decoder");
                 }
@@ -783,7 +783,7 @@ public class MediaExtractorTest extends AndroidTestCase {
 
         public MediaExtractorStream(
                 String inMime, String outMime,
-                MediaCodecTest.ByteBufferStream inputStream) throws Exception {
+                StreamUtils.ByteBufferStream inputStream) throws Exception {
             this(inMime, outMime, new ByteBufferDataSource(inputStream));
         }
 
@@ -851,14 +851,14 @@ public class MediaExtractorTest extends AndroidTestCase {
             format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
 
             // TODO: Add float mode when MediaExtractor supports float configuration.
-            final MediaCodecTest.PcmAudioBufferStream audioStream =
-                    new MediaCodecTest.PcmAudioBufferStream(
+            final StreamUtils.PcmAudioBufferStream audioStream =
+                    new StreamUtils.PcmAudioBufferStream(
                             SAMPLES, sampleRate, 1000 /* frequency */, 100 /* sweep */,
                           false /* useFloat */);
 
-            final MediaCodecTest.MediaCodecStream rawToFlac =
-                    new MediaCodecTest.MediaCodecStream(
-                            new MediaCodecTest.ByteBufferInputStream(audioStream),
+            final StreamUtils.MediaCodecStream rawToFlac =
+                    new StreamUtils.MediaCodecStream(
+                            new StreamUtils.ByteBufferInputStream(audioStream),
                             format, true /* encode */);
             final MediaExtractorStream flacToRaw =
                     new MediaExtractorStream(MediaFormat.MIMETYPE_AUDIO_FLAC /* inMime */,
@@ -869,9 +869,9 @@ public class MediaExtractorTest extends AndroidTestCase {
             // floats come through integer to float conversion, it does not matter.
             assertEquals("Audio data not identical after compression",
                 audioStream.sizeInBytes(),
-                MediaCodecTest.compareStreams(new MediaCodecTest.ByteBufferInputStream(flacToRaw),
-                    new MediaCodecTest.ByteBufferInputStream(
-                            new MediaCodecTest.PcmAudioBufferStream(audioStream))));
+                StreamUtils.compareStreams(new StreamUtils.ByteBufferInputStream(flacToRaw),
+                    new StreamUtils.ByteBufferInputStream(
+                            new StreamUtils.PcmAudioBufferStream(audioStream))));
         }
     }
 
