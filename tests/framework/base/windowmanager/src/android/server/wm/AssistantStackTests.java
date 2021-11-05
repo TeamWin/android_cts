@@ -200,9 +200,9 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
         }
 
-        // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
-        // the fullscreen activity is still visible and on top after the assistant activity finishes
-        launchActivityOnDisplay(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
+        // Launch an assistant activity on top of an existing activity, and ensure that the activity
+        // is still visible and on top after the assistant activity finishes
+        launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
