@@ -456,27 +456,45 @@ public class TunerFrontendTest {
 
     @Test
     public void testIsdbtFrontendSettingsWithIntFrequency() throws Exception {
-        IsdbtFrontendSettings settings =
-                IsdbtFrontendSettings
-                        .builder()
-                        .setFrequency(9)
-                        .setModulation(IsdbtFrontendSettings.MODULATION_MOD_64QAM)
-                        .setBandwidth(IsdbtFrontendSettings.BANDWIDTH_8MHZ)
-                        .setMode(IsdbtFrontendSettings.MODE_2)
-                        .setCodeRate(DvbtFrontendSettings.CODERATE_7_8)
-                        .setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_1_4)
-                        .setServiceAreaId(10)
-                        .build();
+        IsdbtFrontendSettings.Builder builder = IsdbtFrontendSettings.builder();
+        builder.setFrequency(9);
+        builder.setModulation(IsdbtFrontendSettings.MODULATION_MOD_64QAM);
+        builder.setBandwidth(IsdbtFrontendSettings.BANDWIDTH_8MHZ);
+        builder.setMode(IsdbtFrontendSettings.MODE_2);
+        builder.setCodeRate(DvbtFrontendSettings.CODERATE_7_8);
+        builder.setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_1_4);
+        builder.setServiceAreaId(10);
 
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            IsdbtFrontendSettings.IsdbtLayerSettings.Builder layerBuilder =
+                    IsdbtFrontendSettings.IsdbtLayerSettings.builder();
+            layerBuilder.setTimeInterleaveMode(IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
+            layerBuilder.setModulation(IsdbtFrontendSettings.MODULATION_MOD_16QAM);
+            layerBuilder.setCodeRate(DvbtFrontendSettings.CODERATE_5_6);
+            layerBuilder.setNumOfSegment(0xFF);
+            IsdbtFrontendSettings.IsdbtLayerSettings layer = layerBuilder.build();
+            builder.setLayerSettings(new IsdbtFrontendSettings.IsdbtLayerSettings[] {layer, layer});
+            builder.setPartialReceptionFlag(IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
+        }
+
+        IsdbtFrontendSettings settings = builder.build();
         settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
         settings.setEndFrequency(100);
 
         assertEquals(FrontendSettings.TYPE_ISDBT, settings.getType());
         assertEquals(9, settings.getFrequency());
-        assertEquals(IsdbtFrontendSettings.MODULATION_MOD_64QAM, settings.getModulation());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(IsdbtFrontendSettings.MODULATION_UNDEFINED, settings.getModulation());
+        } else {
+            assertEquals(IsdbtFrontendSettings.MODULATION_MOD_64QAM, settings.getModulation());
+        }
         assertEquals(IsdbtFrontendSettings.BANDWIDTH_8MHZ, settings.getBandwidth());
         assertEquals(IsdbtFrontendSettings.MODE_2, settings.getMode());
-        assertEquals(DvbtFrontendSettings.CODERATE_7_8, settings.getCodeRate());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(DvbtFrontendSettings.CODERATE_UNDEFINED, settings.getCodeRate());
+        } else {
+            assertEquals(DvbtFrontendSettings.CODERATE_7_8, settings.getCodeRate());
+        }
         assertEquals(DvbtFrontendSettings.GUARD_INTERVAL_1_4, settings.getGuardInterval());
         assertEquals(10, settings.getServiceAreaId());
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
@@ -487,6 +505,21 @@ public class TunerFrontendTest {
             assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
                     settings.getFrontendSpectralInversion());
             assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
+
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            IsdbtFrontendSettings.IsdbtLayerSettings[] layers = settings.getLayerSettings();
+            assertEquals(layers.length, 2);
+            assertEquals(layers[0].getModulation(), IsdbtFrontendSettings.MODULATION_MOD_16QAM);
+            assertEquals(layers[0].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
+            assertEquals(layers[0].getTimeInterleaveMode(),
+                    IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
+            assertEquals(layers[1].getModulation(), IsdbtFrontendSettings.MODULATION_MOD_16QAM);
+            assertEquals(layers[1].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
+            assertEquals(layers[1].getTimeInterleaveMode(),
+                    IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
+            assertEquals(settings.getPartialReceptionFlag(),
+                    IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
         }
     }
 
@@ -942,27 +975,45 @@ public class TunerFrontendTest {
 
     @Test
     public void testIsdbtFrontendSettingsWithLongFrequency() throws Exception {
-        IsdbtFrontendSettings settings =
-                IsdbtFrontendSettings
-                        .builder()
-                        .setFrequencyLong(9)
-                        .setModulation(IsdbtFrontendSettings.MODULATION_MOD_64QAM)
-                        .setBandwidth(IsdbtFrontendSettings.BANDWIDTH_8MHZ)
-                        .setMode(IsdbtFrontendSettings.MODE_2)
-                        .setCodeRate(DvbtFrontendSettings.CODERATE_7_8)
-                        .setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_1_4)
-                        .setServiceAreaId(10)
-                        .build();
+        IsdbtFrontendSettings.Builder builder = IsdbtFrontendSettings.builder();
+        builder.setFrequencyLong(9);
+        builder.setModulation(IsdbtFrontendSettings.MODULATION_MOD_64QAM);
+        builder.setBandwidth(IsdbtFrontendSettings.BANDWIDTH_8MHZ);
+        builder.setMode(IsdbtFrontendSettings.MODE_2);
+        builder.setCodeRate(DvbtFrontendSettings.CODERATE_7_8);
+        builder.setGuardInterval(DvbtFrontendSettings.GUARD_INTERVAL_1_4);
+        builder.setServiceAreaId(10);
 
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            IsdbtFrontendSettings.IsdbtLayerSettings.Builder layerBuilder =
+                    IsdbtFrontendSettings.IsdbtLayerSettings.builder();
+            layerBuilder.setTimeInterleaveMode(IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
+            layerBuilder.setModulation(IsdbtFrontendSettings.MODULATION_MOD_16QAM);
+            layerBuilder.setCodeRate(DvbtFrontendSettings.CODERATE_5_6);
+            layerBuilder.setNumOfSegment(0xFF);
+            IsdbtFrontendSettings.IsdbtLayerSettings layer = layerBuilder.build();
+            builder.setLayerSettings(new IsdbtFrontendSettings.IsdbtLayerSettings[] {layer, layer});
+            builder.setPartialReceptionFlag(IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
+        }
+
+        IsdbtFrontendSettings settings = builder.build();
         settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
         settings.setEndFrequencyLong(100);
 
         assertEquals(FrontendSettings.TYPE_ISDBT, settings.getType());
         assertEquals(9, settings.getFrequencyLong());
-        assertEquals(IsdbtFrontendSettings.MODULATION_MOD_64QAM, settings.getModulation());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(IsdbtFrontendSettings.MODULATION_UNDEFINED, settings.getModulation());
+        } else {
+            assertEquals(IsdbtFrontendSettings.MODULATION_MOD_64QAM, settings.getModulation());
+        }
         assertEquals(IsdbtFrontendSettings.BANDWIDTH_8MHZ, settings.getBandwidth());
         assertEquals(IsdbtFrontendSettings.MODE_2, settings.getMode());
-        assertEquals(DvbtFrontendSettings.CODERATE_7_8, settings.getCodeRate());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(DvbtFrontendSettings.CODERATE_UNDEFINED, settings.getCodeRate());
+        } else {
+            assertEquals(DvbtFrontendSettings.CODERATE_7_8, settings.getCodeRate());
+        }
         assertEquals(DvbtFrontendSettings.GUARD_INTERVAL_1_4, settings.getGuardInterval());
         assertEquals(10, settings.getServiceAreaId());
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
@@ -973,6 +1024,21 @@ public class TunerFrontendTest {
             assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
                     settings.getFrontendSpectralInversion());
             assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequencyLong());
+        }
+
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            IsdbtFrontendSettings.IsdbtLayerSettings[] layers = settings.getLayerSettings();
+            assertEquals(layers.length, 2);
+            assertEquals(layers[0].getModulation(), IsdbtFrontendSettings.MODULATION_MOD_16QAM);
+            assertEquals(layers[0].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
+            assertEquals(layers[0].getTimeInterleaveMode(),
+                    IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
+            assertEquals(layers[1].getModulation(), IsdbtFrontendSettings.MODULATION_MOD_16QAM);
+            assertEquals(layers[1].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
+            assertEquals(layers[1].getTimeInterleaveMode(),
+                    IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
+            assertEquals(settings.getPartialReceptionFlag(),
+                    IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
         }
     }
 
@@ -1146,6 +1212,9 @@ public class TunerFrontendTest {
         isdbtCaps.getModulationCapability();
         isdbtCaps.getCodeRateCapability();
         isdbtCaps.getGuardIntervalCapability();
+        isdbtCaps.getTimeInterleaveModeCapability();
+        isdbtCaps.isSegmentAutoSupported();
+        isdbtCaps.isFullSegmentSupported();
     }
 
     private void testDtmbFrontendCapabilities(FrontendCapabilities caps) throws Exception {

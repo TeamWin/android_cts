@@ -387,6 +387,12 @@ public class TunerTest {
                     case FrontendStatus.FRONTEND_STATUS_TYPE_IS_SHORT_FRAMES_ENABLED:
                         status.isShortFramesEnabled();
                         break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_MODE:
+                        status.getIsdbtMode();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_PARTIAL_RECEPTION_FLAG:
+                        status.getIsdbtPartialReceptionFlag();
+                        break;
                 }
             }
             tuner.close();
@@ -2084,15 +2090,43 @@ public class TunerTest {
                     int modulation = getFirstCapable(isdbtCaps.getModulationCapability());
                     int codeRate = getFirstCapable(isdbtCaps.getCodeRateCapability());
                     int guardInterval = getFirstCapable(isdbtCaps.getGuardIntervalCapability());
-                    IsdbtFrontendSettings settings = IsdbtFrontendSettings
-                            .builder()
-                            .setFrequencyLong(minFreq)
-                            .setModulation(modulation)
-                            .setBandwidth(bandwidth)
-                            .setMode(mode)
-                            .setCodeRate(codeRate)
-                            .setGuardInterval(guardInterval)
-                            .build();
+                    int timeInterleaveMode =
+                            getFirstCapable(isdbtCaps.getTimeInterleaveModeCapability());
+                    boolean isSegmentAutoSupported = isdbtCaps.isSegmentAutoSupported();
+                    boolean isFullSegmentSupported = isdbtCaps.isFullSegmentSupported();
+
+                    IsdbtFrontendSettings.Builder builder = IsdbtFrontendSettings.builder();
+                    builder.setFrequencyLong(minFreq);
+                    builder.setBandwidth(bandwidth);
+                    builder.setMode(mode);
+                    builder.setGuardInterval(guardInterval);
+
+                    if (!TunerVersionChecker.isHigherOrEqualVersionTo(
+                                TunerVersionChecker.TUNER_VERSION_2_0)) {
+                        builder.setModulation(modulation);
+                        builder.setCodeRate(codeRate);
+                    } else {
+                        IsdbtFrontendSettings.IsdbtLayerSettings.Builder layerBuilder =
+                                IsdbtFrontendSettings.IsdbtLayerSettings.builder();
+                        layerBuilder.setTimeInterleaveMode(timeInterleaveMode);
+                        layerBuilder.setModulation(modulation);
+                        layerBuilder.setCodeRate(codeRate);
+                        if (isSegmentAutoSupported) {
+                            layerBuilder.setNumOfSegment(0xFF);
+                        } else {
+                            if (isFullSegmentSupported) {
+                                layerBuilder.setNumOfSegment(13);
+                            } else {
+                                layerBuilder.setNumOfSegment(1);
+                            }
+                        }
+                        IsdbtFrontendSettings.IsdbtLayerSettings layer = layerBuilder.build();
+                        builder.setLayerSettings(
+                                new IsdbtFrontendSettings.IsdbtLayerSettings[] {layer});
+                        builder.setPartialReceptionFlag(
+                                IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
+                    }
+                    IsdbtFrontendSettings settings = builder.build();
                     settings.setEndFrequencyLong(maxFreq);
                     return settings;
                 }
