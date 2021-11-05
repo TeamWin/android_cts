@@ -17,6 +17,8 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.app.ActivityManager.STOP_BG_USERS_ON_SWITCH_DEFAULT;
+import static android.app.ActivityManager.STOP_BG_USERS_ON_SWITCH_FALSE;
 
 import static com.android.bedstead.nene.permissions.Permissions.NOTIFY_PENDING_SYSTEM_UPDATE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
@@ -601,11 +603,8 @@ public final class DeviceState implements TestRule {
                 Tags.clearTags();
                 Tags.addTag(Tags.USES_DEVICESTATE);
 
-                boolean originalStopBgUsersOnSwitch =
-                        TestApis.users().getStopBgUsersOnSwitch();
-
                 try {
-                    TestApis.users().setStopBgUsersOnSwitch(false);
+                    TestApis.users().setStopBgUsersOnSwitch(STOP_BG_USERS_ON_SWITCH_FALSE);
 
                     try {
                         List<Annotation> annotations =
@@ -642,7 +641,7 @@ public final class DeviceState implements TestRule {
                         teardownShareableState();
                     }
 
-                    TestApis.users().setStopBgUsersOnSwitch(originalStopBgUsersOnSwitch);
+                    TestApis.users().setStopBgUsersOnSwitch(STOP_BG_USERS_ON_SWITCH_DEFAULT);
                 }
             }
         };
