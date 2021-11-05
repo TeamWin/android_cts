@@ -261,13 +261,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest
     @Override
     @Test
-    public void testCaCertManagement() throws Exception {
-        super.testCaCertManagement();
-    }
-
-    @FlakyTest
-    @Override
-    @Test
     public void testDelegatedCertInstaller() throws Exception {
         super.testDelegatedCertInstaller();
     }

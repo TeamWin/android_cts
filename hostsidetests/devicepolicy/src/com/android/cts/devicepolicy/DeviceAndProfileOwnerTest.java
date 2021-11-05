@@ -223,26 +223,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
-    // TODO(b/198641824):remove after fixing the failure in the migrated test
-    @Test
-    public void testCaCertManagement() throws Exception {
-        executeDeviceTestClass(".CaCertManagementTest");
-    }
-
-    @Test
-    public void testInstallCaCertLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".CaCertManagementTest", "testCanInstallAndUninstallACaCert");
-        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_CA_CERT_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.UNINSTALL_CA_CERTS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .build());
-    }
-
     @Test
     public void testApplicationRestrictionIsRestricted() throws Exception {
         installAppAsUser(DELEGATE_APP_APK, mUserId);
