@@ -44,7 +44,6 @@ import android.util.Log;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.Certificate;
@@ -805,6 +804,14 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
      */
     public void testManagedProvisioningPreInstalled() throws Exception {
         if (mDeviceAdmin) {
+            // TODO(b/205178429): remove this check once it's migrated to the new infra (or ran from
+            // current user)
+            if (UserManager.isHeadlessSystemUserMode()) {
+                Log.i(TAG, "Skipping testManagedProvisioningPreInstalled() because system runs on"
+                        + " headless system user mode and " + MANAGED_PROVISIONING_PKG
+                        + " might not be available for tha user");
+                return;
+            }
             assertTrue(isPackageInstalledOnSystemImage(MANAGED_PROVISIONING_PKG));
         }
     }
