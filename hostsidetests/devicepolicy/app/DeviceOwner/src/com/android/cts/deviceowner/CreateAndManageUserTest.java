@@ -181,8 +181,10 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     @SuppressWarnings("unused")
     private static void logoutUser(Context context, DevicePolicyManager devicePolicyManager,
             ComponentName componentName) {
-        assertUserOperationResult(devicePolicyManager.logoutUser(componentName),
-                UserManager.USER_OPERATION_SUCCESS, "cannot logout user");
+        Log.d(TAG, "calling logutUser() on user " + context.getUserId());
+        int result = devicePolicyManager.logoutUser(componentName);
+        Log.d(TAG, "result: " + result);
+        assertUserOperationResult(result, UserManager.USER_OPERATION_SUCCESS, "cannot logout user");
     }
 
     public void testCreateAndManageUser_LogoutUser() throws Exception {
