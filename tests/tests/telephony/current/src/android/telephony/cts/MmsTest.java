@@ -100,11 +100,13 @@ public class MmsTest {
         private final Object mLock;
         private boolean mSuccess;
         private boolean mDone;
+        private int mExpectedErrorResultCode;
 
-        public SentReceiver() {
+        SentReceiver(int expectedErrorResultCode) {
             mLock = new Object();
             mSuccess = false;
             mDone = false;
+            mExpectedErrorResultCode = expectedErrorResultCode;
         }
 
         @Override
@@ -135,6 +137,9 @@ public class MmsTest {
                 }
             } else {
                 Log.e(TAG, "Failure result=" + resultCode);
+                if (resultCode == mExpectedErrorResultCode) {
+                    mSuccess = true;
+                }
                 if (resultCode == SmsManager.MMS_ERROR_HTTP_FAILURE) {
                     final int httpError = intent.getIntExtra(SmsManager.EXTRA_MMS_HTTP_STATUS, 0);
                     Log.e(TAG, "HTTP failure=" + httpError);
@@ -161,7 +166,6 @@ public class MmsTest {
                 Log.i(TAG, "Wait for sent: done=" + mDone + ", success=" + mSuccess);
                 return mDone && mSuccess;
             }
-
         }
     }
 
@@ -175,15 +179,23 @@ public class MmsTest {
 
     @Test
     public void testSendMmsMessage() {
-        sendMmsMessage(0L /* messageId */);
+        sendMmsMessage(0L /* messageId */, Activity.RESULT_OK, SmsManager.getDefault());
+    }
+
+    @Test
+    public void testSendMmsMessageWithInactiveSubscriptionId() {
+        int inactiveSubId = 127;
+        sendMmsMessage(0L /* messageId */, SmsManager.MMS_ERROR_INACTIVE_SUBSCRIPTION,
+                SmsManager.getSmsManagerForSubscriptionId(inactiveSubId));
     }
 
     @Test
     public void testSendMmsMessageWithMessageId() {
-        sendMmsMessage(MESSAGE_ID);
+        sendMmsMessage(MESSAGE_ID, Activity.RESULT_OK, SmsManager.getDefault());
     }
 
-    private void sendMmsMessage(long messageId) {
+    private void sendMmsMessage(long messageId, int expectedErrorResultCode,
+            SmsManager smsManager) {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
              || !doesSupportMMS()) {
             Log.i(TAG, "testSendMmsMessage skipped: no telephony available or MMS not supported");
@@ -194,7 +206,7 @@ public class MmsTest {
 
         final Context context = getContext();
         // Register sent receiver
-        mSentReceiver = new SentReceiver();
+        mSentReceiver = new SentReceiver(expectedErrorResultCode);
         context.registerReceiver(mSentReceiver, new IntentFilter(ACTION_MMS_SENT));
         // Create local provider file for sending PDU
         final String fileName = "send." + String.valueOf(Math.abs(mRandom.nextLong())) + ".dat";
@@ -213,14 +225,15 @@ public class MmsTest {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 0, new Intent(ACTION_MMS_SENT), PendingIntent.FLAG_MUTABLE);
         if (messageId == 0L) {
-            SmsManager.getDefault().sendMultimediaMessage(context,
+            smsManager.sendMultimediaMessage(context,
                     contentUri, null/*locationUrl*/, null/*configOverrides*/, pendingIntent);
         } else {
-            SmsManager.getDefault().sendMultimediaMessage(context,
+            smsManager.sendMultimediaMessage(context,
                     contentUri, null/*locationUrl*/, null/*configOverrides*/, pendingIntent,
                     messageId);
         }
         assertTrue(mSentReceiver.waitForSuccess(SENT_TIMEOUT));
+        assertTrue(mSentReceiver.getResultCode() == expectedErrorResultCode);
         sendFile.delete();
     }
 
