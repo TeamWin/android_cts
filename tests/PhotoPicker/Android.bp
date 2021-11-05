@@ -23,9 +23,14 @@ android_test {
     srcs: ["src/**/*.java", "helper/**/*.java", ":CtsProviderTestUtils",],
     compile_multilib: "both",
     test_suites: ["device-tests", "mts-mediaprovider", "cts"],
-    sdk_version: "test_current",
+    sdk_version: "core_current",
     min_sdk_version: "30",
-    libs: ["android.test.base", "android.test.runner",],
+    libs: [
+            "android.test.base",
+            "android.test.runner",
+            "framework-mediaprovider.impl",
+            "framework-res",
+            "android_test_stubs_current"],
     static_libs: [
             "androidx.test.rules",
             "cts-install-lib",
