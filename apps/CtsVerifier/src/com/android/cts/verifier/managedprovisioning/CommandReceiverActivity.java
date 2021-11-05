@@ -509,8 +509,7 @@ public class CommandReceiverActivity extends Activity {
                             Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
                     // TODO(b/204483021): move to helper class / restore after user is logged out
                     if (UserManager.isHeadlessSystemUserMode()) {
-                        mAm.setStopBackgroundUsersOnSwitch(
-                                ActivityManager.STOP_BG_USERS_ON_SWITCH_FALSE);
+                        mAm.setStopUserOnSwitch(ActivityManager.STOP_USER_ON_SWITCH_FALSE);
                     }
                     Log.d(TAG, "Starting user " + userHandle);
                     mDpm.startUserInBackground(mAdmin, userHandle);
@@ -746,8 +745,7 @@ public class CommandReceiverActivity extends Activity {
                 SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
         // TODO(b/204483021): move to helper class / restore after user is logged out
         if (UserManager.isHeadlessSystemUserMode()) {
-            mAm.setStopBackgroundUsersOnSwitch(
-                    ActivityManager.STOP_BG_USERS_ON_SWITCH_FALSE);
+            mAm.setStopUserOnSwitch(ActivityManager.STOP_USER_ON_SWITCH_FALSE);
         }
         Log.d(TAG, "Switching to user " + userHandle);
         mDpm.switchUser(mAdmin, userHandle);
