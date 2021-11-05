@@ -24,7 +24,8 @@ import numpy as np
 
 NAME = os.path.basename(__file__).split('.')[0]
 LOCKED = 3
-LUMA_LOCKED_TOL = 0.05
+LUMA_LOCKED_RTOL_EV_SM = 0.05
+LUMA_LOCKED_RTOL_EV_LG = 0.10
 THRESH_CONVERGE_FOR_EV = 8  # AE must converge within this num
 YUV_FULL_SCALE = 255.0
 YUV_SAT_MIN = 250.0
@@ -52,6 +53,11 @@ def main():
                 props['android.control.aeCompensationStep'])
         steps_per_ev = int(1.0 / ev_per_step)
         evs = range(-2 * steps_per_ev, 2 * steps_per_ev + 1, steps_per_ev)
+        luma_locked_rtols = [LUMA_LOCKED_RTOL_EV_LG,
+                             LUMA_LOCKED_RTOL_EV_SM,
+                             LUMA_LOCKED_RTOL_EV_SM,
+                             LUMA_LOCKED_RTOL_EV_SM,
+                             LUMA_LOCKED_RTOL_EV_LG]
         lumas = []
 
         # Converge 3A, and lock AE once converged. skip AF trigger as
@@ -59,7 +65,8 @@ def main():
         # doesn't care the image sharpness.
         cam.do_3a(ev_comp=0, lock_ae=True, do_af=False, mono_camera=mono_camera)
 
-        for ev in evs:
+        for j, ev in enumerate(evs):
+            luma_locked_rtol = luma_locked_rtols[j]
             # Capture a single shot with the same EV comp and locked AE.
             req = its.objects.auto_capture_request()
             req['android.control.aeExposureCompensation'] = ev
@@ -76,9 +83,9 @@ def main():
                         lumas.append(luma)
                         print 'lumas in AE locked captures: ', luma_locked
                         msg = 'AE locked lumas: %s, RTOL: %.2f' % (
-                                str(luma_locked), LUMA_LOCKED_TOL)
+                                str(luma_locked), luma_locked_rtol)
                         assert np.isclose(min(luma_locked), max(luma_locked),
-                                          rtol=LUMA_LOCKED_TOL), msg
+                                          rtol=luma_locked_rtol), msg
             assert caps[THRESH_CONVERGE_FOR_EV-1]['metadata']['android.control.aeState'] == LOCKED
 
         pylab.plot(evs, lumas, '-ro')
