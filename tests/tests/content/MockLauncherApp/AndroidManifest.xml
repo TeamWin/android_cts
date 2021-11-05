@@ -16,7 +16,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="android.content.cts.mocklauncherapp">
-    <application>
+    <application android:resetEnabledSettingsOnAppDataCleared="true">
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name="android.content.cts.mocklauncherapp.Launcher"
@@ -28,5 +28,16 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+
+        <!-- Tests for attribute of resetEnabledSetting -->
+        <activity android:name=".MockActivity" android:exported="false"
+                  android:enabled="false" />
+        <receiver android:name=".MockReceiver" android:exported="false"
+                  android:enabled="false" />
+        <service android:name=".MockService" android:exported="false"
+                 android:enabled="false" />
+        <provider android:authorities="android.content.cts.mocklauncherapp"
+                  android:name=".MockProvider" android:exported="false"
+                  android:enabled="false" />
     </application>
 </manifest>
