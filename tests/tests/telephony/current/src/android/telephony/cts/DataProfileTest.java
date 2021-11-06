@@ -18,9 +18,15 @@ package android.telephony.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+
 import android.os.Parcel;
+import android.telephony.TelephonyManager;
 import android.telephony.data.ApnSetting;
 import android.telephony.data.DataProfile;
+import android.telephony.data.TrafficDescriptor;
 
 import org.junit.Test;
 
@@ -33,9 +39,9 @@ public class DataProfileTest {
     private static final String PASSWORD = "PASSWORD";
     private static final int TYPE = DataProfile.TYPE_3GPP2;
     private static final boolean IS_ENABLED = true;
-    private static final int APN_BITMASK = 1;
+    private static final int APN_BITMASK = ApnSetting.TYPE_DEFAULT;
     private static final int ROAMING_PROTOCOL_TYPE = ApnSetting.PROTOCOL_IP;
-    private static final int BEARER_BITMASK = 14;
+    private static final int BEARER_BITMASK = (int) TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
     private static final int MTU_V4 = 1440;
     private static final int MTU_V6 = 1400;
     private static final boolean IS_PREFERRED = true;
@@ -188,5 +194,130 @@ public class DataProfileTest {
 
         DataProfile parcelProfile = DataProfile.CREATOR.createFromParcel(stateParcel);
         assertThat(profile).isEqualTo(parcelProfile);
+
+        ApnSetting apnSetting = new ApnSetting.Builder()
+                .setEntryName(APN)
+                .setApnName(APN)
+                .setApnTypeBitmask(APN_BITMASK)
+                .setNetworkTypeBitmask(BEARER_BITMASK)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setModemCognitive(IS_PERSISTENT)
+                .setProtocol(PROTOCOL_TYPE)
+                .setRoamingProtocol(ROAMING_PROTOCOL_TYPE)
+                .setUser(USER_NAME)
+                .setPassword(PASSWORD)
+                .setCarrierEnabled(IS_ENABLED)
+                .setProfileId(PROFILE_ID)
+                .setAuthType(AUTH_TYPE)
+                .build();
+
+        byte[] osAppId = {1, 2, 3, 4};
+        TrafficDescriptor td = new TrafficDescriptor.Builder()
+                .setDataNetworkName(APN)
+                .setOsAppId(osAppId)
+                .build();
+
+        profile = new DataProfile.Builder()
+                .setApnSetting(apnSetting)
+                .setTrafficDescriptor(td)
+                .build();
+
+        stateParcel = Parcel.obtain();
+        profile.writeToParcel(stateParcel, 0);
+        stateParcel.setDataPosition(0);
+
+        parcelProfile = DataProfile.CREATOR.createFromParcel(stateParcel);
+        assertThat(profile).isEqualTo(parcelProfile);
+
+        stateParcel.recycle();
+    }
+
+    @Test
+    public void testGetApnSetting() {
+        ApnSetting apnSetting = new ApnSetting.Builder()
+                .setEntryName(APN)
+                .setApnName(APN)
+                .setApnTypeBitmask(APN_BITMASK)
+                .setNetworkTypeBitmask(BEARER_BITMASK)
+                .setMtuV4(MTU_V4)
+                .setMtuV6(MTU_V6)
+                .setModemCognitive(IS_PERSISTENT)
+                .setProtocol(PROTOCOL_TYPE)
+                .setRoamingProtocol(ROAMING_PROTOCOL_TYPE)
+                .setUser(USER_NAME)
+                .setPassword(PASSWORD)
+                .setCarrierEnabled(IS_ENABLED)
+                .setProfileId(PROFILE_ID)
+                .setAuthType(AUTH_TYPE)
+                .build();
+
+        DataProfile profile = new DataProfile.Builder()
+                .setApnSetting(apnSetting)
+                .build();
+
+        assertEquals(apnSetting, profile.getApnSetting());
+    }
+
+    @Test
+    public void testGetTrafficDescriptor() {
+        byte[] osAppId = {1, 2, 3, 4};
+        TrafficDescriptor td = new TrafficDescriptor.Builder()
+                .setDataNetworkName(APN)
+                .setOsAppId(osAppId)
+                .build();
+
+        DataProfile profile = new DataProfile.Builder()
+                .setTrafficDescriptor(td)
+                .build();
+
+        assertEquals(td, profile.getTrafficDescriptor());
+    }
+
+    @Test
+    public void testNullApnSetting() {
+        byte[] osAppId = {1, 2, 3, 4};
+        TrafficDescriptor td = new TrafficDescriptor.Builder()
+                .setDataNetworkName(APN)
+                .setOsAppId(osAppId)
+                .build();
+        DataProfile profile = new DataProfile.Builder()
+                .setApnSetting(null)
+                .setTrafficDescriptor(td)
+                .build();
+
+        assertEquals("", profile.getApn());
+        assertEquals(null, profile.getApnSetting());
+        assertEquals(ApnSetting.AUTH_TYPE_NONE, profile.getAuthType());
+        assertEquals((int) TelephonyManager.NETWORK_TYPE_BITMASK_UNKNOWN,
+                profile.getBearerBitmask());
+        assertEquals(0, profile.getMtu());
+        assertEquals(0, profile.getMtuV4());
+        assertEquals(0, profile.getMtuV6());
+        assertEquals(null, profile.getUserName());
+        assertEquals(null, profile.getPassword());
+        assertEquals(0, profile.getProfileId());
+        assertEquals(ApnSetting.PROTOCOL_IP, profile.getProtocolType());
+        assertEquals(ApnSetting.PROTOCOL_IP, profile.getRoamingProtocolType());
+        assertEquals(ApnSetting.TYPE_NONE, profile.getSupportedApnTypesBitmask());
+        assertEquals(DataProfile.TYPE_COMMON, profile.getType());
+        assertFalse(profile.isEnabled());
+        assertFalse(profile.isPersistent());
+        assertFalse(profile.isPreferred());
+        assertEquals(td, profile.getTrafficDescriptor());
+    }
+
+    @Test
+    public void illegalDataProfile() {
+        try {
+            DataProfile profile = new DataProfile.Builder()
+                    .setApnSetting(null)
+                    .setTrafficDescriptor(null)
+                    .build();
+            fail("Should throw exception if both APN setting and traffic descriptor are null.");
+        } catch (IllegalArgumentException ex) {
+            // Expected to get illegal argument exception.
+        }
+
     }
 }
