@@ -255,6 +255,35 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     }
 
     /**
+     * Verifies the behavior of the activities in a TaskFragment that is sandwiched in adjacent
+     * TaskFragments.
+     */
+    @Test
+    public void testSandwichTaskFragmentInAdjacent() {
+        // Initialize test environment by launching Activity A and B side-by-side.
+        initializeSplitActivities(false /* verifyEmbeddedTask */);
+
+        final IBinder taskFragTokenA = mTaskFragA.getTaskFragToken();
+        final TaskFragmentCreationParams paramsC = generateSideTaskFragParams();
+        final IBinder taskFragTokenC = paramsC.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                // Create the side TaskFragment for C and launch
+                .createTaskFragment(paramsC)
+                .startActivityInTaskFragment(taskFragTokenC, mOwnerToken, mIntent,
+                        null /* activityOptions */)
+                .setAdjacentTaskFragments(taskFragTokenA, taskFragTokenC, null /* options */);
+
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        // Wait for the TaskFragment of Activity C to be created.
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+
+        waitAndAssertResumedActivity(mActivityC, "Activity C must be resumed.");
+        waitAndAssertActivityState(mActivityB, STATE_STOPPED,
+                "Activity B is occluded by Activity C, so it must be stopped.");
+        waitAndAssertResumedActivity(mActivityA, "Activity B must be resumed.");
+    }
+
+    /**
      * Verifies the behavior to launch adjacent Activity to the adjacent TaskFragment.
      * <p>
      * For example, given that Activity A and B are showed side-by-side, this test verifies

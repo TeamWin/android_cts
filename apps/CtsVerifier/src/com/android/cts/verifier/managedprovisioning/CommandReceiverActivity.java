@@ -22,11 +22,11 @@ import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -186,6 +186,7 @@ public class CommandReceiverActivity extends Activity {
     private ComponentName mAdmin;
     private DevicePolicyManager mDpm;
     private UserManager mUm;
+    private ActivityManager mAm;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -200,7 +201,8 @@ public class CommandReceiverActivity extends Activity {
             mDpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
                             DeviceAdminTestReceiver.class, forDeviceOwner);
 
-            mUm = (UserManager) getSystemService(Context.USER_SERVICE);
+            mUm = getSystemService(UserManager.class);
+            mAm = getSystemService(ActivityManager.class);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
             final String command = intent.getStringExtra(EXTRA_COMMAND);
             Log.i(TAG, "Command: " + command);
@@ -501,8 +503,16 @@ public class CommandReceiverActivity extends Activity {
                     UserHandle userHandle = mDpm.createAndManageUser(mAdmin, "managed user", mAdmin,
                             extras,
                             SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
+                    Log.i(TAG, "Created user " + userHandle + "; setting affiliation ids to "
+                            + DeviceAdminTestReceiver.AFFILIATION_ID);
                     mDpm.setAffiliationIds(mAdmin,
                             Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
+                    // TODO(b/204483021): move to helper class / restore after user is logged out
+                    if (UserManager.isHeadlessSystemUserMode()) {
+                        mAm.setStopBackgroundUsersOnSwitch(
+                                ActivityManager.STOP_BG_USERS_ON_SWITCH_FALSE);
+                    }
+                    Log.d(TAG, "Starting user " + userHandle);
                     mDpm.startUserInBackground(mAdmin, userHandle);
                 } break;
                 case COMMAND_CREATE_MANAGED_USER_WITHOUT_SETUP:{
@@ -734,6 +744,12 @@ public class CommandReceiverActivity extends Activity {
         UserHandle userHandle = mDpm.createAndManageUser(mAdmin, "managed user", mAdmin,
                 extras,
                 SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
+        // TODO(b/204483021): move to helper class / restore after user is logged out
+        if (UserManager.isHeadlessSystemUserMode()) {
+            mAm.setStopBackgroundUsersOnSwitch(
+                    ActivityManager.STOP_BG_USERS_ON_SWITCH_FALSE);
+        }
+        Log.d(TAG, "Switching to user " + userHandle);
         mDpm.switchUser(mAdmin, userHandle);
     }
 

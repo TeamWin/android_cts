@@ -30,6 +30,7 @@ import static android.contentcaptureservice.cts.Assertions.assertViewDisappeared
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeFinished;
 import static android.contentcaptureservice.cts.Assertions.assertViewTreeStarted;
 import static android.contentcaptureservice.cts.Assertions.assertViewsDisappeared;
+import static android.contentcaptureservice.cts.Assertions.removeBoundsAndInsetsEvents;
 import static android.contentcaptureservice.cts.Helper.newImportantView;
 import static android.contentcaptureservice.cts.Helper.sContext;
 
@@ -177,7 +178,6 @@ public class ChildlessActivityTest
         activity2.assertDefaultEvents(session2);
     }
 
-
     @Test
     public void testLaunchAnotherActivity_onTopOfIt() throws Exception {
         final CtsContentCaptureService service = enableService();
@@ -208,10 +208,8 @@ public class ChildlessActivityTest
             .activityResumed(name1)
             .activityPaused(name1)
             .activityResumed(name2)
-            .activityStopped(name1)
             .activityPaused(name2)
             .activityResumed(name1)
-            .activityDestroyed(name2)
             .activityPaused(name1);
 
         // Assert the sessions
@@ -223,7 +221,7 @@ public class ChildlessActivityTest
         Log.v(TAG, "session id2: " + sessionId2);
 
         final Session session1 = service.getFinishedSession(sessionId1);
-        final List<ContentCaptureEvent> events1 = session1.getEvents();
+        final List<ContentCaptureEvent> events1 = removeBoundsAndInsetsEvents(session1.getEvents());
         Log.v(TAG, "events on " + activity1 + ": " + events1);
         assertThat(events1).hasSize(4);
         assertSessionResumed(events1, 0);
