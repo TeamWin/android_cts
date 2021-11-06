@@ -25,11 +25,12 @@ import static android.os.Process.myUserHandle;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
+import static com.android.bedstead.nene.utils.Versions.S_V2;
 
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.pm.UserInfo;
 import android.os.Build;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -64,7 +65,6 @@ public final class Users {
 
     static final int SYSTEM_USER_ID = 0;
     private static final Duration WAIT_FOR_USER_TIMEOUT = Duration.ofMinutes(4);
-    private static final String PROPERTY_STOP_BG_USERS_ON_SWITCH = "fw.stop_bg_users_on_switch";
 
     private Map<Integer, AdbUser> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;
@@ -439,32 +439,19 @@ public final class Users {
     }
 
     /**
-     * Get the stopBgUsersOnSwitch property.
-     *
-     * <p>This affects if background users will be swapped when switched away from on some devices.
-     *
-     * <p>If the property is not set, then {@code false} will be returned.
-     */
-    public boolean getStopBgUsersOnSwitch() {
-        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
-            return false;
-        }
-
-        return SystemProperties.getBoolean(PROPERTY_STOP_BG_USERS_ON_SWITCH, /* def= */ true);
-    }
-
-    /**
      * Set the stopBgUsersOnSwitch property.
      *
      * <p>This affects if background users will be swapped when switched away from on some devices.
      */
-    public void setStopBgUsersOnSwitch(boolean stop) {
-        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+    public void setStopBgUsersOnSwitch(int value) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(S_V2)) {
             return;
         }
-
-        // TODO(203752848): Re-enable this once we can set it
-//        TestApis.systemProperties().set(PROPERTY_STOP_BG_USERS_ON_SWITCH, stop ? "1" : "0");
+        Context context = TestApis.context().instrumentedContext();
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            context.getSystemService(ActivityManager.class).setStopBackgroundUsersOnSwitch(value);
+        }
     }
 
     @Nullable
