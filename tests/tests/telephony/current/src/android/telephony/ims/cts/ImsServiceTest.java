@@ -48,12 +48,14 @@ import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.ImsRcsManager;
 import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.ImsRegistrationAttributes;
+import android.telephony.ims.ImsStateCallback;
 import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.RcsClientConfiguration;
 import android.telephony.ims.RcsContactUceCapability;
 import android.telephony.ims.RcsUceAdapter;
 import android.telephony.ims.RegistrationManager;
 import android.telephony.ims.RtpHeaderExtensionType;
+import android.telephony.ims.SipDelegateManager;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
@@ -197,6 +199,8 @@ public class ImsServiceTest {
             "org.openmobilealliance:ChatSession";
     private static final String FILE_TRANSFER_SERVICE_ID =
             "org.openmobilealliance:File-Transfer-HTTP";
+
+    private static final int FEATURE_STATE_READY = 0;
 
     private static CarrierConfigReceiver sReceiver;
     private static SingleRegistrationCapabilityReceiver sSrcReceiver;
@@ -3531,6 +3535,267 @@ public class ImsServiceTest {
         }
     }
 
+    @Test
+    public void testImsMmTelManagerImsStateCallback() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        LinkedBlockingQueue<Integer> stateQueue = new LinkedBlockingQueue<>();
+        ImsStateCallback callback = buildImsStateCallback(stateQueue);
+
+        ImsMmTelManager mmTelManager = null;
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsStateCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        int reason = waitForIntResult(stateQueue);
+        assertTrue(reason == ImsStateCallback.REASON_UNKNOWN_TEMPORARY_ERROR
+                || reason == ImsStateCallback.REASON_UNKNOWN_PERMANENT_ERROR
+                || reason == ImsStateCallback.REASON_IMS_SERVICE_DISCONNECTED
+                || reason == ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED
+                || reason == ImsStateCallback.REASON_SUBSCRIPTION_INACTIVE
+                || reason == ImsStateCallback.REASON_IMS_SERVICE_NOT_READY);
+
+        mmTelManager.unregisterImsStateCallback(callback);
+
+        // Connect to device ImsService with MmTelFeature
+        triggerFrameworkConnectToCarrierImsService();
+
+        stateQueue = new LinkedBlockingQueue<>();
+        callback = buildImsStateCallback(stateQueue);
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager.registerImsStateCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // expects FEATURE_MMTEL STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(stateQueue));
+
+        if (sServiceConnector != null) {
+            sServiceConnector.getCarrierService().getMmTelFeature().setFeatureState(
+                    ImsFeature.STATE_INITIALIZING);
+        }
+
+        // expects NOT_READY
+        assertEquals(ImsStateCallback.REASON_IMS_SERVICE_NOT_READY,
+                waitForIntResult(stateQueue));
+
+        // Unbind the GTS ImsService
+        if (sServiceConnector != null) {
+            sServiceConnector.disconnectCarrierImsService();
+        }
+
+        // expects DISCONNECTED
+        assertEquals(ImsStateCallback.REASON_IMS_SERVICE_DISCONNECTED,
+                waitForIntResult(stateQueue));
+
+        mmTelManager.unregisterImsStateCallback(callback);
+    }
+
+    @Test
+    public void testImsRcsManagerImsStateCallback() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        LinkedBlockingQueue<Integer> rcsQueue = new LinkedBlockingQueue<>();
+        ImsStateCallback rcsCallback = buildImsStateCallback(rcsQueue);
+
+        LinkedBlockingQueue<Integer> sipQueue = new LinkedBlockingQueue<>();
+        ImsStateCallback sipCallback = buildImsStateCallback(sipQueue);
+
+        ImsRcsManager imsRcsManager;
+        SipDelegateManager imsSipManager;
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+            imsRcsManager.registerImsStateCallback(getContext().getMainExecutor(), rcsCallback);
+            imsSipManager = imsManager.getSipDelegateManager(sTestSub);
+            imsSipManager.registerImsStateCallback(getContext().getMainExecutor(), sipCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        int reason = waitForIntResult(rcsQueue);
+        assertTrue(reason == ImsStateCallback.REASON_UNKNOWN_TEMPORARY_ERROR
+                || reason == ImsStateCallback.REASON_UNKNOWN_PERMANENT_ERROR
+                || reason == ImsStateCallback.REASON_IMS_SERVICE_DISCONNECTED
+                || reason == ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED
+                || reason == ImsStateCallback.REASON_SUBSCRIPTION_INACTIVE
+                || reason == ImsStateCallback.REASON_IMS_SERVICE_NOT_READY);
+
+        reason = waitForIntResult(sipQueue);
+        assertTrue(reason == ImsStateCallback.REASON_UNKNOWN_TEMPORARY_ERROR
+                || reason == ImsStateCallback.REASON_UNKNOWN_PERMANENT_ERROR
+                || reason == ImsStateCallback.REASON_IMS_SERVICE_DISCONNECTED
+                || reason == ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED
+                || reason == ImsStateCallback.REASON_SUBSCRIPTION_INACTIVE
+                || reason == ImsStateCallback.REASON_IMS_SERVICE_NOT_READY);
+
+        imsRcsManager.unregisterImsStateCallback(rcsCallback);
+        imsSipManager.unregisterImsStateCallback(sipCallback);
+
+        // Override the carrier config
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, false);
+        bundle.putBoolean(
+                CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        // Connect to device ImsService with RcsFeature
+        triggerFrameworkConnectToLocalImsServiceBindRcsFeature();
+
+        rcsQueue = new LinkedBlockingQueue<>();
+        rcsCallback = buildImsStateCallback(rcsQueue);
+
+        sipQueue = new LinkedBlockingQueue<>();
+        sipCallback = buildImsStateCallback(sipQueue);
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            imsRcsManager.registerImsStateCallback(getContext().getMainExecutor(), rcsCallback);
+            imsSipManager.registerImsStateCallback(getContext().getMainExecutor(), sipCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // expects FEATURE_RCS, NO_IMS_SERVICE_CONFIGURED
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(rcsQueue));
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(sipQueue));
+
+        // Override the carrier config
+        bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        // Wait for the framework to set the capabilities on the ImsService
+        sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_RCS_CAP_SET);
+
+        // expects FEATURE_RCS, STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(rcsQueue));
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(sipQueue));
+
+        bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        // expects FEATURE_RCS, NO_IMS_SERVICE_CONFIGURED
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(rcsQueue));
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(sipQueue));
+
+        // Override the carrier config
+        bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        // expects FEATURE_RCS, STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(rcsQueue));
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(sipQueue));
+
+        bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        // expects FEATURE_RCS, NO_IMS_SERVICE_CONFIGURED
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(rcsQueue));
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(sipQueue));
+
+        // Override the carrier config
+        bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        bundle.putBoolean(
+                CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        // expects FEATURE_RCS, STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(rcsQueue));
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(sipQueue));
+
+        bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        // ensure no change in state since having one active feature
+        reason = waitForIntResult(rcsQueue, 3000);
+        assertEquals(Integer.MAX_VALUE, reason);
+        reason = waitForIntResult(sipQueue, 1000);
+        assertEquals(Integer.MAX_VALUE, reason);
+
+        bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, false);
+        overrideCarrierConfig(bundle);
+
+        // expects FEATURE_RCS, NO_IMS_SERVICE_CONFIGURED
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(rcsQueue));
+        assertEquals(ImsStateCallback.REASON_NO_IMS_SERVICE_CONFIGURED,
+                waitForIntResult(sipQueue));
+
+        // Override the carrier config
+        bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        // expects FEATURE_RCS, STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(rcsQueue));
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(sipQueue));
+
+        if (sServiceConnector != null) {
+            sServiceConnector.getCarrierService().getRcsFeature().setFeatureState(
+                    ImsFeature.STATE_INITIALIZING);
+        }
+
+        // expects NOT_READY
+        assertEquals(ImsStateCallback.REASON_IMS_SERVICE_NOT_READY,
+                waitForIntResult(rcsQueue));
+        assertEquals(ImsStateCallback.REASON_IMS_SERVICE_NOT_READY,
+                waitForIntResult(sipQueue));
+
+        // Unbind the GTS ImsService
+        if (sServiceConnector != null) {
+            sServiceConnector.disconnectCarrierImsService();
+        }
+
+        // expects DISCONNECTED
+        assertEquals(ImsStateCallback.REASON_IMS_SERVICE_DISCONNECTED,
+                waitForIntResult(rcsQueue));
+        assertEquals(ImsStateCallback.REASON_IMS_SERVICE_DISCONNECTED,
+                waitForIntResult(sipQueue));
+
+        imsRcsManager.unregisterImsStateCallback(rcsCallback);
+        imsSipManager.unregisterImsStateCallback(sipCallback);
+    }
+
     private void verifyIntKey(ProvisioningManager pm,
             LinkedBlockingQueue<Pair<Integer, Integer>> intQueue, int key, int value)
             throws Exception {
@@ -3653,6 +3918,25 @@ public class ImsServiceTest {
         assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
                         + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
                 sTestSlot, serviceSlot);
+    }
+
+    private ImsStateCallback buildImsStateCallback(final LinkedBlockingQueue<Integer> stateQueue) {
+        return new ImsStateCallback() {
+            @Override
+            public void onUnavailable(int reason) {
+                stateQueue.offer(reason);
+            }
+
+            @Override
+            public void onAvailable() {
+                stateQueue.offer(FEATURE_STATE_READY);
+            }
+
+            @Override
+            public void onError() {
+                stateQueue.offer(-1);
+            }
+        };
     }
 
     private ProvisioningManager.RcsProvisioningCallback buildRcsProvisioningCallback(
