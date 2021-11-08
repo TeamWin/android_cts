@@ -171,7 +171,11 @@ public final class CarWatchdogTestActivity extends Activity {
 
     @Override
     public void dump(String prefix, FileDescriptor fd, PrintWriter writer, String[] args) {
+        if (mDumpMessage.isEmpty()) {
+            return;
+        }
         writer.printf("%s: %s\n", TAG, mDumpMessage);
+        Log.i(TAG, "Dumping message: '" + mDumpMessage + "'");
     }
 
     @Override
@@ -179,7 +183,11 @@ public final class CarWatchdogTestActivity extends Activity {
         if (mCar != null) {
             mCar.disconnect();
         }
-
+        if (mTestDir.delete()) {
+            Log.i(TAG, "Deleted directory '" + mTestDir.getAbsolutePath() + "' successfully");
+        } else {
+            Log.e(TAG, "Failed to delete directory '" + mTestDir.getAbsolutePath() + "'");
+        }
         super.onDestroy();
     }
 
@@ -215,8 +223,18 @@ public final class CarWatchdogTestActivity extends Activity {
     }
 
     private boolean writeToDisk(long bytes) {
-        long writtenBytes;
         File uniqueFile = new File(mTestDir, Long.toString(System.nanoTime()));
+        boolean result = writeToFile(uniqueFile, bytes);
+        if (uniqueFile.delete()) {
+            Log.i(TAG, "Deleted file: " + uniqueFile.getAbsolutePath());
+        } else {
+            Log.e(TAG, "Failed to delete file: " + uniqueFile.getAbsolutePath());
+        }
+        return result;
+    }
+
+    private boolean writeToFile(File uniqueFile, long bytes) {
+        long writtenBytes = 0;
         try (FileOutputStream fos = new FileOutputStream(uniqueFile)) {
             Log.d(TAG, "Attempting to write " + bytes + " bytes");
             writtenBytes = writeToFos(fos, bytes);
@@ -232,37 +250,46 @@ public final class CarWatchdogTestActivity extends Activity {
             Thread.sleep(DISK_DELAY_MS);
             return true;
         } catch (IOException | InterruptedException e) {
-            String reason = e instanceof IOException ? "I/O exception" : "Thread interrupted";
-            setDumpMessage("ERROR: " + reason
-                    + " after successfully writing to disk.\n\n" + e.getMessage());
+            String message;
+            if (e instanceof IOException) {
+                message = "I/O exception";
+            } else {
+                message = "Thread interrupted";
+                Thread.currentThread().interrupt();
+            }
+            if (writtenBytes > 0) {
+                message += " after successfully writing to disk.";
+            }
+            Log.e(TAG, message, e);
+            setDumpMessage("ERROR: " + message);
             return false;
         }
     }
 
-    private long writeToFos(FileOutputStream fos, long maxSize) {
-        long writtenSize = 0;
-        while (maxSize != 0) {
-            int writeSize =
+    private long writeToFos(FileOutputStream fos, long remainingBytes) {
+        long totalBytesWritten = 0;
+        while (remainingBytes != 0) {
+            int writeBytes =
                     (int) Math.min(Integer.MAX_VALUE,
-                            Math.min(Runtime.getRuntime().freeMemory(), maxSize));
+                            Math.min(Runtime.getRuntime().freeMemory(), remainingBytes));
             try {
-                fos.write(new byte[writeSize]);
-            } catch (InterruptedIOException e) {
-                Log.d(TAG, "Exception while writing to file", e);
+                fos.write(new byte[writeBytes]);
+            }  catch (InterruptedIOException e) {
                 Thread.currentThread().interrupt();
-                return writtenSize;
+                continue;
             } catch (IOException e) {
-                Log.d(TAG, "Exception while writing to file", e);
-                return writtenSize;
+                Log.e(TAG, "I/O exception while writing " + writeBytes + " to disk", e);
+                return totalBytesWritten;
             }
-            writtenSize += writeSize;
-            maxSize -= writeSize;
-            if (writeSize > 0) {
-                Log.d(TAG, "writeSize:" + writeSize);
+            totalBytesWritten += writeBytes;
+            remainingBytes -= writeBytes;
+            if (writeBytes > 0 && remainingBytes > 0) {
+                Log.i(TAG, "Total bytes written: " + totalBytesWritten + "/"
+                        + (totalBytesWritten + remainingBytes));
             }
         }
         Log.d(TAG, "Write completed.");
-        return writtenSize;
+        return totalBytesWritten;
     }
 
     private long fetchRemainingBytes(long minWrittenBytes) {
