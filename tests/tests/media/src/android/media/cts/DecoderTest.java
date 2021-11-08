@@ -3677,7 +3677,12 @@ public class DecoderTest extends MediaPlayerTestBase {
 
         final long durationMs = mMediaCodecPlayer.getDuration();
         final long timeOutMs = System.currentTimeMillis() + durationMs + 5 * 1000; // add 5 sec
-        while (!mMediaCodecPlayer.isEnded()) {
+        while (!mMediaCodecPlayer.isEnded() ||
+                // Workaround to framework bug: audio underrun incorrectly pauses the video before
+                // it ends.
+                // See https://android-review.googlesource.com/c/platform/frameworks/av/+/1690347/
+                // for context.
+                Math.abs(durationMs - mMediaCodecPlayer.getCurrentPosition()) >= 100) {
             // Log.d(TAG, "currentPosition: " + mMediaCodecPlayer.getCurrentPosition()
             //         + "  duration: " + mMediaCodecPlayer.getDuration());
             assertTrue("Tunneled video playback timeout exceeded",
