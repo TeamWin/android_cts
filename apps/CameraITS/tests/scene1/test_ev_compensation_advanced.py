@@ -22,7 +22,9 @@ from matplotlib import pylab
 import numpy
 
 LOCKED = 3
-MAX_LUMA_DELTA_THRESH = 0.05
+LUMA_DELTA_ATOL = 0.05
+LUMA_DELTA_ATOL_SAT = 0.1
+LUMA_SAT_THRESH = 0.75  # luma value at which ATOL changes from MID to SAT
 NAME = os.path.basename(__file__).split('.')[0]
 THRESH_CONVERGE_FOR_EV = 8  # AE must converge in this num auto reqs for EV
 
@@ -89,6 +91,8 @@ def main():
         shift_mid = ev_shifts[imid]
         luma_normal = lumas[imid] / shift_mid
         expected_lumas = [min(1.0, luma_normal*ev_shift) for ev_shift in ev_shifts]
+        luma_delta_atols = [LUMA_DELTA_ATOL if l < LUMA_SAT_THRESH
+                            else LUMA_DELTA_ATOL_SAT for l in expected_lumas]
 
         pylab.plot(ev_steps, lumas, '-ro')
         pylab.plot(ev_steps, expected_lumas, '-bo')
@@ -98,13 +102,15 @@ def main():
 
         matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
 
-        luma_diffs = [expected_lumas[i]-lumas[i] for i in range(len(ev_steps))]
-        max_diff = max(abs(i) for i in luma_diffs)
-        avg_diff = abs(numpy.array(luma_diffs)).mean()
-        print 'Max delta between modeled and measured lumas:', max_diff
-        print 'Avg delta between modeled and measured lumas:', avg_diff
-        assert max_diff < MAX_LUMA_DELTA_THRESH, 'diff: %.3f, THRESH: %.2f' % (
-                max_diff, MAX_LUMA_DELTA_THRESH)
+        for i, luma in enumerate(lumas):
+            luma_delta_atol = luma_delta_atols[i]
+            print ('EV step: %3d, luma: %.3f, model: %.3f, ATOL: %.2f' %
+                   (ev_steps[i], luma, expected_lumas[i], luma_delta_atol))
+            e_msg = ('Modeled/measured luma deltas too large! '
+                     'meas: %.4f, model: %.4f, ATOL: %.2f' %
+                     (lumas[i], expected_lumas[i], luma_delta_atol))
+            assert numpy.isclose(luma, expected_lumas[i],
+                                 atol=luma_delta_atol), e_msg
 
 
 if __name__ == '__main__':
