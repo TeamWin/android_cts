@@ -22,10 +22,11 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.tv.tuner.DemuxCapabilities;
 import android.media.tv.tuner.Descrambler;
@@ -101,25 +102,24 @@ import android.media.tv.tunerresourcemanager.TunerFrontendRequest;
 import android.media.tv.tunerresourcemanager.TunerResourceManager;
 import android.os.ConditionVariable;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
-
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
-
 import com.android.compatibility.common.util.RequiredFeatureRule;
-
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -132,27 +132,28 @@ public class TunerTest {
 
     private static final int TIMEOUT_MS = 10 * 1000;  // 10 seconds
     private static final int SCAN_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+    private static final long TIMEOUT_BINDER_SERVICE_SEC = 2;
 
     private Context mContext;
     private Tuner mTuner;
     private CountDownLatch mLockLatch = new CountDownLatch(1);
     private TunerResourceManager mTunerResourceManager = null;
-    private String mSharedFilterToken = null;
+    private TestServiceConnection mConnection;
+    private ISharedFilterTestServer mSharedFilterTestServer;
 
-    class SharedFilterTokenReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (action.equals("android.media.tv.tuner.cts.SHARED_FILTER_TOKEN")) {
-                mSharedFilterToken = intent.getStringExtra("TOKEN");
-                if (mLockLatch != null) {
-                    mLockLatch.countDown();
-                }
-            } else if (action.equals("android.media.tv.tuner.cts.SHARED_FILTER_CLOSED")) {
-                if (mLockLatch != null) {
-                    mLockLatch.countDown();
-                }
-            }
+    private class TestServiceConnection implements ServiceConnection {
+        private BlockingQueue<IBinder> mBlockingQueue = new LinkedBlockingQueue<>();
+
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBlockingQueue.offer(service);
+        }
+
+        public void onServiceDisconnected(ComponentName componentName) {}
+
+        public IBinder getService() throws Exception {
+            final IBinder service =
+                    mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC, TimeUnit.SECONDS);
+            return service;
         }
     }
 
@@ -162,6 +163,12 @@ public class TunerTest {
         InstrumentationRegistry
                 .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
         mTuner = new Tuner(mContext, null, 100);
+
+        mConnection = new TestServiceConnection();
+        mContext.bindService(new Intent(mContext, SharedFilterTestService.class), mConnection,
+                Context.BIND_AUTO_CREATE);
+        mSharedFilterTestServer =
+                ISharedFilterTestServer.Stub.asInterface(mConnection.getService());
     }
 
     @After
@@ -170,6 +177,7 @@ public class TunerTest {
           mTuner.close();
           mTuner = null;
         }
+        mContext.unbindService(mConnection);
     }
 
     @Test
@@ -1493,95 +1501,20 @@ public class TunerTest {
         assertEquals(f.read(new byte[3], 0, 3), 0);
         assertEquals(f.stop(), Tuner.RESULT_INVALID_STATE);
 
-        f.releaseSharedFilter(token1);
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
-        f = null;
-    }
 
-    @Test
-    public void testSharedFilterTwoProcessesOpenTwice() throws Exception {
-        mLockLatch = new CountDownLatch(1);
-
-        // Set up receiver to receive shared filter token.
-        SharedFilterTokenReceiver receiver = new SharedFilterTokenReceiver();
-        mContext.registerReceiver(
-                receiver, new IntentFilter("android.media.tv.tuner.cts.SHARED_FILTER_TOKEN"));
-
-        // Start the filter in SharedFilterTestService.
-        Intent startIntent = new Intent(mContext, SharedFilterTestService.class);
-        startIntent.putExtra("CMD", "start");
-        mContext.startService(startIntent);
-
-        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-        mContext.unregisterReceiver(receiver);
-
-        assertTrue(mSharedFilterToken != null);
-        SharedFilter f = Tuner.openSharedFilter(
-                mContext, mSharedFilterToken, getExecutor(), getSharedFilterCallback());
-        assertTrue(f != null);
-
-        assertEquals(f.start(), Tuner.RESULT_SUCCESS);
-        assertEquals(f.flush(), Tuner.RESULT_SUCCESS);
-        assertTrue(f.read(new byte[3], 0, 3) != 0);
-        assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
-
-        mLockLatch = new CountDownLatch(1);
-
+        f.releaseSharedFilter(token1);
         f.close();
-        assertFalse(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-
-        // Open again.
-        f = Tuner.openSharedFilter(
-                mContext, mSharedFilterToken, getExecutor(), getSharedFilterCallback());
-        assertTrue(f != null);
-
-        assertEquals(f.start(), Tuner.RESULT_SUCCESS);
-        assertEquals(f.flush(), Tuner.RESULT_SUCCESS);
-        assertTrue(f.read(new byte[3], 0, 3) != 0);
-        assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
-
-        mLockLatch = new CountDownLatch(1);
-
-        f.close();
-        assertFalse(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-
-        // Close the filter in SharedFilterTestService.
-        Intent stopIntent = new Intent(mContext, SharedFilterTestService.class);
-        stopIntent.putExtra("CMD", "close");
-        mContext.startService(stopIntent);
-
-        // Stop the SharedFilterTestService
-        mContext.stopService(new Intent(mContext, SharedFilterTestService.class));
-        Thread.sleep(5000);
-        mSharedFilterToken = null;
         f = null;
     }
 
     @Test
     public void testSharedFilterTwoProcessesCloseInSharedFilter() throws Exception {
-        mLockLatch = new CountDownLatch(1);
-
-        // Set up receiver to receive shared filter token.
-        SharedFilterTokenReceiver receiver = new SharedFilterTokenReceiver();
-        mContext.registerReceiver(
-                receiver, new IntentFilter("android.media.tv.tuner.cts.SHARED_FILTER_TOKEN"));
-
-        // Start the filter in SharedFilterTestService.
-        Intent startIntent = new Intent(mContext, SharedFilterTestService.class);
-        startIntent.putExtra("CMD", "start");
-        mContext.startService(startIntent);
-
-        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-        mContext.unregisterReceiver(receiver);
-
-        assertTrue(mSharedFilterToken != null);
-        SharedFilter f = Tuner.openSharedFilter(
-                mContext, mSharedFilterToken, getExecutor(), getSharedFilterCallback());
+        String token = mSharedFilterTestServer.createSharedFilter();
+        assertTrue(token != null);
+        SharedFilter f =
+                Tuner.openSharedFilter(mContext, token, getExecutor(), getSharedFilterCallback());
         assertTrue(f != null);
 
         assertEquals(f.start(), Tuner.RESULT_SUCCESS);
@@ -1590,44 +1523,21 @@ public class TunerTest {
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);
-
         f.close();
-        assertFalse(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-
-        // Close the filter in SharedFilterTestService.
-        Intent stopIntent = new Intent(mContext, SharedFilterTestService.class);
-        stopIntent.putExtra("CMD", "close");
-        mContext.startService(stopIntent);
-
-        // Stop the SharedFilterTestService
-        mContext.stopService(new Intent(mContext, SharedFilterTestService.class));
-        Thread.sleep(5000);
-        mSharedFilterToken = null;
         f = null;
+        mSharedFilterTestServer.closeFilter();
+        Thread.sleep(2000);
+        assertEquals(mLockLatch.getCount(), 1);
+        mLockLatch = null;
     }
 
     @Test
-    public void testSharedFilterTwoProcessesCloseInOriginalFilter() throws Exception {
-        mLockLatch = new CountDownLatch(1);
+    public void testSharedFilterTwoProcessesCloseInFilter() throws Exception {
+        String token = mSharedFilterTestServer.createSharedFilter();
+        assertTrue(token != null);
 
-        // Set up receiver to receive shared filter token.
-        SharedFilterTokenReceiver receiver = new SharedFilterTokenReceiver();
-        mContext.registerReceiver(
-                receiver, new IntentFilter("android.media.tv.tuner.cts.SHARED_FILTER_TOKEN"));
-
-        // Start the filter in SharedFilterTestService.
-        Intent startIntent = new Intent(mContext, SharedFilterTestService.class);
-        startIntent.putExtra("CMD", "start");
-        mContext.startService(startIntent);
-
-        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-        mContext.unregisterReceiver(receiver);
-
-        assertTrue(mSharedFilterToken != null);
-        SharedFilter f = Tuner.openSharedFilter(
-                mContext, mSharedFilterToken, getExecutor(), getSharedFilterCallback());
+        SharedFilter f =
+                Tuner.openSharedFilter(mContext, token, getExecutor(), getSharedFilterCallback());
         assertTrue(f != null);
 
         assertEquals(f.start(), Tuner.RESULT_SUCCESS);
@@ -1636,44 +1546,20 @@ public class TunerTest {
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);
-
-        // Close the filter in SharedFilterTestService.
-        Intent stopIntent = new Intent(mContext, SharedFilterTestService.class);
-        stopIntent.putExtra("CMD", "close");
-        mContext.startService(stopIntent);
-
+        mSharedFilterTestServer.closeFilter();
         assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         mLockLatch = null;
-
-        // Stop the SharedFilterTestService
-        mContext.stopService(new Intent(mContext, SharedFilterTestService.class));
-        Thread.sleep(5000);
-        mSharedFilterToken = null;
         f.close();
         f = null;
     }
 
     @Test
-    public void testSharedFilterTwoProcessesReleaseInOriginalFilter() throws Exception {
-        mLockLatch = new CountDownLatch(1);
+    public void testSharedFilterTwoProcessesReleaseInFilter() throws Exception {
+        String token = mSharedFilterTestServer.createSharedFilter();
+        assertTrue(token != null);
 
-        // Set up receiver to receive shared filter token.
-        SharedFilterTokenReceiver receiver = new SharedFilterTokenReceiver();
-        mContext.registerReceiver(
-                receiver, new IntentFilter("android.media.tv.tuner.cts.SHARED_FILTER_TOKEN"));
-
-        // Start the filter in SharedFilterTestService.
-        Intent startIntent = new Intent(mContext, SharedFilterTestService.class);
-        startIntent.putExtra("CMD", "start");
-        mContext.startService(startIntent);
-
-        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-        mContext.unregisterReceiver(receiver);
-
-        assertTrue(mSharedFilterToken != null);
-        SharedFilter f = Tuner.openSharedFilter(
-                mContext, mSharedFilterToken, getExecutor(), getSharedFilterCallback());
+        SharedFilter f =
+                Tuner.openSharedFilter(mContext, token, getExecutor(), getSharedFilterCallback());
         assertTrue(f != null);
 
         assertEquals(f.start(), Tuner.RESULT_SUCCESS);
@@ -1682,40 +1568,22 @@ public class TunerTest {
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);
-
-        // Release the shared filter created by SharedFilterTestService.
-        Intent releaseIntent = new Intent(mContext, SharedFilterTestService.class);
-        releaseIntent.putExtra("CMD", "release");
-        mContext.startService(releaseIntent);
-
+        mSharedFilterTestServer.releaseSharedFilter(token);
         assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         mLockLatch = null;
 
-        // Close the filter in SharedFilterTestService.
-        Intent stopIntent = new Intent(mContext, SharedFilterTestService.class);
-        stopIntent.putExtra("CMD", "close");
-        mContext.startService(stopIntent);
-
-        // Stop the SharedFilterTestService
-        mContext.stopService(new Intent(mContext, SharedFilterTestService.class));
-        Thread.sleep(5000);
-        mSharedFilterToken = null;
+        mSharedFilterTestServer.closeFilter();
         f.close();
         f = null;
     }
 
     @Test
-    public void testSharedFilterTwoProcessesDoubleClose() throws Exception {
+    public void testSharedFilterTwoProcessesVerifySharedFilter() throws Exception {
         Filter f = createFilterForSharedFilterTest(mTuner, getExecutor(), getFilterCallback());
         assertTrue(f != null);
 
         String token = f.createSharedFilter();
         assertTrue(token != null);
-
-        // Set up receiver to receive shared filter closed intent.
-        SharedFilterTokenReceiver receiver = new SharedFilterTokenReceiver();
-        mContext.registerReceiver(
-                receiver, new IntentFilter("android.media.tv.tuner.cts.SHARED_FILTER_CLOSED"));
 
         // Tune a frontend before start the shared filter
         List<Integer> ids = mTuner.getFrontendIds();
@@ -1724,27 +1592,13 @@ public class TunerTest {
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
         assertEquals(Tuner.RESULT_SUCCESS, res);
-
-        mLockLatch = new CountDownLatch(1);
-
-        // Run the shared filter in SharedFilterTestService.
-        Intent runIntent = new Intent(mContext, SharedFilterTestService.class);
-        runIntent.putExtra("CMD", "share");
-        runIntent.putExtra("TOKEN", token);
-        mContext.startService(runIntent);
-
-        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        mLockLatch = null;
-
-        f.releaseSharedFilter(token);
-        f.close();
+        assertTrue(mSharedFilterTestServer.verifySharedFilter(token));
 
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
 
-        // Stop the SharedFilterTestService
-        mContext.stopService(new Intent(mContext, SharedFilterTestService.class));
-        Thread.sleep(5000);
+        f.releaseSharedFilter(token);
+        f.close();
         f = null;
     }
 
