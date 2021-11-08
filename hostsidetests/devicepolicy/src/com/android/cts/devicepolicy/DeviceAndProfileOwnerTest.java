@@ -611,62 +611,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".ApplicationHiddenTest", "testCannotHidePolicyExemptApps");
     }
 
-    // TODO(b/197491427): AccountManager support in TestApp
-    @Test
-    public void testAccountManagement_userRestrictionAddAccount() throws Exception {
-        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        try {
-            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, true, mUserId);
-            executeAccountTest("testAddAccount_blocked");
-        } finally {
-            // Ensure we clear the user restriction
-            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, false, mUserId);
-        }
-        executeAccountTest("testAddAccount_allowed");
-    }
-
-    // TODO(b/197491427): AccountManager support in TestApp
-    @Test
-    public void testAccountManagement_userRestrictionRemoveAccount() throws Exception {
-        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        try {
-            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, true, mUserId);
-            executeAccountTest("testRemoveAccount_blocked");
-        } finally {
-            // Ensure we clear the user restriction
-            changeUserRestrictionOrFail(DISALLOW_MODIFY_ACCOUNTS, false, mUserId);
-        }
-        executeAccountTest("testRemoveAccount_allowed");
-    }
-
-    // TODO(b/197491427): AccountManager support in TestApp
-    @Test
-    public void testAccountManagement_disabledAddAccount() throws Exception {
-        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        try {
-            changeAccountManagement(COMMAND_BLOCK_ACCOUNT_TYPE, ACCOUNT_TYPE, mUserId);
-            executeAccountTest("testAddAccount_blocked");
-        } finally {
-            // Ensure we remove account management policies
-            changeAccountManagement(COMMAND_UNBLOCK_ACCOUNT_TYPE, ACCOUNT_TYPE, mUserId);
-        }
-        executeAccountTest("testAddAccount_allowed");
-    }
-
-    // TODO(b/197491427): AccountManager support in TestApp
-    @Test
-    public void testAccountManagement_disabledRemoveAccount() throws Exception {
-        installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
-        try {
-            changeAccountManagement(COMMAND_BLOCK_ACCOUNT_TYPE, ACCOUNT_TYPE, mUserId);
-            executeAccountTest("testRemoveAccount_blocked");
-        } finally {
-            // Ensure we remove account management policies
-            changeAccountManagement(COMMAND_UNBLOCK_ACCOUNT_TYPE, ACCOUNT_TYPE, mUserId);
-        }
-        executeAccountTest("testRemoveAccount_allowed");
-    }
-
     @Test
     public void testDelegatedCertInstaller() throws Exception {
         installAppAsUser(CERT_INSTALLER_APK, mUserId);

@@ -16,7 +16,7 @@
 
 package com.android.bedstead.remoteframeworkclasses;
 
-import android.app.admin.RemoteDevicePolicyManager;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -27,30 +27,30 @@ import com.google.android.enterprise.connectedapps.internal.BundlerType;
 /**
  * This parcelable wrapper just passes null to callers.
  *
- * <p>It is not functional and only enables use of {@link RemoteDevicePolicyManager} for clients
- * which do not need to actually use the {@link RemoteDevicePolicyManager} param or return value.
+ * <p>It is not functional and only enables use of {@link Handler} for clients
+ * which do not need to actually use the {@link Handler} param or return value.
  */
-@CustomParcelableWrapper(originalType = RemoteDevicePolicyManager.class)
-public final class NullParcelableRemoteDevicePolicyManager implements Parcelable {
+@CustomParcelableWrapper(originalType = Handler.class)
+public final class NullParcelableHandler implements Parcelable {
 
     /**
-     * Create a wrapper for a given {@link RemoteDevicePolicyManager}.
+     * Create a wrapper for a given {@link Handler}.
      */
-    public static <F> NullParcelableRemoteDevicePolicyManager of(
+    public static <F> NullParcelableHandler of(
             Bundler bundler, BundlerType type,
-            RemoteDevicePolicyManager remoteDevicePolicyManager) {
+            Handler handler) {
 
-        if (remoteDevicePolicyManager != null) {
-            throw new IllegalArgumentException("remoteDevicePolicyManager can only be null");
+        if (handler != null) {
+            throw new IllegalArgumentException("handler can only be null");
         }
 
-        return new NullParcelableRemoteDevicePolicyManager();
+        return new NullParcelableHandler();
     }
 
-    private NullParcelableRemoteDevicePolicyManager() {
+    private NullParcelableHandler() {
     }
 
-    public RemoteDevicePolicyManager get() {
+    public Handler get() {
         return null;
     }
 
@@ -64,16 +64,16 @@ public final class NullParcelableRemoteDevicePolicyManager implements Parcelable
     }
 
     @SuppressWarnings("rawtypes")
-    public static final Creator<NullParcelableRemoteDevicePolicyManager> CREATOR =
-            new Creator<NullParcelableRemoteDevicePolicyManager>() {
+    public static final Creator<NullParcelableHandler> CREATOR =
+            new Creator<NullParcelableHandler>() {
                 @Override
-                public NullParcelableRemoteDevicePolicyManager createFromParcel(Parcel in) {
-                    return new NullParcelableRemoteDevicePolicyManager();
+                public NullParcelableHandler createFromParcel(Parcel in) {
+                    return new NullParcelableHandler();
                 }
 
                 @Override
-                public NullParcelableRemoteDevicePolicyManager[] newArray(int size) {
-                    return new NullParcelableRemoteDevicePolicyManager[size];
+                public NullParcelableHandler[] newArray(int size) {
+                    return new NullParcelableHandler[size];
                 }
             };
 }
