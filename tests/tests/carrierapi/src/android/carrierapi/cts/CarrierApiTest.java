@@ -22,6 +22,8 @@ import static android.carrierapi.cts.IccUtils.hexStringToBytes;
 import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
 import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
 import static android.telephony.SubscriptionManager.PHONE_NUMBER_SOURCE_CARRIER;
+import static android.telephony.TelephonyManager.DATA_ENABLED_REASON_THERMAL;
+import static android.telephony.TelephonyManager.DATA_ENABLED_REASON_USER;
 
 import static com.android.compatibility.common.util.UiccUtil.UiccCertificate.CTS_UICC_2021;
 
@@ -1380,5 +1382,22 @@ public class CarrierApiTest extends BaseCarrierApiTest {
         assertWithMessage("Results for AUTHTYPE_EAP_AKA failed")
                 .that(akaResponse)
                 .isEqualTo(hexStringToBytes(EXPECTED_EAP_AKA_RESULT));
+    }
+
+    /**
+     * This test checks that applications with carrier privilege can set/get data enable
+     * state.
+     */
+    @Test
+    public void testDataEnableRequest() {
+        for (int i = DATA_ENABLED_REASON_USER; i <= DATA_ENABLED_REASON_THERMAL; i++) {
+            mTelephonyManager.isDataEnabledForReason(i);
+        }
+        boolean isDataEnabled = mTelephonyManager.isDataEnabledForReason(
+                TelephonyManager.DATA_ENABLED_REASON_CARRIER);
+        mTelephonyManager.setDataEnabledForReason(
+                TelephonyManager.DATA_ENABLED_REASON_CARRIER, !isDataEnabled);
+        mTelephonyManager.setDataEnabledForReason(
+                TelephonyManager.DATA_ENABLED_REASON_CARRIER, isDataEnabled);
     }
 }
