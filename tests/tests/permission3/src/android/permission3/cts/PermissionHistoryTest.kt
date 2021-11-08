@@ -25,6 +25,7 @@ import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assume.assumeFalse
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 private const val APP_LABEL_1 = "CtsMicAccess"
@@ -96,6 +97,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
     }
 
     @Test
+    @Ignore
     fun testMicrophoneTimelineWithOneApp() {
         openMicrophoneApp(INTENT_ACTION_1)
         waitFindObject(By.textContains(APP_LABEL_1))
