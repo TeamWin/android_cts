@@ -497,9 +497,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final DisplayContent defDisplay = mWmState.getDisplay(DEFAULT_DISPLAY);
         final ImeEventStream stream = mockImeSession.openEventStream();
 
-        // Tap default display as top focused display & request focus on EditText to show
-        // soft input.
-        tapOnDisplayCenter(defDisplay.mId);
+        // Tap on the imeTestActivity task center instead of the display center because
+        // the activity might not be spanning the entire display
+        WindowManagerState.ActivityTask imeTestActivityTask = mWmState
+                .getTaskByActivity(imeTestActivitySession.getActivity().getComponentName());
+        tapOnStackCenter(imeTestActivityTask);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
         waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
@@ -517,8 +519,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                         imeTestActivitySession2.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
 
-        // Tap default display again to make sure the IME window will come back.
-        tapOnDisplayCenter(defDisplay.mId);
+        // Tap on the imeTestActivity task center instead of the display center because
+        // the activity might not be spanning the entire display
+        imeTestActivityTask = mWmState
+                .getTaskByActivity(imeTestActivitySession.getActivity().getComponentName());
+        tapOnStackCenter(imeTestActivityTask);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
         waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
@@ -731,7 +736,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Verify if tapping the test activity on default display to request focus on EditText can
         // show soft input.
         final ImeEventStream stream = mockImeSession.openEventStream();
-        tapOnCenter(imeTestActivitySession.getActivity().getBoundsOnScreen(), defDisplay.mId);
+        // Tap on the imeTestActivity stack center instead of the display center because
+        // the activity might not be spanning the entire display
+        final WindowManagerState.ActivityTask testActivityTask = mWmState
+                .getTaskByActivity(imeTestActivitySession.getActivity().getComponentName());
+        tapOnStackCenter(testActivityTask);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
         waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
