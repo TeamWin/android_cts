@@ -23,6 +23,7 @@ import com.android.compatibility.common.tradefed.targetprep.FilePusher;
 import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
+import com.android.tradefed.config.IDeviceConfiguration;
 import com.android.tradefed.targetprep.ITargetPreparer;
 import com.android.tradefed.targetprep.PushFilePreparer;
 import com.android.tradefed.targetprep.TestAppInstallSetup;
@@ -87,64 +88,65 @@ public class ApkPackageNameCheck {
             // For each config, we check all the apk it's going to install
             List<File> apkNames = new ArrayList<>();
             List<String> packageListNames = new ArrayList<>();
-            for (ITargetPreparer prep : c.getTargetPreparers()) {
-                if (prep instanceof TestAppInstallSetup) {
-                    apkNames.addAll(((TestAppInstallSetup) prep).getTestsFileName());
-                }
-                // Ensure the files requested to be pushed exist.
-                if (prep instanceof FilePusher && ((FilePusher) prep).shouldAppendBitness()) {
-                    for (File f : ((PushFilePreparer) prep).getPushSpecs(null).values()) {
-                        String path = f.getPath();
-                        if (!new File(testcases, path + "32").exists()
-                                || !new File(testcases, path + "64").exists()) {
-                            // TODO: Enforce should abort on failure is True in CTS
-                            if (((FilePusher) prep).shouldAbortOnFailure()) {
-                                fail(
-                                        String.format(
-                                                "File %s[32/64] wasn't found in testcases/ while "
-                                                        + "it's expected to be pushed as part of "
-                                                        + "%s",
-                                                path, config.getName()));
+            for (IDeviceConfiguration dConfig : c.getDeviceConfig()) {
+                for (ITargetPreparer prep : dConfig.getTargetPreparers()) {
+                    if (prep instanceof TestAppInstallSetup) {
+                        apkNames.addAll(((TestAppInstallSetup) prep).getTestsFileName());
+                    }
+                    // Ensure the files requested to be pushed exist.
+                    if (prep instanceof FilePusher && ((FilePusher) prep).shouldAppendBitness()) {
+                        for (File f : ((PushFilePreparer) prep).getPushSpecs(null).values()) {
+                            String path = f.getPath();
+                            if (!new File(testcases, path + "32").exists()
+                                    || !new File(testcases, path + "64").exists()) {
+                                // TODO: Enforce should abort on failure is True in CTS
+                                if (((FilePusher) prep).shouldAbortOnFailure()) {
+                                    fail(
+                                            String.format(
+                                                    "File %s[32/64] wasn't found in testcases/ while "
+                                                            + "it's expected to be pushed as part of "
+                                                            + "%s",
+                                                    path, config.getName()));
+                                }
+                            }
+                        }
+                    } else if (prep instanceof PushFilePreparer) {
+                        for (File f : ((PushFilePreparer) prep).getPushSpecs(null).values()) {
+                            String path = f.getPath();
+                            if (!new File(testcases, path).exists()) {
+                                // TODO: Enforce should abort on failure is True in CTS
+                                if (((PushFilePreparer) prep).shouldAbortOnFailure()) {
+                                    fail(
+                                            String.format(
+                                                    "File %s wasn't found in testcases/ while it's "
+                                                            + "expected to be pushed as part of %s",
+                                                    path, config.getName()));
+                                }
                             }
                         }
                     }
-                } else if (prep instanceof PushFilePreparer) {
-                    for (File f : ((PushFilePreparer) prep).getPushSpecs(null).values()) {
-                        String path = f.getPath();
-                        if (!new File(testcases, path).exists()) {
-                            // TODO: Enforce should abort on failure is True in CTS
-                            if (((PushFilePreparer) prep).shouldAbortOnFailure()) {
-                                fail(
-                                        String.format(
-                                                "File %s wasn't found in testcases/ while it's "
-                                                        + "expected to be pushed as part of %s",
-                                                path, config.getName()));
-                            }
-                        }
+                }
+    
+                for (File apk : apkNames) {
+                    String apkName = apk.getName();
+                    File apkFile = new File(testcases, apkName);
+                    if (!apkFile.exists()) {
+                        fail(String.format("Module %s is trying to install %s which does not "
+                                + "exists in testcases/", config.getName(), apkFile));
+                    }
+                    AaptParser res = AaptParser.parse(apkFile);
+                    assertNotNull(res);
+                    String packageName = res.getPackageName();
+                    String put = packageNames.put(packageName, apkName);
+                    packageListNames.add(packageName);
+                    // The package already exists and it's a different apk
+                    if (put != null && !apkName.equals(put) && !EXCEPTION_LIST.contains(packageName)) {
+                        fail(String.format("Module %s: Package name '%s' from apk '%s' was already "
+                                + "added by previous apk '%s'.",
+                                config.getName(), packageName, apkName, put));
                     }
                 }
             }
-
-            for (File apk : apkNames) {
-                String apkName = apk.getName();
-                File apkFile = new File(testcases, apkName);
-                if (!apkFile.exists()) {
-                    fail(String.format("Module %s is trying to install %s which does not "
-                            + "exists in testcases/", config.getName(), apkFile));
-                }
-                AaptParser res = AaptParser.parse(apkFile);
-                assertNotNull(res);
-                String packageName = res.getPackageName();
-                String put = packageNames.put(packageName, apkName);
-                packageListNames.add(packageName);
-                // The package already exists and it's a different apk
-                if (put != null && !apkName.equals(put) && !EXCEPTION_LIST.contains(packageName)) {
-                    fail(String.format("Module %s: Package name '%s' from apk '%s' was already "
-                            + "added by previous apk '%s'.",
-                            config.getName(), packageName, apkName, put));
-                }
-            }
-
             // Catch a test trying to run something it doesn't install.
             List<IRemoteTest> tests = c.getTests();
             for (IRemoteTest test : tests) {
