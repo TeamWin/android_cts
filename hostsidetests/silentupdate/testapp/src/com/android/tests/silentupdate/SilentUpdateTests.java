@@ -16,6 +16,7 @@
 
 package com.android.tests.silentupdate;
 
+import static android.Manifest.permission.INSTALL_DPC_PACKAGES;
 import static android.app.PendingIntent.FLAG_MUTABLE;
 import static android.content.Context.MODE_PRIVATE;
 import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED;
@@ -39,6 +40,11 @@ import android.content.pm.PackageManager;
 import android.os.SystemClock;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -68,12 +74,19 @@ public class SilentUpdateTests {
     private static final String INSTALLER_PACKAGE_NAME = "com.android.tests.silentupdate";
     static final long SILENT_UPDATE_THROTTLE_TIME_SECOND = 10;
 
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sDpcApp = sTestAppProvider.query()
+                    .whereIsDeviceAdmin().isTrue()
+                    .whereTestOnly().isFalse()
+                    .get();
+
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
     @After
     public void tearDown() {
+        sDpcApp.uninstall();
         resetSilentUpdatesPolicy();
     }
 
@@ -207,6 +220,39 @@ public class SilentUpdateTests {
         Assert.assertEquals("The repeated silent update should succeed",
                 PackageInstaller.STATUS_SUCCESS,
                 silentInstallResource(CURRENT_APK));
+    }
+
+    @Test
+    public void newInstall_withInstallDpcPermission_requiresUserAction() throws Exception {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                INSTALL_DPC_PACKAGES)) {
+            Assert.assertEquals("Installing a non DPC package with INSTALL_DPC_PACKAGES "
+                    + "permission should require user action.",
+                    PackageInstaller.STATUS_PENDING_USER_ACTION,
+                    silentInstallResource(CURRENT_APK));
+        }
+    }
+
+    @Test
+    public void newInstallDpc_withInstallDpcPermission_requiresNoUserAction() throws Exception {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                INSTALL_DPC_PACKAGES)) {
+            Assert.assertEquals("Installing a DPC package with INSTALL_DPC_PACKAGES "
+                            + "permission should not require user action.",
+                    PackageInstaller.STATUS_SUCCESS,
+                    install(sDpcApp::apkStream, /* requireUserAction= */ false));
+        }
+    }
+
+    @Test
+    public void newInstallDpc_withoutInstallDpcPermission_requiresUserAction() throws Exception {
+        try (PermissionContext p = TestApis.permissions().withoutPermission(
+                INSTALL_DPC_PACKAGES)) {
+            Assert.assertEquals("Installing a DPC package without INSTALL_DPC_PACKAGES "
+                            + "permission should require user action.",
+                    PackageInstaller.STATUS_PENDING_USER_ACTION,
+                    install(sDpcApp::apkStream, /* requireUserAction= */ false));
+        }
     }
 
     private int silentInstallResource(String resourceName) throws Exception {

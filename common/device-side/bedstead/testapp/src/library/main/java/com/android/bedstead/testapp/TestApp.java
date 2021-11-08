@@ -140,9 +140,18 @@ public class TestApp {
         return new TestAppInstanceReference(this, user);
     }
 
-    private byte[] apkBytes() {
-        try (InputStream inputStream =
-                     sContext.getResources().openRawResource(mDetails.mResourceIdentifier)) {
+    /**
+     * Returns an {@link InputStream} of the apk for this app.
+     */
+    public InputStream apkStream() {
+        return sContext.getResources().openRawResource(mDetails.mResourceIdentifier);
+    }
+
+    /**
+     * Returns a byte array of the apk for this app.
+     */
+    public byte[] apkBytes() {
+        try (InputStream inputStream = apkStream()) {
             return readInputStreamFully(inputStream);
         } catch (IOException e) {
             throw new NeneException("Error when reading TestApp bytes", e);

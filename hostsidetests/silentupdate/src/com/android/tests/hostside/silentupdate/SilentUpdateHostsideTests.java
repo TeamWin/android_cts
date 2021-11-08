@@ -135,6 +135,25 @@ public class SilentUpdateHostsideTests extends BaseHostJUnit4Test {
                 "silentInstallRepeatedly_waitForThrottleTime_succeed");
     }
 
+    @Test
+    public void newInstall_withInstallDpcPermission_requiresUserAction() throws Exception {
+        runDeviceTests(
+                TEST_PKG, TEST_CLS, "newInstall_withInstallDpcPermission_requiresUserAction");
+    }
+
+    @Test
+    public void newInstallDpc_withInstallDpcPermission_requiresNoUserAction() throws Exception {
+        runDeviceTests(
+                TEST_PKG, TEST_CLS, "newInstallDpc_withInstallDpcPermission_requiresNoUserAction");
+    }
+
+    @Test
+    public void newInstallDpc_withoutInstallDpcPermission_requiresUserAction() throws Exception {
+        runDeviceTests(
+                TEST_PKG, TEST_CLS,
+                "newInstallDpc_withoutInstallDpcPermission_requiresUserAction");
+    }
+
     private void waitForPathChange(String packageName, String originalCodePath, long timeout)
             throws DeviceNotAvailableException, InterruptedException {
                 long startTime = System.currentTimeMillis();
