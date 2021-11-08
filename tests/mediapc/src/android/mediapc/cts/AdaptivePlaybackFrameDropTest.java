@@ -22,6 +22,7 @@ import android.os.Build;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -63,6 +64,7 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement="2.2.7.1/5.3/H-1-2")
     public void testAdaptivePlaybackFrameDrop() throws Exception {
         PlaybackFrameDrop playbackFrameDrop = new PlaybackFrameDrop(mMime, mDecoderName,
                 new String[]{m1080pTestFiles.get(mMime), m540pTestFiles.get(mMime)},
@@ -80,7 +82,8 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
             log.addValue("decoder", mDecoderName, ResultType.NEUTRAL, ResultUnit.NONE);
             log.addValue("adaptive_frame_drops_for_30sec", frameDropCount, ResultType.LOWER_BETTER,
                     ResultUnit.NONE);
-            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("CDD 2.2.7.1/5.3/H-1-2 performance_class", pc, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
             log.submit(InstrumentationRegistry.getInstrumentation());
         }
     }
