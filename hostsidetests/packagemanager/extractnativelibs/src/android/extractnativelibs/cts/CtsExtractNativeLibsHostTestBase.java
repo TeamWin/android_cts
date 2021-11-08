@@ -177,7 +177,7 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
      * @return an ABI string from AbiUtils.ABI_*
      * @return an ABI string from AbiUtils.ABI_*
      */
-    final String getExpectedLibAbi(String abiSuffix) throws Exception {
+    final String getExpectedLibAbi(String abiSuffix) {
         final String testAbi = getAbi().getName();
         final String testBitness = AbiUtils.getBitness(testAbi);
         final String libBitness;
