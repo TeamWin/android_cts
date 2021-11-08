@@ -205,18 +205,14 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         }
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
         testTurnScreenOnActivity(lockScreenSession, activityClient,
-                true /* useWindowFlags */, true /* showWhenLocked */);
+                true /* useWindowFlags */);
         testTurnScreenOnActivity(lockScreenSession, activityClient,
-                false /* useWindowFlags */, true /* showWhenLocked */);
+                false /* useWindowFlags */);
         if (notSupportsInsecureLock) {
             // In the platform without InsecureLock, we just test if the display is on with
             // TurnScreenOnActivity.
             mObjectTracker.close(lockScreenSession);
         }
-        testTurnScreenOnActivity(lockScreenSession, activityClient,
-                true /* useWindowFlags */, false /* showWhenLocked */);
-        testTurnScreenOnActivity(lockScreenSession, activityClient,
-                false /* useWindowFlags */, false /* showWhenLocked */);
     }
 
     @Test
@@ -230,21 +226,20 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // timeout should still notify the client activity to be visible. Then the relayout can
         // send the visible request to apply the flags and turn on screen.
         testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */,
-                true /* showWhenLocked */, 1000 /* sleepMsInOnCreate */);
+                1000 /* sleepMsInOnCreate */);
     }
 
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
-            ActivitySessionClient activitySessionClient, boolean useWindowFlags,
-            boolean showWhenLocked) {
+            ActivitySessionClient activitySessionClient, boolean useWindowFlags) {
         testTurnScreenOnActivity(lockScreenSession, activitySessionClient, useWindowFlags,
-                showWhenLocked, 0 /* sleepMsInOnCreate */);
+                0 /* sleepMsInOnCreate */);
     }
 
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
             ActivitySessionClient activitySessionClient, boolean useWindowFlags,
-            boolean showWhenLocked, int sleepMsInOnCreate) {
+            int sleepMsInOnCreate) {
         ActivitySession activity = sleepDeviceAndLaunchTurnScreenOnActivity(lockScreenSession,
-                activitySessionClient, useWindowFlags, showWhenLocked, sleepMsInOnCreate,
+                activitySessionClient, useWindowFlags, sleepMsInOnCreate,
                 WINDOWING_MODE_FULLSCREEN);
 
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
@@ -263,21 +258,16 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
 
         testFreeformWindowTurnScreenOnActivity(lockScreenSession, activityClient,
-                true/* useWindowFlags */, true/* showWhenLocked */);
+                true/* useWindowFlags */);
         testFreeformWindowTurnScreenOnActivity(lockScreenSession, activityClient,
-                true/* useWindowFlags */, false/* showWhenLocked */);
-        testFreeformWindowTurnScreenOnActivity(lockScreenSession, activityClient,
-                false/* useWindowFlags */, true/* showWhenLocked */);
-        testFreeformWindowTurnScreenOnActivity(lockScreenSession, activityClient,
-                false/* useWindowFlags */, false/* showWhenLocked */);
+                false/* useWindowFlags */);
     }
 
     private void testFreeformWindowTurnScreenOnActivity(LockScreenSession lockScreenSession,
-            ActivitySessionClient activityClient, boolean useWindowFlags,
-            boolean showWhenLocked) {
+            ActivitySessionClient activityClient, boolean useWindowFlags) {
         ActivitySession activity = sleepDeviceAndLaunchTurnScreenOnActivity(lockScreenSession,
-                activityClient, useWindowFlags, showWhenLocked,
-                0 /* sleepMsInOnCreate */, WINDOWING_MODE_FREEFORM);
+                activityClient, useWindowFlags, 0 /* sleepMsInOnCreate */,
+                WINDOWING_MODE_FREEFORM);
         mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(TURN_SCREEN_ON_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
@@ -291,16 +281,13 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     private ActivitySession sleepDeviceAndLaunchTurnScreenOnActivity(
             LockScreenSession lockScreenSession, ActivitySessionClient activitySessionClient,
-            boolean useWindowFlags, boolean showWhenLocked, int sleepMsInOnCreate,
-            int windowingMode) {
+            boolean useWindowFlags, int sleepMsInOnCreate, int windowingMode) {
         lockScreenSession.sleepDevice();
 
         return activitySessionClient.startActivity(
                 getLaunchActivityBuilder().setUseInstrumentation().setIntentExtra(extra -> {
                     extra.putBoolean(Components.TurnScreenOnActivity.EXTRA_USE_WINDOW_FLAGS,
                             useWindowFlags);
-                    extra.putBoolean(Components.TurnScreenOnActivity.EXTRA_SHOW_WHEN_LOCKED,
-                            showWhenLocked);
                     extra.putLong(Components.TurnScreenOnActivity.EXTRA_SLEEP_MS_IN_ON_CREATE,
                             sleepMsInOnCreate);
                 }).setTargetActivity(TURN_SCREEN_ON_ACTIVITY).setWindowingMode(windowingMode));
