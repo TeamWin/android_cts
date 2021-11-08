@@ -77,6 +77,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -984,6 +985,7 @@ class GLSurfaceViewFactory extends VideoViewFactory {
         private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES;
         private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
         private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
+        private final CountDownLatch mDone = new CountDownLatch(1);
         private FloatBuffer triangleVertices;
         private float[] textureTransform = new float[16];
 
@@ -1056,6 +1058,21 @@ class GLSurfaceViewFactory extends VideoViewFactory {
             byteBuffer = ByteBuffer.allocateDirect(VIEW_WIDTH * VIEW_HEIGHT * 4);
             byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
             Looper.loop();
+            surface.release();
+            surfaceTexture.release();
+            byteBufferIsReady = false;
+            byteBuffer =  null;
+            egl10.eglMakeCurrent(eglDisplay,
+                EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+            egl10.eglDestroySurface(eglDisplay, eglSurface);
+            egl10.eglDestroyContext(eglDisplay, eglContext);
+            //TODO: uncomment following line after fixing crash in GL driver libGLESv2_adreno.so
+            //TODO: see b/123755902
+            //egl10.eglTerminate(eglDisplay);
+            eglDisplay = EGL10.EGL_NO_DISPLAY;
+            eglContext = EGL10.EGL_NO_CONTEXT;
+            eglSurface = EGL10.EGL_NO_SURFACE;
+            mDone.countDown();
         }
 
         @Override
@@ -1121,22 +1138,12 @@ class GLSurfaceViewFactory extends VideoViewFactory {
 
         public void release() {
             looper.quit();
-            surface.release();
-            surfaceTexture.release();
-            byteBufferIsReady = false;
-            byteBuffer =  null;
-            if (eglDisplay != EGL10.EGL_NO_DISPLAY) {
-                egl10.eglMakeCurrent(eglDisplay,
-                    EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
-                egl10.eglDestroySurface(eglDisplay, eglSurface);
-                egl10.eglDestroyContext(eglDisplay, eglContext);
-                //TODO: uncomment following line after fixing crash in GL driver libGLESv2_adreno.so
-                //TODO: see b/123755902
-                //egl10.eglTerminate(eglDisplay);
+            try{
+                mDone.await();
             }
-            eglDisplay = EGL10.EGL_NO_DISPLAY;
-            eglContext = EGL10.EGL_NO_CONTEXT;
-            eglSurface = EGL10.EGL_NO_SURFACE;
+            catch(InterruptedException e) {
+                Log.e(TAG, "Interrupted waiting in release");
+            }
         }
 
         /* Makes our EGL context and surface current. */
