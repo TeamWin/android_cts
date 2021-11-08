@@ -202,5 +202,9 @@ public class NonBlockingAudioTrack {
         mNumBytesQueued += size;
         mQueue.add(element);
     }
-}
 
+    /** Returns the underlying {@code AudioTrack}. */
+    public AudioTrack getAudioTrack() {
+        return mAudioTrack;
+    }
+}
