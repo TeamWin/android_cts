@@ -26,6 +26,8 @@ import java.util.List;
 public final class StringQueryHelper<E extends Queryable>
         implements StringQuery<E>, Serializable{
 
+    private static final long serialVersionUID = 1;
+
     private final transient E mQuery;
     private String mEqualsValue;
 

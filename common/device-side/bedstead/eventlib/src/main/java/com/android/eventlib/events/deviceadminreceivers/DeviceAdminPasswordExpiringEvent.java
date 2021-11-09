@@ -40,6 +40,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminPasswordExpiringEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminPasswordExpiringEvent} events. */
     public static DeviceAdminPasswordExpiringEventQuery queryPackage(String packageName) {
         return new DeviceAdminPasswordExpiringEventQuery(packageName);

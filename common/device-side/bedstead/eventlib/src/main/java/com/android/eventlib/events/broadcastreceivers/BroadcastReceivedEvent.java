@@ -37,6 +37,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class BroadcastReceivedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link BroadcastReceivedEvent} events. */
     public static BroadcastReceivedEventQuery queryPackage(String packageName) {
         return new BroadcastReceivedEventQuery(packageName);

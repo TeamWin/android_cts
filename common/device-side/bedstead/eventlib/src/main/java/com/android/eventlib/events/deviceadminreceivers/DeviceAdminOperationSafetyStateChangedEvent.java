@@ -40,6 +40,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminOperationSafetyStateChangedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminOperationSafetyStateChangedEvent} events. */
     public static DeviceAdminOperationSafetyStateChangedEventQuery queryPackage(String packageName) {
         return new DeviceAdminOperationSafetyStateChangedEventQuery(packageName);

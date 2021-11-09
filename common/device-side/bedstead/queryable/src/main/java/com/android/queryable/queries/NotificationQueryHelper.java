@@ -30,6 +30,8 @@ import java.io.Serializable;
 public final class NotificationQueryHelper<E extends Queryable> implements NotificationQuery<E>,
         Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private final StringQueryHelper<E> mChannelId;
 

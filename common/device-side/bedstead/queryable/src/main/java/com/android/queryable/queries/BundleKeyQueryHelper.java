@@ -28,6 +28,8 @@ import java.util.List;
 public final class BundleKeyQueryHelper<E extends Queryable> implements BundleKeyQuery<E>,
         Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private Boolean mExpectsToExist = null;
     private StringQueryHelper<E> mStringQuery = null;
