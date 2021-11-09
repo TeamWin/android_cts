@@ -620,20 +620,33 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
         String direction = fromCecClient ? "<<" : ">>";
-        Pattern pattern =
-                Pattern.compile(
-                        "(.*"
-                                + direction
-                                + ")(.*?)"
-                                + "("
-                                + fromDevice
-                                + toDevice
-                                + "):"
-                                + "("
-                                + expectedMessage
-                                + ")(.*)",
-                        Pattern.CASE_INSENSITIVE);
-
+        Pattern pattern;
+        if (expectedMessage == CecOperand.POLL) {
+            pattern =
+                    Pattern.compile(
+                            "(.*"
+                                    + direction
+                                    + ")(.*?)"
+                                    + "("
+                                    + fromDevice
+                                    + toDevice
+                                    + ")(.*)",
+                            Pattern.CASE_INSENSITIVE);
+        } else {
+            pattern =
+                    Pattern.compile(
+                            "(.*"
+                                    + direction
+                                    + ")(.*?)"
+                                    + "("
+                                    + fromDevice
+                                    + toDevice
+                                    + "):"
+                                    + "("
+                                    + expectedMessage
+                                    + ")(.*)",
+                            Pattern.CASE_INSENSITIVE);
+        }
         while ((endTime - startTime <= timeoutMillis)) {
             try {
                 if (mInputConsole.ready()) {
