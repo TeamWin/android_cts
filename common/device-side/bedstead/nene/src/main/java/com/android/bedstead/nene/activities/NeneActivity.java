@@ -16,13 +16,14 @@
 
 package com.android.bedstead.nene.activities;
 
+import android.app.RemoteActivity;
 import android.os.UserHandle;
 
 /**
- * Additional methods which are not direct wrappes of {@link Activity}.
+ * Additional methods which are not direct wrappers of {@link Activity}.
  */
-public interface NeneActivity extends NeneActivityDirect {
+public interface NeneActivity extends RemoteActivity {
 
-    /** See {@link android.app.Activity#getUser()}. */
+    /** Get the user the Activity is running on. */
     UserHandle getUser();
 }

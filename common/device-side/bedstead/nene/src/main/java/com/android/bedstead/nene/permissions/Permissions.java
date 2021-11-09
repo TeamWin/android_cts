@@ -129,6 +129,29 @@ public final class Permissions {
 
     /**
      * Enter a {@link PermissionContext} where the given permissions are granted only when running
+     * on the given version or above.
+     *
+     * <p>If the permissions cannot be granted, and are not already granted, an exception will be
+     * thrown.
+     *
+     * <p>If the version does not match, the permission context will not change.
+     */
+    public PermissionContextImpl withPermissionOnVersionAtLeast(
+            int minSdkVersion, String... permissions) {
+        if (mPermissionContexts.isEmpty()) {
+            recordExistingPermissions();
+        }
+
+        PermissionContextImpl permissionContext = new PermissionContextImpl(this);
+        mPermissionContexts.add(permissionContext);
+
+        permissionContext.withPermissionOnVersionAtLeast(minSdkVersion, permissions);
+
+        return permissionContext;
+    }
+
+    /**
+     * Enter a {@link PermissionContext} where the given permissions are granted only when running
      * on the given version.
      *
      * <p>If the permissions cannot be granted, and are not already granted, an exception will be

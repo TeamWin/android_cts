@@ -24,7 +24,7 @@ import com.android.bedstead.nene.packages.ComponentReference;
  * A reference to an {@link Activity} in a {@link TestApp}.
  */
 public final class UnresolvedTestAppActivity extends TestAppActivityReference {
-    UnresolvedTestAppActivity(TestAppInstanceReference instance,
+    UnresolvedTestAppActivity(TestAppInstance instance,
             ComponentReference component) {
         super(instance, component);
     }
