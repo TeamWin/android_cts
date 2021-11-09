@@ -33,6 +33,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ReportLog.Metric;
 
@@ -289,6 +290,7 @@ public class EncoderInitializationLatencyTest {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement="2.2.7.1/5.1/H-1-7,H-1-8")
     public void testInitializationLatency() throws Exception {
         final int NUM_MEASUREMENTS = 5;
         // Test gathers initialization latency for a number of iterations and
@@ -343,7 +345,8 @@ public class EncoderInitializationLatencyTest {
             log.addValue("encoder", mEncoderName, ResultType.NEUTRAL, ResultUnit.NONE);
             log.addValue("initialization_latency", initializationLatency, ResultType.LOWER_BETTER,
                     ResultUnit.NONE);
-            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("CDD 2.2.7.1/5.1/H-1-7,H-1-8 performance_class", pc, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
             log.submit(InstrumentationRegistry.getInstrumentation());
         }
     }
