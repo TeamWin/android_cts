@@ -38,7 +38,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.Before;
@@ -89,9 +89,9 @@ public class DeviceOwnerPrerequisitesTest {
     @EnsureHasNoProfileOwner
     public void setDeviceOwnerViaAdb_deviceHasAccount_fails()
             throws InterruptedException {
-        try (TestAppInstanceReference accountAuthenticatorApp =
+        try (TestAppInstance accountAuthenticatorApp =
                      sAccountManagementApp.install(TestApis.users().instrumented());
-            TestAppInstanceReference dpcApp = sDpcApp.install(TestApis.users().instrumented())) {
+             TestAppInstance dpcApp = sDpcApp.install(TestApis.users().instrumented())) {
             addAccount();
 
             assertThrows(AdbException.class, () ->

@@ -36,9 +36,9 @@ public final class TestAppBinder implements ConnectionBinder {
 
     private static final String LOG_TAG = TestAppBinder.class.getName();
 
-    private final TestAppInstanceReference mTestAppInstance;
+    private final TestAppInstance mTestAppInstance;
 
-    public TestAppBinder(TestAppInstanceReference testAppInstance) {
+    public TestAppBinder(TestAppInstance testAppInstance) {
         mTestAppInstance = testAppInstance;
     }
 

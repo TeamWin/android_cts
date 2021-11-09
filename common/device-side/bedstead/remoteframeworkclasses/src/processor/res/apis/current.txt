@@ -3918,7 +3918,6 @@ package android.app {
     method public void dump(@NonNull String, @Nullable java.io.FileDescriptor, @NonNull java.io.PrintWriter, @Nullable String[]);
     method @Deprecated public void enterPictureInPictureMode();
     method public boolean enterPictureInPictureMode(@NonNull android.app.PictureInPictureParams);
-    method public <T extends android.view.View> T findViewById(@IdRes int);
     method public void finish();
     method public void finishActivity(int);
     method @Deprecated public void finishActivityFromChild(@NonNull android.app.Activity, int);
@@ -4082,7 +4081,6 @@ package android.app {
     method public final void requestShowKeyboardShortcuts();
     method @Deprecated public boolean requestVisibleBehind(boolean);
     method public final boolean requestWindowFeature(int);
-    method @NonNull public final <T extends android.view.View> T requireViewById(@IdRes int);
     method public final void runOnUiThread(Runnable);
     method public void setActionBar(@Nullable android.widget.Toolbar);
     method public void setContentTransitionManager(android.transition.TransitionManager);
@@ -10535,7 +10533,6 @@ package android.content {
     method @NonNull public final String getString(@StringRes int);
     method @NonNull public final String getString(@StringRes int, java.lang.Object...);
     method public abstract Object getSystemService(@NonNull String);
-    method public final <T> T getSystemService(@NonNull Class<T>);
     method @Nullable public abstract String getSystemServiceName(@NonNull Class<?>);
     method @NonNull public final CharSequence getText(@StringRes int);
     method public abstract android.content.res.Resources.Theme getTheme();

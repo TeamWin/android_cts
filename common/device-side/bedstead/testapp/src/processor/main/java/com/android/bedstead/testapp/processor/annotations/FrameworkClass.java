@@ -14,21 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.activities;
+package com.android.bedstead.testapp.processor.annotations;
 
-import android.app.Activity;
-import android.app.RemoteActivityImpl;
-import android.os.UserHandle;
-
-class ActivityWrapper extends RemoteActivityImpl implements NeneActivity {
-
-    ActivityWrapper(Activity activity) {
-        super(activity);
-    }
-
-    @Override
-    public UserHandle getUser() {
-        // Assuming if we have an Activity it's on the instrumented user
-        return android.os.Process.myUserHandle();
-    }
+public @interface FrameworkClass {
+    Class<?> frameworkClass();
+    String constructor();
 }

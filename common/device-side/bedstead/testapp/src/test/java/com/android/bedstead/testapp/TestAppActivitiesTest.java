@@ -52,21 +52,21 @@ public class TestAppActivitiesTest {
                     activity().activityClass().className().isEqualTo(NON_EXISTING_ACTIVITY)
             )
             .get();
-    private static TestAppInstanceReference mTestAppInstance;
+    private static TestAppInstance sTestAppInstance;
 
     @Before
     public void setup() {
-        mTestAppInstance = sTestApp.install(sUser);
+        sTestAppInstance = sTestApp.install(sUser);
     }
 
     @After
     public void teardown() {
-        mTestAppInstance.uninstall();
+        sTestAppInstance.uninstall();
     }
 
     @Test
     public void query_matchesActivity_returnsActivity() {
-        TestAppActivityReference activity = mTestAppInstance.activities().query()
+        TestAppActivityReference activity = sTestAppInstance.activities().query()
                     .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                     .get();
 
@@ -75,12 +75,12 @@ public class TestAppActivitiesTest {
 
     @Test
     public void query_matchesPreviouslyReturnedActivity_throwsException() {
-        mTestAppInstance.activities().query()
+        sTestAppInstance.activities().query()
                 .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                 .get();
 
         assertThrows(IllegalStateException.class, () ->
-                mTestAppInstance.activities().query()
+                sTestAppInstance.activities().query()
                         .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                         .get());
     }
@@ -88,7 +88,7 @@ public class TestAppActivitiesTest {
     @Test
     public void query_doesNotMatchActivity_throwsException() {
         assertThrows(IllegalStateException.class, () ->
-                mTestAppInstance.activities().query()
+                sTestAppInstance.activities().query()
                         .whereActivity().activityClass().className()
                             .isEqualTo(NON_EXISTING_ACTIVITY)
                         .get());
@@ -96,18 +96,18 @@ public class TestAppActivitiesTest {
 
     @Test
     public void any_returnsActivity() {
-        TestAppActivityReference activity = mTestAppInstance.activities().any();
+        TestAppActivityReference activity = sTestAppInstance.activities().any();
 
         assertThat(activity).isNotNull();
     }
 
     @Test
     public void query_matchesActivityPreviouslyReturnedByDifferentInstance_returnsActivity() {
-        mTestAppInstance.activities().query()
+        sTestAppInstance.activities().query()
                 .whereActivity().activityClass().className().isEqualTo(EXISTING_ACTIVITY)
                 .get();
 
-        TestAppInstanceReference testAppInstance2 = sTestApp.instance(sUser);
+        TestAppInstance testAppInstance2 = sTestApp.instance(sUser);
 
         assertThat(
                 testAppInstance2.activities().query()

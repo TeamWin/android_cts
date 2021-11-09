@@ -17,11 +17,9 @@
 package com.android.bedstead.testapp;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.os.UserHandle;
 
 import com.android.bedstead.nene.activities.NeneActivity;
-import com.android.bedstead.nene.activities.NeneActivityDirect;
 import com.android.bedstead.nene.packages.ComponentReference;
 
 /**
@@ -32,14 +30,8 @@ import com.android.bedstead.nene.packages.ComponentReference;
  */
 public abstract class TestAppActivity extends TestAppActivityReference implements
         NeneActivity {
-    TestAppActivity(TestAppInstanceReference instance,
-            ComponentReference component) {
+    TestAppActivity(TestAppInstance instance, ComponentReference component) {
         super(instance, component);
-    }
-
-    @Override
-    public ComponentName getComponentName() {
-        return component().componentName();
     }
 
     @Override

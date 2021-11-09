@@ -33,11 +33,11 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 /** Entry point to RemoteDPC. */
-public final class RemoteDpc extends TestAppInstanceReference {
+public final class RemoteDpc extends TestAppInstance {
 
     // This must be instrumentation not instrumented to access the resources
     private static final Context sContext = TestApis.context().instrumentationContext();
@@ -258,10 +258,10 @@ public final class RemoteDpc extends TestAppInstanceReference {
     }
 
     /**
-     * Get the {@link TestAppInstanceReference} for the DPC.
+     * Get the {@link TestAppInstance} for the DPC.
      *
      */
-    public TestAppInstanceReference app() {
+    public TestAppInstance app() {
         return sTestApp.instance(mDevicePolicyController.user());
     }
 
