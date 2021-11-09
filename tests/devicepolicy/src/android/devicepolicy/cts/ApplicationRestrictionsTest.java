@@ -15,12 +15,21 @@
  */
 package android.devicepolicy.cts;
 
+import static android.content.Intent.ACTION_APPLICATION_RESTRICTIONS_CHANGED;
+
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+import static com.android.eventlib.truth.EventLogsSubject.assertThat;
+
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.stats.devicepolicy.EventId;
 import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -31,6 +40,8 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
+import com.android.bedstead.harrier.policies.ApplicationRestrictionsManagingPackage;
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -45,25 +56,52 @@ import java.util.Arrays;
 @RunWith(BedsteadJUnit4.class)
 public final class ApplicationRestrictionsTest {
 
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
     private static final String TAG = ApplicationRestrictionsTest.class.getSimpleName();
-
-    private static final String[] TEST_STRINGS = new String[] {
+    private static final String[] TEST_STRINGS = new String[]{
             "<bad/>",
             ">worse!\"£$%^&*()'<",
             "<JSON>\"{ \\\"One\\\": { \\\"OneOne\\\": \\\"11\\\", \\\""
                     + "OneTwo\\\": \\\"12\\\" }, \\\"Two\\\": \\\"2\\\" } <JSON/>\""
     };
-
     private static final Bundle BUNDLE = createBundle();
-
-    @ClassRule
-    @Rule
-    public static final DeviceState sDeviceState = new DeviceState();
-
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
     private static final TestApp sTestApp = sTestAppProvider.any();
     private static final TestApp sDifferentTestApp = sTestAppProvider.any();
+
+    // Should be consistent with assertEqualToBundle
+    private static Bundle createBundle() {
+        Bundle result = new Bundle();
+        // Tests for 6 allowed types: Integer, Boolean, String, String[], Bundle and Parcelable[]
+        // Also test for string escaping handling
+        result.putBoolean("boolean_0", false);
+        result.putBoolean("boolean_1", true);
+        result.putInt("integer", 0x7fffffff);
+        // If a null is stored, "" will be read back
+        result.putString("empty", "");
+        result.putString("string", "text");
+        result.putStringArray("string[]", TEST_STRINGS);
+
+        // Adding a bundle, which contain 2 nested restrictions - bundle_string and bundle_int
+        Bundle bundle = new Bundle();
+        bundle.putString("bundle_string", "bundle_string");
+        bundle.putInt("bundle_int", 1);
+        result.putBundle("bundle", bundle);
+
+        // Adding an array of 2 bundles
+        Bundle[] bundleArray = new Bundle[2];
+        bundleArray[0] = new Bundle();
+        bundleArray[0].putString("bundle_array_string", "bundle_array_string");
+        // Put bundle inside bundle
+        bundleArray[0].putBundle("bundle_array_bundle", bundle);
+        bundleArray[1] = new Bundle();
+        bundleArray[1].putString("bundle_array_string2", "bundle_array_string2");
+        result.putParcelableArray("bundle_array", bundleArray);
+        return result;
+    }
 
     @Test
     @Postsubmit(reason = "New test")
@@ -75,6 +113,34 @@ public final class ApplicationRestrictionsTest {
                                 sDeviceState.dpc().componentName(), sTestApp.packageName());
 
         try (TestAppInstance testApp = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setApplicationRestrictions(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            BUNDLE);
+
+            assertEqualToBundle(
+                    testApp.userManager().getApplicationRestrictions(sTestApp.packageName()));
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), originalApplicationRestrictions);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    public void setApplicationRestrictions_applicationRestrictionsAlreadySet_setsNewRestrictions() {
+        Bundle originalApplicationRestrictions =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getApplicationRestrictions(
+                                sDeviceState.dpc().componentName(), sTestApp.packageName());
+
+        try (TestAppInstance testApp = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setApplicationRestrictions(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            new Bundle());
             sDeviceState.dpc().devicePolicyManager()
                     .setApplicationRestrictions(
                             sDeviceState.dpc().componentName(), sTestApp.packageName(),
@@ -155,7 +221,7 @@ public final class ApplicationRestrictionsTest {
                             BUNDLE);
 
             assertNotEqualToBundle(differentTestApp.userManager().getApplicationRestrictions(
-                            sDifferentTestApp.packageName()));
+                    sDifferentTestApp.packageName()));
         } finally {
             sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
                     sDeviceState.dpc().componentName(),
@@ -198,38 +264,118 @@ public final class ApplicationRestrictionsTest {
         });
     }
 
-    // Should be consistent with assertBundle0
-    private static Bundle createBundle() {
-        Bundle result = new Bundle();
-        // Tests for 6 allowed types: Integer, Boolean, String, String[], Bundle and Parcelable[]
-        // Also test for string escaping handling
-        result.putBoolean("boolean_0", false);
-        result.putBoolean("boolean_1", true);
-        result.putInt("integer", 0x7fffffff);
-        // If a null is stored, "" will be read back
-        result.putString("empty", "");
-        result.putString("string", "text");
-        result.putStringArray("string[]", TEST_STRINGS);
-
-        // Adding a bundle, which contain 2 nested restrictions - bundle_string and bundle_int
-        Bundle bundle = new Bundle();
-        bundle.putString("bundle_string", "bundle_string");
-        bundle.putInt("bundle_int", 1);
-        result.putBundle("bundle", bundle);
-
-        // Adding an array of 2 bundles
-        Bundle[] bundleArray = new Bundle[2];
-        bundleArray[0] = new Bundle();
-        bundleArray[0].putString("bundle_array_string", "bundle_array_string");
-        // Put bundle inside bundle
-        bundleArray[0].putBundle("bundle_array_bundle", bundle);
-        bundleArray[1] = new Bundle();
-        bundleArray[1].putString("bundle_array_string2", "bundle_array_string2");
-        result.putParcelableArray("bundle_array", bundleArray);
-        return result;
+    @Test
+    @Postsubmit(reason = "New test")
+    @CannotSetPolicyTest(policy = ApplicationRestrictions.class)
+    public void getApplicationRestrictions_cannotSetPolicy_throwsException() {
+        assertThrows(SecurityException.class, () -> {
+            sDeviceState.dpc().devicePolicyManager()
+                    .getApplicationRestrictions(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName());
+        });
     }
 
-    // Should be consistent with createBundle0
+    @Test
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = ApplicationRestrictions.class, singleTestOnly = true)
+    public void setApplicationRestrictions_nullComponent_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(null,
+                        sTestApp.packageName(), BUNDLE));
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    public void setApplicationRestrictions_restrictionsChangedBroadcastIsReceived() {
+        Bundle originalApplicationRestrictions =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getApplicationRestrictions(
+                                sDeviceState.dpc().componentName(), sTestApp.packageName());
+
+        try (TestAppInstance testApp = sTestApp.install()) {
+            testApp.registerReceiver(new IntentFilter(ACTION_APPLICATION_RESTRICTIONS_CHANGED));
+
+            sDeviceState.dpc().devicePolicyManager()
+                    .setApplicationRestrictions(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            BUNDLE);
+
+            assertThat(testApp.events().broadcastReceived().whereIntent().action().isEqualTo(
+                    ACTION_APPLICATION_RESTRICTIONS_CHANGED)).eventOccurred();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), originalApplicationRestrictions);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = ApplicationRestrictionsManagingPackage.class)
+    public void setApplicationRestrictionsManagingPackage_applicationRestrictionsManagingPackageIsSet()
+            throws Exception {
+        final String originalApplicationRestrictionsManagingPackage =
+                sDeviceState.dpc().devicePolicyManager().getApplicationRestrictionsManagingPackage(
+                        sDeviceState.dpc().componentName());
+        try (TestAppInstance testApp = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictionsManagingPackage(
+                    sDeviceState.dpc().componentName(), sTestApp.packageName());
+
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getApplicationRestrictionsManagingPackage(sDeviceState.dpc().componentName()))
+                    .isEqualTo(sTestApp.packageName());
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictionsManagingPackage(
+                    sDeviceState.dpc().componentName(),
+                    originalApplicationRestrictionsManagingPackage);
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = ApplicationRestrictionsManagingPackage.class)
+    public void setApplicationRestrictionsManagingPackage_appNotInstalled_throwsException() {
+        sDifferentTestApp.uninstall();
+
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .setApplicationRestrictionsManagingPackage(
+                                sDeviceState.dpc().componentName(),
+                                sDifferentTestApp.packageName()));
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    public void setApplicationRestrictions_logged() {
+        Bundle originalApplicationRestrictions =
+                sDeviceState.dpc().devicePolicyManager()
+                        .getApplicationRestrictions(
+                                sDeviceState.dpc().componentName(), sTestApp.packageName());
+
+        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create();
+             TestAppInstance testApp = sTestApp.install()) {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setApplicationRestrictions(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            BUNDLE);
+
+            assertThat(metrics.query()
+                    .whereType().isEqualTo(EventId.SET_APPLICATION_RESTRICTIONS_VALUE)
+                    .whereAdminPackageName().isEqualTo(
+                            sDeviceState.dpc().componentName().getPackageName())
+                    .whereStrings().contains(sTestApp.packageName())
+                    .whereStrings().size().isEqualTo(1))
+                    .wasLogged();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationRestrictions(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), originalApplicationRestrictions);
+        }
+    }
+
+    // Should be consistent with createBundle
     private void assertEqualToBundle(Bundle bundle) {
         assertWithMessage("bundle0 size")
                 .that(bundle.size()).isEqualTo(8);

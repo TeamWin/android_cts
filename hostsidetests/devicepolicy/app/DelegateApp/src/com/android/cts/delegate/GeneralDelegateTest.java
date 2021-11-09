@@ -58,7 +58,7 @@ public class GeneralDelegateTest extends BaseJUnit3TestCase {
                     expected.getMessage());
         }
     }
-
+  
     public void testSettingAdminComponentNameThrowsException() {
         final String myPackageName = getInstrumentation().getContext().getPackageName();
         final ComponentName myComponentName = new ComponentName(myPackageName,
