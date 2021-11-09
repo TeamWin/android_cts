@@ -26,6 +26,7 @@ import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
@@ -170,5 +171,31 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         String reportFeatures = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_FEATURES);
         assertThat(CecMessage.getParams(reportFeatures, 2)).isEqualTo(cecVersion);
+    }
+
+    /**
+     * Tests that the device sends a {@code <CEC Version>} in response to a {@code <Get CEC
+     * Version>} in standby
+     */
+    @Test
+    public void cectGiveCecVersionInStandby() throws Exception {
+        ITestDevice device = getDevice();
+        try {
+            sendDeviceToSleepAndValidate();
+            hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+            String message =
+                    hdmiCecClient.checkExpectedOutputOrFeatureAbort(
+                            hdmiCecClient.getSelfDevice(),
+                            CecOperand.CEC_VERSION,
+                            CecOperand.GET_CEC_VERSION,
+                            HdmiCecConstants.ABORT_NOT_IN_CORRECT_MODE);
+            assertThat(CecMessage.getParams(message))
+                    .isIn(
+                            Arrays.asList(
+                                    HdmiCecConstants.CEC_VERSION_2_0,
+                                    HdmiCecConstants.CEC_VERSION_1_4));
+        } finally {
+            wakeUpDevice();
+        }
     }
 }

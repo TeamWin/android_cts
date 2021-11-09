@@ -65,6 +65,20 @@ public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
     }
 
     /**
+     * Tests that the device responds to a {@code <GIVE_DEVICE_VENDOR_ID>} when in standby.
+     */
+    @Test
+    public void cectGiveDeviceVendorIdDuringStandby() throws Exception {
+        ITestDevice device = getDevice();
+        try {
+            sendDeviceToSleepAndValidate();
+            cect_11_2_9_1_GiveDeviceVendorId();
+        } finally {
+            wakeUpDevice();
+        }
+    }
+
+    /**
      * Test 11.2.9-2
      * <p>Tests that the device broadcasts a {@code <DEVICE_VENDOR_ID>} message after successful
      * initialisation and address allocation.
