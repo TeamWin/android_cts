@@ -29,7 +29,6 @@ import android.os.Bundle;
 import android.os.UserManager;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.cts.verifier.ArrayTestListAdapter;
@@ -145,18 +144,15 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
         setTestListAdapter(adapter);
 
         View setDeviceOwnerButton = findViewById(R.id.set_device_owner_button);
-        setDeviceOwnerButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new AlertDialog.Builder(
-                        DeviceOwnerRequestingBugreportTestActivity.this)
+        setDeviceOwnerButton.setOnClickListener((v) -> new AlertDialog.Builder(
+                DeviceOwnerRequestingBugreportTestActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_info)
                         .setTitle(R.string.set_device_owner_dialog_title)
-                        .setMessage(R.string.set_device_owner_dialog_text)
+                        .setMessage(UserManager.isHeadlessSystemUserMode()
+                                ? R.string.set_device_owner_headless_dialog_text
+                                : R.string.set_device_owner_dialog_text)
                         .setPositiveButton(android.R.string.ok, null)
-                        .show();
-            }
-        });
+                        .show());
     }
 
     @Override
