@@ -21,12 +21,10 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -52,13 +50,7 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHdmiCecCtsTest {
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
 
-    /**
-     * Test 11.2.11-1a
-     * Tests that the device responds to a <GIVE_OSD_NAME> with a <SET_OSD_NAME> that has the
-     * correct device name in the parameters.
-     */
-    @Test
-    public void cect_11_2_11_1a_GiveOsdNameTest() throws Exception {
+    private String getDeviceName() throws DeviceNotAvailableException {
         /* The params for <SET_OSD_NAME> only allow for 14 characters */
         final int nameLength = 14;
         ITestDevice device = getDevice();
@@ -66,9 +58,46 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHdmiCecCtsTest {
         if (deviceName.length() > nameLength) {
             deviceName = deviceName.substring(0, nameLength).trim();
         }
+        return deviceName;
+    }
+
+    /**
+     * Test 11.2.11-1a
+     *
+     * <p>Tests that the device responds to a {@code <GIVE_OSD_NAME>} with a {@code <SET_OSD_NAME>}
+     * that has the correct device name in the parameters.
+     */
+    @Test
+    public void cect_11_2_11_1a_GiveOsdNameTest() throws Exception {
+        String deviceName = getDeviceName();
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_OSD_NAME);
         String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.SET_OSD_NAME);
         assertThat(CecMessage.getAsciiString(message)).isEqualTo(deviceName);
+    }
+
+    /**
+     * Tests that the device responds to a {@code <GIVE_OSD_NAME>} with a {@code <SET_OSD_NAME>}
+     * that has the correct device name in the parameters in standby mode.
+     */
+    @Test
+    public void cectGiveOsdNameTestInStandby() throws Exception {
+        ITestDevice device = getDevice();
+        try {
+            sendDeviceToSleepAndValidate();
+            String deviceName = getDeviceName();
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_OSD_NAME);
+            String message =
+                    hdmiCecClient.checkExpectedOutputOrFeatureAbort(
+                            LogicalAddress.TV,
+                            CecOperand.SET_OSD_NAME,
+                            CecOperand.GIVE_OSD_NAME,
+                            HdmiCecConstants.ABORT_NOT_IN_CORRECT_MODE);
+            if (CecMessage.getOperand(message) != CecOperand.FEATURE_ABORT) {
+                assertThat(CecMessage.getAsciiString(message)).isEqualTo(deviceName);
+            }
+        } finally {
+            wakeUpDevice();
+        }
     }
 
     /**
