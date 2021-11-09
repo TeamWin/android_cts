@@ -769,6 +769,10 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             setGlobalSetting(SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD,
                     Integer.toString(0));
 
+            // TODO(205779832): There's a maximum two-seconds-delay before SettingsProvider persists
+            //  the settings. Waits for 3 seconds before reboot the device to ensure the setting is
+            //  persisted.
+            Thread.sleep(3_000);
             getDevice().reboot();
 
             // Waits for the uninstallation of the unused library to ensure the job has be executed
