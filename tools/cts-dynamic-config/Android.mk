@@ -22,7 +22,7 @@ LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_CLASS := FAKE
 LOCAL_IS_HOST_MODULE := true
 
-LOCAL_COMPATIBILITY_SUITE := cts general-tests mts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests mts mts-media
 
 # my_test_config_file := DynamicConfig.xml
 # TODO (sbasi): Update to use BUILD_HOST_TEST_CONFIG when it's primary install
