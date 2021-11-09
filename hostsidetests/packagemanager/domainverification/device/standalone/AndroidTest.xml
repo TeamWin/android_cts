@@ -29,6 +29,11 @@
         <option name="install-arg" value="-t" />
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
+        <option name="push" value="CtsDomainVerificationTestDeclaringApp1.apk->/data/local/tmp/CtsDomainVerificationTestDeclaringApp1.apk" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package"
             value="com.android.cts.packagemanager.verify.domain.device.standalone" />
