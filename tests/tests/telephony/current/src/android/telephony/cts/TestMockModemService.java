@@ -42,11 +42,14 @@ public class TestMockModemService extends Service {
             "android.telephony.cts.iradiomodem.mockmodem.service";
     public static final String IRADIOSIM_MOCKMODEM_SERVICE_INTERFACE =
             "android.telephony.cts.iradiosim.mockmodem.service";
+    public static final String IRADIONETWORK_MOCKMODEM_SERVICE_INTERFACE =
+            "android.telephony.cts.iradionetwork.mockmodem.service";
 
     private static Context sContext;
     private static IRadioConfigImpl sIRadioConfigImpl;
     private static IRadioModemImpl sIRadioModemImpl;
     private static IRadioSimImpl sIRadioSimImpl;
+    private static IRadioNetworkImpl sIRadioNetworkImpl;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
@@ -55,7 +58,7 @@ public class TestMockModemService extends Service {
     public static final int LATCH_MAX = 4;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
-    private static final int IRADIO_INTERFACE_NUMBER = 2; // TODO: 6
+    private static final int IRADIO_INTERFACE_NUMBER = 3; // TODO: 6
     public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
     public static final int LATCH_MOCK_MODEM_INITIALIZATION_READY =
             LATCH_RADIO_INTERFACES_READY + 1;
@@ -96,6 +99,7 @@ public class TestMockModemService extends Service {
         sIRadioConfigImpl = new IRadioConfigImpl(this);
         sIRadioModemImpl = new IRadioModemImpl(this);
         sIRadioSimImpl = new IRadioSimImpl(this);
+        sIRadioNetworkImpl = new IRadioNetworkImpl(this);
 
         mBinder = new LocalBinder();
     }
@@ -111,6 +115,9 @@ public class TestMockModemService extends Service {
         } else if (IRADIOSIM_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
             Log.i(TAG, "onBind-IRadioSim");
             return sIRadioSimImpl;
+        } else if (IRADIONETWORK_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioNetwork");
+            return sIRadioNetworkImpl;
         }
 
         countDownLatch(LATCH_MOCK_MODEM_SERVICE_READY);
