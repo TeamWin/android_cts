@@ -27,6 +27,8 @@ android_test_helper_app {
         "androidx.core_core",
         "androidx.test.runner",
         "truth-prebuilt",
+        "TestApp",
+        "Nene",
     ],
     sdk_version: "test_current",
     test_suites: [
