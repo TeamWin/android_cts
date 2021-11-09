@@ -383,6 +383,14 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 TranscodingSession.RESULT_SUCCESS);
     }
 
+    public void testHevcTranscoding720PVideo30FramesWithoutAudio() throws Exception {
+        if (shouldSkip()) {
+            return;
+        }
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_720p_30Frames,
+                "Video_HEVC_720p_30Frames.mp4"), false /* testFileDescriptor */);
+    }
+
     public void testAvcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
         if (shouldSkip()) {
             return;
