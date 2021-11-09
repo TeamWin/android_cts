@@ -23,6 +23,7 @@ import android.util.Pair;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -95,6 +96,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement="2.2.7.1/5.1/H-1-1,H-1-2")
     public void test720p() throws Exception {
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(mFirstPair);
@@ -144,7 +146,8 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
             log.addValue("achieved_framerate", achievedFrameRate, ResultType.HIGHER_BETTER,
                     ResultUnit.NONE);
             log.addValue("expected_framerate", mMaxFrameRate, ResultType.NEUTRAL, ResultUnit.NONE);
-            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("CDD 2.2.7.1/5.1/H-1-1,H-1-2 performance_class", pc, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
             log.submit(InstrumentationRegistry.getInstrumentation());
         }
     }

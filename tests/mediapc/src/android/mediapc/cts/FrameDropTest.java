@@ -21,6 +21,7 @@ import android.os.Build;
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -61,6 +62,7 @@ public class FrameDropTest extends FrameDropTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirement="2.2.7.1/5.3/H-1-1")
     public void testDecodeToSurface() throws Exception {
         PlaybackFrameDrop playbackFrameDrop = new PlaybackFrameDrop(mMime, mDecoderName,
                 new String[]{m1080pTestFiles.get(mMime)}, mSurface, FRAME_RATE, mIsAsync);
@@ -77,7 +79,8 @@ public class FrameDropTest extends FrameDropTestBase {
             log.addValue("decoder", mDecoderName, ResultType.NEUTRAL, ResultUnit.NONE);
             log.addValue("frame_drops_for_30sec", frameDropCount, ResultType.LOWER_BETTER,
                     ResultUnit.NONE);
-            log.setSummary("performance_class", pc, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("CDD 2.2.7.1/5.3/H-1-1 performance_class", pc, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
             log.submit(InstrumentationRegistry.getInstrumentation());
         }
     }
