@@ -17,10 +17,9 @@
 package android.app.appsearch.cts.app;
 
 import static android.app.appsearch.AppSearchResult.RESULT_NOT_FOUND;
-
-import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
+import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
+import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
+import static android.app.appsearch.testutil.AppSearchTestUtils.doGet;
 
 import static com.google.common.truth.Truth.assertThat;
 

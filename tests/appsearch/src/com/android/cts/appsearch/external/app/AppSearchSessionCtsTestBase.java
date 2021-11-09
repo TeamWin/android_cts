@@ -18,11 +18,10 @@ package android.app.appsearch.cts.app;
 
 import static android.app.appsearch.AppSearchResult.RESULT_INVALID_SCHEMA;
 import static android.app.appsearch.AppSearchResult.RESULT_NOT_FOUND;
-
-import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.retrieveAllSearchResults;
+import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
+import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
+import static android.app.appsearch.testutil.AppSearchTestUtils.doGet;
+import static android.app.appsearch.testutil.AppSearchTestUtils.retrieveAllSearchResults;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -47,11 +46,10 @@ import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
 import android.app.appsearch.StorageInfo;
 import android.app.appsearch.exceptions.AppSearchException;
+import android.app.appsearch.testutil.AppSearchEmail;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
-
-import com.android.server.appsearch.testing.AppSearchEmail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -70,8 +68,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 public abstract class AppSearchSessionCtsTestBase {
-    private static final String DB_NAME_1 = "";
-    private static final String DB_NAME_2 = "testDb2";
+    static final String DB_NAME_1 = "";
+    static final String DB_NAME_2 = "testDb2";
 
     private AppSearchSessionShim mDb1;
     private AppSearchSessionShim mDb2;
@@ -1254,6 +1252,17 @@ public abstract class AppSearchSessionCtsTestBase {
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).hasSize(1);
         assertThat(documents).containsExactly(inDoc);
+
+        // Query only for non-exist type
+        searchResults =
+                mDb1.search(
+                        "body",
+                        new SearchSpec.Builder()
+                                .addFilterSchemas("nonExistType")
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .build());
+        documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).isEmpty();
     }
 
     @Test
@@ -1347,6 +1356,17 @@ public abstract class AppSearchSessionCtsTestBase {
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).hasSize(1);
         assertThat(documents).containsExactly(expectedEmail);
+
+        // Query only for non-exist namespace
+        searchResults =
+                mDb1.search(
+                        "body",
+                        new SearchSpec.Builder()
+                                .addFilterNamespaces("nonExistNamespace")
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .build());
+        documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).isEmpty();
     }
 
     @Test
@@ -2042,7 +2062,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Query for the document
         SearchResultsShim searchResults =
                 mDb1.search(
-                        "foo",
+                        "fo",
                         new SearchSpec.Builder()
                                 .addFilterSchemas("Generic")
                                 .setSnippetCount(1)
@@ -2067,6 +2087,15 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(matchInfo.getSnippetRange())
                 .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 26, /*upper=*/ 33));
         assertThat(matchInfo.getSnippet()).isEqualTo("is foo.");
+
+        if (!mDb1.getCapabilities().isSubmatchSupported()) {
+            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatchRange());
+            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatch());
+        } else {
+            assertThat(matchInfo.getSubmatchRange())
+                    .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 29, /*upper=*/ 31));
+            assertThat(matchInfo.getSubmatch()).isEqualTo("fo");
+        }
     }
 
     @Test
@@ -2205,6 +2234,15 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(matchInfo.getExactMatchRange())
                 .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 44, /*upper=*/ 45));
         assertThat(matchInfo.getExactMatch()).isEqualTo("は");
+
+        if (!mDb1.getCapabilities().isSubmatchSupported()) {
+            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatchRange());
+            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatch());
+        } else {
+            assertThat(matchInfo.getSubmatchRange())
+                    .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 44, /*upper=*/ 45));
+            assertThat(matchInfo.getSubmatch()).isEqualTo("は");
+        }
     }
 
     @Test
@@ -2380,6 +2418,50 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("id2").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
+    }
+
+    @Test
+    public void testRemoveByQuery_nonExistNamespace() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("namespace1", "id1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("foo")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("namespace2", "id2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("bar")
+                        .setBody("This is the body of the testPut second email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email1, email2)
+                                .build()));
+
+        // Check the presence of the documents
+        assertThat(doGet(mDb1, "namespace1", "id1")).hasSize(1);
+        assertThat(doGet(mDb1, "namespace2", "id2")).hasSize(1);
+
+        // Delete the email by nonExist namespace.
+        mDb1.remove(
+                        "",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
+                                .addFilterNamespaces("nonExistNamespace")
+                                .build())
+                .get();
+        // None of these emails will be deleted.
+        assertThat(doGet(mDb1, "namespace1", "id1")).hasSize(1);
+        assertThat(doGet(mDb1, "namespace2", "id2")).hasSize(1);
     }
 
     @Test

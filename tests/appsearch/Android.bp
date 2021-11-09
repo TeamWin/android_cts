@@ -24,6 +24,7 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "service-appsearch",
         "testng",
     ],
     srcs: [
@@ -49,7 +50,7 @@ android_test_helper_app {
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsAppSearchTestsAidl"
+        ":CtsAppSearchTestsAidl",
     ],
     test_suites: [
         "cts",
@@ -62,7 +63,7 @@ android_test_helper_app {
         "--rename-manifest-package com.android.cts.appsearch.helper.a",
     ],
     certificate: ":cts-appsearch-helper-cert-a",
-    sdk_version: "test_current"
+    sdk_version: "test_current",
 }
 
 android_test_helper_app {
@@ -77,7 +78,7 @@ android_test_helper_app {
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsAppSearchTestsAidl"
+        ":CtsAppSearchTestsAidl",
     ],
     test_suites: [
         "cts",
@@ -90,12 +91,12 @@ android_test_helper_app {
         "--rename-manifest-package com.android.cts.appsearch.helper.b",
     ],
     certificate: ":cts-appsearch-helper-cert-b",
-    sdk_version: "test_current"
+    sdk_version: "test_current",
 }
 
 filegroup {
     name: "CtsAppSearchTestsAidl",
     srcs: [
         "aidl/**/*.aidl",
-    ]
+    ],
 }
