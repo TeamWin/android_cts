@@ -31,7 +31,6 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.cts.verifier.ArrayTestListAdapter;
@@ -162,25 +161,25 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         setTestListAdapter(adapter);
 
         View setDeviceOwnerButton = findViewById(R.id.set_device_owner_button);
-        setDeviceOwnerButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                StringBuilder builder = new StringBuilder();
-                if (UserManager.isHeadlessSystemUserMode()) {
-                    builder.append(getString(R.string.grant_headless_system_user_permissions));
-                }
-
-                String message = builder.append(getString(R.string.set_device_owner_dialog_text))
-                        .toString();
-                Log.i(TAG, message);
-                new AlertDialog.Builder(
-                        DeviceOwnerPositiveTestActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle(R.string.set_device_owner_dialog_title)
-                        .setMessage(message)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .show();
+        setDeviceOwnerButton.setOnClickListener((v) -> {
+            StringBuilder builder = new StringBuilder();
+            int messageResId;
+            if (UserManager.isHeadlessSystemUserMode()) {
+                builder.append(getString(R.string.grant_headless_system_user_permissions));
+                messageResId = R.string.set_device_owner_headless_dialog_text;
+            } else {
+                messageResId = R.string.set_device_owner_dialog_text;
             }
+
+            String message = builder.append(getString(messageResId)).toString();
+            Log.i(TAG, message);
+            new AlertDialog.Builder(
+                    DeviceOwnerPositiveTestActivity.this)
+                    .setIcon(android.R.drawable.ic_dialog_info)
+                    .setTitle(R.string.set_device_owner_dialog_title)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
         });
 
     }
