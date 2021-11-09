@@ -31,6 +31,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.car.cts.builtin.activity.VirtualDisplayIdTestActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service android:name="android.car.cts.builtin.os.SharedMemoryTestService"
             android:process=":shdmemservice">
         </service>
