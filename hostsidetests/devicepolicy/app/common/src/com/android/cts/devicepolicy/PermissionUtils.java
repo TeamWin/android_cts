@@ -23,6 +23,8 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
@@ -118,7 +120,7 @@ public class PermissionUtils {
         }
         launchActivityWithAction(permission, ACTION_REQUEST_PERMISSION,
                 packageName, activityName);
-        pressPermissionPromptButton(device, resNames.toArray(new String[0]));
+        pressPermissionPromptButton(device, expected, resNames.toArray(new String[0]));
         assertBroadcastReceived(receiver, expected);
     }
 
@@ -129,8 +131,8 @@ public class PermissionUtils {
         launchIntent.putExtra(EXTRA_PERMISSION, permission);
         launchIntent.setAction(action);
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-        Log.d(LOG_TAG, "Launching activity with intent " + launchIntent + " on uid "
-                + Process.myUid());
+        Log.d(LOG_TAG, "Launching activity (with intent " + launchIntent + ") for permission "
+                + permission + " on uid " + Process.myUid());
         getContext().startActivity(launchIntent);
     }
 
@@ -177,9 +179,29 @@ public class PermissionUtils {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    private static void pressPermissionPromptButton(UiDevice mDevice, String[] resNames) {
+    private static void pressPermissionPromptButton(UiDevice device, int expectedAction,
+            String[] resNames) {
+        UiObject2 button = findPermissionPromptButton(device, expectedAction, resNames);
+        Log.d(LOG_TAG, "Clicking on '" + button.getText() + "'");
+        button.click();
+    }
+
+    private static UiObject2 findPermissionPromptButton(UiDevice device, int expectedAction,
+            String[] resNames) {
         if ((resNames == null) || (resNames.length == 0)) {
             throw new IllegalArgumentException("resNames must not be null or empty");
+        }
+        String action;
+        switch (expectedAction) {
+            case PERMISSION_DENIED:
+                action = "PERMISSION_DENIED";
+                break;
+            case PERMISSION_GRANTED:
+                action = "PERMISSION_GRANTED";
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid expected action: "
+                        + expectedAction);
         }
 
         // The dialog was moved from the packageinstaller to the permissioncontroller.
@@ -189,64 +211,64 @@ public class PermissionUtils {
                 "com.android.packageinstaller",
                 "com.android.permissioncontroller"};
 
-        Log.v(LOG_TAG, "pressPermissionPromptButton(): pkgs= " + Arrays.toString(possiblePackages)
-                + ", resIds=" + Arrays.toString(resNames));
-
-        boolean foundButton = false;
+        Log.v(LOG_TAG, "findPermissionPromptButton(): pkgs= " + Arrays.toString(possiblePackages)
+                + ", action=" + action + ", resIds=" + Arrays.toString(resNames));
         for (String resName : resNames) {
             for (String possiblePkg : possiblePackages) {
                 BySelector selector = By
                         .clazz(android.widget.Button.class.getName())
                         .res(possiblePkg, resName);
                 Log.v(LOG_TAG, "trying " + selector);
-                mDevice.wait(Until.hasObject(selector), 5000);
-                UiObject2 button = mDevice.findObject(selector);
+                device.wait(Until.hasObject(selector), 5000);
+                UiObject2 button = device.findObject(selector);
                 Log.d(LOG_TAG, String.format("Resource %s in Package %s found? %b", resName,
                         possiblePkg, button != null));
                 if (button != null) {
-                    foundButton = true;
-                    Log.d(LOG_TAG, "Clicking on " + button.getText());
-                    button.click();
-                    break;
+                    return button;
                 }
             }
-            if (foundButton) {
-                break;
-            }
         }
 
-        if (!sContext.getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            assertWithMessage("Found button on packages %s", Arrays.toString(possiblePackages))
-                    .that(foundButton).isTrue();
-            return;
+        if (!sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            fail("Did not find button for action " + action + " on packages "
+                    + Arrays.toString(possiblePackages));
         }
+        return findPermissionPromptButtonAutomotive(device, expectedAction);
+    }
 
-        // TODO: ideally the UI should use a more specific resource
+    private static UiObject2 findPermissionPromptButtonAutomotive(UiDevice device,
+            int expectedAction) {
+        // TODO: ideally the UI should use a more specific resource, so it doesn't need to search
+        // for text
         Pattern resPattern = Pattern.compile(".*car_ui_list_item_title");
+        Pattern textPattern;
+        String action;
+        switch (expectedAction) {
+            case PERMISSION_DENIED:
+                action = "PERMISSION_DENIED";
+                textPattern = Pattern.compile("^Don’t allow$");
+                break;
+            case PERMISSION_GRANTED:
+                action = "PERMISSION_GRANTED";
+                textPattern = Pattern.compile("^Allow|While using the app$");
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid expected action: " + expectedAction);
+        }
         Log.i(LOG_TAG, "Button not found on automotive build; searching for " + resPattern
-                + " regex instead");
+                + " res and " + textPattern + " text instead");
         BySelector selector = By
                 .clazz(android.widget.TextView.class.getName())
+                 .text(textPattern)
                 .res(resPattern);
         Log.v(LOG_TAG, "selector: " + selector);
-        mDevice.wait(Until.hasObject(selector), 5000);
-        UiObject2 button = mDevice.findObject(selector);
-        Log.d(LOG_TAG, "button: " + button);
-        if (button != null) {
-            String text = button.getText();
-            // TODO: ideally value of text should not be hardcoded, but they are defined by
-            // resources on PermissionController app (grant_dialog_button_allow and
-            // grant_dialog_button_allow_foreground)
-            if (text.equals("Allow") || text.equals("While using the app")) {
-                foundButton = true;
-                Log.d(LOG_TAG, "Clicking on '" + text + "'");
-                button.click();
-            }
-        }
+        device.wait(Until.hasObject(selector), 5000);
+        UiObject2 button = device.findObject(selector);
+        Log.d(LOG_TAG, "button: " + button + (button == null ? "" : " (" + button.getText() + ")"));
+        assertWithMessage("Found button with res %s and text '%s'", resPattern, textPattern)
+                .that(button).isNotNull();
 
-        assertWithMessage("Couldn't find any button with regex %s", resPattern)
-                .that(foundButton).isTrue();
+        return button;
     }
 
     public static String permissionGrantStateToString(int state) {

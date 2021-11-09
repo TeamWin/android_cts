@@ -412,6 +412,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     }
 
     private void setPermissionPolicy(int permissionPolicy) {
+        Log.d(TAG, "Calling setPermissionPolicy(" + permissionPolicyToString(permissionPolicy)
+                + ") using DPM " + mDevicePolicyManager + " on uid " + Process.myUid());
         mDevicePolicyManager.setPermissionPolicy(ADMIN_RECEIVER_COMPONENT, permissionPolicy);
     }
 

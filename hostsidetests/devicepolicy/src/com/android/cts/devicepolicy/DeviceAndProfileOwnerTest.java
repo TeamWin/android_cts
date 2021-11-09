@@ -598,7 +598,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @FlakyTest(bugId = 187862351)
+    @FlakyTest(bugId = 205194911)
     public void testPermissionPrompts() throws Exception {
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest", "testPermissionPrompts");
