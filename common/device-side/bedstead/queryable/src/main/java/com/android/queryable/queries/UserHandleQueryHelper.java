@@ -29,6 +29,8 @@ import java.util.List;
 public final class UserHandleQueryHelper<E extends Queryable>
         implements UserHandleQuery<E>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private UserHandle mEqualsValue;
     private IntegerQueryHelper<E> mIdQuery;

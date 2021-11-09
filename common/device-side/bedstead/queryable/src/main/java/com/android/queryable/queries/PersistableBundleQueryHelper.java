@@ -31,6 +31,8 @@ import java.util.Map;
 public final class PersistableBundleQueryHelper<E extends Queryable>
         implements PersistableBundleQuery<E>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private final Map<String, PersistableBundleKeyQueryHelper<E>> mKeyQueryHelpers =
             new HashMap<>();
