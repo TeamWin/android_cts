@@ -39,6 +39,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminUserRemovedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminUserRemovedEvent} events. */
     public static DeviceAdminUserRemovedEventQuery queryPackage(String packageName) {
         return new DeviceAdminUserRemovedEventQuery(packageName);

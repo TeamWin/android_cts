@@ -32,6 +32,8 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityResumedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link ActivityResumedEvent} events. */
     public static ActivityResumedEventQuery queryPackage(String packageName) {
         return new ActivityResumedEventQuery(packageName);
