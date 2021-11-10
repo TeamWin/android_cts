@@ -1035,6 +1035,9 @@
     <string name="nfc_not_enabled_message">These tests require NFC to be enabled. Click the
         button below to goto Settings and enable it.</string>
     <string name="nfc_settings">NFC Settings</string>
+    <string name="secure_nfc_enabled">\"Require device unlock for NFC\" is enabled!</string>
+    <string name="secure_nfc_enabled_message">These tests require \"Require device unlock for NFC\"
+        to be disabled. Click the button below to goto Settings and disable it.</string>
 
     <string name="ndef_push_not_enabled">NDEF Push is not enabled!</string>
     <string name="ndef_push_not_enabled_message">These tests require Android Beam to be enabled.
