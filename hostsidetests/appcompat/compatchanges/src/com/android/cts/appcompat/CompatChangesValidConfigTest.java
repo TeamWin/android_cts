@@ -89,7 +89,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     public void testOnlyAllowedlistedChangesAreOverridable() throws Exception {
         for (Change c : getOnDeviceCompatConfig()) {
             if (c.overridable) {
-                assertWithMessage("Please contact platform-compat-eng@google.com for approval")
+                assertWithMessage("Please contact compat-team@google.com for approval")
                         .that(OVERRIDABLE_CHANGES).contains(c.changeName);
             }
         }
