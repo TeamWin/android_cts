@@ -142,7 +142,6 @@ src_method = """
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        p.waitFor();
         BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
         String line;
         StringBuilder errorString = new StringBuilder();
@@ -150,6 +149,7 @@ src_method = """
             errorString.append(line);
             errorString.append("\\n");
         }
+        p.waitFor();
         assertTrue("The following errors were encountered when validating the SELinux"
                    + "neverallow rule:\\n" + neverallowRule + "\\n" + errorString,
                    errorString.length() == 0);
