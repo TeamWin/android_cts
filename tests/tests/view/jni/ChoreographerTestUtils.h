@@ -18,6 +18,7 @@
 #include <android/choreographer.h>
 #include <android/log.h>
 #include <android/looper.h>
+#include <android/trace.h>
 #include <jni.h>
 #include <jniAssert.h>
 #include <sys/time.h>
@@ -106,16 +107,20 @@ private:
 
 static void extendedFrameCallback(int64_t frameTimeNanos, void* data) {
     std::lock_guard<std::mutex> _l(gLock);
+    ATrace_beginSection("extendedFrameCallback base");
     Callback* cb = static_cast<Callback*>(data);
     cb->count++;
     cb->frameTime = std::chrono::nanoseconds{frameTimeNanos};
+    ATrace_endSection();
 }
 
 static void extendedFrameCallback(const AChoreographerFrameCallbackData* callbackData, void* data) {
+    ATrace_beginSection("extendedFrameCallback");
     extendedFrameCallback(AChoreographerFrameCallbackData_getFrameTimeNanos(callbackData), data);
 
     ExtendedCallback* cb = static_cast<ExtendedCallback*>(data);
     cb->populate(callbackData);
+    ATrace_endSection();
 }
 
 static void frameCallback64(int64_t frameTimeNanos, void* data) {
