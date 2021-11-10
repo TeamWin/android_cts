@@ -704,13 +704,8 @@ public class ConfigTest {
     
     @Test
     public void testDensity() throws Exception {
-        // have 32, 240 and the default 160 content.
-        // rule is that closest wins, with down scaling (larger content)
-        // being twice as nice as upscaling.
-        // transition at H/2 * (-1 +/- sqrt(1+8L/H))
-        // SO, X < 49 goes to 32
-        // 49 >= X < 182 goes to 160
-        // X >= 182 goes to 240
+        // Have 32, 240 and the default 160 content.
+        // Rule is that next highest wins.
         TotalConfig config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 2);
         Resources res = config.getResources();
@@ -728,13 +723,6 @@ public class ConfigTest {
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 48);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 32dpi");
-        checkValue(res, R.configVarying.bag,
-                R.styleable.TestConfig, new String[]{"bag 32dpi"});
-
-        config = makeClassicConfig();
-        config.setProperty(Properties.DENSITY, 49);
-        res = config.getResources();
         checkValue(res, R.configVarying.simple, "simple default");
         checkValue(res, R.configVarying.bag,
                 R.styleable.TestConfig, new String[]{"bag default"});
@@ -748,13 +736,6 @@ public class ConfigTest {
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 181);
-        res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple default");
-        checkValue(res, R.configVarying.bag,
-                R.styleable.TestConfig, new String[]{"bag default"});
-
-        config = makeClassicConfig();
-        config.setProperty(Properties.DENSITY, 182);
         res = config.getResources();
         checkValue(res, R.configVarying.simple, "simple 240dpi");
         checkValue(res, R.configVarying.bag,
