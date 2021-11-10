@@ -46,7 +46,6 @@ import static android.security.keystore.KeyProperties.PURPOSE_VERIFY;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PKCS1;
 import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PSS;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.either;
@@ -54,7 +53,6 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -77,18 +75,22 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.ArraySet;
 import android.util.Log;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.ImmutableSet;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -106,13 +108,8 @@ import java.util.Date;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.crypto.KeyGenerator;
-
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Tests for Android KeysStore attestation.
@@ -211,10 +208,11 @@ public class KeyAttestationTest {
                                         curves[curveIndex], keySizes[curveIndex],
                                         purposes[purposeIndex], devicePropertiesAttestation);
                             } catch (Throwable e) {
-                                if (devicePropertiesAttestation
-                                        && (e.getCause() instanceof KeyStoreException)
-                                        && KM_ERROR_CANNOT_ATTEST_IDS ==
-                                                ((KeyStoreException) e.getCause()).getErrorCode()) {
+                                boolean isIdAttestationFailure =
+                                        (e.getCause() instanceof KeyStoreException)
+                                        && KeyStoreException.ERROR_ID_ATTESTATION_FAILURE
+                                        == ((KeyStoreException) e.getCause()).getNumericErrorCode();
+                                if (devicePropertiesAttestation && isIdAttestationFailure) {
                                     Log.i(TAG, "key attestation with device IDs not supported; "
                                             + "test skipped");
                                     continue;
@@ -230,6 +228,19 @@ public class KeyAttestationTest {
                 }
             }
         }
+    }
+
+    private void assertPublicAttestationError(KeyStoreException keyStoreException,
+            boolean devicePropertiesAttestation) {
+        // Assert public failure information.
+        int errorCode = keyStoreException.getNumericErrorCode();
+        String assertMessage = String.format(
+                "Error code was %d, device properties attestation? %b",
+                errorCode, devicePropertiesAttestation);
+        assertTrue(assertMessage, KeyStoreException.ERROR_INCORRECT_USAGE == errorCode
+                || (devicePropertiesAttestation
+                && KeyStoreException.ERROR_ID_ATTESTATION_FAILURE == errorCode));
+        assertFalse(keyStoreException.isTransientFailure());
     }
 
     @Test
@@ -250,6 +261,7 @@ public class KeyAttestationTest {
                         (devicePropertiesAttestation
                                 && KM_ERROR_CANNOT_ATTEST_IDS == cause.getErrorCode())
                 );
+                assertPublicAttestationError(cause, devicePropertiesAttestation);
             }
         }
     }
@@ -452,6 +464,9 @@ public class KeyAttestationTest {
             // Attestation is expected to fail because of lack of permissions.
             KeyStoreException cause = (KeyStoreException) e.getCause();
             assertEquals(KM_ERROR_PERMISSION_DENIED, cause.getErrorCode());
+            // Assert public failure information.
+            assertEquals(KeyStoreException.ERROR_PERMISSION_DENIED, cause.getNumericErrorCode());
+            assertFalse(cause.isTransientFailure());
         } finally {
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
@@ -547,6 +562,7 @@ public class KeyAttestationTest {
                         (devicePropertiesAttestation
                                 && KM_ERROR_CANNOT_ATTEST_IDS == cause.getErrorCode())
                 );
+                assertPublicAttestationError(cause, devicePropertiesAttestation);
             }
         }
     }
@@ -685,9 +701,11 @@ public class KeyAttestationTest {
                 testRsaAttestation(challenge, false /* includeValidityDates */, keySize, purpose,
                         paddings, devicePropertiesAttestation);
             } catch (Throwable e) {
-                if (devicePropertiesAttestation && (e.getCause() instanceof KeyStoreException)
-                        && KM_ERROR_CANNOT_ATTEST_IDS ==
-                                ((KeyStoreException) e.getCause()).getErrorCode()) {
+                boolean isIdAttestationFailure =
+                        (e.getCause() instanceof KeyStoreException)
+                                && KeyStoreException.ERROR_ID_ATTESTATION_FAILURE
+                                == ((KeyStoreException) e.getCause()).getNumericErrorCode();
+                if (devicePropertiesAttestation && isIdAttestationFailure) {
                     Log.i(TAG, "key attestation with device IDs not supported; test skipped");
                     continue;
                 }
@@ -1191,7 +1209,9 @@ public class KeyAttestationTest {
         assertTrue("Verified boot key is only " + rootOfTrust.getVerifiedBootKey().length +
                    " bytes long", rootOfTrust.getVerifiedBootKey().length >= 32);
         if (requireLocked) {
-            assertTrue(rootOfTrust.isDeviceLocked());
+            final String unlockedDeviceMessage = "The device's bootloader must be locked. This may "
+                    + "not be the default for pre-production devices.";
+            assertTrue(unlockedDeviceMessage, rootOfTrust.isDeviceLocked());
             checkEntropy(rootOfTrust.getVerifiedBootKey());
             assertEquals(KM_VERIFIED_BOOT_VERIFIED, rootOfTrust.getVerifiedBootState());
         }
