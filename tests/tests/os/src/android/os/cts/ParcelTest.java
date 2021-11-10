@@ -3601,6 +3601,84 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testReadMapWithClass_whenNull() {
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        p.writeMap(null);
+        HashMap<String, Intent> map = new HashMap<>();
+
+        p.setDataPosition(0);
+        p.readMap(map, mcl, String.class, Intent.class);
+        assertEquals(0, map.size());
+
+        p.recycle();
+    }
+
+    public void testReadMapWithClass_whenMismatchingClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<Signature, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put(new Signature("1234"), new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put(new Signature("4321"), new TestSubIntent(
+                baseIntent, "test_intent2"));
+        p.writeMap(map);
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readMap(new HashMap<Intent, TestSubIntent>(), loader,
+                        Intent.class, TestSubIntent.class));
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readMap(new HashMap<Signature, Signature>(), loader,
+                        Signature.class, Signature.class));
+        p.recycle();
+    }
+
+    public void testReadMapWithClass_whenSameClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<String, TestSubIntent> map = new HashMap<>();
+        HashMap<String, TestSubIntent> map2 = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put("key1", new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put("key2", new TestSubIntent(
+                baseIntent, "test_intent2"));
+        p.writeMap(map);
+        p.setDataPosition(0);
+        p.readMap(map2, loader, String.class, TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.recycle();
+    }
+
+    public void testReadMapWithClass_whenSubClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<TestSubIntent, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put(new TestSubIntent(baseIntent, "test_intent_key1"), new TestSubIntent(
+                baseIntent, "test_intent_val1"));
+        p.writeMap(map);
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map2 = new HashMap<>();
+        p.readMap(map2, loader, Intent.class, TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map3 = new HashMap<>();
+        p.readMap(map3, loader, TestSubIntent.class, Intent.class);
+        assertEquals(map, map3);
+
+        p.recycle();
+    }
+
     @SuppressWarnings("unchecked")
     public void testReadHashMap() {
         Parcel p;
@@ -3628,6 +3706,80 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals("String", map.get("string"));
         assertEquals(Integer.MAX_VALUE, map.get("int"));
         assertEquals(true, map.get("boolean"));
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenNull() {
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        p.writeMap(null);
+        p.setDataPosition(0);
+        assertNull(p.readHashMap(mcl, String.class, Intent.class));
+
+        p.setDataPosition(0);
+        assertNull(p.readHashMap(null, String.class, Intent.class));
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenMismatchingClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<Signature, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put(new Signature("1234"), new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put(new Signature("4321"), new TestSubIntent(
+                baseIntent, "test_intent2"));
+        p.writeMap(map);
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readHashMap(loader, Intent.class, TestSubIntent.class));
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readHashMap(loader, Signature.class, Signature.class));
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenSameClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<String, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put("key1", new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put("key2", new TestSubIntent(
+                baseIntent, "test_intent2"));
+
+        p.writeMap(map);
+        p.setDataPosition(0);
+        HashMap<String, TestSubIntent> map2 = p.readHashMap(loader, String.class,
+                TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenSubClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<TestSubIntent, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        TestSubIntent test_intent_key1 = new TestSubIntent(baseIntent, "test_intent_key1");
+        map.put(test_intent_key1, new TestSubIntent(
+                baseIntent, "test_intent_val1"));
+        p.writeMap(map);
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map2 = p.readHashMap(loader, Intent.class, TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map3 = p.readHashMap(loader, TestSubIntent.class, Intent.class);
+        assertEquals(map, map3);
         p.recycle();
     }
 
@@ -4172,6 +4324,11 @@ public class ParcelTest extends AndroidTestCase {
         public boolean equals(Object obj) {
             final TestSubIntent other = (TestSubIntent) obj;
             return mString.equals(other.mString);
+        }
+
+        @Override
+        public int hashCode() {
+            return mString.hashCode();
         }
     }
 
