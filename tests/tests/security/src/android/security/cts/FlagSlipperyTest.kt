@@ -19,6 +19,7 @@ package android.security.cts
 import android.app.Instrumentation
 import android.graphics.Rect
 import android.os.SystemClock
+import android.platform.test.annotations.AsbSecurityTest
 import android.view.Gravity
 import android.view.InputDevice
 import android.view.MotionEvent
@@ -200,6 +201,7 @@ class FlagSlipperyTest {
      * Test a top window that tries to set FLAG_SLIPPERY when it is added to WindowManager
      */
     @Test
+    @AsbSecurityTest(cveBugId = [157929241])
     fun testWindowIsNotSlipperyWhenAdded() {
         testWindowIsNotSlippery(true /* slipperyWhenAdded */)
     }
@@ -208,6 +210,7 @@ class FlagSlipperyTest {
      * Test a top window that tries to set FLAG_SLIPPERY during relayout
      */
     @Test
+    @AsbSecurityTest(cveBugId = [157929241])
     fun testWindowIsNotSlipperyAfterRelayout() {
         testWindowIsNotSlippery(false /* slipperyWhenAdded */)
     }
@@ -268,6 +271,7 @@ class FlagSlipperyTest {
      * away from the touched position.
      */
     @Test
+    @AsbSecurityTest(cveBugId = [157929241])
     fun testWindowlessWindowIsNotSlippery() {
         val surfaceView = addEmbeddedHostWindow()
         viewToRemove = surfaceView
