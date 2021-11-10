@@ -95,7 +95,7 @@ public class TestAppTest {
         TestApp testApp = mTestAppProvider.any();
 
         try {
-            TestAppInstanceReference testAppInstance = testApp.install(sUser);
+            TestAppInstance testAppInstance = testApp.install(sUser);
 
             assertThat(testAppInstance.testApp()).isEqualTo(testApp);
             assertThat(testAppInstance.user()).isEqualTo(sUser);
@@ -122,7 +122,7 @@ public class TestAppTest {
         TestApp testApp = mTestAppProvider.any();
 
         try {
-            TestAppInstanceReference testAppInstance = testApp.install(sUserHandle);
+            TestAppInstance testAppInstance = testApp.install(sUserHandle);
 
             assertThat(testAppInstance.testApp()).isEqualTo(testApp);
             assertThat(testAppInstance.user()).isEqualTo(sUser);
@@ -149,7 +149,7 @@ public class TestAppTest {
     public void instance_userHandle_instanceIsNotInstalled_stillReturnsInstance() {
         TestApp testApp = mTestAppProvider.any();
 
-        TestAppInstanceReference testAppInstance = testApp.instance(sUserHandle);
+        TestAppInstance testAppInstance = testApp.instance(sUserHandle);
 
         assertThat(testAppInstance.testApp()).isEqualTo(testApp);
         assertThat(testAppInstance.user()).isEqualTo(sUser);
@@ -159,7 +159,7 @@ public class TestAppTest {
     public void instance_userReference_instanceIsNotInstalled_stillReturnsInstance() {
         TestApp testApp = mTestAppProvider.any();
 
-        TestAppInstanceReference testAppInstance = testApp.instance(sNonExistingUserHandle);
+        TestAppInstance testAppInstance = testApp.instance(sNonExistingUserHandle);
 
         assertThat(testAppInstance.testApp()).isEqualTo(testApp);
         assertThat(testAppInstance.user()).isEqualTo(sNonExistingUser);
@@ -169,7 +169,7 @@ public class TestAppTest {
     public void instance_userHandle_nonExistingUser_stillReturnsInstance() {
         TestApp testApp = mTestAppProvider.any();
 
-        TestAppInstanceReference testAppInstance = testApp.instance(sUserHandle);
+        TestAppInstance testAppInstance = testApp.instance(sUserHandle);
 
         assertThat(testAppInstance.testApp()).isEqualTo(testApp);
         assertThat(testAppInstance.user()).isEqualTo(sUser);
@@ -186,7 +186,7 @@ public class TestAppTest {
     public void instance_userReference_nonExistingUser_stillReturnsInstance() {
         TestApp testApp = mTestAppProvider.any();
 
-        TestAppInstanceReference testAppInstance = testApp.instance(sNonExistingUser);
+        TestAppInstance testAppInstance = testApp.instance(sNonExistingUser);
 
         assertThat(testAppInstance.testApp()).isEqualTo(testApp);
         assertThat(testAppInstance.user()).isEqualTo(sNonExistingUser);
@@ -293,10 +293,10 @@ public class TestAppTest {
     @EnsureHasDeviceOwner
     public void install_repeated_hasRemoteDpcDeviceOwner_doesNotFailVerification() {
         TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference t = testApp.install()) {
+        try (TestAppInstance t = testApp.install()) {
             // Intentionally empty
         }
-        try (TestAppInstanceReference t = testApp.install()) {
+        try (TestAppInstance t = testApp.install()) {
             // Intentionally empty
         }
     }
@@ -307,12 +307,12 @@ public class TestAppTest {
         TestApp testApp = mTestAppProvider.any();
 
         // The first install can be into the parent or the work profile and it will succeed
-        try (TestAppInstanceReference t = testApp.install()) {
+        try (TestAppInstance t = testApp.install()) {
             // Intentionally empty
         }
 
         // The second will fail 100% of the time if DISALLOW_INSTALL_UNKNOWN_SOURCES is enabled
-        try (TestAppInstanceReference t = testApp.install(sDeviceState.workProfile())) {
+        try (TestAppInstance t = testApp.install(sDeviceState.workProfile())) {
             // Intentionally empty
         }
     }
@@ -321,10 +321,10 @@ public class TestAppTest {
     @EnsureHasWorkProfile
     public void install_repeated_hasRemoteDpcWorkProfile_installsInParent_doesNotFailVerification() {
         TestApp testApp = mTestAppProvider.any();
-        try (TestAppInstanceReference t = testApp.install()) {
+        try (TestAppInstance t = testApp.install()) {
             // Intentionally empty
         }
-        try (TestAppInstanceReference t = testApp.install()) {
+        try (TestAppInstance t = testApp.install()) {
             // Intentionally empty
         }
     }

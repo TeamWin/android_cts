@@ -174,6 +174,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     public static boolean isKeyguardShowingAndNotOccluded(WindowManagerState state) {
         return state.getKeyguardControllerState().keyguardShowing
+                && !state.getKeyguardControllerState().aodShowing
                 && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY);
     }
 

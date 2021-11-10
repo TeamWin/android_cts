@@ -37,6 +37,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
 /** Event logged when {@link DeviceAdminReceiver#onSystemUpdatePending} is called. */
 public class DeviceAdminSystemUpdatePendingEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminSystemUpdatePendingEvent} events. */
     public static DeviceAdminSystemUpdatePendingEventQuery queryPackage(String packageName) {
         return new DeviceAdminSystemUpdatePendingEventQuery(packageName);

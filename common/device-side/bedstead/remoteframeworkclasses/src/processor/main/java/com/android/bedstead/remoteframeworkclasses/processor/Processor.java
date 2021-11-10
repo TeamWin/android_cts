@@ -34,7 +34,10 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,7 +45,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -57,7 +59,7 @@ import javax.tools.JavaFileObject;
  *
  * <p>This is started by including the {@link RemoteFrameworkClasses} annotation.
  *
- * <p>For each entry in {@code SYSTEM_SERVICES} this will generate an interface including all public
+ * <p>For each entry in {@code FRAMEWORK_CLASSES} this will generate an interface including all public
  * and test APIs with the {@code CrossUser} annotation. This interface will be named the same as the
  * framework class except with a prefix of "Remote", and will be in the same package.
  *
@@ -70,7 +72,7 @@ import javax.tools.JavaFileObject;
 @AutoService(javax.annotation.processing.Processor.class)
 public final class Processor extends AbstractProcessor {
 
-    private static final String[] SYSTEM_SERVICES = {
+    private static final String[] FRAMEWORK_CLASSES = {
             "android.app.admin.DevicePolicyManager",
             "android.net.wifi.WifiManager",
             "android.os.HardwarePropertiesManager",
@@ -78,12 +80,18 @@ public final class Processor extends AbstractProcessor {
             "android.content.pm.PackageManager",
             "android.content.pm.CrossProfileApps",
             "android.content.pm.LauncherApps",
-            "android.accounts.AccountManager"
+            "android.accounts.AccountManager",
+            "android.app.Activity",
+            "android.content.Context",
+            "android.content.ContentResolver",
+            "android.security.KeyChain"
     };
 
     private static final String PARENT_PROFILE_INSTANCE =
             "public android.app.admin.DevicePolicyManager getParentProfileInstance(android"
                     + ".content.ComponentName)";
+    private static final String GET_CONTENT_RESOLVER =
+            "public android.content.ContentResolver getContentResolver()";
 
     private static final Set<String> BLOCKLISTED_METHODS = ImmutableSet.of(
             // DevicePolicyManager
@@ -297,13 +305,342 @@ public final class Processor extends AbstractProcessor {
             "public android.os.Bundle isCredentialsUpdateSuggested(android.accounts.AccountAuthenticatorResponse, android.accounts.Account, String) throws android.accounts.NetworkErrorException",
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> isCredentialsUpdateSuggested(android.accounts.Account, String, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> removeAccount(android.accounts.Account, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
-            "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)"
-    );
+            "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)",
 
+            // Uses android.accounts.AccountManager
+            "public static android.accounts.AccountManager get(android.content.Context)",
+
+            // Activity
+
+            // Uses android.view.View
+            "public void addContentView(android.view.View, android.view.ViewGroup.LayoutParams)",
+            "@Nullable public android.view.View getCurrentFocus()",
+            "@Nullable public android.view.View onCreatePanelView(int)",
+            "@Nullable public android.view.View onCreateView(@NonNull String, @NonNull android.content.Context, @NonNull android.util.AttributeSet)",
+            "@Nullable public android.view.View onCreateView(@Nullable android.view.View, @NonNull String, @NonNull android.content.Context, @NonNull android.util.AttributeSet)",
+            "public boolean onPreparePanel(int, @Nullable android.view.View, @NonNull android.view.Menu)",
+            "public void openContextMenu(android.view.View)",
+            "public void registerForContextMenu(android.view.View)",
+            "public void setContentView(android.view.View)",
+            "public void setContentView(android.view.View, android.view.ViewGroup.LayoutParams)",
+            "public void unregisterForContextMenu(android.view.View)",
+
+            // Uses java.io.FileDescriptor
+            "public void dump(@NonNull String, @Nullable java.io.FileDescriptor, @NonNull java.io.PrintWriter, @Nullable String[])",
+
+            // Uses android.app.Activity
+            "@Deprecated public void finishActivityFromChild(@NonNull android.app.Activity, int)",
+            "@Deprecated public void finishFromChild(android.app.Activity)",
+            "public final android.app.Activity getParent()",
+            "@Deprecated public boolean navigateUpToFromChild(android.app.Activity, android.content.Intent)",
+            "protected void onChildTitleChanged(android.app.Activity, CharSequence)",
+            "@Deprecated public boolean onNavigateUpFromChild(android.app.Activity)",
+            "@Deprecated public void startActivityFromChild(@NonNull android.app.Activity, @RequiresPermission android.content.Intent, int)",
+            "@Deprecated public void startActivityFromChild(@NonNull android.app.Activity, @RequiresPermission android.content.Intent, int, @Nullable android.os.Bundle)",
+            "@Deprecated public void startIntentSenderFromChild(android.app.Activity, android.content.IntentSender, int, android.content.Intent, int, int, int) throws android.content.IntentSender.SendIntentException",
+            "@Deprecated public void startIntentSenderFromChild(android.app.Activity, android.content.IntentSender, int, android.content.Intent, int, int, int, @Nullable android.os.Bundle) throws android.content.IntentSender.SendIntentException",
+
+            // Uses android.app.ActionBar
+            "@Nullable public android.app.ActionBar getActionBar()",
+
+            // Uses android.app.Application
+            "public final android.app.Application getApplication()",
+
+            // Uses android.app.Fragment
+            "@Deprecated public void onAttachFragment(android.app.Fragment)",
+            "@Deprecated public void startActivityFromFragment(@NonNull android.app.Fragment, @RequiresPermission android.content.Intent, int)",
+            "@Deprecated public void startActivityFromFragment(@NonNull android.app.Fragment, @RequiresPermission android.content.Intent, int, @Nullable android.os.Bundle)",
+
+            // Uses android.app.FragmentManager
+            "@Deprecated public android.app.FragmentManager getFragmentManager()",
+
+            // Uses android.transition.Scene
+            "public android.transition.Scene getContentScene()",
+
+            // Uses android.transition.TransitionManager
+            "public android.transition.TransitionManager getContentTransitionManager()",
+            "public void setContentTransitionManager(android.transition.TransitionManager)",
+
+            // Uses Object
+            "@Nullable public Object getLastNonConfigurationInstance()",
+            "public Object onRetainNonConfigurationInstance()",
+
+            // Uses android.view.LayoutInflater
+            "@NonNull public android.view.LayoutInflater getLayoutInflater()",
+
+            // Uses android.view.MenuInflater
+            "@NonNull public android.view.MenuInflater getMenuInflater()",
+
+            // Uses android.app.LoaderManager
+            "@Deprecated public android.app.LoaderManager getLoaderManager()",
+
+            // Uses android.media.session.MediaController
+            "public final android.media.session.MediaController getMediaController()",
+
+            // Uses android.content.SharedPreferences
+            "public android.content.SharedPreferences getPreferences(int)",
+
+            // Uses android.view.SearchEvent
+            "public final android.view.SearchEvent getSearchEvent()",
+
+            // Uses android.window.SplashScreen
+            "@NonNull public final android.window.SplashScreen getSplashScreen()",
+
+            // Uses android.app.VoiceInteractor
+            "public android.app.VoiceInteractor getVoiceInteractor()",
+
+            // Uses android.view.Window
+            "public android.view.Window getWindow()",
+
+            // Uses android.view.WindowManager
+            "public android.view.WindowManager getWindowManager()",
+
+            // Uses android.database.Cursor
+            "@Deprecated public final android.database.Cursor managedQuery(android.net.Uri, String[], String, String[], String)",
+            "@Deprecated public void startManagingCursor(android.database.Cursor)",
+            "@Deprecated public void stopManagingCursor(android.database.Cursor)",
+
+            // Uses android.view.ActionMode
+            "@CallSuper public void onActionModeFinished(android.view.ActionMode)",
+            "@CallSuper public void onActionModeStarted(android.view.ActionMode)",
+            "@Nullable public android.view.ActionMode onWindowStartingActionMode(android.view.ActionMode.Callback)",
+            "@Nullable public android.view.ActionMode onWindowStartingActionMode(android.view.ActionMode.Callback, int)",
+            "@Nullable public android.view.ActionMode startActionMode(android.view.ActionMode.Callback)",
+            "@Nullable public android.view.ActionMode startActionMode(android.view.ActionMode.Callback, int)",
+
+            // Uses android.view.MenuItem
+            "public boolean onContextItemSelected(@NonNull android.view.MenuItem)",
+            "public void onContextMenuClosed(@NonNull android.view.Menu)",
+            "public boolean onMenuItemSelected(int, @NonNull android.view.MenuItem)",
+            "public boolean onOptionsItemSelected(@NonNull android.view.MenuItem)",
+
+            // Uses android.view.ContextMenu
+            "public void onCreateContextMenu(android.view.ContextMenu, android.view.View, android.view.ContextMenu.ContextMenuInfo)",
+
+            // Uses android.app.Dialog
+            "@Deprecated protected android.app.Dialog onCreateDialog(int)",
+            "@Deprecated @Nullable protected android.app.Dialog onCreateDialog(int, android.os.Bundle)",
+            "@Deprecated protected void onPrepareDialog(int, android.app.Dialog)",
+            "@Deprecated protected void onPrepareDialog(int, android.app.Dialog, android.os.Bundle)",
+
+            // Uses android.app.TaskStackBuilder
+            "public void onCreateNavigateUpTaskStack(android.app.TaskStackBuilder)",
+            "public void onPrepareNavigateUpTaskStack(android.app.TaskStackBuilder)",
+
+            // Uses android.view.Menu
+            "public boolean onCreateOptionsMenu(android.view.Menu)",
+            "public boolean onCreatePanelMenu(int, @NonNull android.view.Menu)",
+            "public boolean onMenuOpened(int, @NonNull android.view.Menu)",
+            "public void onOptionsMenuClosed(android.view.Menu)",
+            "public void onPanelClosed(int, @NonNull android.view.Menu)",
+            "public boolean onPrepareOptionsMenu(android.view.Menu)",
+
+            // Uses android.graphics.Canvas
+            "@Deprecated public boolean onCreateThumbnail(android.graphics.Bitmap, android.graphics.Canvas)",
+
+            // Uses android.os.CancellationSignal
+            "public void onGetDirectActions(@NonNull android.os.CancellationSignal, @NonNull java.util.function.Consumer<java.util.List<android.app.DirectAction>>)",
+            "public void onPerformDirectAction(@NonNull String, @NonNull android.os.Bundle, @NonNull android.os.CancellationSignal, @NonNull java.util.function.Consumer<android.os.Bundle>)",
+
+            // Uses android.view.SearchEvent
+            "public boolean onSearchRequested(@Nullable android.view.SearchEvent)",
+
+            // Uses android.app.Application.ActivityLifecycleCallbacks
+            "public void registerActivityLifecycleCallbacks(@NonNull android.app.Application.ActivityLifecycleCallbacks)",
+            "public void unregisterActivityLifecycleCallbacks(@NonNull android.app.Application.ActivityLifecycleCallbacks)",
+
+            // Uses Runnable
+            "public final void runOnUiThread(Runnable)",
+
+            // Uses android.widget.Toolbar
+            "public void setActionBar(@Nullable android.widget.Toolbar)",
+
+            // Uses android.app.SharedElementCallback
+            "public void setEnterSharedElementCallback(android.app.SharedElementCallback)",
+            "public void setExitSharedElementCallback(android.app.SharedElementCallback)",
+
+            // Uses Drawable
+            "public final void setFeatureDrawable(int, android.graphics.drawable.Drawable)",
+
+            // Uses android.media.session.MediaController
+            "public final void setMediaController(android.media.session.MediaController)",
+
+            // Context
+
+            // Uses Object
+            "public abstract Object getSystemService(@NonNull String)",
+
+            // ContextThemeWrapper
+            "protected void onApplyThemeResource(android.content.res.Resources.Theme, int, boolean)",
+
+            // Context
+
+            // Uses java.util.concurrent.Executor
+            "public boolean bindIsolatedService(@NonNull @RequiresPermission android.content.Intent, int, @NonNull String, @NonNull java.util.concurrent.Executor, @NonNull android.content.ServiceConnection)",
+            "public boolean bindService(@NonNull @RequiresPermission android.content.Intent, int, @NonNull java.util.concurrent.Executor, @NonNull android.content.ServiceConnection)",
+
+            // Uses android.content.ServiceConnection
+            "public abstract boolean bindService(@RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int)",
+            "public boolean bindServiceAsUser(@NonNull @RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int, @NonNull android.os.UserHandle)",
+            "public abstract void unbindService(@NonNull android.content.ServiceConnection)",
+            "public void updateServiceGroup(@NonNull android.content.ServiceConnection, int, int)",
+
+            // Uses android.content.Context
+            "@NonNull public android.content.Context createAttributionContext(@Nullable String)",
+            "public abstract android.content.Context createConfigurationContext(@NonNull android.content.res.Configuration)",
+            "@NonNull public android.content.Context createContext(@NonNull android.content.ContextParams)",
+            "public abstract android.content.Context createContextForSplit(String) throws android.content.pm.PackageManager.NameNotFoundException",
+            "public abstract android.content.Context createDeviceProtectedStorageContext()",
+            "@DisplayContext public abstract android.content.Context createDisplayContext(@NonNull android.view.Display)",
+            "public abstract android.content.Context createPackageContext(String, int) throws android.content.pm.PackageManager.NameNotFoundException",
+            "@NonNull @UiContext public android.content.Context createWindowContext(int, @Nullable android.os.Bundle)",
+            "@NonNull @UiContext public android.content.Context createWindowContext(@NonNull android.view.Display, int, @Nullable android.os.Bundle)",
+            "public abstract android.content.Context getApplicationContext()",
+
+            // Uses android.content.res.AssetManager
+            "public abstract android.content.res.AssetManager getAssets()",
+
+            // Uses java.lang.ClassLoader
+            "public abstract ClassLoader getClassLoader()",
+
+            // Uses android.view.Display
+            "@Nullable public android.view.Display getDisplay()",
+
+            // Uses android.graphics.drawable.Drawable
+            "@Nullable public final android.graphics.drawable.Drawable getDrawable(@DrawableRes int)",
+            "@Deprecated public abstract android.graphics.drawable.Drawable getWallpaper()",
+            "@Deprecated public abstract android.graphics.drawable.Drawable peekWallpaper()",
+
+            // Uses java.util.concurrent.Executor
+            "public java.util.concurrent.Executor getMainExecutor()",
+
+            // Uses android.os.Looper
+            "public abstract android.os.Looper getMainLooper()",
+
+            // Uses android.content.pm.PackageManager
+            "public abstract android.content.pm.PackageManager getPackageManager()",
+
+            // Uses android.content.ContextParams
+            "@Nullable public android.content.ContextParams getParams()",
+
+            // Uses android.content.res.Resources
+            "public abstract android.content.res.Resources getResources()",
+
+            // Uses android.content.SharedPreferences
+            "public abstract android.content.SharedPreferences getSharedPreferences(String, int)",
+
+            // Uses android.content.res.Resources.Theme
+            "public abstract android.content.res.Resources.Theme getTheme()",
+
+            // Uses android.content.res.TypedArray
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@NonNull @StyleableRes int[])",
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@StyleRes int, @NonNull @StyleableRes int[]) throws android.content.res.Resources.NotFoundException",
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@Nullable android.util.AttributeSet, @NonNull @StyleableRes int[])",
+            "@NonNull public final android.content.res.TypedArray obtainStyledAttributes(@Nullable android.util.AttributeSet, @NonNull @StyleableRes int[], @AttrRes int, @StyleRes int)",
+
+            // Uses java.io.FileInputStream
+            "public abstract java.io.FileInputStream openFileInput(String) throws java.io.FileNotFoundException",
+
+            // Uses java.io.FileOutputStream
+            "public abstract java.io.FileOutputStream openFileOutput(String, int) throws java.io.FileNotFoundException",
+
+            // Uses android.database.sqlite.SQLiteDatabase
+            "public abstract android.database.sqlite.SQLiteDatabase openOrCreateDatabase(String, int, android.database.sqlite.SQLiteDatabase.CursorFactory)",
+            "public abstract android.database.sqlite.SQLiteDatabase openOrCreateDatabase(String, int, android.database.sqlite.SQLiteDatabase.CursorFactory, @Nullable android.database.DatabaseErrorHandler)",
+
+            // Uses android.content.ComponentCallbacks
+            "public void registerComponentCallbacks(android.content.ComponentCallbacks)",
+            "public void unregisterComponentCallbacks(android.content.ComponentCallbacks)",
+
+            // Uses android.content.BroadcastReceiver
+            "@Nullable public abstract android.content.Intent registerReceiver(@Nullable android.content.BroadcastReceiver, android.content.IntentFilter)",
+            "@Nullable public abstract android.content.Intent registerReceiver(@Nullable android.content.BroadcastReceiver, android.content.IntentFilter, int)",
+            "@Nullable public abstract android.content.Intent registerReceiver(android.content.BroadcastReceiver, android.content.IntentFilter, @Nullable String, @Nullable android.os.Handler)",
+            "@Nullable public abstract android.content.Intent registerReceiver(android.content.BroadcastReceiver, android.content.IntentFilter, @Nullable String, @Nullable android.os.Handler, int)",
+            "public abstract void sendOrderedBroadcast(@NonNull @RequiresPermission android.content.Intent, @Nullable String, @Nullable android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public void sendOrderedBroadcast(@NonNull android.content.Intent, @Nullable String, @Nullable String, @Nullable android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void sendOrderedBroadcastAsUser(@RequiresPermission android.content.Intent, android.os.UserHandle, @Nullable String, android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void sendStickyOrderedBroadcast(@RequiresPermission android.content.Intent, android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void sendStickyOrderedBroadcastAsUser(@RequiresPermission android.content.Intent, android.os.UserHandle, android.content.BroadcastReceiver, @Nullable android.os.Handler, int, @Nullable String, @Nullable android.os.Bundle)",
+            "public abstract void unregisterReceiver(android.content.BroadcastReceiver)",
+
+            // Uses java.io.InputStream
+            "@Deprecated public abstract void setWallpaper(java.io.InputStream) throws java.io.IOException",
+
+
+            // Doesn't make sense as it requires an actual Context
+            "public abstract boolean moveDatabaseFrom(android.content.Context, String)",
+            "public abstract boolean moveSharedPreferencesFrom(android.content.Context, String)",
+
+            // ContentResolver
+
+            // Uses Object
+            "public static Object addStatusChangeListener(int, android.content.SyncStatusObserver)",
+            "public static void removeStatusChangeListener(Object)",
+
+            // Uses android.content.ContentProviderClient
+            "@Nullable public final android.content.ContentProviderClient acquireContentProviderClient(@NonNull android.net.Uri)",
+            "@Nullable public final android.content.ContentProviderClient acquireContentProviderClient(@NonNull String)",
+            "@Nullable public final android.content.ContentProviderClient acquireUnstableContentProviderClient(@NonNull android.net.Uri)",
+            "@Nullable public final android.content.ContentProviderClient acquireUnstableContentProviderClient(@NonNull String)",
+
+            // Uses android.content.ContentResolver.MimeTypeInfo
+            "@NonNull public final android.content.ContentResolver.MimeTypeInfo getTypeInfo(@NonNull String)",
+
+            // Uses android.util.Size
+            "@NonNull public android.graphics.Bitmap loadThumbnail(@NonNull android.net.Uri, @NonNull android.util.Size, @Nullable android.os.CancellationSignal) throws java.io.IOException",
+
+            // Uses android.database.ContentObserver
+            "public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver)",
+            "@Deprecated public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver, boolean)",
+            "public void notifyChange(@NonNull android.net.Uri, @Nullable android.database.ContentObserver, int)",
+            "public void notifyChange(@NonNull java.util.Collection<android.net.Uri>, @Nullable android.database.ContentObserver, int)",
+            "public final void registerContentObserver(@NonNull android.net.Uri, boolean, @NonNull android.database.ContentObserver)",
+            "public final void unregisterContentObserver(@NonNull android.database.ContentObserver)",
+
+            // Uses android.os.CancellationSignal
+            "@Nullable public final android.content.res.AssetFileDescriptor openAssetFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.content.res.AssetFileDescriptor openAssetFileDescriptor(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.os.ParcelFileDescriptor openFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.os.ParcelFileDescriptor openFileDescriptor(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.content.res.AssetFileDescriptor openTypedAssetFile(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "@Nullable public final android.content.res.AssetFileDescriptor openTypedAssetFileDescriptor(@NonNull android.net.Uri, @NonNull String, @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal) throws java.io.FileNotFoundException",
+            "public final boolean refresh(@NonNull android.net.Uri, @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal)",
+
+            // Uses java.io.InputStream
+            "@Nullable public final java.io.InputStream openInputStream(@NonNull android.net.Uri) throws java.io.FileNotFoundException",
+
+            // Uses java.io.OutputStream
+            "@Nullable public final java.io.OutputStream openOutputStream(@NonNull android.net.Uri) throws java.io.FileNotFoundException",
+            "@Nullable public final java.io.OutputStream openOutputStream(@NonNull android.net.Uri, @NonNull String) throws java.io.FileNotFoundException",
+
+            // Uses android.database.Cursor
+            "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable String, @Nullable String[], @Nullable String)",
+            "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable String, @Nullable String[], @Nullable String, @Nullable android.os.CancellationSignal)",
+            "@Nullable public final android.database.Cursor query(@NonNull @RequiresPermission.Read android.net.Uri, @Nullable String[], @Nullable android.os.Bundle, @Nullable android.os.CancellationSignal)",
+
+            // Uses android.content.ContentResolver
+            "@NonNull public static android.content.ContentResolver wrap(@NonNull android.content.ContentProvider)",
+            "@NonNull public static android.content.ContentResolver wrap(@NonNull android.content.ContentProviderClient)",
+
+
+            // KeyChain
+
+            // Uses android.app.Activity
+            "public static void choosePrivateKeyAlias(@NonNull android.app.Activity, @NonNull android.security.KeyChainAliasCallback, @Nullable String[], @Nullable java.security.Principal[], @Nullable String, int, @Nullable String)",
+            "public static void choosePrivateKeyAlias(@NonNull android.app.Activity, @NonNull android.security.KeyChainAliasCallback, @Nullable String[], @Nullable java.security.Principal[], @Nullable android.net.Uri, @Nullable String)"
+
+
+
+
+    );
 
     private static final ClassName NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME =
             ClassName.get("com.android.bedstead.remoteframeworkclasses",
                     "NullParcelableRemoteDevicePolicyManager");
+    private static final ClassName NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableRemoteContentResolver");
     private static final ClassName COMPONENT_NAME_CLASSNAME =
             ClassName.get("android.content", "ComponentName");
 
@@ -325,7 +662,7 @@ public final class Processor extends AbstractProcessor {
                             m, processingEnv.getTypeUtils(), processingEnv.getElementUtils()))
                     .collect(Collectors.toSet());
 
-            for (String systemService : SYSTEM_SERVICES) {
+            for (String systemService : FRAMEWORK_CLASSES) {
                 TypeElement typeElement =
                         processingEnv.getElementUtils().getTypeElement(systemService);
                 generateRemoteSystemService(
@@ -340,6 +677,7 @@ public final class Processor extends AbstractProcessor {
 
     private void generateWrappers() {
         generateWrapper(NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME);
+        generateWrapper(NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME);
     }
 
     private void generateWrapper(ClassName className) {
@@ -373,7 +711,8 @@ public final class Processor extends AbstractProcessor {
             TypeElement frameworkClass,
             Set<MethodSignature> blocklistedMethodSignatures,
             Elements elements) {
-        Set<ExecutableElement> methods = filterMethods(getMethods(frameworkClass),
+        Set<ExecutableElement> methods = filterMethods(getMethods(frameworkClass,
+                processingEnv.getElementUtils()),
                 Apis.forClass(frameworkClass.getQualifiedName().toString(),
                         processingEnv.getTypeUtils(), processingEnv.getElementUtils()), elements)
                 .stream()
@@ -395,6 +734,16 @@ public final class Processor extends AbstractProcessor {
         MethodSignature parentProfileInstanceSignature =
                 MethodSignature.forApiString(PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
                         processingEnv.getElementUtils());
+        MethodSignature getContentResolverSignature =
+                MethodSignature.forApiString(GET_CONTENT_RESOLVER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+
+        Map<MethodSignature, ClassName> signatureReturnOverrides = new HashMap<>();
+        signatureReturnOverrides.put(parentProfileInstanceSignature,
+                ClassName.get("android.app.admin", "RemoteDevicePolicyManager"));
+        signatureReturnOverrides.put(getContentResolverSignature,
+                ClassName.get("android.content", "RemoteContentResolver"));
+
         String packageName = frameworkClass.getEnclosingElement().toString();
         ClassName className = ClassName.get(packageName,
                 "Remote" + frameworkClass.getSimpleName().toString());
@@ -412,8 +761,9 @@ public final class Processor extends AbstractProcessor {
 
 
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
-                .addMember("parcelableWrappers", "$T.class",
-                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .addMember("parcelableWrappers", "{$T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
+                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME)
                 .addMember("futureWrappers", "$T.class",
                         ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME)
                 .build());
@@ -428,10 +778,9 @@ public final class Processor extends AbstractProcessor {
 
             MethodSignature signature = MethodSignature.forMethod(method,
                     processingEnv.getElementUtils());
-            if (signature.equals(parentProfileInstanceSignature)) {
-                // Special case, we want to return a RemoteDevicePolicyManager instead
-                methodBuilder.returns(ClassName.get(
-                        "android.app.admin", "RemoteDevicePolicyManager"));
+
+            if (signatureReturnOverrides.containsKey(signature)) {
+                methodBuilder.returns(signatureReturnOverrides.get(signature));
             }
 
             methodBuilder.addJavadoc("See {@link $T#$L}.",
@@ -466,8 +815,9 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.classBuilder(className).addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
-                .addMember("parcelableWrappers", "$T.class",
-                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME)
+                .addMember("parcelableWrappers", "{$T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
+                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME)
                 .build());
 
         classBuilder.addField(ClassName.get(frameworkClass),
@@ -539,9 +889,19 @@ public final class Processor extends AbstractProcessor {
     }
 
     private void generateFrameworkImpl(TypeElement frameworkClass, Set<ExecutableElement> methods) {
-        MethodSignature parentProfileInstanceSignature = MethodSignature.forApiString(
-                PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
-                processingEnv.getElementUtils());
+        MethodSignature parentProfileInstanceSignature =
+                MethodSignature.forApiString(PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+        MethodSignature getContentResolverSignature =
+                MethodSignature.forApiString(GET_CONTENT_RESOLVER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+
+        Map<MethodSignature, ClassName> signatureReturnOverrides = new HashMap<>();
+        signatureReturnOverrides.put(parentProfileInstanceSignature,
+                ClassName.get("android.app.admin", "RemoteDevicePolicyManager"));
+        signatureReturnOverrides.put(getContentResolverSignature,
+                ClassName.get("android.content", "RemoteContentResolver"));
+
         String packageName = frameworkClass.getEnclosingElement().toString();
         ClassName interfaceClassName = ClassName.get(packageName,
                 "Remote" + frameworkClass.getSimpleName().toString());
@@ -551,7 +911,7 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.classBuilder(
                         className)
                         .addSuperinterface(interfaceClassName)
-                        .addModifiers(Modifier.FINAL, Modifier.PUBLIC);
+                        .addModifiers(Modifier.PUBLIC);
 
         classBuilder.addField(ClassName.get(frameworkClass),
                 "mFrameworkClass", Modifier.PRIVATE, Modifier.FINAL);
@@ -591,21 +951,26 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addParameter(parameterSpec);
             }
 
-            if (signature.equals(parentProfileInstanceSignature)) {
-                // Special case, we want to return a RemoteDevicePolicyManager instead
-                methodBuilder.returns(ClassName.get(
-                        "android.app.admin", "RemoteDevicePolicyManager"));
+            String frameworkClassName = "mFrameworkClass";
+
+            if (method.getModifiers().contains(Modifier.STATIC)) {
+                frameworkClassName = frameworkClass.getQualifiedName().toString();
+            }
+
+            if (signatureReturnOverrides.containsKey(signature)) {
+                methodBuilder.returns(signatureReturnOverrides.get(signature));
                 methodBuilder.addStatement(
-                        "return new $T(mFrameworkClass.$L($L))",
-                        className, method.getSimpleName(), String.join(", ", paramNames));
+                        "return new $TImpl($L.$L($L))",
+                        signatureReturnOverrides.get(signature), frameworkClassName,
+                        method.getSimpleName(), String.join(", ", paramNames));
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
-                        "mFrameworkClass.$L($L)",
-                        method.getSimpleName(), String.join(", ", paramNames));
+                        "$L.$L($L)",
+                        frameworkClassName, method.getSimpleName(), String.join(", ", paramNames));
             } else {
                 methodBuilder.addStatement(
-                        "return mFrameworkClass.$L($L)",
-                        method.getSimpleName(), String.join(", ", paramNames));
+                        "return $L.$L($L)",
+                        frameworkClassName, method.getSimpleName(), String.join(", ", paramNames));
             }
 
             classBuilder.addMethod(methodBuilder.build());
@@ -616,9 +981,22 @@ public final class Processor extends AbstractProcessor {
 
     private Set<ExecutableElement> filterMethods(
             Set<ExecutableElement> allMethods, Apis validApis, Elements elements) {
-        return allMethods.stream()
-                .filter(m -> validApis.methods().contains(MethodSignature.forMethod(m, elements)))
-                .collect(Collectors.toSet());
+        Set<ExecutableElement> filteredMethods = new HashSet<>();
+
+        for (ExecutableElement method : allMethods) {
+            MethodSignature methodSignature = MethodSignature.forMethod(method, elements);
+            if (validApis.methods().contains(methodSignature)) {
+                if (method.getModifiers().contains(Modifier.PROTECTED)) {
+                    System.out.println(methodSignature + " is protected. Dropping");
+                } else {
+                    filteredMethods.add(method);
+                }
+            } else {
+                System.out.println("No matching public API for " + methodSignature);
+            }
+        }
+
+        return filteredMethods;
     }
 
     private void writeClassToFile(String packageName, TypeSpec clazz) {
@@ -637,11 +1015,31 @@ public final class Processor extends AbstractProcessor {
         }
     }
 
-    private Set<ExecutableElement> getMethods(TypeElement interfaceClass) {
-        return interfaceClass.getEnclosedElements().stream()
+    private Set<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
+        Map<String, ExecutableElement> methods = new HashMap<>();
+        getMethods(methods, interfaceClass, elements);
+        return new HashSet<>(methods.values());
+    }
+
+    private void getMethods(Map<String, ExecutableElement> methods, TypeElement interfaceClass,
+            Elements elements) {
+        interfaceClass.getEnclosedElements().stream()
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
-                .filter(e -> e.getKind().equals(ElementKind.METHOD))
-                .collect(Collectors.toSet());
+                .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
+                .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
+                .forEach(e -> {
+                    methods.put(methodHash(e), e);
+                });
+
+        interfaceClass.getInterfaces().stream()
+                .map(m -> elements.getTypeElement(m.toString()))
+                .forEach(m -> getMethods(methods, m, elements));
+    }
+
+    private String methodHash(ExecutableElement method) {
+        return method.getSimpleName() + "(" + method.getParameters().stream()
+                .map(p -> p.asType().toString()).collect(
+                Collectors.joining(",")) + ")";
     }
 }

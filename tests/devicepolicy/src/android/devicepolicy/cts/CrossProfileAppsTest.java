@@ -49,7 +49,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
@@ -328,9 +328,9 @@ public final class CrossProfileAppsTest {
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
-        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+        try (TestAppInstance personalApp = sCrossProfileTestApp.install(
                 sDeviceState.primaryUser());
-             TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+             TestAppInstance workApp = sCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),
@@ -348,9 +348,9 @@ public final class CrossProfileAppsTest {
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
-        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+        try (TestAppInstance personalApp = sCrossProfileTestApp.install(
                 sDeviceState.primaryUser());
-             TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+             TestAppInstance workApp = sCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),
@@ -365,7 +365,7 @@ public final class CrossProfileAppsTest {
     @RequireRunOnPrimaryUser
     public void canRequestInteractAcrossProfiles_noOtherProfiles_returnsFalse()
             throws Exception {
-        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+        try (TestAppInstance personalApp = sCrossProfileTestApp.install(
                 sDeviceState.primaryUser())) {
 
             assertThat(personalApp.crossProfileApps().canRequestInteractAcrossProfiles()).isFalse();
@@ -380,9 +380,9 @@ public final class CrossProfileAppsTest {
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
-        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+        try (TestAppInstance personalApp = sCrossProfileTestApp.install(
                 sDeviceState.primaryUser());
-             TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+             TestAppInstance workApp = sCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),
@@ -400,7 +400,7 @@ public final class CrossProfileAppsTest {
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
-        try (TestAppInstanceReference workApp = sCrossProfileTestApp.install(
+        try (TestAppInstance workApp = sCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),
@@ -417,7 +417,7 @@ public final class CrossProfileAppsTest {
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
-        try (TestAppInstanceReference personalApp = sCrossProfileTestApp.install(
+        try (TestAppInstance personalApp = sCrossProfileTestApp.install(
                 sDeviceState.primaryUser())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),
@@ -435,9 +435,9 @@ public final class CrossProfileAppsTest {
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
                 .devicePolicyManager();
-        try (TestAppInstanceReference personalApp = sNonCrossProfileTestApp.install(
+        try (TestAppInstance personalApp = sNonCrossProfileTestApp.install(
                 sDeviceState.primaryUser());
-             TestAppInstanceReference workApp = sNonCrossProfileTestApp.install(
+             TestAppInstance workApp = sNonCrossProfileTestApp.install(
                 sDeviceState.workProfile())) {
             profileOwner.setCrossProfilePackages(
                     sDeviceState.profileOwner(WORK_PROFILE).componentName(),

@@ -38,6 +38,8 @@ import java.io.Serializable;
  */
 public final class CustomEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link CustomEvent} events. */
     public static CustomEventQuery queryPackage(String packageName) {
         return new CustomEventQuery(packageName);

@@ -26,6 +26,8 @@ import java.util.List;
 public final class IntegerQueryHelper<E extends Queryable> implements IntegerQuery<E>,
         Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private Integer mEqualToValue = null;
     private Integer mGreaterThanValue = null;
     private Integer mGreaterThanOrEqualToValue = null;

@@ -45,7 +45,7 @@ import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.queryable.queries.StringQuery;
 
@@ -188,7 +188,7 @@ public class UserControlDisabledPackagesTest {
 
         sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(DPC_COMPONENT_NAME,
                 Arrays.asList(testAppPackageName));
-        try (TestAppInstanceReference instance = sTestApp.install()) {
+        try (TestAppInstance instance = sTestApp.install()) {
             instance.activities().any().start();
 
             sActivityManager.forceStopPackage(testAppPackageName);

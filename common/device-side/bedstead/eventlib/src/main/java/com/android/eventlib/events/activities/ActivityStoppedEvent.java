@@ -32,6 +32,8 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityStoppedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link ActivityStoppedEvent} events. */
     public static ActivityStoppedEventQuery queryPackage(String packageName) {
         return new ActivityStoppedEventQuery(packageName);

@@ -33,18 +33,18 @@ import com.android.eventlib.events.activities.ActivityEvents;
  */
 public abstract class TestAppActivityReference {
 
-    final TestAppInstanceReference mInstance;
+    final TestAppInstance mInstance;
     final ComponentReference mComponent;
 
     TestAppActivityReference(
-            TestAppInstanceReference instance,
+            TestAppInstance instance,
             ComponentReference component) {
         mInstance = instance;
         mComponent = component;
     }
 
-    /** Gets the {@link TestAppInstanceReference} this activity exists in. */
-    public TestAppInstanceReference testAppInstance() {
+    /** Gets the {@link TestAppInstance} this activity exists in. */
+    public TestAppInstance testAppInstance() {
         return mInstance;
     }
 

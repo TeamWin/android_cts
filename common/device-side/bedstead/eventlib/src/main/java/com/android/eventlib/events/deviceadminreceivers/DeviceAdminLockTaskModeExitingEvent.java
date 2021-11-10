@@ -37,6 +37,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminLockTaskModeExitingEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminLockTaskModeExitingEvent} events. */
     public static DeviceAdminLockTaskModeExitingEventQuery queryPackage(String packageName) {
         return new DeviceAdminLockTaskModeExitingEventQuery(packageName);

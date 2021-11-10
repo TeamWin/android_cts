@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 
 public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> implements SetQuery<E, F, G>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private E mQuery;
     private final IntegerQueryHelper<E> mSizeQuery;
     private final Set<G> mContainsByQuery = new HashSet<>();

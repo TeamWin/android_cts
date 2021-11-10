@@ -27,6 +27,8 @@ import java.util.List;
 /** Implementation of {@link LongQuery}. */
 public final class LongQueryHelper<E extends Queryable> implements LongQuery<E>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     @Nullable private Long mEqualToValue = null;
     @Nullable private Long mGreaterThanValue = null;
     @Nullable private Long mGreaterThanOrEqualToValue = null;

@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 public final class EnumQueryHelper <E extends Queryable, F> implements EnumQuery<E, F>,
         Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private Set<F> mIsEqualTo = null;
     private Set<F> mIsNotEqualTo = null;

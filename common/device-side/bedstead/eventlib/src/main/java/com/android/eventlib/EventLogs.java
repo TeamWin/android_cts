@@ -28,6 +28,9 @@ import java.time.Instant;
 
 /** Interface to interact with the results of an {@link EventLogsQuery}. */
 public abstract class EventLogs<E extends Event> implements Serializable {
+
+    private static final long serialVersionUID = 1;
+
     static final Duration DEFAULT_POLL_TIMEOUT = Duration.ofMinutes(5);
 
     // We need to set this earlier than construction otherwise we will skip all events that happen

@@ -29,6 +29,8 @@ import java.util.List;
 public final class UriQueryHelper<E extends Queryable>
         implements UriQuery<E>, Serializable{
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private Uri mEqualsValue;
     private final StringQueryHelper<E> mStringValue = new StringQueryHelper<>();

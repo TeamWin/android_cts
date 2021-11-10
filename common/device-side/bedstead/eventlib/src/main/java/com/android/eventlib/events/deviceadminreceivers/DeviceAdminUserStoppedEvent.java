@@ -40,6 +40,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminUserStoppedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminUserStoppedEvent} events. */
     public static DeviceAdminUserStoppedEventQuery queryPackage(String packageName) {
         return new DeviceAdminUserStoppedEventQuery(packageName);

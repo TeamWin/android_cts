@@ -49,7 +49,7 @@ import com.android.bedstead.harrier.policies.SetSmsPermissionGranted;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.notifications.NotificationListener;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import com.google.common.collect.ImmutableSet;
@@ -114,7 +114,7 @@ public class PermissionGrantTest {
             ).wherePermissions().doesNotContain(
                     NOT_DECLARED_PERMISSION
             ).get();
-    private static TestAppInstanceReference sTestAppInstance;
+    private static TestAppInstance sTestAppInstance;
 
     @BeforeClass
     public static void setupClass() {

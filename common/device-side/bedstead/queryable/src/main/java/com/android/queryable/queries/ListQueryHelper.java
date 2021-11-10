@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 public final class ListQueryHelper<E extends Queryable, F, G extends Query<F>>
         implements ListQuery<E, F, G>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private E mQuery;
     private final IntegerQueryHelper<E> mSizeQuery;
     private final List<G> mContainsByQuery = new ArrayList<>();

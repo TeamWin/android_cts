@@ -41,7 +41,7 @@ import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.After;
@@ -185,7 +185,7 @@ public class ScreenCaptureDisabledTest {
     }
 
     private Bitmap takeScreenshotExpectingFailure() {
-        try (TestAppInstanceReference testApp = sTestApp.install()) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             testApp.activities().any().start();
             return Poll.forValue(mUiAutomation::takeScreenshot)
                     .timeout(Duration.ofSeconds(60))
@@ -195,7 +195,7 @@ public class ScreenCaptureDisabledTest {
     }
 
     private Bitmap takeScreenshotExpectingSuccess() {
-        try (TestAppInstanceReference testApp = sTestApp.install()) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             testApp.activities().any().start();
             return Poll.forValue(mUiAutomation::takeScreenshot)
                     .toNotBeNull()

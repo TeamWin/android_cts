@@ -32,6 +32,8 @@ import com.android.queryable.queries.ActivityQueryHelper;
  */
 public final class ActivityDestroyedEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link ActivityDestroyedEvent} events. */
     public static ActivityDestroyedEventQuery queryPackage(String packageName) {
         return new ActivityDestroyedEventQuery(packageName);

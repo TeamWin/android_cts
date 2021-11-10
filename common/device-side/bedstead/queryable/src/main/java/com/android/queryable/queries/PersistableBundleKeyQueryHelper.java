@@ -28,6 +28,8 @@ import java.util.List;
 public final class PersistableBundleKeyQueryHelper<E extends Queryable>
         implements PersistableBundleKeyQuery<E>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private Boolean mExpectsToExist = null;
     private StringQueryHelper<E> mStringQuery = null;
