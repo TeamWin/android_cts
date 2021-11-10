@@ -74,7 +74,8 @@ public abstract class BaseUserRestrictionsTest extends BaseDeviceAdminTest {
             UserManager.DISALLOW_CAMERA_TOGGLE,
             UserManager.DISALLOW_MICROPHONE_TOGGLE,
             UserManager.DISALLOW_CHANGE_WIFI_STATE,
-            UserManager.DISALLOW_WIFI_TETHERING
+            UserManager.DISALLOW_WIFI_TETHERING,
+            UserManager.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI
     };
 
     /**
