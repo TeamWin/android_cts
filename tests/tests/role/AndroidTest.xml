@@ -38,6 +38,7 @@
         <option name="cleanup" value="true" />
         <option name="push" value="CtsRoleTestApp.apk->/data/local/tmp/cts/role/CtsRoleTestApp.apk" />
         <option name="push" value="CtsRoleTestApp28.apk->/data/local/tmp/cts/role/CtsRoleTestApp28.apk" />
+        <option name="push" value="CtsRoleTestApp33WithoutInCallService.apk->/data/local/tmp/cts/role/CtsRoleTestApp33WithoutInCallService.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
