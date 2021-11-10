@@ -22,7 +22,9 @@ android_test {
     // Include both the 32 and 64 bit versions
     compile_multilib: "both",
     static_libs: [
+        "androidx.test.ext.junit",
         "androidx.test.rules",
+        "androidx.test.runner",
         "android-common",
         "ctstestserver",
         "ctstestrunner-axt",
@@ -56,6 +58,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "src/android/security/cts/activity/ISecureRandomService.aidl",
         "aidl/android/security/cts/IIsolatedService.aidl",
         "aidl/android/security/cts/CVE_2021_0327/IBadProvider.aidl",
