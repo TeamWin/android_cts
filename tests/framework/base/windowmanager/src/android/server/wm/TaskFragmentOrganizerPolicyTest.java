@@ -318,6 +318,53 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    /**
+     * Verifies that the TaskFragment hierarchy ops should still work while in lock task mode.
+     */
+    @Test
+    public void testApplyHierarchyOpsInLockTaskMode() {
+        // Start an activity
+        final Activity activity = startNewActivity();
+
+        try {
+            // Lock the task
+            runWithShellPermission(() -> {
+                mAtm.startSystemLockTaskMode(activity.getTaskId());
+            });
+
+            // Create TaskFragment and reparent the activity
+            final IBinder ownerToken = getActivityToken(activity);
+            final TaskFragmentCreationParams params =
+                    mTaskFragmentOrganizer.generateTaskFragParams(ownerToken);
+            final IBinder taskFragToken = params.getFragmentToken();
+            WindowContainerTransaction wct = new WindowContainerTransaction()
+                    .createTaskFragment(params)
+                    .reparentActivityToTaskFragment(taskFragToken, ownerToken);
+            mTaskFragmentOrganizer.applyTransaction(wct);
+
+            // Verifies it works
+            mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+            TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+            assertEquals(1, info.getActivities().size());
+
+            // Delete the TaskFragment
+            wct = new WindowContainerTransaction().deleteTaskFragment(
+                    mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken).getToken());
+            mTaskFragmentOrganizer.applyTransaction(wct);
+
+            // Verifies the TaskFragment NOT removed because the removal would also empty the task.
+            mTaskFragmentOrganizer.waitForTaskFragmentError();
+            assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(
+                    IllegalStateException.class);
+            info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+            assertEquals(1, info.getActivities().size());
+        } finally {
+            runWithShellPermission(() -> {
+                mAtm.stopSystemLockTaskMode();
+            });
+        }
+    }
+
     private static Activity startNewActivity() {
         return startNewActivity(TestActivity.class);
     }
