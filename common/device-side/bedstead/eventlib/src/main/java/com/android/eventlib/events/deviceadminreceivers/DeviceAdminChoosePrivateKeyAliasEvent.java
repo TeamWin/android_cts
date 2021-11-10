@@ -44,6 +44,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminChoosePrivateKeyAliasEvent} events. */
     public static DeviceAdminChoosePrivateKeyAliasEventQuery queryPackage(String packageName) {
         return new DeviceAdminChoosePrivateKeyAliasEventQuery(packageName);

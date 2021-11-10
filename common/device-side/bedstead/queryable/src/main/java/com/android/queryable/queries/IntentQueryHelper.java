@@ -27,6 +27,8 @@ import java.io.Serializable;
 public final class IntentQueryHelper<E extends Queryable> implements IntentQuery<E>,
         Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private final StringQueryHelper<E> mAction;
     private final BundleQueryHelper<E> mExtras;

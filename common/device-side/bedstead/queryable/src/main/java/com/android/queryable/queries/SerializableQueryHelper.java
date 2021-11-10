@@ -26,6 +26,8 @@ import java.util.List;
 public final class SerializableQueryHelper<E extends Queryable>
         implements SerializableQuery<E>, Serializable {
 
+    private static final long serialVersionUID = 1;
+
     private final E mQuery;
     private Serializable mEqualsValue;
 

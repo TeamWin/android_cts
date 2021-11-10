@@ -64,9 +64,9 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserSwitchedE
 public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
         DeviceAdminReceiverEvents {
 
-    private final TestAppInstanceReference mTestApp;
+    private final TestAppInstance mTestApp;
 
-    TestAppEvents(TestAppInstanceReference testApp) {
+    TestAppEvents(TestAppInstance testApp) {
         mTestApp = testApp;
     }
 

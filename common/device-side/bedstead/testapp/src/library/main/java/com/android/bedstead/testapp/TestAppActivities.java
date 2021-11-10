@@ -30,16 +30,16 @@ import java.util.Set;
  */
 public final class TestAppActivities {
 
-    final TestAppInstanceReference mInstance;
+    final TestAppInstance mInstance;
     private Set<ActivityInfo> mActivities = null;
 
-    static TestAppActivities create(TestAppInstanceReference instance) {
+    static TestAppActivities create(TestAppInstance instance) {
         TestAppActivities activities = new TestAppActivities(instance);
         return activities;
     }
 
 
-    private TestAppActivities(TestAppInstanceReference instance) {
+    private TestAppActivities(TestAppInstance instance) {
         mInstance = instance;
     }
 

@@ -74,6 +74,18 @@ public final class PermissionContextImpl implements PermissionContext {
     }
 
     /**
+     * See {@link Permissions#withPermissionOnVersionAtLeast(int, String...)}
+     */
+    public PermissionContextImpl withPermissionOnVersionAtLeast(
+            int sdkVersion, String... permissions) {
+        if (Versions.meetsMinimumSdkVersionRequirement(sdkVersion)) {
+            return withPermission(permissions);
+        }
+
+        return this;
+    }
+
+    /**
      * See {@link Permissions#withoutPermission(String...)}
      */
     public PermissionContextImpl withoutPermission(String... permissions) {

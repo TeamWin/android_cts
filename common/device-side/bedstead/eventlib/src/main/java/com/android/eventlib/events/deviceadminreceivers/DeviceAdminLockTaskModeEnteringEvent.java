@@ -39,6 +39,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminLockTaskModeEnteringEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminLockTaskModeEnteringEvent} events. */
     public static DeviceAdminLockTaskModeEnteringEventQuery queryPackage(String packageName) {
         return new DeviceAdminLockTaskModeEnteringEventQuery(packageName);

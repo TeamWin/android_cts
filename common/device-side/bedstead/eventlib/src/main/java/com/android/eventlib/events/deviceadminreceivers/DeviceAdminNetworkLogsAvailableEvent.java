@@ -39,6 +39,8 @@ import com.android.queryable.util.SerializableParcelWrapper;
  */
 public final class DeviceAdminNetworkLogsAvailableEvent extends Event {
 
+    private static final long serialVersionUID = 1;
+
     /** Begins a query for {@link DeviceAdminNetworkLogsAvailableEvent} events. */
     public static DeviceAdminNetworkLogsAvailableEventQuery queryPackage(String packageName) {
         return new DeviceAdminNetworkLogsAvailableEventQuery(packageName);

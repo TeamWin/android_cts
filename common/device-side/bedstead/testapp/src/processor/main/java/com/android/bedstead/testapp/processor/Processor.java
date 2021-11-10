@@ -17,8 +17,7 @@
 package com.android.bedstead.testapp.processor;
 
 
-import static java.util.stream.Collectors.toList;
-
+import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 
@@ -33,12 +32,16 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,6 +54,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.MirroredTypesException;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -70,10 +74,10 @@ public final class Processor extends AbstractProcessor {
             ClassName.get("com.android.bedstead.nene.utils", "Retry");
     private static final ClassName CONTEXT_CLASSNAME =
             ClassName.get("android.content", "Context");
-    private static final ClassName NENE_ACTIVITY_CLASSNAME =
+    private static final ClassName REMOTE_ACTIVITY_CLASSNAME =
             ClassName.get(
-                    "com.android.bedstead.nene.activities",
-                    "NeneActivityDirect");
+                    "android.app",
+                    "RemoteActivity");
     private static final ClassName TEST_APP_ACTIVITY_CLASSNAME =
             ClassName.get(
                     "com.android.bedstead.testapp",
@@ -105,10 +109,6 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName CROSS_PROFILE_CONNECTOR_CLASSNAME =
             ClassName.get("com.google.android.enterprise.connectedapps",
                     "CrossProfileConnector");
-    private static final ClassName UNAVAILABLE_PROFILE_EXCEPTION_CLASSNAME =
-            ClassName.get(
-                    "com.google.android.enterprise.connectedapps.exceptions",
-                    "UnavailableProfileException");
     private static final ClassName PROFILE_RUNTIME_EXCEPTION_CLASSNAME =
             ClassName.get(
                     "com.google.android.enterprise.connectedapps.exceptions",
@@ -117,9 +117,8 @@ public final class Processor extends AbstractProcessor {
             ClassName.get(
                     "com.android.bedstead.nene.exceptions",
                     "NeneException");
-    private static final ClassName TEST_APP_INSTANCE_REFERENCE_CLASSNAME =
-            ClassName.get("com.android.bedstead.testapp",
-                    "TestAppInstanceReference");
+    private static final ClassName TEST_APP_INSTANCE_CLASSNAME =
+            ClassName.get("com.android.bedstead.testapp", "TestAppInstance");
     private static final ClassName COMPONENT_REFERENCE_CLASSNAME =
             ClassName.get("com.android.bedstead.nene.packages",
                     "ComponentReference");
@@ -132,6 +131,9 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME =
             ClassName.get("android.app.admin",
                     "RemoteDevicePolicyManagerParentWrapper");
+    private static final ClassName REMOTE_CONTENT_RESOLVER_WRAPPER_CLASSNAME =
+            ClassName.get("android.content",
+                    "RemoteContentResolverWrapper");
 
     /**
      * Extract classes provided in an annotation.
@@ -140,21 +142,32 @@ public final class Processor extends AbstractProcessor {
      * extracted for.
      */
     public static List<TypeElement> extractClassesFromAnnotation(Types types, Runnable runnable) {
-        // From https://docs.oracle.com/javase/8/docs/api/javax/lang/model/AnnotatedConstruct.html
-        // "The annotation returned by this method could contain an element whose value is of type
-        // Class. This value cannot be returned directly: information necessary to locate and load a
-        // class (such as the class loader to use) is not available, and the class might not be
-        // loadable at all. Attempting to read a Class object by invoking the relevant method on the
-        // returned annotation will result in a MirroredTypeException, from which the corresponding
-        // TypeMirror may be extracted."
         try {
             runnable.run();
         } catch (MirroredTypesException e) {
             return e.getTypeMirrors().stream()
                     .map(t -> (TypeElement) types.asElement(t))
-                    .collect(toList());
+                    .collect(Collectors.toList());
         }
         throw new AssertionError("Could not extract classes from annotation");
+    }
+
+    /**
+     * Extract a class provided in an annotation.
+     *
+     * <p>The {@code runnable} should call the annotation method that the class is being extracted
+     * for.
+     */
+    public static TypeElement extractClassFromAnnotation(Types types, Runnable runnable) {
+        try {
+            runnable.run();
+        } catch (MirroredTypeException e) {
+            return e.getTypeMirrors().stream()
+                    .map(t -> (TypeElement) types.asElement(t))
+                    .findFirst()
+                    .get();
+        }
+        throw new AssertionError("Could not extract class from annotation");
     }
 
     @Override
@@ -168,7 +181,7 @@ public final class Processor extends AbstractProcessor {
 
         TypeElement neneActivityInterface =
                 processingEnv.getElementUtils().getTypeElement(
-                        NENE_ACTIVITY_CLASSNAME.canonicalName());
+                        REMOTE_ACTIVITY_CLASSNAME.canonicalName());
 
         Set<? extends Element> receiverAnnotatedElements =
                 roundEnv.getElementsAnnotatedWith(TestAppReceiver.class);
@@ -182,21 +195,19 @@ public final class Processor extends AbstractProcessor {
             TestAppReceiver testAppReceiver = receiverAnnotatedElements.iterator().next()
                     .getAnnotation(TestAppReceiver.class);
 
-
-            List<TypeElement> systemServiceClasses =
-                    extractClassesFromAnnotation(
-                            processingEnv.getTypeUtils(), testAppReceiver::systemServiceClasses);
+            FrameworkClass[] frameworkClasses = testAppReceiver.frameworkClasses();
 
             generateTargetedRemoteActivityInterface(neneActivityInterface);
             generateTargetedRemoteActivityImpl(neneActivityInterface);
             generateTargetedRemoteActivityWrapper(neneActivityInterface);
-            generateProvider(systemServiceClasses);
+            generateProvider(frameworkClasses);
             generateConfiguration();
 
             generateDpmParentWrapper(processingEnv.getElementUtils());
-            for (TypeElement systemServiceClass : systemServiceClasses) {
+            for (FrameworkClass frameworkClass : frameworkClasses) {
                 generateRemoteFrameworkClassWrapper(
-                        processingEnv.getElementUtils(), systemServiceClass);
+                        extractClassFromAnnotation(processingEnv.getTypeUtils(),
+                                frameworkClass::frameworkClass));
             }
         }
 
@@ -207,8 +218,7 @@ public final class Processor extends AbstractProcessor {
         return true;
     }
 
-    private void generateRemoteFrameworkClassWrapper(
-            Elements elements, TypeElement systemServiceClass) {
+    private void generateRemoteFrameworkClassWrapper(TypeElement systemServiceClass) {
         ClassName originalClassName = ClassName.get(systemServiceClass);
         ClassName interfaceClassName = ClassName.get(
                 originalClassName.packageName(),
@@ -219,7 +229,8 @@ public final class Processor extends AbstractProcessor {
         ClassName profileClassName = ClassName.get(
                 originalClassName.packageName(),
                 "Profile" + interfaceClassName.simpleName());
-        TypeElement interfaceElement = elements.getTypeElement(interfaceClassName.canonicalName());
+        TypeElement interfaceElement =
+                processingEnv.getElementUtils().getTypeElement(interfaceClassName.canonicalName());
 
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
@@ -246,7 +257,8 @@ public final class Processor extends AbstractProcessor {
                         profileClassName)
                 .build());
 
-        for (ExecutableElement method : getMethods(interfaceElement)) {
+        for (ExecutableElement method : getMethods(
+                interfaceElement, processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -260,15 +272,19 @@ public final class Processor extends AbstractProcessor {
             List<String> params = new ArrayList<>();
 
             for (VariableElement param : method.getParameters()) {
+
                 ParameterSpec parameterSpec =
                         ParameterSpec.builder(ClassName.get(param.asType()),
                                 param.getSimpleName().toString()).build();
+                methodBuilder.addParameter(parameterSpec);
+
+                if (param.asType().toString().equals("android.content.Context")) {
+                    // Context is auto-provided so not passed in
+                    continue;
+                }
 
                 params.add(param.getSimpleName().toString());
-
-                methodBuilder.addParameter(parameterSpec);
             }
-
 
 
             CodeBlock.Builder logicLambda = CodeBlock.builder()
@@ -286,6 +302,16 @@ public final class Processor extends AbstractProcessor {
                 logicLambda.addStatement("return new $T(mConnector, $L)",
                         REMOTE_DEVICE_POLICY_MANAGER_PARENT_WRAPPER_CLASSNAME,
                         String.join(", ", params));
+            } else if (method.getReturnType().toString().equals(
+                    "android.content.RemoteContentResolver")
+                    && method.getSimpleName().contentEquals("getContentResolver")) {
+                // Special case, we want to return a contnet resolver, but still call through to
+                // the other side for exceptions, etc.
+                logicLambda.addStatement(
+                        "mProfileClass.other().$L($L)",
+                        method.getSimpleName(), String.join(", ", params));
+                logicLambda.addStatement("return new $T(mConnector)",
+                        REMOTE_CONTENT_RESOLVER_WRAPPER_CLASSNAME);
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 logicLambda.addStatement("mProfileClass.other().$L($L)", method.getSimpleName(),
                         String.join(", ", params));
@@ -361,7 +387,7 @@ public final class Processor extends AbstractProcessor {
                 .addStatement("mProfileClass = $T.create(connector)", profileClassName)
                 .build());
 
-        for (ExecutableElement method : getMethods(interfaceElement)) {
+        for (ExecutableElement method : getMethods(interfaceElement, elements)) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -435,12 +461,16 @@ public final class Processor extends AbstractProcessor {
                         .addSuperinterface(TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC)
-                            .addAnnotation(Override.class);
+                            .addAnnotation(Override.class)
+                            .addExceptions(
+                                    method.getThrownTypes().stream().map(TypeName::get).collect(
+                                            Collectors.toSet()));
 
             methodBuilder.addParameter(
                     ParameterSpec.builder(String.class, "activityClassName").build());
@@ -498,7 +528,8 @@ public final class Processor extends AbstractProcessor {
                         PROFILE_TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                 .build());
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
@@ -579,7 +610,7 @@ public final class Processor extends AbstractProcessor {
 
         classBuilder.addMethod(
                 MethodSpec.constructorBuilder()
-                        .addParameter(TEST_APP_INSTANCE_REFERENCE_CLASSNAME, "instance")
+                        .addParameter(TEST_APP_INSTANCE_CLASSNAME, "instance")
                         .addParameter(
                                 COMPONENT_REFERENCE_CLASSNAME, "component")
                         .addStatement("super(instance, component)")
@@ -589,12 +620,16 @@ public final class Processor extends AbstractProcessor {
                         .build());
 
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC)
-                            .addAnnotation(Override.class);
+                            .addAnnotation(Override.class)
+                            .addExceptions(
+                                    method.getThrownTypes().stream().map(TypeName::get).collect(
+                                            Collectors.toSet()));
 
             String params = "mActivityClassName";
 
@@ -628,12 +663,16 @@ public final class Processor extends AbstractProcessor {
                         TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC);
 
-        for (ExecutableElement method : getMethods(neneActivityInterface)) {
+        for (ExecutableElement method : getMethods(neneActivityInterface,
+                processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
                     MethodSpec.methodBuilder(method.getSimpleName().toString())
                             .returns(ClassName.get(method.getReturnType()))
                             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                            .addAnnotation(CrossProfile.class);
+                            .addAnnotation(CrossProfile.class)
+                            .addExceptions(
+                                    method.getThrownTypes().stream().map(TypeName::get).collect(
+                                            Collectors.toSet()));
 
             methodBuilder.addParameter(
                     ParameterSpec.builder(String.class, "activityClassName").build());
@@ -652,7 +691,7 @@ public final class Processor extends AbstractProcessor {
         writeClassToFile(PACKAGE_NAME, classBuilder.build());
     }
 
-    private void generateProvider(List<TypeElement> systemServiceClasses) {
+    private void generateProvider(FrameworkClass[] frameworkClasses) {
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         "Provider")
@@ -683,21 +722,13 @@ public final class Processor extends AbstractProcessor {
                         DEVICE_POLICY_MANAGER_CLASSNAME)
                 .build());
 
-        for (TypeElement systemServiceClass : systemServiceClasses) {
-            ClassName originalClassName = ClassName.get(systemServiceClass);
+        for (FrameworkClass frameworkClass : frameworkClasses) {
+            ClassName originalClassName = ClassName.get(extractClassFromAnnotation(
+                    processingEnv.getTypeUtils(), frameworkClass::frameworkClass));
             ClassName interfaceClassName = ClassName.get(
                     originalClassName.packageName(), "Remote" + originalClassName.simpleName());
             ClassName implClassName = ClassName.get(
                     originalClassName.packageName(), interfaceClassName.simpleName() + "Impl");
-
-            CodeBlock systemServiceGetterCode = CodeBlock.of(
-                    "context.getSystemService($T.class)", originalClassName);
-
-            if (systemServiceClass.asType().toString().equals(
-                    "android.content.pm.PackageManager")) {
-                // Special case - getSystemService will return null
-                systemServiceGetterCode = CodeBlock.of("context.getPackageManager()");
-            }
 
             classBuilder.addMethod(
                     MethodSpec.methodBuilder("provide" + interfaceClassName.simpleName())
@@ -706,7 +737,7 @@ public final class Processor extends AbstractProcessor {
                             .addAnnotation(CrossProfileProvider.class)
                             .addParameter(CONTEXT_CLASSNAME, "context")
                             .addCode("return new $T($L);",
-                                    implClassName, systemServiceGetterCode)
+                                    implClassName, frameworkClass.constructor())
                             .build());
         }
 
@@ -741,10 +772,31 @@ public final class Processor extends AbstractProcessor {
         }
     }
 
-    private Set<ExecutableElement> getMethods(TypeElement interfaceClass) {
-        return interfaceClass.getEnclosedElements().stream()
+    private Set<ExecutableElement> getMethods(TypeElement interfaceClass, Elements elements) {
+        Map<String, ExecutableElement> methods = new HashMap<>();
+        getMethods(methods, interfaceClass, elements);
+        return new HashSet<>(methods.values());
+    }
+
+    private void getMethods(Map<String, ExecutableElement> methods, TypeElement interfaceClass,
+            Elements elements) {
+        interfaceClass.getEnclosedElements().stream()
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
-                .collect(Collectors.toSet());
+                .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
+                .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
+                .forEach(e -> {
+                    methods.put(methodHash(e), e);
+                });
+
+        interfaceClass.getInterfaces().stream()
+                .map(m -> elements.getTypeElement(m.toString()))
+                .forEach(m -> getMethods(methods, m, elements));
+    }
+
+    private String methodHash(ExecutableElement method) {
+        return method.getSimpleName() + "(" + method.getParameters().stream()
+                .map(p -> p.asType().toString()).collect(
+                Collectors.joining(",")) + ")";
     }
 }

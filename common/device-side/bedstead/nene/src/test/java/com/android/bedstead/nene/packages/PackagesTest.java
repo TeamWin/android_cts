@@ -34,7 +34,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.FileUtils;
 
@@ -328,12 +328,12 @@ public class PackagesTest {
     @Ignore
     // TODO: .exists() doesn't return true when the package is kept - restore this functionality
     public void keepUninstalledPackages_packageIsUninstalled_packageStillExists() {
-        try (TestAppInstanceReference testAppInstanceReference = sTestApp.install()) {
+        try (TestAppInstance testAppInstance = sTestApp.install()) {
             TestApis.packages().keepUninstalledPackages()
                     .add(sTestApp.pkg())
                     .commit();
 
-            testAppInstanceReference.uninstall();
+            testAppInstance.uninstall();
 
             assertThat(sTestApp.pkg().exists()).isTrue();
         } finally {

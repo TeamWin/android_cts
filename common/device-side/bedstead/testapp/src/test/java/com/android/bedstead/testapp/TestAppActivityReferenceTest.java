@@ -54,7 +54,7 @@ public class TestAppActivityReferenceTest {
     @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void start_activityIsStarted() {
         TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstance testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
             assertThat(TestApis.activities().foregroundActivity()).isEqualTo(
@@ -65,7 +65,7 @@ public class TestAppActivityReferenceTest {
     @Test
     public void remote_executes() {
         TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
-        try (TestAppInstanceReference testAppInstance = testApp.install(sUser)) {
+        try (TestAppInstance testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
             assertThat(activity.activity().isFinishing()).isFalse();

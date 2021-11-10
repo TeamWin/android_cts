@@ -64,27 +64,27 @@ public class TestApp {
      *
      * <p>See {@link Users#instrumented()}
      */
-    public TestAppInstanceReference install() {
+    public TestAppInstance install() {
         return install(TestApis.users().instrumented());
     }
 
     /**
      * Install the {@link TestApp} on the device for the given {@link UserReference}.
      */
-    public TestAppInstanceReference install(UserReference user) {
+    public TestAppInstance install(UserReference user) {
         try {
             pkg().installBytes(user, this::apkBytes);
         } catch (NeneException e) {
             throw new NeneException("Error while installing TestApp " + this, e);
         }
 
-        return new TestAppInstanceReference(this, user);
+        return new TestAppInstance(this, user);
     }
 
     /**
      * Install the {@link TestApp} on the device for the given {@link UserHandle}.
      */
-    public TestAppInstanceReference install(UserHandle user) {
+    public TestAppInstance install(UserHandle user) {
         install(TestApis.users().find(user));
         return instance(user);
     }
@@ -124,7 +124,7 @@ public class TestApp {
      *
      * <p>This does not check if the user exists, or if the test app is installed on the user.
      */
-    public TestAppInstanceReference instance(UserHandle user) {
+    public TestAppInstance instance(UserHandle user) {
         return instance(TestApis.users().find(user));
     }
 
@@ -133,11 +133,11 @@ public class TestApp {
      *
      * <p>This does not check if the user exists, or if the test app is installed on the user.
      */
-    public TestAppInstanceReference instance(UserReference user) {
+    public TestAppInstance instance(UserReference user) {
         if (user == null) {
             throw new NullPointerException();
         }
-        return new TestAppInstanceReference(this, user);
+        return new TestAppInstance(this, user);
     }
 
     private byte[] apkBytes() {

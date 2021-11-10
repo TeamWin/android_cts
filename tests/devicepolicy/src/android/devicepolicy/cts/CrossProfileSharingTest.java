@@ -46,7 +46,7 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstanceReference;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
@@ -107,7 +107,7 @@ public class CrossProfileSharingTest {
         // Enforce the restriction and wait for it to be applied.
         setSharingIntoProfileEnabled(false);
         // Test app handles android.intent.action.PICK just in case no other app does.
-        try (TestAppInstanceReference testAppParent =
+        try (TestAppInstance testAppParent =
                      sTestApp.install(sDeviceState.primaryUser())) {
             // Verify that the intents don't resolve into cross-profile forwarder.
             assertCrossProfileIntentsResolvability(OPENING_INTENTS,
@@ -133,7 +133,7 @@ public class CrossProfileSharingTest {
         setSharingIntoProfileEnabled(true);
 
         // Test app handles android.intent.action.PICK just in case no other app does.
-        try (TestAppInstanceReference testAppParent =
+        try (TestAppInstance testAppParent =
                      sTestApp.install(sDeviceState.primaryUser())) {
             // Verify that the intents resolve into cross-profile forwarder.
             assertCrossProfileIntentsResolvability(
@@ -190,7 +190,7 @@ public class CrossProfileSharingTest {
      */
     private ResolveInfo getResolveInfo(UserReference targetProfile, int direction) {
         ResolveInfo forwarderInfo;
-        try (TestAppInstanceReference testApp = sTestApp.install(targetProfile)) {
+        try (TestAppInstance testApp = sTestApp.install(targetProfile)) {
             // Set up cross profile intent filters so we can resolve these to find out framework's
             // intent forwarder activity as ground truth
             sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager()

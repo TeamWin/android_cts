@@ -436,7 +436,7 @@ public final class Package {
                     .addOperand("-n")
                     .executeAndParseOutput(o -> parsePsOutput(o).stream()
                             .filter(p -> p.mPackageName.equals(mPackageName))
-                            .map(p -> new ProcessReference(this, p.mPid,
+                            .map(p -> new ProcessReference(this, p.mPid, p.mUid,
                                     TestApis.users().find(p.mUserId))))
                     .collect(Collectors.toSet());
         } catch (AdbException e) {
@@ -449,7 +449,9 @@ public final class Package {
                 .skip(1) // Skip the title line
                 .map(s -> s.split("\\s+"))
                 .map(m -> new ProcessInfo(
-                        m[8], Integer.parseInt(m[1]), Integer.parseInt(m[0]) / PIDS_PER_USER_ID))
+                        m[8], Integer.parseInt(m[1]),
+                        Integer.parseInt(m[0]),
+                        Integer.parseInt(m[0]) / PIDS_PER_USER_ID))
                 .collect(Collectors.toSet());
     }
 
@@ -776,21 +778,23 @@ public final class Package {
     private static final class ProcessInfo {
         final String mPackageName;
         final int mPid;
+        final int mUid;
         final int mUserId;
 
-        public ProcessInfo(String packageName, int pid, int userId) {
+        ProcessInfo(String packageName, int pid, int uid, int userId) {
             if (packageName == null) {
                 throw new NullPointerException();
             }
             mPackageName = packageName;
             mPid = pid;
+            mUid = uid;
             mUserId = userId;
         }
 
         @Override
         public String toString() {
             return "ProcessInfo{packageName=" + mPackageName + ", pid="
-                    + mPid + ", userId=" + mUserId + "}";
+                    + mPid + ", uid=" + mUid + ", userId=" + mUserId + "}";
         }
     }
 }
