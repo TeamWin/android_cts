@@ -16,10 +16,13 @@
 
 #define LOG_TAG "ASurfaceControlTest"
 
+#include <ChoreographerTestUtils.h>
+#include <android/choreographer.h>
 #include <android/data_space.h>
 #include <android/hardware_buffer.h>
 #include <android/hardware_buffer_jni.h>
 #include <android/log.h>
+#include <android/looper.h>
 #include <android/native_window_jni.h>
 #include <android/surface_control.h>
 #include <android/sync.h>
@@ -43,16 +46,6 @@ static struct {
     jclass clazz;
     jmethodID onTransactionComplete;
 } gTransactionCompleteListenerClassInfo;
-
-#define NANOS_PER_SECOND 1000000000LL
-int64_t systemTime() {
-    struct timespec time;
-    int result = clock_gettime(CLOCK_MONOTONIC, &time);
-    if (result < 0) {
-        return -errno;
-    }
-    return (time.tv_sec * NANOS_PER_SECOND) + time.tv_nsec;
-}
 
 static AHardwareBuffer* allocateBuffer(int32_t width, int32_t height) {
     AHardwareBuffer* buffer = nullptr;
