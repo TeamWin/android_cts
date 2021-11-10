@@ -34,6 +34,7 @@ import android.content.pm.PackageManager;
 import android.provider.DeviceConfig;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -256,9 +257,10 @@ public class OneTimePermissionTest {
     }
 
     private void clickOneTimeButton() throws Throwable {
-        UiAutomatorUtils.waitFindObject(By.res(
-                "com.android.permissioncontroller:id/permission_allow_one_time_button"), 10000)
-                .click();
+        final UiObject2 uiObject = UiAutomatorUtils.waitFindObject(By.res(
+                "com.android.permissioncontroller:id/permission_allow_one_time_button"), 10000);
+        Thread.sleep(500);
+        uiObject.click();
     }
 
     /**
