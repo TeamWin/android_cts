@@ -20,6 +20,7 @@ import static android.Manifest.permission.FORCE_STOP_PACKAGES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.QUERY_ALL_PACKAGES;
 import static android.content.pm.ApplicationInfo.FLAG_STOPPED;
+import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -773,6 +774,20 @@ public final class Package {
         }
 
         return Packages.parseDumpsys().mPackages.containsKey(mPackageName);
+    }
+
+    /**
+     * {@code true} if the package is installed in the device's system image.
+     */
+    @Experimental
+    public boolean hasSystemFlag() {
+        ApplicationInfo appInfo = applicationInfoFromAnyUser(/* flags= */ 0);
+
+        if (appInfo == null) {
+            throw new NeneException("Package not installed: " + this);
+        }
+
+        return (appInfo.flags & FLAG_SYSTEM) > 0;
     }
 
     private static final class ProcessInfo {
