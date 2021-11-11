@@ -50,6 +50,9 @@ public final class DeviceAdminLockTaskModeEnteringEvent extends Event {
     public static final class DeviceAdminLockTaskModeEnteringEventQuery
             extends EventLogsQuery<DeviceAdminLockTaskModeEnteringEvent,
             DeviceAdminLockTaskModeEnteringEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminLockTaskModeEnteringEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminLockTaskModeEnteringEventQuery> mIntent =

@@ -50,6 +50,9 @@ public final class DeviceAdminUserStartedEvent extends Event {
     public static final class DeviceAdminUserStartedEventQuery
             extends EventLogsQuery<DeviceAdminUserStartedEvent,
             DeviceAdminUserStartedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminUserStartedEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminUserStartedEventQuery> mIntent =

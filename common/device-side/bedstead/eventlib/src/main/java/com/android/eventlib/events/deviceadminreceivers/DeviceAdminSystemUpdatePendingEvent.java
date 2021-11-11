@@ -48,6 +48,9 @@ public class DeviceAdminSystemUpdatePendingEvent extends Event {
     public static final class DeviceAdminSystemUpdatePendingEventQuery
             extends EventLogsQuery<DeviceAdminSystemUpdatePendingEvent,
                     DeviceAdminSystemUpdatePendingEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminSystemUpdatePendingEventQuery>
                 mDeviceAdminReceiver = new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminSystemUpdatePendingEventQuery> mIntent =

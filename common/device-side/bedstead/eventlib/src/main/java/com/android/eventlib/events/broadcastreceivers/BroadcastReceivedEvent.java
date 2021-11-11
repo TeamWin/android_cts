@@ -47,6 +47,9 @@ public final class BroadcastReceivedEvent extends Event {
     /** {@link EventLogsQuery} for {@link BroadcastReceivedEvent}. */
     public static final class BroadcastReceivedEventQuery
             extends EventLogsQuery<BroadcastReceivedEvent, BroadcastReceivedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         BroadcastReceiverQueryHelper<BroadcastReceivedEventQuery> mBroadcastReceiver =
                 new BroadcastReceiverQueryHelper<>(this);
         IntentQueryHelper<BroadcastReceivedEventQuery> mIntent = new IntentQueryHelper<>(this);
