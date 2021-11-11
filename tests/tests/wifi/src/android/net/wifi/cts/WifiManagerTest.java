@@ -1509,7 +1509,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             if (isSupportCustomizedMac) {
                 assertEquals(TEST_MAC, softApConfig.getBssid());
             }
-            assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
+            assertEquals(TEST_SSID, softApConfig.getWifiSsid().toString());
             assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
         } finally {
             // clean up

@@ -3395,6 +3395,182 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testInterfaceArray() {
+        Parcel p;
+        MockIInterface[] iface2 = {new MockIInterface(), new MockIInterface(), null};
+        MockIInterface[] iface3 = new MockIInterface[iface2.length];
+        MockIInterface[] iface4 = new MockIInterface[iface2.length + 1];
+
+        p = Parcel.obtain();
+        p.writeInterfaceArray(null);
+        p.setDataPosition(0);
+        try {
+            // input array shouldn't be null
+            p.readInterfaceArray(null, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        try {
+            // can't read null array
+            p.readInterfaceArray(iface3, MockIInterface::asInterface);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        // null if parcel has null array
+        assertNull(p.createInterfaceArray(MockIInterface[]::new, MockIInterface::asInterface));
+        p.recycle();
+
+        p = Parcel.obtain();
+        p.writeInterfaceArray(iface2);
+        p.setDataPosition(0);
+        try {
+            // input array shouldn't be null
+            p.readInterfaceArray(null, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        try {
+            // input array should be the same size
+            p.readInterfaceArray(iface4, MockIInterface::asInterface);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        try {
+            // asInterface shouldn't be null
+            p.readInterfaceArray(iface3, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        // read into input array with the exact size
+        p.readInterfaceArray(iface3, MockIInterface::asInterface);
+        for (int i = 0; i < iface3.length; i++) {
+            assertEquals(iface2[i], iface3[i]);
+        }
+
+        p.setDataPosition(0);
+        try {
+            // newArray/asInterface shouldn't be null
+            p.createInterfaceArray(null, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        // create a new array from parcel
+        MockIInterface[] iface5 =
+            p.createInterfaceArray(MockIInterface[]::new, MockIInterface::asInterface);
+        assertNotNull(iface5);
+        assertEquals(iface2.length, iface5.length);
+        for (int i = 0; i < iface5.length; i++) {
+            assertEquals(iface2[i], iface5[i]);
+        }
+        p.recycle();
+    }
+
+    public void testInterfaceList() {
+        Parcel p;
+        ArrayList<MockIInterface> arrayList = new ArrayList<>();
+        ArrayList<MockIInterface> arrayList2 = new ArrayList<>();
+        ArrayList<MockIInterface> arrayList3;
+        arrayList.add(new MockIInterface());
+        arrayList.add(new MockIInterface());
+        arrayList.add(null);
+
+        p = Parcel.obtain();
+        p.writeInterfaceList(null);
+        p.setDataPosition(0);
+        try {
+            // input list shouldn't be null
+            p.readInterfaceList(null, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        arrayList2.clear();
+        arrayList2.add(null);
+        try {
+            // can't read null list into non-empty list
+            p.readInterfaceList(arrayList2, MockIInterface::asInterface);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        arrayList2.clear();
+        // read null list into empty list
+        p.readInterfaceList(arrayList2, MockIInterface::asInterface);
+        assertEquals(0, arrayList2.size());
+
+        p.setDataPosition(0);
+        // null if parcel has null list
+        arrayList3 = p.createInterfaceArrayList(MockIInterface::asInterface);
+        assertNull(arrayList3);
+        p.recycle();
+
+        p = Parcel.obtain();
+        p.writeInterfaceList(arrayList);
+        p.setDataPosition(0);
+        try {
+            // input list shouldn't be null
+            p.readInterfaceList(null, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            // expected
+        }
+
+        p.setDataPosition(0);
+        arrayList2.clear();
+        try {
+            // asInterface shouldn't be null
+            p.readInterfaceList(arrayList2, null);
+            fail("Should throw a RuntimeException");
+        } catch (RuntimeException e) {
+            //expected
+        }
+
+        p.setDataPosition(0);
+        arrayList2.clear();
+        // fill a list with parcel
+        p.readInterfaceList(arrayList2, MockIInterface::asInterface);
+        assertEquals(arrayList, arrayList2);
+
+        p.setDataPosition(0);
+        arrayList2.clear();
+        // add one more item
+        for (int i=0; i<arrayList.size() + 1; i++) {
+            arrayList2.add(null);
+        }
+        // extra item should be discarded after read
+        p.readInterfaceList(arrayList2, MockIInterface::asInterface);
+        assertEquals(arrayList, arrayList2);
+
+        p.setDataPosition(0);
+        // create a new ArrayList from parcel
+        arrayList3 = p.createInterfaceArrayList(MockIInterface::asInterface);
+        assertEquals(arrayList, arrayList3);
+        p.recycle();
+    }
+
+
     @SuppressWarnings("unchecked")
     public void testWriteMap() {
         Parcel p;
@@ -3425,6 +3601,84 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testReadMapWithClass_whenNull() {
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        p.writeMap(null);
+        HashMap<String, Intent> map = new HashMap<>();
+
+        p.setDataPosition(0);
+        p.readMap(map, mcl, String.class, Intent.class);
+        assertEquals(0, map.size());
+
+        p.recycle();
+    }
+
+    public void testReadMapWithClass_whenMismatchingClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<Signature, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put(new Signature("1234"), new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put(new Signature("4321"), new TestSubIntent(
+                baseIntent, "test_intent2"));
+        p.writeMap(map);
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readMap(new HashMap<Intent, TestSubIntent>(), loader,
+                        Intent.class, TestSubIntent.class));
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readMap(new HashMap<Signature, Signature>(), loader,
+                        Signature.class, Signature.class));
+        p.recycle();
+    }
+
+    public void testReadMapWithClass_whenSameClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<String, TestSubIntent> map = new HashMap<>();
+        HashMap<String, TestSubIntent> map2 = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put("key1", new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put("key2", new TestSubIntent(
+                baseIntent, "test_intent2"));
+        p.writeMap(map);
+        p.setDataPosition(0);
+        p.readMap(map2, loader, String.class, TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.recycle();
+    }
+
+    public void testReadMapWithClass_whenSubClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<TestSubIntent, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put(new TestSubIntent(baseIntent, "test_intent_key1"), new TestSubIntent(
+                baseIntent, "test_intent_val1"));
+        p.writeMap(map);
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map2 = new HashMap<>();
+        p.readMap(map2, loader, Intent.class, TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map3 = new HashMap<>();
+        p.readMap(map3, loader, TestSubIntent.class, Intent.class);
+        assertEquals(map, map3);
+
+        p.recycle();
+    }
+
     @SuppressWarnings("unchecked")
     public void testReadHashMap() {
         Parcel p;
@@ -3452,6 +3706,80 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals("String", map.get("string"));
         assertEquals(Integer.MAX_VALUE, map.get("int"));
         assertEquals(true, map.get("boolean"));
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenNull() {
+        Parcel p = Parcel.obtain();
+        MockClassLoader mcl = new MockClassLoader();
+        p.writeMap(null);
+        p.setDataPosition(0);
+        assertNull(p.readHashMap(mcl, String.class, Intent.class));
+
+        p.setDataPosition(0);
+        assertNull(p.readHashMap(null, String.class, Intent.class));
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenMismatchingClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<Signature, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put(new Signature("1234"), new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put(new Signature("4321"), new TestSubIntent(
+                baseIntent, "test_intent2"));
+        p.writeMap(map);
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readHashMap(loader, Intent.class, TestSubIntent.class));
+
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readHashMap(loader, Signature.class, Signature.class));
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenSameClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<String, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        map.put("key1", new TestSubIntent(
+                baseIntent, "test_intent1"));
+        map.put("key2", new TestSubIntent(
+                baseIntent, "test_intent2"));
+
+        p.writeMap(map);
+        p.setDataPosition(0);
+        HashMap<String, TestSubIntent> map2 = p.readHashMap(loader, String.class,
+                TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.recycle();
+    }
+
+    public void testReadHashMapWithClass_whenSubClass() {
+        Parcel p = Parcel.obtain();
+        ClassLoader loader = getClass().getClassLoader();
+        HashMap<TestSubIntent, TestSubIntent> map = new HashMap<>();
+
+        Intent baseIntent = new Intent();
+        TestSubIntent test_intent_key1 = new TestSubIntent(baseIntent, "test_intent_key1");
+        map.put(test_intent_key1, new TestSubIntent(
+                baseIntent, "test_intent_val1"));
+        p.writeMap(map);
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map2 = p.readHashMap(loader, Intent.class, TestSubIntent.class);
+        assertEquals(map, map2);
+
+        p.setDataPosition(0);
+        HashMap<Intent, Intent> map3 = p.readHashMap(loader, TestSubIntent.class, Intent.class);
+        assertEquals(map, map3);
         p.recycle();
     }
 
@@ -3620,15 +3948,26 @@ public class ParcelTest extends AndroidTestCase {
         }
     }
 
-    private class MockIInterface implements IInterface {
+    private static class MockIInterface implements IInterface {
         public Binder binder;
-
+        private static final String DESCRIPTOR = "MockIInterface";
         public MockIInterface() {
             binder = new Binder();
+            binder.attachInterface(this, DESCRIPTOR);
         }
 
         public IBinder asBinder() {
             return binder;
+        }
+
+        public static MockIInterface asInterface(IBinder binder) {
+            if (binder != null) {
+                IInterface iface = binder.queryLocalInterface(DESCRIPTOR);
+                if (iface != null && iface instanceof MockIInterface) {
+                    return (MockIInterface) iface;
+                }
+            }
+            return null;
         }
     }
 
@@ -3985,6 +4324,11 @@ public class ParcelTest extends AndroidTestCase {
         public boolean equals(Object obj) {
             final TestSubIntent other = (TestSubIntent) obj;
             return mString.equals(other.mString);
+        }
+
+        @Override
+        public int hashCode() {
+            return mString.hashCode();
         }
     }
 
