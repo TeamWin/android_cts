@@ -16,7 +16,10 @@
 
 package com.android.bedstead.harrier;
 
+import android.os.Bundle;
+
 import androidx.annotation.Nullable;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -428,7 +431,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 EnterprisePolicy enterprisePolicy =
                         policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
-                        Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy);
+                        Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy, ((CannotSetPolicyTest) annotation).includeDeviceAdminStates(), ((CannotSetPolicyTest) annotation).includeNonDeviceAdminStates());
                 replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
@@ -469,5 +472,18 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
 
         return rules;
+    }
+
+    /**
+     * True if the test is running in debug mode.
+     *
+     * <p>This will result in additional debugging information being added which would otherwise
+     * be dropped to improve test performance.
+     *
+     * <p>To enable this, pass the "bedstead-debug" instrumentation arg as "true"
+     */
+    public static boolean isDebug() {
+        Bundle arguments = InstrumentationRegistry.getArguments();
+        return Boolean.parseBoolean(arguments.getString("bedstead-debug", "false"));
     }
 }

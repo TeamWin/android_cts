@@ -195,7 +195,8 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = SupportMessage.class)
+    // We don't include non device admin states as passing a null admin is a NullPointerException
+    @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void getLongSupportMessage_invalidAdmin_fails() {
         assertThrows(SecurityException.class, () ->
@@ -203,7 +204,8 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = SupportMessage.class)
+    // We don't include non device admin states as passing a null admin is a NullPointerException
+    @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_invalidAdmin_fails() {
         assertThrows(SecurityException.class, () ->
@@ -211,7 +213,8 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = SupportMessage.class)
+    // We don't include non device admin states as passing a null admin is a NullPointerException
+    @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void getShortSupportMessage_invalidAdmin_fails() {
         assertThrows(SecurityException.class, () ->
@@ -219,7 +222,8 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = SupportMessage.class)
+    // We don't include non device admin states as passing a null admin is a NullPointerException
+    @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_invalidAdmin_fails() {
         assertThrows(SecurityException.class, () ->

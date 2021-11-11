@@ -16,6 +16,18 @@
 
 package com.android.bedstead.harrier;
 
+import static android.app.admin.DevicePolicyManager.DELEGATION_APP_RESTRICTIONS;
+import static android.app.admin.DevicePolicyManager.DELEGATION_BLOCK_UNINSTALL;
+import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
+import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_SELECTION;
+import static android.app.admin.DevicePolicyManager.DELEGATION_ENABLE_SYSTEM_APP;
+import static android.app.admin.DevicePolicyManager.DELEGATION_INSTALL_EXISTING_PACKAGE;
+import static android.app.admin.DevicePolicyManager.DELEGATION_KEEP_UNINSTALLED_PACKAGES;
+import static android.app.admin.DevicePolicyManager.DELEGATION_NETWORK_LOGGING;
+import static android.app.admin.DevicePolicyManager.DELEGATION_PACKAGE_ACCESS;
+import static android.app.admin.DevicePolicyManager.DELEGATION_PERMISSION_GRANT;
+import static android.app.admin.DevicePolicyManager.DELEGATION_SECURITY_LOGGING;
+
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
@@ -49,6 +61,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffi
 
 import com.google.auto.value.AutoAnnotation;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -66,6 +79,22 @@ import java.util.stream.Collectors;
  * Utility class for enterprise policy tests.
  */
 public final class Policy {
+
+    // Delegate scopes to be used for a "CannotSet" state. All delegate scopes except the ones which
+    // should allow use of the API will be granted
+    private static final ImmutableSet<String> ALL_DELEGATE_SCOPES = ImmutableSet.of(
+            DELEGATION_CERT_INSTALL,
+            DELEGATION_APP_RESTRICTIONS,
+            DELEGATION_BLOCK_UNINSTALL,
+            DELEGATION_PERMISSION_GRANT,
+            DELEGATION_PACKAGE_ACCESS,
+            DELEGATION_ENABLE_SYSTEM_APP,
+            DELEGATION_INSTALL_EXISTING_PACKAGE,
+            DELEGATION_KEEP_UNINSTALLED_PACKAGES,
+            DELEGATION_NETWORK_LOGGING,
+            DELEGATION_CERT_SELECTION,
+            DELEGATION_SECURITY_LOGGING
+    );
 
     // This is a map containing all Include* annotations and the flags which lead to them
     // This is not validated - every state must have a single APPLIED_BY annotation
@@ -103,7 +132,7 @@ public final class Policy {
     private static final ImmutableMap<Integer, Function<EnterprisePolicy, Set<Annotation>>>
             DPC_STATE_ANNOTATIONS_BASE =
             ImmutableMap.<Integer, Function<EnterprisePolicy, Set<Annotation>>>builder()
-                    .put(APPLIED_BY_DEVICE_OWNER, (flags) -> hasFlag(flags.dpc(), APPLIED_BY_DEVICE_OWNER | APPLIES_IN_BACKGROUND) ? Set.of(includeRunOnBackgroundDeviceOwnerUser()) : Set.of(includeRunOnDeviceOwnerUser()))
+                    .put(APPLIED_BY_DEVICE_OWNER, (flags) -> hasFlag(flags.dpc(), APPLIED_BY_DEVICE_OWNER | APPLIES_IN_BACKGROUND) ? ImmutableSet.of(includeRunOnBackgroundDeviceOwnerUser()) : ImmutableSet.of(includeRunOnDeviceOwnerUser()))
                     .put(APPLIED_BY_AFFILIATED_PROFILE_OWNER, singleAnnotation(includeRunOnAffiliatedProfileOwnerSecondaryUser()))
                     .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
                     .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
@@ -192,7 +221,7 @@ public final class Policy {
 
     private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(
             Annotation annotation) {
-        return (i) -> Set.of(annotation);
+        return (i) -> ImmutableSet.of(annotation);
     }
 
     private static Function<EnterprisePolicy, Set<Annotation>> generateDelegateAnnotation(
@@ -331,22 +360,57 @@ public final class Policy {
      * Get parameterized test runs where the policy cannot be set for the given policy.
      */
     public static List<Annotation> cannotSetPolicyStates(String policyName,
-            EnterprisePolicy enterprisePolicy) {
+            EnterprisePolicy enterprisePolicy, boolean includeDeviceAdminStates,
+            boolean includeNonDeviceAdminStates) {
         Set<Annotation> annotations = new HashSet<>();
 
         validateFlags(policyName, enterprisePolicy.dpc());
 
-        // TODO(scottjonathan): Always include a state without a dpc
+        if (includeDeviceAdminStates) {
+            int allFlags = 0;
+            for (int p : enterprisePolicy.dpc()) {
+                allFlags = allFlags | p;
+            }
 
-        int allFlags = 0;
-        for (int p : enterprisePolicy.dpc()) {
-            allFlags = allFlags | p;
+            for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> appliedByFlag :
+                    DPC_STATE_ANNOTATIONS.entrySet()) {
+                if ((appliedByFlag.getKey() & allFlags) == 0) {
+                    annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
+                }
+            }
         }
 
-        for (Map.Entry<Integer, Function<EnterprisePolicy, Set<Annotation>>> appliedByFlag :
-                DPC_STATE_ANNOTATIONS.entrySet()) {
-            if ((appliedByFlag.getKey() & allFlags) == 0) {
-                annotations.addAll(appliedByFlag.getValue().apply(enterprisePolicy));
+        if (includeNonDeviceAdminStates) {
+            Set<String> validScopes = ImmutableSet.copyOf(enterprisePolicy.delegatedScopes());
+            String[] scopes = ALL_DELEGATE_SCOPES.stream()
+                    .filter(i -> !validScopes.contains(i))
+                    .toArray(String[]::new);
+            Annotation[] existingAnnotations = IncludeRunOnDeviceOwnerUser.class.getAnnotations();
+
+            if (BedsteadJUnit4.isDebug()) {
+                // Add a non-DPC with no delegate scopes
+                Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
+                        existingAnnotations.length + 1);
+                newAnnotations[newAnnotations.length - 1] = ensureHasDelegate(
+                        EnsureHasDelegate.AdminType.PRIMARY, new String[]{}, /* isPrimary= */ true);
+                annotations.add(
+                        new DynamicParameterizedAnnotation("DelegateWithNoScopes", newAnnotations));
+
+                for (String scope : scopes) {
+                    newAnnotations = Arrays.copyOf(existingAnnotations,
+                            existingAnnotations.length + 1);
+                    newAnnotations[newAnnotations.length - 1] = ensureHasDelegate(
+                            EnsureHasDelegate.AdminType.PRIMARY, new String[]{scope}, /* isPrimary= */ true);
+                    annotations.add(
+                            new DynamicParameterizedAnnotation("DelegateWithScope:" + scope, newAnnotations));
+                }
+            } else {
+                Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
+                        existingAnnotations.length + 1);
+                newAnnotations[newAnnotations.length - 1] = ensureHasDelegate(
+                        EnsureHasDelegate.AdminType.PRIMARY, scopes, /* isPrimary= */ true);
+                annotations.add(
+                        new DynamicParameterizedAnnotation("DelegateWithoutValidScope", newAnnotations));
             }
         }
 
