@@ -20,6 +20,7 @@ import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.WakeLockHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -75,10 +76,12 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_HandleBroadcastStandby() throws Exception {
-        getDevice().reboot();
+        ITestDevice device = getDevice();
+        device.reboot();
         TimeUnit.SECONDS.sleep(5);
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
+                WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendCecMessage(source, LogicalAddress.BROADCAST, CecOperand.STANDBY);
                 checkStandbyAndWakeUp();
     }
@@ -91,9 +94,11 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_HandleAddressedStandby() throws Exception {
-        getDevice().reboot();
+        ITestDevice device = getDevice();
+        device.reboot();
         for (LogicalAddress source : mLogicalAddresses) {
             if (!hasLogicalAddress(source)) {
+                WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendCecMessage(source, CecOperand.STANDBY);
                 checkStandbyAndWakeUp();
     }
@@ -111,8 +116,12 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
          * a feature to turn off this standby broadcast and this test tests the same.
          */
         sendDeviceToSleep();
-        hdmiCecClient.checkOutputDoesNotContainMessage(
-                LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        try {
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        } finally {
+            wakeUpDevice();
+        }
     }
 
     private void defineLogicalAddressList() throws Exception {

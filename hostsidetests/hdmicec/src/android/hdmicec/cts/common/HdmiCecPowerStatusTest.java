@@ -24,6 +24,7 @@ import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.WakeLockHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -97,23 +98,29 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         setCec20();
 
-        // Turn device on
-        wakeUpDevice();
+        try {
+            // Turn device on
+            wakeUpDevice();
 
-        // Move device to standby
-        sendDeviceToSleep();
+            // Move device to standby
+            sendDeviceToSleep();
 
-        String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
-                CecOperand.REPORT_POWER_STATUS);
+            String reportPowerStatus =
+                    hdmiCecClient.checkExpectedOutput(
+                            LogicalAddress.BROADCAST, CecOperand.REPORT_POWER_STATUS);
 
-        if (CecMessage.getParams(reportPowerStatus) == HdmiCecConstants.CEC_POWER_STATUS_ON) {
-            // Received the "wake up" broadcast, check for the next broadcast message
-            reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
-                    CecOperand.REPORT_POWER_STATUS);
+            if (CecMessage.getParams(reportPowerStatus) == HdmiCecConstants.CEC_POWER_STATUS_ON) {
+                // Received the "wake up" broadcast, check for the next broadcast message
+                reportPowerStatus =
+                        hdmiCecClient.checkExpectedOutput(
+                                LogicalAddress.BROADCAST, CecOperand.REPORT_POWER_STATUS);
+            }
+
+            assertThat(CecMessage.getParams(reportPowerStatus))
+                    .isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+        } finally {
+            wakeUpDevice();
         }
-
-        assertThat(CecMessage.getParams(reportPowerStatus)).isEqualTo(
-                HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
 
     /**
@@ -231,6 +238,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                         "dumpsys power | grep mWakefulness=");
                 assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
 
+                WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
 
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
