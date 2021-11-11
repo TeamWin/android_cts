@@ -48,9 +48,9 @@ import static android.view.Surface.ROTATION_90;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -366,6 +366,9 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 ORIENTATION_PORTRAIT, initialReportedSizes.orientation);
         assertTrue("portrait activity should have height >= width",
                 initialReportedSizes.heightDp >= initialReportedSizes.widthDp);
+        assumeFalse("Skipping test: device is fixed to user rotation",
+                mWmState.isFixedToUserRotation());
+
         separateTestJournal();
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -548,6 +551,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        assumeFalse("Skipping test: device is fixed to user rotation",
+                mWmState.isFixedToUserRotation());
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         mWmState.waitAndAssertLastOrientation("Fullscreen app requested landscape orientation",
                 SCREEN_ORIENTATION_LANDSCAPE);
@@ -791,8 +796,19 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
-        mWmState.waitAndAssertLastOrientation("Fullscreen app requested landscape orientation",
-                SCREEN_ORIENTATION_LANDSCAPE);
+        final boolean isFixedToUserRotation = mWmState.isFixedToUserRotation();
+        if (!isFixedToUserRotation) {
+            mWmState.waitAndAssertLastOrientation(
+                        "Fullscreen app requested landscape orientation",
+                        SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            final SizeInfo reportedSizes =
+                    getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+            assertEquals("landscape activity should be in landscape",
+                    ORIENTATION_LANDSCAPE, reportedSizes.orientation);
+            assertTrue("landscape activity should have height < width",
+                    reportedSizes.heightDp < reportedSizes.widthDp);
+        }
 
         // Start another activity in a different task.
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
@@ -807,8 +823,18 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Verify that activity brought to front is in originally requested orientation.
         mWmState.waitForValidState(LANDSCAPE_ORIENTATION_ACTIVITY);
-        mWmState.waitAndAssertLastOrientation("Should return to app in landscape orientation",
-                SCREEN_ORIENTATION_LANDSCAPE);
+        if (!isFixedToUserRotation) {
+            mWmState.waitAndAssertLastOrientation(
+                        "Fullscreen app requested landscape orientation",
+                        SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            final SizeInfo reportedSizes =
+                    getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+            assertEquals("landscape activity should be in landscape",
+                    ORIENTATION_LANDSCAPE, reportedSizes.orientation);
+            assertTrue("landscape activity should have height < width",
+                    reportedSizes.heightDp < reportedSizes.widthDp);
+        }
     }
 
     /**
