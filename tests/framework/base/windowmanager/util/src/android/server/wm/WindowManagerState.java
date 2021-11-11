@@ -1648,9 +1648,9 @@ public class WindowManagerState {
             if (proto != null) {
                 aodShowing = proto.aodShowing;
                 keyguardShowing = proto.keyguardShowing;
-                for (int i = 0;  i < proto.keyguardOccludedStates.length; i++) {
-                    mKeyguardOccludedStates.append(proto.keyguardOccludedStates[i].displayId,
-                            proto.keyguardOccludedStates[i].keyguardOccluded);
+                for (int i = 0;  i < proto.keyguardPerDisplay.length; i++) {
+                    mKeyguardOccludedStates.append(proto.keyguardPerDisplay[i].displayId,
+                            proto.keyguardPerDisplay[i].keyguardOccluded);
                 }
             }
         }
