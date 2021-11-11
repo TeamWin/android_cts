@@ -24,15 +24,14 @@ import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.testutil.AppSearchEmail;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
 import android.content.Context;
 import android.os.UserHandle;
 
 import androidx.test.core.app.ApplicationProvider;
-
-import com.android.server.appsearch.testing.AppSearchEmail;
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import org.junit.After;
 import org.junit.Before;

@@ -16,8 +16,8 @@
 
 package android.appsearch.app.a;
 
-import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
+import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
+import static android.app.appsearch.testutil.AppSearchTestUtils.doGet;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -35,12 +35,11 @@ import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.os.Bundle;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import com.google.common.io.BaseEncoding;
 

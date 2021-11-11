@@ -21,6 +21,7 @@ import static android.os.storage.StorageManager.UUID_DEFAULT;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
 import android.content.Context;
@@ -28,8 +29,6 @@ import android.os.UserHandle;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -27,9 +27,8 @@ import android.app.appsearch.GenericDocument;
 import android.app.appsearch.Migrator;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.testutil.AppSearchEmail;
 import android.util.ArrayMap;
-
-import com.android.server.appsearch.testing.AppSearchEmail;
 
 import org.junit.Test;
 

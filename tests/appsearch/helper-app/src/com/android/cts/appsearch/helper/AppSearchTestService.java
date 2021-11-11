@@ -15,8 +15,8 @@
  */
 package com.android.cts.appsearch.helper;
 
-import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
+import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
+import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
 
 import android.app.Service;
 import android.app.appsearch.AppSearchManager;
@@ -27,14 +27,14 @@ import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.testutil.AppSearchEmail;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
+import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
 import com.android.cts.appsearch.ICommandReceiver;
-import com.android.server.appsearch.testing.AppSearchEmail;
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
-import com.android.server.appsearch.testing.GlobalSearchSessionShimImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;

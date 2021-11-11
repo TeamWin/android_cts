@@ -17,10 +17,9 @@ package android.app.appsearch.cts.app;
 
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 
 import androidx.annotation.NonNull;
-
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

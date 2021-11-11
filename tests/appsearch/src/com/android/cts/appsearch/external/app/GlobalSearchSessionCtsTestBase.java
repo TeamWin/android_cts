@@ -16,8 +16,8 @@
 
 package android.app.appsearch.cts.app;
 
-import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
+import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
+import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -37,11 +37,10 @@ import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
 import android.app.appsearch.exceptions.AppSearchException;
+import android.app.appsearch.testutil.AppSearchEmail;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
-
-import com.android.server.appsearch.testing.AppSearchEmail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -56,10 +55,11 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public abstract class GlobalSearchSessionCtsTestBase {
+    static final String DB_NAME_1 = "";
+    static final String DB_NAME_2 = "testDb2";
+
     private AppSearchSessionShim mDb1;
-    private static final String DB_NAME_1 = "";
     private AppSearchSessionShim mDb2;
-    private static final String DB_NAME_2 = "testDb2";
 
     private GlobalSearchSessionShim mGlobalAppSearchManager;
 

@@ -16,17 +16,16 @@
 
 package android.appsearch.app.b;
 
-import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
+import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.SearchSpec;
+import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.server.appsearch.testing.GlobalSearchSessionShimImpl;
 
 import org.junit.Before;
 import org.junit.Test;
