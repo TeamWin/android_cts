@@ -63,6 +63,7 @@ import android.net.wifi.WifiManager.SubsystemRestartTrackingCallback;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConnectionStatistics;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.net.wifi.WifiSsid;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
@@ -1482,7 +1483,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uiAutomation.adoptShellPermissionIdentity();
             verifyRegisterSoftApCallback(executor, capabilityCallback);
             SoftApConfiguration.Builder customConfigBuilder = new SoftApConfiguration.Builder()
-                    .setSsid(TEST_SSID_UNQUOTED)
+                    .setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID_UNQUOTED))
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
 
             boolean isSupportCustomizedMac = capabilityCallback.getCurrentSoftApCapability()
@@ -1509,7 +1510,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             if (isSupportCustomizedMac) {
                 assertEquals(TEST_MAC, softApConfig.getBssid());
             }
-            assertEquals(TEST_SSID, softApConfig.getWifiSsid().toString());
+            assertEquals(TEST_SSID_UNQUOTED, softApConfig.getWifiSsid().getUtf8Text());
             assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
         } finally {
             // clean up
@@ -1529,7 +1530,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         SoftApConfiguration customConfig = new SoftApConfiguration.Builder()
-                .setSsid(TEST_SSID_UNQUOTED)
+                .setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID_UNQUOTED))
                 .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                 .build();
         TestExecutor executor = new TestExecutor();
@@ -1551,7 +1552,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotNull(callback.reservation);
             SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
             assertNotNull(softApConfig);
-            assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
+            assertEquals(TEST_SSID_UNQUOTED, softApConfig.getWifiSsid().getUtf8Text());
             assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
         } finally {
             // clean up
@@ -2047,10 +2048,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertTrue(currentConfig.isUserConfiguration());
         }
+
+        // Verify set/get with the deprecated set/getSsid()
+        SoftApConfiguration oldSsidConfig = new SoftApConfiguration.Builder(targetConfig)
+                .setWifiSsid(null)
+                .setSsid(targetConfig.getSsid()).build();
+        mWifiManager.setSoftApConfiguration(oldSsidConfig);
+        currentConfig = mWifiManager.getSoftApConfiguration();
+        compareSoftApConfiguration(oldSsidConfig, currentConfig);
     }
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
         SoftApConfiguration testSoftApConfig) {
+        assertEquals(currentConfig.getWifiSsid(), testSoftApConfig.getWifiSsid());
         assertEquals(currentConfig.getSsid(), testSoftApConfig.getSsid());
         assertEquals(currentConfig.getBssid(), testSoftApConfig.getBssid());
         assertEquals(currentConfig.getSecurityType(), testSoftApConfig.getSecurityType());
@@ -2176,7 +2186,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     SoftApConfiguration.BAND_2GHZ | SoftApConfiguration.BAND_5GHZ};
             // Test bridged SoftApConfiguration set and get (setBands)
             SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
-                    .setSsid(TEST_SSID_UNQUOTED)
+                    .setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID_UNQUOTED))
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setBands(expectedBands)
                     .build();
@@ -2243,7 +2253,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         callback.getCurrentSoftApCapability()
                         .getSupportedChannelList(SoftApConfiguration.BAND_5GHZ)[0]);
                 SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
-                        .setSsid(TEST_SSID_UNQUOTED)
+                        .setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID_UNQUOTED))
                         .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                         .setChannels(dual_channels)
                         .build();
@@ -2294,7 +2304,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             verifyRegisterSoftApCallback(executor, callback);
 
             SoftApConfiguration.Builder softApConfigBuilder = new SoftApConfiguration.Builder()
-                    .setSsid(TEST_SSID_UNQUOTED)
+                    .setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID_UNQUOTED))
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setAutoShutdownEnabled(true)
                     .setShutdownTimeoutMillis(100000)
@@ -2399,7 +2409,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
 
             SoftApConfiguration.Builder testSoftApConfigBuilder = new SoftApConfiguration.Builder()
-                    .setSsid(TEST_SSID_UNQUOTED)
+                    .setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID_UNQUOTED))
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setChannel(testBandsAndChannels.valueAt(0), testBandsAndChannels.keyAt(0));
 
