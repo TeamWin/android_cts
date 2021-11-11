@@ -16,6 +16,7 @@
 
 package android.localemanager.cts.app;
 
+import static android.localemanager.cts.util.LocaleConstants.TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_CREATION_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_PACKAGE;
 import static android.localemanager.cts.util.LocaleUtils.constructResultIntent;
@@ -23,6 +24,7 @@ import static android.localemanager.cts.util.LocaleUtils.constructResultIntent;
 import android.app.Activity;
 import android.app.LocaleManager;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.localemanager.cts.util.LocaleConstants;
 import android.os.Bundle;
 import android.os.LocaleList;
@@ -59,5 +61,16 @@ public class MainActivity extends Activity {
                     TEST_APP_PACKAGE, locales));
             finish();
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        LocaleList locales = newConfig.getLocales();
+
+        // Send back the received locales to the test for correctness assertion
+        sendBroadcast(constructResultIntent(TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION,
+                TEST_APP_PACKAGE, locales));
+        finish();
     }
 }

@@ -47,6 +47,9 @@ public final class LocaleConstants {
     public static final String TEST_APP_CREATION_INFO_PROVIDER_ACTION =
             "android.locale.cts.action.TEST_APP_CREATION_INFO_PROVIDER";
 
+    public static final String TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION =
+            "android.locale.cts.action.TEST_APP_CONFIG_CHANGED_INFO_PROVIDER";
+
     public static final String INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION =
             "android.locale.cts.action.INSTALLER_APP_BROADCAST_INFO_PROVIDER";
 
