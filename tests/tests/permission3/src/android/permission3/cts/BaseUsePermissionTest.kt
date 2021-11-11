@@ -60,6 +60,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_LATEST_NONE = "$APK_DIRECTORY/CtsUsePermissionAppLatestNone.apk"
         const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
+        const val APP_PACKAGE_NAME_PREFIX = "android.permission3.cts"
 
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
@@ -413,7 +414,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     ) {
         if (isTv) {
             // Dismiss DeprecatedTargetSdkVersionDialog, if present
-            if (waitFindObjectOrNull(By.text(APP_PACKAGE_NAME), 1000L) != null) {
+            if (waitFindObjectOrNull(By.textStartsWith(APP_PACKAGE_NAME_PREFIX), 1000L) != null) {
                 pressBack()
             }
             pressHome()
