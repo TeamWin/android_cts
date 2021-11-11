@@ -20,6 +20,7 @@ import static android.localemanager.cts.util.LocaleConstants.CALLING_PACKAGE;
 import static android.localemanager.cts.util.LocaleConstants.DEFAULT_APP_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.DEFAULT_SYSTEM_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES;
+import static android.localemanager.cts.util.LocaleConstants.EXTRA_SET_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROADCAST_RECEIVER;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_PACKAGE;
@@ -329,6 +330,52 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mTestAppConfigChangedInfoProvider.await();
         assertReceivedBroadcastContains(mTestAppConfigChangedInfoProvider, TEST_APP_PACKAGE,
                 DEFAULT_APP_LOCALES);
+    }
+
+    @Test
+    public void testSetApplicationLocales_withReadAppSpecificLocalesPermission_receivesBroadcast()
+            throws Exception {
+
+        BlockingBroadcastReceiver appSpecificLocaleBroadcastReceiver =
+                new BlockingBroadcastReceiver();
+        mContext.registerReceiver(appSpecificLocaleBroadcastReceiver,
+                new IntentFilter(Intent.ACTION_APPLICATION_LOCALE_CHANGED));
+
+        // Hold Manifest.permission.READ_APP_SPECIFIC_LOCALES while the broadcast is sent,
+        //   so that we receive it
+        runWithShellPermissionIdentity(() -> {
+            // Tell the test app to change its app-specific locales
+            launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_SET_LOCALES,
+                    DEFAULT_APP_LOCALES.toLanguageTags()));
+            assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
+
+            appSpecificLocaleBroadcastReceiver.await();
+        }, Manifest.permission.READ_APP_SPECIFIC_LOCALES);
+
+        assertReceivedBroadcastContains(appSpecificLocaleBroadcastReceiver,
+                TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
+    }
+
+
+    @Test
+    public void testSetApplicationLocales_appWithoutPermission_noBroadcastsReceived()
+            throws Exception {
+
+        BlockingBroadcastReceiver appSpecificLocaleBroadcastReceiver =
+                new BlockingBroadcastReceiver();
+        mContext.registerReceiver(appSpecificLocaleBroadcastReceiver,
+                new IntentFilter(Intent.ACTION_APPLICATION_LOCALE_CHANGED));
+
+        // Tell the test app to change its app-specific locales
+        launchActivity(TEST_APP_MAIN_ACTIVITY, extraString(EXTRA_SET_LOCALES,
+                DEFAULT_APP_LOCALES.toLanguageTags()));
+        assertLocalesCorrectlySetForAnotherApp(TEST_APP_PACKAGE, DEFAULT_APP_LOCALES);
+
+        // Ensure that no broadcasts were received since the change was for another app (the Test
+        //   App) and we are neither the Test App's installer, nor do we hold
+        //   Manifest.permission.READ_APP_SPECIFIC_LOCALES
+        appSpecificLocaleBroadcastReceiver.assertNoBroadcastReceived();
+        mCallingAppBroadcastReceiver.assertNoBroadcastReceived();
     }
 
     @Test(expected = SecurityException.class)

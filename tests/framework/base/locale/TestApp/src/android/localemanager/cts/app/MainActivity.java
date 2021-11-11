@@ -16,6 +16,8 @@
 
 package android.localemanager.cts.app;
 
+import static android.localemanager.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES;
+import static android.localemanager.cts.util.LocaleConstants.EXTRA_SET_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_CREATION_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_PACKAGE;
@@ -25,7 +27,6 @@ import android.app.Activity;
 import android.app.LocaleManager;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.localemanager.cts.util.LocaleConstants;
 import android.os.Bundle;
 import android.os.LocaleList;
 
@@ -48,7 +49,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra(LocaleConstants.EXTRA_QUERY_LOCALES)) {
+        if (intent != null && intent.hasExtra(EXTRA_QUERY_LOCALES)) {
             // This intent extra is sent by app for restarting the app.
             // Upon app restart, we want to check that the correct locales are received.
             // So fetch the locales and send them to the calling test for verification.
@@ -59,6 +60,12 @@ public class MainActivity extends Activity {
             // in current activity to the calling test.
             sendBroadcast(constructResultIntent(TEST_APP_CREATION_INFO_PROVIDER_ACTION,
                     TEST_APP_PACKAGE, locales));
+            finish();
+        } else if (intent != null && intent.hasExtra(EXTRA_SET_LOCALES)) {
+            // The invoking test directed us to set our application locales to the specified value
+            LocaleManager localeManager = getSystemService(LocaleManager.class);
+            localeManager.setApplicationLocales(LocaleList.forLanguageTags(
+                    intent.getStringExtra(EXTRA_SET_LOCALES)));
             finish();
         }
     }

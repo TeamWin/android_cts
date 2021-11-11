@@ -60,4 +60,7 @@ public final class LocaleConstants {
             + ".InstallerBroadcastReceiver";
 
     public static final String EXTRA_QUERY_LOCALES = "query_locales";
+
+    public static final String EXTRA_SET_LOCALES = "set_locales";
+
 }
