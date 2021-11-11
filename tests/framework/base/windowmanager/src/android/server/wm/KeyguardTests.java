@@ -443,6 +443,8 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     @Test
+    @Ignore("For the initial android 12, activity with turnScreenOn flag can unlock device if "
+            + "keyguard is insecure. Ignore this test regardless the OEM has resolved the issue")
     public void testTurnScreenOnActivityOnAod() {
         final AodSession aodSession = createManagedAodSession();
         assumeTrue(aodSession.isAodAvailable());
