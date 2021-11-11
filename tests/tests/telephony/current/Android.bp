@@ -59,6 +59,7 @@ android_test {
         "android.hardware.radio.modem-V1-java",
         "android.hardware.radio.sim-V1-java",
         "android.hardware.radio.network-V1-java",
+        "android.hardware.radio.data-V1-java",
     ],
     srcs: [
         "src/**/*.java",
