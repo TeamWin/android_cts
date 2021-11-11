@@ -22,7 +22,10 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -266,5 +269,11 @@ public class Utils {
             value = value >> 1;
         }
         return bits;
+    }
+
+    public static boolean isVirtualDevice() {
+        final String property = PropertyUtil.getProperty("ro.hardware.virtual_device");
+        Log.v(TAG, "virtual device property=" + property);
+        return Objects.equals(property, "1");
     }
 }
