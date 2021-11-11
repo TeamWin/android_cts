@@ -18,8 +18,6 @@ package com.android.compatibility.common.util;
 
 import android.util.Log;
 
-import com.android.compatibility.common.util.MultiLog;
-
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
@@ -39,7 +37,7 @@ import java.util.List;
  * Now Business Logics rules and actions can be called from the GCL by using the interface fully
  * qualified name.
  */
-public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase implements MultiLog {
+public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase {
 
     private static final String LOG_TAG = BusinessLogicTestCase.class.getSimpleName();
 
@@ -56,7 +54,8 @@ public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase i
                     "Test \"%s\" is unable to execute as it depends on the missing remote "
                     + "configuration.", mTestCase.getMethodName()), mCanReadBusinessLogic);
         } else if (!mCanReadBusinessLogic) {
-            logInfo(LOG_TAG, "Skipping Business Logic for %s", mTestCase.getMethodName());
+            Log.i(LOG_TAG, String.format(
+                    "Skipping Business Logic for %s", mTestCase.getMethodName()));
             return;
         }
 
@@ -69,30 +68,5 @@ public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase i
             mBusinessLogic.applyLogicFor(extraBusinessLogic, executor);
         }
         executeBusinessLogic();
-    }
-
-    // copied from MultiLogDevice because pi can't desugar the default methods
-    /** {@inheritDoc} */
-    @Override
-    public void logInfo(String logTag, String format, Object... args) {
-        Log.i(logTag, String.format(format, args));
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void logDebug(String logTag, String format, Object... args) {
-        Log.d(logTag, String.format(format, args));
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void logWarn(String logTag, String format, Object... args) {
-        Log.w(logTag, String.format(format, args));
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void logError(String logTag, String format, Object... args) {
-        Log.e(logTag, String.format(format, args));
     }
 }
