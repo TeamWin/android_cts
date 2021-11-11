@@ -72,6 +72,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             "IGNORE_FULL_BACKUP_CONTENT_IN_D2D",
             "NEVER_SANDBOX_DISPLAY_APIS",
             "OVERRIDE_MIN_ASPECT_RATIO",
+            "OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY",
             "OVERRIDE_MIN_ASPECT_RATIO_LARGE",
             "OVERRIDE_MIN_ASPECT_RATIO_MEDIUM"
     );
