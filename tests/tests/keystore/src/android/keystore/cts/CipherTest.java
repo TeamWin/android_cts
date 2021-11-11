@@ -298,6 +298,7 @@ public class CipherTest extends AndroidTestCase {
         public void performDeviceUnlock() throws Exception {
             mLockCredential.gotoKeyguard();
             UiDeviceUtils.pressUnlockButton();
+            SystemClock.sleep(200);
             mLockCredential.enterAndConfirmLockCredential();
             launchHomeActivity();
             KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(
