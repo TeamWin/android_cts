@@ -379,6 +379,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public void sendDeviceToSleep() throws Exception {
         ITestDevice device = getDevice();
+        WakeLockHelper.acquirePartialWakeLock(device);
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
         TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
     }
@@ -387,6 +388,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
         TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        WakeLockHelper.releasePartialWakeLock(device);
     }
 
     public void checkStandbyAndWakeUp() throws Exception {

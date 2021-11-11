@@ -66,6 +66,17 @@ public final class LogHelper {
         assertThat(testString).isIn(expectedOutputs);
     }
 
+    /** Skip the test if the expectedOutput was not found in the device logs. */
+    public static void assumeLog(ITestDevice device, String tag, String expectedOutput)
+            throws Exception {
+        String testString = getLog(device, tag);
+        assumeTrue(
+                "Skip the test since "
+                        + expectedOutput
+                        + " message is not found in the device logs.",
+                testString.contains(expectedOutput));
+    }
+
     /** This method will return the DUT volume. */
     public static int parseDutVolume(ITestDevice device, String tag) throws Exception {
         String testString = getLog(device, tag);
