@@ -16,9 +16,9 @@
 
 package com.android.bedstead.nene.users;
 
-import static android.app.ActivityManager.STOP_BG_USERS_ON_SWITCH_DEFAULT;
-import static android.app.ActivityManager.STOP_BG_USERS_ON_SWITCH_FALSE;
-import static android.app.ActivityManager.STOP_BG_USERS_ON_SWITCH_TRUE;
+import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
+import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
+import static android.app.ActivityManager.STOP_USER_ON_SWITCH_TRUE;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.SYSTEM_USER;
@@ -491,7 +491,7 @@ public class UsersTest {
     @RequireHeadlessSystemUserMode
     public void switch_hasSetStopBgUsersOnSwitch_stopsUser() throws Exception {
         try {
-            TestApis.users().setStopBgUsersOnSwitch(STOP_BG_USERS_ON_SWITCH_TRUE);
+            TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_TRUE);
             TestApis.users().system().switchTo();
 
             Poll.forValue("Secondary user running",
@@ -503,7 +503,7 @@ public class UsersTest {
             assertThat(sDeviceState.secondaryUser().isRunning()).isFalse();
         } finally {
             sDeviceState.secondaryUser().start();
-            TestApis.users().setStopBgUsersOnSwitch(STOP_BG_USERS_ON_SWITCH_DEFAULT);
+            TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_DEFAULT);
         }
     }
 
@@ -511,12 +511,12 @@ public class UsersTest {
     @RequireRunOnSecondaryUser
     public void switch_hasSetStopBgUsersOnSwitchFalse_doesNotStopUser() {
         try {
-            TestApis.users().setStopBgUsersOnSwitch(STOP_BG_USERS_ON_SWITCH_FALSE);
+            TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_FALSE);
             TestApis.users().system().switchTo();
 
             assertThat(sDeviceState.secondaryUser().isRunning()).isTrue();
         } finally {
-            TestApis.users().setStopBgUsersOnSwitch(STOP_BG_USERS_ON_SWITCH_DEFAULT);
+            TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_DEFAULT);
             sDeviceState.secondaryUser().start();
             sDeviceState.secondaryUser().switchTo();
         }
