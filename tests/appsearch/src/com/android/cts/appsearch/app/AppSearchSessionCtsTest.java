@@ -17,12 +17,11 @@ package android.app.appsearch.cts.app;
 
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
-
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

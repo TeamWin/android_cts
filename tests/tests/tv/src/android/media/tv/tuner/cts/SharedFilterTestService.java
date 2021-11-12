@@ -20,18 +20,14 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.MediaPlayer;
 import android.media.tv.tuner.Tuner;
-import android.media.tv.tuner.Tuner.Result;
+import android.media.tv.tuner.cts.ISharedFilterTestServer;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
-import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
-import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
 import android.media.tv.tuner.filter.Settings;
 import android.media.tv.tuner.filter.SharedFilter;
 import android.media.tv.tuner.filter.SharedFilterCallback;
-import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.os.IBinder;
 import android.util.Log;
@@ -40,34 +36,28 @@ import java.util.concurrent.Executor;
 
 public class SharedFilterTestService extends Service {
     private static final String TAG = "SharedFilterTestService";
-    private Context mContext;
-    private Tuner mTuner;
-    private Filter mFilter;
-    private String mSharedFilterToken;
-    private boolean mTuning;
-
-    @Override
-    public void onCreate() {
-        mContext = this;
-        mTuner = new Tuner(mContext, null, 100);
-    }
-
-    @Override
-    public void onDestroy() {
-        mTuner.close();
-        mTuner = null;
-        super.onDestroy();
-    }
+    private Context mContext = null;
+    private Tuner mTuner = null;
+    private Filter mFilter = null;
+    private boolean mTuning = false;
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        mContext = this;
+        mTuner = new Tuner(mContext, null, 100);
+        return new SharedFilterTestServer();
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        final String command = intent.getStringExtra("CMD");
-        if (command.equals("start")) {
+    public boolean onUnbind(Intent intent) {
+        mTuner.close();
+        mTuner = null;
+        return false;
+    }
+
+    private class SharedFilterTestServer extends ISharedFilterTestServer.Stub {
+        @Override
+        public String createSharedFilter() {
             mFilter = TunerTest.createFilterForSharedFilterTest(
                     mTuner, getExecutor(), getFilterCallback());
 
@@ -76,44 +66,58 @@ public class SharedFilterTestService extends Service {
             mTuner.tune(TunerTest.createFrontendSettings(infos.get(0)));
             mTuning = true;
 
-            mSharedFilterToken = mFilter.createSharedFilter();
-
-            Intent tokenIntent = new Intent();
-            tokenIntent.setAction("android.media.tv.tuner.cts.SHARED_FILTER_TOKEN");
-            tokenIntent.putExtra("TOKEN", mSharedFilterToken);
-            sendBroadcast(tokenIntent);
-        } else if (command.equals("close")) {
-            if (mTuning) {
-                mTuner.cancelTuning();
-                mTuning = false;
-            }
-            if (mFilter != null) {
-                mFilter.close();
-            }
-            mFilter = null;
-        } else if (command.equals("release")) {
-            if (mTuning) {
-                mTuner.cancelTuning();
-                mTuning = false;
-            }
-            if (mFilter != null && mSharedFilterToken != null) {
-                mFilter.releaseSharedFilter(mSharedFilterToken);
-            }
-        } else if (command.equals("share")) {
-            final String token = intent.getStringExtra("TOKEN");
-            SharedFilter filter = Tuner.openSharedFilter(
-                    mContext, token, getExecutor(), getSharedFilterCallback());
-            filter.start();
-            filter.flush();
-            filter.read(new byte[3], 0, 3);
-            filter.stop();
-            filter.close();
-            filter = null;
-            Intent closedIntent = new Intent();
-            closedIntent.setAction("android.media.tv.tuner.cts.SHARED_FILTER_CLOSED");
-            sendBroadcast(closedIntent);
+            return mFilter.createSharedFilter();
         }
-        return Service.START_NOT_STICKY;
+
+        @Override
+        public void closeFilter() {
+            if (mTuning) {
+                mTuner.cancelTuning();
+                mTuning = false;
+            }
+            mFilter.close();
+            mFilter = null;
+        }
+
+        @Override
+        public void releaseSharedFilter(String token) {
+            if (mTuning) {
+                mTuner.cancelTuning();
+                mTuning = false;
+            }
+            mFilter.releaseSharedFilter(token);
+        }
+
+        @Override
+        public boolean verifySharedFilter(String token) {
+            SharedFilter f = Tuner.openSharedFilter(
+                    mContext, token, getExecutor(), getSharedFilterCallback());
+            if (f == null) {
+                Log.e(TAG, "SharedFilter is null");
+                return false;
+            }
+            if (f.start() != Tuner.RESULT_SUCCESS) {
+                f = null;
+                Log.e(TAG, "Failed to start SharedFilter");
+                return false;
+            }
+            if (f.flush() != Tuner.RESULT_SUCCESS) {
+                f.close();
+                f = null;
+                Log.e(TAG, "Failed to flush SharedFilter");
+                return false;
+            }
+            f.read(new byte[3], 0, 3);
+            if (f.stop() != Tuner.RESULT_SUCCESS) {
+                f.close();
+                f = null;
+                Log.e(TAG, "Failed to stop SharedFilter");
+                return false;
+            }
+            f.close();
+            f = null;
+            return true;
+        }
     }
 
     private FilterCallback getFilterCallback() {

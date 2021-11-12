@@ -21,12 +21,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.expectThrows;
 
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.content.Context;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

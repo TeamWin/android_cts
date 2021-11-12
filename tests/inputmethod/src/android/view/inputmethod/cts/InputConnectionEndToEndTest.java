@@ -52,6 +52,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.SurroundingText;
+import android.view.inputmethod.TextAttribute;
 import android.view.inputmethod.TextSnapshot;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.MockTestActivityUtil;
@@ -78,6 +79,7 @@ import com.google.common.truth.Correspondence;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -1965,6 +1967,110 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Test {@link InputConnection#commitText(CharSequence, int, TextAttribute)} works as expected.
+     */
+    @Test
+    public void testCommitTextWithTextAttribute() throws Exception {
+        final Annotation expectedSpan = new Annotation("expectedKey", "expectedValue");
+        final CharSequence expectedText = createTestCharSequence("expectedText", expectedSpan);
+        final int expectedNewCursorPosition = 123;
+        final ArrayList<String> expectedSuggestions = new ArrayList<>();
+        expectedSuggestions.add("test");
+        final TextAttribute expectedTextAttribute = new TextAttribute.TextAttributeBuilder()
+                .setTextConversionSuggestions(expectedSuggestions).build();
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitText(
+                    CharSequence text, int newCursorPosition, TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callCommitText(
+                    expectedText, expectedNewCursorPosition, expectedTextAttribute);
+            assertTrue("commitText() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
+                assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
+                final TextAttribute textAttribute = args.getParcelable("textAttribute");
+                assertThat(textAttribute).isNotNull();
+                assertThat(textAttribute.getTextConversionSuggestions())
+                        .containsExactlyElementsIn(expectedSuggestions);
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#commitText(CharSequence, int, TextAttribute)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testCommitTextAfterUnbindInputWithTextAttribute() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean commitText(
+                    CharSequence text, int newCursorPosition, TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now IC#getTextAfterCursor() for the memorized IC should fail fast.
+            final ImeEvent result = expectCommand(stream,
+                    session.callCommitText("text", 1,
+                            new TextAttribute.TextAttributeBuilder().setTextConversionSuggestions(
+                                    Collections.singletonList("test")).build()),
+                    TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#commitText() still returns true even after unbindInput().",
+                    result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#commitText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
      * Test {@link InputConnection#setComposingText(CharSequence, int)} works as expected.
      */
     @Test
@@ -2039,6 +2145,111 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
             // Now this API call on the memorized IC should fail fast.
             final ImeCommand command = session.callSetComposingText("text", 1);
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#setComposingText() still returns true even after "
+                    + "unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setComposingText() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingText(CharSequence, int, TextAttribute)}
+     * works as expected.
+     */
+    @Test
+    public void testSetComposingTextWithTextAttribute() throws Exception {
+        final Annotation expectedSpan = new Annotation("expectedKey", "expectedValue");
+        final CharSequence expectedText = createTestCharSequence("expectedText", expectedSpan);
+        final int expectedNewCursorPosition = 123;
+        final ArrayList<String> expectedSuggestions = new ArrayList<>();
+        expectedSuggestions.add("test");
+        final TextAttribute expectedTextAttribute = new TextAttribute.TextAttributeBuilder()
+                .setTextConversionSuggestions(expectedSuggestions).build();
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition,
+                    TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetComposingText(
+                    expectedText, expectedNewCursorPosition, expectedTextAttribute);
+            assertTrue("testSetComposingTextWithTextAttribute() always returns true unless"
+                            + " RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEqualsForTestCharSequence(expectedText, args.getCharSequence("text"));
+                assertEquals(expectedNewCursorPosition, args.getInt("newCursorPosition"));
+                final TextAttribute textAttribute = args.getParcelable("textAttribute");
+                assertThat(textAttribute).isNotNull();
+                assertThat(textAttribute.getTextConversionSuggestions())
+                        .containsExactlyElementsIn(expectedSuggestions);
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingText(CharSequence, int, TextAttribute)} fails fast
+     * once {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSetComposingTextAfterUnbindInputWithTextAttribute() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition,
+                    TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putCharSequence("text", text);
+                    args.putInt("newCursorPosition", newCursorPosition);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSetComposingText(
+                    "text", 1, new TextAttribute.TextAttributeBuilder()
+                            .setTextConversionSuggestions(Collections.singletonList("test"))
+                            .build());
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
             assertTrue("Currently IC#setComposingText() still returns true even after "
@@ -2150,6 +2361,106 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
             assertTrue("IC#setComposingRegion() returns true even when the target app does not"
                     + " implement it.", result.getReturnBooleanValue());
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingRegion} works as expected.
+     */
+    @Test
+    public void testSetComposingRegionWithTextAttribute() throws Exception {
+        final int expectedStart = 3;
+        final int expectedEnd = 17;
+        final ArrayList<String> expectedSuggestions = new ArrayList<>();
+        expectedSuggestions.add("test");
+        final TextAttribute expectedTextAttribute = new TextAttribute.TextAttributeBuilder()
+                .setTextConversionSuggestions(expectedSuggestions).build();
+        // Intentionally let the app return "false" to confirm that IME still receives "true".
+        final boolean returnedResult = false;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingRegion(
+                    int start, int end, TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            final ImeCommand command = session.callSetComposingRegion(
+                    expectedStart, expectedEnd, expectedTextAttribute);
+            assertTrue("setComposingRegion() always returns true unless RemoteException is thrown",
+                    expectCommand(stream, command, TIMEOUT).getReturnBooleanValue());
+            methodCallVerifier.expectCalledOnce(args -> {
+                assertEquals(expectedStart, args.getInt("start"));
+                assertEquals(expectedEnd, args.getInt("end"));
+                final TextAttribute textAttribute = args.getParcelable("textAttribute");
+                assertThat(textAttribute).isNotNull();
+                assertThat(textAttribute.getTextConversionSuggestions())
+                        .containsExactlyElementsIn(expectedSuggestions);
+            }, TIMEOUT);
+        });
+    }
+
+    /**
+     * Test {@link InputConnection#setComposingRegion(int, int, TextAttribute)} fails fast once
+     * {@link android.view.inputmethod.InputMethod#unbindInput()} is issued.
+     */
+    @Test
+    public void testSetComposingRegionTextAfterUnbindInputWithTextAttribute() throws Exception {
+        final boolean returnedResult = true;
+
+        final MethodCallVerifier methodCallVerifier = new MethodCallVerifier();
+
+        final class Wrapper extends InputConnectionWrapper {
+            private Wrapper(InputConnection target) {
+                super(target, false);
+            }
+
+            @Override
+            public boolean setComposingRegion(int start, int end, TextAttribute textAttribute) {
+                methodCallVerifier.onMethodCalled(args -> {
+                    args.putInt("start", start);
+                    args.putInt("end", end);
+                    args.putParcelable("textAttribute", textAttribute);
+                });
+                return returnedResult;
+            }
+        }
+
+        testInputConnection(Wrapper::new, (MockImeSession session, ImeEventStream stream) -> {
+            // Memorize the current InputConnection.
+            expectCommand(stream, session.memorizeCurrentInputConnection(), TIMEOUT);
+
+            // Let unbindInput happen.
+            triggerUnbindInput();
+            expectEvent(stream, event -> "unbindInput".equals(event.getEventName()), TIMEOUT);
+
+            // Now this API call on the memorized IC should fail fast.
+            final ImeCommand command = session.callSetComposingRegion(1, 23,
+                    new TextAttribute.TextAttributeBuilder().setTextConversionSuggestions(
+                            Collections.singletonList("test")).build());
+            final ImeEvent result = expectCommand(stream, command, TIMEOUT);
+            // CAVEAT: this behavior is a bit questionable and may change in a future version.
+            assertTrue("Currently IC#setComposingRegion() still returns true even after"
+                    + " unbindInput().", result.getReturnBooleanValue());
+            expectElapseTimeLessThan(result, IMMEDIATE_TIMEOUT_NANO);
+
+            // Make sure that the app does not receive the call (for a while).
+            methodCallVerifier.expectNotCalled(
+                    "Once unbindInput() happened, IC#setComposingRegion() fails fast.",
+                    EXPECTED_NOT_CALLED_TIMEOUT);
         });
     }
 

@@ -64,6 +64,7 @@ import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.TextAttribute;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
@@ -238,27 +239,53 @@ public final class MockIme extends InputMethodService {
                         return getMemorizedOrCurrentInputConnection()
                                 .deleteSurroundingTextInCodePoints(beforeLength, afterLength);
                     }
-                    case "setComposingText": {
+                    case "setComposingText(CharSequence,int)": {
                         final CharSequence text = command.getExtras().getCharSequence("text");
                         final int newCursorPosition =
                                 command.getExtras().getInt("newCursorPosition");
                         return getMemorizedOrCurrentInputConnection().setComposingText(
                                 text, newCursorPosition);
                     }
-                    case "setComposingRegion": {
+                    case "setComposingText(CharSequence,int,TextAttribute)": {
+                        final CharSequence text = command.getExtras().getCharSequence("text");
+                        final int newCursorPosition =
+                                command.getExtras().getInt("newCursorPosition");
+                        final TextAttribute textAttribute =
+                                command.getExtras().getParcelable("textAttribute");
+                        return getMemorizedOrCurrentInputConnection()
+                                .setComposingText(text, newCursorPosition, textAttribute);
+                    }
+                    case "setComposingRegion(int,int)": {
                         final int start = command.getExtras().getInt("start");
                         final int end = command.getExtras().getInt("end");
                         return getMemorizedOrCurrentInputConnection().setComposingRegion(start,
                                 end);
                     }
+                    case "setComposingRegion(int,int,TextAttribute)": {
+                        final int start = command.getExtras().getInt("start");
+                        final int end = command.getExtras().getInt("end");
+                        final TextAttribute textAttribute =
+                                command.getExtras().getParcelable("textAttribute");
+                        return getMemorizedOrCurrentInputConnection()
+                                .setComposingRegion(start, end, textAttribute);
+                    }
                     case "finishComposingText":
                         return getMemorizedOrCurrentInputConnection().finishComposingText();
-                    case "commitText": {
+                    case "commitText(CharSequence,int)": {
                         final CharSequence text = command.getExtras().getCharSequence("text");
                         final int newCursorPosition =
                                 command.getExtras().getInt("newCursorPosition");
                         return getMemorizedOrCurrentInputConnection().commitText(text,
                                 newCursorPosition);
+                    }
+                    case "commitText(CharSequence,int,TextAttribute)": {
+                        final CharSequence text = command.getExtras().getCharSequence("text");
+                        final int newCursorPosition =
+                                command.getExtras().getInt("newCursorPosition");
+                        final TextAttribute textAttribute =
+                                command.getExtras().getParcelable("textAttribute");
+                        return getMemorizedOrCurrentInputConnection()
+                                .commitText(text, newCursorPosition, textAttribute);
                     }
                     case "commitCompletion": {
                         final CompletionInfo text = command.getExtras().getParcelable("text");

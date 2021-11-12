@@ -36,6 +36,7 @@ import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.Instrumentation.ActivityResult;
 import android.app.PendingIntent;
+import android.app.TaskInfo;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
@@ -196,19 +197,10 @@ public class ActivityManagerTest extends InstrumentationTestCase {
          * than the index of recent1_activity
          */
         recentTaskList = mActivityManager.getRecentTasks(maxNum, flags);
-        int indexRecentOne = -1;
-        int indexRecentTwo = -1;
-        int i = 0;
-        for (RecentTaskInfo rti : recentTaskList) {
-            if (rti.baseIntent.getComponent().getClassName().equals(
-                    ActivityManagerRecentOneActivity.class.getName())) {
-                indexRecentOne = i;
-            } else if (rti.baseIntent.getComponent().getClassName().equals(
-                    ActivityManagerRecentTwoActivity.class.getName())) {
-                indexRecentTwo = i;
-            }
-            i++;
-        }
+        int indexRecentOne = getTaskInfoIndex(recentTaskList,
+                ActivityManagerRecentOneActivity.class);
+        int indexRecentTwo = getTaskInfoIndex(recentTaskList,
+                ActivityManagerRecentTwoActivity.class);
         assertTrue(indexRecentOne != -1 && indexRecentTwo != -1);
         assertTrue(indexRecentTwo < indexRecentOne);
 
@@ -306,6 +298,18 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         mStartedActivityList.add(monitor.waitForActivity());
     }
 
+    private <T extends TaskInfo, S extends Activity> int getTaskInfoIndex(List<T> taskList,
+            Class<S> activityClass) {
+        int i = 0;
+        for (TaskInfo ti : taskList) {
+            if (ti.baseActivity.getClassName().equals(activityClass.getName())) {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
     public void testGetRunningTasks() {
         // Test illegal parameter
         List<RunningTaskInfo> runningTaskList;
@@ -321,30 +325,36 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         // start recent1_activity.
         startSubActivity(ActivityManagerRecentOneActivity.class);
-        // start recent2_activity
+
+        runningTaskList = mActivityManager.getRunningTasks(20);
+
+        // assert only recent1_activity exists and is visible.
+        int indexRecentOne = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentOneActivity.class);
+        int indexRecentTwo = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentTwoActivity.class);
+        assertTrue(indexRecentOne != -1 && indexRecentTwo == -1);
+        assertTrue(runningTaskList.get(indexRecentOne).isVisible());
+
+        // start recent2_activity.
         startSubActivity(ActivityManagerRecentTwoActivity.class);
 
         /*
          * assert both recent1_activity and recent2_activity exist in the
          * running tasks list. Moreover,the index of the recent2_activity is
-         * smaller than the index of recent1_activity
+         * smaller than the index of recent1_activity.
          */
         runningTaskList = mActivityManager.getRunningTasks(20);
-        int indexRecentOne = -1;
-        int indexRecentTwo = -1;
-        int i = 0;
-        for (RunningTaskInfo rti : runningTaskList) {
-            if (rti.baseActivity.getClassName().equals(
-                    ActivityManagerRecentOneActivity.class.getName())) {
-                indexRecentOne = i;
-            } else if (rti.baseActivity.getClassName().equals(
-                    ActivityManagerRecentTwoActivity.class.getName())) {
-                indexRecentTwo = i;
-            }
-            i++;
-        }
+        indexRecentOne = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentOneActivity.class);
+        indexRecentTwo = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentTwoActivity.class);
         assertTrue(indexRecentOne != -1 && indexRecentTwo != -1);
         assertTrue(indexRecentTwo < indexRecentOne);
+
+        // assert only recent2_activity is visible.
+        assertFalse(runningTaskList.get(indexRecentOne).isVisible());
+        assertTrue(runningTaskList.get(indexRecentTwo).isVisible());
     }
 
     public void testGetRunningServices() throws Exception {
