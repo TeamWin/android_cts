@@ -507,20 +507,20 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     R.string.device_owner_disallow_user_switch,
                     R.string.device_owner_disallow_user_switch_info,
                     new ButtonInfo[]{
-                            new ButtonInfo(
-                                    R.string.device_owner_disallow_user_switch_create_user,
+                            new ButtonInfo(R.string.device_owner_disallow_user_switch_create_user,
                                     createCreateManagedUserWithoutSetupIntent()),
-                            new ButtonInfo(
-                                    R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_USER_SWITCH, true)),
-                            new ButtonInfo(
-                                    R.string.device_owner_settings_go,
+                            new ButtonInfo(R.string.device_owner_user_restriction_set,
+                                    CommandReceiverActivity
+                                            .createSetDeviceOwnerUserRestrictionIntent(
+                                                    UserManager.DISALLOW_USER_SWITCH,
+                                                    /* enforced= */ true)),
+                            new ButtonInfo(R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_USER_SETTINGS)),
-                            new ButtonInfo(
-                                    R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_USER_SWITCH, false))
+                            new ButtonInfo(R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity
+                                            .createSetDeviceOwnerUserRestrictionIntent(
+                                                    UserManager.DISALLOW_USER_SWITCH,
+                                                    /* enforced= */ false))
             }));
 
             // DISALLOW_REMOVE_USER
