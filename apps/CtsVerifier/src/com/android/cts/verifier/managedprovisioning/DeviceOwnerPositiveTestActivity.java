@@ -18,6 +18,7 @@ package com.android.cts.verifier.managedprovisioning;
 
 import static android.os.UserHandle.myUserId;
 
+import static com.android.cts.verifier.managedprovisioning.CommandReceiverActivity.createIntentForDisablingKeyguardOrStatusBar;
 import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
 
 import android.app.Activity;
@@ -378,14 +379,15 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_disable_statusbar_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
-                                                    true)),
+                                            /* disabled= */ true)),
                             new ButtonInfo(
                                     R.string.device_owner_reenable_statusbar_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
-                                                    false))}));
+                                            /* disabled= */ false))
+                    }));
         }
 
         // setKeyguardDisabled
@@ -397,14 +399,15 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_disable_keyguard_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                                    true)),
+                                            /* disabled= */ true)),
                             new ButtonInfo(
                                     R.string.device_owner_reenable_keyguard_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                                    false))}));
+                                            /* disabled= */ false))
+                    }));
         }
 
         // setLockTaskFeatures
@@ -634,12 +637,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_REMOVE_DEVICE_OWNER);
-    }
-
-    private Intent createDeviceOwnerIntentWithBooleanParameter(String command, boolean value) {
-        return new Intent(this, CommandReceiverActivity.class)
-                .putExtra(CommandReceiverActivity.EXTRA_COMMAND, command)
-                .putExtra(CommandReceiverActivity.EXTRA_ENFORCED, value);
     }
 
     private Intent createSetUserIconIntent(int iconRes) {
