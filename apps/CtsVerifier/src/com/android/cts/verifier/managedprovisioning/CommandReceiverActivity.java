@@ -703,6 +703,8 @@ public class CommandReceiverActivity extends Activity {
 
     private static Intent createSetUserRestrictionIntent(String restriction, boolean enforced,
             boolean forceCurrentUserDpm) {
+        Log.d(TAG, "createSetUserRestrictionIntent(): restriction=" + restriction
+                + ", enforced=" + enforced + ", forceCurrentUserDpm=" + forceCurrentUserDpm);
         Intent intent = new Intent(ACTION_EXECUTE_COMMAND);
         if (forceCurrentUserDpm) {
             intent.putExtra(EXTRA_USE_CURRENT_USER_DPM, true);
