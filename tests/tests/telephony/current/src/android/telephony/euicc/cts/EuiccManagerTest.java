@@ -213,6 +213,37 @@ public class EuiccManagerTest {
     }
 
     @Test
+    public void testSwitchToSubscriptionWithCallback() {
+        // test disabled state only for now
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // set up CountDownLatch and callback
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        EuiccManager.ResultListener callback = new EuiccManager.ResultListener() {
+            @Override
+            public void onComplete(int resultCode, Intent resultIntent) {
+                // verify correct result code is received
+                assertEquals(
+                        EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, resultCode);
+                countDownLatch.countDown();
+            }
+        };
+
+        // call switchToSubscription
+        mEuiccManager.switchToSubscription(4, TelephonyManager.DEFAULT_PORT_INDEX,
+                getContext().getMainExecutor(), callback);
+
+        // wait for callback
+        try {
+            countDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+    }
+
+    @Test
     public void testEraseSubscriptions() {
         // test disabled state only for now
         if (mEuiccManager.isEnabled()) {
