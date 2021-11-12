@@ -251,13 +251,17 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             );
             ImmutableSet<String> overlapBurndownList;
             if (hasFeature(FEATURE_AUTOMOTIVE)) {
-                overlapBurndownList = ImmutableSet.<String>builder()
-                        .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
-                        .addAll(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST).build();
+                final Set<String> allDuplicatedFiles = Sets.union(
+                      BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST,
+                      AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST
+                );
+                overlapBurndownList = ImmutableSet.copyOf(allDuplicatedFiles);
             } else if (hasFeature(FEATURE_WEARABLE)) {
-                overlapBurndownList = ImmutableSet.<String>builder()
-                        .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
-                        .addAll(WEAR_HIDL_OVERLAP_BURNDOWN_LIST).build();
+                final Set<String> allDuplicatedFiles = Sets.union(
+                      BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST,
+                      WEAR_HIDL_OVERLAP_BURNDOWN_LIST
+                );
+                overlapBurndownList = ImmutableSet.copyOf(allDuplicatedFiles);
             } else {
                 overlapBurndownList = ImmutableSet.copyOf(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
             }
