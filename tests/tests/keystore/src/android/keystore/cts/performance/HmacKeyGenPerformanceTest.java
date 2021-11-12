@@ -18,12 +18,17 @@ package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class HmacKeyGenPerformanceTest extends PerformanceTestBase {
 
     final int[] SUPPORTED_KEY_SIZES = {64, 128, 256, 512};
 
+    @Test
     public void testHmacKeyGen() throws Exception {
         for (int keySize : SUPPORTED_KEY_SIZES) {
             measure(

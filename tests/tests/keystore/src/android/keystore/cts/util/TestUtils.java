@@ -16,6 +16,11 @@
 
 package android.keystore.cts.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
@@ -78,7 +83,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
-abstract public class TestUtils extends Assert {
+public class TestUtils {
 
     public static final String EXPECTED_CRYPTO_OP_PROVIDER_NAME = "AndroidKeyStoreBCWorkaround";
     public static final String EXPECTED_PROVIDER_NAME = "AndroidKeyStore";
