@@ -310,6 +310,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 }
                 numBytes += bytesRead;
             }
+            // The audio data will be zero on virtual device, so it would be better to skip to
+            // check the audio data.
+            if (Utils.isVirtualDevice()) {
+                return true;
+            }
             for (byte b : buffer) {
                 // TODO: Maybe check that some portion of the bytes are non-zero.
                 if (b != 0) {
