@@ -80,7 +80,9 @@ public class UiAutomatorUtils {
                 final double deadZone = !(FeatureUtil.isWatch() || FeatureUtil.isTV())
                         ? 0.25 : DEFAULT_SWIPE_DEADZONE_PCT;
                 UiScrollable scrollable = new UiScrollable(new UiSelector().scrollable(true));
-                scrollable.setSwipeDeadZonePercentage(deadZone);
+                if (!FeatureUtil.isWatch() && !FeatureUtil.isTV()) {
+                    scrollable.setSwipeDeadZonePercentage(deadZone);
+                }
                 if (scrollable.exists()) {
                     if (!scrolledPastCollapsibleToolbar) {
                         scrollPastCollapsibleToolbar(scrollable, deadZone);
