@@ -211,9 +211,9 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testSingleTap_initiatesTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        mController.addListener(
+        mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
-                new BaseListener() {
+                new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
                         if (event.getActionMasked() == ACTION_DOWN) {
                             mController.requestTouchExploration();
@@ -230,9 +230,9 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testTwoFingerDrag_sendsTouchEvents() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        mController.addListener(
+        mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
-                new BaseListener() {
+                new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
                         if (event.getActionMasked() == ACTION_POINTER_DOWN) {
                             mController.requestDragging(event.getPointerId(0));
@@ -266,9 +266,9 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testTwoFingersMovingIndependently_shouldDelegate() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        mController.addListener(
+        mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
-                new BaseListener() {
+                new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
                         if (event.getActionMasked() == ACTION_POINTER_DOWN) {
                             mController.requestDelegating();
@@ -335,9 +335,9 @@ public class TouchInteractionControllerTest {
     public void testPerformLongClick_sendsMotionEvents() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         // First perform touch exploration.
-        mController.addListener(
+        mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
-                new BaseListener() {
+                new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
                         if (event.getActionMasked() == ACTION_DOWN) {
                             mController.requestTouchExploration();
@@ -353,10 +353,10 @@ public class TouchInteractionControllerTest {
                 TYPE_TOUCH_EXPLORATION_GESTURE_START,
                 TYPE_TOUCH_EXPLORATION_GESTURE_END,
                 TYPE_TOUCH_INTERACTION_END);
-        mController.removeAllListeners();
-        mController.addListener(
+        mController.unregisterAllCallbacks();
+        mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
-                new BaseListener() {
+                new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
                         if (event.getActionMasked() == ACTION_DOWN) {
                             mController.performLongClickAndStartDrag();
@@ -397,7 +397,7 @@ public class TouchInteractionControllerTest {
         await(dispatchGesture(mService, gesture));
     }
 
-    class BaseListener implements TouchInteractionController.Listener {
+    class BaseCallback implements TouchInteractionController.Callback {
 
         @Override
         public void onMotionEvent(MotionEvent event) {}
