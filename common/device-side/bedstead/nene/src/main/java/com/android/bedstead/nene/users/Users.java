@@ -450,7 +450,7 @@ public final class Users {
         Context context = TestApis.context().instrumentedContext();
         try (PermissionContext p = TestApis.permissions()
                 .withPermission(INTERACT_ACROSS_USERS_FULL)) {
-            context.getSystemService(ActivityManager.class).setStopBackgroundUsersOnSwitch(value);
+            context.getSystemService(ActivityManager.class).setStopUserOnSwitch(value);
         }
     }
 
