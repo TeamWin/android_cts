@@ -477,6 +477,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 characteristics.getMaxServiceSpecificInfoLength(), 255);
         assertEquals("Match Filter Length", characteristics.getMaxMatchFilterLength(), 255);
         assertNotEquals("Cipher suites", characteristics.getSupportedCipherSuites(), 0);
+        assertTrue("Max number of NDP", characteristics.getNumberOfSupportedDataPaths() > 0);
+        assertTrue("Max number of NDI", characteristics.getNumberOfSupportedDataInterfaces() > 0);
+        assertTrue("Max number of Publish sessions",
+                characteristics.getNumberOfSupportedPublishSessions() > 0);
+        assertTrue("Max number of Subscribe sessions",
+                characteristics.getNumberOfSupportedSubscribeSessions() > 0);
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             mWifiAwareManager.enableInstantCommunicationMode(true);
             assertEquals(mWifiAwareManager.isInstantCommunicationModeEnabled(),
