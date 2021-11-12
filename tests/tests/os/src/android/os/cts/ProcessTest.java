@@ -25,6 +25,11 @@ import android.os.Process;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+/**
+ * CTS for {@link android.os.Process}.
+ *
+ * We have more test in cts/tests/process/ too.
+ */
 public class ProcessTest extends AndroidTestCase {
 
     public static final int THREAD_PRIORITY_HIGHEST = -20;
