@@ -83,7 +83,7 @@ public final class FeatureUtil {
     /**
      * Checks whether the device is watch or automotive
      */
-    private static boolean isWatchOrAutomotive(Context context) {
+    public static boolean isWatchOrAutomotive(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
