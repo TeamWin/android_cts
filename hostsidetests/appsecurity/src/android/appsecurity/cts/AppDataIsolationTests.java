@@ -218,7 +218,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             // Setup screenlock
             getDevice().executeShellCommand("settings put global require_password_to_decrypt 0");
             getDevice().executeShellCommand("locksettings set-disabled false");
-            getDevice().executeShellCommand("locksettings set-pin 12345");
+            getDevice().executeShellCommand("locksettings set-pin 1234");
 
             // Give enough time for vold to update keys
             Thread.sleep(15000);
@@ -265,7 +265,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
                 try {
                     runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_UNLOCK_DEVICE);
                 } catch (Exception e) {}
-                getDevice().executeShellCommand("locksettings clear --old 12345");
+                getDevice().executeShellCommand("locksettings clear --old 1234");
                 getDevice().executeShellCommand("locksettings set-disabled true");
                 getDevice().executeShellCommand(
                         "settings delete global require_password_to_decrypt");
