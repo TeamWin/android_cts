@@ -61,6 +61,7 @@ android_test {
         "android.hardware.radio.network-V1-java",
         "android.hardware.radio.data-V1-java",
         "android.hardware.radio.messaging-V1-java",
+        "android.hardware.radio.voice-V1-java",
     ],
     srcs: [
         "src/**/*.java",
