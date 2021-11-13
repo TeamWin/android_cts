@@ -131,7 +131,7 @@ public abstract class BroadcastTestBase {
         mActivityDoneReceiver = new ActivityDoneReceiver();
         mContext.registerReceiver(mActivityDoneReceiver,
                 new IntentFilter(BroadcastUtils.BROADCAST_INTENT + testCaseType.toString()),
-                Context.RECEIVER_NOT_EXPORTED);
+                Context.RECEIVER_EXPORTED);
     }
 
     protected boolean startTestAndWaitForBroadcast(BroadcastUtils.TestcaseType testCaseType,

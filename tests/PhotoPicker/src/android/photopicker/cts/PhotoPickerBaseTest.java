@@ -16,9 +16,11 @@
 
 package android.photopicker.cts;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
@@ -39,6 +41,9 @@ public class PhotoPickerBaseTest {
     @Before
     public void setUp() throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
+
+        enablePhotoPickerFlag(inst);
+
         mContext = inst.getContext();
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -53,5 +58,15 @@ public class PhotoPickerBaseTest {
         inst.waitForIdleSync();
         mActivity.clearResult();
         mDevice.waitForIdle();
+    }
+
+    private void enablePhotoPickerFlag(Instrumentation inst) {
+        inst.getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.WRITE_DEVICE_CONFIG);
+        DeviceConfig.setProperty(
+                DeviceConfig.NAMESPACE_STORAGE_NATIVE_BOOT,
+                "picker_intent_enabled" /* name */,
+                "true" /* value */,
+                false /* makeDefault */);
     }
 }

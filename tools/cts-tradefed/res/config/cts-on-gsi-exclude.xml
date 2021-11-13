@@ -92,4 +92,7 @@
 
       <!-- b/199996926 - No UWB stack support in AOSP for Android S -->
     <option name="compatibility:exclude-filter" value="CtsUwbTestCases" />
+
+    <!-- b/183653612: CtsTransitionTestCases -->
+    <option name="compatibility:exclude-filter" value="CtsTransitionTestCases" />
 </configuration>
