@@ -48,6 +48,8 @@ public class TestMockModemService extends Service {
             "android.telephony.cts.iradiodata.mockmodem.service";
     public static final String IRADIOMESSAGING_MOCKMODEM_SERVICE_INTERFACE =
             "android.telephony.cts.iradiomessaging.mockmodem.service";
+    public static final String IRADIOVOICE_MOCKMODEM_SERVICE_INTERFACE =
+            "android.telephony.cts.iradiovoice.mockmodem.service";
 
     private static Context sContext;
     private static IRadioConfigImpl sIRadioConfigImpl;
@@ -56,6 +58,7 @@ public class TestMockModemService extends Service {
     private static IRadioNetworkImpl sIRadioNetworkImpl;
     private static IRadioDataImpl sIRadioDataImpl;
     private static IRadioMessagingImpl sIRadioMessagingImpl;
+    private static IRadioVoiceImpl sIRadioVoiceImpl;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
@@ -64,7 +67,7 @@ public class TestMockModemService extends Service {
     public static final int LATCH_MAX = 4;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
-    private static final int IRADIO_INTERFACE_NUMBER = 5; // TODO: 6
+    private static final int IRADIO_INTERFACE_NUMBER = 6;
     public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
     public static final int LATCH_MOCK_MODEM_INITIALIZATION_READY =
             LATCH_RADIO_INTERFACES_READY + 1;
@@ -108,6 +111,7 @@ public class TestMockModemService extends Service {
         sIRadioNetworkImpl = new IRadioNetworkImpl(this);
         sIRadioDataImpl = new IRadioDataImpl(this);
         sIRadioMessagingImpl = new IRadioMessagingImpl(this);
+        sIRadioVoiceImpl = new IRadioVoiceImpl(this);
 
         mBinder = new LocalBinder();
     }
@@ -132,6 +136,9 @@ public class TestMockModemService extends Service {
         } else if (IRADIOMESSAGING_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
             Log.i(TAG, "onBind-IRadioMessaging");
             return sIRadioMessagingImpl;
+        } else if (IRADIOVOICE_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioVoice");
+            return sIRadioVoiceImpl;
         }
 
         countDownLatch(LATCH_MOCK_MODEM_SERVICE_READY);
