@@ -28,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.RemoteViews;
+import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
@@ -367,6 +368,54 @@ public class RemoteViewsRecyclingTest {
     @Test
     public void recycleWhenViewIdDoesntMatchFailsInMultipleLayoutAsync() throws Throwable {
         recycleWhenViewIdDoesntMatchFailsInMultipleLayout(true /* async */);
+    }
+
+    private void recycleWhenViewIdDoesntMatchFailsInSimpleLayout(boolean async) throws Throwable {
+        RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle, 2);
+        applyRemoteViews(rv);
+
+        RemoteViews rv2 = createRemoteViews(R.layout.remoteviews_recycle, 3);
+        try {
+            reapplyRemoteViews(rv2, async);
+        } catch (RuntimeException ex) {
+            return; // success
+        } catch (Throwable t) {
+            fail("Excepted a RuntimeException, received " + t.toString());
+        }
+        fail("Excepted a RuntimeException, no exception received.");
+    }
+
+    @Test
+    public void recycleWhenViewIdDoesntMatchFailsInSimpleLayoutSync() throws Throwable {
+        recycleWhenViewIdDoesntMatchFailsInSimpleLayout(false /* async */);
+    }
+
+    @Test
+    public void recycleWhenViewIdDoesntMatchFailsInSimpleLayoutAsync() throws Throwable {
+        recycleWhenViewIdDoesntMatchFailsInSimpleLayout(true /* async */);
+    }
+
+    private void recycleWhenLayoutIdDoesntMatchSucceedsInSimpleLayout(boolean async)
+            throws Throwable {
+        RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle);
+        applyRemoteViews(rv);
+
+        RemoteViews rv2 = createRemoteViews(R.layout.remoteviews_textview);
+        rv2.setTextViewText(R.id.remoteViews_recycle_static, "New text");
+        reapplyRemoteViews(rv2, async);
+
+        TextView textView = mResult.findViewById(R.id.remoteViews_recycle_static);
+        assertEquals("New text", textView.getText());
+    }
+
+    @Test
+    public void recycleWhenLayoutIdDoesntMatchSucceedsInSimpleLayoutSync() throws Throwable {
+        recycleWhenLayoutIdDoesntMatchSucceedsInSimpleLayout(false);
+    }
+
+    @Test
+    public void recycleWhenLayoutIdDoesntMatchSucceedsInSimpleLayoutAsync() throws Throwable {
+        recycleWhenLayoutIdDoesntMatchSucceedsInSimpleLayout(true);
     }
 
     private void recycleWhenRemovingFromEndAndInsertInMiddleAtManyLevels(boolean async)

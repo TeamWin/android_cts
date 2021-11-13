@@ -27,6 +27,7 @@ import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -702,6 +703,8 @@ public class CommandReceiverActivity extends Activity {
 
     private static Intent createSetUserRestrictionIntent(String restriction, boolean enforced,
             boolean forceCurrentUserDpm) {
+        Log.d(TAG, "createSetUserRestrictionIntent(): restriction=" + restriction
+                + ", enforced=" + enforced + ", forceCurrentUserDpm=" + forceCurrentUserDpm);
         Intent intent = new Intent(ACTION_EXECUTE_COMMAND);
         if (forceCurrentUserDpm) {
             intent.putExtra(EXTRA_USE_CURRENT_USER_DPM, true);
@@ -760,5 +763,13 @@ public class CommandReceiverActivity extends Activity {
         }
 
         return resolveInfo.activityInfo.packageName;
+    }
+
+    static Intent createIntentForDisablingKeyguardOrStatusBar(Context context, String command,
+            boolean disabled) {
+        return new Intent(context, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true)
+                .putExtra(CommandReceiverActivity.EXTRA_COMMAND, command)
+                .putExtra(CommandReceiverActivity.EXTRA_ENFORCED, disabled);
     }
 }

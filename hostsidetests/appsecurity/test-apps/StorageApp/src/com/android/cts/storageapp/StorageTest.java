@@ -162,7 +162,7 @@ public class StorageTest extends InstrumentationTestCase {
         UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
         String storageString = "internal storage";
         try {
-            uiScrollable.scrollTextIntoView(storageString);
+            uiScrollable.scrollIntoView(new UiSelector().textContains(storageString));
         } catch (UiObjectNotFoundException e) {
             // Scrolling can fail if the UI is not scrollable
         }
