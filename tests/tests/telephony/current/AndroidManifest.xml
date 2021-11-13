@@ -170,6 +170,7 @@
                 <action android:name="android.telephony.cts.iradiosim.mockmodem.service"/>
                 <action android:name="android.telephony.cts.iradionetwork.mockmodem.service"/>
                 <action android:name="android.telephony.cts.iradiodata.mockmodem.service"/>
+                <action android:name="android.telephony.cts.iradiomessaging.mockmodem.service"/>
             </intent-filter>
         </service>
 
