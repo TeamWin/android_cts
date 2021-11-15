@@ -22,9 +22,12 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -35,7 +38,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
  * Test utilities.
  */
 /* package private */ class Utils {
-    private static final int sPc = Build.VERSION.MEDIA_PERFORMANCE_CLASS;
+    private static final int sPc;
 
     private static final String TAG = "PerformanceClassTestUtils";
 
@@ -52,6 +55,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
     public static final long MIN_MEMORY_PERF_CLASS_CANDIDATE_MB = 5 * 1024;
 
     static {
+        sPc = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) ? Build.VERSION.MEDIA_PERFORMANCE_CLASS
+                : SystemProperties.getInt("ro.odm.build.media_performance_class", 0);
         Log.d(TAG, "performance class is " + sPc);
 
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
