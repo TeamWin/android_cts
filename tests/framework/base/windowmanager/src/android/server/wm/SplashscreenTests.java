@@ -33,8 +33,10 @@ import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
+import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
+import static android.server.wm.app.Components.TestActivity.EXTRA_INTENTS;
 import static android.server.wm.app.Components.TestActivity.EXTRA_OPTION;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CENTER_VIEW_IS_SURFACE_VIEW;
@@ -137,6 +139,17 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         startActivityFromTestLauncher(homeActivity, componentName, fillExtra, null /* options */);
     }
 
+    private void startActivitiesFromTestLauncher(CommandSession.ActivitySession homeActivity,
+            Intent[] intents, ActivityOptions options) {
+
+        final Bundle data = new Bundle();
+        data.putParcelableArray(EXTRA_INTENTS, intents);
+        if (options != null) {
+            data.putParcelable(EXTRA_OPTION, options.toBundle());
+        }
+        homeActivity.sendCommand(COMMAND_START_ACTIVITIES, data);
+    }
+
     private void startActivityFromTestLauncher(CommandSession.ActivitySession homeActivity,
             ComponentName componentName, Consumer<Intent> fillExtra, ActivityOptions options) {
 
@@ -151,6 +164,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         }
         homeActivity.sendCommand(COMMAND_START_ACTIVITY, data);
     }
+
     @Test
     public void testSplashscreenContent() {
         // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
@@ -434,17 +448,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         });
         mWmState.computeState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
         mWmState.assertVisibility(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, true);
-        final TestJournalProvider.TestJournal journal =
-                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
-        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
-                () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
-        assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
-        final long iconAnimationStart = journal.extras.getLong(ICON_ANIMATION_START);
-        final long iconAnimationDuration = journal.extras.getLong(ICON_ANIMATION_DURATION);
-        assertTrue(iconAnimationStart != 0);
-        assertEquals(iconAnimationDuration, 500);
-        assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
-        assertTrue(journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
+
+        assertReplaceIcon(TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT));
     }
 
     @Test
@@ -544,6 +549,64 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
         assertHandleExit(TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT));
+    }
+
+    private void launchActivitiesFromLauncherWithOptions(Intent[] intents,
+            ActivityOptions options, ComponentName waitResumeComponent) {
+        assumeFalse(isLeanBack());
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        TestJournalProvider.TestJournalContainer.start();
+
+        startActivitiesFromTestLauncher(homeActivity, intents, options);
+
+        mWmState.waitForActivityState(waitResumeComponent, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+    }
+
+    @Test
+    public void testLaunchActivitiesWithIconOptions() throws Exception {
+        final ActivityOptions options = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_ICON);
+        final Intent[] intents = new Intent[] {
+                new Intent().setComponent(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                new Intent().setComponent(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY)
+                        .putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true)
+        };
+        launchActivitiesFromLauncherWithOptions(intents, options,
+                SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
+        assertReplaceIcon(TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT));
+    }
+
+    @Test
+    public void testLaunchActivitiesWithEmptyOptions() {
+        final ActivityOptions options = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
+
+        final Intent[] intents = new Intent[] {
+                new Intent().setComponent(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true),
+                new Intent().setComponent(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY)
+                        .putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true)
+        };
+        launchActivitiesFromLauncherWithOptions(intents, options,
+                SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
+        assertFalse(journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+    }
+
+    private void assertReplaceIcon(TestJournalProvider.TestJournal journal) throws Exception {
+        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
+                () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+        assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+        final long iconAnimationStart = journal.extras.getLong(ICON_ANIMATION_START);
+        final long iconAnimationDuration = journal.extras.getLong(ICON_ANIMATION_DURATION);
+        assertTrue(iconAnimationStart != 0);
+        assertEquals(iconAnimationDuration, 500);
+        assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+        assertTrue(journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
     }
 
     private void assertHandleExit(TestJournalProvider.TestJournal journal) throws Exception {

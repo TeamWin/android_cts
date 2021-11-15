@@ -110,10 +110,10 @@ public class TestActivity extends AbstractLifecycleLogActivity {
 
     @Override
     public void handleCommand(String command, Bundle data) {
+        final Bundle options = data.getParcelable(EXTRA_OPTION);
         switch (command) {
             case COMMAND_START_ACTIVITY:
                 final Intent startIntent = data.getParcelable(EXTRA_INTENT);
-                final Bundle options = data.getParcelable(EXTRA_OPTION);
                 try {
                     startActivity(startIntent, options);
                 } catch (Exception e) {
@@ -122,7 +122,7 @@ public class TestActivity extends AbstractLifecycleLogActivity {
                 break;
             case COMMAND_START_ACTIVITIES:
                 final Parcelable[] intents = data.getParcelableArray(EXTRA_INTENTS);
-                startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
+                startActivities(Arrays.copyOf(intents, intents.length, Intent[].class), options);
                 break;
             case COMMAND_NAVIGATE_UP_TO:
                 final Intent intent = data.getParcelable(EXTRA_INTENT);

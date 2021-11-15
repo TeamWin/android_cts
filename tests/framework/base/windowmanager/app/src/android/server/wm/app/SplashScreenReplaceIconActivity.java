@@ -31,7 +31,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.TestJournalProvider;
-import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.window.SplashScreen;

@@ -38,7 +38,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.server.wm.TestJournalProvider;
-import android.util.Log;
 import android.window.SplashScreen;
 
 public class HandleSplashScreenExitActivity extends Activity {
