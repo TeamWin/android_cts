@@ -18,6 +18,8 @@ package android.server.wm;
 
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE;
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.provider.DeviceConfig.NAMESPACE_CONSTRAIN_DISPLAY_APIS;
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -82,6 +84,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY =
             component(SupportsSizeChangesPortraitActivity.class);
 
+    // Device aspect ratio (both portrait and landscape orientations) for min aspect ratio tests
+    private static final float SIZE_COMPAT_DISPLAY_ASPECT_RATIO = 1.4f;
     // Fixed orientation min aspect ratio
     private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
     // The min aspect ratio of NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY (as defined in the manifest).
@@ -326,7 +330,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
     public void testOverrideMinAspectRatioMissingSpecificOverride() {
-        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
+        // Note that we're using getBounds() in portrait, rather than getAppBounds() like other
+        // tests, because we're comparing to the display size and therefore need to consider insets.
+        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
+                /* expected= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
+                /* useAppBoundsInPortrait= */false);
     }
 
     /**
@@ -336,7 +344,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioMissingGeneralOverride() {
-        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
+        // Note that we're using getBounds() in portrait, rather than getAppBounds() like other
+        // tests, because we're comparing to the display size and therefore need to consider insets.
+        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
+                /* expected= */ SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
+                /* useAppBoundsInPortrait= */false);
     }
 
     /**
@@ -545,18 +557,47 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     /**
-     * Launches the provided activity and verifies that its min aspect ratio is equal to {@code
-     * expected}.
+     * Launches the provided activity twice. The first time, the display is resized to a portrait
+     * aspect ratio. The second time, the display is resized to a landscape aspect ratio.
      *
      * @param activity the activity under test.
-     * @param expected the expected min aspect ratio in both portrait and landscape displays.
+     * @param expected the expected aspect ratio in both portrait and landscape displays.
      */
     private void runMinAspectRatioTest(ComponentName activity, float expected) {
+        runMinAspectRatioTest(activity, expected, /* useAppBoundsInPortrait= */ true);
+    }
+
+    /**
+     * Launches the provided activity twice. The first time, the display is resized to a portrait
+     * aspect ratio. The second time, the display is resized to a landscape aspect ratio.
+     *
+     * @param activity               the activity under test.
+     * @param expected               the expected aspect ratio in both a portrait and a landscape
+     *                               display.
+     * @param useAppBoundsInPortrait whether to use {@code activity#getAppBounds} rather than
+     *                               {@code activity.getBounds} in portrait display.
+     */
+    private void runMinAspectRatioTest(ComponentName activity, float expected,
+            boolean useAppBoundsInPortrait) {
+        // Change the aspect ratio of the display to something that is smaller than all the aspect
+        // ratios used throughout those tests but still portrait. This ensures we're using
+        // enforcing aspect ratio behaviour within orientation.
+        // NOTE: using a smaller aspect ratio (e.g., 1.2) might cause activities to have a landscape
+        // window because of insets.
+        mDisplayMetricsSession.changeAspectRatio(SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
+                ORIENTATION_PORTRAIT);
         launchActivity(activity);
-        WindowManagerState.Activity activityContainer = mWmState.getActivity(activity);
-        assertNotNull(activityContainer);
         assertEquals(expected,
-                activityContainer.getMinAspectRatio(),
+                getActivityAspectRatio(activity, /* useAppBounds= */ useAppBoundsInPortrait),
+                FLOAT_EQUALITY_DELTA);
+
+        // Change the orientation of the display to landscape. In this case we should see
+        // fixed orientation letterboxing and the aspect ratio should be applied there.
+        mDisplayMetricsSession.changeAspectRatio(SIZE_COMPAT_DISPLAY_ASPECT_RATIO,
+                ORIENTATION_LANDSCAPE);
+        launchActivity(activity);
+        assertEquals(expected,
+                getActivityAspectRatio(activity, /* useAppBounds= */ true),
                 FLOAT_EQUALITY_DELTA);
     }
 
@@ -595,6 +636,15 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             WindowManagerState.ActivityTask task = wmState.getTaskByActivity(activityName);
             return task != null && !task.getBounds().equals(priorTaskBounds);
         }, "checking task bounds updated");
+    }
+
+    private float getActivityAspectRatio(ComponentName componentName, boolean useAppBounds) {
+        WindowManagerState.Activity activity = mWmState.getActivity(componentName);
+        assertNotNull(activity);
+        Rect bounds = useAppBounds ? activity.getAppBounds() : activity.getBounds();
+        assertNotNull(bounds);
+        return Math.max(bounds.height(), bounds.width())
+                / (float) (Math.min(bounds.height(), bounds.width()));
     }
 
     private float getInitialDisplayAspectRatio() {
