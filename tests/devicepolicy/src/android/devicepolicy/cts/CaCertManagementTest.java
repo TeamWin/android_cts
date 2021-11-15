@@ -36,7 +36,6 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.FakeKeys;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,6 +53,9 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+// These tests rely on the line "android:networkSecurityConfig="@xml/network_security_config"" in
+// the <application> element in the manifest.
+// TODO(b/205261115): Use a testapp and query for it rather than relying on the Manifest content
 @RunWith(BedsteadJUnit4.class)
 public class CaCertManagementTest {
     @ClassRule
@@ -65,15 +67,14 @@ public class CaCertManagementTest {
 
     @Test
     @CanSetPolicyTest(policy = CaCertManagement.class)
-    public void testGetInstalledCaCerts_doesNotReturnNull() throws Exception {
+    public void getInstalledCaCerts_doesNotReturnNull() throws Exception {
         assertThat(sDeviceState.dpc().devicePolicyManager().getInstalledCaCerts(
                 DPC_COMPONENT_NAME)).isNotNull();
     }
 
     @Test
-    @Ignore("b/198641824): Fix failing check X509TrustManager#getTrustedIssuers")
     @PositivePolicyTest(policy = CaCertManagement.class)
-    public void testInstallCaCert_installsCaCert() throws Exception {
+    public void installCaCert_caCertIsInstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
@@ -82,7 +83,7 @@ public class CaCertManagementTest {
                     DPC_COMPONENT_NAME, CA_CERT_1);
 
             assertThat(result).isTrue();
-            assertCaCertInstalled(CA_CERT_1);
+            assertCaCertInstalledForTheDpcAndLocally(CA_CERT_1);
         } finally {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
         }
@@ -90,14 +91,13 @@ public class CaCertManagementTest {
 
     @Test
     @PositivePolicyTest(policy = CaCertManagement.class)
-    public void testInstallCaCert_logsEvent() throws Exception {
+    public void installCaCert_logsEvent() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
-            try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
 
-                remoteDpm.installCaCert(
-                        DPC_COMPONENT_NAME, CA_CERT_1);
+            try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
+                remoteDpm.installCaCert(DPC_COMPONENT_NAME, CA_CERT_1);
 
                 assertThat(metrics.query()
                         .whereType().isEqualTo(EventId.INSTALL_CA_CERT_VALUE)
@@ -112,7 +112,7 @@ public class CaCertManagementTest {
 
     @Test
     @PositivePolicyTest(policy = CaCertManagement.class)
-    public void testUninstallCaCert_uninstallsCaCert() throws Exception {
+    public void uninstallCaCert_caCertIsNotInstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
@@ -120,7 +120,7 @@ public class CaCertManagementTest {
 
             remoteDpm.uninstallCaCert(DPC_COMPONENT_NAME, CA_CERT_1);
 
-            assertCaCertNotInstalled(CA_CERT_1);
+            assertCaCertNotInstalledForTheDpcOrLocally(CA_CERT_1);
         } finally {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
         }
@@ -128,8 +128,7 @@ public class CaCertManagementTest {
 
     @Test
     @PositivePolicyTest(policy = CaCertManagement.class)
-    @Ignore("b/198641824): Fix failing check X509TrustManager#getTrustedIssuers")
-    public void testUninstallCaCert_onlyUninstallsRequestedCaCert() throws Exception {
+    public void uninstallCaCert_otherCaCertsAreNotUninstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
@@ -138,8 +137,7 @@ public class CaCertManagementTest {
 
             remoteDpm.uninstallCaCert(DPC_COMPONENT_NAME, CA_CERT_1);
 
-            assertCaCertInstalled(CA_CERT_2);
-            assertCaCertNotInstalled(CA_CERT_1);
+            assertCaCertInstalledForTheDpcAndLocally(CA_CERT_2);
         } finally {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
         }
@@ -147,7 +145,7 @@ public class CaCertManagementTest {
 
     @Test
     @PositivePolicyTest(policy = CaCertManagement.class)
-    public void testUninstallCaCert_logsEvent() throws Exception {
+    public void uninstallCaCert_logsEvent() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
@@ -171,7 +169,7 @@ public class CaCertManagementTest {
 
     @Test
     @PositivePolicyTest(policy = CaCertManagement.class)
-    public void testUninstallAllUserCaCerts_uninstallsAllCaCerts()
+    public void uninstallAllUserCaCerts_uninstallsAllCaCerts()
             throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
@@ -181,19 +179,19 @@ public class CaCertManagementTest {
 
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
 
-            assertCaCertNotInstalled(CA_CERT_1);
-            assertCaCertNotInstalled(CA_CERT_2);
+            assertCaCertNotInstalledForTheDpcOrLocally(CA_CERT_1);
+            assertCaCertNotInstalledForTheDpcOrLocally(CA_CERT_2);
         } finally {
             remoteDpm.uninstallAllUserCaCerts(DPC_COMPONENT_NAME);
         }
     }
 
-    private void assertCaCertInstalled(byte[] caBytes)
+    private void assertCaCertInstalledForTheDpcAndLocally(byte[] caBytes)
             throws GeneralSecurityException {
         assertCaCertInstalledAndTrusted(caBytes, /* installed= */ true);
     }
 
-    private void assertCaCertNotInstalled(byte[] caBytes)
+    private void assertCaCertNotInstalledForTheDpcOrLocally(byte[] caBytes)
             throws GeneralSecurityException {
         assertCaCertInstalledAndTrusted(caBytes, /* installed= */ false);
     }
