@@ -49,6 +49,9 @@ public final class ActivityCreatedEvent extends Event {
     /** {@link EventLogsQuery} for {@link ActivityCreatedEvent}. */
     public static final class ActivityCreatedEventQuery
             extends EventLogsQuery<ActivityCreatedEvent, ActivityCreatedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         ActivityQueryHelper<ActivityCreatedEventQuery> mActivity = new ActivityQueryHelper<>(this);
         BundleQueryHelper<ActivityCreatedEventQuery> mSavedInstanceState =
                 new BundleQueryHelper<>(this);

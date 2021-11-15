@@ -49,6 +49,9 @@ public final class DeviceAdminTransferOwnershipCompleteEvent extends Event {
     public static final class DeviceAdminTransferOwnershipCompleteEventQuery
             extends EventLogsQuery<DeviceAdminTransferOwnershipCompleteEvent,
             DeviceAdminTransferOwnershipCompleteEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminTransferOwnershipCompleteEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         PersistableBundleQueryHelper<DeviceAdminTransferOwnershipCompleteEventQuery> mBundle =

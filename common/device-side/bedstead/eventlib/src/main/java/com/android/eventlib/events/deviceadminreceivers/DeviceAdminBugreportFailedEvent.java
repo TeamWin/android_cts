@@ -50,6 +50,9 @@ public final class DeviceAdminBugreportFailedEvent extends Event {
     public static final class DeviceAdminBugreportFailedEventQuery
             extends EventLogsQuery<DeviceAdminBugreportFailedEvent,
             DeviceAdminBugreportFailedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminBugreportFailedEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminBugreportFailedEventQuery> mIntent =

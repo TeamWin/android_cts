@@ -50,6 +50,9 @@ public final class DeviceAdminUserRemovedEvent extends Event {
     public static final class DeviceAdminUserRemovedEventQuery
             extends EventLogsQuery<DeviceAdminUserRemovedEvent,
             DeviceAdminUserRemovedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminUserRemovedEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminUserRemovedEventQuery> mIntent =
