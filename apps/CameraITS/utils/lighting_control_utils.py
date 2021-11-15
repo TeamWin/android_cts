@@ -74,6 +74,27 @@ def lighting_control(lighting_cntl, lighting_ch):
     return arduino_serial_port
 
   else:
-    logging('No lighting control: need to control lights manually.')
+    logging.debug('No lighting control: need to control lights manually.')
     return None
+
+
+def set_lighting_state(arduino_serial_port, lighting_ch, state):
+  """Turn lights ON in test rig.
+
+  Args:
+    arduino_serial_port: serial port object
+    lighting_ch: str for lighting channel
+    state: str 'ON/OFF'
+  """
+  if state == 'ON':
+    level = 255
+  elif state == 'OFF':
+    level = 0
+  else:
+    raise AssertionError(f'Lighting state not defined correctly: {state}')
+
+  if arduino_serial_port:
+    set_light_brightness(lighting_ch, level, arduino_serial_port, delay=1)
+  else:
+    _ = input(f'Turn {state} lights in rig and hit ENTER to continue.')
 
