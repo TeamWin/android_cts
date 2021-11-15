@@ -448,7 +448,7 @@ public class SpinnerTest {
         // Dismiss the popup with the emulated back key
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
         // Verify that we're not showing the popup
-        PollingCheck.waitFor(() -> !mSpinnerDropdownMode.isPopupShowing());
+        PollingCheck.waitFor(() -> !mSpinnerDialogMode.isPopupShowing());
 
         // Set yellow background on the popup
         mActivityRule.runOnUiThread(() ->
