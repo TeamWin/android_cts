@@ -48,6 +48,9 @@ public final class DeviceAdminProfileProvisioningCompleteEvent extends Event {
     public static final class DeviceAdminProfileProvisioningCompleteEventQuery
             extends EventLogsQuery<DeviceAdminProfileProvisioningCompleteEvent,
             DeviceAdminProfileProvisioningCompleteEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminProfileProvisioningCompleteEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminProfileProvisioningCompleteEventQuery> mIntent =

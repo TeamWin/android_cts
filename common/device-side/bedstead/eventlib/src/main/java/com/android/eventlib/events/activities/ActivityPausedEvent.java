@@ -42,6 +42,9 @@ public final class ActivityPausedEvent extends Event {
     /** {@link EventLogsQuery} for {@link ActivityPausedEvent}. */
     public static final class ActivityPausedEventQuery
             extends EventLogsQuery<ActivityPausedEvent, ActivityPausedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         ActivityQueryHelper<ActivityPausedEventQuery> mActivity =
                 new ActivityQueryHelper<>(this);
 
