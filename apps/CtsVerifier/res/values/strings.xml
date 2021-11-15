@@ -162,12 +162,6 @@
       implemented gears then the pass button will be enabled.</string>
     <string name="expected_gear_selection_title">Expected Gear Selection</string>
     <string name="current_gear_selection_title">Current Gear Selection</string>
-    <string name="night_mode_test">NIGHT_MODE Test</string>
-    <string name="night_mode_test_desc">This test ensures that the NIGHT_MODE vehicle property is
-      implemented correctly.\n\nFollow the instructions on the screen to engage and disengage
-      NIGHT_MODE through the vehicle HAL. When the instructions are completed, the pass button
-      will be enabled.</string>
-    <string name="current_night_mode_value_title">Current NIGHT_MODE Value:</string>
     <string name="parking_brake_on_test">PARKING_BRAKE_ON Test</string>
     <string name="parking_brake_on_test_desc">This test ensures that the
       PARKING_BRAKE_ON property is implemented correctly.\n\nFollow the
