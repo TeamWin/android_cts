@@ -37,6 +37,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
@@ -282,6 +283,7 @@ public class DeviceStateTest {
 
     @Test
     @EnsureDoesNotHavePermission(TEST_PERMISSION_1)
+    @AppModeFull // withoutPermission does not work on instant apps
     public void ensureDoesNotHavePermission_permissionIsDenied() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
@@ -289,6 +291,7 @@ public class DeviceStateTest {
 
     @Test
     @EnsureDoesNotHavePermission({TEST_PERMISSION_1, TEST_PERMISSION_2})
+    @AppModeFull // withoutPermission does not work on instant apps
     public void ensureDoesNotHavePermission_multiplePermissions_permissionsAreDenied() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_DENIED);
@@ -301,6 +304,7 @@ public class DeviceStateTest {
     @EnsureDoesNotHavePermission(TEST_PERMISSION_2)
     @RequireSdkVersion(min = Build.VERSION_CODES.R,
             reason = "Used permissions not available prior to R")
+    @AppModeFull // withoutPermission does not work on instant apps
     public void ensureHasPermissionAndDoesNotHavePermission_permissionsAreCorrect() {
         assertThat(TestApis.context().instrumentedContext()
                 .checkSelfPermission(TEST_PERMISSION_1)).isEqualTo(PERMISSION_GRANTED);

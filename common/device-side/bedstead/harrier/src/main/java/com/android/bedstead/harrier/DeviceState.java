@@ -602,6 +602,9 @@ public final class DeviceState implements TestRule {
 
                 Tags.clearTags();
                 Tags.addTag(Tags.USES_DEVICESTATE);
+                if (TestApis.packages().instrumented().isInstantApp()) {
+                    Tags.addTag(Tags.INSTANT_APP);
+                }
 
                 try {
                     TestApis.users().setStopBgUsersOnSwitch(STOP_USER_ON_SWITCH_FALSE);
