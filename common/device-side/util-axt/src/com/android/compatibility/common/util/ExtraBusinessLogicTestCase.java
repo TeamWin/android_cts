@@ -18,8 +18,6 @@ package com.android.compatibility.common.util;
 
 import static org.junit.Assert.assertTrue;
 
-import android.util.Log;
-
 import org.junit.Before;
 
 import java.util.List;
@@ -37,7 +35,7 @@ import java.util.List;
  * Now Business Logics rules and actions can be called from the GCL by using the interface fully
  * qualified name.
  */
-public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase {
+public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase implements MultiLogDevice {
 
     private static final String LOG_TAG = BusinessLogicTestCase.class.getSimpleName();
 
@@ -54,8 +52,7 @@ public abstract class ExtraBusinessLogicTestCase extends BusinessLogicTestCase {
                     "Test \"%s\" is unable to execute as it depends on the missing remote "
                     + "configuration.", mTestCase.getMethodName()), mCanReadBusinessLogic);
         } else if (!mCanReadBusinessLogic) {
-            Log.i(LOG_TAG, String.format(
-                    "Skipping Business Logic for %s", mTestCase.getMethodName()));
+            logInfo(LOG_TAG, "Skipping Business Logic for %s", mTestCase.getMethodName());
             return;
         }
 
