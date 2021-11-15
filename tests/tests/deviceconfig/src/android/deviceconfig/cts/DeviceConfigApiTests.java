@@ -75,7 +75,7 @@ public final class DeviceConfigApiTests extends AbstractDeviceConfigTestCase {
      * Get necessary permissions to access and modify properties through DeviceConfig API.
      */
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUpPermission() throws Exception {
         if (!isSupported()) return;
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
