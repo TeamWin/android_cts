@@ -20,9 +20,6 @@ import com.android.bedstead.nene.activities.NeneActivity;
 
 /** Default implementation of {@link ActivityEvents}. */
 public final class ActivityEventsImpl implements ActivityEvents {
-
-    private static final long serialVersionUID = 1;
-
     private final NeneActivity mActivity;
 
     ActivityEventsImpl(NeneActivity activity) {

@@ -51,6 +51,9 @@ public final class DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent ex
     public static final class DeviceAdminTransferAffiliatedProfileOwnershipCompleteEventQuery
             extends EventLogsQuery<DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent,
             DeviceAdminTransferAffiliatedProfileOwnershipCompleteEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminTransferAffiliatedProfileOwnershipCompleteEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         UserHandleQueryHelper<DeviceAdminTransferAffiliatedProfileOwnershipCompleteEventQuery>

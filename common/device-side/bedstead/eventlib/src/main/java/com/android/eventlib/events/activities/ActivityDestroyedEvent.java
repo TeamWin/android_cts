@@ -42,6 +42,9 @@ public final class ActivityDestroyedEvent extends Event {
     /** {@link EventLogsQuery} for {@link ActivityDestroyedEvent}. */
     public static final class ActivityDestroyedEventQuery
             extends EventLogsQuery<ActivityDestroyedEvent, ActivityDestroyedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         ActivityQueryHelper<ActivityDestroyedEventQuery> mActivity =
                 new ActivityQueryHelper<>(this);
 
