@@ -89,7 +89,9 @@ import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.ThermalMitigationRequest;
 import android.telephony.UiccCardInfo;
+import android.telephony.UiccPortInfo;
 import android.telephony.UiccSlotInfo;
+import android.telephony.UiccSlotMapping;
 import android.telephony.data.ApnSetting;
 import android.telephony.data.NetworkSlicingConfig;
 import android.telephony.emergency.EmergencyNumber;
@@ -2218,12 +2220,13 @@ public class TelephonyManagerTest {
         // test that these methods don't crash
         if (infos.size() > 0) {
             UiccCardInfo info = infos.get(0);
-            info.getIccId();
             info.getEid();
             info.isRemovable();
             info.isEuicc();
             info.getCardId();
-            info.getSlotIndex();
+            info.getPorts();
+            info.getPhysicalSlotIndex();
+            info.isRemovable();
         }
     }
 
@@ -4436,7 +4439,8 @@ public class TelephonyManagerTest {
                     List<UiccCardInfo> cardInfos = mTelephonyManager.getUiccCardsInfo();
                     Set<String> presentCards = Arrays.stream(mTelephonyManager.getUiccSlotsInfo())
                             .filter(Objects::nonNull)
-                            .filter(UiccSlotInfo::getIsActive)
+                            .filter(port -> port.getPorts().stream().anyMatch(portInfo ->
+                                    portInfo.isActive()))
                             .map(UiccSlotInfo::getCardId)
                             .filter(Objects::nonNull)
                             // hack around getUiccSlotsInfo not stripping trailing F
@@ -4444,10 +4448,12 @@ public class TelephonyManagerTest {
                             .collect(Collectors.toSet());
                     int slotIndex = -1;
                     for (UiccCardInfo cardInfo : cardInfos) {
-                        if (presentCards.contains(cardInfo.getIccId())
-                                || presentCards.contains(cardInfo.getEid())) {
-                            slotIndex = cardInfo.getSlotIndex();
-                            break;
+                        for (UiccPortInfo portInfo : cardInfo.getPorts()) {
+                            if (presentCards.contains(portInfo.getIccId())
+                                    || presentCards.contains(cardInfo.getEid())) {
+                                slotIndex = cardInfo.getPhysicalSlotIndex();
+                                break;
+                            }
                         }
                     }
                     if (slotIndex < 0) {
@@ -4764,6 +4770,92 @@ public class TelephonyManagerTest {
                     + "with READ_PRIVILEGED_PHONE_STATE");
         } catch (SecurityException e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testSimSlotMapping() {
+        if (!hasCellular()) return;
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        // passing slotMapping combination
+        UiccSlotMapping slotMapping1 = new UiccSlotMapping(0, 1, 1);
+        UiccSlotMapping slotMapping2 = new UiccSlotMapping(1, 0, 0);
+        List<UiccSlotMapping> slotMappingList = new ArrayList<UiccSlotMapping>();
+        slotMappingList.add(slotMapping1);
+        slotMappingList.add(slotMapping2);
+        try {
+            mTelephonyManager.setSimSlotMapping(slotMappingList);
+        } catch (Exception e) {
+            fail("Not Expected Fail, Error in setSimSlotMapping :" + e);
+        }
+        slotMappingList.clear();
+
+        // Duplicate logicalSlotIndex - Fail
+        UiccSlotMapping slotMapping3 = new UiccSlotMapping(0, 1, 0);
+        UiccSlotMapping slotMapping4 = new UiccSlotMapping(1, 0, 0);
+        slotMappingList.add(slotMapping3);
+        slotMappingList.add(slotMapping4);
+        try {
+            mTelephonyManager.setSimSlotMapping(slotMappingList);
+            fail("Expected IllegalArgumentException, Duplicate UiccSlotMapping data found");
+        } catch (IllegalArgumentException e) {
+            //expected
+        }
+        slotMappingList.clear();
+
+        // Duplicate {portIndex+physicalSlotIndex} - Fail
+        UiccSlotMapping slotMapping5 = new UiccSlotMapping(0, 1, 0);
+        UiccSlotMapping slotMapping6 = new UiccSlotMapping(0, 1, 1);
+        slotMappingList.add(slotMapping5);
+        slotMappingList.add(slotMapping6);
+        try {
+            mTelephonyManager.setSimSlotMapping(slotMappingList);
+            fail("Expected IllegalArgumentException, Duplicate UiccSlotMapping data found");
+        } catch (IllegalArgumentException e) {
+            //expected
+        }
+        slotMappingList.clear();
+
+        // Duplicate {portIndex+physicalSlotIndex+logicalSlotIndex} - Fail
+        UiccSlotMapping slotMapping7 = new UiccSlotMapping(0, 1, 0);
+        UiccSlotMapping slotMapping8 = new UiccSlotMapping(0, 1, 0);
+        slotMappingList.add(slotMapping7);
+        slotMappingList.add(slotMapping8);
+        try {
+            mTelephonyManager.setSimSlotMapping(slotMappingList);
+            fail("Expected IllegalArgumentException, Duplicate UiccSlotMapping data found");
+        } catch (IllegalArgumentException e) {
+            //expected
+        }
+        slotMappingList.clear();
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+
+    }
+
+    @Test
+    public void getUiccSlotInfoTest() {
+        UiccSlotInfo[] slotInfos = mTelephonyManager.getUiccSlotsInfo();
+
+        if (slotInfos == null) {
+            return;
+        }
+
+        // Call below methods to make sure it doesn't crash.
+        for (UiccSlotInfo slotInfo : slotInfos) {
+            slotInfo.getIsEuicc();
+            slotInfo.getCardId();
+            slotInfo.getCardStateInfo();
+            slotInfo.getIsExtendedApduSupported();
+            slotInfo.isRemovable();
+            for (UiccPortInfo portInfo :slotInfo.getPorts()) {
+                portInfo.isActive();
+                portInfo.getIccId();
+                portInfo.getLogicalSlotIndex();
+                portInfo.getPortIndex();
+            }
         }
     }
 }
