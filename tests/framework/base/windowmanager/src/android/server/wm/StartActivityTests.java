@@ -171,6 +171,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
         getLaunchActivityBuilder()
                 .setTargetActivity(LAUNCHING_ACTIVITY)
                 .setUseInstrumentation()
+                .setWaitForLaunched(false)
                 .execute();
 
         // make sure TEST_ACTIVITY is still on top and resumed
