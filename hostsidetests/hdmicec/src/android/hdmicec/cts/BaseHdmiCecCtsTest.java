@@ -377,17 +377,48 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         checkDeviceAsleep();
     }
 
+    private void waitForTransitionTo(int finalState) throws Exception {
+        int powerStatus;
+        int waitTimeSeconds = 0;
+        LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
+        int transitionState;
+        if (finalState == HdmiCecConstants.CEC_POWER_STATUS_STANDBY) {
+            transitionState = HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY;
+        } else if (finalState == HdmiCecConstants.CEC_POWER_STATUS_ON) {
+            transitionState = HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_ON;
+        } else {
+            throw new Exception("Unsupported final power state!");
+        }
+        do {
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.SLEEP_TIMESTEP_SECONDS);
+            waitTimeSeconds += HdmiCecConstants.SLEEP_TIMESTEP_SECONDS;
+            hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
+            powerStatus =
+                    CecMessage.getParams(
+                            hdmiCecClient.checkExpectedOutput(
+                                    cecClientDevice, CecOperand.REPORT_POWER_STATUS));
+            if (powerStatus == finalState) {
+                return;
+            }
+        } while (powerStatus == transitionState
+                && waitTimeSeconds <= HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
+        if (powerStatus != finalState) {
+            // Transition not complete even after wait, throw an Exception.
+            throw new Exception("Power status did not change to expected state.");
+        }
+    }
+
     public void sendDeviceToSleep() throws Exception {
         ITestDevice device = getDevice();
         WakeLockHelper.acquirePartialWakeLock(device);
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
 
     public void wakeUpDevice() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+        waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
         WakeLockHelper.releasePartialWakeLock(device);
     }
 
