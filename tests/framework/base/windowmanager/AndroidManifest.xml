@@ -336,7 +336,8 @@
         <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity"/>
         <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity"
                   android:theme="@style/no_starting_window"/>
-        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestHideOnCreateActivity"/>
+        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestHideOnCreateActivity"
+                  android:windowSoftInputMode="adjustPan|stateUnchanged"/>
         <activity android:name="android.server.wm.WindowInsetsControllerTests$TestShowOnCreateActivity"/>
 
         <activity android:name="android.server.wm.DragDropTest$DragDropActivity"
