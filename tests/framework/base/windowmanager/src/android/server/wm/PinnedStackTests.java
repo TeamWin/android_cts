@@ -1292,8 +1292,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
         assertPinnedStackDoesNotExist();
 
-        // Go home and ensure that there is a pinned stack.
-        launchHomeActivity();
+        // Launch a new activity and ensure that there is a pinned stack.
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
