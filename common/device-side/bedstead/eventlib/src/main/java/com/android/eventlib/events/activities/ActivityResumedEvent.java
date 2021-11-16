@@ -42,6 +42,9 @@ public final class ActivityResumedEvent extends Event {
     /** {@link EventLogsQuery} for {@link ActivityResumedEvent}. */
     public static final class ActivityResumedEventQuery
             extends EventLogsQuery<ActivityResumedEvent, ActivityResumedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         ActivityQueryHelper<ActivityResumedEventQuery> mActivity =
                 new ActivityQueryHelper<>(this);
 

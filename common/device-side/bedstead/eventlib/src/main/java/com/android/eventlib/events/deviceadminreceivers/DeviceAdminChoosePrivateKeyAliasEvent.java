@@ -55,6 +55,9 @@ public final class DeviceAdminChoosePrivateKeyAliasEvent extends Event {
     public static final class DeviceAdminChoosePrivateKeyAliasEventQuery
             extends EventLogsQuery<DeviceAdminChoosePrivateKeyAliasEvent,
             DeviceAdminChoosePrivateKeyAliasEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminChoosePrivateKeyAliasEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminChoosePrivateKeyAliasEventQuery> mIntent =

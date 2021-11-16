@@ -51,6 +51,9 @@ public final class DeviceAdminPasswordFailedEvent extends Event {
     public static final class DeviceAdminPasswordFailedEventQuery
             extends EventLogsQuery<DeviceAdminPasswordFailedEvent,
             DeviceAdminPasswordFailedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminPasswordFailedEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminPasswordFailedEventQuery> mIntent =

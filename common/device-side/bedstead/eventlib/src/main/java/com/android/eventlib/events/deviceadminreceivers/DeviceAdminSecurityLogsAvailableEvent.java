@@ -48,6 +48,9 @@ public final class DeviceAdminSecurityLogsAvailableEvent extends Event {
     public static final class DeviceAdminSecurityLogsAvailableEventQuery
             extends EventLogsQuery<DeviceAdminSecurityLogsAvailableEvent,
             DeviceAdminSecurityLogsAvailableEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminSecurityLogsAvailableEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminSecurityLogsAvailableEventQuery> mIntent =

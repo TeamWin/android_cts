@@ -42,6 +42,9 @@ public final class ActivityStartedEvent extends Event {
     /** {@link EventLogsQuery} for {@link ActivityStartedEvent}. */
     public static final class ActivityStartedEventQuery
             extends EventLogsQuery<ActivityStartedEvent, ActivityStartedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         ActivityQueryHelper<ActivityStartedEventQuery> mActivity = new ActivityQueryHelper<>(this);
 
         private ActivityStartedEventQuery(String packageName) {
