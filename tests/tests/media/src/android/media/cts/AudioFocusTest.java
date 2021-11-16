@@ -214,8 +214,16 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         // verify a request that is "force duck"'d still causes loss of focus because it doesn't
         // come from an A11y service, and requests are from same uid
         final AudioAttributes[] attributes = {ATTR_MEDIA, ATTR_A11Y};
-        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes,
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, attributes,
                 false /*no handler*/, true /* forceDucking */);
+    }
+
+    public void testAudioFocusRequestA11y() throws Exception {
+        final AudioAttributes[] attributes = {ATTR_DRIVE_DIR, ATTR_A11Y};
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE,
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE, attributes,
+                false /*no handler*/, false /* forceDucking */);
     }
 
     /**
@@ -445,35 +453,38 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      */
     private void doTestTwoPlayersGainLoss(int gainType, AudioAttributes[] attributes,
             boolean useHandlerInListener) throws Exception {
-        doTestTwoPlayersGainLoss(gainType, attributes, useHandlerInListener,
-                false /*forceDucking*/);
+        doTestTwoPlayersGainLoss(AudioManager.AUDIOFOCUS_GAIN, gainType, attributes,
+                useHandlerInListener, false /*forceDucking*/);
     }
 
     /**
      * Same as {@link #doTestTwoPlayersGainLoss(int, AudioAttributes[], boolean)} with forceDucking
      *   set to false.
-     * @param gainType
-     * @param attributes
+     * @param gainTypeForFirstPlayer focus gain of the focus owner on bottom (== 1st focus request)
+     * @param gainTypeForSecondPlayer focus gain of the focus owner on top (== 2nd focus request)
+     * @param attributes Audio attributes for first and second player, in order.
      * @param useHandlerInListener
      * @param forceDucking value used for setForceDucking in request for focus requester at top of
      *   stack (second requester in test).
      * @throws Exception
      */
-    private void doTestTwoPlayersGainLoss(int gainType, AudioAttributes[] attributes,
-            boolean useHandlerInListener, boolean forceDucking) throws Exception {
+    private void doTestTwoPlayersGainLoss(int gainTypeForFirstPlayer, int gainTypeForSecondPlayer,
+            AudioAttributes[] attributes, boolean useHandlerInListener,
+            boolean forceDucking) throws Exception {
         final int NB_FOCUS_OWNERS = 2;
         if (NB_FOCUS_OWNERS != attributes.length) {
             throw new IllegalArgumentException("Invalid test: invalid number of attributes");
         }
         final AudioFocusRequest[] focusRequests = new AudioFocusRequest[NB_FOCUS_OWNERS];
         final FocusChangeListener[] focusListeners = new FocusChangeListener[NB_FOCUS_OWNERS];
-        final int[] focusGains = { AudioManager.AUDIOFOCUS_GAIN, gainType };
+        final int[] focusGains = { gainTypeForFirstPlayer, gainTypeForSecondPlayer };
         int expectedLoss = 0;
-        switch (gainType) {
+        switch (gainTypeForSecondPlayer) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 expectedLoss = AudioManager.AUDIOFOCUS_LOSS;
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
                 expectedLoss = AudioManager.AUDIOFOCUS_LOSS_TRANSIENT;
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
@@ -528,7 +539,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             focusRequests[1] = null;
             Thread.sleep(TEST_TIMING_TOLERANCE_MS);
             // when focus was lost because it was requested with GAIN, focus is not given back
-            if (gainType != AudioManager.AUDIOFOCUS_GAIN) {
+            if (gainTypeForSecondPlayer != AudioManager.AUDIOFOCUS_GAIN) {
                 assertEquals("Focus gain not dispatched", AudioManager.AUDIOFOCUS_GAIN,
                         focusListeners[0].getFocusChangeAndReset());
             } else {
