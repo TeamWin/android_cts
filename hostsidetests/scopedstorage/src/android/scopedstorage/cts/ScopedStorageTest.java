@@ -857,7 +857,7 @@ public class ScopedStorageTest {
                     ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE);
 
             assertRWR(readPfd, writePfd);
-            assertLowerFsFd(writePfd);
+            assertLowerFsFdWithPassthrough(writePfd);
         } finally {
             file.delete();
         }
@@ -895,7 +895,7 @@ public class ScopedStorageTest {
                     ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE);
 
             assertRWR(readPfd, writePfd);
-            assertLowerFsFd(readPfd);
+            assertLowerFsFdWithPassthrough(readPfd);
         } finally {
             file.delete();
         }
@@ -915,8 +915,8 @@ public class ScopedStorageTest {
 
             assertRWR(readPfd, writePfd);
             assertRWR(writePfd, readPfd); // Can read on 'w' only pfd
-            assertLowerFsFd(writePfd);
-            assertLowerFsFd(readPfd);
+            assertLowerFsFdWithPassthrough(writePfd);
+            assertLowerFsFdWithPassthrough(readPfd);
         } finally {
             file.delete();
         }
@@ -940,7 +940,7 @@ public class ScopedStorageTest {
                     writePfd.close();
 
                     assertRWR(readPfd, writePfdDup);
-                    assertLowerFsFd(writePfdDup);
+                    assertLowerFsFdWithPassthrough(writePfdDup);
                 }
             }
         } finally {
@@ -3054,6 +3054,14 @@ public class ScopedStorageTest {
 
     private void assertUpperFsFd(ParcelFileDescriptor pfd) throws Exception {
         assertThat(Os.readlink("/proc/self/fd/" + pfd.getFd()).startsWith("/mnt/user")).isTrue();
+    }
+
+    private void assertLowerFsFdWithPassthrough(ParcelFileDescriptor pfd) throws Exception {
+        if (getBoolean("persist.sys.fuse.passthrough.enable", false)) {
+            assertUpperFsFd(pfd);
+        } else {
+            assertLowerFsFd(pfd);
+        }
     }
 
     private static void assertCanCreateFile(File file) throws IOException {
