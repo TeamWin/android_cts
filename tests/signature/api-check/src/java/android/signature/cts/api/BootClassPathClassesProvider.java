@@ -17,6 +17,7 @@
 package android.signature.cts.api;
 
 import android.os.Debug;
+import android.util.Log;
 import android.signature.cts.ClassProvider;
 import android.signature.cts.DexField;
 import android.signature.cts.DexMethod;
@@ -34,6 +35,8 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("deprecation")
 public class BootClassPathClassesProvider extends ClassProvider {
+    private static final String TAG = "BootClassPathClassesProvider";
+
     private static boolean sJvmtiAttached = false;
 
     @Override
@@ -52,6 +55,9 @@ public class BootClassPathClassesProvider extends ClassProvider {
                     } catch (ClassNotFoundException e) {
                         // It could be that a class failed to verify.
                         // No process will be able to load it, so it's ok to silently ignore.
+                        return null;
+                    } catch (NoClassDefFoundError e) {
+                        Log.w(TAG, "Could not load class " + classname, e);
                         return null;
                     }
                 })
