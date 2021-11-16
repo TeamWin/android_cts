@@ -378,8 +378,9 @@ public class VibratorTest {
 
         verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
         verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
-        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
-        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+        // The state changes back to false after vibration ends.
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(2)).onVibratorStateChanged(false);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(2)).onVibratorStateChanged(false);
     }
 
     @LargeTest
