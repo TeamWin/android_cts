@@ -38,6 +38,7 @@ android_test {
         "cts",
         "general-tests",
         "mts-permission",
+        "sts",
     ],
 
     data: [

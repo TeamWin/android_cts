@@ -40,6 +40,7 @@ import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.support.test.uiautomator.By;
@@ -113,6 +114,9 @@ public class RoleManagerTest {
 
     private static final String PERMISSION_MANAGE_ROLES_FROM_CONTROLLER =
             "com.android.permissioncontroller.permission.MANAGE_ROLES_FROM_CONTROLLER";
+
+    private static final String ROLE_SYSTEM_SPEECH_RECOGNIZER =
+            "android.app.role.SYSTEM_SPEECH_RECOGNIZER";
 
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
@@ -987,6 +991,33 @@ public class RoleManagerTest {
         }
         assertThat(callWithShellPermissionIdentity(() ->
                 sRoleManager.isBypassingRoleQualification())).isFalse();
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+    @SecurityTest
+    @Test
+    public void systemRoleDoesNotOverrideUserRevokedPermission() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(ROLE_SYSTEM_SPEECH_RECOGNIZER));
+        String systemSpeechRecognizerPackageName = getRoleHolders(ROLE_SYSTEM_SPEECH_RECOGNIZER)
+                .get(0);
+        assertThat(sPackageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+                systemSpeechRecognizerPackageName)).isEqualTo(PackageManager.PERMISSION_GRANTED);
+        assertThat(sPackageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+                APP_PACKAGE_NAME)).isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        runWithShellPermissionIdentity(() -> sPackageManager.updatePermissionFlags(
+                android.Manifest.permission.RECORD_AUDIO, APP_PACKAGE_NAME,
+                PackageManager.FLAG_PERMISSION_USER_SET, PackageManager.FLAG_PERMISSION_USER_SET,
+                Process.myUserHandle()));
+        runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(true));
+        try {
+            addRoleHolder(ROLE_SYSTEM_SPEECH_RECOGNIZER, APP_PACKAGE_NAME);
+
+            assertThat(sPackageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+                APP_PACKAGE_NAME)).isEqualTo(PackageManager.PERMISSION_DENIED);
+        } finally {
+            runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(false));
+        }
     }
 
     @NonNull
