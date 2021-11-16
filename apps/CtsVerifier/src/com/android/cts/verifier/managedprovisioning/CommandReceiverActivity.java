@@ -205,7 +205,7 @@ public class CommandReceiverActivity extends Activity {
             mAm = getSystemService(ActivityManager.class);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
             final String command = intent.getStringExtra(EXTRA_COMMAND);
-            Log.i(TAG, "Command: " + command);
+            Log.i(TAG, "Command: " + command + " forDeviceOwner: " + forDeviceOwner);
             switch (command) {
                 case COMMAND_SET_USER_RESTRICTION: {
                     String restrictionKey = intent.getStringExtra(EXTRA_USER_RESTRICTION);
@@ -379,6 +379,7 @@ public class CommandReceiverActivity extends Activity {
                     uninstallHelperPackage();
                 } break;
                 case COMMAND_SET_PERMISSION_GRANT_STATE: {
+                    Log.d(TAG, "Granting permission using " + mDpm);
                     mDpm.setPermissionGrantState(mAdmin, getPackageName(),
                             intent.getStringExtra(EXTRA_PERMISSION),
                             intent.getIntExtra(EXTRA_GRANT_STATE,
@@ -482,16 +483,22 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
                 } break;
                 case COMMAND_SET_DEFAULT_IME: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())
+                            && !UserManager.isHeadlessSystemUserMode()) {
                         return;
                     }
+                    Log.d(TAG, "Setting " + Settings.Secure.DEFAULT_INPUT_METHOD + " using "
+                            + mDpm);
                     mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD,
                             getPackageName());
                 } break;
                 case COMMAND_CLEAR_DEFAULT_IME: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!mDpm.isDeviceOwnerApp(getPackageName())
+                            && !UserManager.isHeadlessSystemUserMode()) {
                         return;
                     }
+                    Log.d(TAG, "Clearing " + Settings.Secure.DEFAULT_INPUT_METHOD + " using "
+                            + mDpm);
                     mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
                 } break;
                 case COMMAND_CREATE_MANAGED_USER:{
