@@ -74,6 +74,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 "com.android.permissioncontroller:" +
                         "id/permission_no_upgrade_and_dont_ask_again_button"
 
+        const val ALLOW_ALWAYS_RADIO_BUTTON =
+                "com.android.permissioncontroller:id/allow_always_radio_button"
         const val ALLOW_RADIO_BUTTON = "com.android.permissioncontroller:id/allow_radio_button"
         const val ALLOW_FOREGROUND_RADIO_BUTTON =
                 "com.android.permissioncontroller:id/allow_foreground_only_radio_button"
@@ -125,6 +127,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.ACCESS_FINE_LOCATION
                     to "@android:string/permgrouplab_location",
             android.Manifest.permission.ACCESS_COARSE_LOCATION
+                    to "@android:string/permgrouplab_location",
+            android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
                     to "@android:string/permgrouplab_location",
             // Phone
             android.Manifest.permission.READ_PHONE_STATE
@@ -508,6 +512,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         PermissionState.ALLOWED ->
                             if (showsForegroundOnlyButton(permission)) {
                                 By.res(ALLOW_FOREGROUND_RADIO_BUTTON)
+                            } else if (showsAlwaysButton(permission)) {
+                                By.res(ALLOW_ALWAYS_RADIO_BUTTON)
                             } else if (isMediaStorageButton(permission, targetSdk)) {
                                 // Uses "allow_foreground_only_radio_button" as id
                                 byTextRes(R.string.allow_media_storage)
@@ -574,6 +580,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         when (permission) {
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.RECORD_AUDIO -> true
+            else -> false
+        }
+
+    private fun showsAlwaysButton(permission: String): Boolean =
+        when (permission) {
+            android.Manifest.permission.ACCESS_BACKGROUND_LOCATION -> true
             else -> false
         }
 
