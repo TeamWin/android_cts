@@ -80,6 +80,13 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether the device supports file transfer.
+     */
+    public static boolean isUsbFileTransferSupported(Context context) {
+        return !isWatchOrAutomotive(context);
+    }
+
+    /**
      * Checks whether the device is watch .
      */
     private static boolean isWatch(Context context) {
@@ -118,5 +125,4 @@ public final class FeatureUtil {
     public static boolean isKeyguardShownWhenUserDoesntHaveCredentials(Context context) {
         return !isAutomotive(context);
     }
-
 }
