@@ -32,6 +32,7 @@ filegroup {
         "test_package/Foo.aidl",
         "test_package/ByteEnum.aidl",
         "test_package/FixedSize.aidl",
+        "test_package/FixedSizeUnion.aidl",
         "test_package/IEmpty.aidl",
         "test_package/ITest.aidl",
         "test_package/IntEnum.aidl",
