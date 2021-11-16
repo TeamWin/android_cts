@@ -51,6 +51,9 @@ public final class DeviceAdminOperationSafetyStateChangedEvent extends Event {
     public static final class DeviceAdminOperationSafetyStateChangedEventQuery
             extends EventLogsQuery<DeviceAdminOperationSafetyStateChangedEvent,
             DeviceAdminOperationSafetyStateChangedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminOperationSafetyStateChangedEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntegerQueryHelper<DeviceAdminOperationSafetyStateChangedEventQuery> mReason =

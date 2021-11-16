@@ -42,6 +42,9 @@ public final class ActivityRestartedEvent extends Event {
     /** {@link EventLogsQuery} for {@link ActivityRestartedEvent}. */
     public static final class ActivityRestartedEventQuery
             extends EventLogsQuery<ActivityRestartedEvent, ActivityRestartedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         ActivityQueryHelper<ActivityRestartedEventQuery> mActivity =
                 new ActivityQueryHelper<>(this);
 

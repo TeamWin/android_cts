@@ -327,7 +327,7 @@ public class UserRestrictions {
             case UserManager.DISALLOW_SHARE_LOCATION:
                 return pm.hasSystemFeature(PackageManager.FEATURE_LOCATION);
             case UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES:
-                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+                return FeatureUtil.isInstallUnknownSourcesSupported(context);
             case UserManager.DISALLOW_CONFIG_CREDENTIALS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                         && hasSettingsActivity(context, ACTION_CREDENTIALS_INSTALL);
@@ -335,6 +335,10 @@ public class UserRestrictions {
                 return FeatureUtil.isScreenTimeoutSupported(context);
             case UserManager.DISALLOW_CONFIG_LOCATION:
                 return FeatureUtil.isConfigLocationSupported(context);
+            case UserManager.DISALLOW_APPS_CONTROL:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+            case UserManager.DISALLOW_UNINSTALL_APPS:
+                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             default:
                 return true;
         }

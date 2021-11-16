@@ -115,29 +115,11 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                         "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId));
     }
 
-    @FlakyTest
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197907379",
-            reason = "Will be migrated to new test infra")
-    public void testCaCertManagement() throws Exception {
-        super.testCaCertManagement();
-    }
-
     @FlakyTest(bugId = 141161038)
     @Override
     @Test
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
         super.testCannotRemoveUserIfRestrictionSet();
-    }
-
-    @FlakyTest
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197907379",
-            reason = "Will be migrated to new test infra")
-    public void testInstallCaCertLogged() throws Exception {
-        super.testInstallCaCertLogged();
     }
 
     @FlakyTest(bugId = 137088260)

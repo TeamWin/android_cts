@@ -223,26 +223,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         super.tearDown();
     }
 
-    // TODO(b/198641824):remove after fixing the failure in the migrated test
-    @Test
-    public void testCaCertManagement() throws Exception {
-        executeDeviceTestClass(".CaCertManagementTest");
-    }
-
-    @Test
-    public void testInstallCaCertLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".CaCertManagementTest", "testCanInstallAndUninstallACaCert");
-        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_CA_CERT_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.UNINSTALL_CA_CERTS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .build());
-    }
-
     @Test
     public void testApplicationRestrictionIsRestricted() throws Exception {
         installAppAsUser(DELEGATE_APP_APK, mUserId);
@@ -304,24 +284,17 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     /**
      * General instructions to add a new delegation test:
-     * 1. Test primary delegation functionalitiy
-     *    Implement the delegate's positive/negate functionaility tests in a new test class
-     *    in CtsDelegateApp.apk. Main entry point are {@code testCanAccessApis} and
-     *    {@code testCannotAccessApis}. Once implemented, add the delegation scope and the test
-     *    class name to {@link #getDelegationScopes}, {@link #getDelegationTests} to make the test
-     *    run on DO/PO/PO on primary user.  If the test should only run on a subset of these
-     *    combinations, add them to the subclass's {@link #getAdditionalDelegationScopes} and
-     *    {@link #getDelegationScopes} intead.
-     *    <p>Alternatively, create a separate hostside method to drive the test, similar to
-     *    {@link #testDelegationCertSelection}. This is preferred if the delegated functionalities
-     *    already exist in another app.
-     * 2. Test access control of DO-only delegation
-     *    Add the delegation scope to
-     *    {@code DelegationTest#testDeviceOwnerOnlyDelegationsOnlyPossibleToBeSetByDeviceOwner} to
-     *    test that only DO can delegate this scope.
-     * 3. Test behaviour of exclusive delegation
-     *    Add the delegation scope to {@code DelegationTest#testExclusiveDelegations} to test that
-     *    the scope can only be delegatd to one app at a time.
+     *
+     * <p>Implement the delegate's positive/negate functionaility tests in a new test class
+     * in CtsDelegateApp.apk. Main entry point are {@code testCanAccessApis} and
+     * {@code testCannotAccessApis}. Once implemented, add the delegation scope and the test
+     * class name to {@link #getDelegationScopes}, {@link #getDelegationTests} to make the test
+     * run on DO/PO/PO on primary user.  If the test should only run on a subset of these
+     * combinations, add them to the subclass's {@link #getAdditionalDelegationScopes} and
+     * {@link #getDelegationScopes} instead.
+     * <p>Alternatively, create a separate hostside method to drive the test, similar to
+     * {@link #testDelegationCertSelection}. This is preferred if the delegated functionalities
+     * already exist in another app.
      */
     @Test
     public void testDelegation() throws Exception {
@@ -349,9 +322,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // APIs are not accessible after revoking delegations.
             setDelegatedScopes(DELEGATE_APP_PKG, null);
             executeDelegationTests(delegationTests, false /* negative result */);
-
-            // Additional delegation tests.
-            executeDeviceTestClass(".DelegationTest");
 
         } finally {
             // Remove any remaining delegations.

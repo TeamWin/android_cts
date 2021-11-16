@@ -48,6 +48,9 @@ public final class DeviceAdminBugreportSharingDeclinedEvent extends Event {
     public static final class DeviceAdminBugreportSharingDeclinedEventQuery
             extends EventLogsQuery<DeviceAdminBugreportSharingDeclinedEvent,
             DeviceAdminBugreportSharingDeclinedEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminBugreportSharingDeclinedEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminBugreportSharingDeclinedEventQuery> mIntent =

@@ -80,8 +80,8 @@ public class AvailableNetworkInfoTest {
                 .setMccMncs(null);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testAvailableNetworkInfoBuilder_invalidRAS_throwsIllegalArgumentException() {
+    @Test(expected = NullPointerException.class)
+    public void testAvailableNetworkInfoBuilder_nullRAS_throwsNullPointerException() {
         AvailableNetworkInfo.Builder availableNetworkInfo =
             new AvailableNetworkInfo.Builder(SUB_ID)
                 .setRadioAccessSpecifiers(null);

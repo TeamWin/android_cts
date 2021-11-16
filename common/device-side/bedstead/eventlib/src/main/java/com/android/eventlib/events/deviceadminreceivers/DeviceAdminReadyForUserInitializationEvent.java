@@ -48,6 +48,9 @@ public final class DeviceAdminReadyForUserInitializationEvent extends Event {
     public static final class DeviceAdminReadyForUserInitializationEventQuery
             extends EventLogsQuery<DeviceAdminReadyForUserInitializationEvent,
             DeviceAdminReadyForUserInitializationEventQuery> {
+
+        private static final long serialVersionUID = 1;
+
         DeviceAdminReceiverQueryHelper<DeviceAdminReadyForUserInitializationEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
         IntentQueryHelper<DeviceAdminReadyForUserInitializationEventQuery> mIntent =
