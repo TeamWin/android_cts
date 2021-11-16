@@ -20,6 +20,7 @@ import static android.Manifest.permission.CONNECTIVITY_INTERNAL;
 import static android.Manifest.permission.NETWORK_SETTINGS;
 import static android.net.ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
@@ -379,15 +380,18 @@ public class TestHelper {
      * @param restrictedNetworkCapabilities Whether this connection should be restricted with
      *                                    the provided capability.
      *
+     * @param isRestricted whether the suggestion is for a restricted network
      * @return NetworkCallback used for the connection (can be used by client to release the
      * connection.
      */
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestionWithShellIdentity(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @NonNull Set<Integer> restrictedNetworkCapabilities) throws Exception {
+            @NonNull Set<Integer> restrictedNetworkCapabilities,
+            boolean isRestricted) throws Exception {
         return testConnectionFlowWithSuggestionInternal(
-                network, suggestion, executorService, restrictedNetworkCapabilities, true);
+                network, suggestion, executorService, restrictedNetworkCapabilities, true,
+                isRestricted);
     }
 
     /**
@@ -402,19 +406,22 @@ public class TestHelper {
      * @param restrictedNetworkCapabilities Whether this connection should be restricted with
      *                                    the provided capability.
      *
+     * @param isRestricted whether the suggestion is for a restricted network
      * @return NetworkCallback used for the connection (can be used by client to release the
      * connection.
      */
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestion(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @NonNull Set<Integer> restrictedNetworkCapabilities) throws Exception {
+            @NonNull Set<Integer> restrictedNetworkCapabilities,
+            boolean isRestricted) throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS, CONNECTIVITY_INTERNAL);
             return testConnectionFlowWithSuggestionWithShellIdentity(
-                    network, suggestion, executorService, restrictedNetworkCapabilities);
+                    network, suggestion, executorService, restrictedNetworkCapabilities,
+                    isRestricted);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -441,7 +448,8 @@ public class TestHelper {
         try {
             uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS, CONNECTIVITY_INTERNAL);
             return testConnectionFlowWithSuggestionInternal(
-                    network, suggestion, executorService, restrictedNetworkCapabilities, false);
+                    network, suggestion, executorService, restrictedNetworkCapabilities, false,
+                    false/* restrictedNetwork */);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -457,6 +465,7 @@ public class TestHelper {
      *                                    the provided capability.
      * @param expectConnectionSuccess Whether to expect connection success or not.
      *
+     * @param isRestricted whether the suggestion is for a restricted network
      * @return NetworkCallback used for the connection (can be used by client to release the
      * connection.
      */
@@ -464,7 +473,7 @@ public class TestHelper {
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
             @NonNull Set<Integer> restrictedNetworkCapabilities,
-            boolean expectConnectionSuccess) throws Exception {
+            boolean expectConnectionSuccess, boolean isRestricted) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
         TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatch);
@@ -473,7 +482,7 @@ public class TestHelper {
             NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
                     .addTransportType(TRANSPORT_WIFI)
                     .addCapability(NET_CAPABILITY_INTERNET);
-            if (restrictedNetworkCapabilities.isEmpty()) {
+            if (restrictedNetworkCapabilities.isEmpty() && !isRestricted) {
                 // If not a restricted connection, a network callback is sufficient.
                 mConnectivityManager.registerNetworkCallback(
                         nrBuilder.build(), testNetworkCallback);
@@ -481,6 +490,7 @@ public class TestHelper {
                 for (Integer restrictedNetworkCapability : restrictedNetworkCapabilities) {
                     nrBuilder.addCapability(restrictedNetworkCapability);
                 }
+                nrBuilder.removeCapability(NET_CAPABILITY_NOT_RESTRICTED);
                 mConnectivityManager.requestNetwork(nrBuilder.build(), testNetworkCallback);
             }
             // Add wifi network suggestion.
@@ -501,17 +511,16 @@ public class TestHelper {
                 assertThat(testNetworkCallback.onAvailableCalled).isTrue();
                 final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
                 assertConnectionEquals(network, wifiInfo);
-                if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
-                    assertThat(wifiInfo.isTrusted()).isTrue();
-                    WifiInfo redact = wifiInfo
-                            .makeCopy(NetworkCapabilities.REDACT_FOR_ACCESS_FINE_LOCATION);
-                    assertThat(wifiInfo.getInformationElements()).isNotNull();
-                    assertThat(redact.getInformationElements()).isNull();
-                    assertThat(redact.getApplicableRedactions()).isEqualTo(
-                            NetworkCapabilities.REDACT_FOR_ACCESS_FINE_LOCATION
-                            | NetworkCapabilities.REDACT_FOR_LOCAL_MAC_ADDRESS
-                            | NetworkCapabilities.REDACT_FOR_NETWORK_SETTINGS);
-                }
+                assertThat(wifiInfo.isTrusted()).isTrue();
+                assertThat(wifiInfo.isRestricted()).isEqualTo(isRestricted);
+                WifiInfo redact = wifiInfo
+                        .makeCopy(NetworkCapabilities.REDACT_FOR_ACCESS_FINE_LOCATION);
+                assertThat(wifiInfo.getInformationElements()).isNotNull();
+                assertThat(redact.getInformationElements()).isNull();
+                assertThat(redact.getApplicableRedactions()).isEqualTo(
+                        NetworkCapabilities.REDACT_FOR_ACCESS_FINE_LOCATION
+                                | NetworkCapabilities.REDACT_FOR_LOCAL_MAC_ADDRESS
+                                | NetworkCapabilities.REDACT_FOR_NETWORK_SETTINGS);
                 if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
                     // If STA concurrency for restricted connection is supported, this should not
                     // be the primary connection.

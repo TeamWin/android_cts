@@ -23,12 +23,12 @@ import static android.Manifest.permission.WIFI_UPDATE_USABILITY_STATS_SCORE;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
 import static android.net.wifi.WifiUsabilityStatsEntry.ContentionTimeStats;
-import static android.net.wifi.WifiUsabilityStatsEntry.RadioStats;
-import static android.net.wifi.WifiUsabilityStatsEntry.RateStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_FAILURE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_NO_PROBE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_SUCCESS;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_UNKNOWN;
+import static android.net.wifi.WifiUsabilityStatsEntry.RadioStats;
+import static android.net.wifi.WifiUsabilityStatsEntry.RateStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_BE;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_BK;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VI;
@@ -41,7 +41,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
@@ -49,11 +48,11 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiConnectedSessionInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiUsabilityStatsEntry;
-import android.net.wifi.WifiConnectedSessionInfo;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
@@ -761,7 +760,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     }
                     return mTestHelper.testConnectionFlowWithSuggestionWithShellIdentity(
                             testNetwork, suggestionBuilder.build(), executorService,
-                            restrictedNetworkCapabilities);
+                            restrictedNetworkCapabilities, false/* restrictedNetwork */);
                 }
         );
     }

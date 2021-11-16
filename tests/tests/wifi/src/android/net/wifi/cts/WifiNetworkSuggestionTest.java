@@ -23,7 +23,6 @@ import static android.net.wifi.WifiEnterpriseConfig.Eap.WAPI_CERT;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1113,7 +1112,25 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .build();
         sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
                 sTestNetwork, suggestion, mExecutorService,
-                Set.of() /* restrictedNetworkCapability */);
+                Set.of()/* restrictedNetworkCapability */, false/* restrictedNetwork */);
+    }
+
+    /**
+     * Connect to a restricted network using suggestion API.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
+    public void testConnectToRestrictedSuggestion() throws Exception {
+        assertNotNull(sTestNetwork);
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        sTestNetwork)
+                        .setRestricted(true)
+                        .build();
+        assertTrue(suggestion.isRestricted());
+        sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService,
+                Set.of()/* restrictedNetworkCapability */, true);
     }
 
     /**
@@ -1129,7 +1146,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .setOemPaid(true)
                         .build();
         sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
-                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID), false);
     }
 
     /**
@@ -1147,7 +1164,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .build();
         sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
                 sTestNetwork, suggestion, mExecutorService,
-                Set.of(NET_CAPABILITY_OEM_PAID, NET_CAPABILITY_OEM_PRIVATE));
+                Set.of(NET_CAPABILITY_OEM_PAID, NET_CAPABILITY_OEM_PRIVATE), false);
     }
 
     /**
@@ -1163,7 +1180,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .setOemPrivate(true)
                         .build();
         sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
-                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE),
+                false);
     }
 
     /**
