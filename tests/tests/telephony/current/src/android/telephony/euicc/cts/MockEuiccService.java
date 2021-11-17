@@ -147,6 +147,13 @@ public class MockEuiccService extends EuiccService {
     }
 
     @Override
+    public @Result int onSwitchToSubscriptionWithPort(
+            int slotId, int portIndex, @Nullable String iccid, boolean forceDeactivateSim) {
+        sMockEuiccServiceCallback.setMethodCalled();
+        return EuiccService.RESULT_OK;
+    }
+
+    @Override
     public int onUpdateSubscriptionNickname(int slotId, String iccid, String nickname) {
         sMockEuiccServiceCallback.setMethodCalled();
         return EuiccService.RESULT_OK;
