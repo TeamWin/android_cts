@@ -16,7 +16,6 @@
 
 package android.webkit.cts;
 
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,11 +29,15 @@ import android.os.RemoteException;
 
 import com.android.internal.annotations.GuardedBy;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 
 class TestProcessClient extends Assert implements AutoCloseable, ServiceConnection {
     private Context mContext;
+
+    static final long REMOTE_TIMEOUT_MS = 5000;
 
     private static final long CONNECT_TIMEOUT_MS = 5000;
 
@@ -60,7 +63,34 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
      * Subclass this to implement test code to run on the service side.
      */
     static abstract class TestRunnable extends Assert {
-        public abstract void run(Context ctx);
+        public abstract void run(Context ctx) throws Throwable;
+    }
+
+    /**
+     * Subclass this to implement test code that runs on the main looper on the service side.
+     */
+    static abstract class UiThreadTestRunnable extends TestRunnable {
+        // A handler for the main thread.
+        private static final Handler sMainThreadHandler = new Handler(Looper.getMainLooper());
+
+        @Override
+        final public void run(Context ctx) throws Throwable {
+            final SettableFuture<Void> exceptionPropagatingFuture = SettableFuture.create();
+            sMainThreadHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        runOnUiThread(ctx);
+                        exceptionPropagatingFuture.set(null);
+                    } catch (Throwable t) {
+                        exceptionPropagatingFuture.setException(t);
+                    }
+                }
+            });
+            WebkitUtils.waitForFuture(exceptionPropagatingFuture);
+        }
+
+        protected abstract void runOnUiThread(Context ctx) throws Throwable;
     }
 
     static class ProcessFreshChecker extends TestRunnable {
