@@ -95,4 +95,8 @@
 
     <!-- b/183653612: CtsTransitionTestCases -->
     <option name="compatibility:exclude-filter" value="CtsTransitionTestCases" />
+
+    <!-- b/198226244 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.CodecEncoderPerformanceTest#testPerformanceOfHardwareVideoEncoders" />
+
 </configuration>
