@@ -19,8 +19,8 @@ package android.server.wm;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_90;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -94,11 +94,6 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
             new ActivityTestRule<>(ImmersiveFullscreenTestActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
 
-    @Rule
-    public final ActivityTestRule<NaturalOrientationTestActivity> mNaturalOrientationTestActivity =
-            new ActivityTestRule<>(NaturalOrientationTestActivity.class,
-                    false /* initialTouchMode */, false /* launchActivity */);
-
     @Before
     @Override
     public void setUp() throws Exception {
@@ -147,16 +142,20 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
 
-        launchAndWait(mNaturalOrientationTestActivity);
-        mWmState.computeState(new ComponentName[] {});
-        final boolean naturalOrientationPortrait =
-                mWmState.getDisplay(DEFAULT_DISPLAY)
-                        .mFullConfiguration.orientation == ORIENTATION_PORTRAIT;
-
-        final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(naturalOrientationPortrait ? ROTATION_90 : ROTATION_0);
-
         final TestActivity activity = launchAndWait(mTestActivity);
+        final int rotation = activity.getDisplay().getRotation();
+        final boolean isPortrait = activity.getResources().getConfiguration()
+                .orientation == ORIENTATION_PORTRAIT;
+        final RotationSession rotationSession = createManagedRotationSession();
+        if (isPortrait) {
+            // Rotate to landscape.
+            rotationSession.set(rotation == ROTATION_0 || rotation == ROTATION_180
+                    ? ROTATION_90 : ROTATION_0);
+        } else {
+            // Keep in landscape.
+            rotationSession.set(rotation);
+        }
+
         mWmState.waitForValidState(mTestActivityComponentName);
         final int taskId = mWmState.getTaskByActivity(mTestActivityComponentName).mTaskId;
         launchActivityInPrimarySplit(LAUNCHING_ACTIVITY);
