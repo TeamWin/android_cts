@@ -69,16 +69,8 @@ import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
 import android.util.Log;
-
+import androidx.test.filters.RequiresDevice;
 import com.google.common.collect.ImmutableSet;
-
-import androidx.test.filters.RequiresDevice;
-
-import androidx.test.filters.RequiresDevice;
-
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-
 import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
