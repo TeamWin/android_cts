@@ -164,7 +164,6 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
         case InputMessage::Type::FOCUS: {
             outMsg->body.focus.eventId = msg.body.focus.eventId;
             outMsg->body.focus.hasFocus = msg.body.focus.hasFocus;
-            outMsg->body.focus.inTouchMode = msg.body.focus.inTouchMode;
             break;
         }
         case InputMessage::Type::CAPTURE: {

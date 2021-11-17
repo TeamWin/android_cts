@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package android.security.cts;
+package android.media.tv.interactive.cts;
 
-import android.platform.test.annotations.AsbSecurityTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import android.app.Activity;
+import android.media.tv.interactive.TvIAppView;
+import android.os.Bundle;
+import android.tv.cts.R;
 
-@RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0684 extends SecurityTestCase {
+public class TvIAppViewStubActivity extends Activity {
 
-    /**
-     * b/179839665
-     * Vulnerability Behaviour: SIGSEGV in Self
-     */
-    @AsbSecurityTest(cveBugId = 179839665)
-    @Test
-    public void testPocCVE_2021_0684() throws Exception {
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-0684", null, getDevice());
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.tviappview_layout);
+    }
+
+    public TvIAppView getTvIAppView() {
+        return findViewById(R.id.tviappview);
     }
 }

@@ -78,7 +78,7 @@ public class SurfaceControlTest {
     }
 
     private void verifyTest(SurfaceHolder.Callback callback, PixelChecker pixelChecker) {
-        mActivity.verifyTest(callback, pixelChecker);
+        mActivity.verifyTest(callback, pixelChecker, mName);
     }
 
     @Before

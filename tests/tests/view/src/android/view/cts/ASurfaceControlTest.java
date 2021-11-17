@@ -238,7 +238,7 @@ public class ASurfaceControlTest {
 
     private void verifyTest(BasicSurfaceHolderCallback callback, PixelChecker pixelChecker) {
         SurfaceHolderCallback surfaceHolderCallback = new SurfaceHolderCallback(callback);
-        mActivity.verifyTest(surfaceHolderCallback, pixelChecker);
+        mActivity.verifyTest(surfaceHolderCallback, pixelChecker, mName);
     }
 
     @Test

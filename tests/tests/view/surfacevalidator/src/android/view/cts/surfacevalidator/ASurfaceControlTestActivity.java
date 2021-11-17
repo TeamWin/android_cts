@@ -29,6 +29,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -42,6 +43,11 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
+import org.junit.rules.TestName;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -104,7 +110,7 @@ public class ASurfaceControlTestActivity extends Activity {
     }
 
     public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
-            PixelChecker pixelChecker) {
+            PixelChecker pixelChecker, TestName name) {
         try {
             mReadyToStart.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -151,6 +157,9 @@ public class ASurfaceControlTestActivity extends Activity {
         Rect bounds = pixelChecker.getBoundsToCheck(swBitmap);
         boolean success = pixelChecker.checkPixels(numMatchingPixels, swBitmap.getWidth(),
                 swBitmap.getHeight());
+        if (!success) {
+            saveFailureCapture(swBitmap, name);
+        }
         swBitmap.recycle();
 
         assertTrue("Actual matched pixels:" + numMatchingPixels
@@ -295,6 +304,32 @@ public class ASurfaceControlTestActivity extends Activity {
                 mSurfaceCreatedLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
             }
+        }
+    }
+
+    private void saveFailureCapture(Bitmap failFrame, TestName name) {
+        String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + getClass().getSimpleName()
+                + "/" + name.getMethodName();
+        File testDirectory = new File(directoryName);
+        if (testDirectory.exists()) {
+            String[] children = testDirectory.list();
+            for (String file : children) {
+                new File(testDirectory, file).delete();
+            }
+        } else {
+            testDirectory.mkdirs();
+        }
+
+        String bitmapName = "frame.png";
+        Log.d(TAG, "Saving file : " + bitmapName + " in directory : " + directoryName);
+
+        File file = new File(directoryName, bitmapName);
+        try (FileOutputStream fileStream = new FileOutputStream(file)) {
+            failFrame.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
+            fileStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

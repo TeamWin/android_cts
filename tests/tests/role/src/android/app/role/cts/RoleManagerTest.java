@@ -40,6 +40,7 @@ import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.support.test.uiautomator.By;
@@ -114,6 +115,9 @@ public class RoleManagerTest {
     private static final String PERMISSION_MANAGE_ROLES_FROM_CONTROLLER =
             "com.android.permissioncontroller.permission.MANAGE_ROLES_FROM_CONTROLLER";
 
+    private static final String ROLE_SYSTEM_SPEECH_RECOGNIZER =
+            "android.app.role.SYSTEM_SPEECH_RECOGNIZER";
+
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
@@ -134,8 +138,7 @@ public class RoleManagerTest {
 
     @Before
     public void saveRoleHolder() throws Exception {
-        List<String> roleHolders = getRoleHolders(ROLE_NAME);
-        mRoleHolder = !roleHolders.isEmpty() ? roleHolders.get(0) : null;
+        mRoleHolder = getRoleHolder(ROLE_NAME);
 
         if (Objects.equals(mRoleHolder, APP_PACKAGE_NAME)) {
             removeRoleHolder(ROLE_NAME, APP_PACKAGE_NAME);
@@ -911,7 +914,7 @@ public class RoleManagerTest {
     public void removeSmsRoleHolderThenPermissionIsRevoked() throws Exception {
         assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
 
-        String smsRoleHolder = getRoleHolders(RoleManager.ROLE_SMS).get(0);
+        String smsRoleHolder = getRoleHolder(RoleManager.ROLE_SMS);
         addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
         addRoleHolder(RoleManager.ROLE_SMS, smsRoleHolder);
 
@@ -925,7 +928,7 @@ public class RoleManagerTest {
                 && sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
 
         addRoleHolder(RoleManager.ROLE_DIALER, APP_PACKAGE_NAME);
-        String smsRoleHolder = getRoleHolders(RoleManager.ROLE_SMS).get(0);
+        String smsRoleHolder = getRoleHolder(RoleManager.ROLE_SMS);
         addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
         addRoleHolder(RoleManager.ROLE_SMS, smsRoleHolder);
 
@@ -989,9 +992,44 @@ public class RoleManagerTest {
                 sRoleManager.isBypassingRoleQualification())).isFalse();
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+    @SecurityTest
+    @Test
+    public void systemRoleDoesNotOverrideUserRevokedPermission() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(ROLE_SYSTEM_SPEECH_RECOGNIZER));
+        String systemSpeechRecognizerPackageName = getRoleHolder(ROLE_SYSTEM_SPEECH_RECOGNIZER);
+        if (systemSpeechRecognizerPackageName != null) {
+            assertThat(sPackageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+                    systemSpeechRecognizerPackageName))
+                    .isEqualTo(PackageManager.PERMISSION_GRANTED);
+        }
+        assertThat(sPackageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+                APP_PACKAGE_NAME)).isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        runWithShellPermissionIdentity(() -> sPackageManager.updatePermissionFlags(
+                android.Manifest.permission.RECORD_AUDIO, APP_PACKAGE_NAME,
+                PackageManager.FLAG_PERMISSION_USER_SET, PackageManager.FLAG_PERMISSION_USER_SET,
+                Process.myUserHandle()));
+        runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(true));
+        try {
+            addRoleHolder(ROLE_SYSTEM_SPEECH_RECOGNIZER, APP_PACKAGE_NAME);
+
+            assertThat(sPackageManager.checkPermission(android.Manifest.permission.RECORD_AUDIO,
+                APP_PACKAGE_NAME)).isEqualTo(PackageManager.PERMISSION_DENIED);
+        } finally {
+            runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(false));
+        }
+    }
+
     @NonNull
     private List<String> getRoleHolders(@NonNull String roleName) throws Exception {
         return callWithShellPermissionIdentity(() -> sRoleManager.getRoleHolders(roleName));
+    }
+
+    @Nullable
+    private String getRoleHolder(@NonNull String roleName) throws Exception {
+        List<String> roleHolders = getRoleHolders(roleName);
+        return !roleHolders.isEmpty() ? roleHolders.get(0) : null;
     }
 
     private void assertIsRoleHolder(@NonNull String roleName, @NonNull String packageName,
