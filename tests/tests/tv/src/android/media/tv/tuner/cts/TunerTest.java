@@ -1950,7 +1950,7 @@ public class TunerTest {
                     int sif = getFirstCapable(analogCaps.getSifStandardCapability());
                     return AnalogFrontendSettings
                             .builder()
-                            .setFrequencyLong(minFreq)
+                            .setFrequencyLong(55250000) //2nd freq of VHF
                             .setSignalType(signalType)
                             .setSifStandard(sif)
                             .build();
@@ -1962,7 +1962,7 @@ public class TunerTest {
                     Atsc3FrontendSettings settings =
                             Atsc3FrontendSettings
                                     .builder()
-                                    .setFrequencyLong(minFreq)
+                                    .setFrequencyLong(473000000) // 1st freq of UHF
                                     .setBandwidth(bandwidth)
                                     .setDemodOutputFormat(demod)
                                     .build();
@@ -1974,7 +1974,7 @@ public class TunerTest {
                     int modulation = getFirstCapable(atscCaps.getModulationCapability());
                     return AtscFrontendSettings
                             .builder()
-                            .setFrequencyLong(minFreq)
+                            .setFrequencyLong(479000000) // 2nd freq of UHF
                             .setModulation(modulation)
                             .build();
                 }
@@ -1986,7 +1986,7 @@ public class TunerTest {
                     DvbcFrontendSettings settings =
                             DvbcFrontendSettings
                                     .builder()
-                                    .setFrequencyLong(minFreq)
+                                    .setFrequencyLong(490000000)
                                     .setModulation(modulation)
                                     .setInnerFec(fec)
                                     .setAnnex(annex)
@@ -2001,7 +2001,7 @@ public class TunerTest {
                     DvbsFrontendSettings settings =
                             DvbsFrontendSettings
                                     .builder()
-                                    .setFrequencyLong(minFreq)
+                                    .setFrequencyLong(950000000) //950Mhz
                                     .setModulation(modulation)
                                     .setStandard(standard)
                                     .build();
@@ -2018,7 +2018,7 @@ public class TunerTest {
                     int guardInterval = getFirstCapable(dvbtCaps.getGuardIntervalCapability());
                     DvbtFrontendSettings settings = DvbtFrontendSettings
                             .builder()
-                            .setFrequencyLong(minFreq)
+                            .setFrequencyLong(498000000)
                             .setTransmissionMode(transmission)
                             .setBandwidth(bandwidth)
                             .setConstellation(constellation)
@@ -2038,7 +2038,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(isdbs3Caps.getCodeRateCapability());
                     Isdbs3FrontendSettings settings = Isdbs3FrontendSettings
                             .builder()
-                            .setFrequencyLong(minFreq)
+                            .setFrequencyLong(1000000000) //1000 Mhz
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
@@ -2051,7 +2051,7 @@ public class TunerTest {
                     int codeRate = getFirstCapable(isdbsCaps.getCodeRateCapability());
                     IsdbsFrontendSettings settings = IsdbsFrontendSettings
                             .builder()
-                            .setFrequencyLong(minFreq)
+                            .setFrequencyLong(1050000000) //1050 Mhz
                             .setModulation(modulation)
                             .setCodeRate(codeRate)
                             .build();
@@ -2071,7 +2071,7 @@ public class TunerTest {
                     boolean isFullSegmentSupported = isdbtCaps.isFullSegmentSupported();
 
                     IsdbtFrontendSettings.Builder builder = IsdbtFrontendSettings.builder();
-                    builder.setFrequencyLong(minFreq);
+                    builder.setFrequencyLong(527143000); //22 ch    527.143 MHz
                     builder.setBandwidth(bandwidth);
                     builder.setMode(mode);
                     builder.setGuardInterval(guardInterval);
@@ -2118,7 +2118,7 @@ public class TunerTest {
                     DtmbFrontendSettings settings =
                             DtmbFrontendSettings
                                     .builder()
-                                    .setFrequencyLong(minFreq)
+                                    .setFrequencyLong(506000000)
                                     .setModulation(modulation)
                                     .setTransmissionMode(transmissionMode)
                                     .setBandwidth(bandwidth)
