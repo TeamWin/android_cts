@@ -22,7 +22,6 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import android.app.AppOpsManager;
@@ -30,8 +29,8 @@ import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -40,12 +39,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.os.Process;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
+import android.telecom.CallEndpoint;
 import android.telecom.Conference;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -56,7 +56,6 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
-import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
@@ -119,6 +118,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     TestUtils.InvokeCounter mOnHandoverCompleteCounter;
     TestUtils.InvokeCounter mOnHandoverFailedCounter;
     TestUtils.InvokeCounter mOnPhoneAccountChangedCounter;
+    TestUtils.InvokeCounter mOnAnswerFailedCounter;
     Bundle mPreviousExtras;
     int mPreviousProperties = -1;
     PhoneAccountHandle mPreviousPhoneAccountHandle = null;
@@ -546,6 +546,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             public void onHandoverFailed(Call call, int reason) {
                 mOnHandoverFailedCounter.invoke(call, reason);
             }
+
+            @Override
+            public void onAnswerFailed(CallEndpoint callEndpoint, int reason) {
+                mOnAnswerFailedCounter.invoke(callEndpoint, reason);
+            }
         };
 
         MockInCallService.setCallbacks(mInCallCallbacks);
@@ -569,6 +574,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnHandoverFailedCounter = new TestUtils.InvokeCounter("mOnHandoverFailedCounter");
         mOnPhoneAccountChangedCounter = new TestUtils.InvokeCounter(
                 "mOnPhoneAccountChangedCounter");
+        mOnAnswerFailedCounter = new TestUtils.InvokeCounter("mOnAnswerFailedCounter");
     }
 
     void addAndVerifyNewFailedIncomingCall(Uri incomingHandle, Bundle extras) {
