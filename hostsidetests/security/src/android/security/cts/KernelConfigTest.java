@@ -59,11 +59,11 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        // Assumes every test in this file asserts a requirement of CDD section 9.
-        assumeSecurityModelCompat();
         mDevice = getDevice();
         mBuild = getBuild();
         configSet = getDeviceConfig(mDevice, cachedConfigGzSet);
+        // Assumes every test in this file asserts a requirement of CDD section 9.
+        assumeSecurityModelCompat();
     }
 
     /*
