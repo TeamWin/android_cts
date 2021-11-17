@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.cts.verifier"
           android:versionCode="5"
-          android:versionName="12_r1">
+          android:versionName="12L_r1">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="31"/>
 
@@ -136,6 +136,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.device_admin" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
         </activity>

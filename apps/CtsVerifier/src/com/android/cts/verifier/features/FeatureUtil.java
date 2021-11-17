@@ -73,6 +73,13 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether the device supports installing from unknown sources
+     */
+    public static boolean isInstallUnknownSourcesSupported(Context context) {
+        return !isWatchOrAutomotive(context);
+    }
+
+    /**
      * Checks whether the device is watch .
      */
     private static boolean isWatch(Context context) {
