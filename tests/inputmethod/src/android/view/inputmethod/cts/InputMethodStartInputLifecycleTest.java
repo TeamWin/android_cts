@@ -27,6 +27,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -34,14 +36,23 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.inputmethodservice.InputMethodService;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.Selection;
 import android.text.TextUtils;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.TextSnapshot;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.RequireImeCompatFlagRule;
@@ -52,6 +63,7 @@ import android.view.inputmethod.cts.util.WindowFocusStealer;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -84,6 +96,14 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             FINISH_INPUT_NO_FALLBACK_CONNECTION, true);
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+
+    private static final String TEST_MARKER_PREFIX =
+            "android.view.inputmethod.cts.FocusHandlingTest";
+
+    private static String getTestMarker() {
+        return TEST_MARKER_PREFIX + "/"  + SystemClock.elapsedRealtimeNanos();
+    }
 
     @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
@@ -99,8 +119,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 context, instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final String marker = InputMethodManagerTest.class.getName() + "/"
-                    + SystemClock.elapsedRealtimeNanos();
+            final String marker = getTestMarker();
             final AtomicInteger screenStateCallbackRef = new AtomicInteger(-1);
             TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
@@ -187,8 +206,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final String marker = InputMethodStartInputLifecycleTest.class.getName() + "/"
-                    + SystemClock.elapsedRealtimeNanos();
+            final String marker = getTestMarker();
             final EditText editText = launchTestActivity(marker);
             TestUtils.runOnMainSync(() -> editText.requestFocus());
 
@@ -241,6 +259,184 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             return layout;
         });
         return editTextRef.get();
+    }
+
+    /**
+     * A mostly-minimum implementation of {@link View} that can be used to test custom
+     * implementations of {@link View#onCreateInputConnection(EditorInfo)}.
+     */
+    static class TestEditor extends View {
+        TestEditor(@NonNull Context context) {
+            super(context);
+            setBackgroundColor(Color.YELLOW);
+            setFocusableInTouchMode(true);
+            setFocusable(true);
+            setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 10 /* height */));
+        }
+    }
+
+    /**
+     * {@link InputMethodManager#invalidateInput(View)} is a lightweight version of
+     * {@link InputMethodManager#restartInput(View)} that reuses existing {@link InputConnection}
+     * by using {@link InputConnection#takeSnapshot()}.
+     */
+    @Test
+    public void testInterruptInputWithTakeSnapshotSupport() throws Exception {
+        testInterruptInputMain(true /* supportTakeSnapshot */);
+    }
+
+    /**
+     * {@link InputMethodManager#invalidateInput(View)} falls back into
+     * {@link InputMethodManager#restartInput(View)} when {@link InputConnection#takeSnapshot()}
+     * returns {@code null}.
+     */
+    @Test
+    public void testInterruptInputWithoutTakeSnapshotSupport() throws Exception {
+        testInterruptInputMain(false /* supportTakeSnapshot */);
+    }
+
+    private void testInterruptInputMain(boolean supportTakeSnapshot) throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final int initialSelStart = 3;
+            final int initialSelEnd = 7;
+            final int initialCapsMode = TextUtils.CAP_MODE_SENTENCES;
+
+            final AtomicInteger onCreateConnectionCount = new AtomicInteger(0);
+            class MyTestEditor extends TestEditor {
+                final Editable mEditable;
+
+                MyTestEditor(Context context, @NonNull Editable editable) {
+                    super(context);
+                    mEditable = editable;
+                }
+
+                @Override
+                public boolean onCheckIsTextEditor() {
+                    return true;
+                }
+
+                @Override
+                public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                    onCreateConnectionCount.incrementAndGet();
+                    outAttrs.inputType =
+                            InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+                    outAttrs.initialSelStart = Selection.getSelectionStart(mEditable);
+                    outAttrs.initialSelEnd = Selection.getSelectionEnd(mEditable);
+                    outAttrs.initialCapsMode = initialCapsMode;
+                    outAttrs.privateImeOptions = marker;
+                    outAttrs.setInitialSurroundingText(mEditable);
+                    return new BaseInputConnection(this, true) {
+                        @Override
+                        public Editable getEditable() {
+                            return mEditable;
+                        }
+
+                        @Override
+                        public TextSnapshot takeSnapshot() {
+                            return supportTakeSnapshot ? super.takeSnapshot() : null;
+                        }
+                    };
+                }
+            }
+
+            final AtomicReference<MyTestEditor> myEditorRef = new AtomicReference<>();
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final Editable editable =
+                        Editable.Factory.getInstance().newEditable("0123456789");
+                Selection.setSelection(editable, initialSelStart, initialSelEnd);
+
+                final MyTestEditor editor = new MyTestEditor(activity, editable);
+                editor.requestFocus();
+                myEditorRef.set(editor);
+
+                layout.addView(editor);
+                return layout;
+            });
+            final MyTestEditor myEditor = myEditorRef.get();
+
+            // Wait until the MockIme gets bound to the TestActivity.
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+
+            {
+                final ImeEvent startInputEvent =
+                        expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                final EditorInfo editorInfo =
+                        startInputEvent.getArguments().getParcelable("editorInfo");
+                assertThat(editorInfo).isNotNull();
+                assertThat(editorInfo.initialSelStart).isEqualTo(initialSelStart);
+                assertThat(editorInfo.initialSelEnd).isEqualTo(initialSelEnd);
+                assertThat(editorInfo.getInitialSelectedText(0).toString()).isEqualTo("3456");
+            }
+
+            stream.skipAll();
+            final ImeEventStream forkedStream = stream.copy();
+
+            final int prevOnCreateInputConnectionCount = onCreateConnectionCount.get();
+
+            final int newSelStart = 1;
+            final int newSelEnd = 3;
+            TestUtils.runOnMainSync(() -> {
+                Selection.setSelection(myEditor.mEditable, newSelStart, newSelEnd);
+                final InputMethodManager imm = myEditor.getContext().getSystemService(
+                        InputMethodManager.class);
+                imm.invalidateInput(myEditor);
+            });
+
+            // Verify that InputMethodService#onStartInput() is triggered as if IMM#restartInput()
+            // was called.
+            {
+                final ImeEvent startInputEvent =
+                        expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                final boolean restarting = startInputEvent.getArguments().getBoolean("restarting");
+                assertThat(restarting).isTrue();
+                final EditorInfo editorInfo =
+                        startInputEvent.getArguments().getParcelable("editorInfo");
+                assertThat(editorInfo).isNotNull();
+                assertThat(editorInfo.initialSelStart).isEqualTo(newSelStart);
+                assertThat(editorInfo.initialSelEnd).isEqualTo(newSelEnd);
+                assertThat(editorInfo.getInitialSelectedText(0).toString()).isEqualTo("12");
+            }
+
+            if (supportTakeSnapshot) {
+                // Make sure that InputMethodManager#interruptInput() does not trigger
+                // View#onCreateInputConnection() if InputConnection#takeSnapshot() is supported.
+                assertThat(onCreateConnectionCount.get()).isEqualTo(
+                        prevOnCreateInputConnectionCount);
+            } else {
+                // Make sure that InputMethodManager#interruptInput() does trigger
+                // View#onCreateInputConnection() if InputConnection#takeSnapshot() is not
+                // supported.
+                assertThat(onCreateConnectionCount.get()).isGreaterThan(
+                        prevOnCreateInputConnectionCount);
+            }
+
+            // For historical reasons, InputMethodService#onFinishInput() will not be triggered when
+            // restarting an input connection.
+            assertThat(forkedStream.findFirst(onFinishInputMatcher()).isPresent()).isFalse();
+
+            // Make sure that InputMethodManager#updateSelection() will be ignored when there is
+            // no change from the last call of InputMethodManager#interruptInput().
+            TestUtils.runOnMainSync(() -> {
+                Selection.setSelection(myEditor.mEditable, newSelStart, newSelEnd);
+                final InputMethodManager imm = myEditor.getContext().getSystemService(
+                        InputMethodManager.class);
+                imm.updateSelection(myEditor, newSelStart, newSelEnd, -1, -1);
+            });
+
+            notExpectEvent(stream, event -> "onUpdateSelection".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
+        }
     }
 
     private static Predicate<ImeEvent> onFinishInputMatcher() {
