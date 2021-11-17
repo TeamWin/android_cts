@@ -88,9 +88,9 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
     // Default setting for transcoding to H.264.
     private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private static final int BIT_RATE = 4000000;            // 4Mbps
-    private static final int WIDTH = 720;
-    private static final int HEIGHT = 480;
+    private static final int BIT_RATE = 20000000;            // 20Mbps
+    private static final int WIDTH = 1920;
+    private static final int HEIGHT = 1080;
 
     // Threshold for the psnr to make sure the transcoded video is valid.
     private static final int PSNR_THRESHOLD = 20;
@@ -148,9 +148,9 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         androidx.test.InstrumentationRegistry.registerInstance(
                 InstrumentationRegistry.getInstrumentation(), new Bundle());
 
-        // Setup default source HEVC 480p file uri.
-        mSourceHEVCVideoUri = resourceToUri(mContext, R.raw.Video_HEVC_480p_30Frames,
-                "Video_HEVC_480p_30Frames.mp4");
+        // Setup source HEVC file uri.
+        mSourceHEVCVideoUri = resourceToUri(mContext, R.raw.Video_HEVC_30Frames,
+                "Video_HEVC_30Frames.mp4");
 
         // Setup source AVC file uri.
         mSourceAVCVideoUri = resourceToUri(mContext, R.raw.Video_AVC_30Frames,
@@ -340,7 +340,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     // Tests transcoding to a uri in res folder and expects failure as test could not write to res
     // folder.
     public void testTranscodingToResFolder() throws Exception {
-        if (shouldSkip()) {
+        if (shouldSkip() || !isVideoTranscodingSupported(mSourceHEVCVideoUri)) {
             return;
         }
         // Create a file Uri:  android.resource://android.media.cts/temp.mp4
@@ -354,7 +354,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
     // Tests transcoding to a uri in internal cache folder and expects success.
     public void testTranscodingToCacheDir() throws Exception {
-        if (shouldSkip()) {
+        if (shouldSkip() || !isVideoTranscodingSupported(mSourceHEVCVideoUri)) {
             return;
         }
         // Create a file Uri: file:///data/user/0/android.media.cts/cache/temp.mp4
@@ -368,7 +368,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
     // Tests transcoding to a uri in internal files directory and expects success.
     public void testTranscodingToInternalFilesDir() throws Exception {
-        if (shouldSkip()) {
+        if (shouldSkip() || !isVideoTranscodingSupported(mSourceHEVCVideoUri)) {
             return;
         }
         // Create a file Uri: file:///data/user/0/android.media.cts/files/temp.mp4
@@ -377,14 +377,6 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
         testTranscodingWithExpectResult(mSourceHEVCVideoUri, destinationUri,
                 TranscodingSession.RESULT_SUCCESS);
-    }
-
-    public void testHevcTranscoding720PVideo30FramesWithoutAudio() throws Exception {
-        if (shouldSkip()) {
-            return;
-        }
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_720p_30Frames,
-                "Video_HEVC_720p_30Frames.mp4"), false /* testFileDescriptor */);
     }
 
     public void testAvcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
@@ -570,7 +562,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     public void testCancelTranscoding() throws Exception {
-        if (shouldSkip()) {
+        if (shouldSkip() || !isVideoTranscodingSupported(mSourceHEVCVideoUri)) {
             return;
         }
         Log.d(TAG, "Starting: testCancelTranscoding");
@@ -661,7 +653,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }*/
 
     public void testTranscodingProgressUpdate() throws Exception {
-        if (shouldSkip()) {
+        if (shouldSkip() || !isVideoTranscodingSupported(mSourceHEVCVideoUri)) {
             return;
         }
         Log.d(TAG, "Starting: testTranscodingProgressUpdate");
@@ -713,7 +705,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     }
 
     public void testAddingClientUids() throws Exception {
-        if (shouldSkip()) {
+        if (shouldSkip() || !isVideoTranscodingSupported(mSourceHEVCVideoUri)) {
             return;
         }
         Log.d(TAG, "Starting: testTranscodingProgressUpdate");
@@ -788,6 +780,27 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         }
         extractor.release();
         return videoFormat;
+    }
+
+    private boolean isVideoTranscodingSupported(Uri fileUri) throws IOException {
+        MediaFormat sourceFormat = getVideoTrackFormat(fileUri);
+        if (sourceFormat != null) {
+            // Since destination format is not available, we assume width, height and
+            // frame rate same as source format, and mime as AVC for destination format.
+            MediaFormat destinationFormat = new MediaFormat();
+            destinationFormat.setString(MediaFormat.KEY_MIME, MIME_TYPE);
+            destinationFormat.setInteger(MediaFormat.KEY_WIDTH,
+                    sourceFormat.getInteger(MediaFormat.KEY_WIDTH));
+            destinationFormat.setInteger(MediaFormat.KEY_HEIGHT,
+                    sourceFormat.getInteger(MediaFormat.KEY_HEIGHT));
+            if (sourceFormat.containsKey(MediaFormat.KEY_FRAME_RATE)) {
+                destinationFormat.setInteger(MediaFormat.KEY_FRAME_RATE,
+                        sourceFormat.getInteger(MediaFormat.KEY_FRAME_RATE));
+            }
+            return isFormatSupported(sourceFormat, false)
+                    && isFormatSupported(destinationFormat, true);
+        }
+        return false;
     }
 
     private boolean isFormatSupported(MediaFormat format, boolean isEncoder) {

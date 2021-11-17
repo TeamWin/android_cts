@@ -38,6 +38,7 @@ android_test_helper_app {
         "compatibility-device-util-axt",
     ],
     // Disable by default
+    enforce_uses_libs: false,
     dex_preopt: {
         enabled: false,
     },

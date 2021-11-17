@@ -158,8 +158,6 @@ public class PolicyTransparencyTestListActivity extends PassFailButtons.TestList
                 continue;
             }
 
-            String action = intent.getStringExtra(
-                    PolicyTransparencyTestActivity.EXTRA_SETTINGS_INTENT_ACTION);
             if (mMode == MODE_MANAGED_PROFILE && !ALSO_VALID_FOR_MANAGED_PROFILE.contains(test)) {
                 continue;
             }

@@ -322,7 +322,7 @@ public class AdbUserParser30 extends AdbUserParser26 {
             for (String baseType : userTypeString.split("mBaseType: ", 2)[1]
                     .split("\n")[0].split("\\|")) {
                 if (!baseType.isEmpty()) {
-                    userType.mBaseType.add(UserType.BaseType.valueOf(baseType));
+                    userType.mBaseType.add(baseType);
                 }
             }
 

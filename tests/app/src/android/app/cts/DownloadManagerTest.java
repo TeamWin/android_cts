@@ -24,6 +24,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
@@ -697,6 +698,8 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
 
     @Test
     public void testDownload_onMediaStoreDownloadsDeleted() throws Exception {
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+
         // prepare file
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS), "cts" + System.nanoTime() + ".mp3");
