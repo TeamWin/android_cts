@@ -38,6 +38,7 @@ android_test {
         "androidx.test.ext.truth",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "cts-wm-util",
         "testng",
     ],
 
