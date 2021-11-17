@@ -1357,7 +1357,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     @CddTest(requirement="9.7")
     @Test
     public void testDrmServerDomain() throws DeviceNotAvailableException {
-        assertDomainZeroOrOne("u:r:drmserver:s0", "/system/bin/drmserver");
+        assertDomainN("u:r:drmserver:s0", "/system/bin/drmserver", "/system/bin/drmserver64");
     }
 
     /* Installd is always running */
