@@ -21,7 +21,12 @@ import android.os.Bundle;
 import android.signature.cts.AnnotationChecker;
 import android.signature.cts.ApiDocumentParser;
 
+import android.signature.cts.LogHelper;
+import android.util.Log;
+import androidx.test.InstrumentationRegistry;
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.PropertyUtil;
+import java.util.List;
 
 /**
  * Checks that parts of the device's API that are annotated (e.g. with android.annotation.SystemApi)
@@ -30,14 +35,28 @@ import com.android.compatibility.common.util.PropertyUtil;
 public class AnnotationTest extends AbstractApiTest {
 
     private static final String TAG = AnnotationTest.class.getSimpleName();
+    private static final String MODULE_NAME = "CtsSystemApiAnnotationTestCases";
 
     private String[] expectedApiFiles;
     private String annotationForExactMatch;
+    private List<String> expectedFailures;
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
         expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
         annotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
+
+        // Make sure that the Instrumentation provided to this test is registered so it can be
+        // retrieved by the DynamicConfigDeviceSide below.
+        InstrumentationRegistry.registerInstance(getInstrumentation(), new Bundle());
+
+        // Get the DynamicConfig.xml contents and extract the expected failures list.
+        DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(MODULE_NAME);
+        expectedFailures = dcds.getValues("expected_failures");
+        Log.d(TAG, "Expected failure count: " + expectedFailures.size());
+        for (String failure: expectedFailures) {
+            Log.d(TAG, "Expected failure: \"" + failure + "\"");
+        }
     }
 
     /**
@@ -47,7 +66,7 @@ public class AnnotationTest extends AbstractApiTest {
     public void testAnnotation() {
         if ("true".equals(PropertyUtil.getProperty("ro.treble.enabled")) &&
                 PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1) {
-            runWithTestResultObserver(resultObserver -> {
+            runWithTestResultObserver(expectedFailures, resultObserver -> {
                 AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
                         classProvider, annotationForExactMatch);
 
