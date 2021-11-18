@@ -28,7 +28,7 @@ CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
 class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
   """Test camera launch latency for S performance class as specified in CDD.
 
-  [7.5/H-1-7] MUST have camera2 startup latency (open camera to first preview
+  [7.5/H-1-6] MUST have camera2 startup latency (open camera to first preview
   frame) < 600ms as measured by the CTS camera PerformanceTest under ITS
   lighting conditions (3000K) for both primary cameras.
   """
