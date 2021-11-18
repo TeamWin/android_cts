@@ -47,7 +47,8 @@ public final class ProfileOwner extends DevicePolicyController {
 
     @Override
     public void remove() {
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)
+                || TestApis.packages().instrumented().isInstantApp()) {
             removePreS();
             return;
         }

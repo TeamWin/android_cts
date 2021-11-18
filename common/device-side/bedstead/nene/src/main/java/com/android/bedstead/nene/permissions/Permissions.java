@@ -214,6 +214,15 @@ public final class Permissions {
             return;
         }
 
+        if (TestApis.packages().instrumented().isInstantApp()) {
+            // Instant Apps aren't able to know the permissions of shell so we can't know if we can
+            // adopt it - we'll assume we can adopt and log
+            Log.i(LOG_TAG,
+                    "Adopting all shell permissions as can't check shell: " + mPermissionContexts);
+            ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity();
+            return;
+        }
+
         if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
             ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
         }
@@ -373,6 +382,7 @@ public final class Permissions {
         mExistingPermissions = ShellCommandUtils.uiAutomation().getAdoptedShellPermissions();
     }
 
+    @SuppressWarnings("NewApi")
     private void restoreExistingPermissions() {
         if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
             return;
