@@ -302,6 +302,7 @@
              android:configChanges="orientation|screenLayout|keyboard|keyboardHidden|navigation"
              android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$TestActivity"
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
              android:turnScreenOn="true"
              android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$FullscreenTestActivity"/>
@@ -309,8 +310,6 @@
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$ImmersiveFullscreenTestActivity"
              android:documentLaunchMode="always"
              android:theme="@style/no_animation"/>
-        <activity android:name="android.server.wm.WindowInsetsPolicyTest$NaturalOrientationTestActivity"
-                  android:screenOrientation="nosensor"/>
         <activity android:name="android.server.wm.LayoutTests$TestActivity"
              android:theme="@style/no_animation"/>
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"

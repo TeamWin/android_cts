@@ -1,4 +1,4 @@
-// Copyright (C) 2021 The Android Open Source Project
+// Copyright (C) 2014 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,32 +16,9 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsCarBuiltinApiTestCases",
+android_test_helper_app {
+    name: "CtsLocaleManagerTestDeviceApp",
     defaults: ["cts_defaults"],
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-
-    srcs: [
-        "src/**/*.java",
-        "src/**/*.aidl",
-    ],
-    resource_dirs: ["res"],
-    libs: [
-        "android.car.builtin",
-        "android.test.base",
-    ],
-    static_libs: [
-        "androidx.test.rules",
-        "androidx.test.ext.truth",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "cts-wm-util",
-        "testng",
-    ],
-
-    platform_apis: true,
-    sdk_version: "module_current",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
 }
