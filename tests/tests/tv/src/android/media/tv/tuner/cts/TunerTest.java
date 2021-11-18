@@ -1464,10 +1464,10 @@ public class TunerTest {
         Filter f = createFilterForSharedFilterTest(mTuner, getExecutor(), getFilterCallback());
         assertTrue(f != null);
 
-        String token1 = f.createSharedFilter();
+        String token1 = f.acquireSharedFilterToken();
         assertTrue(token1 != null);
 
-        String token2 = f.createSharedFilter();
+        String token2 = f.acquireSharedFilterToken();
         assertTrue(token2 == null);
 
         // Tune a frontend before start the filter
@@ -1504,14 +1504,14 @@ public class TunerTest {
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
 
-        f.releaseSharedFilter(token1);
+        f.freeSharedFilterToken(token1);
         f.close();
         f = null;
     }
 
     @Test
     public void testSharedFilterTwoProcessesCloseInSharedFilter() throws Exception {
-        String token = mSharedFilterTestServer.createSharedFilter();
+        String token = mSharedFilterTestServer.acquireSharedFilterToken();
         assertTrue(token != null);
         SharedFilter f =
                 Tuner.openSharedFilter(mContext, token, getExecutor(), getSharedFilterCallback());
@@ -1533,7 +1533,7 @@ public class TunerTest {
 
     @Test
     public void testSharedFilterTwoProcessesCloseInFilter() throws Exception {
-        String token = mSharedFilterTestServer.createSharedFilter();
+        String token = mSharedFilterTestServer.acquireSharedFilterToken();
         assertTrue(token != null);
 
         SharedFilter f =
@@ -1555,7 +1555,7 @@ public class TunerTest {
 
     @Test
     public void testSharedFilterTwoProcessesReleaseInFilter() throws Exception {
-        String token = mSharedFilterTestServer.createSharedFilter();
+        String token = mSharedFilterTestServer.acquireSharedFilterToken();
         assertTrue(token != null);
 
         SharedFilter f =
@@ -1568,7 +1568,7 @@ public class TunerTest {
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);
-        mSharedFilterTestServer.releaseSharedFilter(token);
+        mSharedFilterTestServer.freeSharedFilterToken(token);
         assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         mLockLatch = null;
 
@@ -1582,7 +1582,7 @@ public class TunerTest {
         Filter f = createFilterForSharedFilterTest(mTuner, getExecutor(), getFilterCallback());
         assertTrue(f != null);
 
-        String token = f.createSharedFilter();
+        String token = f.acquireSharedFilterToken();
         assertTrue(token != null);
 
         // Tune a frontend before start the shared filter
@@ -1597,7 +1597,7 @@ public class TunerTest {
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
 
-        f.releaseSharedFilter(token);
+        f.freeSharedFilterToken(token);
         f.close();
         f = null;
     }

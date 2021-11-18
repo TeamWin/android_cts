@@ -17,8 +17,8 @@
 package android.media.tv.tuner.cts;
 
 interface ISharedFilterTestServer {
-    String createSharedFilter();
+    String acquireSharedFilterToken();
     void closeFilter();
-    void releaseSharedFilter(String token);
+    void freeSharedFilterToken(String token);
     boolean verifySharedFilter(String token);
 }

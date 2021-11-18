@@ -57,7 +57,7 @@ public class SharedFilterTestService extends Service {
 
     private class SharedFilterTestServer extends ISharedFilterTestServer.Stub {
         @Override
-        public String createSharedFilter() {
+        public String acquireSharedFilterToken() {
             mFilter = TunerTest.createFilterForSharedFilterTest(
                     mTuner, getExecutor(), getFilterCallback());
 
@@ -66,7 +66,7 @@ public class SharedFilterTestService extends Service {
             mTuner.tune(TunerTest.createFrontendSettings(infos.get(0)));
             mTuning = true;
 
-            return mFilter.createSharedFilter();
+            return mFilter.acquireSharedFilterToken();
         }
 
         @Override
@@ -80,12 +80,12 @@ public class SharedFilterTestService extends Service {
         }
 
         @Override
-        public void releaseSharedFilter(String token) {
+        public void freeSharedFilterToken(String token) {
             if (mTuning) {
                 mTuner.cancelTuning();
                 mTuning = false;
             }
-            mFilter.releaseSharedFilter(token);
+            mFilter.freeSharedFilterToken(token);
         }
 
         @Override
