@@ -25,8 +25,9 @@
          tests into CTS, but until then, they should be excluded. -->
     <option name="compatibility:exclude-filter" value="CtsTestHarnessModeTestCases" />
 
-    <!-- Exclude CtsMultiDeviceTestCases - in developing -->
+    <!-- Exclude multi device test cases - in developing -->
     <option name="compatibility:exclude-filter" value="CtsSampleMultiDeviceTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsSampleMoblyTestCases" />
 
     <!-- Exclude downstreaming tests from CTS, i.e. tests added after the
          first major release for this API level (They are pulled into GTS

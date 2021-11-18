@@ -98,6 +98,12 @@ public class ValidateTestsAbi {
          * This binary is a host side helper, so we do not need to check it.
          */
         BINARY_EXCEPTIONS.add("sepolicy-analyze");
+
+        /**
+         * This binary is a python script.
+         * TODO(b/207155369): Update ValidateTestsAbi to exampt abi checking for all Python scripts.
+         */
+        BINARY_EXCEPTIONS.add("CtsSampleMoblyTestCases");
     }
 
     private static final String BINARY_EXCEPTIONS_REGEX [] = {
