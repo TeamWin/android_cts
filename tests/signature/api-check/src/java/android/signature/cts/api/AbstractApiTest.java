@@ -19,8 +19,10 @@ import android.os.Bundle;
 import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.ClassProvider;
 import android.signature.cts.ExcludingClassProvider;
+import android.signature.cts.ExpectedFailuresFilter;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
+import android.signature.cts.ResultObserver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,9 +33,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import org.xmlpull.v1.XmlPullParserException;
@@ -74,13 +76,21 @@ public class AbstractApiTest extends InstrumentationTestCase {
 
     }
 
-    protected interface RunnableWithTestResultObserver {
-        void run(TestResultObserver observer) throws Exception;
+    protected interface RunnableWithResultObserver {
+        void run(ResultObserver observer) throws Exception;
     }
 
-    void runWithTestResultObserver(RunnableWithTestResultObserver runnable) {
+    void runWithTestResultObserver(RunnableWithResultObserver runnable) {
+        runWithTestResultObserver(Collections.emptyList(), runnable);
+    }
+
+    void runWithTestResultObserver(Collection<String> expectedFailures, RunnableWithResultObserver runnable) {
         try {
-            runnable.run(mResultObserver);
+            ResultObserver observer = mResultObserver;
+            if (!expectedFailures.isEmpty()) {
+                observer = new ExpectedFailuresFilter(observer, expectedFailures);
+            }
+            runnable.run(observer);
         } catch (Exception e) {
             StringWriter writer = new StringWriter();
             writer.write(e.toString());
