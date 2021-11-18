@@ -16,6 +16,8 @@
 
 package android.telephony.cts;
 
+import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -25,11 +27,10 @@ import android.hardware.radio.RadioResponseType;
 import android.os.Binder;
 import android.os.IBinder;
 import android.sysprop.TelephonyProperties;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,7 @@ public class MockModemService extends Service {
     public static final String PHONE_ID = "phone_id";
 
     private static Context sContext;
+    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
     private static IRadioConfigImpl sIRadioConfigImpl;
     private static IRadioModemImpl sIRadioModemImpl;
     private static IRadioSimImpl sIRadioSimImpl;
@@ -72,7 +74,10 @@ public class MockModemService extends Service {
             LATCH_RADIO_INTERFACES_READY + 1;
     public static final int TOTAL_LATCH_NUMBER = LATCH_MAX + 2;
 
-    private int mSimNumber;
+    private TelephonyManager mTelephonyManager;
+    private int mNumOfSim;
+    private int mNumOfPhone;
+    private static final int DEFAULT_SUB_ID = 0;
 
     private Object mLock;
     protected static CountDownLatch[] sLatches;
@@ -89,7 +94,11 @@ public class MockModemService extends Service {
     public void onCreate() {
         Log.d(TAG, "Mock Modem Service Created");
 
-        mSimNumber = 1; // TODO: Read property to know the device is single SIM or DSDS
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mTelephonyManager = sContext.getSystemService(TelephonyManager.class);
+        mNumOfSim = getNumPhysicalSlots();
+        mNumOfPhone = mTelephonyManager.getActiveModemCount();
+        Log.d(TAG, "Support number of phone = " + mNumOfPhone + ", number of SIM = " + mNumOfSim);
 
         mLock = new Object();
 
@@ -99,14 +108,20 @@ public class MockModemService extends Service {
         }
 
         int radioInterfaceNumber =
-                IRADIO_CONFIG_INTERFACE_NUMBER + mSimNumber * IRADIO_INTERFACE_NUMBER;
+                IRADIO_CONFIG_INTERFACE_NUMBER + mNumOfPhone * IRADIO_INTERFACE_NUMBER;
         sLatches[LATCH_RADIO_INTERFACES_READY] = new CountDownLatch(radioInterfaceNumber);
         sLatches[LATCH_MOCK_MODEM_INITIALIZATION_READY] = new CountDownLatch(1);
 
-        sContext = InstrumentationRegistry.getInstrumentation().getContext();
-        sIRadioConfigImpl = new IRadioConfigImpl(this);
-        sIRadioModemImpl = new IRadioModemImpl(this);
-        sIRadioSimImpl = new IRadioSimImpl(this);
+        sMockModemConfigInterfaces = new MockModemConfigBase[mNumOfPhone];
+        for (int i = 0; i < mNumOfPhone; i++) {
+            sMockModemConfigInterfaces[i] =
+                    new MockModemConfigBase(sContext, i, mNumOfSim, mNumOfPhone);
+        }
+
+        sIRadioConfigImpl = new IRadioConfigImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
+        // TODO: Support DSDS
+        sIRadioModemImpl = new IRadioModemImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
+        sIRadioSimImpl = new IRadioSimImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
         sIRadioNetworkImpl = new IRadioNetworkImpl(this);
         sIRadioDataImpl = new IRadioDataImpl(this);
         sIRadioMessagingImpl = new IRadioMessagingImpl(this);
@@ -233,7 +248,6 @@ public class MockModemService extends Service {
         int numPhysicalSlots =
                 sContext.getResources()
                         .getInteger(com.android.internal.R.integer.config_num_physical_slots);
-        Log.d(TAG, "numPhysicalSlots: " + numPhysicalSlots);
         return numPhysicalSlots;
     }
 
@@ -284,6 +298,11 @@ public class MockModemService extends Service {
 
         boolean status = false;
 
+        // Sync mock modem status between modules
+        for (int i = 0; i < mNumOfPhone; i++) {
+            sMockModemConfigInterfaces[i].notifyAllRegistrantNotifications();
+        }
+
         sIRadioModemImpl.rilConnected();
 
         status = initRadioState();
@@ -301,6 +320,7 @@ public class MockModemService extends Service {
         countDownLatch(LATCH_MOCK_MODEM_INITIALIZATION_READY);
     }
 
+    // Helper method implementation
     public void unsolSimSlotsStatusChanged() {
         sIRadioConfigImpl.unsolSimSlotsStatusChanged();
         sIRadioSimImpl.simStatusChanged();
@@ -308,17 +328,15 @@ public class MockModemService extends Service {
 
     public void setSimPresent(int slotId) {
         Log.d(TAG, "setSimPresent");
-
-        sIRadioSimImpl.setSimPresent(slotId);
-        sIRadioConfigImpl.setSimPresent(slotId);
+        sMockModemConfigInterfaces[slotId].setSimPresent(true, TAG);
     }
 
     /**
      * Change the response error per specific RIL request
      *
      * @param requestId the request/response message ID
-     * @param error RIL_Errno and -1 means to disable the modifed mechanism,
-     *  back to original mock modem behavior
+     * @param error RIL_Errno and -1 means to disable the modifed mechanism, back to original mock
+     *     modem behavior
      */
     public void forceErrorResponse(int requestId, int error) {
         Log.d(TAG, "setReturnResponseError for request:" + requestId + " ,error:" + error);
