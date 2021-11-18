@@ -89,11 +89,10 @@ public class ExtensionTest extends JetpackExtensionTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        ExtensionUtils.assumeSupportedDevice(mContext);
 
         // Launch activity after the ActivityManagerTestBase clean all package states.
         mActivity = mActivityTestRule.launchActivity(new Intent());
-        ExtensionUtils.assumeSupportedDevice(mActivity);
-
         mExtension = ExtensionUtils.getInterfaceCompat(mActivity);
         assertThat(mExtension).isNotNull();
         mWindowToken = getActivityWindowToken(mActivity);

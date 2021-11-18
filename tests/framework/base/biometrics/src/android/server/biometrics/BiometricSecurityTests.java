@@ -163,7 +163,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                 testBiometricStrength_forSensor_authDisallowed(sensorId,
                         testCases[i][0] /* originalStrength */,
                         testCases[i][1] /* requestedStrength */,
-                        sensors.size() > 1 /* hasMultiSensors */);
+                        mSensorProperties.size() > 1 /* hasMultiSensors */);
             }
         }
     }
@@ -505,7 +505,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
                         testCases[i][0] /* originalStrength */,
                         testCases[i][1] /* targetStrength */,
                         testCases[i][2] /* requestedStrength */,
-                        sensors.size() > 1 /* hasMultiSensors */);
+                        mSensorProperties.size() > 1 /* hasMultiSensors */);
             }
         }
     }

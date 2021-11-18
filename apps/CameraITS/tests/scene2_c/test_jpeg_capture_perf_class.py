@@ -22,7 +22,7 @@ import camera_properties_utils
 import its_base_test
 import its_session_utils
 
-JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD = 1000  # ms
+JPEG_CAPTURE_PERFORMANCE_CLASS_THRESHOLD = 1000  # ms
 
 
 class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
@@ -41,7 +41,7 @@ class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
         camera_id=self.camera_id) as cam:
 
       camera_properties_utils.skip_unless(
-          cam.is_performance_class_primary_camera())
+          cam.get_performance_class_level() >= 11)
 
       # Load chart for scene.
       props = cam.get_camera_properties()
@@ -55,10 +55,10 @@ class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
         camera_id=self.camera_id)
 
     jpeg_capture_ms = cam.measure_camera_1080p_jpeg_capture_ms()
-    if jpeg_capture_ms >= JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD:
+    if jpeg_capture_ms >= JPEG_CAPTURE_PERFORMANCE_CLASS_THRESHOLD:
       raise AssertionError(f'1080p jpeg capture time: {jpeg_capture_ms} ms, '
                            f'THRESH: '
-                           f'{JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD} ms')
+                           f'{JPEG_CAPTURE_PERFORMANCE_CLASS_THRESHOLD} ms')
     else:
       logging.debug('1080p jpeg capture time: %.1f ms', jpeg_capture_ms)
 

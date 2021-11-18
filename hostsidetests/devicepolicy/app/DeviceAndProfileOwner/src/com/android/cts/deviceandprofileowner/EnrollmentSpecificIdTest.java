@@ -126,7 +126,8 @@ public class EnrollmentSpecificIdTest extends BaseDeviceAdminTest {
         if (hardwareIdentifier == null) {
             hardwareIdentifier = "";
         }
-        return String.format("%16s", hardwareIdentifier);
+        String hwIdentifier = String.format("%16s", hardwareIdentifier);
+        return hwIdentifier.substring(0, 16);
     }
 
     private static String getPaddedProfileOwnerName(String profileOwnerPackage) {

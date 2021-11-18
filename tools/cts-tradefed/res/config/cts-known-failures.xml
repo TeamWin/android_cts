@@ -237,15 +237,16 @@
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.inline.InlineSimpleSaveActivityTest#testAutofill_oneDatasetAndSave" />
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases[instant] android.autofillservice.cts.inline.InlineSimpleSaveActivityTest#testAutofill_oneDatasetAndSave" />
 
-    <!-- b/195580880 -->
-    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.PkgInstallSignatureVerificationTest#testInstallV4UpdateAfterRotation" />
-
     <!-- b/194293021 -->
     <option name="compatibility:exclude-filter" value="CtsPrintTestCases" />
     <option name="compatibility:exclude-filter" value="CtsPrintTestCases[instant]" />
 
     <!-- b/194146521 -->
     <option name="compatibility:exclude-filter" value="CtsPermission3TestCases android.permission3.cts.PermissionTest23#testNoResidualPermissionsOnUninstall" />
+ 
+    <!-- b/198992105 -->
+    <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionState" />
+    <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionStateSampled" />
 
     <!-- b/202357331 -->
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testCreateAdminSupportIntent" />

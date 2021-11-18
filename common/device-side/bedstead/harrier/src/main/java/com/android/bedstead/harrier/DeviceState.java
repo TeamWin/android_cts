@@ -990,7 +990,6 @@ public final class DeviceState implements TestRule {
             UserType forUser,
             boolean hasProfileOwner,
             boolean profileOwnerIsPrimary) {
-        requireFeature("android.software.managed_users", FailureMode.SKIP);
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(profileType, FailureMode.SKIP);
 
@@ -1023,8 +1022,6 @@ public final class DeviceState implements TestRule {
     }
 
     private void ensureHasNoProfile(String profileType, UserType forUser) {
-        requireFeature("android.software.managed_users", FailureMode.SKIP);
-
         UserReference forUserReference = resolveUserTypeToUser(forUser);
         com.android.bedstead.nene.users.UserType resolvedProfileType =
                 sTestApis.users().supportedType(profileType);
