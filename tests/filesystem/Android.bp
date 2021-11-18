@@ -30,5 +30,5 @@ android_test {
         "cts",
         "general-tests",
     ],
-    sdk_version: "test_current",
+    min_sdk_version: "30",
 }
