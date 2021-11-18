@@ -65,10 +65,13 @@ public class BluetoothTestActivity extends PassFailButtons.TestListActivity {
                   "com.android.cts.verifier.bluetooth.BleAdvertiserTestActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleServerTestBaseActivity");
+            disabledTestArray.add("com.android.cts.verifier.bluetooth.BleClientTestBaseActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleScannerTestActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleConnectionPriorityServerBaseActivity");
+            disabledTestArray.add(
+                    "com.android.cts.verifier.bluetooth.BleConnectionPriorityClientBaseActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleInsecureServerTestListActivity");
             disabledTestArray.add(
@@ -77,6 +80,14 @@ public class BluetoothTestActivity extends PassFailButtons.TestListActivity {
                   "com.android.cts.verifier.bluetooth.BleCocSecureServerTestListActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleCocInsecureServerTestListActivity");
+            disabledTestArray.add(
+                    "com.android.cts.verifier.bluetooth.BleInsecureClientTestListActivity");
+            disabledTestArray.add(
+                    "com.android.cts.verifier.bluetooth.BleSecureClientTestListActivity");
+            disabledTestArray.add(
+                    "com.android.cts.verifier.bluetooth.BleCocSecureClientTestListActivity");
+            disabledTestArray.add(
+                    "com.android.cts.verifier.bluetooth.BleCocInsecureClientTestListActivity");
         }
         setTestListAdapter(new ManifestTestListAdapter(this, getClass().getName(),
                 disabledTestArray.toArray(new String[disabledTestArray.size()])));
