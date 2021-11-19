@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import android.media.AudioFormat;
 import android.os.Parcel;
 
@@ -277,5 +279,32 @@ public class AudioFormatTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_OUT_9POINT1POINT6));
         assertTrue(subsetOf(AudioFormat.CHANNEL_OUT_13POINT_360RA,
                 AudioFormat.CHANNEL_OUT_22POINT2));
+    }
+
+    /**
+     * Test AudioFormat Builder error handling.
+     *
+     * @throws Exception
+     */
+    public void testAudioFormatBuilderError() throws Exception {
+        final int BIGNUM = Integer.MAX_VALUE;
+
+        // Note: setChannelMask() and setChannelIndexMask() are
+        // validated when used, i.e. in AudioTrack and AudioRecord.
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new AudioFormat.Builder()
+                    .setEncoding(BIGNUM)
+                    .build();
+        });
+
+        // Sample rate out of bounds. These cases caught in AudioFormat.
+        for (int sampleRate : new int[] {-BIGNUM, -1, BIGNUM}) {
+            assertThrows(IllegalArgumentException.class, () -> {
+                new AudioFormat.Builder()
+                        .setSampleRate(sampleRate)
+                        .build();
+            });
+        }
     }
 }
