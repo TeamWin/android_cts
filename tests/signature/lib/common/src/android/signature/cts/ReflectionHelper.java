@@ -27,6 +27,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,6 +36,7 @@ import java.util.Set;
  * Uses reflection to obtain runtime representations of elements in the API.
  */
 public class ReflectionHelper {
+    private static final String TAG = "ReflectionHelper";
 
     /**
      * Finds the reflected class for the class under test.
@@ -127,6 +129,16 @@ public class ReflectionHelper {
      */
     static Constructor<?> findMatchingConstructor(Class<?> runtimeClass,
             JDiffClassDescription.JDiffConstructor jdiffDes) {
+        try {
+            return findMatchingConstructorImpl(runtimeClass, jdiffDes);
+        } catch (NoClassDefFoundError e) {
+            LogHelper.loge(TAG + ": Could not retrieve constructors of " + runtimeClass, e);
+            return null;
+        }
+    }
+
+    static Constructor<?> findMatchingConstructorImpl(Class<?> runtimeClass,
+            JDiffClassDescription.JDiffConstructor jdiffDes) {
         for (Constructor<?> c : runtimeClass.getDeclaredConstructors()) {
             Type[] params = c.getGenericParameterTypes();
             boolean isStaticClass = ((runtimeClass.getModifiers() & Modifier.STATIC) != 0);
@@ -207,6 +219,16 @@ public class ReflectionHelper {
      * @return the reflected method, or null if not found.
      */
     static Method findMatchingMethod(Class<?> runtimeClass,
+        JDiffClassDescription.JDiffMethod method) {
+        try {
+            return findMatchingMethodImpl(runtimeClass, method);
+        } catch (NoClassDefFoundError e) {
+            LogHelper.loge(TAG + ": Could not retrieve methods of " + runtimeClass, e);
+            return null;
+        }
+    }
+
+    static Method findMatchingMethodImpl(Class<?> runtimeClass,
             JDiffClassDescription.JDiffMethod method) {
 
         // Search through the class to find the methods just in case the method was actually
@@ -402,6 +424,17 @@ public class ReflectionHelper {
      */
     public static Set<Constructor<?>> getAnnotatedConstructors(Class<?> clazz,
             Class<? extends Annotation> annotation) {
+        try {
+            return getAnnotatedConstructorsImpl(clazz, annotation);
+        } catch (NoClassDefFoundError e) {
+            LogHelper.loge(TAG + ": Could not retrieve constructors of " + clazz
+                + " annotated with " + annotation, e);
+            return Collections.emptySet();
+        }
+    }
+
+    private static Set<Constructor<?>> getAnnotatedConstructorsImpl(Class<?> clazz,
+        Class<? extends Annotation> annotation) {
         Set<Constructor<?>> result = new HashSet<>();
         if (annotation != null) {
             for (Constructor<?> c : clazz.getDeclaredConstructors()) {
@@ -425,6 +458,17 @@ public class ReflectionHelper {
      */
     public static Set<Method> getAnnotatedMethods(Class<?> clazz,
             Class<? extends Annotation> annotation) {
+        try {
+            return getAnnotatedMethodsImpl(clazz, annotation);
+        } catch (NoClassDefFoundError e) {
+            LogHelper.loge(TAG + ": Could not retrieve methods of " + clazz
+                + " annotated with " + annotation, e);
+            return Collections.emptySet();
+        }
+    }
+
+    private static Set<Method> getAnnotatedMethodsImpl(Class<?> clazz,
+        Class<? extends Annotation> annotation) {
         Set<Method> result = new HashSet<>();
         if (annotation != null) {
             for (Method m : clazz.getDeclaredMethods()) {
@@ -441,6 +485,17 @@ public class ReflectionHelper {
      * Returns a list of fields which are annotated with the given annotation class.
      */
     public static Set<Field> getAnnotatedFields(Class<?> clazz,
+        Class<? extends Annotation> annotation) {
+        try {
+            return getAnnotatedFieldsImpl(clazz, annotation);
+        } catch (NoClassDefFoundError e) {
+            LogHelper.loge(TAG + ": Could not retrieve fields of " + clazz
+                + " annotated with " + annotation, e);
+            return Collections.emptySet();
+        }
+    }
+
+    private static Set<Field> getAnnotatedFieldsImpl(Class<?> clazz,
             Class<? extends Annotation> annotation) {
         Set<Field> result = new HashSet<>();
         if (annotation != null) {
