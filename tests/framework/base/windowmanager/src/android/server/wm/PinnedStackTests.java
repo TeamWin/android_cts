@@ -1300,6 +1300,19 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testAutoPipOnLaunchingAnotherActivity() {
+        // Launch the PIP activity and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+        assertPinnedStackDoesNotExist();
+
+        // Launch another and ensure that there is a pinned stack.
+        launchActivity(TEST_ACTIVITY);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
+    }
+
+    @Test
     public void testMaxNumberOfActions() {
         final int maxNumberActions = ActivityTaskManager.getMaxNumPictureInPictureActions(mContext);
         assertThat(maxNumberActions, greaterThanOrEqualTo(3));
