@@ -353,8 +353,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_USB_FILE_TRANSFER
-        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (FeatureUtil.isUsbFileTransferSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
                     R.string.device_owner_disallow_usb_file_transfer_test,
                     R.string.device_owner_disallow_usb_file_transfer_test_info,
