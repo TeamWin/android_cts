@@ -26,6 +26,7 @@ import android.graphics.Color;
 import android.graphics.cts.utils.Cam;
 import android.util.Pair;
 
+
 import androidx.annotation.ColorInt;
 import androidx.core.graphics.ColorUtils;
 import androidx.test.filters.SmallTest;
@@ -35,15 +36,18 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class SystemPaletteTest {
 
     // Hue goes from 0 to 360
-    private static final int MAX_HUE_DISTANCE = 30;
+    private static final int MAX_HUE_DISTANCE = 12;
 
     @Test
     public void testShades0and1000() {
@@ -72,14 +76,54 @@ public class SystemPaletteTest {
                 getAllAccent2Colors(context), getAllAccent3Colors(context),
                 getAllNeutral1Colors(context), getAllNeutral2Colors(context));
 
+        final float[] tones = {100, 99, 95, 90, 80, 70, 60, 49, 40, 30, 20, 10, 0};
         for (int[] palette : allPalettes) {
-            for (int i = 3; i < palette.length - 1; i++) {
-                assertWithMessage("Color " + Integer.toHexString((palette[i - 1]))
-                        + " has different hue compared to " + Integer.toHexString(palette[i])
-                        + " for palette: " + Arrays.toString(palette))
-                        .that(similarHue(palette[i - 1], palette[i])).isTrue();
+            // Determine the median hue of the palette. Each color in the palette colors will have
+            // its hue measured against the median hue. If the difference is too large, the test
+            // fails.
+            List<Float> hues = new ArrayList<>();
+            for (int i = 0; i < palette.length - 1; i++) {
+                // Avoid measuring hue of colors above 90 or below 10 in tone.
+                //
+                // Converting from HCT to sRGB from display quantizes colors - i.e. not every
+                // HCT color can be expressed in sRGB. As colors approach the extreme tones, white
+                // at 100 and black at 0, hues begin overlapping overlay - made up example: hues
+                // 110 to 128 at tone 95, when mapped to sRGB for display, all end up being measured
+                // as hue 114.
+                final float tone = tones[i];
+                if (tone < 10.0 || tone > 90.0) {
+                    continue;
+                }
+                final Cam cam = Cam.fromInt(palette[i]);
+                hues.add(cam.getHue());
+            }
+            Collections.sort(hues);
+            final float medianHue = hues.get(hues.size() / 2);
+
+            // Measure the hue of each color in the palette against the median hue.
+            for (int i = 0; i < palette.length - 1; i++) {
+                final float tone = tones[i];
+                // Skip testing hue of extreme tones, due to overlap due to quantization that occurs
+                // when converting from HCT to sRGB for display.
+                if (tone < 10.0 || tone > 90.0) {
+                    continue;
+                }
+                final Cam cam = Cam.fromInt(palette[i]);
+                final float hue = cam.getHue();
+                final boolean hueWithinTolerance = deltaHueWithinTolerance(hue, medianHue);
+                assertWithMessage("Color " + toHctString(cam)
+                        + " has different hue compared to median hue " + Math.round(medianHue)
+                        + " of palette: " + Arrays.toString(palette))
+                        .that(hueWithinTolerance).isTrue();
             }
         }
+    }
+
+    private static String toHctString(Cam cam) {
+        final double[] labColor = new double[3];
+        ColorUtils.colorToLAB(cam.viewedInSrgb(), labColor);
+        return "H" + Math.round(cam.getHue()) + " C" + Math.round(cam.getChroma()) + " T"
+                + Math.round(labColor[0]);
     }
 
     /**
@@ -89,12 +133,10 @@ public class SystemPaletteTest {
      * @param colorB Color 2
      * @return True when colors have similar hue.
      */
-    private boolean similarHue(@ColorInt int colorA, @ColorInt int colorB) {
-        final Cam camA = Cam.fromInt(colorA);
-        final Cam camB = Cam.fromInt(colorB);
+    private boolean deltaHueWithinTolerance(float hueA, float hueB) {
 
-        float hue1 = Math.max(camA.getHue(), camB.getHue());
-        float hue2 = Math.min(camA.getHue(), camB.getHue());
+        float hue1 = Math.max(hueA, hueB);
+        float hue2 = Math.min(hueA, hueB);
 
         float diffDegrees = 180.0f - Math.abs(Math.abs(hue1 - hue2) - 180.0f);
         return diffDegrees < MAX_HUE_DISTANCE;
