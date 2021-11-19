@@ -16,8 +16,11 @@
 
 package android.telecom.cts;
 
+import static android.app.role.RoleManager.ROLE_CALL_SCREENING;
 import static android.telecom.cts.TestUtils.shouldTestTelecom;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.app.role.RoleManager;
 import android.content.ContentResolver;
 import android.telecom.cts.MockCallScreeningService.CallScreeningServiceCallbacks;
 
@@ -25,6 +28,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Process;
+import android.os.UserHandle;
 import android.telecom.Call;
 import android.telecom.CallScreeningService;
 import android.telecom.Connection;
@@ -34,6 +39,8 @@ import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class CallScreeningServiceTest extends InstrumentationTestCase {
     private static final Uri TEST_NUMBER = Uri.fromParts("tel", "7", null);
+    private static final int ASYNC_TIMEOUT = 10000;
 
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE = new PhoneAccountHandle(
             new ComponentName(TestUtils.PACKAGE, TestUtils.COMPONENT),
@@ -55,6 +63,7 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
             .build();
 
     private Context mContext;
+    private RoleManager mRoleManager;
     private TelecomManager mTelecomManager;
     private String mPreviousDefaultDialer;
     MockConnectionService mConnectionService;
@@ -68,6 +77,8 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
         mContext = getInstrumentation().getContext();
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         if (shouldTestTelecom(mContext)) {
+            mRoleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
+            clearRoleHoldersAsUser(ROLE_CALL_SCREENING);
             mPreviousDefaultDialer = TestUtils.getDefaultDialer(getInstrumentation());
             TestUtils.setDefaultDialer(getInstrumentation(), TestUtils.PACKAGE);
             setupConnectionService();
@@ -218,6 +229,26 @@ public class CallScreeningServiceTest extends InstrumentationTestCase {
                 lock.release();
             }
         };
+    }
+
+    private void clearRoleHoldersAsUser(String roleName)
+            throws Exception {
+        UserHandle user = Process.myUserHandle();
+        Executor executor = mContext.getMainExecutor();
+        LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
+
+        runWithShellPermissionIdentity(() -> mRoleManager.clearRoleHoldersAsUser(roleName,
+                RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
+                user, executor,
+                successful -> {
+                    try {
+                        queue.put(successful);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }));
+        boolean result = queue.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+        assertTrue(result);
     }
 
     private void setupConnectionService() throws Exception {
