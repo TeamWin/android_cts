@@ -215,6 +215,14 @@ public class PackageManagerTest {
             STUB_PACKAGE_NAME, ".StubActivity");
     private static final ComponentName STUB_SERVICE_COMPONENT = ComponentName.createRelative(
             STUB_PACKAGE_NAME, ".StubService");
+    private static final ComponentName RESET_ENABLED_SETTING_ACTIVITY_COMPONENT =
+            ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockActivity");
+    private static final ComponentName RESET_ENABLED_SETTING_RECEIVER_COMPONENT =
+            ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockReceiver");
+    private static final ComponentName RESET_ENABLED_SETTING_SERVICE_COMPONENT =
+            ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockService");
+    private static final ComponentName RESET_ENABLED_SETTING_PROVIDER_COMPONENT =
+            ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockProvider");
 
     private final ServiceTestRule mServiceTestRule = new ServiceTestRule();
 
@@ -1929,6 +1937,44 @@ public class PackageManagerTest {
                 () -> setComponentEnabledSettingsAndWaitForBroadcasts(enabledSettings));
     }
 
+    @Test
+    public void clearApplicationUserData_resetComponentEnabledSettings() throws Exception {
+        assertThat(installPackage(MOCK_LAUNCHER_APK)).isTrue();
+        final List<ComponentEnabledSetting> settings = List.of(
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_ACTIVITY_COMPONENT,
+                        COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */),
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_RECEIVER_COMPONENT,
+                        COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */),
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_SERVICE_COMPONENT,
+                        COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */),
+                new ComponentEnabledSetting(RESET_ENABLED_SETTING_PROVIDER_COMPONENT,
+                        COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+
+        try {
+            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                    android.Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE);
+            // update component enabled settings
+            setComponentEnabledSettingsAndWaitForBroadcasts(settings);
+
+            clearApplicationUserData(MOCK_LAUNCHER_PACKAGE_NAME);
+
+            assertThat(mPackageManager
+                    .getComponentEnabledSetting(RESET_ENABLED_SETTING_ACTIVITY_COMPONENT))
+                    .isEqualTo(COMPONENT_ENABLED_STATE_DEFAULT);
+            assertThat(mPackageManager
+                    .getComponentEnabledSetting(RESET_ENABLED_SETTING_RECEIVER_COMPONENT))
+                    .isEqualTo(COMPONENT_ENABLED_STATE_DEFAULT);
+            assertThat(mPackageManager
+                    .getComponentEnabledSetting(RESET_ENABLED_SETTING_SERVICE_COMPONENT))
+                    .isEqualTo(COMPONENT_ENABLED_STATE_DEFAULT);
+            assertThat(mPackageManager
+                    .getComponentEnabledSetting(RESET_ENABLED_SETTING_PROVIDER_COMPONENT))
+                    .isEqualTo(COMPONENT_ENABLED_STATE_DEFAULT);
+        } finally {
+            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
     private void setComponentEnabledSettingsAndWaitForBroadcasts(
             List<ComponentEnabledSetting> enabledSettings)
             throws InterruptedException, TimeoutException {
@@ -1972,5 +2018,12 @@ public class PackageManagerTest {
         } finally {
             mContext.unregisterReceiver(br);
         }
+    }
+
+    private void clearApplicationUserData(String packageName) {
+        final StringBuilder cmd = new StringBuilder("pm clear --user ");
+        cmd.append(UserHandle.myUserId()).append(" ");
+        cmd.append(packageName);
+        SystemUtil.runShellCommand(cmd.toString());
     }
 }
