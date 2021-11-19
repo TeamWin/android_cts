@@ -59,7 +59,7 @@ public class ProcessTest2 {
         // from the target APIs.
         try (Receiver<Message> receiver = new Receiver<>(sContext, Consts.TAG)) {
             Intent intent = new Intent(Consts.ACTION_SEND_BACK_START_TIME)
-                    .setComponent(Consts.RECEIVER_HELPER_1)
+                    .setComponent(Consts.RECEIVER2_HELPER_1)
                     .setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
 
             final long beforeStartElapsedRealtime = SystemClock.elapsedRealtime();

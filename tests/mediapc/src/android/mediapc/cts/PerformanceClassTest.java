@@ -71,7 +71,7 @@ public class PerformanceClassTest {
     }
 
     @Test
-    @CddTest(requirement="2.2.7.3/7.1.1.1,7.1.1.3,7.6.1/H-1-1")
+    @CddTest(requirement="2.2.7.3/7.1.1.1,7.1.1.3,7.6.1/H-1-1,H-2-1")
     public void testMinimumMemory() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -108,7 +108,7 @@ public class PerformanceClassTest {
             log.addValue("DisplayDensity", density, ResultType.LOWER_BETTER, ResultUnit.NONE);
             log.addValue("ResolutionLong", longPix, ResultType.LOWER_BETTER, ResultUnit.NONE);
             log.addValue("ResolutionShort", shortPix, ResultType.LOWER_BETTER, ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.3/7.1.1.1,7.1.1.3/H-1-1 performance_class", pc,
+            log.setSummary("CDD 2.2.7.3/7.1.1.1,7.1.1.3/H-1-1,H-2-1 performance_class", pc,
                     ResultType.NEUTRAL, ResultUnit.NONE);
             log.submit(InstrumentationRegistry.getInstrumentation());
         }
@@ -129,8 +129,8 @@ public class PerformanceClassTest {
             int pc = totalMemoryMb >= minMb ? Build.VERSION_CODES.S : 0;
             DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",  "MinMemory");
             log.addValue("MemoryMB", totalMemoryMb, ResultType.LOWER_BETTER, ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.3/7.6.1/H-1-1  performance_class", pc, ResultType.NEUTRAL,
-                    ResultUnit.NONE);
+            log.setSummary("CDD 2.2.7.3/7.6.1/H-1-1,H-2-1  performance_class", pc,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
             log.submit(InstrumentationRegistry.getInstrumentation());
         }
 

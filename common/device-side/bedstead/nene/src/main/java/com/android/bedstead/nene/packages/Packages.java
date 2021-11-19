@@ -58,6 +58,8 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
+import org.junit.AssumptionViolatedException;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -196,19 +198,20 @@ public final class Packages {
             throw new NullPointerException();
         }
 
+        if (!Versions.meetsMinimumSdkVersionRequirement(R)
+                || TestApis.packages().instrumented().isInstantApp()) {
+            AdbPackageParser.ParseResult packages = parseDumpsys();
+            return packages.mPackages.values().stream()
+                    .filter(p -> p.installedOnUsers().contains(user))
+                    .map(p -> find(p.packageName()))
+                    .collect(Collectors.toSet());
+        }
+
         if (user.equals(TestApis.users().instrumented())) {
             return TestApis.context().instrumentedContext().getPackageManager()
                     .getInstalledPackages(/* flags= */ 0)
                     .stream()
                     .map(i -> new Package(i.packageName))
-                    .collect(Collectors.toSet());
-        }
-
-        if (!Versions.meetsMinimumSdkVersionRequirement(R)) {
-            AdbPackageParser.ParseResult packages = parseDumpsys();
-            return packages.mPackages.values().stream()
-                    .filter(p -> p.installedOnUsers().contains(user))
-                    .map(p -> find(p.packageName()))
                     .collect(Collectors.toSet());
         }
 
@@ -325,8 +328,8 @@ public final class Packages {
      *
      * <p>If the package is marked testOnly, it will still be installed.
      *
-     * <p>On versions of Android prior to Q, this will return null. On other versions it will return
-     * the installed package.
+     * <p>On versions of Android prior to Q, or when running as an instant app, this will return
+     * null. On other versions it will return the installed package.
      */
     @Nullable
     public Package install(UserReference user, byte[] apkFile) {
@@ -341,6 +344,31 @@ public final class Packages {
         if (!user.exists() || !user.isUnlocked()) {
             throw new NeneException("Packages can not be installed in non-started users "
                     + "(Trying to install into user " + user + ")");
+        }
+
+        if (TestApis.packages().instrumented().isInstantApp()) {
+            // We should install using stdin with the byte array
+            try {
+                ShellCommand.builderForUser(user, "pm install")
+                        .addOperand("-t") // Allow installing test apks
+                        .addOperand("-r") // Replace existing apps
+                        .addOption("-S", apkFile.length) // Install from stdin
+                        .writeToStdIn(apkFile)
+                        .validate(ShellCommandUtils::startsWithSuccess)
+                        .execute();
+            } catch (AdbException e) {
+                throw new NeneException("Error installing from instant app", e);
+            }
+
+            // Arbitrary sleep because the shell command doesn't block and we can't listen for
+            // the broadcast (instant app)
+            try {
+                Thread.sleep(10_000);
+            } catch (InterruptedException e) {
+                throw new NeneException("Interrupted while waiting for install", e);
+            }
+
+            return null;
         }
 
         // This is not inside the try because if the install is unsuccessful we don't want to await
@@ -387,7 +415,6 @@ public final class Packages {
                     }
                 }
             }
-
             return waitForPackageAddedBroadcast(broadcastReceiver);
         } catch (IOException e) {
             throw new NeneException("Could not install package", e);
@@ -403,6 +430,11 @@ public final class Packages {
         // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
         File outputDir = Environment.getExternalStorageDirectory();
         File outputFile = null;
+
+        if (TestApis.packages().instrumented().isInstantApp()) {
+            // We can't manage files as an instant app, so we must skip this test
+            throw new AssumptionViolatedException("Cannot install packages as instant app");
+        }
 
         try (PermissionContext p =
                      TestApis.permissions().withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {

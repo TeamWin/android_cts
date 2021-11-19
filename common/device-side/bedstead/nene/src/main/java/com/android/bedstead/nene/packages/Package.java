@@ -516,6 +516,11 @@ public final class Package {
         PackageInfo packageInfo = packageInfoFromAnyUser(GET_PERMISSIONS);
 
         if (packageInfo == null) {
+            if (TestApis.packages().instrumented().isInstantApp()) {
+                Log.i(LOG_TAG, "Tried to get requestedPermissions for "
+                        + mPackageName + " but can't on instant apps");
+                return new HashSet<>();
+            }
             throw new NeneException("Error getting requestedPermissions, does not exist");
         }
 
@@ -788,6 +793,11 @@ public final class Package {
         }
 
         return (appInfo.flags & FLAG_SYSTEM) > 0;
+    }
+
+    @Experimental
+    public boolean isInstantApp() {
+        return sPackageManager.isInstantApp(mPackageName);
     }
 
     private static final class ProcessInfo {

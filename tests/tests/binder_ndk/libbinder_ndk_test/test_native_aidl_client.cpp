@@ -21,6 +21,7 @@
 #include <aidl/test_package/ByteEnum.h>
 #include <aidl/test_package/ExtendableParcelable.h>
 #include <aidl/test_package/FixedSize.h>
+#include <aidl/test_package/FixedSizeUnion.h>
 #include <aidl/test_package/Foo.h>
 #include <aidl/test_package/IntEnum.h>
 #include <aidl/test_package/LongEnum.h>
@@ -28,7 +29,6 @@
 #include <android/binder_ibinder_jni.h>
 #include <android/log.h>
 #include <gtest/gtest.h>
-
 #include "itest_impl.h"
 #include "utilities.h"
 
@@ -42,6 +42,7 @@ using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ByteEnum;
 using ::aidl::test_package::ExtendableParcelable;
 using ::aidl::test_package::FixedSize;
+using ::aidl::test_package::FixedSizeUnion;
 using ::aidl::test_package::Foo;
 using ::aidl::test_package::GenericBar;
 using ::aidl::test_package::ICompatTest;
@@ -59,6 +60,11 @@ using ::ndk::SpAIBinder;
 static_assert(sizeof(FixedSize) == 16);
 static_assert(offsetof(FixedSize, a) == 0);
 static_assert(offsetof(FixedSize, b) == 8);
+
+static_assert(sizeof(FixedSizeUnion) == 16);  // tag(uint8_t), value(union of {int32_t, long64_t})
+static_assert(alignof(FixedSizeUnion) == 8);
+
+static_assert(FixedSizeUnion::fixed_size::value);
 
 // AIDL tests which are independent of the service
 class NdkBinderTest_AidlLocal : public NdkBinderTest {};
