@@ -27,6 +27,7 @@ public final class Tags {
 
     public static final String USES_DEVICESTATE = "uses_devicestate";
     public static final String USES_NOTIFICATIONS = "uses_notifications";
+    public static final String INSTANT_APP = "instant_app";
 
     private Tags() {
 
