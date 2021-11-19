@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.os.PersistableBundle;
 import android.service.carrier.CarrierIdentifier;
 import android.service.carrier.CarrierService;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.ServiceTestCase;
 import android.util.Log;
@@ -72,6 +73,31 @@ public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestC
             getService().notifyCarrierNetworkChange(active);
             fail("Expected SecurityException for notifyCarrierNetworkChange(" + active + ")");
         } catch (SecurityException e) { /* Expected */ }
+    }
+
+    public void testNotifyCarrierNetworkChangeWithSubId_true() {
+        if (!mHasCellular) return;
+
+        notifyCarrierNetworkChangeWithSubId(/*active=*/ true);
+    }
+
+    public void testNotifyCarrierNetworkChangeWithSubId_false() {
+        if (!mHasCellular) return;
+
+        notifyCarrierNetworkChangeWithSubId(/*active=*/ false);
+    }
+
+    private void notifyCarrierNetworkChangeWithSubId(boolean active) {
+        Intent intent = new Intent(getContext(), TestCarrierService.class);
+        startService(intent);
+
+        try {
+            int subId = SubscriptionManager.getDefaultSubscriptionId();
+            getService().notifyCarrierNetworkChange(subId, active);
+            fail("Expected SecurityException for notifyCarrierNetworkChangeWithSubId(" + subId
+                    + ", " + active + ")");
+        } catch (SecurityException expected) {
+        }
     }
 
     public static class TestCarrierService extends CarrierService {
