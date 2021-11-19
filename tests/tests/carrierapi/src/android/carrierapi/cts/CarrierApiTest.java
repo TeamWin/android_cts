@@ -21,6 +21,7 @@ import static android.carrierapi.cts.IccUtils.bytesToHexString;
 import static android.carrierapi.cts.IccUtils.hexStringToBytes;
 import static android.telephony.IccOpenLogicalChannelResponse.INVALID_CHANNEL;
 import static android.telephony.IccOpenLogicalChannelResponse.STATUS_NO_ERROR;
+import static android.telephony.SubscriptionManager.PHONE_NUMBER_SOURCE_CARRIER;
 
 import static com.android.compatibility.common.util.UiccUtil.UiccCertificate.CTS_UICC_2021;
 
@@ -988,10 +989,12 @@ public class CarrierApiTest extends BaseCarrierApiTest {
 
     /**
      * This test verifies that {@link TelephonyManager#setLine1NumberForDisplay(String, String)}
-     * correctly sets the Line 1 alpha tag and number when called.
+     * correctly sets the Line 1 alpha tag and number when called, and the phone number
+     * of {@link SubscriptionManager#PHONE_NUMBER_SOURCE_CARRIER}.
      */
     @Test
     public void testLine1NumberForDisplay() {
+        int subId = SubscriptionManager.getDefaultSubscriptionId();
         // Cache original alpha tag and number values.
         String originalAlphaTag = mTelephonyManager.getLine1AlphaTag();
         String originalNumber = mTelephonyManager.getLine1Number();
@@ -1005,15 +1008,21 @@ public class CarrierApiTest extends BaseCarrierApiTest {
             assertThat(mTelephonyManager.setLine1NumberForDisplay(ALPHA_TAG_A, NUMBER_A)).isTrue();
             assertThat(mTelephonyManager.getLine1AlphaTag()).isEqualTo(ALPHA_TAG_A);
             assertThat(mTelephonyManager.getLine1Number()).isEqualTo(NUMBER_A);
+            assertThat(mSubscriptionManager.getPhoneNumber(subId, PHONE_NUMBER_SOURCE_CARRIER))
+                    .isEqualTo(NUMBER_A);
 
             assertThat(mTelephonyManager.setLine1NumberForDisplay(ALPHA_TAG_B, NUMBER_B)).isTrue();
             assertThat(mTelephonyManager.getLine1AlphaTag()).isEqualTo(ALPHA_TAG_B);
             assertThat(mTelephonyManager.getLine1Number()).isEqualTo(NUMBER_B);
+            assertThat(mSubscriptionManager.getPhoneNumber(subId, PHONE_NUMBER_SOURCE_CARRIER))
+                    .isEqualTo(NUMBER_B);
 
             // null is used to clear the Line 1 alpha tag and number values.
             assertThat(mTelephonyManager.setLine1NumberForDisplay(null, null)).isTrue();
             assertThat(mTelephonyManager.getLine1AlphaTag()).isEqualTo(defaultAlphaTag);
             assertThat(mTelephonyManager.getLine1Number()).isEqualTo(defaultNumber);
+            assertThat(mSubscriptionManager.getPhoneNumber(subId, PHONE_NUMBER_SOURCE_CARRIER))
+                    .isEqualTo("");
         } finally {
             // Reset original alpha tag and number values.
             mTelephonyManager.setLine1NumberForDisplay(originalAlphaTag, originalNumber);
