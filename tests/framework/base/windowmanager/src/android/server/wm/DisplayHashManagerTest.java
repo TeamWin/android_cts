@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_BOUNDS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_HASH_ALGORITHM;
@@ -86,6 +87,8 @@ public class DisplayHashManagerTest {
     private Executor mExecutor;
 
     private SyncDisplayHashResultCallback mSyncDisplayHashResultCallback;
+
+    protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
 
     @Rule
     public ActivityTestRule<TestActivity> mActivityRule =
@@ -392,6 +395,7 @@ public class DisplayHashManagerTest {
             mMainView.getRootSurfaceControl().applyTransactionOnDraw(t);
         });
         mInstrumentation.waitForIdleSync();
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         try {
             committedCallbackLatch.await(WAIT_TIME_S, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
