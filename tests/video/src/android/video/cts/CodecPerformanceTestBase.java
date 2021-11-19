@@ -58,6 +58,10 @@ class CodecPerformanceTestBase {
     // resolutions that are less than half of max supported frame sizes of encoder.
     static final boolean EXCLUDE_ENCODER_MAX_RESOLUTION;
 
+    // Some older devices can not support concurrent instances of both decoder and encoder
+    // for operating rates > 0 and < 30 for resolutions 4k
+    static final boolean EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K;
+
     static final String mInputPrefix = WorkDir.getMediaDirString();
 
     ArrayList<MediaCodec.BufferInfo> mBufferInfos;
@@ -100,6 +104,10 @@ class CodecPerformanceTestBase {
 
         // Encoders on devices launched on Android Q and lower aren't tested at maximum resolution
         EXCLUDE_ENCODER_MAX_RESOLUTION = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.Q;
+
+        // Encoders on devices launched on Android R and lower aren't tested when operating rate
+        // that is set is > 0 and < 30 for resolution 4k
+        EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R;
     }
 
     @Before
