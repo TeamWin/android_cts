@@ -1135,6 +1135,149 @@ public class RcsUceAdapterTest {
         overrideCarrierConfig(null);
     }
 
+    /**
+     * Tests the case when contact1 has had a successful network query, but a query for contact2
+     * has resulted in the carrier network not responding with a NOTIFY. If contact1 caps are
+     * queried again, the query to the cache for contact1 should not be blocked in a queue behind
+     * the pending network query. Eventually, request for contact2 will timeout with onTimeout
+     * response from vendor, which will result in ERROR_REQUEST_TIMEOUT result back to app.
+     */
+    @Test
+    public void testCacheQuerySuccessWhenNetworkBlocked() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(capabilityQueue::offer);
+            }
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {
+                errorQueue.offer(errorCode);
+            }
+        };
+
+        // Prepare two contacts
+        final Uri contact1 = sTestNumberUri;
+        final Uri contact2 = sTestContact2Uri;
+
+        Collection<Uri> contacts = new ArrayList<>(1);
+        contacts.add(contact1);
+
+        ArrayList<String> pidfXmlList = new ArrayList<>(1);
+        pidfXmlList.add(getPidfXmlData(contact1, true, true));
+
+        // Setup the network response is 200 OK and notify capabilities update
+        int networkRespCode = 200;
+        String networkRespReason = "OK";
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(networkRespCode, networkRespReason);
+            cb.onNotifyCapabilitiesUpdate(pidfXmlList);
+            cb.onTerminated("", 0L);
+        });
+
+        requestCapabilities(uceAdapter, contacts, callback);
+
+        List<RcsContactUceCapability> resultCapList = new ArrayList<>();
+
+        // Verify that the first contact is updated
+        RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Cannot receive the first capabilities result.", capability);
+        resultCapList.add(capability);
+
+        // Verify contact1's capabilities from the received capabilities list
+        RcsContactUceCapability resultCapability = getContactCapability(resultCapList, contact1);
+        assertNotNull("Cannot find the contact: " + contact1, resultCapability);
+        verifyCapabilityResult(resultCapability, contact1, SOURCE_TYPE_NETWORK,
+                REQUEST_RESULT_FOUND, true, true);
+
+        // Verify the onCompleted is called
+        waitForResult(completeQueue);
+
+        completeQueue.clear();
+        capabilityQueue.clear();
+        resultCapList.clear();
+
+        // Now hold the second contact and do not return a response until after contact1 is queried
+        //again
+        CountDownLatch latch = new CountDownLatch(1);
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            try {
+                cb.onNetworkResponse(networkRespCode, networkRespReason);
+                assertTrue("Timed out waiting for latch", latch.await(10, TimeUnit.SECONDS));
+                // We didn't receive any NOTIFY
+                cb.onTerminated("timeout", 0L);
+            } catch (InterruptedException e) {
+                fail("Waiting for cap response resulted in unexpected exception: " + e);
+            }
+        });
+
+        contacts.clear();
+        contacts.add(contact2);
+
+        pidfXmlList.clear();
+        pidfXmlList.add(getPidfXmlData(contact2, true, true));
+
+        requestCapabilities(uceAdapter, contacts, callback);
+
+        // Send another request for contact1's caps. Although the request queue is blocked due to
+        // pending network request, contact1 has valid caps, so system should return those.
+        contacts.clear();
+        contacts.add(contact1);
+
+        pidfXmlList.clear();
+        pidfXmlList.add(getPidfXmlData(contact1, true, true));
+
+        requestCapabilities(uceAdapter, contacts, callback);
+
+        capability = waitForResult(capabilityQueue);
+        assertNotNull("Cannot receive the cached capabilities result.", capability);
+        resultCapList.add(capability);
+
+        // Verify contact1's capabilities from the received capabilities list
+        resultCapability = getContactCapability(resultCapList, contact1);
+        assertNotNull("Cannot find the contact: " + contact1, resultCapability);
+        verifyCapabilityResult(resultCapability, contact1, SOURCE_TYPE_CACHED, REQUEST_RESULT_FOUND,
+                true, true);
+
+        // Now contact2's query finishes and it timed out without a NOTIFY
+        latch.countDown();
+
+        Integer error = waitForResult(errorQueue);
+        assertNotNull("Cannot receive the expected error result.", capability);
+        assertEquals("Timeout without NOTIFY should result in ERROR_REQUEST_TIMEOUT",
+                RcsUceAdapter.ERROR_REQUEST_TIMEOUT, error.intValue());
+
+        errorQueue.clear();
+        completeQueue.clear();
+        capabilityQueue.clear();
+        resultCapList.clear();
+        removeTestContactFromEab();
+
+        overrideCarrierConfig(null);
+    }
+
     @Test
     public void testRequestCapabilitiesFromCacheWithPresenceMechanism() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
