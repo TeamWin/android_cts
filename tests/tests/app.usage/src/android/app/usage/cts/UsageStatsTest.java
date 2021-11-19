@@ -764,6 +764,8 @@ public class UsageStatsTest {
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
     public void testIsAppInactive() throws Exception {
+        assumeTrue("Test only works on devices with a battery", BatteryUtils.hasBattery());
+
         setStandByBucket(mTargetPackage, "rare");
 
         try {
@@ -809,6 +811,8 @@ public class UsageStatsTest {
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
     public void testIsAppInactive_Charging() throws Exception {
+        assumeTrue("Test only works on devices with a battery", BatteryUtils.hasBattery());
+
         setStandByBucket(TEST_APP_PKG, "rare");
 
         try {
