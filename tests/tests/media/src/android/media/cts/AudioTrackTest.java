@@ -3367,6 +3367,122 @@ public class AudioTrackTest {
         }
     }
 
+    /**
+     * Test AudioTrack Builder error handling.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testAudioTrackBuilderError() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack[] audioTrack = new AudioTrack[1]; // pointer to audio track.
+        final int BIGNUM = Integer.MAX_VALUE; // large value that should be invalid.
+        final int INVALID_SESSION_ID = 1024;  // can never occur (wrong type in 3 lsbs)
+        final int INVALID_CHANNEL_MASK = -1;
+
+        try {
+            // NOTE:
+            // Tuner Configuration builder error tested in testTunerConfiguration (same file).
+            // AudioAttributes tested in AudioAttributesTest#testAudioAttributesBuilderError.
+            // AudioFormat tested in AudioFormatTest#testAudioFormatBuilderError.
+
+            // We must be able to create the AudioTrack.
+            audioTrack[0] = new AudioTrack.Builder().build();
+            audioTrack[0].release();
+
+            // Out of bounds buffer size.  A large size will fail in AudioTrack creation.
+            assertThrows(UnsupportedOperationException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setBufferSizeInBytes(BIGNUM)
+                        .build();
+            });
+
+            // 0 and negative buffer size throw IllegalArgumentException
+            for (int bufferSize : new int[] {-BIGNUM, -1, 0}) {
+                assertThrows(IllegalArgumentException.class, () -> {
+                    audioTrack[0] = new AudioTrack.Builder()
+                            .setBufferSizeInBytes(bufferSize)
+                            .build();
+                });
+            }
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setEncapsulationMode(BIGNUM)
+                        .build();
+            });
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setPerformanceMode(BIGNUM)
+                        .build();
+            });
+
+            // Invalid session id that is positive.
+            // (logcat error message vague)
+            assertThrows(UnsupportedOperationException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setSessionId(INVALID_SESSION_ID)
+                        .build();
+            });
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setTransferMode(BIGNUM)
+                        .build();
+            });
+
+            // Specialty AudioTrack build errors.
+
+            // Bad audio encoding DRA expected unsupported.
+            try {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                                .setEncoding(AudioFormat.ENCODING_DRA)
+                                .build())
+                        .build();
+                // Don't throw an exception, maybe it is supported somehow, but warn.
+                // Note: often specialty audio formats are offloaded (see setOffloadedPlayback).
+                // AudioTrackSurroundTest and AudioTrackOffloadedTest can be used as examples.
+                Log.w(TAG, "ENCODING_DRA is expected to be unsupported");
+                audioTrack[0].release();
+                audioTrack[0] = null;
+            } catch (UnsupportedOperationException e) {
+                ; // OK expected
+            }
+
+            // Sample rate out of bounds.
+            // System levels caught on AudioFormat.
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setSampleRate(BIGNUM)
+                                .build())
+                        .build();
+            });
+
+            // Invalid channel mask - caught here on use.
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioTrack[0] = new AudioTrack.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setChannelMask(INVALID_CHANNEL_MASK)
+                                .build())
+                        .build();
+            });
+        } finally {
+            // Did we successfully complete for some reason but did not
+            // release?
+            if (audioTrack[0] != null) {
+                audioTrack[0].release();
+                audioTrack[0] = null;
+            }
+        }
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
