@@ -155,11 +155,12 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
+        mDevice = getDevice();
+        mBuild = getBuild();
+
         // Assumes every test in this file asserts a requirement of CDD section 9.
         assumeSecurityModelCompat();
 
-        mDevice = getDevice();
-        mBuild = getBuild();
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         sepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
         sepolicyAnalyze.setExecutable(true);
