@@ -21,6 +21,13 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_HOME;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -45,8 +52,10 @@ import android.app.stubs.LocalForegroundService;
 import android.app.stubs.MockApplicationActivity;
 import android.app.stubs.MockService;
 import android.app.stubs.ScreenOnActivity;
+import android.app.stubs.TestHomeActivity;
 import android.app.stubs.TrimMemService;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -54,6 +63,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.os.Binder;
 import android.os.Bundle;
@@ -144,6 +154,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     private List<Activity> mStartedActivityList;
     private int mErrorProcessID;
     private Instrumentation mInstrumentation;
+    private HomeActivitySession mTestHomeSession;
 
     @Override
     protected void setUp() throws Exception {
@@ -161,6 +172,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        if (mTestHomeSession != null) {
+            mTestHomeSession.close();
+        }
         if (mIntent != null) {
             mInstrumentation.getContext().stopService(mIntent);
         }
@@ -725,6 +739,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that the TimeTrackingAPI works properly when starting and ending an activity.
      */
     public void testTimeTrackingAPI_SimpleStartExit() throws Exception {
+        createManagedHomeActivitySession();
         launchHome();
         // Prepare to start an activity from another APK.
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -811,6 +826,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that the TimeTrackingAPI works properly when switching away from the monitored task.
      */
     public void testTimeTrackingAPI_SwitchAwayTriggers() throws Exception {
+        createManagedHomeActivitySession();
         launchHome();
 
         // Prepare to start an activity from another APK.
@@ -859,6 +875,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * and ended.
      */
     public void testTimeTrackingAPI_ChainedActivityExit() throws Exception {
+        createManagedHomeActivitySession();
         launchHome();
         // Prepare to start an activity from another APK.
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -1897,5 +1914,64 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             Thread.sleep(500);
         } while (!(result = supplier.get()) && SystemClock.uptimeMillis() < deadLine);
         return result;
+    }
+
+    private void createManagedHomeActivitySession()
+            throws Exception {
+        if (noHomeScreen()) return;
+        ComponentName homeActivity = new ComponentName(
+                STUB_PACKAGE_NAME, TestHomeActivity.class.getName());
+        mTestHomeSession = new HomeActivitySession(homeActivity);
+    }
+
+    /**
+     * HomeActivitySession is used to replace the default home component, so that you can use
+     * your preferred home for testing within the session. The original default home will be
+     * restored automatically afterward.
+     */
+    private class HomeActivitySession {
+        private PackageManager mPackageManager;
+        private ComponentName mOrigHome;
+        private ComponentName mSessionHome;
+
+        HomeActivitySession(ComponentName sessionHome) throws Exception {
+            mSessionHome = sessionHome;
+            mPackageManager = mInstrumentation.getContext().getPackageManager();
+            mOrigHome = getDefaultHomeComponent();
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
+                            COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP));
+            setDefaultHome(mSessionHome);
+        }
+
+        public void close() throws Exception {
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
+                            COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
+            if (mOrigHome != null) {
+                setDefaultHome(mOrigHome);
+                mOrigHome = null;
+            }
+        }
+
+        private void setDefaultHome(ComponentName componentName) throws Exception {
+            executeShellCommand("cmd package set-home-activity --user "
+                    + android.os.Process.myUserHandle().getIdentifier() + " "
+                    + componentName.flattenToString());
+        }
+
+        private ComponentName getDefaultHomeComponent() {
+            final Intent intent = new Intent(ACTION_MAIN);
+            intent.addCategory(CATEGORY_HOME);
+            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+            final ResolveInfo resolveInfo = mInstrumentation.getContext()
+                    .getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
+            if (resolveInfo == null) {
+                throw new AssertionError("Home activity not found");
+            }
+            return new ComponentName(resolveInfo.activityInfo.packageName,
+                    resolveInfo.activityInfo.name);
+        }
     }
 }
