@@ -80,41 +80,52 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
 
         String action = getIntent().getAction();
         Log.d(TAG, "onCreate(): action = " + action);
-        switch (action) {
-            case ACTION_CHECK_DEVICE_OWNER_FOR_REQUESTING_BUGREPORT: {
-                DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
-                        DeviceAdminTestReceiver.class, /* forDeviceOwner= */ true);
-                if (dpm.isDeviceOwnerApp(getPackageName())) {
-                    TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                            null, null);
-                } else {
-                    TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                            getString(R.string.device_owner_incorrect_device_owner, myUserId()),
-                            null);
-                }
-                finish();
-                return;
-            } case ACTION_CHECK_PROFILE_OWNER_FOR_REQUESTING_BUGREPORT: {
-                DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
-                if (dpm.isProfileOwnerApp(getPackageName())) {
-                    TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                            null, null);
-                } else {
-                    TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                            getString(R.string.device_owner_incorrect_profile_owner, myUserId()),
-                            null);
-                }
-                finish();
-                return;
-            } case ACTION_CHECK_CURRENT_USER_AFFILIATED_FOR_REQUESTING_BUGREPORT: {
-                DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
-                if (dpm.isAffiliatedUser()) {
-                    TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                            null, null);
-                } else {
-                    TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                            getString(R.string.device_owner_user_not_affiliated, myUserId()), null);
-                }
+        boolean validAction = true;
+        if (action != null) {
+            DevicePolicyManager dpm = null;
+            switch (action) {
+                case ACTION_CHECK_DEVICE_OWNER_FOR_REQUESTING_BUGREPORT:
+                    dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
+                            DeviceAdminTestReceiver.class, /* forDeviceOwner= */ true);
+                    if (dpm.isDeviceOwnerApp(getPackageName())) {
+                        TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                                null, null);
+                    } else {
+                        TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                                getString(R.string.device_owner_incorrect_device_owner, myUserId()),
+                                null);
+                    }
+                    break;
+                case ACTION_CHECK_PROFILE_OWNER_FOR_REQUESTING_BUGREPORT:
+                    dpm = getSystemService(DevicePolicyManager.class);
+                    if (dpm.isProfileOwnerApp(getPackageName())) {
+                        TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                                null, null);
+                    } else {
+                        TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                                getString(R.string.device_owner_incorrect_profile_owner,
+                                        myUserId()),
+                                null);
+                    }
+                    break;
+                case ACTION_CHECK_CURRENT_USER_AFFILIATED_FOR_REQUESTING_BUGREPORT:
+                    dpm = getSystemService(DevicePolicyManager.class);
+                    if (dpm.isAffiliatedUser()) {
+                        TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                                null, null);
+                    } else {
+                        TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                                getString(R.string.device_owner_user_not_affiliated, myUserId()),
+                                null);
+                    }
+                    break;
+                default:
+                    Log.w(TAG, "invalid action on intent: " + action);
+                    validAction = false;
+                    break;
+            }
+            if (validAction) {
+                Log.d(TAG, "Finishing activity");
                 finish();
                 return;
             }

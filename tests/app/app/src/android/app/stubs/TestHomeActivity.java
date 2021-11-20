@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.app.stubs;
 
-import android.media.cts.WorkDirBase;
+import android.app.Activity;
 
-class WorkDir extends WorkDirBase {
-    public static final String getMediaDirString() {
-        return getMediaDirString("CtsMediaTestCases-1.4");
-    }
+public class TestHomeActivity extends Activity {
 }
