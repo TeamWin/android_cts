@@ -54,6 +54,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,6 +118,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     private File seappNeverAllowFile;
     private File libsepolwrap;
     private File libcpp;
+    private File copyLibcpp;
     private File sepolicyTests;
 
     private IBuildInfo mBuild;
@@ -913,17 +916,21 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     private void setupLibraries() throws Exception {
         // The host side binary tests are host OS specific. Use Linux
         // libraries on Linux and Mac libraries on Mac.
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         if (isMac()) {
-            libsepolwrap = copyResourceToTempFile("/libsepolwrap.dylib");
-            libcpp = copyResourceToTempFile("/libc++.dylib");
-            libcpp.renameTo(new File(System.getProperty("java.io.tmpdir") + "/libc++.dylib"));
+            libsepolwrap = buildHelper.getTestFile("libsepolwrap.dylib");
+            libcpp = buildHelper.getTestFile("libc++.dylib");
+            copyLibcpp = new File(System.getProperty("java.io.tmpdir") + "/libc++.dylib");
+            Files.copy(libcpp.toPath(), copyLibcpp.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } else {
-            libsepolwrap = copyResourceToTempFile("/libsepolwrap.so");
-            libcpp = copyResourceToTempFile("/libc++.so");
-            libcpp.renameTo(new File(System.getProperty("java.io.tmpdir") + "/libc++.so"));
+            libsepolwrap = buildHelper.getTestFile("libsepolwrap.so");
+            libcpp = buildHelper.getTestFile("libc++.so");
+            copyLibcpp = new File(System.getProperty("java.io.tmpdir") + "/libc++.so");
+            Files.copy(libcpp.toPath(), copyLibcpp.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         libsepolwrap.deleteOnExit();
         libcpp.deleteOnExit();
+        copyLibcpp.deleteOnExit();
     }
 
     private void assertSepolicyTests(String test, String testExecutable,
