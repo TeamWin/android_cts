@@ -18,7 +18,6 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.Manifest.permission.QUERY_ALL_PACKAGES;
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
@@ -31,8 +30,6 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
-
-import static com.android.queryable.queries.StringQuery.string;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -53,7 +50,6 @@ import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.UserHandle;
@@ -75,9 +71,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.ClassRule;
@@ -105,7 +98,6 @@ public final class DevicePolicyManagerTest {
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final SharedPreferences sSharedPreferences =
             sContext.getSharedPreferences("required-apps.txt", Context.MODE_PRIVATE);
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
             DeviceAdminApp.deviceAdminComponentName(sContext);
@@ -794,34 +786,6 @@ public final class DevicePolicyManagerTest {
     public void removeActiveAdmin_adminPassedDoesNotBelongToCaller_manageDeviceAdminsPermission_noException() {
         sDevicePolicyManager.removeActiveAdmin(
                 sDeviceState.deviceOwner().componentName());
-    }
-
-    @Test
-    public void isDeviceOwnerApp_versionGreaterThanEqual_S_V2_noPermission_throwsException() {
-        TestApp sTestApp = sTestAppProvider.query()
-                .wherePermissions().doesNotContain(
-                        string().isEqualTo(QUERY_ALL_PACKAGES))
-                .whereTargetSdkVersion().isGreaterThanOrEqualTo(Build.VERSION_CODES.S_V2).get();
-        try (TestAppInstance testApp = sTestApp.install(
-                TestApis.users().instrumented())) {
-
-            assertThrows(SecurityException.class, () ->
-                    testApp.devicePolicyManager().isDeviceOwnerApp(sContext.getPackageName()));
-        }
-    }
-
-    @Test
-    public void isDeviceOwnerApp_versionLessThan_S_V2_noPermission_noException() {
-        TestApp sTestApp = sTestAppProvider.query()
-                .wherePermissions().doesNotContain(
-                        string().isEqualTo(QUERY_ALL_PACKAGES))
-                .whereTargetSdkVersion().isLessThan(Build.VERSION_CODES.S_V2).get();
-        try (TestAppInstance testApp = sTestApp.install(
-                TestApis.users().instrumented())) {
-
-            assertThat(testApp.devicePolicyManager().isDeviceOwnerApp(
-                    sContext.getPackageName())).isFalse();
-        }
     }
 
     private static HashMap<String, String> createNfcIntentData() {
