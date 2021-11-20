@@ -536,7 +536,22 @@
                  android:resource="@xml/shortcuts"/>
         </activity>
 
-        <service android:name="android.app.stubs.TrimMemService"
+        <!-- Disable home activities by default or it may disturb other tests by
+                showing ResolverActivity when start home activity.
+             Set the task affinity to empty not to group with the other Activities in this app. -->
+        <activity
+            android:name="android.app.stubs.TestHomeActivity"
+            android:enabled="false"
+            android:taskAffinity=""
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+    <service android:name="android.app.stubs.TrimMemService"
             android:exported="true"
             android:isolatedProcess="true">
         </service>
