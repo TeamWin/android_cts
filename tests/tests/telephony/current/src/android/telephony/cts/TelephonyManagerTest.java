@@ -3822,33 +3822,19 @@ public class TelephonyManagerTest {
             return;
         }
 
-        // Verify SE throws for app when set systemThresholdReportingRequestedWhileIdle to true
-        SignalStrengthUpdateRequest requestWithSystemThresholdReportingRequestedWhileIdle =
-                new SignalStrengthUpdateRequest.Builder()
-                        .setSignalThresholdInfos(List.of(
-                                new SignalThresholdInfo.Builder()
-                                        .setRadioAccessNetworkType(
-                                                AccessNetworkConstants.AccessNetworkType.GERAN)
-                                        .setSignalMeasurementType(
-                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
-                                        .setThresholds(new int[]{-113, -103, -97, -51})
-                                        .build()))
-                        .setReportingRequestedWhileIdle(true)
-                        //allowed for system caller only
-                        .setSystemThresholdReportingRequestedWhileIdle(true)
-                        .build();
-        try {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.setSignalStrengthUpdateRequest(
-                            requestWithSystemThresholdReportingRequestedWhileIdle));
-            fail("IllegalArgumentException expected when set "
-                    + "systemThresholdReportingRequestedWhileIdle");
-        } catch (IllegalArgumentException expected) {
-        }
+        // Verify system privileged app with permission LISTEN_ALWAYS_REPORTED_SIGNAL_STRENGTH can
+        // set systemThresholdReportingRequestedWhileIdle to true with empty thresholdInfos
+        SignalStrengthUpdateRequest request = new SignalStrengthUpdateRequest.Builder()
+                .setSignalThresholdInfos(Collections.EMPTY_LIST)
+                .setSystemThresholdReportingRequestedWhileIdle(true)
+                .build();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setSignalStrengthUpdateRequest(request));
     }
 
     @Test
-    public void testSetSignalStrengthUpdateRequest_systeresisDbSet() {
+    public void testSetSignalStrengthUpdateRequest_hysteresisDbSet() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
             return;
@@ -3878,7 +3864,7 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testSetSignalStrengthUpdateRequest_systeresisMsSet() {
+    public void testSetSignalStrengthUpdateRequest_hysteresisMsSet() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
             return;
