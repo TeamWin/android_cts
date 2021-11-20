@@ -177,7 +177,7 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus RepeatFd(
       const ::ndk::ScopedFileDescriptor& in_value,
       ::ndk::ScopedFileDescriptor* _aidl_return) override {
-    _aidl_return->set(dup(in_value.get()));
+    *_aidl_return = in_value.dup();
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 
