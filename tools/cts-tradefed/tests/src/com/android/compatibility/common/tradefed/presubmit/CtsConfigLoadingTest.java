@@ -113,6 +113,7 @@ public class CtsConfigLoadingTest {
                             "CtsSliceTestCases.config",
                             "CtsSampleDeviceTestCases.config",
                             "CtsSampleMultiDeviceTestCases.config",
+                            "CtsSampleMoblyTestCases.config",
                             "CtsUsbTests.config",
                             "CtsGpuToolsHostTestCases.config",
                             "CtsEdiHostTestCases.config",
@@ -138,7 +139,8 @@ public class CtsConfigLoadingTest {
             // Tradefed runners
             "com.android.tradefed.testtype.AndroidJUnitTest",
             "com.android.tradefed.testtype.HostTest",
-            "com.android.tradefed.testtype.GTest"
+            "com.android.tradefed.testtype.GTest",
+            "com.android.tradefed.testtype.mobly.MoblyBinaryHostTest"
     ));
 
     /**

@@ -22,5 +22,7 @@
     <!-- CTS multi device test cases only-->
     <option name="compatibility:include-filter"
         value="CtsSampleMultiDeviceTestCases"/>
+    <option name="compatibility:include-filter"
+        value="CtsSampleMoblyTestCases"/>
 
 </configuration>
