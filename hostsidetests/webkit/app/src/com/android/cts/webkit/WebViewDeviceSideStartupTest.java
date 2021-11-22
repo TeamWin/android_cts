@@ -16,8 +16,6 @@
 
 package com.android.cts.webkit;
 
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.http.SslError;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -116,48 +114,6 @@ public class WebViewDeviceSideStartupTest
         assertTrue(m.matches());
         assertEquals("42", m.group(1)); // value got incremented
         syncLoader.detach();
-    }
-
-    @UiThreadTest
-    public void testGetCurrentWebViewPackageOnUiThread() throws Throwable {
-        runCurrentWebViewPackageTest(true /* alreadyOnMainThread */);
-    }
-
-    public void testGetCurrentWebViewPackage() throws Throwable {
-        runCurrentWebViewPackageTest(false /* alreadyOnMainThread */);
-    }
-
-    private void runCurrentWebViewPackageTest(boolean alreadyOnMainThread) throws Exception {
-        PackageManager pm = mActivity.getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
-            PackageInfo webViewPackage = WebView.getCurrentWebViewPackage();
-            // Ensure that getCurrentWebViewPackage returns a package recognized by the package
-            // manager.
-            assertPackageEquals(pm.getPackageInfo(webViewPackage.packageName, 0), webViewPackage);
-
-            // Create WebView on the app's main thread
-            if (alreadyOnMainThread) {
-                mActivity.createAndAttachWebView();
-            } else {
-                WebkitUtils.onMainThreadSync(() -> {
-                    mActivity.createAndAttachWebView();
-                });
-            }
-
-            // Ensure we are still using the same WebView package.
-            assertPackageEquals(webViewPackage, WebView.getCurrentWebViewPackage());
-        } else {
-            // if WebView isn't supported the API should return null.
-            assertNull(WebView.getCurrentWebViewPackage());
-        }
-    }
-
-    private void assertPackageEquals(PackageInfo expected, PackageInfo actual) {
-        if (expected == null) assertNull(actual);
-        assertEquals(expected.packageName, actual.packageName);
-        assertEquals(expected.versionCode, actual.versionCode);
-        assertEquals(expected.versionName, actual.versionName);
-        assertEquals(expected.lastUpdateTime, actual.lastUpdateTime);
     }
 
     @UiThreadTest

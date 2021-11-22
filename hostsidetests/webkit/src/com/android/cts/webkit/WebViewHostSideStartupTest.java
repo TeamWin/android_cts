@@ -42,14 +42,6 @@ public class WebViewHostSideStartupTest extends DeviceTestCase {
         assertDeviceTestPasses("testCookieManagerBlockingUiThread");
     }
 
-    public void testWebViewVersionApiOnUiThread() throws DeviceNotAvailableException {
-        assertDeviceTestPasses("testGetCurrentWebViewPackageOnUiThread");
-    }
-
-    public void testWebViewVersionApi() throws DeviceNotAvailableException {
-        assertDeviceTestPasses("testGetCurrentWebViewPackage");
-    }
-
     public void testStrictMode() throws DeviceNotAvailableException {
         assertDeviceTestPasses("testStrictModeNotViolatedOnStartup");
     }
