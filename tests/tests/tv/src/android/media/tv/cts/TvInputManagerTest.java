@@ -20,7 +20,9 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.tv.cts.TvViewTest.MockCallback;
@@ -36,8 +38,10 @@ import android.media.tv.TvInputService;
 import android.media.tv.TvStreamConfig;
 import android.media.tv.TvView;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.test.ActivityInstrumentationTestCase2;
 import android.tv.cts.R;
 
@@ -47,8 +51,10 @@ import androidx.test.InstrumentationRegistry;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -59,12 +65,26 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     /** The maximum time to wait for an operation. */
     private static final long TIME_OUT_MS = 15000L;
 
+    private static final int DUMMY_DEVICE_ID = Integer.MAX_VALUE;
     private static final String[] VALID_TV_INPUT_SERVICES = {
         StubTunerTvInputService.class.getName()
     };
     private static final String[] INVALID_TV_INPUT_SERVICES = {
         NoMetadataTvInputService.class.getName(), NoPermissionTvInputService.class.getName()
     };
+    private static final String EXTENSION_INTERFACE_NAME_WITHOUT_PERMISSION =
+            "android.media.tv.cts.TvInputManagerTest.EXTENSION_INTERFACE_NAME_WITHOUT_PERMISSION";
+    private static final String EXTENSION_INTERFACE_NAME_WITH_PERMISSION_GRANTED =
+            "android.media.tv.cts.TvInputManagerTest"
+            + ".EXTENSION_INTERFACE_NAME_WITH_PERMISSION_GRANTED";
+    private static final String EXTENSION_INTERFACE_NAME_WITH_PERMISSION_UNGRANTED =
+            "android.media.tv.cts.TvInputManagerTest"
+            + ".EXTENSION_INTERFACE_NAME_WITH_PERMISSION_UNGRANTED";
+    private static final String PERMISSION_GRANTED =
+            "android.media.tv.cts.TvInputManagerTest.PERMISSION_GRANTED";
+    private static final String PERMISSION_UNGRANTED =
+            "android.media.tv.cts.TvInputManagerTest.PERMISSION_UNGRANTED";
+
     private static final TvContentRating DUMMY_RATING = TvContentRating.createRating(
             "com.android.tv", "US_TV", "US_TV_PG", "US_TV_D", "US_TV_L");
 
@@ -85,6 +105,64 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             }
         }
         return null;
+    }
+
+    private static boolean isHardwareDeviceAdded(List<TvInputHardwareInfo> list, int deviceId) {
+        if (list != null) {
+            for (TvInputHardwareInfo info : list) {
+                if (info.getDeviceId() == deviceId) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String prepareStubHardwareTvInputService() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.TV_INPUT_HARDWARE");
+
+        // Use the test api to add an HDMI hardware device
+        mManager.addHardwareDevice(DUMMY_DEVICE_ID);
+        assertTrue(isHardwareDeviceAdded(mManager.getHardwareList(), DUMMY_DEVICE_ID));
+
+        PackageManager pm = getActivity().getPackageManager();
+        ComponentName component =
+                new ComponentName(getActivity(), StubHardwareTvInputService.class);
+        pm.setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return null != getInfoForClassName(
+                        mManager.getTvInputList(), StubHardwareTvInputService.class.getName());
+            }
+        }.run();
+
+        TvInputInfo info = getInfoForClassName(
+                mManager.getTvInputList(), StubHardwareTvInputService.class.getName());
+        assertNotNull(info);
+        return info.getId();
+    }
+
+    private void cleanupStubHardwareTvInputService() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
+        PackageManager pm = getActivity().getPackageManager();
+        ComponentName component =
+                new ComponentName(getActivity(), StubHardwareTvInputService.class);
+        pm.setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return null == getInfoForClassName(
+                        mManager.getTvInputList(), StubHardwareTvInputService.class.getName());
+            }
+        }.run();
+
+        mManager.removeHardwareDevice(DUMMY_DEVICE_ID);
     }
 
     public TvInputManagerTest() {
@@ -394,7 +472,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testAcquireTvInputHardware() {
-        if (mManager == null) {
+        if (!Utils.hasTvInputFramework(getActivity()) || mManager == null) {
             return;
         }
         // Update hardware device list
@@ -435,6 +513,64 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         // Clean up
         if (hardwareDeviceAdded) {
             mManager.removeHardwareDevice(deviceId);
+        }
+    }
+
+    public void testGetAvailableExtensionInterfaceNames() {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+
+        try {
+            String inputId = prepareStubHardwareTvInputService();
+
+            StubHardwareTvInputService.injectAvailableExtensionInterface(
+                    EXTENSION_INTERFACE_NAME_WITHOUT_PERMISSION, null);
+            StubHardwareTvInputService.injectAvailableExtensionInterface(
+                    EXTENSION_INTERFACE_NAME_WITH_PERMISSION_GRANTED, PERMISSION_GRANTED);
+            StubHardwareTvInputService.injectAvailableExtensionInterface(
+                    EXTENSION_INTERFACE_NAME_WITH_PERMISSION_UNGRANTED, PERMISSION_UNGRANTED);
+
+            List<String> names = mManager.getAvailableExtensionInterfaceNames(inputId);
+            assertTrue(names != null && !names.isEmpty());
+            assertTrue(names.contains(EXTENSION_INTERFACE_NAME_WITHOUT_PERMISSION));
+            assertTrue(names.contains(EXTENSION_INTERFACE_NAME_WITH_PERMISSION_GRANTED));
+            assertFalse(names.contains(EXTENSION_INTERFACE_NAME_WITH_PERMISSION_UNGRANTED));
+
+            StubHardwareTvInputService.clearAvailableExtensionInterfaces();
+
+            names = mManager.getAvailableExtensionInterfaceNames(inputId);
+            assertTrue(names != null && names.isEmpty());
+        } finally {
+            StubHardwareTvInputService.clearAvailableExtensionInterfaces();
+            cleanupStubHardwareTvInputService();
+        }
+    }
+
+    public void testGetExtensionInterface() {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+
+        try {
+            String inputId = prepareStubHardwareTvInputService();
+
+            StubHardwareTvInputService.injectAvailableExtensionInterface(
+                    EXTENSION_INTERFACE_NAME_WITHOUT_PERMISSION, null);
+            StubHardwareTvInputService.injectAvailableExtensionInterface(
+                    EXTENSION_INTERFACE_NAME_WITH_PERMISSION_GRANTED, PERMISSION_GRANTED);
+            StubHardwareTvInputService.injectAvailableExtensionInterface(
+                    EXTENSION_INTERFACE_NAME_WITH_PERMISSION_UNGRANTED, PERMISSION_UNGRANTED);
+
+            assertNotNull(mManager.getExtensionInterface(inputId,
+                    EXTENSION_INTERFACE_NAME_WITHOUT_PERMISSION));
+            assertNotNull(mManager.getExtensionInterface(inputId,
+                    EXTENSION_INTERFACE_NAME_WITH_PERMISSION_GRANTED));
+            assertNull(mManager.getExtensionInterface(inputId,
+                    EXTENSION_INTERFACE_NAME_WITH_PERMISSION_UNGRANTED));
+        } finally {
+            StubHardwareTvInputService.clearAvailableExtensionInterfaces();
+            cleanupStubHardwareTvInputService();
         }
     }
 
@@ -491,6 +627,74 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         @Override
         public Session onCreateSession(String inputId) {
             return null;
+        }
+    }
+
+    public static class StubHardwareTvInputService extends TvInputService {
+        private static final Map<String, String> sAvailableExtensionInterfaceMap = new HashMap<>();
+
+        private ResolveInfo mResolveInfo = null;
+        private TvInputInfo mTvInputInfo = null;
+
+        public static void clearAvailableExtensionInterfaces() {
+            sAvailableExtensionInterfaceMap.clear();
+        }
+
+        public static void injectAvailableExtensionInterface(String name, String permission) {
+            sAvailableExtensionInterfaceMap.put(name, permission);
+        }
+
+        @Override
+        public void onCreate() {
+            mResolveInfo = getPackageManager().resolveService(
+                    new Intent(SERVICE_INTERFACE).setClass(this, getClass()),
+                    PackageManager.GET_SERVICES | PackageManager.GET_META_DATA);
+        }
+
+        @Override
+        public  TvInputInfo onHardwareAdded(TvInputHardwareInfo hardwareInfo) {
+            TvInputInfo info = null;
+            if (hardwareInfo.getDeviceId() == DUMMY_DEVICE_ID) {
+                info = new TvInputInfo.Builder(this, mResolveInfo)
+                        .setTvInputHardwareInfo(hardwareInfo)
+                        .build();
+                mTvInputInfo = info;
+            }
+            return info;
+        }
+
+        @Override
+        public String onHardwareRemoved(TvInputHardwareInfo hardwareInfo) {
+            String inputId = null;
+            if (hardwareInfo.getDeviceId() == DUMMY_DEVICE_ID && mTvInputInfo != null) {
+                inputId = mTvInputInfo.getId();
+                mTvInputInfo = null;
+            }
+            return inputId;
+        }
+
+        @Override
+        public Session onCreateSession(String inputId) {
+            return null;
+        }
+
+        @Override
+        public List<String> getAvailableExtensionInterfaceNames() {
+            return new ArrayList<>(sAvailableExtensionInterfaceMap.keySet());
+        }
+
+        @Override
+        public String getExtensionInterfacePermission(String name) {
+            return sAvailableExtensionInterfaceMap.get(name);
+        }
+
+        @Override
+        public IBinder getExtensionInterface(String name) {
+            if (sAvailableExtensionInterfaceMap.containsKey(name)) {
+                return new Binder();
+            } else {
+                return null;
+            }
         }
     }
 
