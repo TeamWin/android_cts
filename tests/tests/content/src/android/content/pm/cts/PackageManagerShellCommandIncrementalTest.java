@@ -78,6 +78,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -202,6 +203,8 @@ public class PackageManagerShellCommandIncrementalTest {
         final long blockSize = Os.statvfs("/data/incremental").f_bsize;
         final long preAllocatedBlocks = Os.statvfs("/data/incremental").f_bfree;
 
+        final AtomicLong freeSpaceDifference = new AtomicLong(-1L);
+
         mSession =
                 new IncrementalInstallSession.Builder()
                         .addApk(Paths.get(apk), Paths.get(idsig))
@@ -216,10 +219,8 @@ public class PackageManagerShellCommandIncrementalTest {
                             try {
                                 final long postAllocatedBlocks =
                                         Os.statvfs("/data/incremental").f_bfree;
-                                final long freeSpaceDifference =
-                                        (preAllocatedBlocks - postAllocatedBlocks) * blockSize;
-                                assertTrue(freeSpaceDifference
-                                        >= ((appFileSize * 1.015) + blockSize * 8));
+                                freeSpaceDifference.set(
+                                        (preAllocatedBlocks - postAllocatedBlocks) * blockSize);
                             } catch (Exception e) {
                                 Log.i(TAG, "ErrnoException: ", e);
                                 throw new AssertionError(e);
@@ -238,6 +239,10 @@ public class PackageManagerShellCommandIncrementalTest {
         }
 
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+
+        final double freeSpaceExpectedDifference = ((appFileSize * 1.015) + blockSize * 8);
+        assertTrue(freeSpaceDifference.get() + " >= " + freeSpaceExpectedDifference,
+                freeSpaceDifference.get() >= freeSpaceExpectedDifference);
 
         String installPath = executeShellCommand(String.format("pm path %s", TEST_APP_PACKAGE))
                                         .replaceFirst("package:", "")
