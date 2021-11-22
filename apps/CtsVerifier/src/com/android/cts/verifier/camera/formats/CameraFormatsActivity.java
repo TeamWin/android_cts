@@ -15,9 +15,6 @@
  */
 package com.android.cts.verifier.camera.formats;
 
-import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
-
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -35,9 +32,9 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -46,11 +43,13 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.cts.verifier.PassFailButtons;
+import com.android.cts.verifier.R;
+
 import java.io.IOException;
-import java.lang.Math;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
