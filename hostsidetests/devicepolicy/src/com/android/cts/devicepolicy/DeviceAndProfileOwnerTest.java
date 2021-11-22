@@ -833,6 +833,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // the DelegatedCertinstallerTest.
     @Test
     public void testDelegatedCertInstallerDirectly() throws Exception {
+        assumeTrue(mHasAttestation);
+
         setUpDelegatedCertInstallerAndRunTests(() ->
             runDeviceTestsAsUser("com.android.cts.certinstaller",
                     ".DirectDelegatedCertInstallerTest", mUserId));
@@ -842,6 +844,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     // access to it.
     @Test
     public void testSetKeyGrant() throws Exception {
+        assumeTrue(mHasAttestation);
+
         // Install an app
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
@@ -1338,6 +1342,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testGenerateKeyPairLogged() throws Exception {
+        assumeTrue(mHasAttestation);
+
         assertMetricsLogged(getDevice(), () -> {
                 executeDeviceTestMethod(
                         ".KeyManagementTest", "testCanGenerateKeyPairWithKeyAttestation");

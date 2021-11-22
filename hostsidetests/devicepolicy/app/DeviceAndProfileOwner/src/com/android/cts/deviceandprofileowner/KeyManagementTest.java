@@ -38,6 +38,7 @@ import android.keystore.cts.AuthorizationList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
+import android.os.SystemProperties;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
@@ -80,6 +81,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.x500.X500Principal;
+
+import static org.junit.Assume.assumeTrue;
 
 public class KeyManagementTest extends BaseDeviceAdminTest {
     private static final long KEYCHAIN_TIMEOUT_MINS = 6;
@@ -449,9 +452,12 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             String keyAlgorithm, String signatureAlgorithm,
             String[] signaturePaddings, boolean useStrongBox,
             int deviceIdAttestationFlags) throws Exception {
+        assumeTrue(isAttestationSupported());
+
         final String alias =
                 String.format("com.android.test.attested-%s", keyAlgorithm.toLowerCase());
         byte[] attestationChallenge = new byte[] {0x01, 0x02, 0x03};
+
         try {
             KeyGenParameterSpec.Builder specBuilder =  new KeyGenParameterSpec.Builder(
                     alias,
@@ -522,6 +528,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
      * algorithms.
      */
     public void testCanGenerateKeyPairWithKeyAttestation() throws Exception {
+        assumeTrue(isAttestationSupported());
         for (SupportedKeyAlgorithm supportedKey : SUPPORTED_KEY_ALGORITHMS) {
             assertThat(
                     generateKeyAndCheckAttestation(
@@ -535,6 +542,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     }
 
     public void testCanGenerateKeyPairWithKeyAttestationUsingStrongBox() throws Exception {
+        assumeTrue(isAttestationSupported());
         try {
             for (SupportedKeyAlgorithm supportedKey : SUPPORTED_KEY_ALGORITHMS) {
                 assertThat(
@@ -642,9 +650,11 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     }
 
     public void testProfileOwnerCannotAttestDeviceUniqueIds() throws Exception {
+        assumeTrue(isAttestationSupported());
         if (isDeviceOwner()) {
             return;
         }
+
         int[] forbiddenModes = new int[] {ID_TYPE_SERIAL, ID_TYPE_IMEI, ID_TYPE_MEID};
         for (int i = 0; i < forbiddenModes.length; i++) {
             try {
@@ -1021,5 +1031,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     boolean isUniqueDeviceAttestationSupported() {
         return mDevicePolicyManager.isUniqueDeviceAttestationSupported();
+    }
+
+    private boolean isAttestationSupported() {
+        return SystemProperties.getInt("ro.product.first_api_level", 0) >= 26;
     }
 }
