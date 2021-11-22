@@ -186,6 +186,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
+    protected boolean mHasAttestation;
+
     private static final String VERIFY_CREDENTIAL_CONFIRMATION = "Lock credential verified";
 
     @Rule
@@ -205,6 +207,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
+        String propertyValue = getDevice().getProperty("ro.product.first_api_level");
+        if (propertyValue != null && !propertyValue.isEmpty()) {
+            mHasAttestation = Integer.parseInt(propertyValue) >= 26;
+        }
         if (hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN)) {
             ensurePrimaryUserHasNoPassword();
         }

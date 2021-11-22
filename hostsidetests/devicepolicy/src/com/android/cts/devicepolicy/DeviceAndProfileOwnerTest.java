@@ -753,6 +753,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             reason = "Will be migrated to new test infra")
     @Test
     public void testDelegatedCertInstallerDirectly() throws Exception {
+        assumeTrue(mHasAttestation);
+
         setUpDelegatedCertInstallerAndRunTests(() ->
             runDeviceTestsAsUser("com.android.cts.certinstaller",
                     ".DirectDelegatedCertInstallerTest", mUserId));
@@ -764,6 +766,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             reason = "Will be migrated to new test infra")
     @Test
     public void testSetKeyGrant() throws Exception {
+        assumeTrue(mHasAttestation);
+
         // Install an app
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
@@ -1292,6 +1296,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     // TODO(b/198408853): Migrate
     public void testGenerateKeyPairLogged() throws Exception {
+        assumeTrue(mHasAttestation);
+
         assertMetricsLogged(getDevice(), () -> {
                 executeDeviceTestMethod(
                         ".KeyManagementTest", "testCanGenerateKeyPairWithKeyAttestation");
