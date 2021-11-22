@@ -16,11 +16,11 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
+
 import android.Manifest;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -30,8 +30,6 @@ import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
-
-import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
 
 /**
  * Test class to verify privacy information is shown for devices managed by a Device Owner.
@@ -92,6 +90,12 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND, command);
     }
 
+    private Intent buildCommandIntentForCurrentUser(String command) {
+        return buildCommandIntent(command)
+                .putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true);
+    }
+
+
     private TestListItem buildCommandTest(String id, int titleRes, int infoRes,
             int commandButtonRes, String command) {
         return createInteractiveTestItem(this, id, titleRes, infoRes,
@@ -105,12 +109,14 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
             String permission) {
         return createInteractiveTestItem(this, id, titleRes, infoRes,
                 new ButtonInfo[] {
-                        new ButtonInfo(R.string.enterprise_privacy_reset, buildCommandIntent(
+                        new ButtonInfo(R.string.enterprise_privacy_reset,
+                                buildCommandIntentForCurrentUser(
                                 CommandReceiverActivity.COMMAND_SET_PERMISSION_GRANT_STATE)
                                 .putExtra(CommandReceiverActivity.EXTRA_PERMISSION, permission)
                                 .putExtra(CommandReceiverActivity.EXTRA_GRANT_STATE,
                                         DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT)),
-                        new ButtonInfo(R.string.enterprise_privacy_grant, buildCommandIntent(
+                        new ButtonInfo(R.string.enterprise_privacy_grant,
+                                buildCommandIntentForCurrentUser(
                                 CommandReceiverActivity.COMMAND_SET_PERMISSION_GRANT_STATE)
                                 .putExtra(CommandReceiverActivity.EXTRA_PERMISSION, permission)
                                 .putExtra(CommandReceiverActivity.EXTRA_GRANT_STATE,
@@ -182,11 +188,12 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                         new ButtonInfo(R.string.enterprise_privacy_open_settings,
                                 new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
                         new ButtonInfo(R.string.enterprise_privacy_set_keyboard,
-                                buildCommandIntent(CommandReceiverActivity
-                                        .COMMAND_SET_DEFAULT_IME)),
+                                buildCommandIntentForCurrentUser(
+                                        CommandReceiverActivity.COMMAND_SET_DEFAULT_IME)),
                         new ButtonInfo(R.string.enterprise_privacy_finish,
-                                buildCommandIntent(CommandReceiverActivity
-                                        .COMMAND_CLEAR_DEFAULT_IME))}));
+                                buildCommandIntentForCurrentUser(
+                                        CommandReceiverActivity.COMMAND_CLEAR_DEFAULT_IME))
+                }));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ALWAYS_ON_VPN,
                 R.string.enterprise_privacy_always_on_vpn,
                 R.string.enterprise_privacy_always_on_vpn_info,
