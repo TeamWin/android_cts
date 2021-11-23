@@ -1723,6 +1723,9 @@ public class ContextTest extends AndroidTestCase {
      * Verifies a receiver registered with {@link Context#RECEIVER_NOT_EXPORTED} does not receive
      * a broadcast from an external app.
      */
+    // TODO(b/206699109): Re-enable this test once the skip for an external app sending a broadcast
+    // to an unexported receiver is restored in BroadcastQueue.
+    @Suppress
     public void testRegisterReceiver_notExported_broadcastNotReceived() throws Exception {
         final ResultReceiver receiver = new ResultReceiver();
         registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION),
