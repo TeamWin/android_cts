@@ -2720,8 +2720,7 @@
 
         <activity android:name=".camera.video.CameraVideoActivity"
                  android:label="@string/camera_video"
-                 android:exported="true"
-                 android:screenOrientation="landscape">
+                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
