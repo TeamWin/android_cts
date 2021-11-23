@@ -16,8 +16,6 @@
 
 package com.android.bedstead.harrier.policies;
 
-import static android.app.admin.DevicePolicyManager.DELEGATION_APP_RESTRICTIONS;
-
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_IN_BACKGROUND;
@@ -32,17 +30,12 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 /**
  * Policy for application restrictions.
  *
- * <p>This is used by methods such as
- * {@link DevicePolicyManager#setApplicationRestrictions(ComponentName, String, Bundle)} and
- * {@link DevicePolicyManager#getApplicationRestrictions(ComponentName, String)}.
+ * <p>This is used by the method
+ * {@link DevicePolicyManager#setApplicationRestrictionsManagingPackage(ComponentName, String, Bundle)}
  */
 @EnterprisePolicy(
         dpc = {
-            APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND,
-            APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER},
-        delegatedScopes = {
-            @EnterprisePolicy.DelegatedScope(
-                    scope = DELEGATION_APP_RESTRICTIONS, appliesTo = APPLIES_TO_OWN_USER)
-        })
-public final class ApplicationRestrictions {
+                APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_IN_BACKGROUND,
+                APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER})
+public final class ApplicationRestrictionsManagingPackage {
 }
