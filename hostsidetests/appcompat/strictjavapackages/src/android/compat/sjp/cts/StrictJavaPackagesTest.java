@@ -277,6 +277,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
         Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
                 duplicate -> !overlapBurndownList.contains(duplicate));
+
+        assertThat(filtered).isEmpty();
     }
 
     /**
