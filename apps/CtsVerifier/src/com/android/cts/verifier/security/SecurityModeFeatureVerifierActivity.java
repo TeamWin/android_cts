@@ -75,7 +75,7 @@ public class SecurityModeFeatureVerifierActivity extends PassFailButtons.Activit
         mHandheldOrTabletOkButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                setTestResultAndFinish(mFeatureAvailable);
+                setTestResultAndFinish(mFeatureAvailable || mDeviceLaunchedBeforeS);
             }
         });
     }
