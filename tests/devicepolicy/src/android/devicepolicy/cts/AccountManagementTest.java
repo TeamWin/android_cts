@@ -100,7 +100,8 @@ public class AccountManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @CannotSetPolicyTest(policy = AccountManagement.class)
+    // We don't include non device admin states as passing a null admin is a NullPointerException
+    @CannotSetPolicyTest(policy = AccountManagement.class, includeNonDeviceAdminStates = false)
     public void setAccountTypesWithManagementDisabled_invalidAdmin_throwsException() {
         assertThrows(OperationCanceledException.class, () ->
                 mDpm.setAccountManagementDisabled(

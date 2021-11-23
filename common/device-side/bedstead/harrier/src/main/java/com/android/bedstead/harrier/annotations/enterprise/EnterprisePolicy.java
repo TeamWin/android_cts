@@ -166,6 +166,14 @@ public @interface EnterprisePolicy {
      * {@link APPLIES_IN_BACKGROUND}. */
     int DOES_NOT_APPLY_IN_BACKGROUND = 1 << 18;
 
+
+    /**
+     * A policy which can be applied by a delegate.
+     *
+     * See {@link #delegatedScopes()} for the scopes which enable this.
+     */
+    int CAN_BE_DELEGATED = 1 << 19;
+
     /** Flags indicating DPC states which can set the policy. */
     int[] dpc() default {};
 
@@ -186,7 +194,7 @@ public @interface EnterprisePolicy {
     /**
      * {@link DelegatedScope} indicating which delegated scopes can control the policy.
      *
-     * <p>Note that this currently does not generate any additional tests but may do in future.
+     * <p>This applies to {@link #dpc()} entries with the {@link #CAN_BE_DELEGATED} flag.
      */
-    DelegatedScope[] delegatedScopes() default {};
+    String[] delegatedScopes() default {};
 }
