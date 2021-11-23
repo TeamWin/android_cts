@@ -34,6 +34,7 @@ import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.KeyManagement;
@@ -62,6 +63,7 @@ import java.security.cert.CertificateFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test that a DPC can manage keys and certificate on a device by installing, generating and
@@ -74,6 +76,7 @@ public class KeyManagementTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+    private static final int KEYCHAIN_CALLBACK_TIMEOUT_SECONDS = 600;
     private static final String RSA = "RSA";
     private static final String RSA_ALIAS = "com.android.test.valid-rsa-key-1";
     private static final PrivateKey PRIVATE_KEY =
@@ -270,6 +273,8 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
+    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
+            + "takes a long time to callback")
     public void choosePrivateKeyAlias_aliasIsSelectedByAdmin_returnAlias() throws Exception {
         try {
             // Install keypair
@@ -279,7 +284,8 @@ public class KeyManagementTest {
 
             choosePrivateKeyAlias(callback, RSA_ALIAS);
 
-            assertThat(callback.await()).isEqualTo(RSA_ALIAS);
+            assertThat(callback.await(KEYCHAIN_CALLBACK_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                    .isEqualTo(RSA_ALIAS);
         } finally {
             // Remove keypair
             sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
@@ -289,6 +295,8 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
+    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
+            + "takes a long time to callback")
     public void choosePrivateKeyAlias_nonUserSelectedAliasIsSelectedByAdmin_returnAlias()
             throws Exception {
         try {
@@ -299,7 +307,8 @@ public class KeyManagementTest {
 
             choosePrivateKeyAlias(callback, RSA_ALIAS);
 
-            assertThat(callback.await()).isEqualTo(RSA_ALIAS);
+            assertThat(callback.await(KEYCHAIN_CALLBACK_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                    .isEqualTo(RSA_ALIAS);
         } finally {
             // Remove keypair
             sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
@@ -309,6 +318,8 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
+    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
+            + "takes a long time to callback")
     public void getPrivateKey_aliasIsGranted_returnPrivateKey() throws Exception {
         try {
             // Install keypair
@@ -317,7 +328,7 @@ public class KeyManagementTest {
             // Grant alias via {@code KeyChain.choosePrivateKeyAlias}
             KeyChainAliasCallback callback = new KeyChainAliasCallback();
             choosePrivateKeyAlias(callback, RSA_ALIAS);
-            callback.await();
+            callback.await(KEYCHAIN_CALLBACK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             // Get private key for the granted alias
             final PrivateKey privateKey =
