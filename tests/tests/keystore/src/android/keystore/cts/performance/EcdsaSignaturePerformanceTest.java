@@ -30,26 +30,32 @@ public class EcdsaSignaturePerformanceTest extends PerformanceTestBase {
     final int[] SUPPORTED_KEY_SIZES = {224, 256, 384, 521};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
+    @Test
     public void testNONEwithECDSA() throws Exception {
         testEcdsaSign("NONEwithECDSA", TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA1withECDSA() throws Exception {
         testEcdsaSign("SHA1withECDSA", TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA224withECDSA() throws Exception {
         testEcdsaSign("SHA224withECDSA", TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA256withECDSA() throws Exception {
         testEcdsaSign("SHA256withECDSA", TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA384withECDSA() throws Exception {
         testEcdsaSign("SHA384withECDSA", TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA512withECDSA() throws Exception {
         testEcdsaSign("SHA512withECDSA", TEST_MESSAGE_SIZES);
     }
