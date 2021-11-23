@@ -249,14 +249,7 @@ public final class RecognitionServiceMicIndicatorTest {
         }
         Log.i(TAG, "Retrieved dialog description " + dialogDescription);
 
-        if (isCar()) {
-            // Make sure Voice recognizer's app label is present in dialog.
-            assertWithMessage(
-                    "Voice recognition service can blame the calling app name " + APP_LABEL
-                            + ", but does not find it.")
-                    .that(dialogDescription)
-                    .contains(APP_LABEL);
-        } else if (trustVoiceService) {
+        if (trustVoiceService) {
             // Check trust recognizer can blame calling apmic permission
             assertWithMessage(
                     "Trusted voice recognition service can blame the calling app name " + APP_LABEL
