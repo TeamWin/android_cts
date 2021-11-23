@@ -41,8 +41,8 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.os.Build;
-import android.platform.test.annotations.AppModeFull;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
@@ -65,6 +65,7 @@ import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
@@ -594,6 +595,19 @@ public class DeviceStateTest {
     @RequireRunOnPrimaryUser(switchedToUser = FALSE)
     public void requireRunOnUser_specifyNotSwitchedToUser_isNotCurrentUser() {
         assertThat(TestApis.users().current()).isNotEqualTo(sDeviceState.primaryUser());
+    }
+
+    @Test
+    @RequireRunNotOnSecondaryUser
+    public void requireRunNotOnSecondaryUser_currentUserIsNotSecondary() {
+        assertThat(TestApis.users().current().type().name()).isNotEqualTo(SECONDARY_USER_TYPE_NAME);
+    }
+
+    @Test
+    @RequireRunNotOnSecondaryUser
+    public void requireRunNotOnSecondaryUser_instrumentedUserIsNotSecondary() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isNotEqualTo(SECONDARY_USER_TYPE_NAME);
     }
 
     @Test
