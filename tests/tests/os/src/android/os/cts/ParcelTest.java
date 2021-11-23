@@ -689,6 +689,43 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testWriteBlob() {
+        Parcel p;
+
+        byte[] shortBytes = {(byte) 21};
+        // Create a byte array with 70 KiB to make sure it is large enough to be saved into Android
+        // Shared Memory. The native blob inplace limit is 16 KiB. Also make it larger than the
+        // IBinder.MAX_IPC_SIZE which is 64 KiB.
+        byte[] largeBytes = new byte[70 * 1024];
+        for (int i = 0; i < largeBytes.length; i++) {
+            largeBytes[i] = (byte) (i / Byte.MAX_VALUE);
+        }
+        // test write null
+        p = Parcel.obtain();
+        p.writeBlob(null, 0, 2);
+        p.setDataPosition(0);
+        byte[] outputBytes = p.readBlob();
+        assertNull(outputBytes);
+        p.recycle();
+
+        // test write short bytes
+        p = Parcel.obtain();
+        p.writeBlob(shortBytes, 0, 1);
+        p.setDataPosition(0);
+        assertEquals(shortBytes[0], p.readBlob()[0]);
+        p.recycle();
+
+        // test write large bytes
+        p = Parcel.obtain();
+        p.writeBlob(largeBytes, 0, largeBytes.length);
+        p.setDataPosition(0);
+        outputBytes = p.readBlob();
+        for (int i = 0; i < largeBytes.length; i++) {
+            assertEquals(largeBytes[i], outputBytes[i]);
+        }
+        p.recycle();
+    }
+
     public void testWriteByteArray() {
         Parcel p;
 
