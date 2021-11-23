@@ -156,7 +156,8 @@ public class DefaultSmsApplicationTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @CannotSetPolicyTest(policy = DefaultSmsApplication.class)
+    // We don't include non device admin states as passing a null admin is a NullPointerException
+    @CannotSetPolicyTest(policy = DefaultSmsApplication.class, includeNonDeviceAdminStates = false)
     public void setDefaultSmsApplication_invalidAdmin_throwsException() {
         try (TestAppInstance smsApp = sSmsApp.install()) {
 
