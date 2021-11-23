@@ -80,8 +80,7 @@ public class WebViewStartupTest extends InstrumentationTestCase {
     public void testGetCurrentWebViewPackageOnUiThread() throws Throwable {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         try (TestProcessClient process = TestProcessClient.createProcessA(context)) {
-            process.run(TestGetCurrentWebViewPackageOnUiThread.class,
-                    TestProcessClient.REMOTE_TIMEOUT_MS);
+            process.run(TestGetCurrentWebViewPackageOnUiThread.class);
         }
     }
 
@@ -96,8 +95,7 @@ public class WebViewStartupTest extends InstrumentationTestCase {
     public void testGetCurrentWebViewPackageOnBackgroundThread() throws Throwable {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         try (TestProcessClient process = TestProcessClient.createProcessA(context)) {
-            process.run(TestGetCurrentWebViewPackageOnBackgroundThread.class,
-                    TestProcessClient.REMOTE_TIMEOUT_MS);
+            process.run(TestGetCurrentWebViewPackageOnBackgroundThread.class);
         }
     }
 }
