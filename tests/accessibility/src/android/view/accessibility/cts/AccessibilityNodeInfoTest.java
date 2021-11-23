@@ -18,7 +18,8 @@ package android.view.accessibility.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
-import static org.junit.Assert.assertArrayEquals;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -346,7 +347,8 @@ public class AccessibilityNodeInfoTest {
         info.setRangeInfo(RangeInfo.obtain(RangeInfo.RANGE_TYPE_FLOAT, 0.05f, 1.0f, 0.01f));
         info.setCollectionInfo(
                 CollectionInfo.obtain(2, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE));
-        info.setCollectionItemInfo(CollectionItemInfo.obtain(1, 2, 3, 4, true, true));
+        info.setCollectionItemInfo(CollectionItemInfo.obtain("RowTitle", 1, 2, "ColumnTitle",
+                3, 4, true, true));
         info.setParent(new View(getContext()));
         info.setSource(new View(getContext())); // Populates 2 fields: source and window id
         info.setLeashedParent(new MockBinder(), 1); // Populates 2 fields
@@ -547,6 +549,9 @@ public class AccessibilityNodeInfoTest {
             assertEquals("CollectionItemInfo#getRowSpan has incorrect value",
                     expectedItemInfo.getRowSpan(),
                     receivedItemInfo.getRowSpan());
+            assertThat(expectedItemInfo.getRowTitle()).isEqualTo(receivedItemInfo.getRowTitle());
+            assertThat(
+                    expectedItemInfo.getColumnTitle()).isEqualTo(receivedItemInfo.getColumnTitle());
         }
 
         // Check 1 field
