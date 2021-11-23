@@ -42,6 +42,7 @@ import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingCallback;
@@ -66,6 +67,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(BedsteadJUnit4.class)
 public class CredentialManagementAppTest {
@@ -74,6 +76,7 @@ public class CredentialManagementAppTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    private static final int KEYCHAIN_CALLBACK_TIMEOUT_SECONDS = 600;
     private static final PrivateKey PRIVATE_KEY =
             getPrivateKey(FakeKeys.FAKE_RSA_1.privateKey, "RSA");
     private static final Certificate CERTIFICATE =
@@ -277,6 +280,8 @@ public class CredentialManagementAppTest {
 
     @Test
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
+            + "takes a long time to callback")
     public void choosePrivateKeyAlias_isCredentialManagementApp_aliasSelected() throws Exception {
         setCredentialManagementApp();
 
@@ -291,7 +296,8 @@ public class CredentialManagementAppTest {
                             /* keyTypes= */ null, /* issuers= */ null, URI, /* alias = */ null)
             );
 
-            assertThat(callback.await()).isEqualTo(ALIAS);
+            assertThat(callback.await(KEYCHAIN_CALLBACK_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                    .isEqualTo(ALIAS);
         } finally {
             // Remove keypair as credential management app
             sDevicePolicyManager.removeKeyPair(/* admin = */ null, ALIAS);
