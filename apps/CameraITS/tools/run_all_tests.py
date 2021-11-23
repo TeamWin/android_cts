@@ -126,7 +126,6 @@ SUB_CAMERA_TESTS = {
         'test_yuv_plus_raw',
     ],
     'scene2_a': [
-        'test_faces',
         'test_num_faces',
     ],
     'scene4': [
