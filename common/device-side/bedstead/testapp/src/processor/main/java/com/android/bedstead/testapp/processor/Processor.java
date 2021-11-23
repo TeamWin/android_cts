@@ -336,7 +336,14 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder.nextControlFlow(
                     "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
-                    .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .addStatement("throw ($T) e.getCause()", RuntimeException.class);
+
+            for (TypeMirror m : method.getThrownTypes()) {
+                methodBuilder.nextControlFlow("catch ($T e)", m)
+                        .addStatement("throw e");
+            }
+
+            methodBuilder
                     .nextControlFlow("catch ($T e)", Throwable.class)
                     .addStatement(
                             "throw new $T($S, e)",
@@ -435,6 +442,11 @@ public final class Processor extends AbstractProcessor {
                 methodBuilder.addStatement(runLogic);
             } else {
                 methodBuilder.addStatement("return $L", runLogic);
+            }
+
+            for (TypeMirror m : method.getThrownTypes()) {
+                methodBuilder.nextControlFlow("catch ($T e)", m)
+                        .addStatement("throw e");
             }
 
             methodBuilder.nextControlFlow(
@@ -536,6 +548,10 @@ public final class Processor extends AbstractProcessor {
                             .addModifiers(Modifier.PUBLIC)
                             .addAnnotation(Override.class);
 
+            for (TypeMirror m : method.getThrownTypes()) {
+                methodBuilder.addException(ClassName.get(m));
+            }
+
             methodBuilder.addParameter(
                     ParameterSpec.builder(String.class, "activityClassName").build());
 
@@ -580,7 +596,14 @@ public final class Processor extends AbstractProcessor {
 
             methodBuilder.nextControlFlow(
                     "catch ($T e)", PROFILE_RUNTIME_EXCEPTION_CLASSNAME)
-                    .addStatement("throw ($T) e.getCause()", RuntimeException.class)
+                    .addStatement("throw ($T) e.getCause()", RuntimeException.class);
+
+            for (TypeMirror m : method.getThrownTypes()) {
+                methodBuilder.nextControlFlow("catch ($T e)", m)
+                        .addStatement("throw e");
+            }
+
+            methodBuilder
                     .nextControlFlow("catch ($T e)", Throwable.class)
                     .addStatement(
                             "throw new $T($S, e)",

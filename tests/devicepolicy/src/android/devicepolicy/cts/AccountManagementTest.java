@@ -42,7 +42,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.AccountManagement;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
-import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -85,8 +85,8 @@ public class AccountManagementTest {
 
     @Before
     public void setUp() {
-        RemoteDpc dpc = sDeviceState.dpc();
-        mAdmin = dpc.devicePolicyController().componentName();
+        RemotePolicyManager dpc = sDeviceState.dpc();
+        mAdmin = dpc.componentName();
         mDpm = dpc.devicePolicyManager();
         mAccountManager = sContext.getSystemService(AccountManager.class);
     }

@@ -52,7 +52,7 @@ public final class TestAppBinder implements ConnectionBinder {
 
         Intent bindIntent = new Intent();
         bindIntent.setComponent(new ComponentName(
-                mTestAppInstance.testApp().packageName(),
+                mTestAppInstance.packageName(),
                 bindToService.getClassName()));
 
         Log.i(LOG_TAG, "Attempting to bind to " + bindIntent);

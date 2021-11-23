@@ -16,7 +16,6 @@
 package com.android.cts.delegate;
 
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.os.Bundle;
 import android.test.MoreAsserts;
 import android.util.Log;
@@ -56,19 +55,6 @@ public class GeneralDelegateTest extends BaseJUnit3TestCase {
         } catch (SecurityException expected) {
             MoreAsserts.assertContainsRegex("Caller with uid \\d+ is not " + otherPackage,
                     expected.getMessage());
-        }
-    }
-
-    public void testSettingAdminComponentNameThrowsException() {
-        final String myPackageName = getInstrumentation().getContext().getPackageName();
-        final ComponentName myComponentName = new ComponentName(myPackageName,
-                GeneralDelegateTest.class.getName());
-
-        try {
-            mDpm.setUninstallBlocked(myComponentName, myPackageName, true);
-            fail("Expected SecurityException not thrown");
-        } catch (SecurityException expected) {
-            MoreAsserts.assertContainsRegex("No active admin", expected.getMessage());
         }
     }
 }

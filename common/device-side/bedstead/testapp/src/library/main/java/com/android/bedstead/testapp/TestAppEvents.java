@@ -73,238 +73,238 @@ public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
     @Override
     public ActivityCreatedEvent.ActivityCreatedEventQuery activityCreated() {
         return ActivityCreatedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public ActivityDestroyedEvent.ActivityDestroyedEventQuery activityDestroyed() {
         return ActivityDestroyedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public ActivityPausedEvent.ActivityPausedEventQuery activityPaused() {
         return ActivityPausedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public ActivityRestartedEvent.ActivityRestartedEventQuery activityRestarted() {
         return ActivityRestartedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public ActivityResumedEvent.ActivityResumedEventQuery activityResumed() {
         return ActivityResumedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public ActivityStartedEvent.ActivityStartedEventQuery activityStarted() {
         return ActivityStartedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public ActivityStoppedEvent.ActivityStoppedEventQuery activityStopped() {
         return ActivityStoppedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public BroadcastReceivedEvent.BroadcastReceivedEventQuery broadcastReceived() {
         return BroadcastReceivedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminBugreportFailedEvent.DeviceAdminBugreportFailedEventQuery bugReportFailed() {
         return DeviceAdminBugreportFailedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminBugreportSharedEvent.DeviceAdminBugreportSharedEventQuery bugReportShared() {
         return DeviceAdminBugreportSharedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminBugreportSharingDeclinedEvent.DeviceAdminBugreportSharingDeclinedEventQuery bugReportSharingDeclined() {
         return DeviceAdminBugreportSharingDeclinedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminChoosePrivateKeyAliasEvent.DeviceAdminChoosePrivateKeyAliasEventQuery choosePrivateKeyAlias() {
         return DeviceAdminChoosePrivateKeyAliasEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminDisabledEvent.DeviceAdminDisabledEventQuery deviceAdminDisabled() {
         return DeviceAdminDisabledEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminDisableRequestedEvent.DeviceAdminDisableRequestedEventQuery deviceAdminDisableRequested() {
         return DeviceAdminDisableRequestedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminEnabledEvent.DeviceAdminEnabledEventQuery deviceAdminEnabled() {
         return DeviceAdminEnabledEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminLockTaskModeEnteringEvent.DeviceAdminLockTaskModeEnteringEventQuery lockTaskModeEntering() {
         return DeviceAdminLockTaskModeEnteringEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminLockTaskModeExitingEvent.DeviceAdminLockTaskModeExitingEventQuery lockTaskModeExiting() {
         return DeviceAdminLockTaskModeExitingEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminNetworkLogsAvailableEvent.DeviceAdminNetworkLogsAvailableEventQuery networkLogsAvailable() {
         return DeviceAdminNetworkLogsAvailableEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminOperationSafetyStateChangedEvent.DeviceAdminOperationSafetyStateChangedEventQuery operationSafetyStateChanged() {
         return DeviceAdminOperationSafetyStateChangedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminPasswordChangedEvent.DeviceAdminPasswordChangedEventQuery passwordChanged() {
         return DeviceAdminPasswordChangedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminPasswordExpiringEvent.DeviceAdminPasswordExpiringEventQuery passwordExpiring() {
         return DeviceAdminPasswordExpiringEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminPasswordFailedEvent.DeviceAdminPasswordFailedEventQuery passwordFailed() {
         return DeviceAdminPasswordFailedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminPasswordSucceededEvent.DeviceAdminPasswordSucceededEventQuery passwordSucceeded() {
         return DeviceAdminPasswordSucceededEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminProfileProvisioningCompleteEvent.DeviceAdminProfileProvisioningCompleteEventQuery profileProvisioningComplete() {
         return DeviceAdminProfileProvisioningCompleteEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminReadyForUserInitializationEvent.DeviceAdminReadyForUserInitializationEventQuery readyForUserInitialization() {
         return DeviceAdminReadyForUserInitializationEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminSecurityLogsAvailableEvent.DeviceAdminSecurityLogsAvailableEventQuery securityLogsAvailable() {
         return DeviceAdminSecurityLogsAvailableEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminSystemUpdatePendingEvent.DeviceAdminSystemUpdatePendingEventQuery systemUpdatePending() {
         return DeviceAdminSystemUpdatePendingEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent.DeviceAdminTransferAffiliatedProfileOwnershipCompleteEventQuery transferAffiliatedProfileOwnershipComplete() {
         return DeviceAdminTransferAffiliatedProfileOwnershipCompleteEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminTransferOwnershipCompleteEvent.DeviceAdminTransferOwnershipCompleteEventQuery transferOwnershipComplete() {
         return DeviceAdminTransferOwnershipCompleteEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminUserAddedEvent.DeviceAdminUserAddedEventQuery userAdded() {
         return DeviceAdminUserAddedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminUserRemovedEvent.DeviceAdminUserRemovedEventQuery userRemoved() {
         return DeviceAdminUserRemovedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminUserStartedEvent.DeviceAdminUserStartedEventQuery userStarted() {
         return DeviceAdminUserStartedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminUserStoppedEvent.DeviceAdminUserStoppedEventQuery userStopped() {
         return DeviceAdminUserStoppedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 
     @Override
     public DeviceAdminUserSwitchedEvent.DeviceAdminUserSwitchedEventQuery userSwitched() {
         return DeviceAdminUserSwitchedEvent.queryPackage(
-                mTestApp.testApp().packageName())
+                mTestApp.packageName())
                 .onUser(mTestApp.user());
     }
 }

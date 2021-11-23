@@ -142,14 +142,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "189268544",
-            reason = "Will be migrated to new test infra")
-    public void testApplicationRestrictions() throws Exception {
-        super.testApplicationRestrictions();
-    }
-
-    @Override
-    @Test
     @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197909577",
             reason = "Will be migrated to new test infra")
     public void testAccountManagement_userRestrictionAddAccount() throws Exception {
