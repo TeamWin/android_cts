@@ -34,6 +34,8 @@ import static com.android.bedstead.nene.notifications.NotificationListenerQueryS
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.testng.Assert.assertThrows;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
@@ -557,7 +559,7 @@ public class PermissionGrantTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class)
+    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
     public void grantSmsPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
@@ -580,6 +582,15 @@ public class PermissionGrantTest {
                     sDeviceState.dpc().componentName(), sTestApp.packageName(),
                     READ_SMS, existingGrantState);
         }
+    }
+
+    @Test
+    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
+    public void grantSmsPermission_nonDeviceAdmin_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
+                        sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                        READ_SMS, PERMISSION_GRANT_STATE_GRANTED));
     }
 
     @Test

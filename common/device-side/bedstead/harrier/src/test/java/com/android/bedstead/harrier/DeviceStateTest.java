@@ -30,6 +30,7 @@ import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.PRIMARY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -745,5 +746,19 @@ public class DeviceStateTest {
                 .setApplicationRestrictions(
                         sDeviceState.dpc().componentName(),
                         sDeviceState.dpc().packageName(), new Bundle());
+    }
+
+    @Test
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @EnsureHasDelegate(admin = PRIMARY, scopes = {})
+    public void ensureHasDelegateAnnotation_primaryAdminWithoutReplace_dpcReturnsDpc() {
+        assertThat(sDeviceState.dpc()).isInstanceOf(RemoteDpc.class);
+    }
+
+    @Test
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @EnsureHasDelegate(admin = PRIMARY, scopes = {}, isPrimary = true)
+    public void ensureHasDelegateAnnotation_primaryAdminAndReplace_dpcReturnsDelegate() {
+        assertThat(sDeviceState.dpc()).isInstanceOf(RemoteDelegate.class);
     }
 }

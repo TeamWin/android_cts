@@ -1419,9 +1419,14 @@ public final class DeviceState implements TestRule {
 
     private void ensureHasDelegate(
             EnsureHasDelegate.AdminType adminType, List<String> scopes, boolean isPrimary) {
-        RemoteDpc dpc = getDeviceAdmin(adminType);
+        RemotePolicyManager dpc = getDeviceAdmin(adminType);
 
-        if (isPrimary && mPrimaryPolicyManager != null) {
+
+        boolean specifiesAdminType = adminType != EnsureHasDelegate.AdminType.PRIMARY;
+        boolean currentPrimaryPolicyManagerIsNotDelegator = mPrimaryPolicyManager != dpc;
+
+        if (isPrimary && mPrimaryPolicyManager != null
+                && (specifiesAdminType || currentPrimaryPolicyManagerIsNotDelegator)) {
             throw new IllegalStateException(
                     "Only one DPC can be marked as primary per test (current primary is "
                             + mPrimaryPolicyManager + ")");
@@ -1442,12 +1447,14 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private RemoteDpc getDeviceAdmin(EnsureHasDelegate.AdminType adminType) {
+    private RemotePolicyManager getDeviceAdmin(EnsureHasDelegate.AdminType adminType) {
         switch (adminType) {
             case DEVICE_OWNER:
                 return deviceOwner();
             case PROFILE_OWNER:
                 return profileOwner();
+            case PRIMARY:
+                return dpc();
             default:
                 throw new IllegalStateException("Unknown device admin type " + adminType);
         }

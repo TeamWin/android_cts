@@ -16,7 +16,10 @@
 
 package com.android.bedstead.harrier;
 
+import android.os.Bundle;
+
 import androidx.annotation.Nullable;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -72,18 +75,23 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         return getAnnotationWeight(a) - getAnnotationWeight(b);
     }
 
-    private static int getAnnotationWeight(Annotation a) {
-        if (!a.annotationType().getPackage().getName().startsWith(BEDSTEAD_PACKAGE_NAME)) {
+    private static int getAnnotationWeight(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            // Special case, not important
+            return AnnotationRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
+        }
+
+        if (!annotation.annotationType().getPackage().getName().startsWith(BEDSTEAD_PACKAGE_NAME)) {
             return AnnotationRunPrecedence.FIRST;
         }
 
         try {
-            return (int) a.annotationType().getMethod("weight").invoke(a);
+            return (int) annotation.annotationType().getMethod("weight").invoke(annotation);
         } catch (NoSuchMethodException e) {
             // Default to PRECEDENCE_NOT_IMPORTANT if no weight is found on the annotation.
             return AnnotationRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new NeneException("Failed to invoke weight on this annotation: " + a, e);
+            throw new NeneException("Failed to invoke weight on this annotation: " + annotation, e);
         }
     }
 
@@ -92,7 +100,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
      */
     public static final class BedsteadFrameworkMethod extends FrameworkMethod {
 
-        private final Class<? extends Annotation> mParameterizedAnnotation;
+        private final Annotation mParameterizedAnnotation;
         private final Map<Class<? extends Annotation>, Annotation> mAnnotationsMap =
                 new HashMap<>();
         private Annotation[] mAnnotations;
@@ -103,8 +111,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
         public BedsteadFrameworkMethod(Method method, Annotation parameterizedAnnotation) {
             super(method);
-            this.mParameterizedAnnotation = (parameterizedAnnotation == null) ? null
-                    : parameterizedAnnotation.annotationType();
+            mParameterizedAnnotation = parameterizedAnnotation;
 
             calculateAnnotations();
         }
@@ -124,6 +131,9 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
             this.mAnnotations = annotations.toArray(new Annotation[0]);
             for (Annotation annotation : annotations) {
+                if (annotation instanceof DynamicParameterizedAnnotation) {
+                    continue; // don't return this
+                }
                 mAnnotationsMap.put(annotation.annotationType(), annotation);
             }
         }
@@ -133,7 +143,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             if (mParameterizedAnnotation == null) {
                 return super.getName();
             }
-            return super.getName() + "[" + mParameterizedAnnotation.getSimpleName() + "]";
+            return super.getName() + "[" + getParameterName(mParameterizedAnnotation) + "]";
         }
 
         @Override
@@ -162,13 +172,20 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
     }
 
+    private static String getParameterName(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            return ((DynamicParameterizedAnnotation) annotation).name();
+        }
+        return annotation.annotationType().getSimpleName();
+    }
+
     /**
      * Resolve annotations recursively.
      *
      * @param parameterizedAnnotation The class of the parameterized annotation to expand, if any
      */
     public static void resolveRecursiveAnnotations(List<Annotation> annotations,
-            @Nullable Class<? extends Annotation> parameterizedAnnotation) {
+            @Nullable Annotation parameterizedAnnotation) {
         int index = 0;
         while (index < annotations.size()) {
             Annotation annotation = annotations.get(index);
@@ -181,11 +198,34 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
     }
 
+    private static boolean isParameterizedAnnotation(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            return true;
+        }
+
+        return annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null;
+    }
+
+    private static Annotation[] getIndirectAnnotations(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            return ((DynamicParameterizedAnnotation) annotation).annotations();
+        }
+        return annotation.annotationType().getAnnotations();
+    }
+
+    private static boolean isRepeatingAnnotation(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            return false;
+        }
+
+        return annotation.annotationType().getAnnotation(RepeatingAnnotation.class) != null;
+    }
+
     private static List<Annotation> getReplacementAnnotations(Annotation annotation,
-            @Nullable Class<? extends Annotation> parameterizedAnnotation) {
+            @Nullable Annotation parameterizedAnnotation) {
         List<Annotation> replacementAnnotations = new ArrayList<>();
 
-        if (annotation.annotationType().getAnnotation(RepeatingAnnotation.class) != null) {
+        if (isRepeatingAnnotation(annotation)) {
             try {
                 Annotation[] annotations =
                         (Annotation[]) annotation.annotationType()
@@ -197,14 +237,12 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             }
         }
 
-        if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null
-                && !annotation.annotationType().equals(parameterizedAnnotation)) {
+        if (isParameterizedAnnotation(annotation) && !annotation.equals(parameterizedAnnotation)) {
             return replacementAnnotations;
         }
 
-        for (Annotation indirectAnnotation : annotation.annotationType().getAnnotations()) {
-            String annotationPackage = indirectAnnotation.annotationType().getPackage().getName();
-            if (shouldSkipAnnotation(annotationPackage)) {
+        for (Annotation indirectAnnotation : getIndirectAnnotations(annotation)) {
+            if (shouldSkipAnnotation(annotation)) {
                 continue;
             }
 
@@ -212,12 +250,21 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                     indirectAnnotation, parameterizedAnnotation));
         }
 
-        replacementAnnotations.add(annotation);
+        if (!(annotation instanceof DynamicParameterizedAnnotation)) {
+            // We drop the fake annotation once it's replaced
+            replacementAnnotations.add(annotation);
+        }
 
         return replacementAnnotations;
     }
 
-    private static boolean shouldSkipAnnotation(String annotationPackage) {
+    private static boolean shouldSkipAnnotation(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            return false;
+        }
+
+        String annotationPackage = annotation.annotationType().getPackage().getName();
+
         for (String ignoredPackage : sIgnoredAnnotationPackages) {
             if (ignoredPackage.endsWith(".*")) {
                 if (annotationPackage.startsWith(
@@ -236,6 +283,14 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         super(testClass);
     }
 
+    private boolean annotationShouldBeSkipped(Annotation annotation) {
+        if (annotation instanceof DynamicParameterizedAnnotation) {
+            return false;
+        }
+
+        return annotation.annotationType().equals(IncludeNone.class);
+    }
+
     @Override
     protected List<FrameworkMethod> computeTestMethods() {
         TestClass testClass = getTestClass();
@@ -252,7 +307,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             }
 
             for (Annotation annotation : parameterizedAnnotations) {
-                if (annotation.annotationType().equals(IncludeNone.class)) {
+                if (annotationShouldBeSkipped(annotation)) {
                     // Special case - does not generate a run
                     continue;
                 }
@@ -328,7 +383,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         parseEnterpriseAnnotations(annotations);
 
         for (Annotation annotation : annotations) {
-            if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null) {
+            if (isParameterizedAnnotation(annotation)) {
                 parameterizedAnnotations.add(annotation);
             }
         }
@@ -376,7 +431,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 EnterprisePolicy enterprisePolicy =
                         policy.getAnnotation(EnterprisePolicy.class);
                 List<Annotation> replacementAnnotations =
-                        Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy);
+                        Policy.cannotSetPolicyStates(policy.getName(), enterprisePolicy, ((CannotSetPolicyTest) annotation).includeDeviceAdminStates(), ((CannotSetPolicyTest) annotation).includeNonDeviceAdminStates());
                 replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
 
                 annotations.addAll(index, replacementAnnotations);
@@ -417,5 +472,18 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
 
         return rules;
+    }
+
+    /**
+     * True if the test is running in debug mode.
+     *
+     * <p>This will result in additional debugging information being added which would otherwise
+     * be dropped to improve test performance.
+     *
+     * <p>To enable this, pass the "bedstead-debug" instrumentation arg as "true"
+     */
+    public static boolean isDebug() {
+        Bundle arguments = InstrumentationRegistry.getArguments();
+        return Boolean.parseBoolean(arguments.getString("bedstead-debug", "false"));
     }
 }
