@@ -18,12 +18,17 @@ package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class AesKeyGenPerformanceTest extends PerformanceTestBase {
 
     final int[] SUPPORTED_AES_KEY_SIZES = {128, 256};
 
+    @Test
     public void testAesKeyGen() throws Exception {
         for (int keySize : SUPPORTED_AES_KEY_SIZES) {
             measure(
