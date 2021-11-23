@@ -92,4 +92,8 @@
 
       <!-- b/199996926 - No UWB stack support in AOSP for Android S -->
     <option name="compatibility:exclude-filter" value="CtsUwbTestCases" />
+
+    <!-- b/198226244 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.CodecEncoderPerformanceTest#testPerformanceOfHardwareVideoEncoders" />
+
 </configuration>
