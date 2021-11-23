@@ -24,11 +24,14 @@ import java.security.AlgorithmParameters;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 
+import org.junit.Test;
+
 public class DesCipherPerformanceTest extends PerformanceTestBase {
 
     final int[] SUPPORTED_DES_KEY_SIZES = {168};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
+    @Test
     public void testDESede_CBC_NoPadding() throws Exception {
         if (!TestUtils.supports3DES()) {
             return;
@@ -36,6 +39,7 @@ public class DesCipherPerformanceTest extends PerformanceTestBase {
         testDesCipher("DESede/CBC/NoPadding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testDESede_CBC_PKCS7Padding() throws Exception {
         if (!TestUtils.supports3DES()) {
             return;
@@ -43,6 +47,7 @@ public class DesCipherPerformanceTest extends PerformanceTestBase {
         testDesCipher("DESede/CBC/PKCS7Padding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testDESede_ECB_NoPadding() throws Exception {
         if (!TestUtils.supports3DES()) {
             return;
@@ -50,6 +55,7 @@ public class DesCipherPerformanceTest extends PerformanceTestBase {
         testDesCipher("DESede/ECB/NoPadding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testDESede_ECB_PKCS7Padding() throws Exception {
         if (!TestUtils.supports3DES()) {
             return;

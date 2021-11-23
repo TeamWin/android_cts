@@ -28,22 +28,27 @@ public class HmacMacPerformanceTest extends PerformanceTestBase {
     final int[] SUPPORTED_KEY_SIZES = {64, 128, 256, 512};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
+    @Test
     public void testHmacSHA1() throws Exception {
         testHmac("HmacSHA1", SUPPORTED_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testHmacSHA224() throws Exception {
         testHmac("HmacSHA224", SUPPORTED_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testHmacSHA256() throws Exception {
         testHmac("HmacSHA256", SUPPORTED_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testHmacSHA384() throws Exception {
         testHmac("HmacSHA384", SUPPORTED_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testHmacSHA512() throws Exception {
         testHmac("HmacSHA512", SUPPORTED_KEY_SIZES, TEST_MESSAGE_SIZES);
     }

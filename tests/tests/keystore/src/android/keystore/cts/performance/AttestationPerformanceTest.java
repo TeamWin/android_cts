@@ -20,9 +20,9 @@ import android.keystore.cts.performance.PerformanceTestBase.AndroidKeystoreKeyGe
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
-
 import java.security.spec.ECGenParameterSpec;
+
+import org.junit.Test;
 
 public class AttestationPerformanceTest extends PerformanceTestBase {
 
@@ -35,6 +35,7 @@ public class AttestationPerformanceTest extends PerformanceTestBase {
         new byte[128], // long challenge
     };
 
+    @Test
     public void testRsaKeyAttestation() throws Exception {
         for (byte[] challenge : ATTESTATION_CHALLENGES) {
             for (int keySize : RSA_KEY_SIZES) {
@@ -45,6 +46,7 @@ public class AttestationPerformanceTest extends PerformanceTestBase {
         }
     }
 
+    @Test
     public void testEcKeyAttestation() throws Exception {
         for (byte[] challenge : ATTESTATION_CHALLENGES) {
             for (int curve : EC_CURVES) {

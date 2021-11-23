@@ -18,14 +18,19 @@ package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.security.spec.ECGenParameterSpec;
 
+@RunWith(AndroidJUnit4.class)
 public class EcKeyGenPerformanceTest extends PerformanceTestBase {
 
     final int[] SUPPORTED_CURVES = {224, 256, 384, 521};
 
+    @Test
     public void testEcKeyGen() throws Exception {
         for (int curve : SUPPORTED_CURVES) {
             measure(

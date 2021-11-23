@@ -17,11 +17,12 @@
 package android.keystore.cts.performance;
 
 import android.keystore.cts.util.TestUtils;
+import android.os.Build;
 import android.os.SystemClock;
 import android.security.keystore.KeyGenParameterSpec;
-import android.test.AndroidTestCase;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
@@ -36,9 +37,10 @@ import java.util.ArrayList;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
-import android.os.Build;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class PerformanceTestBase extends AndroidTestCase {
+public class PerformanceTestBase {
 
     public static final long MS_PER_NS = 1000000L;
     protected static final String TAG = "KeystorePerformanceTest";
