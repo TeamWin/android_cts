@@ -31,7 +31,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.SupportMessage;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
-import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.remotedpc.RemotePolicyManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,8 +67,8 @@ public final class SupportMessageTest {
 
     @Before
     public void setUp() {
-        RemoteDpc dpc = sDeviceState.dpc();
-        mAdmin = dpc.devicePolicyController().componentName();
+        RemotePolicyManager dpc = sDeviceState.dpc();
+        mAdmin = dpc.componentName();
         mDevicePolicyManager = dpc.devicePolicyManager();
     }
 
