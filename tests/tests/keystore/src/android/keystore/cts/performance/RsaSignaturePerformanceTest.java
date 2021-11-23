@@ -30,6 +30,7 @@ public class RsaSignaturePerformanceTest extends PerformanceTestBase {
     final int[] SUPPORTED_RSA_KEY_SIZES = {2048, 3072, 4096};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
+    @Test
     public void testNONEwithRSA() throws Exception {
         for (int keySize : SUPPORTED_RSA_KEY_SIZES) {
             int modulusSizeBytes = (keySize + 7) / 8;
@@ -39,46 +40,57 @@ public class RsaSignaturePerformanceTest extends PerformanceTestBase {
         }
     }
 
+    @Test
     public void testMD5withRSA() throws Exception {
         testRsaSign("MD5withRSA", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA1withRSA() throws Exception {
         testRsaSign("SHA1withRSA", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA224withRSA() throws Exception {
         testRsaSign("SHA224withRSA", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA256withRSA() throws Exception {
         testRsaSign("SHA256withRSA", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA384withRSA() throws Exception {
         testRsaSign("SHA384withRSA", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA512withRSA() throws Exception {
         testRsaSign("SHA512withRSA", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA1withRSA_PSS() throws Exception {
         testRsaSign("SHA1withRSA/PSS", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA224withRSA_PSS() throws Exception {
         testRsaSign("SHA224withRSA/PSS", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA256withRSA_PSS() throws Exception {
         testRsaSign("SHA256withRSA/PSS", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA384withRSA_PSS() throws Exception {
         testRsaSign("SHA384withRSA/PSS", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testSHA512withRSA_PSS() throws Exception {
         testRsaSign("SHA512withRSA/PSS", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }

@@ -20,31 +20,35 @@ import android.keystore.cts.util.EmptyArray;
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
-
 import java.security.AlgorithmParameters;
 import java.security.KeyPair;
 
 import javax.crypto.Cipher;
+
+import org.junit.Test;
 
 public class RsaCipherPerformanceTest extends PerformanceTestBase {
 
     final int[] SUPPORTED_RSA_KEY_SIZES = {2048, 3072, 4096};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10};
 
+    @Test
     public void testRSA_ECB_NoPadding() throws Exception {
         testRsaCipher("RSA/ECB/NoPadding", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testRSA_ECB_PKCS1Padding() throws Exception {
         testRsaCipher("RSA/ECB/PKCS1Padding", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testRSA_ECB_OAEPWithSHA_1AndMGF1Padding() throws Exception {
         testRsaCipher(
                 "RSA/ECB/OAEPWithSHA-1AndMGF1Padding", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testRSA_ECB_OAEPPadding() throws Exception {
         testRsaCipher("RSA/ECB/OAEPPadding", SUPPORTED_RSA_KEY_SIZES, TEST_MESSAGE_SIZES);
     }

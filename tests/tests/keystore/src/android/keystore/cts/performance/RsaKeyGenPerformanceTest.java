@@ -18,28 +18,36 @@ package android.keystore.cts.performance;
 
 import android.security.keystore.KeyProperties;
 
+import org.junit.Test;
+
 public class RsaKeyGenPerformanceTest extends PerformanceTestBase {
 
+    @Test
     public void testRsa2048KeyGenWithAndroidProvider() throws Exception {
         measureKeyGenWithAndroidProvider(2048);
     }
 
+    @Test
     public void testRsa3072KeyGenWithAndroidProvider() throws Exception {
         measureKeyGenWithAndroidProvider(3072);
     }
 
+    @Test
     public void testRsa4096KeyGenWithAndroidProvider() throws Exception {
         measureKeyGenWithAndroidProvider(4096);
     }
 
+    @Test
     public void testRsa2048KeyGenWithDefaultProvider() throws Exception {
         measureKeyGenWithDefaultProvider(2048);
     }
 
+    @Test
     public void testRsa3072KeyGenWithDefaultProvider() throws Exception {
         measureKeyGenWithDefaultProvider(3072);
     }
 
+    @Test
     public void testRsa4096KeyGenWithDefaultProvider() throws Exception {
         measureKeyGenWithDefaultProvider(4096);
     }

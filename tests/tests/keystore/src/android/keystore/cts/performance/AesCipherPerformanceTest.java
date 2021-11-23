@@ -31,26 +31,32 @@ public class AesCipherPerformanceTest extends PerformanceTestBase {
     final int[] SUPPORTED_AES_KEY_SIZES = {128, 256};
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
+    @Test
     public void testAES_CBC_NoPadding() throws Exception {
         testAesCipher("AES/CBC/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testAES_CBC_PKCS7Padding() throws Exception {
         testAesCipher("AES/CBC/PKCS7Padding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testAES_CTR_NoPadding() throws Exception {
         testAesCipher("AES/CTR/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testAES_ECB_NoPadding() throws Exception {
         testAesCipher("AES/ECB/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testAES_ECB_PKCS7Padding() throws Exception {
         testAesCipher("AES/ECB/PKCS7Padding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
+    @Test
     public void testAES_GCM_NoPadding() throws Exception {
         testAesCipher("AES/GCM/NoPadding", SUPPORTED_AES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
