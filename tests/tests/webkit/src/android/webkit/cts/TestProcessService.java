@@ -16,16 +16,16 @@
 
 package android.webkit.cts;
 
-
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.util.Log;
 
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
@@ -45,9 +45,19 @@ abstract class TestProcessService extends Service {
         return mMessenger.getBinder();
     }
 
-    final Messenger mMessenger = new Messenger(new IncomingHandler());
+    final Messenger mMessenger;
+
+    public TestProcessService() {
+        HandlerThread backgroundThread = new HandlerThread("TestThread");
+        backgroundThread.start();
+        mMessenger = new Messenger(new IncomingHandler(backgroundThread.getLooper()));
+    }
 
     private class IncomingHandler extends Handler {
+        IncomingHandler(Looper looper) {
+            super(looper);
+        }
+
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == MSG_EXIT_PROCESS) {
