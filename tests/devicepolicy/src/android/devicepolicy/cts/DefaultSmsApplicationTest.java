@@ -37,7 +37,7 @@ import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.DefaultSmsApplication;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -71,8 +71,8 @@ public class DefaultSmsApplicationTest {
 
     @Before
     public void setUp() {
-        RemoteDpc dpc = sDeviceState.dpc();
-        mAdmin = dpc.devicePolicyController().componentName();
+        RemotePolicyManager dpc = sDeviceState.dpc();
+        mAdmin = dpc.componentName();
         mDpm = dpc.devicePolicyManager();
         mTelephonyManager = sContext.getSystemService(TelephonyManager.class);
     }
@@ -85,9 +85,9 @@ public class DefaultSmsApplicationTest {
         assumeTrue(mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
         try (TestAppInstance smsApp = sSmsApp.install()) {
-            mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName());
+            mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName());
 
-            assertThat(getDefaultSmsPackage()).isEqualTo(smsApp.testApp().packageName());
+            assertThat(getDefaultSmsPackage()).isEqualTo(smsApp.packageName());
         } finally {
             mDpm.setDefaultSmsApplication(mAdmin, previousSmsAppName);
         }
@@ -101,7 +101,7 @@ public class DefaultSmsApplicationTest {
         assumeTrue(mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
         try (TestAppInstance smsApp = sSmsApp.install()) {
-            mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName());
+            mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName());
 
             assertThat(getDefaultSmsPackage()).isEqualTo(previousSmsAppName);
         } finally {
@@ -134,7 +134,7 @@ public class DefaultSmsApplicationTest {
 
             assertThrows(NullPointerException.class, () ->
                     mDpm.setDefaultSmsApplication(
-                            /* admin= */ null, smsApp.testApp().packageName()));
+                            /* admin= */ null, smsApp.packageName()));
         }
     }
 
@@ -146,7 +146,7 @@ public class DefaultSmsApplicationTest {
         assumeTrue(!mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
         try (TestAppInstance smsApp = sSmsApp.install()) {
-            mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName());
+            mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName());
 
             assertThat(getDefaultSmsPackage()).isEqualTo(previousSmsAppName);
         } finally {
@@ -161,7 +161,7 @@ public class DefaultSmsApplicationTest {
         try (TestAppInstance smsApp = sSmsApp.install()) {
 
             assertThrows(SecurityException.class, () ->
-                    mDpm.setDefaultSmsApplication(mAdmin, smsApp.testApp().packageName()));
+                    mDpm.setDefaultSmsApplication(mAdmin, smsApp.packageName()));
         }
     }
 
