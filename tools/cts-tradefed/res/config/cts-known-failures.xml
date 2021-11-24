@@ -262,4 +262,11 @@
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testSetCameraDisabledLogged" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testSetCameraDisabledLogged" />
 
+    <!-- b/204427048 -->
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testRequestCapabilitiesWithUriFormatChanged" />
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testCapabilitiesRequestWithResponseError" />
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testRequestCapabilitiesWithPresenceMechanism" />
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testForbidCapabilitiesRequest" />
+    <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testTimeoutToRequestCapabilitiesWithPresenceMechanism" />
+
 </configuration>
