@@ -53,7 +53,7 @@ public final class TestAppActivities {
         PackageManager p = TestApis.context().instrumentedContext().getPackageManager();
         try {
             PackageInfo packageInfo = p.getPackageInfo(
-                    mInstance.testApp().packageName(), /* flags= */ PackageManager.GET_ACTIVITIES);
+                    mInstance.packageName(), /* flags= */ PackageManager.GET_ACTIVITIES);
             for (android.content.pm.ActivityInfo activityInfo : packageInfo.activities) {
                 if (activityInfo.name.startsWith("androidx")) {
                     // Special case: androidx adds non-logging activities

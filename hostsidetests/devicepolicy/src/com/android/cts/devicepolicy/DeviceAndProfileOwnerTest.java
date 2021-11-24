@@ -234,53 +234,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             "testAssertCallerIsApplicationRestrictionsManagingPackage", mUserId);
     }
 
-    @Test
-    public void testApplicationRestrictions() throws Exception {
-        installAppAsUser(DELEGATE_APP_APK, mUserId);
-        installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, mUserId);
-
-        try {
-            // Only the DPC can manage app restrictions by default.
-            executeDeviceTestClass(".ApplicationRestrictionsTest");
-            executeAppRestrictionsManagingPackageTest("testCannotAccessApis");
-
-            // Letting the DELEGATE_APP_PKG manage app restrictions too.
-            changeApplicationRestrictionsManagingPackage(DELEGATE_APP_PKG);
-            executeAppRestrictionsManagingPackageTest("testCanAccessApis");
-            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest",
-                    "testSettingAdminComponentNameThrowsException", mUserId);
-
-            // The DPC should still be able to manage app restrictions normally.
-            executeDeviceTestClass(".ApplicationRestrictionsTest");
-
-            // The app shouldn't be able to manage app restrictions for other users.
-            int parentUserId = getPrimaryUser();
-            if (parentUserId != mUserId) {
-                installAppAsUser(DELEGATE_APP_APK, parentUserId);
-                installAppAsUser(APP_RESTRICTIONS_TARGET_APP_APK, parentUserId);
-                runDeviceTestsAsUser(DELEGATE_APP_PKG, ".AppRestrictionsDelegateTest",
-                        "testCannotAccessApis", parentUserId);
-            }
-
-            // Revoking the permission for DELEGATE_APP_PKG to manage restrictions.
-            changeApplicationRestrictionsManagingPackage(null);
-            executeAppRestrictionsManagingPackageTest("testCannotAccessApis");
-
-            // The DPC should still be able to manage app restrictions normally.
-            executeDeviceTestClass(".ApplicationRestrictionsTest");
-
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".ApplicationRestrictionsTest",
-                        "testSetApplicationRestrictions");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_RESTRICTIONS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(APP_RESTRICTIONS_TARGET_APP_PKG)
-                    .build());
-        } finally {
-            changeApplicationRestrictionsManagingPackage(null);
-        }
-    }
-
     /**
      * Returns a list of delegation tests that should run. Add delegations tests applicable to both
      * device owner and profile owners to this method directly. DO or PO specific tests should be

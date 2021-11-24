@@ -115,6 +115,13 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
     }
 
     /**
+     * See {@link TestApp#packageName()}.
+     */
+    public String packageName() {
+       return testApp().packageName();
+    }
+
+    /**
      * The {@link UserReference} this instance refers to.
      */
     public UserReference user() {

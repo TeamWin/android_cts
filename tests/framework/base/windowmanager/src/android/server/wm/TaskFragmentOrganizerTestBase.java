@@ -30,7 +30,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.server.wm.WindowManagerState.WindowContainer;
 import android.util.ArrayMap;
-import android.window.TaskFragmentAppearedInfo;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
@@ -259,11 +258,9 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         }
 
         @Override
-        public void onTaskFragmentAppeared(
-                @NonNull TaskFragmentAppearedInfo taskFragmentAppearedInfo) {
-            super.onTaskFragmentAppeared(taskFragmentAppearedInfo);
-            final TaskFragmentInfo info = taskFragmentAppearedInfo.getTaskFragmentInfo();
-            mInfos.put(info.getFragmentToken(), info);
+        public void onTaskFragmentAppeared(@NonNull TaskFragmentInfo taskFragmentInfo) {
+            super.onTaskFragmentAppeared(taskFragmentInfo);
+            mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mAppearedLatch.countDown();
         }
 

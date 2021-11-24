@@ -19,7 +19,6 @@ package com.android.bedstead.remotedpc;
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.os.Build;
 import android.os.UserHandle;
 
@@ -33,14 +32,10 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
-import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
 /** Entry point to RemoteDPC. */
-public final class RemoteDpc extends TestAppInstance {
-
-    // This must be instrumentation not instrumented to access the resources
-    private static final Context sContext = TestApis.context().instrumentationContext();
+public final class RemoteDpc extends RemotePolicyManager {
 
     public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
             "com.android.RemoteDPC",
@@ -258,16 +253,9 @@ public final class RemoteDpc extends TestAppInstance {
     }
 
     /**
-     * Get the {@link TestAppInstance} for the DPC.
-     *
-     */
-    public TestAppInstance app() {
-        return sTestApp.instance(mDevicePolicyController.user());
-    }
-
-    /**
      * Get the {@link ComponentName} of the DPC.
      */
+    @Override
     public ComponentName componentName() {
         return DPC_COMPONENT_NAME;
     }

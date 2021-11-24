@@ -18,6 +18,8 @@ package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.app.admin.DevicePolicyManager.DELEGATION_APP_RESTRICTIONS;
+import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
@@ -27,6 +29,8 @@ import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.PRIMARY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -38,6 +42,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.ActivityManager;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.os.Bundle;
 
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
@@ -67,6 +72,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
@@ -82,6 +88,8 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Tags;
+import com.android.bedstead.remotedpc.RemoteDelegate;
+import com.android.bedstead.remotedpc.RemoteDpc;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -628,7 +636,7 @@ public class DeviceStateTest {
     @IncludeRunOnBackgroundDeviceOwnerUser
     public void includeRunOnBackgroundDeviceOwnerUserAnnotation_isRunningOnDeviceOwnerUser() {
         assertThat(TestApis.users().instrumented())
-                .isEqualTo(sDeviceState.dpc().devicePolicyController().user());
+                .isEqualTo(sDeviceState.dpc().user());
     }
 
     @Test
@@ -705,5 +713,52 @@ public class DeviceStateTest {
     @TestTag("TestTag")
     public void testTagAnnoation_testTagIsSet() {
         assertThat(Tags.hasTag("TestTag")).isTrue();
+    }
+
+    @Test
+    @EnsureHasDeviceOwner
+    @EnsureHasDelegate(admin = DEVICE_OWNER, scopes = DELEGATION_CERT_INSTALL, isPrimary = true)
+    public void ensureHasPrimaryDelegateAnnotation_dpcReturnsDelegate() {
+        assertThat(sDeviceState.dpc()).isInstanceOf(RemoteDelegate.class);
+    }
+
+    @Test
+    @EnsureHasDeviceOwner
+    @EnsureHasDelegate(admin = DEVICE_OWNER, scopes = DELEGATION_CERT_INSTALL, isPrimary = false)
+    public void ensureHasNonPrimaryDelegateAnnotation_dpcReturnsDpc() {
+        assertThat(sDeviceState.dpc()).isInstanceOf(RemoteDpc.class);
+    }
+
+    @Test
+    @EnsureHasDeviceOwner
+    @EnsureHasDelegate(admin = DEVICE_OWNER, scopes = DELEGATION_CERT_INSTALL, isPrimary = true)
+    public void ensureHasDelegateAnnotation_dpcCanUseDelegatedFunctionality() {
+        assertThat(sDeviceState.dpc().devicePolicyManager().getEnrollmentSpecificId()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasDeviceOwner
+    @EnsureHasDelegate(admin = DEVICE_OWNER,
+            scopes = {DELEGATION_CERT_INSTALL, DELEGATION_APP_RESTRICTIONS}, isPrimary = true)
+    public void ensureHasDelegateAnnotation_multipleScopes_dpcCanUseAllDelegatedFunctionality() {
+        assertThat(sDeviceState.dpc().devicePolicyManager().getEnrollmentSpecificId()).isNotNull();
+        sDeviceState.dpc().devicePolicyManager()
+                .setApplicationRestrictions(
+                        sDeviceState.dpc().componentName(),
+                        sDeviceState.dpc().packageName(), new Bundle());
+    }
+
+    @Test
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @EnsureHasDelegate(admin = PRIMARY, scopes = {})
+    public void ensureHasDelegateAnnotation_primaryAdminWithoutReplace_dpcReturnsDpc() {
+        assertThat(sDeviceState.dpc()).isInstanceOf(RemoteDpc.class);
+    }
+
+    @Test
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @EnsureHasDelegate(admin = PRIMARY, scopes = {}, isPrimary = true)
+    public void ensureHasDelegateAnnotation_primaryAdminAndReplace_dpcReturnsDelegate() {
+        assertThat(sDeviceState.dpc()).isInstanceOf(RemoteDelegate.class);
     }
 }

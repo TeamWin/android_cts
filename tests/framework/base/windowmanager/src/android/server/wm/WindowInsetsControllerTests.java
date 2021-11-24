@@ -607,8 +607,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testInsetsDispatch() throws Exception {
-        // Start an activity which hides system bars.
-        final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
+        // Start an activity which hides system bars in fullscreen mode,
+        // otherwise, it might not be able to hide system bars in other windowing modes.
+        final TestHideOnCreateActivity activity = startActivityInWindowingModeFullScreen(
+                TestHideOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing();
         PollingCheck.waitFor(TIMEOUT,
