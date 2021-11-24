@@ -36,6 +36,7 @@ android_test {
         "ctstestrunner-axt",
         "kotlin-stdlib",
         "modules-utils-build_system",
+        "truth-prebuilt",
     ],
     test_suites: [
         "cts",
