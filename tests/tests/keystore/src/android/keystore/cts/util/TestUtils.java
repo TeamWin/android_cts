@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.FeatureInfo;
+import android.os.Build;
 import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
@@ -1095,5 +1096,9 @@ public class TestUtils {
         byte[] message = new byte[messageSize];
         new SecureRandom().nextBytes(message);
         return message;
+    }
+
+    public static boolean isAttestationSupported() {
+        return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.O;
     }
 }
