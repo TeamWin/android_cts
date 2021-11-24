@@ -85,6 +85,7 @@ public class TunerFilterTest {
                 AvSettings
                         .builder(Filter.TYPE_TS, true) // is Audio
                         .setPassthrough(false)
+                        .setUseSecureMemory(false)
                         .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
                         .build();
 
@@ -94,10 +95,14 @@ public class TunerFilterTest {
         } else {
             assertEquals(settings.getAudioStreamType(), AvSettings.AUDIO_STREAM_TYPE_UNDEFINED);
         }
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(settings.useSecureMemory(), false);
+        }
 
         settings = AvSettings
                 .builder(Filter.TYPE_TS, false) // is Video
                 .setPassthrough(false)
+                .setUseSecureMemory(true)
                 .setVideoStreamType(AvSettings.VIDEO_STREAM_TYPE_MPEG1)
                 .build();
 
@@ -106,6 +111,9 @@ public class TunerFilterTest {
             assertEquals(settings.getVideoStreamType(), AvSettings.VIDEO_STREAM_TYPE_MPEG1);
         } else {
             assertEquals(settings.getVideoStreamType(), AvSettings.VIDEO_STREAM_TYPE_UNDEFINED);
+        }
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(settings.useSecureMemory(), true);
         }
     }
 

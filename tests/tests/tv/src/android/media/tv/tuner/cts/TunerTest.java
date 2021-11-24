@@ -474,6 +474,7 @@ public class TunerTest {
         Settings settings = AvSettings
                 .builder(Filter.TYPE_TS, true)
                 .setPassthrough(false)
+                .setUseSecureMemory(false)
                 .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
                 .build();
         FilterConfiguration config = TsFilterConfiguration
@@ -546,6 +547,7 @@ public class TunerTest {
         Settings settings = AvSettings
                 .builder(Filter.TYPE_TS, true)
                 .setPassthrough(false)
+                .setUseSecureMemory(false)
                 .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
                 .build();
         FilterConfiguration config = TsFilterConfiguration
@@ -712,6 +714,7 @@ public class TunerTest {
                 AvSettings
                         .builder(Filter.TYPE_TS, true) // is Audio
                         .setPassthrough(false)
+                        .setUseSecureMemory(false)
                         .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
                         .build();
         TsFilterConfiguration config =
