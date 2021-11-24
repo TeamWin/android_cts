@@ -522,6 +522,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
      * algorithms.
      */
     public void testCanGenerateKeyPairWithKeyAttestation() throws Exception {
+        if (!isAttestationSupported()) {
+            return;
+        }
         for (SupportedKeyAlgorithm supportedKey : SUPPORTED_KEY_ALGORITHMS) {
             assertThat(
                     generateKeyAndCheckAttestation(
@@ -1021,5 +1024,9 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     boolean isUniqueDeviceAttestationSupported() {
         return mDevicePolicyManager.isUniqueDeviceAttestationSupported();
+    }
+
+    private boolean isAttestationSupported() {
+        return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.O;
     }
 }
