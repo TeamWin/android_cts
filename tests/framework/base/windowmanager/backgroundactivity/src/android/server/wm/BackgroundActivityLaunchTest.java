@@ -102,6 +102,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public static final ComponentName APP_A_PIP_ACTIVITY =
             new ComponentName(TEST_PACKAGE_APP_A,
                     "android.server.wm.backgroundactivity.appa.PipActivity");
+    public static final ComponentName APP_A_VIRTUAL_DISPLAY_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_A,
+                    "android.server.wm.backgroundactivity.appa.VirtualDisplayActivity");
     private static final String SHELL_PACKAGE = "com.android.shell";
 
     /**
@@ -595,6 +598,24 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         // test will will try to start background activity, but we expect the background activity
         // will be blocked even the app has a visible pip window, as we do not allow background
         // activity to be started after pressing home button.
+        pressHomeAndWaitHomeResumed();
+
+        assertActivityNotResumed();
+    }
+
+    // Check that a presentation on a virtual display won't allow BAL after pressing home.
+    @Test
+    public void testVirtualDisplayCannotStartAfterHomeButton() throws Exception {
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_VIRTUAL_DISPLAY_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+
+        assertTrue("VirtualDisplay activity not started", waitUntilForegroundChanged(
+                TEST_PACKAGE_APP_A, true, ACTIVITY_START_TIMEOUT_MS));
+
+        // Click home button, and test app activity onPause() will trigger which tries to launch
+        // the background activity.
         pressHomeAndWaitHomeResumed();
 
         assertActivityNotResumed();
