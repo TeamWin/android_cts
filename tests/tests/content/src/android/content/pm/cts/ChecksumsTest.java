@@ -36,6 +36,7 @@ import static org.testng.Assert.assertNotNull;
 
 import android.app.UiAutomation;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.IIntentReceiver;
 import android.content.IIntentSender;
 import android.content.Intent;
@@ -51,6 +52,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
@@ -153,8 +155,12 @@ public class ChecksumsTest {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
+    private static Context getContext() {
+        return InstrumentationRegistry.getContext();
+    }
+
     private static PackageManager getPackageManager() {
-        return InstrumentationRegistry.getContext().getPackageManager();
+        return getContext().getPackageManager();
     }
 
     private static PackageInstaller getPackageInstaller() {
@@ -457,6 +463,7 @@ public class ChecksumsTest {
                         + "5f2888afcb71524196dda0d6dd16a6a3292bb75b431b8ff74fb60d796e882f80");
     }
 
+
     @Test
     public void testInstallerChecksumsTrustNone() throws Exception {
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
@@ -626,6 +633,96 @@ public class ChecksumsTest {
         assertEquals(checksums[2].getSplitName(), null);
         assertNull(checksums[2].getInstallerPackageName());
         assertNull(checksums[2].getInstallerCertificate());
+    }
+
+    @LargeTest
+    @Test
+    public void testInstallerFileChecksumsDuringInstall() throws Exception {
+        Checksum[] digestsBase = new Checksum[]{new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(
+                "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e")),
+                new Checksum(TYPE_WHOLE_MD5, hexStringToBytes("dd93e23bb8cdab0382fdca0d21a4f1cb"))};
+        Checksum[] digestsSplit0 = new Checksum[]{new Checksum(TYPE_WHOLE_SHA256, hexStringToBytes(
+                "bd9b095a49a9068498b018ce8cb7cc18d411b13a5a5f7fb417d2ff9808ae838e")),
+                new Checksum(TYPE_WHOLE_MD5, hexStringToBytes("f6430e1b795ce2658c49e68d15316b2d"))};
+
+        final Certificate installerCertificate = getInstallerCertificate();
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        PackageInstaller installer = null;
+        int sessionId = -1;
+        try {
+            installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+
+            sessionId = installer.createSession(params);
+            final Session session = installer.openSession(sessionId);
+
+            writeFileToSession(session, "hw5.apk", TEST_V4_APK);
+            session.setChecksums("hw5.apk", Arrays.asList(digestsBase), NO_SIGNATURE);
+
+            writeFileToSession(session, "hw5_split0.apk", TEST_V4_SPLIT0);
+            session.setChecksums("hw5_split0.apk", Arrays.asList(digestsSplit0), NO_SIGNATURE);
+
+            // Workaround to emulate .digests file present in installation.
+            writeChecksumsToSession(session, "hw5.digests", digestsBase);
+            writeChecksumsToSession(session, "hw5_split0.digests", digestsSplit0);
+
+            File dataApp = Environment.getDataAppDirectory(null);
+
+            {
+                LocalListener receiver = new LocalListener();
+
+                session.requestChecksums("hw5.apk", 0, TRUST_ALL, receiver);
+                ApkChecksum[] checksums = receiver.getResult();
+                assertNotNull(checksums);
+                assertEquals(checksums.length, 3);
+                // base
+                assertEquals(checksums[0].getType(), TYPE_WHOLE_MD5);
+                assertEquals(checksums[0].getSplitName(), null);
+                assertEquals(bytesToHexString(checksums[0].getValue()),
+                        "dd93e23bb8cdab0382fdca0d21a4f1cb");
+                assertEquals(checksums[0].getInstallerPackageName(), CTS_PACKAGE_NAME);
+                assertEquals(checksums[0].getInstallerCertificate(), installerCertificate);
+                assertEquals(checksums[1].getType(), TYPE_WHOLE_SHA256);
+                assertEquals(checksums[1].getSplitName(), null);
+                assertEquals(bytesToHexString(checksums[1].getValue()),
+                        "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e");
+                assertEquals(checksums[1].getInstallerPackageName(), CTS_PACKAGE_NAME);
+                assertEquals(checksums[1].getInstallerCertificate(), installerCertificate);
+                assertEquals(checksums[2].getSplitName(), null);
+                assertEquals(checksums[2].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256);
+                assertNull(checksums[2].getInstallerPackageName());
+                assertNull(checksums[2].getInstallerCertificate());
+            }
+            {
+                LocalListener receiver = new LocalListener();
+
+                session.requestChecksums("hw5_split0.apk", 0, TRUST_ALL, receiver);
+                ApkChecksum[] checksums = receiver.getResult();
+                assertNotNull(checksums);
+                assertEquals(checksums.length, 3);
+                // split0
+                assertEquals(checksums[0].getType(), TYPE_WHOLE_MD5);
+                assertEquals(checksums[0].getSplitName(), null);
+                assertEquals(bytesToHexString(checksums[0].getValue()),
+                        "f6430e1b795ce2658c49e68d15316b2d");
+                assertEquals(checksums[0].getInstallerPackageName(), CTS_PACKAGE_NAME);
+                assertEquals(checksums[0].getInstallerCertificate(), installerCertificate);
+                assertEquals(checksums[1].getType(), TYPE_WHOLE_SHA256);
+                assertEquals(checksums[1].getSplitName(), null);
+                assertEquals(bytesToHexString(checksums[1].getValue()),
+                        "bd9b095a49a9068498b018ce8cb7cc18d411b13a5a5f7fb417d2ff9808ae838e");
+                assertEquals(checksums[1].getInstallerPackageName(), CTS_PACKAGE_NAME);
+                assertEquals(checksums[1].getInstallerCertificate(), installerCertificate);
+                assertEquals(checksums[2].getSplitName(), null);
+                assertEquals(checksums[2].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256);
+                assertNull(checksums[2].getInstallerPackageName());
+                assertNull(checksums[2].getInstallerCertificate());
+            }
+        } finally {
+            installer.abandonSession(sessionId);
+            getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     @Test
@@ -1283,6 +1380,15 @@ public class ChecksumsTest {
         }
     }
 
+    private static void writeChecksumsToSession(PackageInstaller.Session session, String name,
+            Checksum[] checksums) throws IOException {
+        try (DataOutputStream dos = new DataOutputStream(session.openWrite(name, 0, -1))) {
+            for (Checksum checksum : checksums) {
+                Checksum.writeToStream(dos, checksum);
+            }
+        }
+    }
+
     private String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
@@ -1292,6 +1398,16 @@ public class ChecksumsTest {
         final int prefixLength = "package:".length();
         return Arrays.stream(commandResult.split("\\r?\\n"))
                 .anyMatch(line -> line.substring(prefixLength).equals(packageName));
+    }
+
+    private String getAppCodePath(String packageName) throws IOException {
+        final String commandResult = executeShellCommand("pm dump " + packageName);
+        final String prefix = "    codePath=";
+        final int prefixLength = prefix.length();
+        return Arrays.stream(commandResult.split("\\r?\\n"))
+                .filter(line -> line.startsWith(prefix))
+                .map(line -> line.substring(prefixLength))
+                .findFirst().get();
     }
 
     @Nonnull
