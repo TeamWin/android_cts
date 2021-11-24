@@ -69,6 +69,7 @@ import org.junit.rules.TestRule;
  * atest CtsWindowManagerDeviceTestCases:CompatChangeTests
  */
 @Presubmit
+@FlakyTest(bugId = 190609681)
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
             component(ResizeablePortraitActivity.class);
