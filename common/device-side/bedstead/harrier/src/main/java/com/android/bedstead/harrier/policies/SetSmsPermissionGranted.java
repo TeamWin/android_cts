@@ -16,9 +16,12 @@
 
 package com.android.bedstead.harrier.policies;
 
+import static android.app.admin.DevicePolicyManager.DELEGATION_PERMISSION_GRANT;
+
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -34,6 +37,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  */
 // TODO(198311372): Check if APPLIED_BY_PROFILE_OWNER_USER is expected
 @EnterprisePolicy(
-        dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIED_BY_PROFILE_OWNER_USER)
+        dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIED_BY_PROFILE_OWNER_USER | CAN_BE_DELEGATED,
+        delegatedScopes = DELEGATION_PERMISSION_GRANT)
 public final class SetSmsPermissionGranted {
 }

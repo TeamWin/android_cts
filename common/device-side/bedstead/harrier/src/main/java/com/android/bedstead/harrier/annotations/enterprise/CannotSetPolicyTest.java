@@ -45,6 +45,17 @@ public @interface CannotSetPolicyTest {
     Class<?> policy();
 
     /**
+     * If true, then this will run in states where the app is a device admin but is not one which is
+     * allowed to make the call.
+     */
+    boolean includeDeviceAdminStates() default true;
+
+    /**
+     * If true, then this will run in states where the app is not a device admin.
+     */
+    boolean includeNonDeviceAdminStates() default true;
+
+    /**
      * Weight sets the order that annotations will be resolved.
      *
      * <p>Annotations with a lower weight will be resolved before annotations with a higher weight.

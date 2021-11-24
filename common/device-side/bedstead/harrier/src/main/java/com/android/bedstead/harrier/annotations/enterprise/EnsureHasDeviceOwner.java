@@ -49,13 +49,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface EnsureHasDeviceOwner {
+
+    int DO_PO_WEIGHT = MIDDLE;
+
      /** Behaviour if the device owner cannot be set. */
     FailureMode failureMode() default FailureMode.FAIL;
 
     /**
-     * Whether this DPC should be returned by calls to {@link DeviceState#dpc()}.
+     * Whether this DPC should be returned by calls to {@link DeviceState#dpc()} or
+     * {@link DeviceState#policyManager()}}.
      *
-     * <p>Only one device policy controller per test should be marked as primary.
+     * <p>Only one policy manager per test should be marked as primary.
      */
     boolean isPrimary() default false;
 
@@ -74,5 +78,5 @@ public @interface EnsureHasDeviceOwner {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default MIDDLE;
+    int weight() default DO_PO_WEIGHT;
 }

@@ -27,15 +27,39 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test requires that there is no device owner on the device.
+ * Mark that a test requires that the given admin delegates the given scope to a test app.
  *
- * <p>Your test configuration may be configured so that this test is only run on a device which has
- * no device owner. Otherwise, you can use {@link DeviceState} to ensure that the device enters
- * the correct state for the method.
+ * <p>You should use {@link DeviceState} to ensure that the device enters
+ * the correct state for the method. You can use {@link DeviceState#delegate()} to interact with
+ * the delegate.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasNoDeviceOwner {
+public @interface EnsureHasDelegate {
+
+    enum AdminType {
+        DEVICE_OWNER,
+        PROFILE_OWNER,
+        PRIMARY
+    }
+
+    /**
+     * The admin that should delegate this scope.
+     *
+     * <p>If this is set to {@link AdminType#PRIMARY} and {@link #isPrimary()} is true, then the
+     * delegate will replace the primary dpc as primary without error.
+     */
+    AdminType admin();
+
+    /** The scope being delegated. */
+    String[] scopes();
+
+    /**
+     * Whether this delegate should be returned by calls to {@link DeviceState#policyManager()}.
+     *
+     * <p>Only one policy manager per test should be marked as primary.
+     */
+    boolean isPrimary() default false;
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -47,5 +71,5 @@ public @interface EnsureHasNoDeviceOwner {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default DO_PO_WEIGHT;
+    int weight() default DO_PO_WEIGHT + 1; // Should run after setting DO/PO
 }

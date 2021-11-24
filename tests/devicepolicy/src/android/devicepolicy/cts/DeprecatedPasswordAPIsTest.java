@@ -32,7 +32,7 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.DeprecatedPasswordAPIs;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.remotedpc.RemotePolicyManager;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -57,8 +57,8 @@ public final class DeprecatedPasswordAPIsTest {
 
     @Before
     public void setUp() {
-        RemoteDpc dpc = sDeviceState.dpc();
-        mAdmin = dpc.devicePolicyController().componentName();
+        RemotePolicyManager dpc = sDeviceState.dpc();
+        mAdmin = dpc.componentName();
         mDpm = dpc.devicePolicyManager();
     }
 

@@ -162,9 +162,15 @@ static void validateEncryptionModes(int contents_mode, int filenames_mode,
 // Ideally we'd check whether /data is on eMMC, but that is hard to do from a
 // CTS test.  To keep things simple we just check whether the system knows about
 // at least one eMMC device.
-static bool usingEmmcStorage() {
+//
+// virtio devices may provide inline encryption support that is backed by eMMC
+// inline encryption on the host, thus inheriting the DUN size limitation.  So
+// virtio devices must be allowed here too.  TODO(b/207390665): check the
+// maximum DUN size directly instead.
+static bool mightBeUsingEmmcStorage() {
     struct stat stbuf;
-    return lstat("/sys/class/block/mmcblk0", &stbuf) == 0;
+    return lstat("/sys/class/block/mmcblk0", &stbuf) == 0 ||
+            lstat("/sys/class/block/vda", &stbuf) == 0;
 }
 
 // CDD 9.9.3/C-1-15: must not reuse IVs for file contents encryption except when
@@ -175,7 +181,7 @@ static bool usingEmmcStorage() {
 // used on a non-eMMC based device.  CTS can test for that, so we do so below.
 static void validateEncryptionFlags(int flags) {
     if (flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32) {
-        EXPECT_TRUE(usingEmmcStorage());
+        EXPECT_TRUE(mightBeUsingEmmcStorage());
     }
 }
 

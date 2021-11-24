@@ -60,6 +60,7 @@ import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
@@ -85,7 +86,11 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
+import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.remotedpc.RemotePolicyManager;
+import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.eventlib.EventLogs;
 
@@ -345,6 +350,17 @@ public final class DeviceState implements TestRule {
                         dpcIsPrimary, switchedToParentUser, affiliationIds);
                 continue;
             }
+
+            if (annotation instanceof EnsureHasDelegate) {
+                EnsureHasDelegate ensureHasDelegateAnnotation =
+                        (EnsureHasDelegate) annotation;
+                ensureHasDelegate(
+                        ensureHasDelegateAnnotation.admin(),
+                        Arrays.asList(ensureHasDelegateAnnotation.scopes()),
+                        ensureHasDelegateAnnotation.isPrimary());
+                continue;
+            }
+
 
             if (annotation instanceof EnsureHasDeviceOwner) {
                 EnsureHasDeviceOwner ensureHasDeviceOwnerAnnotation =
@@ -878,7 +894,7 @@ public final class DeviceState implements TestRule {
             mProfiles = new HashMap<>();
     private DevicePolicyController mDeviceOwner;
     private Map<UserReference, DevicePolicyController> mProfileOwners = new HashMap<>();
-    private DevicePolicyController mPrimaryDpc;
+    private RemotePolicyManager mPrimaryPolicyManager;
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
@@ -1291,8 +1307,10 @@ public final class DeviceState implements TestRule {
             broadcastReceiver.unregisterQuietly();
         }
         mRegisteredBroadcastReceivers.clear();
-        mPrimaryDpc = null;
+        mPrimaryPolicyManager = null;
     }
+
+    private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
 
     private void teardownShareableState() {
         if (mOriginalSwitchedUser != null) {
@@ -1353,6 +1371,11 @@ public final class DeviceState implements TestRule {
         }
 
         mRemovedUsers.clear();
+
+        for (TestAppInstance installedTestApp : mInstalledTestApps) {
+            installedTestApp.uninstall();
+        }
+        mInstalledTestApps.clear();
     }
 
     private UserReference createProfile(
@@ -1394,16 +1417,64 @@ public final class DeviceState implements TestRule {
         }
     }
 
+    private void ensureHasDelegate(
+            EnsureHasDelegate.AdminType adminType, List<String> scopes, boolean isPrimary) {
+        RemotePolicyManager dpc = getDeviceAdmin(adminType);
+
+
+        boolean specifiesAdminType = adminType != EnsureHasDelegate.AdminType.PRIMARY;
+        boolean currentPrimaryPolicyManagerIsNotDelegator = mPrimaryPolicyManager != dpc;
+
+        if (isPrimary && mPrimaryPolicyManager != null
+                && (specifiesAdminType || currentPrimaryPolicyManagerIsNotDelegator)) {
+            throw new IllegalStateException(
+                    "Only one DPC can be marked as primary per test (current primary is "
+                            + mPrimaryPolicyManager + ")");
+        }
+
+        if (!dpc.user().equals(TestApis.users().instrumented())) {
+            // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
+            ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
+        }
+
+        ensureTestAppInstalled(RemoteDelegate.sTestApp, dpc.user());
+        RemoteDelegate delegate = new RemoteDelegate(RemoteDelegate.sTestApp, dpc().user());
+        dpc.devicePolicyManager().setDelegatedScopes(
+                dpc.componentName(), delegate.packageName(), scopes);
+
+        if (isPrimary) {
+            mPrimaryPolicyManager = delegate;
+        }
+    }
+
+    private RemotePolicyManager getDeviceAdmin(EnsureHasDelegate.AdminType adminType) {
+        switch (adminType) {
+            case DEVICE_OWNER:
+                return deviceOwner();
+            case PROFILE_OWNER:
+                return profileOwner();
+            case PRIMARY:
+                return dpc();
+            default:
+                throw new IllegalStateException("Unknown device admin type " + adminType);
+        }
+    }
+
+    private void ensureTestAppInstalled(TestApp testApp, UserReference user) {
+        mInstalledTestApps.add(testApp.install(user));
+    }
+
     private void ensureHasDeviceOwner(FailureMode failureMode, boolean isPrimary,
             Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
 
         UserReference userReference = TestApis.users().system();
 
-        if (isPrimary && mPrimaryDpc != null && !userReference.equals(mPrimaryDpc.user())) {
+        if (isPrimary && mPrimaryPolicyManager != null && !userReference.equals(
+                mPrimaryPolicyManager.user())) {
             throw new IllegalStateException(
                     "Only one DPC can be marked as primary per test (current primary is "
-                            + mPrimaryDpc + ")");
+                            + mPrimaryPolicyManager + ")");
         }
         if (!userReference.equals(TestApis.users().instrumented())) {
             // INTERACT_ACROSS_USERS_FULL is required for RemoteDPC
@@ -1455,7 +1526,7 @@ public final class DeviceState implements TestRule {
         }
 
         if (isPrimary) {
-            mPrimaryDpc = mDeviceOwner;
+            mPrimaryPolicyManager = RemoteDpc.forDevicePolicyController(mDeviceOwner);
         }
         
         RemoteDpc.forDevicePolicyController(mDeviceOwner)
@@ -1471,7 +1542,8 @@ public final class DeviceState implements TestRule {
 
     private void ensureHasProfileOwner(
             UserReference user, boolean isPrimary, Set<String> affiliationIds) {
-        if (isPrimary && mPrimaryDpc != null && !user.equals(mPrimaryDpc.user())) {
+        if (isPrimary && mPrimaryPolicyManager != null
+                && !user.equals(mPrimaryPolicyManager.user())) {
             throw new IllegalStateException("Only one DPC can be marked as primary per test");
         }
 
@@ -1501,7 +1573,7 @@ public final class DeviceState implements TestRule {
         }
 
         if (isPrimary) {
-            mPrimaryDpc = mProfileOwners.get(user);
+            mPrimaryPolicyManager = RemoteDpc.forDevicePolicyController(mProfileOwners.get(user));
         }
 
         if (affiliationIds != null) {
@@ -1670,20 +1742,22 @@ public final class DeviceState implements TestRule {
     }
 
     /**
-     * Get the most appropriate {@link RemoteDpc} instance for the device state.
+     * Get the most appropriate {@link RemotePolicyManager} instance for the device state.
      *
      * <p>This method should only be used by tests which are annotated with {@link PolicyTest}.
      *
-     * <p>If no DPC is set as the "primary" DPC for the device state, then this method will first
+     * <p>This may be a DPC, a delegate, or a normal app with or without given permissions.
+     *
+     * <p>If no policy manager is set as "primary" for the device state, then this method will first
      * check for a profile owner in the current user, or else check for a device owner.
      *
      * <p>If no Harrier-managed profile owner or device owner exists, an exception will be thrown.
      *
      * <p>If the profile owner or device owner is not a RemoteDPC then an exception will be thrown.
      */
-    public RemoteDpc dpc() {
-        if (mPrimaryDpc != null) {
-            return RemoteDpc.forDevicePolicyController(mPrimaryDpc);
+    public RemotePolicyManager dpc() {
+        if (mPrimaryPolicyManager != null) {
+            return mPrimaryPolicyManager;
         }
 
         if (mProfileOwners.containsKey(TestApis.users().instrumented())) {

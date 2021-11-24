@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package android.media.tv.tuner.cts;
+package com.android.bedstead.harrier.annotations;
 
-interface ISharedFilterTestServer {
-    String acquireSharedFilterToken();
-    void closeFilter();
-    void freeSharedFilterToken(String token);
-    boolean verifySharedFilter(String token);
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Annotation to indicate that a test can take a long time to run.
+ */
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface SlowApiTest {
+    String reason();
 }
