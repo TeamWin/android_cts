@@ -230,6 +230,10 @@
     <!-- b/192284443 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.DisplayHashManagerTest#testGenerateAndVerifyDisplayHash" />
 
+    <!-- b/202901332 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.CompatChangeTests#testOverrideMinAspectRatioMissingSpecificOverride" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.CompatChangeTests#testOverrideMinAspectRatioMissingGeneralOverride" />
+
     <!-- b/195659372 -->
     <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.NearbyDevicesRenouncePermissionTest#scanRenouncingAtEndOfChainNotesBluetoothButNotLocation" />
 
