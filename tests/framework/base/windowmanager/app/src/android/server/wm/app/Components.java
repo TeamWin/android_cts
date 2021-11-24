@@ -579,6 +579,12 @@ public class Components extends ComponentsBase {
 
     public static class RenderService {
         public static final String PROCESS_NAME = ".render_process";
+        public static final String EXTRAS_BUNDLE = "EXTRAS_BUNDLE";
+        public static final String EXTRAS_DISPLAY_ID = "EXTRAS_DISPLAY_ID";
+        public static final String EXTRAS_HOST_TOKEN = "EXTRAS_HOST_TOKEN";
+        public static final String BROADCAST_EMBED_CONTENT =
+                "android.server.wm.app.RenderService.EMBED_CONTENT";
+        public static final String EXTRAS_SURFACE_PACKAGE = "surfacePackage";
     }
 
     /**

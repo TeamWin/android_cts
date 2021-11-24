@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.server.wm.app;
+package android.server.wm;
 
+import static android.server.wm.app.Components.RenderService.BROADCAST_EMBED_CONTENT;
+import static android.server.wm.app.Components.RenderService.EXTRAS_BUNDLE;
+import static android.server.wm.app.Components.RenderService.EXTRAS_DISPLAY_ID;
+import static android.server.wm.app.Components.RenderService.EXTRAS_HOST_TOKEN;
+import static android.server.wm.app.Components.RenderService.EXTRAS_SURFACE_PACKAGE;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_MOTIONEVENT_DELAY_MS;
-import static android.server.wm.app.RenderService.BROADCAST_EMBED_CONTENT;
-import static android.server.wm.app.RenderService.EXTRAS_BUNDLE;
-import static android.server.wm.app.RenderService.EXTRAS_DISPLAY_ID;
-import static android.server.wm.app.RenderService.EXTRAS_HOST_TOKEN;
-import static android.server.wm.app.RenderService.EXTRAS_SURFACE_PACKAGE;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -32,15 +32,18 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.view.SurfaceControlViewHost.SurfacePackage;
+import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import java.util.concurrent.CountDownLatch;
+
+
 public class HostActivity extends Activity implements SurfaceHolder.Callback{
     private SurfaceView mSurfaceView;
-
+    public CountDownLatch mEmbeddedViewAttachedLatch =  new CountDownLatch(1);
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {}
@@ -49,13 +52,14 @@ public class HostActivity extends Activity implements SurfaceHolder.Callback{
         public void onServiceDisconnected(ComponentName className) {}
     };
 
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            SurfacePackage surfacePackage =
+            SurfaceControlViewHost.SurfacePackage surfacePackage =
                     intent.getParcelableExtra(EXTRAS_SURFACE_PACKAGE);
             if (surfacePackage != null) {
                 mSurfaceView.setChildSurfacePackage(surfacePackage);
+                mEmbeddedViewAttachedLatch.countDown();
             }
         }
     };
@@ -64,9 +68,8 @@ public class HostActivity extends Activity implements SurfaceHolder.Callback{
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(BROADCAST_EMBED_CONTENT);
-        registerReceiver(receiver, filter);
+        IntentFilter filter = new IntentFilter(BROADCAST_EMBED_CONTENT);
+        registerReceiver(mReceiver, filter);
 
         final RelativeLayout content = new RelativeLayout(this);
         mSurfaceView = new SurfaceView(this);
@@ -81,20 +84,21 @@ public class HostActivity extends Activity implements SurfaceHolder.Callback{
 
     @Override
     protected void onPause() {
-        unregisterReceiver(receiver);
+        unregisterReceiver(mReceiver);
         super.onPause();
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Intent mIntent =  new Intent(this, RenderService.class);
-        Bundle b = new Bundle();
-        b.putBinder(EXTRAS_HOST_TOKEN, mSurfaceView.getHostToken());
-        b.putInt(EXTRAS_DISPLAY_ID, getDisplay().getDisplayId());
-        b.putInt(EXTRA_ON_MOTIONEVENT_DELAY_MS,
-                getIntent().getIntExtra(EXTRA_ON_MOTIONEVENT_DELAY_MS, 2000));
-        mIntent.putExtra(EXTRAS_BUNDLE, b);
-        bindService(mIntent, mConnection, Context.BIND_AUTO_CREATE|Context.BIND_IMPORTANT);
+        Intent mIntent = new Intent();
+        mIntent.setComponent(new ComponentName(
+                "android.server.wm.app", "android.server.wm.app.RenderService"));
+        Bundle bundle = new Bundle();
+        bundle.putBinder(EXTRAS_HOST_TOKEN, mSurfaceView.getHostToken());
+        bundle.putInt(EXTRAS_DISPLAY_ID, getDisplay().getDisplayId());
+        bundle.putInt(EXTRA_ON_MOTIONEVENT_DELAY_MS, 10000);
+        mIntent.putExtra(EXTRAS_BUNDLE, bundle);
+        bindService(mIntent, mConnection, Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT);
     }
 
     @Override

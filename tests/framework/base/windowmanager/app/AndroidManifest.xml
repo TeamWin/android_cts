@@ -573,14 +573,9 @@
            </intent-filter>
         </service>
 
-        <activity android:name=".HostActivity"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.server.wm.app.HostActivity"/>
-            </intent-filter>
-        </activity>
         <service android:name=".RenderService"
-             android:process=".render_process"/>
+             android:process=".render_process"
+             android:exported="true"/>
         <activity android:name=".ClickableToastActivity"
              android:exported="true"/>
         <activity android:name=".MinimalPostProcessingActivity"
