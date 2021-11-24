@@ -37,6 +37,10 @@ public class AttestationPerformanceTest extends PerformanceTestBase {
 
     @Test
     public void testRsaKeyAttestation() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         for (byte[] challenge : ATTESTATION_CHALLENGES) {
             for (int keySize : RSA_KEY_SIZES) {
                 measure(new KeystoreAttestationMeasurable(
@@ -48,6 +52,10 @@ public class AttestationPerformanceTest extends PerformanceTestBase {
 
     @Test
     public void testEcKeyAttestation() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         for (byte[] challenge : ATTESTATION_CHALLENGES) {
             for (int curve : EC_CURVES) {
                 measure(new KeystoreAttestationMeasurable(
