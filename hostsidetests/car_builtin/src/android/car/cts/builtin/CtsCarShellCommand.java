@@ -44,7 +44,7 @@ public abstract class CtsCarShellCommand {
         if (mCommandArgs != null && mCommandArgs.length > 0) {
             cmd = mCommand + " " + String.join(" ", mCommandArgs);
         }
-        mCommandReturn = mDevice.executeShellCommand(cmd);
+        mCommandReturn = mDevice.executeShellCommand(cmd).trim();
         parseCommandReturn();
         return this;
     }
