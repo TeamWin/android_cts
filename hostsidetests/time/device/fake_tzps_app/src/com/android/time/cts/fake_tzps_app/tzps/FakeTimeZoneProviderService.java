@@ -15,10 +15,10 @@
  */
 package com.android.time.cts.fake_tzps_app.tzps;
 
-import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_CERTAIN;
-import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_DISABLED;
-import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_INITIALIZING;
-import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.STATE_PERM_FAILED;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_CERTAIN;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_DISABLED;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_INITIALIZING;
+import static android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_PERM_FAILED;
 
 import android.app.time.cts.shell.FakeTimeZoneProviderAppShellHelper;
 import android.os.SystemClock;
@@ -38,7 +38,7 @@ import java.util.Objects;
 public class FakeTimeZoneProviderService extends TimeZoneProviderService {
 
     private final String mId;
-    private int mState = STATE_DISABLED;
+    private int mState = PROVIDER_STATE_DISABLED;
 
     protected FakeTimeZoneProviderService(String id) {
         mId = Objects.requireNonNull(id);
@@ -47,12 +47,12 @@ public class FakeTimeZoneProviderService extends TimeZoneProviderService {
 
     @Override
     public void onStartUpdates(long initializationTimeoutMillis) {
-        mState = STATE_INITIALIZING;
+        mState = PROVIDER_STATE_INITIALIZING;
     }
 
     @Override
     public void onStopUpdates() {
-        mState = STATE_DISABLED;
+        mState = PROVIDER_STATE_DISABLED;
     }
 
     // Fake behavior methods.
@@ -62,12 +62,12 @@ public class FakeTimeZoneProviderService extends TimeZoneProviderService {
 
     public void fakeReportUncertain() {
         reportUncertain();
-        mState = FakeTimeZoneProviderAppShellHelper.STATE_UNCERTAIN;
+        mState = FakeTimeZoneProviderAppShellHelper.PROVIDER_STATE_UNCERTAIN;
     }
 
     public void fakeReportPermanentFailure() {
         reportPermanentFailure(new RuntimeException("Fake permanent failure"));
-        mState = STATE_PERM_FAILED;
+        mState = PROVIDER_STATE_PERM_FAILED;
     }
 
     public void fakeReportSuggestion(List<String> timeZoneIds) {
@@ -76,6 +76,6 @@ public class FakeTimeZoneProviderService extends TimeZoneProviderService {
                 .setElapsedRealtimeMillis(SystemClock.elapsedRealtime())
                 .build();
         reportSuggestion(suggestion);
-        mState = STATE_CERTAIN;
+        mState = PROVIDER_STATE_CERTAIN;
     }
 }
