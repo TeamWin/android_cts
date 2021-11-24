@@ -109,6 +109,8 @@ public class LocaleManagerHostTest implements IDeviceTest {
     }
 
     private void restartDeviceAndWaitUntilReady() throws Exception {
+        // Flush pending writes before rebooting device
+        getDevice().executeShellCommand("am write");
         getDevice().reboot();
     }
 
