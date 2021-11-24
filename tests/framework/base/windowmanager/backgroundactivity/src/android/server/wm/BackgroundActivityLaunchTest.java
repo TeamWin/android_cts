@@ -21,8 +21,8 @@ import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
-import static android.server.wm.backgroundactivity.appa.Components.APP_A_FOREGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY_TEST_SERVICE;
+import static android.server.wm.backgroundactivity.appa.Components.APP_A_FOREGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SECOND_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SEND_PENDING_INTENT_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SIMPLE_ADMIN_RECEIVER;
@@ -67,9 +67,9 @@ import android.os.ResultReceiver;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.SystemUserOnly;
+import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
 import android.server.wm.backgroundactivity.common.EventReceiver;
-import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
 
 import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
@@ -113,6 +113,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public static final ComponentName APP_A_PIP_ACTIVITY =
             new ComponentName(TEST_PACKAGE_APP_A,
                     "android.server.wm.backgroundactivity.appa.PipActivity");
+    public static final ComponentName APP_A_VIRTUAL_DISPLAY_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_A,
+                    "android.server.wm.backgroundactivity.appa.VirtualDisplayActivity");
     private static final String SHELL_PACKAGE = "com.android.shell";
 
     /**
@@ -627,6 +630,24 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         // test will will try to start background activity, but we expect the background activity
         // will be blocked even the app has a visible pip window, as we do not allow background
         // activity to be started after pressing home button.
+        pressHomeAndWaitHomeResumed();
+
+        assertActivityNotResumed();
+    }
+
+    // Check that a presentation on a virtual display won't allow BAL after pressing home.
+    @Test
+    public void testVirtualDisplayCannotStartAfterHomeButton() throws Exception {
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_VIRTUAL_DISPLAY_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+
+        assertTrue("VirtualDisplay activity not started", waitUntilForegroundChanged(
+                TEST_PACKAGE_APP_A, true, ACTIVITY_START_TIMEOUT_MS));
+
+        // Click home button, and test app activity onPause() will trigger which tries to launch
+        // the background activity.
         pressHomeAndWaitHomeResumed();
 
         assertActivityNotResumed();
