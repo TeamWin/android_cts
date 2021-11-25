@@ -19,14 +19,14 @@ package android.safetycenter.cts
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_SAFETY_CENTER
+import android.os.Build.VERSION_CODES.TIRAMISU
+import android.support.test.uiautomator.By
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import android.support.test.uiautomator.By
+import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.test.filters.SdkSuppress
-import android.os.Build.VERSION_CODES.TIRAMISU
 
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = TIRAMISU, codeName = "Tiramisu")
