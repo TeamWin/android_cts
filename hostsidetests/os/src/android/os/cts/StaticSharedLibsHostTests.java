@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.LargeTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.PollingCheck;
@@ -99,6 +100,10 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             = "CtsStaticSharedNativeLibConsumer.apk";
     private static final String STATIC_LIB_NATIVE_CONSUMER_PKG
             = "android.os.lib.consumer";
+
+    private static final String STATIC_LIB_TEST_APP_PKG = "android.os.lib.app";
+    private static final String STATIC_LIB_TEST_APP_CLASS_NAME = STATIC_LIB_TEST_APP_PKG
+            + ".StaticSharedLibsTests";
 
     private static final String SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD =
             "unused_static_shared_lib_min_cache_period";
@@ -700,8 +705,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
 
     @AppModeFull(reason = "Instant app cannot get package installer service")
     public void testCannotSamegradeStaticSharedLibByInstaller() throws Exception {
-        runDeviceTests("android.os.lib.app",
-                "android.os.lib.app.StaticSharedLibsTests",
+        runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
                 "testSamegradeStaticSharedLibFail");
     }
 
@@ -737,12 +741,14 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         }
     }
 
+    @LargeTest
     @AppModeFull
     public void testPruneUnusedStaticSharedLibraries_reboot_fullMode()
             throws Exception {
         doTestPruneUnusedStaticSharedLibraries_reboot();
     }
 
+    @LargeTest
     @AppModeInstant
     public void testPruneUnusedStaticSharedLibraries_reboot_instantMode()
             throws Exception {
@@ -787,6 +793,80 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             setGlobalSetting(SETTING_UNUSED_STATIC_SHARED_LIB_MIN_CACHE_PERIOD, null);
             getDevice().uninstallPackage(STATIC_LIB_CONSUMER3_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER7_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
+    }
+
+    @LargeTest
+    @AppModeFull
+    public void testInstallStaticSharedLib_notKillDependentApp_fullMode()
+            throws Exception {
+        doTestInstallStaticSharedLib_notKillDependentApp();
+    }
+
+    @LargeTest
+    @AppModeInstant
+    public void testInstallStaticSharedLib_notKillDependentApp_instantMode()
+            throws Exception {
+        mInstantMode = true;
+        doTestInstallStaticSharedLib_notKillDependentApp();
+    }
+
+    public void doTestInstallStaticSharedLib_notKillDependentApp() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        try {
+            // Install library dependency
+            assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+            // Install the first library
+            assertNull(install(STATIC_LIB_PROVIDER1_APK));
+            // Install the client
+            assertNull(install(STATIC_LIB_CONSUMER1_APK));
+
+            // Bind the service in consumer1 app to verify that the app should not be killed when
+            // a new version static shared library installed.
+            runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
+                    "testInstallStaticSharedLib_notKillDependentApp");
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
+    }
+
+    @AppModeFull
+    public void testSamegradeStaticSharedLib_killDependentApp_fullMode()
+            throws Exception {
+        doTestSamegradeStaticSharedLib_killDependentApp();
+    }
+
+    @AppModeInstant
+    public void testSamegradeStaticSharedLib_killDependentApp_instantMode()
+            throws Exception {
+        mInstantMode = true;
+        doTestSamegradeStaticSharedLib_killDependentApp();
+    }
+
+    public void doTestSamegradeStaticSharedLib_killDependentApp() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        try {
+            // Install library dependency
+            assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+            // Install the first library
+            assertNull(install(STATIC_LIB_PROVIDER1_APK));
+            // Install the client
+            assertNull(install(STATIC_LIB_CONSUMER1_APK));
+
+            // Bind the service in consumer1 app to verify that the app should be killed when
+            // the static shared library is re-installed.
+            runDeviceTests(STATIC_LIB_TEST_APP_PKG, STATIC_LIB_TEST_APP_CLASS_NAME,
+                    "testSamegradeStaticSharedLib_killDependentApp");
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
             getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
         }
     }
