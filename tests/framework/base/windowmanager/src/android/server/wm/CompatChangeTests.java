@@ -45,7 +45,6 @@ import android.server.wm.WindowManagerTestBase.FocusableActivity;
 import android.util.Size;
 
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 
 import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
