@@ -37,7 +37,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
     private static final String TAG = CtsAngleDeveloperOptionHostTest.class.getSimpleName();
 
-    private void setAndValidateAngleDevOptionPkgDriver(String pkgName, String driverValue) throws Exception {
+    private void setAndValidateAngleDevOptionPkgDriver(String pkgName, String driverValue)
+            throws Exception {
         CLog.logAndDisplay(LogLevel.INFO, "Updating Global.Settings: pkgName = '" +
                 pkgName + "', driverValue = '" + driverValue + "'");
 
@@ -57,7 +58,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                 driverValue, devOption);
     }
 
-    private void setAndValidatePkgDriver(String pkgName, OpenGlDriverChoice driver) throws Exception {
+    private void setAndValidatePkgDriver(String pkgName, OpenGlDriverChoice driver)
+            throws Exception {
         stopPackage(getDevice(), pkgName);
 
         setAndValidateAngleDevOptionPkgDriver(pkgName, sDriverGlobalSettingMap.get(driver));
@@ -70,12 +72,11 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
     }
 
     private void installApp(String appName) throws Exception {
-        for (int i = 0; i < NUM_ATTEMPTS; i++)
-        {
+        for (int i = 0; i < NUM_ATTEMPTS; i++) {
             try {
                 installPackage(appName);
                 return;
-            } catch(Exception e) {
+            } catch (Exception e) {
                 Thread.sleep(REATTEMPT_SLEEP_MSEC);
             }
         }
@@ -287,7 +288,8 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                                 sDriverGlobalSettingMap.get(firstDriver));
 
                 CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
-                        firstDriver + ") with method '" + sDriverTestMethodMap.get(firstDriver) + "'");
+                        firstDriver + ") with method '" + sDriverTestMethodMap.get(firstDriver)
+                        + "'");
 
                 runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
                         ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
@@ -299,14 +301,16 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
                                 sDriverGlobalSettingMap.get(secondDriver));
 
                 CLog.logAndDisplay(LogLevel.INFO, "Validating driver selection (" +
-                        secondDriver + ") with method '" + sDriverTestMethodMap.get(secondDriver) + "'");
+                        secondDriver + ") with method '" + sDriverTestMethodMap.get(secondDriver)
+                        + "'");
 
                 runDeviceTests(ANGLE_DRIVER_TEST_SEC_PKG,
                         ANGLE_DRIVER_TEST_SEC_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
                         sDriverTestMethodMap.get(secondDriver));
 
                 String devOptionPkg = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_PKGS);
-                String devOptionValue = getGlobalSetting(getDevice(), SETTINGS_GLOBAL_DRIVER_VALUES);
+                String devOptionValue = getGlobalSetting(getDevice(),
+                        SETTINGS_GLOBAL_DRIVER_VALUES);
                 CLog.logAndDisplay(LogLevel.INFO, "Validating: PKG name = '" +
                         devOptionPkg + "', driver value = '" + devOptionValue + "'");
 
@@ -347,5 +351,49 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
 
         testUseNativeDriver();
+    }
+
+    /**
+     * Test that the `dumpsys gpu` correctly indicates `angleInUse = 1` when ANGLE is enabled.
+     */
+    @Test
+    public void testDumpsysAngleInWhenAngleEnabled() throws Exception {
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
+        Assume.assumeFalse(isNativeDriverAngle(getDevice()));
+
+        installApp(ANGLE_DUMPSYS_GPU_TEST_APP);
+
+        setAndValidateAngleDevOptionPkgDriver(ANGLE_DUMPSYS_GPU_TEST_PKG,
+                sDriverGlobalSettingMap.get(OpenGlDriverChoice.ANGLE));
+
+        startActivity(getDevice(), ANGLE_DUMPSYS_GPU_TEST_PKG, ANGLE_DUMPSYS_GPU_TEST_CLASS);
+
+        int angleInUse = getDumpsysGpuAngleInUse(getDevice(), ANGLE_DUMPSYS_GPU_TEST_PKG);
+        Assert.assertEquals(
+                "'dumpsys gpu' for package '" + ANGLE_DUMPSYS_GPU_TEST_PKG
+                        + "' failed to indicate angle is in use: angleInUse = " + angleInUse,
+                1, angleInUse);
+    }
+
+    /**
+     * Test that the `dumpsys gpu` correctly indicates `angleInUse = 0` when ANGLE is disabled.
+     */
+    @Test
+    public void testDumpsysAngleInWhenAngleDisabled() throws Exception {
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
+        Assume.assumeFalse(isNativeDriverAngle(getDevice()));
+
+        installApp(ANGLE_DUMPSYS_GPU_TEST_APP);
+
+        setAndValidateAngleDevOptionPkgDriver(ANGLE_DUMPSYS_GPU_TEST_PKG,
+                sDriverGlobalSettingMap.get(OpenGlDriverChoice.NATIVE));
+
+        startActivity(getDevice(), ANGLE_DUMPSYS_GPU_TEST_PKG, ANGLE_DUMPSYS_GPU_TEST_CLASS);
+
+        int angleInUse = getDumpsysGpuAngleInUse(getDevice(), ANGLE_DUMPSYS_GPU_TEST_PKG);
+        Assert.assertEquals(
+                "'dumpsys gpu' for package '" + ANGLE_DUMPSYS_GPU_TEST_PKG
+                        + "' failed to indicate angle is not in use: angleInUse = " + angleInUse,
+                0, angleInUse);
     }
 }
