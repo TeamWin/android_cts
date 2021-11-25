@@ -440,7 +440,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
-                !waitFindObject(By.res(DENY_RADIO_BUTTON)).isChecked
+                !waitFindObject(By.text(
+                        getPermissionControllerString("app_permission_button_deny"))).isChecked
             } else if (isTv || isWatch) {
                 !(waitFindObject(
                     By.text(getPermissionControllerString(DENY_BUTTON_TEXT))).isChecked ||
@@ -457,9 +458,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     // Automotive doesn't support one time permissions, and thus
                     // won't show an "Ask every time" message
                     when (state) {
-                        PermissionState.ALLOWED -> By.res(ALLOW_RADIO_BUTTON)
-                        PermissionState.DENIED -> By.res(DENY_RADIO_BUTTON)
-                        PermissionState.DENIED_WITH_PREJUDICE -> By.res(DENY_RADIO_BUTTON)
+                        PermissionState.ALLOWED -> By.text(
+                                getPermissionControllerString("app_permission_button_allow"))
+                        PermissionState.DENIED -> By.text(
+                                getPermissionControllerString("app_permission_button_deny"))
+                        PermissionState.DENIED_WITH_PREJUDICE -> By.text(
+                                getPermissionControllerString("app_permission_button_deny"))
                     }
                 } else if (isTv || isWatch) {
                     when (state) {
