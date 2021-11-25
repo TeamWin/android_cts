@@ -37,6 +37,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -112,6 +113,8 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                     BaseHdmiCecCtsTest.getTargetLogicalAddress(device).getDeviceType();
             int toDevice;
             launchCommand.add("-t");
+            launchCommand.add("r");
+            launchCommand.add("-t");
             if (targetDeviceType == HdmiCecConstants.CEC_DEVICE_TYPE_TV) {
                 toDevice = LogicalAddress.PLAYBACK_1.getLogicalAddressAsInt();
                 launchCommand.add("p");
@@ -161,6 +164,27 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                             device.executeShellCommand(sendVendorCommand.toString());
                             if (cecClientWrapper.checkConsoleOutput(
                                     serialNoParam, TIMEOUT_MILLIS, inputConsole)) {
+                                if (targetDeviceType != HdmiCecConstants.CEC_DEVICE_TYPE_TV) {
+                                    // Timeout in milliseconds
+                                    long getVersionTimeout = 3000;
+                                    BufferedWriter outputConsole =
+                                            new BufferedWriter(
+                                                    new OutputStreamWriter(
+                                                            mCecClient.getOutputStream()));
+
+                                    String getVersionMessage = "tx 10:9f";
+                                    cecClientWrapper.sendConsoleMessage(
+                                            getVersionMessage, outputConsole);
+                                    String getVersionResponse = "01:9e";
+                                    if (cecClientWrapper.checkConsoleOutput(
+                                            getVersionResponse, getVersionTimeout, inputConsole)) {
+                                        throw new Exception(
+                                                "Setup error! The sink device (TV) in the test setup"
+                                                    + " seems to have CEC enabled. Please disable"
+                                                    + " and retry tests.");
+                                    }
+                                }
+
                                 writeMapping(port, serialNo);
                                 return;
                             }

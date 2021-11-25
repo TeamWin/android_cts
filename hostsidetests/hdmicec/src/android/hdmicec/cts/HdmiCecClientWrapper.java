@@ -414,11 +414,16 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
     /** Sends a message to the output console of the cec-client */
     public void sendConsoleMessage(String message) throws CecClientWrapperException {
-        checkCecClient();
+        sendConsoleMessage(message, mOutputConsole);
+    }
+
+    /** Sends a message to the output console of the cec-client */
+    public void sendConsoleMessage(String message, BufferedWriter outputConsole)
+            throws CecClientWrapperException {
         CLog.v("Sending console message:: " + message);
         try {
-            mOutputConsole.write(message);
-            mOutputConsole.flush();
+            outputConsole.write(message);
+            outputConsole.flush();
         } catch (IOException ioe) {
             throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
         }
