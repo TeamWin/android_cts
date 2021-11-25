@@ -139,6 +139,10 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
         run(ProcessFreshChecker.class, 1000);
     }
 
+    public void run(Class runnableClass) throws Throwable {
+        run(runnableClass, REMOTE_TIMEOUT_MS);
+    }
+
     public void run(Class runnableClass, long timeoutMs) throws Throwable {
         Message m = Message.obtain(null, TestProcessService.MSG_RUN_TEST);
         m.replyTo = mReplyHandler;

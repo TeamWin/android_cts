@@ -54,8 +54,16 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertNotEquals;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.keystore.cts.util.TestUtils;
@@ -67,13 +75,13 @@ import android.security.keystore.AttestationUtils;
 import android.security.keystore.DeviceIdAttestationException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.test.AndroidTestCase;
 import android.util.ArraySet;
 import android.util.Log;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.RequiresDevice;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.ImmutableSet;
-
-import androidx.test.filters.RequiresDevice;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
@@ -102,13 +110,18 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.crypto.KeyGenerator;
+
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Tests for Android KeysStore attestation.
  */
-public class KeyAttestationTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class KeyAttestationTest {
 
     private static final String TAG = AndroidKeyStoreTest.class.getSimpleName();
 
@@ -135,6 +148,11 @@ public class KeyAttestationTest extends AndroidTestCase {
     private static final int KM_ERROR_INVALID_INPUT_LENGTH = -21;
     private static final int KM_ERROR_PERMISSION_DENIED = 6;
 
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    @Test
     public void testVersionParser() throws Exception {
         // Non-numerics/empty give version 0
         assertEquals(0, parseSystemOsVersion(""));
@@ -159,7 +177,12 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     @RequiresDevice
+    @Test
     public void testEcAttestation() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -212,7 +235,12 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testEcAttestation_TooLargeChallenge() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             try {
@@ -229,6 +257,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testEcAttestation_NoChallenge() throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
@@ -266,7 +295,12 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @RestrictedBuildTest
     @RequiresDevice
+    @Test
     public void testEcAttestation_DeviceLocked() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -305,6 +339,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAttestationKmVersionMatchesFeatureVersion() throws Exception {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
@@ -349,6 +384,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAttestationKmVersionMatchesFeatureVersionStrongBox() throws Exception {
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
@@ -402,6 +438,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testEcAttestation_KeyStoreExceptionWhenRequestingUniqueId() throws Exception {
         String keystoreAlias = "test_key";
         KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
@@ -426,7 +463,12 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     @RequiresDevice
+    @Test
     public void testRsaAttestation() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -488,7 +530,12 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testRsaAttestation_TooLargeChallenge() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             try {
@@ -507,6 +554,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testRsaAttestation_NoChallenge() throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
@@ -542,7 +590,12 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @RestrictedBuildTest
     @RequiresDevice  // Emulators have no place to store the needed key
+    @Test
     public void testRsaAttestation_DeviceLocked() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
             return;
 
@@ -581,6 +634,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAesAttestation() throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
@@ -604,6 +658,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testHmacAttestation() throws Exception {
         boolean[] devicePropertiesAttestationValues = {true, false};
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
@@ -649,6 +704,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDeviceIdAttestation() throws Exception {
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_SERIAL, null);
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_IMEI, "Unable to retrieve IMEI");

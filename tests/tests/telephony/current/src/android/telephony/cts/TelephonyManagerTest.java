@@ -3362,6 +3362,19 @@ public class TelephonyManagerTest {
                 TelephonyManager.SIM_STATE_NOT_READY,
                 TelephonyManager.SIM_STATE_PERM_DISABLED,
                 TelephonyManager.SIM_STATE_LOADED).contains(simApplicationState));
+
+        for (int i = 0; i <= mTelephonyManager.getPhoneCount(); i++) {
+            final int slotId = i;
+            simApplicationState = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.getSimApplicationState(slotId));
+            assertTrue(Arrays.asList(TelephonyManager.SIM_STATE_UNKNOWN,
+                    TelephonyManager.SIM_STATE_PIN_REQUIRED,
+                    TelephonyManager.SIM_STATE_PUK_REQUIRED,
+                    TelephonyManager.SIM_STATE_NETWORK_LOCKED,
+                    TelephonyManager.SIM_STATE_NOT_READY,
+                    TelephonyManager.SIM_STATE_PERM_DISABLED,
+                    TelephonyManager.SIM_STATE_LOADED).contains(simApplicationState));
+        }
     }
 
     @Test

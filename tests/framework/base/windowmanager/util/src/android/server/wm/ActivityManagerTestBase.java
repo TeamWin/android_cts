@@ -1308,7 +1308,7 @@ public abstract class ActivityManagerTestBase {
      */
     protected static class DisableScreenDozeRule implements TestRule {
 
-        /** Copied from android.provider.Settings.Secure since these keys are hiden. */
+        /** Copied from android.provider.Settings.Secure since these keys are hidden. */
         private static final String[] DOZE_SETTINGS = {
                 "doze_enabled",
                 "doze_always_on",
@@ -1317,7 +1317,8 @@ public abstract class ActivityManagerTestBase {
                 "doze_pulse_on_double_tap",
                 "doze_wake_screen_gesture",
                 "doze_wake_display_gesture",
-                "doze_tap_gesture"
+                "doze_tap_gesture",
+                "doze_quick_pickup_gesture"
         };
 
         private String get(String key) {

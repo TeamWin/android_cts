@@ -35,9 +35,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
  * see http://b/72376996 for the migration of these tests.
  */
 public class WebViewStartupTest extends InstrumentationTestCase {
+    private static final String TEST_PROCESS_DATA_DIR_SUFFIX = "WebViewStartupTestDir";
 
     private static void runCurrentWebViewPackageTest(Context ctx, boolean alreadyOnMainThread)
             throws Throwable {
+        // Have to set data dir suffix because this runs in a new process, and WebView might
+        // already be used in other processes.
+        WebView.setDataDirectorySuffix(TEST_PROCESS_DATA_DIR_SUFFIX);
+
         PackageManager pm = ctx.getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             PackageInfo webViewPackage = WebView.getCurrentWebViewPackage();
@@ -80,8 +85,7 @@ public class WebViewStartupTest extends InstrumentationTestCase {
     public void testGetCurrentWebViewPackageOnUiThread() throws Throwable {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         try (TestProcessClient process = TestProcessClient.createProcessA(context)) {
-            process.run(TestGetCurrentWebViewPackageOnUiThread.class,
-                    TestProcessClient.REMOTE_TIMEOUT_MS);
+            process.run(TestGetCurrentWebViewPackageOnUiThread.class);
         }
     }
 
@@ -96,8 +100,7 @@ public class WebViewStartupTest extends InstrumentationTestCase {
     public void testGetCurrentWebViewPackageOnBackgroundThread() throws Throwable {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         try (TestProcessClient process = TestProcessClient.createProcessA(context)) {
-            process.run(TestGetCurrentWebViewPackageOnBackgroundThread.class,
-                    TestProcessClient.REMOTE_TIMEOUT_MS);
+            process.run(TestGetCurrentWebViewPackageOnBackgroundThread.class);
         }
     }
 }

@@ -16,11 +16,17 @@
 
 package android.keystore.cts.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.FeatureInfo;
+import android.os.Build;
 import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
@@ -78,7 +84,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
-abstract public class TestUtils extends Assert {
+public class TestUtils {
 
     public static final String EXPECTED_CRYPTO_OP_PROVIDER_NAME = "AndroidKeyStoreBCWorkaround";
     public static final String EXPECTED_PROVIDER_NAME = "AndroidKeyStore";
@@ -1090,5 +1096,9 @@ abstract public class TestUtils extends Assert {
         byte[] message = new byte[messageSize];
         new SecureRandom().nextBytes(message);
         return message;
+    }
+
+    public static boolean isAttestationSupported() {
+        return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.O;
     }
 }

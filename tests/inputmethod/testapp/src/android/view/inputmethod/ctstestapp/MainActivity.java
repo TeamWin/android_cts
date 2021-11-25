@@ -77,7 +77,8 @@ public final class MainActivity extends Activity {
             }
             return uri.getBooleanQueryParameter(key, false);
         }
-        return getIntent().getBooleanExtra(key, false);
+        return getIntent().getBooleanExtra(key, false)
+                || "true".equals(getIntent().getStringExtra(key));
     }
 
     @Override

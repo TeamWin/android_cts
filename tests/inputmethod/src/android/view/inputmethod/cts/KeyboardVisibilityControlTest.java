@@ -45,6 +45,7 @@ import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
@@ -55,6 +56,7 @@ import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -76,6 +78,10 @@ import androidx.annotation.NonNull;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
 
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -88,6 +94,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -718,20 +725,33 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
             expectImeVisible(TIMEOUT);
 
-            // Launcher another test activity from another process with popup dialog.
+            // Launch another test activity from another process with popup dialog.
             MockTestActivityUtil.launchSync(instant, TIMEOUT,
                     Map.of(MockTestActivityUtil.EXTRA_KEY_SHOW_DIALOG, "true"));
+            BySelector dialogSelector = By.clazz(AlertDialog.class).depth(0);
+            UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+            assertNotNull(uiDevice.wait(Until.hasObject(dialogSelector), TIMEOUT));
+
             // Dismiss dialog and back to original test activity
             MockTestActivityUtil.sendBroadcastAction(MockTestActivityUtil.EXTRA_DISMISS_DIALOG);
 
+            final CountDownLatch imeVisibilityUpdateLatch = new CountDownLatch(1);
+            AtomicReference<Boolean> imeInsetsVisible = new AtomicReference<>();
+            TestUtils.runOnMainSync(
+                    () -> testActivity.getWindow().getDecorView().setOnApplyWindowInsetsListener(
+                            (v, insets) -> {
+                                if (insets.getInsets(WindowInsets.Type.ime()) != Insets.NONE) {
+                                    imeInsetsVisible.set(insets.isVisible(WindowInsets.Type.ime()));
+                                    imeVisibilityUpdateLatch.countDown();
+                                }
+                                return v.onApplyWindowInsets(insets);
+                            }));
             // Verify keyboard visibility should aligned with IME insets visibility.
             TestUtils.waitOnMainUntil(
                     () -> testActivity.getWindow().getDecorView().getVisibility() == VISIBLE
                             && testActivity.getWindow().getDecorView().hasWindowFocus(), TIMEOUT);
-
-            AtomicReference<Boolean> imeInsetsVisible = new AtomicReference<>();
-            TestUtils.runOnMainSync(() ->
-                    imeInsetsVisible.set(editTextRef.get().getRootWindowInsets().isVisible(ime())));
+            assertTrue("Waiting for onApplyWindowInsets timed out",
+                    imeVisibilityUpdateLatch.await(5, TimeUnit.SECONDS));
 
             if (imeInsetsVisible.get()) {
                 expectImeVisible(TIMEOUT);

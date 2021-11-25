@@ -518,6 +518,18 @@
                   android:exported="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity android:name="android.server.wm.HostActivity"
+                  android:exported="true">
+               <intent-filter>
+                 <action android:name="android.server.wm.app.HostActivity"/>
+               </intent-filter>
+               <intent-filter>
+                 <action android:name="android.intent.action.MAIN"/>
+                 <category android:name="android.intent.category.LAUNCHER"/>
+               </intent-filter>
+        </activity>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -16,9 +16,15 @@
 
 package android.keystore.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
+
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
+
+import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.TestCase;
 
@@ -39,10 +45,15 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Tests for algorithm-agnostic functionality of MAC implementations backed by Android Keystore.
  */
-public class MacTest extends TestCase {
+ @RunWith(AndroidJUnit4.class)
+public class MacTest {
 
     /**
      * Override to test Strongbox.
@@ -74,13 +85,11 @@ public class MacTest extends TestCase {
         }
     }
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         if (isStrongbox()) {
             TestUtils.assumeStrongBox();
         }
-
-        super.setUp();
     }
 
     private static final byte[] KAT_KEY = HexEncoding.decode(
@@ -212,6 +221,7 @@ public class MacTest extends TestCase {
 
     private static final long DAY_IN_MILLIS = TestUtils.DAY_IN_MILLIS;
 
+    @Test
     public void testAlgorithmList() {
         // Assert that Android Keystore Provider exposes exactly the expected MAC algorithms. We
         // don't care whether the algorithms are exposed via aliases, as long as the canonical names
@@ -241,6 +251,7 @@ public class MacTest extends TestCase {
                 expectedAlgsLowerCase.toArray(new String[0]));
     }
 
+    @Test
     public void testAndroidKeyStoreKeysHandledByAndroidKeyStoreProvider() throws Exception {
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
         assertNotNull(provider);
@@ -258,6 +269,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testMacGeneratedForEmptyMessage() throws Exception {
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
         assertNotNull(provider);
@@ -279,6 +291,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testMacGeneratedByAndroidKeyStoreVerifiesByAndroidKeyStore() throws Exception {
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
         assertNotNull(provider);
@@ -299,6 +312,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testMacGeneratedByAndroidKeyStoreVerifiesByHighestPriorityProvider()
             throws Exception {
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
@@ -321,6 +335,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testMacGeneratedByHighestPriorityProviderVerifiesByAndroidKeyStore()
             throws Exception {
         Provider keystoreProvider = Security.getProvider(EXPECTED_PROVIDER_NAME);
@@ -347,6 +362,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testSmallMsgKat() throws Exception {
         byte[] message = SHORT_MSG_KAT_MESSAGE;
 
@@ -382,6 +398,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testLargeMsgKat() throws Exception {
         byte[] message = TestUtils.generateLargeKatMsg(LONG_MSG_KAT_SEED, LONG_MSG_KAT_SIZE_BYTES);
 
@@ -402,6 +419,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testInitFailsWhenNotAuthorizedToSign() throws Exception {
         int badPurposes = KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT
                 | KeyProperties.PURPOSE_VERIFY;
@@ -418,6 +436,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testInitFailsWhenDigestNotAuthorized() throws Exception {
         // TEE algorithms are used here even if Strongbox is tested because
         // the outer loop iterates through algorithms that are not to be supported
@@ -442,6 +461,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testInitFailsWhenKeyNotYetValid() throws Exception {
         for (String algorithm : expectedAlgorithms()) {
             try {
@@ -459,6 +479,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testInitFailsWhenKeyNoLongerValidForOrigination() throws Exception {
         for (String algorithm : expectedAlgorithms()) {
             try {
@@ -479,6 +500,7 @@ public class MacTest extends TestCase {
         }
     }
 
+    @Test
     public void testInitIgnoresThatKeyNoLongerValidForConsumption() throws Exception {
         for (String algorithm : expectedAlgorithms()) {
             try {
