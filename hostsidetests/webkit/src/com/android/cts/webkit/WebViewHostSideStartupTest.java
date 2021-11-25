@@ -46,19 +46,6 @@ public class WebViewHostSideStartupTest extends DeviceTestCase {
         assertDeviceTestPasses("testStrictModeNotViolatedOnStartup");
     }
 
-    public void testGetWebViewLooperOnUiThread() throws DeviceNotAvailableException {
-        assertDeviceTestPasses("testGetWebViewLooperOnUiThread");
-    }
-
-    public void testGetWebViewLooperFromUiThread() throws DeviceNotAvailableException {
-        assertDeviceTestPasses("testGetWebViewLooperCreatedOnUiThreadFromInstrThread");
-    }
-
-    public void testGetWebViewLooperCreatedOnBackgroundThreadFromInstThread()
-            throws DeviceNotAvailableException {
-        assertDeviceTestPasses("testGetWebViewLooperCreatedOnBackgroundThreadFromInstThread");
-    }
-
     private void assertDeviceTestPasses(String testMethodName) throws DeviceNotAvailableException {
         TestRunResult testRunResult = runSingleDeviceTest(DEVICE_WEBVIEW_STARTUP_PKG,
                                                  DEVICE_WEBVIEW_STARTUP_TEST_CLASS,
