@@ -18,6 +18,7 @@ package android.app.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -41,7 +42,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class StatusBarManagerTest {
-    private static final String PERMISSION_STATUS_BAR = "android.permission.STATUS_BAR";
+    private static final String PERMISSION_STATUS_BAR = android.Manifest.permission.STATUS_BAR;
 
     private StatusBarManager mStatusBarManager;
     private Context mContext;
@@ -180,5 +181,42 @@ public class StatusBarManagerTest {
         mStatusBarManager.handleSystemKey(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP);
 
         // Nothing thrown, passed
+    }
+
+    /**
+     * Test StatusBarManager.setNavBarModeOverride(NAV_BAR_MODE_OVERRIDE_KIDS)
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSetNavBarModeOverride_kids_doesNotThrow() throws Exception {
+        int navBarModeOverrideKids = StatusBarManager.NAV_BAR_MODE_OVERRIDE_KIDS;
+        mStatusBarManager.setNavBarModeOverride(navBarModeOverrideKids);
+
+        assertEquals(mStatusBarManager.getNavBarModeOverride(), navBarModeOverrideKids);
+    }
+
+    /**
+     * Test StatusBarManager.setNavBarModeOverride(NAV_BAR_MODE_OVERRIDE_NONE)
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSetNavBarModeOverride_none_doesNotThrow() throws Exception {
+        int navBarModeOverrideNone = StatusBarManager.NAV_BAR_MODE_OVERRIDE_NONE;
+        mStatusBarManager.setNavBarModeOverride(navBarModeOverrideNone);
+
+        assertEquals(mStatusBarManager.getNavBarModeOverride(), navBarModeOverrideNone);
+    }
+
+    /**
+     * Test StatusBarManager.setNavBarModeOverride(-1) // invalid input
+     *
+     * @throws Exception
+     */
+    @Test(expected = UnsupportedOperationException.class)
+    public void testSetNavBarModeOverride_invalid_throws() throws Exception {
+        int invalidInput = -1;
+        mStatusBarManager.setNavBarModeOverride(invalidInput);
     }
 }
