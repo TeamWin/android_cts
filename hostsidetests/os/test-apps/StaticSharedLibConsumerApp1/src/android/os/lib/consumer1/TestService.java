@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
- * Copyright (C) 2020 The Android Open Source Project
+/*
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.os.lib.app">
+package android.os.lib.consumer1;
 
-    <application>
-    </application>
+import android.app.Service;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.IBinder;
 
-    <queries>
-        <package android:name="android.os.lib.provider"/>
-        <package android:name="android.os.lib.consumer1"/>
-    </queries>
+public class TestService extends Service {
+    private Binder mBinder = new Binder();
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.os.lib.app"/>
-</manifest>
-
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
+}
