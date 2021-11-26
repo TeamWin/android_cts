@@ -21,18 +21,30 @@ import android.net.MacAddress
 import android.util.Log
 import com.android.compatibility.common.util.SystemUtil
 import java.io.IOException
+import java.lang.UnsupportedOperationException
 
 /** Utility class for interacting with applications via Shell */
 class AppHelper(
+    private val instrumentation: Instrumentation,
     val userId: Int,
     val packageName: String,
-    private val instrumentation: Instrumentation
+    private val apkPath: String? = null
 ) {
     fun associate(macAddress: MacAddress) =
             runShellCommand("cmd companiondevice associate $userId $packageName $macAddress")
 
     fun disassociate(macAddress: MacAddress) =
             runShellCommand("cmd companiondevice disassociate $userId $packageName $macAddress")
+
+    fun isInstalled(): Boolean =
+            runShellCommand("pm list packages --user $userId $packageName").isNotBlank()
+
+    fun install() = apkPath?.let { runShellCommand("pm install --user $userId $apkPath") }
+            ?: throw UnsupportedOperationException("APK path is not provided.")
+
+    fun uninstall() = runShellCommand("pm uninstall --user $userId $packageName")
+
+    fun clearData() = runShellCommand("pm clear --user $userId $packageName")
 
     fun runShellCommand(cmd: String): String {
         Log.i(TAG, "Running shell command: '$cmd'")
