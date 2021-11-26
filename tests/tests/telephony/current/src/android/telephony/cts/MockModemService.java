@@ -36,20 +36,14 @@ public class MockModemService extends Service {
     private static final String TAG = "MockModemService";
 
     public static final int TEST_TIMEOUT_MS = 30000;
-    public static final String IRADIOCONFIG_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradioconfig.mockmodem.service";
-    public static final String IRADIOMODEM_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradiomodem.mockmodem.service";
-    public static final String IRADIOSIM_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradiosim.mockmodem.service";
-    public static final String IRADIONETWORK_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradionetwork.mockmodem.service";
-    public static final String IRADIODATA_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradiodata.mockmodem.service";
-    public static final String IRADIOMESSAGING_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradiomessaging.mockmodem.service";
-    public static final String IRADIOVOICE_MOCKMODEM_SERVICE_INTERFACE =
-            "android.telephony.cts.iradiovoice.mockmodem.service";
+    public static final String IRADIOCONFIG_INTERFACE = "android.telephony.cts.iradioconfig";
+    public static final String IRADIOMODEM_INTERFACE = "android.telephony.cts.iradiomodem";
+    public static final String IRADIOSIM_INTERFACE = "android.telephony.cts.iradiosim";
+    public static final String IRADIONETWORK_INTERFACE = "android.telephony.cts.iradionetwork";
+    public static final String IRADIODATA_INTERFACE = "android.telephony.cts.iradiodata";
+    public static final String IRADIOMESSAGING_INTERFACE = "android.telephony.cts.iradiomessaging";
+    public static final String IRADIOVOICE_INTERFACE = "android.telephony.cts.iradiovoice";
+    public static final String PHONE_ID = "phone_id";
 
     private static Context sContext;
     private static IRadioConfigImpl sIRadioConfigImpl;
@@ -59,6 +53,9 @@ public class MockModemService extends Service {
     private static IRadioDataImpl sIRadioDataImpl;
     private static IRadioMessagingImpl sIRadioMessagingImpl;
     private static IRadioVoiceImpl sIRadioVoiceImpl;
+
+    public static final byte PHONE_ID_0 = 0x00;
+    public static final byte PHONE_ID_1 = 0x01;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
@@ -118,27 +115,65 @@ public class MockModemService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        if (IRADIOCONFIG_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioConfig");
+        byte phoneId = intent.getByteExtra(PHONE_ID, PHONE_ID_0);
+
+        if (IRADIOCONFIG_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioConfig " + phoneId);
             return sIRadioConfigImpl;
-        } else if (IRADIOMODEM_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioModem");
-            return sIRadioModemImpl;
-        } else if (IRADIOSIM_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioSim");
-            return sIRadioSimImpl;
-        } else if (IRADIONETWORK_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioNetwork");
-            return sIRadioNetworkImpl;
-        } else if (IRADIODATA_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioData");
-            return sIRadioDataImpl;
-        } else if (IRADIOMESSAGING_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioMessaging");
-            return sIRadioMessagingImpl;
-        } else if (IRADIOVOICE_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
-            Log.i(TAG, "onBind-IRadioVoice");
-            return sIRadioVoiceImpl;
+        } else if (IRADIOMODEM_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioModem " + phoneId);
+            if (phoneId == PHONE_ID_0) {
+                return sIRadioModemImpl;
+            } else if (phoneId == PHONE_ID_1) {
+                // TODO
+            } else {
+                return null;
+            }
+        } else if (IRADIOSIM_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioSim " + phoneId);
+            if (phoneId == PHONE_ID_0) {
+                return sIRadioSimImpl;
+            } else if (phoneId == PHONE_ID_1) {
+                // TODO
+            } else {
+                return null;
+            }
+        } else if (IRADIONETWORK_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioNetwork " + phoneId);
+            if (phoneId == PHONE_ID_0) {
+                return sIRadioNetworkImpl;
+            } else if (phoneId == PHONE_ID_1) {
+                // TODO
+            } else {
+                return null;
+            }
+        } else if (IRADIODATA_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioData " + phoneId);
+            if (phoneId == PHONE_ID_0) {
+                return sIRadioDataImpl;
+            } else if (phoneId == PHONE_ID_1) {
+                // TODO
+            } else {
+                return null;
+            }
+        } else if (IRADIOMESSAGING_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioMessaging " + phoneId);
+            if (phoneId == PHONE_ID_0) {
+                return sIRadioMessagingImpl;
+            } else if (phoneId == PHONE_ID_1) {
+                // TODO
+            } else {
+                return null;
+            }
+        } else if (IRADIOVOICE_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioVoice " + phoneId);
+            if (phoneId == PHONE_ID_0) {
+                return sIRadioVoiceImpl;
+            } else if (phoneId == PHONE_ID_1) {
+                // TODO
+            } else {
+                return null;
+            }
         }
 
         countDownLatch(LATCH_MOCK_MODEM_SERVICE_READY);
