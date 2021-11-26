@@ -800,6 +800,20 @@ public final class Package {
         return sPackageManager.isInstantApp(mPackageName);
     }
 
+    /**
+     * Gets the shared user id of the package.
+     */
+    @Experimental
+    public String sharedUserId() {
+        PackageInfo packageInfo = packageInfoFromAnyUser(/* flags= */ 0);
+
+        if (packageInfo == null) {
+            throw new NeneException("Error getting sharedUserId, does not exist");
+        }
+
+        return packageInfo.sharedUserId;
+    }
+
     private static final class ProcessInfo {
         final String mPackageName;
         final int mPid;

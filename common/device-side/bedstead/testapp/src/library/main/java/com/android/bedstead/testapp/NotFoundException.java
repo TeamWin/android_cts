@@ -19,6 +19,6 @@ package com.android.bedstead.testapp;
 /** {@link Exception} thrown when a query doesn't match any test apps. */
 public class NotFoundException extends RuntimeException {
     public NotFoundException(TestAppQueryBuilder query) {
-
+        super("Could not find testapp matching query: " + query.describeQuery(null));
     }
 }

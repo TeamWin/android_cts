@@ -34,6 +34,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
@@ -55,7 +56,7 @@ import java.time.Duration;
 
 
 @RunWith(BedsteadJUnit4.class)
-public class ScreenCaptureDisabledTest {
+public final class ScreenCaptureDisabledTest {
 
     @ClassRule
     @Rule
@@ -141,6 +142,7 @@ public class ScreenCaptureDisabledTest {
     @Test
     @PositivePolicyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
+    @SlowApiTest("Screenshot policy can take minutes to propagate")
     public void setScreenCaptureDisabled_true_screenCaptureFails() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
 
@@ -188,7 +190,7 @@ public class ScreenCaptureDisabledTest {
         try (TestAppInstance testApp = sTestApp.install()) {
             testApp.activities().any().start();
             return Poll.forValue(mUiAutomation::takeScreenshot)
-                    .timeout(Duration.ofSeconds(60))
+                    .timeout(Duration.ofMinutes(5))
                     .toBeNull()
                     .await();
         }

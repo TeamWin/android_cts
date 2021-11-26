@@ -62,6 +62,7 @@ import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
@@ -369,6 +370,13 @@ public final class DeviceState implements TestRule {
                         ensureHasDeviceOwnerAnnotation.isPrimary(),
                         new HashSet<>(
                                 Arrays.asList(ensureHasDeviceOwnerAnnotation.affiliationIds())));
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasNoDelegate) {
+                EnsureHasNoDelegate ensureHasNoDelegateAnnotation =
+                        (EnsureHasNoDelegate) annotation;
+                ensureHasNoDelegate(ensureHasNoDelegateAnnotation.admin());
                 continue;
             }
 
@@ -1311,6 +1319,7 @@ public final class DeviceState implements TestRule {
     }
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
+    private Set<TestAppInstance> mUninstalledTestApps = new HashSet<>();
 
     private void teardownShareableState() {
         if (mOriginalSwitchedUser != null) {
@@ -1376,6 +1385,11 @@ public final class DeviceState implements TestRule {
             installedTestApp.uninstall();
         }
         mInstalledTestApps.clear();
+
+        for (TestAppInstance uninstalledTestApp : mUninstalledTestApps) {
+            uninstalledTestApp.testApp().install(uninstalledTestApp.user());
+        }
+        mUninstalledTestApps.clear();
     }
 
     private UserReference createProfile(
@@ -1447,6 +1461,24 @@ public final class DeviceState implements TestRule {
         }
     }
 
+    private void ensureHasNoDelegate(EnsureHasNoDelegate.AdminType adminType) {
+        if (adminType == EnsureHasNoDelegate.AdminType.ANY) {
+            for (UserReference user : TestApis.users().all()) {
+                ensureTestAppNotInstalled(RemoteDelegate.sTestApp, user);
+            }
+            return;
+        }
+        RemotePolicyManager dpc =
+                adminType == EnsureHasNoDelegate.AdminType.PRIMARY ? mPrimaryPolicyManager
+                : adminType == EnsureHasNoDelegate.AdminType.DEVICE_OWNER ? deviceOwner()
+                : adminType == EnsureHasNoDelegate.AdminType.PROFILE_OWNER ? profileOwner() : null;
+        if (dpc == null) {
+            throw new IllegalStateException("Unknown Admin Type " + adminType);
+        }
+
+        ensureTestAppNotInstalled(RemoteDelegate.sTestApp, dpc.user());
+    }
+
     private RemotePolicyManager getDeviceAdmin(EnsureHasDelegate.AdminType adminType) {
         switch (adminType) {
             case DEVICE_OWNER:
@@ -1461,7 +1493,27 @@ public final class DeviceState implements TestRule {
     }
 
     private void ensureTestAppInstalled(TestApp testApp, UserReference user) {
+        if (TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
+            return;
+        }
+
         mInstalledTestApps.add(testApp.install(user));
+    }
+
+    private void ensureTestAppNotInstalled(TestApp testApp, UserReference user) {
+        if (!TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
+            return;
+        }
+
+        TestAppInstance instance = testApp.instance(user);
+
+        if (mInstalledTestApps.contains(instance)) {
+            mInstalledTestApps.remove(instance);
+        } else {
+            mUninstalledTestApps.add(instance);
+        }
+
+        testApp.uninstall(user);
     }
 
     private void ensureHasDeviceOwner(FailureMode failureMode, boolean isPrimary,

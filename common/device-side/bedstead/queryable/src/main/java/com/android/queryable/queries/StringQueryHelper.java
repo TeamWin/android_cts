@@ -20,7 +20,9 @@ import com.android.queryable.Queryable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** Implementation of {@link StringQuery}. */
 public final class StringQueryHelper<E extends Queryable>
@@ -30,6 +32,7 @@ public final class StringQueryHelper<E extends Queryable>
 
     private final transient E mQuery;
     private String mEqualsValue;
+    private Set<String> mNotEqualsValues = new HashSet<>();
 
     StringQueryHelper() {
         mQuery = (E) this;
@@ -41,7 +44,13 @@ public final class StringQueryHelper<E extends Queryable>
 
     @Override
     public E isEqualTo(String string) {
-        this.mEqualsValue = string;
+        mEqualsValue = string;
+        return mQuery;
+    }
+
+    @Override
+    public E isNotEqualTo(String string) {
+        mNotEqualsValues.add(string);
         return mQuery;
     }
 
@@ -50,12 +59,22 @@ public final class StringQueryHelper<E extends Queryable>
         if (mEqualsValue != null && !mEqualsValue.equals(value)) {
             return false;
         }
+        if (mNotEqualsValues.contains(value)) {
+            return false;
+        }
 
         return true;
     }
 
     public static boolean matches(StringQueryHelper<?> stringQueryHelper, String value) {
         return stringQueryHelper.matches(value);
+    }
+
+    /**
+     * True if this query has not been configured.
+     */
+    public boolean isEmpty() {
+        return mEqualsValue == null && mNotEqualsValues.isEmpty();
     }
 
     /**
@@ -70,6 +89,10 @@ public final class StringQueryHelper<E extends Queryable>
         List<String> queryStrings = new ArrayList<>();
         if (mEqualsValue != null) {
             queryStrings.add(fieldName + "=\"" + mEqualsValue + "\"");
+        }
+
+        for (String notEquals : mNotEqualsValues) {
+            queryStrings.add(fieldName + "!=\"" + notEquals + "\"");
         }
 
         return Queryable.joinQueryStrings(queryStrings);
