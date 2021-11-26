@@ -165,13 +165,13 @@
              android:persistent="true"
              android:exported="true">
             <intent-filter>
-                <action android:name="android.telephony.cts.iradioconfig.mockmodem.service"/>
-                <action android:name="android.telephony.cts.iradiomodem.mockmodem.service"/>
-                <action android:name="android.telephony.cts.iradiosim.mockmodem.service"/>
-                <action android:name="android.telephony.cts.iradionetwork.mockmodem.service"/>
-                <action android:name="android.telephony.cts.iradiodata.mockmodem.service"/>
-                <action android:name="android.telephony.cts.iradiomessaging.mockmodem.service"/>
-                <action android:name="android.telephony.cts.iradiovoice.mockmodem.service"/>
+                <action android:name="android.telephony.cts.iradioconfig"/>
+                <action android:name="android.telephony.cts.iradiomodem"/>
+                <action android:name="android.telephony.cts.iradiosim"/>
+                <action android:name="android.telephony.cts.iradionetwork"/>
+                <action android:name="android.telephony.cts.iradiodata"/>
+                <action android:name="android.telephony.cts.iradiomessaging"/>
+                <action android:name="android.telephony.cts.iradiovoice"/>
             </intent-filter>
         </service>
 
