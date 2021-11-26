@@ -133,6 +133,7 @@ def parse(manifest_content, file_name):
     android_app = AndroidApp()
     android_app.apk_name = file_name
     android_app.package_name = root.attributes["package"]
+    android_app.sharedUserId = root.attributes.get("sharedUserId", "")
 
     parse_uses_sdk(root, android_app)
     parse_permissions(root, android_app)

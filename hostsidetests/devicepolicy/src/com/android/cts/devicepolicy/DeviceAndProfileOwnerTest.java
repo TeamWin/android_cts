@@ -241,7 +241,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".AppRestrictionsDelegateTest", null);
         result.put(".CertInstallDelegateTest", null);
         result.put(".BlockUninstallDelegateTest", null);
         result.put(".PermissionGrantDelegateTest", null);

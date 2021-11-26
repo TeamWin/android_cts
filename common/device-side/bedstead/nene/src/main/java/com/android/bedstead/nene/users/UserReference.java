@@ -161,7 +161,7 @@ public class UserReference implements AutoCloseable {
             Poll.forValue("User running", this::isRunning)
                     .toBeEqualTo(false)
                     // TODO(b/203630556): Replace stopping with something faster
-                    .timeout(Duration.ofMinutes(4))
+                    .timeout(Duration.ofMinutes(10))
                     .errorOnFail()
                     .await();
         } catch (AdbException e) {
@@ -175,6 +175,11 @@ public class UserReference implements AutoCloseable {
      * Make the user the foreground user.
      */
     public UserReference switchTo() {
+        if (TestApis.users().current().equals(this)) {
+            // Already switched to
+            return this;
+        }
+
         // This is created outside of the try because we don't want to wait for the broadcast
         // on versions less than R
         BlockingBroadcastReceiver broadcastReceiver =

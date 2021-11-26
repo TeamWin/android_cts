@@ -399,7 +399,8 @@ public final class Packages {
 
             try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
                 try (PermissionContext p =
-                             TestApis.permissions().withPermission(INSTALL_PACKAGES)) {
+                             TestApis.permissions().withPermission(
+                                     INSTALL_PACKAGES, INSTALL_TEST_ONLY_PACKAGE)) {
                     session.commit(intentSender.intentSender());
                     session.close();
 

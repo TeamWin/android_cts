@@ -18,6 +18,8 @@ package com.android.bedstead.testapp;
 
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
+
 import com.android.queryable.info.ActivityInfo;
 import com.android.queryable.info.ServiceInfo;
 
@@ -32,6 +34,18 @@ class TestAppDetails {
     final Set<String> mPermissions = new HashSet<>();
     final Set<ActivityInfo> mActivities = new HashSet<>();
     final Set<ServiceInfo> mServices = new HashSet<>();
+
+    /**
+     * Get the shared user ID of the test app, or {@code Null} if none.
+     */
+    @Nullable
+    public String sharedUserId() {
+        if (mApp.getSharedUserId().isEmpty()) {
+            return null;
+        }
+
+        return mApp.getSharedUserId();
+    }
 
     @Override
     public String toString() {

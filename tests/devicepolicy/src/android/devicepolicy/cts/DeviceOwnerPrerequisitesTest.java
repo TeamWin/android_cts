@@ -48,7 +48,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public class DeviceOwnerPrerequisitesTest {
+public final class DeviceOwnerPrerequisitesTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();

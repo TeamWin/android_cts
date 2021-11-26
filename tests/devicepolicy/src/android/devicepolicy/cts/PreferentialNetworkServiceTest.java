@@ -55,7 +55,7 @@ import java.util.Set;
 
 // TODO(b/190797743): Move this test to to net test folder.
 @RunWith(BedsteadJUnit4.class)
-public class PreferentialNetworkServiceTest {
+public final class PreferentialNetworkServiceTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
