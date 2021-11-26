@@ -202,6 +202,7 @@ class AutoRevokeTest {
                     goBack()
                     goHome()
                     goBack()
+                    goBack()
 
                     startApp()
                     clickPermissionAllow()
