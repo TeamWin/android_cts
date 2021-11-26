@@ -98,7 +98,8 @@ public class BluetoothDeviceTest extends AndroidTestCase {
                 "cmd companiondevice associate %d %s %s", userId, packageName, deviceAddress));
         String output = runShellCommand("dumpsys companiondevice");
         assertTrue("Package name missing from output", output.contains(packageName));
-        assertTrue("Device address missing from output", output.contains(deviceAddress));
+        assertTrue("Device address missing from output",
+                output.toLowerCase().contains(deviceAddress.toLowerCase()));
 
         // Takes time to update the CDM cache, so sleep to ensure the association is cached
         try {
