@@ -47,6 +47,9 @@ public class NfcPreferredPaymentTest {
     private static final ComponentName CtsNfcTestService =
             new ComponentName("android.nfc.cts", "android.nfc.cts.CtsMyHostApduService");
 
+    private static final int MAX_TIMEOUT_MS = 5000;
+    private static final int TEST_DURATION_MS = 100;
+
     private NfcAdapter mAdapter;
     private CardEmulation mCardEmulation;
     private Context mContext;
@@ -66,6 +69,7 @@ public class NfcPreferredPaymentTest {
         Settings.Secure.putString(mContext.getContentResolver(),
                 Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
                 CtsNfcTestService.flattenToString());
+        waitPreferredPaymentSettingDone();
     }
 
     @After
@@ -116,4 +120,28 @@ public class NfcPreferredPaymentTest {
         }
     }
 
+    public void waitPreferredPaymentSettingDone() {
+        try {
+            for (int i = 0; i < MAX_TIMEOUT_MS / TEST_DURATION_MS; i++) {
+                CharSequence description =
+                        mCardEmulation.getDescriptionForPreferredPaymentService();
+
+                if (description != null && description.toString().equals(mDescription)) return;
+
+                msleep(TEST_DURATION_MS);
+            }
+
+            fail("Unable to set the preferred payment service");
+        } catch (Exception e) {
+            fail("Unexpected Exception " + e);
+        }
+    }
+
+    private void msleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            fail("Unexpected Exception " + e);
+        }
+    }
 }
