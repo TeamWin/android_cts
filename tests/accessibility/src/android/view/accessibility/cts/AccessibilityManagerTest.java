@@ -104,6 +104,8 @@ public class AccessibilityManagerTest {
 
     public static final String ACCESSIBILITY_INTERACTIVE_UI_TIMEOUT_MS =
             "accessibility_interactive_ui_timeout_ms";
+    private static final String ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT =
+            "enabled_accessibility_audio_description_by_default";
 
     private AccessibilityManager mAccessibilityManager;
 
@@ -436,6 +438,35 @@ public class AccessibilityManagerTest {
         assertFalse("Listener told that accessibility is disabled, but manager says enabled",
                 mAccessibilityManager.isEnabled());
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
+    }
+
+    @Test
+    public void testIsAudioDescriptionEnabled() throws Exception {
+        final UiAutomation automan = sInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+
+        try {
+            putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "1");
+            PollingCheck.waitFor(new PollingCheck.PollingCheckCondition() {
+                @Override
+                public boolean canProceed() {
+                    return mAccessibilityManager.isAudioDescriptionRequested();
+                }
+            });
+            assertTrue(mAccessibilityManager.isAudioDescriptionRequested());
+
+            putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "0");
+            PollingCheck.waitFor(new PollingCheck.PollingCheckCondition() {
+                @Override
+                public boolean canProceed() {
+                    return !mAccessibilityManager.isAudioDescriptionRequested();
+                }
+            });
+            assertFalse(mAccessibilityManager.isAudioDescriptionRequested());
+        } finally {
+            putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "0");
+            automan.destroy();
+        }
     }
 
     @Test

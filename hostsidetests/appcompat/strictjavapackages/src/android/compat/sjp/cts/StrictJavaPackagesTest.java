@@ -26,7 +26,7 @@ import static org.junit.Assume.assumeTrue;
 import android.compat.testing.Classpaths;
 import android.compat.testing.SharedLibraryInfo;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -59,6 +59,8 @@ import java.util.stream.Stream;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
 
+    private static final String ANDROID_TEST_MOCK_JAR = "/system/framework/android.test.mock.jar";
+
     private static Object sLock = new Object();
     private static volatile boolean sFetchedClasses;
     private static ImmutableList<String> sBootclasspathJars;
@@ -66,6 +68,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     private static ImmutableList<String> sSharedLibJars;
     private static ImmutableList<SharedLibraryInfo> sSharedLibs;
     private static ImmutableSetMultimap<String, String> sJarsToClasses;
+
+    private DeviceSdkLevel mDeviceSdkLevel;
 
     /**
      * This is the list of classes that are currently duplicated and should be addressed.
@@ -358,12 +362,18 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             sFetchedClasses = true;
         }
     }
+
+    @Before
+    public void setup() {
+        mDeviceSdkLevel = new DeviceSdkLevel(getDevice());
+    }
+
     /**
      * Ensure that there are no duplicate classes among jars listed in BOOTCLASSPATH.
      */
     @Test
     public void testBootclasspath_nonDuplicateClasses() throws Exception {
-        assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
         assertThat(getDuplicateClasses(sBootclasspathJars)).isEmpty();
     }
 
@@ -372,7 +382,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testSystemServerClasspath_nonDuplicateClasses() throws Exception {
-        assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
         ImmutableSet<String> overlapBurndownList;
         if (hasFeature(FEATURE_AUTOMOTIVE)) {
             overlapBurndownList = ImmutableSet.copyOf(AUTOMOTIVE_HIDL_OVERLAP_BURNDOWN_LIST);
@@ -394,7 +404,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testBootClasspathAndSystemServerClasspath_nonDuplicateClasses() throws Exception {
-        assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastR());
         ImmutableList.Builder<String> jars = ImmutableList.builder();
         jars.addAll(sBootclasspathJars);
         jars.addAll(sSystemserverclasspathJars);
@@ -465,15 +475,33 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testBootClasspathAndSharedLibs_nonDuplicateClasses() throws Exception {
-        assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastS());
         final ImmutableList.Builder<String> jars = ImmutableList.builder();
         jars.addAll(sBootclasspathJars);
         jars.addAll(sSharedLibJars);
         final Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
         final Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
-            duplicate -> !BCP_AND_SHARED_LIB_BURNDOWN_LIST.contains(duplicate)
-                         && !isSameLibrary(duplicates.get(duplicate))
-        );
+            dupeClass -> {
+                try {
+                    final Collection<String> dupeJars = duplicates.get(dupeClass);
+                    // Duplicate is already known.
+                    if (BCP_AND_SHARED_LIB_BURNDOWN_LIST.contains(dupeClass)) {
+                        return false;
+                    }
+                    // Duplicate is only between different versions of the same shared library.
+                    if (isSameLibrary(dupeJars)) {
+                        return false;
+                    }
+                    // Pre-T, the Android test mock library included some platform classes.
+                    if (!mDeviceSdkLevel.isDeviceAtLeastT()
+                            && dupeJars.contains(ANDROID_TEST_MOCK_JAR)) {
+                        return false;
+                    }
+                } catch (DeviceNotAvailableException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            });
         assertThat(filtered).isEmpty();
     }
 

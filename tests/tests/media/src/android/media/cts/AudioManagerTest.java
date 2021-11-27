@@ -16,8 +16,6 @@
 
 package android.media.cts;
 
-import static org.junit.Assert.assertNotEquals;
-
 import static android.media.AudioManager.ADJUST_LOWER;
 import static android.media.AudioManager.ADJUST_RAISE;
 import static android.media.AudioManager.ADJUST_SAME;
@@ -42,7 +40,10 @@ import static android.media.AudioManager.VIBRATE_SETTING_ON;
 import static android.media.AudioManager.VIBRATE_SETTING_ONLY_SILENT;
 import static android.media.AudioManager.VIBRATE_TYPE_NOTIFICATION;
 import static android.media.AudioManager.VIBRATE_TYPE_RINGER;
+import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
+
+import static org.junit.Assert.assertNotEquals;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -54,12 +55,12 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.media.AudioAttributes;
+import android.media.AudioDescriptor;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioProfile;
-import android.media.AudioDescriptor;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
@@ -670,6 +671,33 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
             mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
             assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+        }
+    }
+
+    public void testAccessRampingRinger() {
+        boolean originalEnabledState = mAudioManager.isRampingRingerEnabled();
+        try {
+            mAudioManager.setRampingRingerEnabled(false);
+            assertFalse(mAudioManager.isRampingRingerEnabled());
+
+            mAudioManager.setRampingRingerEnabled(true);
+            assertTrue(mAudioManager.isRampingRingerEnabled());
+        } finally {
+            mAudioManager.setRampingRingerEnabled(originalEnabledState);
+        }
+    }
+
+    public void testRampingRingerSetting() {
+        boolean originalEnabledState = mAudioManager.isRampingRingerEnabled();
+        try {
+            // Deprecated public setting should still be supported and affect the setting getter.
+            Settings.Global.putInt(mContext.getContentResolver(), APPLY_RAMPING_RINGER, 0);
+            assertFalse(mAudioManager.isRampingRingerEnabled());
+
+            Settings.Global.putInt(mContext.getContentResolver(), APPLY_RAMPING_RINGER, 1);
+            assertTrue(mAudioManager.isRampingRingerEnabled());
+        } finally {
+            mAudioManager.setRampingRingerEnabled(originalEnabledState);
         }
     }
 
