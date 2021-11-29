@@ -223,9 +223,12 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
 
-        new WebView(getActivity());
-        new WebView(getActivity(), null);
-        new WebView(getActivity(), null, 0);
+        WebView webView = new WebView(getActivity());
+        webView.destroy();
+        webView = new WebView(getActivity(), null);
+        webView.destroy();
+        webView = new WebView(getActivity(), null, 0);
+        webView.destroy();
     }
 
     @UiThreadTest
@@ -237,12 +240,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         Context deviceEncryptedContext = getActivity().createDeviceProtectedStorageContext();
         try {
             new WebView(deviceEncryptedContext);
-        } catch (IllegalArgumentException e) {
-            return;
-        }
-
-        fail("WebView should have thrown exception when creating with a device " +
+            fail("WebView should have thrown exception when creating with a device " +
                 "protected storage context");
+        } catch (IllegalArgumentException e) {}
     }
 
     @UiThreadTest
@@ -256,16 +256,14 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         Context deviceEncryptedContext = getActivity().createDeviceProtectedStorageContext();
 
         // No exception should be thrown with credential encryption context.
-        new WebView(credentialEncryptedContext);
+        WebView webView = new WebView(credentialEncryptedContext);
+        webView.destroy();
 
         try {
             new WebView(deviceEncryptedContext);
-        } catch (IllegalArgumentException e) {
-            return;
-        }
-
-        fail("WebView should have thrown exception when creating with a device " +
+            fail("WebView should have thrown exception when creating with a device " +
                 "protected storage context");
+        } catch (IllegalArgumentException e) {}
     }
 
     @UiThreadTest
@@ -273,8 +271,9 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        new WebView(getActivity());
+        WebView webView = new WebView(getActivity());
         assertNotNull(CookieSyncManager.getInstance());
+        webView.destroy();
     }
 
     // Static methods should be safe to call on non-UI threads
@@ -2065,6 +2064,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals(url1, copyListAfterRestore.getItemAtIndex(0).getUrl());
         assertEquals(url2, copyListAfterRestore.getItemAtIndex(1).getUrl());
         assertEquals(url3, copyListAfterRestore.getItemAtIndex(2).getUrl());
+
+        newWebView.destroy();
     }
 
     public void testRequestChildRectangleOnScreen() throws Throwable {
@@ -2525,6 +2526,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertNotSame(client, client2);
         webView.setWebViewClient(client2);
         assertSame(client2, webView.getWebViewClient());
+        webView.destroy();
     }
 
     /**
@@ -2548,6 +2550,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertNotSame(client, client2);
         webView.setWebChromeClient(client2);
         assertSame(client2, webView.getWebChromeClient());
+        webView.destroy();
     }
 
     @UiThreadTest
@@ -2580,6 +2583,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         WebView webView = new WebView(getActivity());
         webView.setTextClassifier(classifier);
         assertSame(webView.getTextClassifier(), classifier);
+        webView.destroy();
     }
 
     private static class MockContext extends ContextWrapper {
