@@ -63,7 +63,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public class PermissionGrantTest {
+public final class PermissionGrantTest {
 
     @ClassRule
     @Rule
@@ -585,7 +585,7 @@ public class PermissionGrantTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeDeviceAdminStates = false)
     public void grantSmsPermission_nonDeviceAdmin_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(

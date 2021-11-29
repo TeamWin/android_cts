@@ -49,7 +49,7 @@ import org.junit.runner.RunWith;
 
 // TODO(b/189280629): Move this test to to net test folder to live with other network reset tests.
 @RunWith(BedsteadJUnit4.class)
-public class NetworkResetTest {
+public final class NetworkResetTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 

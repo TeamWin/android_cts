@@ -22,6 +22,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.UserHandle;
 
+import androidx.annotation.Nullable;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
@@ -34,11 +36,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.Set;
 
 /** Represents a single test app which can be installed and interacted with. */
 @TestAppSender
-public class TestApp {
+public final class TestApp {
     // Must be instrumentation context to access resources
     private static final Context sContext = TestApis.context().instrumentationContext();
     private final TestAppDetails mDetails;
@@ -207,5 +210,24 @@ public class TestApp {
                 + "packageName=" + packageName()
                 + ", details=" + mDetails
                 + "}";
+    }
+
+    /** The shared user id of the test app, if any. */
+    @Nullable
+    public String sharedUserId() {
+        return mDetails.sharedUserId();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TestApp)) return false;
+        TestApp testApp = (TestApp) o;
+        return mDetails.mApp.getPackageName().equals(testApp.mDetails.mApp.getPackageName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mDetails.mApp.getPackageName());
     }
 }

@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -230,5 +231,32 @@ public class TestAppProviderTest {
                 .get();
 
         assertThat(testApp.activities()).isEmpty();
+    }
+
+    @Test
+    public void query_doesNotSpecifySharedUserId_sharedUserIdIsNull() {
+        TestApp testApp = mTestAppProvider.query()
+                .get();
+
+        assertThat(testApp.sharedUserId()).isNull();
+    }
+
+    @Test
+    @Ignore("re-enable when we have a test app which has a shareuserid")
+    public void query_doesSpecifySharedUserId_matches() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereSharedUserId().isEqualTo("com.android.bedstead")
+                .get();
+
+        assertThat(testApp.sharedUserId()).isEqualTo("com.android.bedstead");
+    }
+
+    @Test
+    public void query_specifiesNullSharedUserId_matches() {
+        TestApp testApp = mTestAppProvider.query()
+                .whereSharedUserId().isNull()
+                .get();
+
+        assertThat(testApp.sharedUserId()).isNull();
     }
 }

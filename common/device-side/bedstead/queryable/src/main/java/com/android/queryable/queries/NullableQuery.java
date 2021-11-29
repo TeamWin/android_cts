@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.android.queryable.queries;
 
 /**
- * Annotation to indicate that a test can take a long time to run.
+ * A {@link Query} for a nullable type.
+ *
+ *
+ * @param <E> Type of query
+ * @param <F> Type of object being queried
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SlowApiTest {
-    String value();
+public interface NullableQuery<E, F> extends Query<F> {
+    /** Require the {@link F} is equal to {@code string}. */
+    E isEqualTo(F value);
+
+    /** Require the {@link F} is not equal to {@code string}. */
+    E isNotEqualTo(F value);
+
+    /** Require the {@link F} is null. */
+    default E isNull() {
+        return isEqualTo(null);
+    }
+
+    /** Require the {@link F} is not null. */
+    default E isNotNull() {
+        return isNotEqualTo(null);
+    }
 }

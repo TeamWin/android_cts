@@ -58,6 +58,7 @@ import com.google.android.enterprise.connectedapps.exceptions.UnavailableProfile
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -381,5 +382,18 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
                 + ", registeredBroadcastReceivers=" + mRegisteredBroadcastReceivers
                 + ", keepAliveManually=" + mKeepAliveManually
                 + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TestAppInstance)) return false;
+        TestAppInstance that = (TestAppInstance) o;
+        return mTestApp.equals(that.mTestApp) && mUser.equals(that.mUser);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mTestApp, mUser);
     }
 }

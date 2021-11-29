@@ -24,8 +24,6 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_NETWORK_LOGGING;
 import static android.app.admin.DevicePolicyManager.DELEGATION_SECURITY_LOGGING;
 import static android.app.admin.DevicePolicyManager.EXTRA_DELEGATION_SCOPES;
 
-import static com.android.queryable.queries.StringQuery.string;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -39,6 +37,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.Delegation;
 import com.android.bedstead.harrier.policies.NetworkLoggingDelegation;
@@ -68,7 +67,8 @@ import java.util.List;
 @Postsubmit(reason = "new test")
 // TODO(b/198584060): clean up the TestApp install API surface and remove the
 //  requirement to manually uninstall or use the 'try' block.
-public class DelegationScopesTest {
+@EnsureHasNoDelegate
+public final class DelegationScopesTest {
 
     private static final String TEST_SCOPE = DELEGATION_CERT_INSTALL;
     private static final String TEST_SCOPE_2 = DELEGATION_APP_RESTRICTIONS;
@@ -79,14 +79,15 @@ public class DelegationScopesTest {
     private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
 
-    private static final TestApp sTestAppProvider =
-            new TestAppProvider().query().whereActivities().isNotEmpty().get();
-    private static final TestApp sTestAppProvider2 = new TestAppProvider().any();
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sTestApp = sTestAppProvider
+            .query().whereActivities().isNotEmpty().get();
+    private static final TestApp sTestApp2 = sTestAppProvider.any();
 
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void getDelegatedScopes_returnsFromSetDelegatedScopes() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
@@ -104,9 +105,9 @@ public class DelegationScopesTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = Delegation.class)
+    @CannotSetPolicyTest(policy = Delegation.class, includeNonDeviceAdminStates = false)
     public void setDelegatedScopes_invalidAdmin_throwsSecurityException() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             assertThrows(SecurityException.class, () ->
                     sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                             sDeviceState.dpc().componentName(),
@@ -118,7 +119,7 @@ public class DelegationScopesTest {
     @Test
     @CannotSetPolicyTest(policy = Delegation.class)
     public void getDelegatedScopes_invalidAdmin_throwsSecurityException() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             assertThrows(SecurityException.class, () ->
                     sDeviceState.dpc().devicePolicyManager().getDelegatedScopes(
                             sDeviceState.dpc().componentName(), testApp.testApp().packageName()));
@@ -128,7 +129,7 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void getDelegatedScopes_returnsLatestFromSetDelegatedScopes() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -171,7 +172,7 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void getDelegatePackages_oneApp_twoScopes_returnsFromSetDelegatedScopes() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -193,9 +194,9 @@ public class DelegationScopesTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = Delegation.class)
+    @CannotSetPolicyTest(policy = Delegation.class, includeNonDeviceAdminStates = false)
     public void getDelegatePackages_invalidAdmin_throwsSecurityException() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             assertThrows(SecurityException.class, () ->
                     sDeviceState.dpc().devicePolicyManager().getDelegatePackages(
                             sDeviceState.dpc().componentName(), testApp.testApp().packageName()));
@@ -205,8 +206,8 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void getDelegatePackages_twoApps_differentScopes_returnsFromSetDelegatedScopes() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser);
-                TestAppInstance testApp2 = sTestAppProvider2.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser);
+             TestAppInstance testApp2 = sTestApp2.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -235,8 +236,8 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void getDelegatePackages_twoApps_sameScope_returnsFromSetDelegatedScopes() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser);
-             TestAppInstance testApp2 = sTestAppProvider2.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser);
+             TestAppInstance testApp2 = sTestApp2.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -264,7 +265,7 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = NetworkLoggingDelegation.class)
     public void setDelegatedScopes_networkLogging_validAdminType_noException() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
@@ -277,9 +278,10 @@ public class DelegationScopesTest {
     }
 
     @Test
-    @CannotSetPolicyTest(policy = NetworkLoggingDelegation.class)
+    @CannotSetPolicyTest(
+            policy = NetworkLoggingDelegation.class, includeNonDeviceAdminStates = false)
     public void setDelegatedScopes_networkLogging_invalidAdminType_throwsSecurityException() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
                 assertThrows(SecurityException.class, () ->
                         sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -297,7 +299,7 @@ public class DelegationScopesTest {
     // TODO(b/198774281): add a negative policy test (in line with all the others here) once we can
     //  correctly mark security logging delegation as possible for COPE profile POs.
     public void setDelegatedScopes_securityLogging_validAdminType_noException() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
@@ -312,8 +314,8 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void setDelegatedScopes_certSelection_settingSecondApp_revokesFirstApp() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser);
-             TestAppInstance testApp2 = sTestAppProvider2.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser);
+             TestAppInstance testApp2 = sTestApp2.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -346,8 +348,8 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = NetworkLoggingDelegation.class)
     public void setDelegatedScopes_networkLogging_settingSecondApp_revokesFirstApp() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser);
-             TestAppInstance testApp2 = sTestAppProvider2.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser);
+             TestAppInstance testApp2 = sTestApp2.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -380,8 +382,8 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = SecurityLoggingDelegation.class)
     public void setDelegatedScopes_securityLogging_settingSecondApp_revokesFirstApp() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser);
-             TestAppInstance testApp2 = sTestAppProvider2.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser);
+             TestAppInstance testApp2 = sTestApp2.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
@@ -414,7 +416,7 @@ public class DelegationScopesTest {
     @Test
     @PositivePolicyTest(policy = Delegation.class)
     public void setDelegatedScopes_delegatedPackageReceivesScopesFromBroadcast() {
-        try (TestAppInstance testApp = sTestAppProvider.install(sUser)) {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
             // TODO(b/198769413): we should not need to start (or query for) an activity, but the
             //  event is not received for some reason without it.
             testApp.activities().any().start();

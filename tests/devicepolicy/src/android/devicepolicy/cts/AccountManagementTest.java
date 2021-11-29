@@ -57,7 +57,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 
 @RunWith(BedsteadJUnit4.class)
-public class AccountManagementTest {
+public final class AccountManagementTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();

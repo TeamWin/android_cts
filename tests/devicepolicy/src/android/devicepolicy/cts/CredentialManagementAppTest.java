@@ -23,9 +23,7 @@ import static com.android.bedstead.nene.appops.AppOps.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOps.AppOpsMode.DEFAULT;
 
 import static com.google.common.truth.Truth.assertThat;
-
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
@@ -42,7 +40,6 @@ import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.BlockingCallback;
@@ -70,13 +67,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(BedsteadJUnit4.class)
-public class CredentialManagementAppTest {
+public final class CredentialManagementAppTest {
 
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final int KEYCHAIN_CALLBACK_TIMEOUT_SECONDS = 600;
+    private static final int KEYCHAIN_CALLBACK_TIMEOUT_SECONDS = 300;
     private static final PrivateKey PRIVATE_KEY =
             getPrivateKey(FakeKeys.FAKE_RSA_1.privateKey, "RSA");
     private static final Certificate CERTIFICATE =
@@ -280,8 +277,6 @@ public class CredentialManagementAppTest {
 
     @Test
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
-    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
-            + "takes a long time to callback")
     public void choosePrivateKeyAlias_isCredentialManagementApp_aliasSelected() throws Exception {
         setCredentialManagementApp();
 
@@ -310,14 +305,14 @@ public class CredentialManagementAppTest {
             throws Exception {
         removeCredentialManagementApp();
 
-        assertFalse(KeyChain.isCredentialManagementApp(sContext));
+        assertThat(KeyChain.isCredentialManagementApp(sContext)).isFalse();
     }
 
     @Test
     public void isCredentialManagementApp_isCredentialManagementApp_returnTrue() throws Exception {
         setCredentialManagementApp();
         try {
-            assertTrue(KeyChain.isCredentialManagementApp(sContext));
+            assertThat(KeyChain.isCredentialManagementApp(sContext)).isTrue();
         } finally {
             removeCredentialManagementApp();
         }
@@ -349,9 +344,10 @@ public class CredentialManagementAppTest {
         setCredentialManagementApp();
 
         try {
-            assertTrue(KeyChain.removeCredentialManagementApp(sContext));
+            boolean wasRemoved = KeyChain.removeCredentialManagementApp(sContext);
 
-            assertFalse(KeyChain.isCredentialManagementApp(sContext));
+            assertThat(wasRemoved).isTrue();
+            assertThat(KeyChain.isCredentialManagementApp(sContext)).isFalse();
         } catch (Exception e) {
             removeCredentialManagementApp();
         }
@@ -361,12 +357,13 @@ public class CredentialManagementAppTest {
     private void setCredentialManagementApp() {
         try (PermissionContext p = TestApis.permissions().withPermission(
                 MANAGE_CREDENTIAL_MANAGEMENT_APP)) {
+            boolean wasSet = KeyChain.setCredentialManagementApp(
+                    sContext, sContext.getPackageName(), AUTHENTICATION_POLICY);
 
-            assertTrue("Unable to set credential management app",
-                    KeyChain.setCredentialManagementApp(sContext, sContext.getPackageName(),
-                            AUTHENTICATION_POLICY));
+            assertWithMessage("Unable to set credential management app").that(wasSet).isTrue();
         }
 
+        assertThat(KeyChain.isCredentialManagementApp(sContext)).isTrue();
         assertThat(TestApis.packages().instrumented().appOps().get(MANAGE_CREDENTIALS))
                 .isEqualTo(ALLOWED);
     }
@@ -375,8 +372,9 @@ public class CredentialManagementAppTest {
     private void removeCredentialManagementApp() {
         try (PermissionContext p = TestApis.permissions().withPermission(
                 MANAGE_CREDENTIAL_MANAGEMENT_APP)) {
-            assertTrue("Unable to remove credential management app",
-                    KeyChain.removeCredentialManagementApp(sContext));
+            boolean wasRemoved = KeyChain.removeCredentialManagementApp(sContext);
+            assertWithMessage("Unable to remove credential management app")
+                    .that(wasRemoved).isTrue();
         }
     }
 

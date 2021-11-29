@@ -15,6 +15,7 @@ message AndroidApp {
   repeated Service services = 6;
   bool test_only = 7;
   repeated Metadata metadata = 8;
+  string sharedUserId = 9;
 }
 
 message UsesSdk {
