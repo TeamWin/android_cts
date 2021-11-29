@@ -58,7 +58,7 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
-public class CrossProfileSharingTest {
+public final class CrossProfileSharingTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();

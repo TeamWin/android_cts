@@ -353,6 +353,16 @@ public final class Permissions {
         applyPermissions();
     }
 
+    /**
+     * Returns all of the permissions which are currently able to be used.
+     */
+    public Set<String> usablePermissions() {
+        Set<String> usablePermissions = new HashSet<>();
+        usablePermissions.addAll(mShellPermissions);
+        usablePermissions.addAll(mInstrumentedRequestedPermissions);
+        return usablePermissions;
+    }
+
     private void removePermissionContextsUntilCanApply() {
         try {
             mPermissionContexts.remove(mPermissionContexts.size() - 1);

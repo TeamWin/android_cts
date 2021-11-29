@@ -41,7 +41,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
 @Postsubmit(reason = "New tests")
-public class RingtoneTest {
+public final class RingtoneTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();

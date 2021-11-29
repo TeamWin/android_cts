@@ -57,7 +57,7 @@ import javax.net.ssl.X509TrustManager;
 // the <application> element in the manifest.
 // TODO(b/205261115): Use a testapp and query for it rather than relying on the Manifest content
 @RunWith(BedsteadJUnit4.class)
-public class CaCertManagementTest {
+public final class CaCertManagementTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();

@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(BedsteadJUnit4.class)
-public class CameraPolicyTest {
+public final class CameraPolicyTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
