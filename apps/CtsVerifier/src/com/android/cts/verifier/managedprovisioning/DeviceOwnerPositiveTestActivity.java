@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
+import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
@@ -49,6 +50,7 @@ import com.android.cts.verifier.features.FeatureUtil;
  * adb shell dpm set-device-owner
  *  'com.android.cts.verifier/com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver'
  */
+@CddTest(requirement="7.7")
 public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListActivity {
     private static final String TAG = "DeviceOwnerPositiveTestActivity";
 
