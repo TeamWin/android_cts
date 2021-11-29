@@ -249,6 +249,18 @@ public class BasicAdapterTest extends AndroidTestCase {
         socket.close();
     }
 
+    public void test_discoverableTimeout() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        assertTrue(BTAdapterUtils.disableAdapter(adapter, mContext));
+        assertEquals(null, adapter.getDiscoverableTimeout());
+        assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
+        assertEquals(120, adapter.getDiscoverableTimeout().toSeconds());
+    }
+
     private static void sleep(long t) {
         try {
             Thread.sleep(t);
