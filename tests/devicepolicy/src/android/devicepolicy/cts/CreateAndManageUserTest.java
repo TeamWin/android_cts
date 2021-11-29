@@ -43,7 +43,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public class CreateAndManageUserTest {
+public final class CreateAndManageUserTest {
 
     private static final String TAG = "CreateAndManageUserTest";
 

@@ -59,7 +59,7 @@ import java.util.Collections;
 import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
-public class UserControlDisabledPackagesTest {
+public final class UserControlDisabledPackagesTest {
     private static final String TAG = "UserControlDisabledPackagesTest";
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
