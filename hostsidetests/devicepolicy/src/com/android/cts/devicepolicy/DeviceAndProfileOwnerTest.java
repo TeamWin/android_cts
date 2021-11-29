@@ -1690,11 +1690,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
     @Test
-    public void testGetNearbyNotificationStreamingPolicy_getsNearbyStreamingDisabledAsDefault()
+    public void testGetNearbyNotificationStreamingPolicy_defaultToSameManagedAccountOnly()
             throws Exception {
         executeDeviceTestMethod(
                 ".NearbyNotificationStreamingPolicyTest",
-                "testGetNearbyNotificationStreamingPolicy_getsNearbyStreamingDisabledAsDefault");
+                "testGetNearbyNotificationStreamingPolicy_defaultToSameManagedAccountOnly");
     }
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
