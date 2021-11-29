@@ -23,6 +23,8 @@ import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.MacAddress
+import android.os.SystemClock.sleep
+import android.os.SystemClock.uptimeMillis
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
 import org.junit.Assume.assumeTrue
@@ -41,10 +43,11 @@ abstract class TestBase {
 
     protected val context: Context = instrumentation.context
     private val userId = context.userId
+    private val targetPackageName = instrumentation.targetContext.packageName
 
-    protected val targetApp =
-            AppHelper(userId, instrumentation.targetContext.packageName, instrumentation)
-    protected val testApp = AppHelper(userId, TEST_APP_PACKAGE_NAME, instrumentation)
+    protected val targetApp = AppHelper(instrumentation, userId, targetPackageName)
+    protected val testApp = AppHelper(
+            instrumentation, userId, TEST_APP_PACKAGE_NAME, TEST_APP_APK_PATH)
 
     protected val pm: PackageManager by lazy { context.packageManager!! }
     private val hasCompanionDeviceSetupFeature by lazy {
@@ -64,6 +67,12 @@ abstract class TestBase {
             cdm.disassociateAll()
             cdm.allAssociations
         })
+
+        // Make sure test app is installed.
+        with(testApp) {
+            if (!isInstalled()) install()
+            assertTrue("Test app $packageName is not installed") { isInstalled() }
+        }
 
         setUp()
     }
@@ -112,6 +121,7 @@ abstract class TestBase {
 
 const val TAG = "CtsCompanionDevicesTestCases"
 private const val TEST_APP_PACKAGE_NAME = "android.os.cts.companiontestapp"
+private const val TEST_APP_APK_PATH = "/data/local/tmp/cts/companion/CtsCompanionTestApp.apk"
 
 fun <T> assumeThat(message: String, obj: T, assumption: (T) -> Boolean) {
     if (!assumption(obj)) throw AssumptionViolatedException(message)
@@ -122,4 +132,21 @@ fun <T> assertEmpty(list: Collection<T>) = assertTrue("Collection is not empty")
 fun assertAssociations(
     actual: List<AssociationInfo>,
     expected: Set<Pair<String, MacAddress?>>
-) = assertEquals(actual.map { it.packageName to it.deviceMacAddress }.toSet(), expected)
+) = assertEquals(actual = actual.map { it.packageName to it.deviceMacAddress }.toSet(),
+        expected = expected)
+
+fun waitFor(
+    message: String,
+    timeout: Long = 10_000,
+    interval: Long = 1_000,
+    condition: () -> Boolean
+) {
+    val startTime = uptimeMillis()
+    while (!condition()) {
+        if (uptimeMillis() - startTime > timeout) {
+            throw RuntimeException("Condition is not satisfied: $message")
+        }
+
+        sleep(interval)
+    }
+}
