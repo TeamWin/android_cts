@@ -799,20 +799,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
 
     @LargeTest
     @AppModeFull
-    public void testInstallStaticSharedLib_notKillDependentApp_fullMode()
-            throws Exception {
-        doTestInstallStaticSharedLib_notKillDependentApp();
-    }
-
-    @LargeTest
-    @AppModeInstant
-    public void testInstallStaticSharedLib_notKillDependentApp_instantMode()
-            throws Exception {
-        mInstantMode = true;
-        doTestInstallStaticSharedLib_notKillDependentApp();
-    }
-
-    public void doTestInstallStaticSharedLib_notKillDependentApp() throws Exception {
+    public void testInstallStaticSharedLib_notKillDependentApp() throws Exception {
         getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
         getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
         getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
@@ -836,19 +823,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     }
 
     @AppModeFull
-    public void testSamegradeStaticSharedLib_killDependentApp_fullMode()
-            throws Exception {
-        doTestSamegradeStaticSharedLib_killDependentApp();
-    }
-
-    @AppModeInstant
-    public void testSamegradeStaticSharedLib_killDependentApp_instantMode()
-            throws Exception {
-        mInstantMode = true;
-        doTestSamegradeStaticSharedLib_killDependentApp();
-    }
-
-    public void doTestSamegradeStaticSharedLib_killDependentApp() throws Exception {
+    public void testSamegradeStaticSharedLib_killDependentApp() throws Exception {
         getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
         getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
         getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
