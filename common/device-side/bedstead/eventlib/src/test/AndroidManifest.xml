@@ -52,6 +52,8 @@
             </intent-filter>
         </receiver>
 
+        <service android:name="com.android.generatedEventLibService"/>
+
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="com.android.eventlib.test"
