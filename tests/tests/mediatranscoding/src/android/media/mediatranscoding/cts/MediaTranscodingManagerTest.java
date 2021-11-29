@@ -91,6 +91,8 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     private static final int BIT_RATE = 4000000;            // 4Mbps
     private static final int WIDTH = 720;
     private static final int HEIGHT = 480;
+    private static final int FRAME_RATE = 30;
+    private static final int INT_NOT_SET = Integer.MIN_VALUE;
 
     // Threshold for the psnr to make sure the transcoded video is valid.
     private static final int PSNR_THRESHOLD = 20;
@@ -128,9 +130,33 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     /**
      * Creates a MediaFormat with the default settings.
      */
-    private static MediaFormat createMediaFormat() {
-        MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, WIDTH, HEIGHT);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+    private static MediaFormat createDefaultMediaFormat() {
+        return createMediaFormat(MIME_TYPE, WIDTH, HEIGHT, INT_NOT_SET /* frameRate */,
+                BIT_RATE /* bitrate */);
+    }
+
+    /**
+     * Creates a MediaFormat with custom settings.
+     */
+    private static MediaFormat createMediaFormat(String mime, int width, int height, int frameRate,
+            int bitrate) {
+        MediaFormat format = new MediaFormat();
+        // Set mime if it not null.
+        if (mime != null) {
+            format.setString(MediaFormat.KEY_MIME, mime);
+        }
+        if (width != INT_NOT_SET) {
+            format.setInteger(MediaFormat.KEY_WIDTH, width);
+        }
+        if (height != INT_NOT_SET) {
+            format.setInteger(MediaFormat.KEY_HEIGHT, height);
+        }
+        if (frameRate != INT_NOT_SET) {
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
+        }
+        if (bitrate != INT_NOT_SET) {
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        }
         return format;
     }
 
@@ -185,7 +211,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertThrows(IllegalArgumentException.class, () -> {
             VideoTranscodingRequest request =
                     new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, null,
-                            createMediaFormat())
+                            createDefaultMediaFormat())
                             .build();
         });
     }
@@ -200,7 +226,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertThrows(IllegalArgumentException.class, () -> {
             VideoTranscodingRequest request =
                     new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, mDestinationUri,
-                            createMediaFormat())
+                            createDefaultMediaFormat())
                             .setClientPid(-1)
                             .build();
         });
@@ -216,7 +242,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertThrows(IllegalArgumentException.class, () -> {
             VideoTranscodingRequest request =
                     new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, mDestinationUri,
-                            createMediaFormat())
+                            createDefaultMediaFormat())
                             .setClientUid(-1)
                             .build();
         });
@@ -231,7 +257,8 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         }
         assertThrows(IllegalArgumentException.class, () -> {
             VideoTranscodingRequest request =
-                    new VideoTranscodingRequest.Builder(null, mDestinationUri, createMediaFormat())
+                    new VideoTranscodingRequest.Builder(null, mDestinationUri,
+                            createDefaultMediaFormat())
                             .build();
         });
     }
@@ -245,7 +272,8 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         }
         assertThrows(IllegalArgumentException.class, () -> {
             VideoTranscodingRequest request =
-                    new VideoTranscodingRequest.Builder(null, mDestinationUri, createMediaFormat())
+                    new VideoTranscodingRequest.Builder(null, mDestinationUri,
+                            createDefaultMediaFormat())
                             .build();
         });
     }
@@ -260,7 +288,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertThrows(IllegalArgumentException.class, () -> {
             VideoTranscodingRequest request =
                     new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, null,
-                            createMediaFormat())
+                            createDefaultMediaFormat())
                             .build();
         });
     }
@@ -288,7 +316,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         Semaphore transcodeCompleteSemaphore = new Semaphore(0);
 
         VideoTranscodingRequest request =
-                new VideoTranscodingRequest.Builder(srcUri, dstUri, createMediaFormat())
+                new VideoTranscodingRequest.Builder(srcUri, dstUri, createDefaultMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
@@ -558,6 +586,135 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                 stats.mAveragePSNR >= PSNR_THRESHOLD);
     }
 
+    private void testVideoFormatResolverShouldTranscode(String mime, int width, int height,
+            int frameRate) {
+        ApplicationMediaCapabilities clientCaps =
+                new ApplicationMediaCapabilities.Builder().build();
+
+        MediaFormat mediaFormat = createMediaFormat(mime, width, height, frameRate, BIT_RATE);
+
+        TranscodingRequest.VideoFormatResolver
+                resolver = new TranscodingRequest.VideoFormatResolver(clientCaps,
+                mediaFormat);
+        assertTrue(resolver.shouldTranscode());
+        MediaFormat videoTrackFormat = resolver.resolveVideoFormat();
+        assertNotNull(videoTrackFormat);
+    }
+
+    public void testVideoFormatResolverValidArgs() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverShouldTranscode(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH, HEIGHT,
+                FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverAv1Mime() {
+        if (shouldSkip()) {
+            return;
+        }
+        ApplicationMediaCapabilities clientCaps =
+                new ApplicationMediaCapabilities.Builder().build();
+
+        MediaFormat mediaFormat = createMediaFormat(MediaFormat.MIMETYPE_VIDEO_AV1, WIDTH, HEIGHT,
+                FRAME_RATE, BIT_RATE);
+
+        TranscodingRequest.VideoFormatResolver
+                resolver = new TranscodingRequest.VideoFormatResolver(clientCaps,
+                mediaFormat);
+        assertFalse(resolver.shouldTranscode());
+        MediaFormat videoTrackFormat = resolver.resolveVideoFormat();
+        assertNull(videoTrackFormat);
+    }
+
+    private void testVideoFormatResolverInvalidArgs(String mime, int width, int height,
+            int frameRate) {
+        ApplicationMediaCapabilities clientCaps =
+                new ApplicationMediaCapabilities.Builder().build();
+
+        MediaFormat mediaFormat = createMediaFormat(mime, width, height, frameRate, BIT_RATE);
+
+        TranscodingRequest.VideoFormatResolver
+                resolver = new TranscodingRequest.VideoFormatResolver(clientCaps,
+                mediaFormat);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            MediaFormat videoTrackFormat = resolver.resolveVideoFormat();
+        });
+    }
+
+    public void testVideoFormatResolverZeroWidth() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, 0 /* width */,
+                HEIGHT, FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverZeroHeight() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH,
+                0 /* height */, FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverZeroFrameRate() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH,
+                HEIGHT, 0 /* frameRate */);
+    }
+
+    public void testVideoFormatResolverNegativeWidth() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, -WIDTH,
+                HEIGHT, FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverNegativeHeight() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH,
+                -HEIGHT, FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverNegativeFrameRate() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH,
+                HEIGHT, -FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverMissingWidth() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, INT_NOT_SET /* width*/,
+                HEIGHT /* height */, FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverMissingHeight() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverInvalidArgs(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH,
+                INT_NOT_SET /* height */, FRAME_RATE);
+    }
+
+    public void testVideoFormatResolverMissingFrameRate() {
+        if (shouldSkip()) {
+            return;
+        }
+        testVideoFormatResolverShouldTranscode(MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH, HEIGHT,
+                INT_NOT_SET /* frameRate */);
+    }
+
     private boolean compareFormat(MediaFormat fmt1, MediaFormat fmt2) {
         if (fmt1 == fmt2) return true;
         if (fmt1 == null || fmt2 == null) return false;
@@ -582,7 +739,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
         VideoTranscodingRequest request =
                 new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
-                        createMediaFormat())
+                        createDefaultMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
@@ -646,7 +803,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
                             .setClientPid(pid)
                             .setClientUid(uid)
                             .setPriority(MediaTranscodingManager.PRIORITY_REALTIME)
-                            .setVideoTrackFormat(createMediaFormat())
+                            .setVideoTrackFormat(createDefaultMediaFormat())
                             .build();
             Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
@@ -674,7 +831,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
         VideoTranscodingRequest request =
                 new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
-                        createMediaFormat())
+                        createDefaultMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
@@ -726,7 +883,7 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
 
         VideoTranscodingRequest request =
                 new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
-                        createMediaFormat())
+                        createDefaultMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
