@@ -309,6 +309,8 @@ public class DeviceAtomTestCase extends AtomTestCase {
             .that(getDevice().waitForBootComplete(120_000)).isTrue();
         assertWithMessage("Stats service failed to start")
             .that(waitForStatsServiceStart(60_000)).isTrue();
+        assertWithMessage("System failed to boot")
+            .that(waitForSystemBootComplete(60_000)).isTrue();
         Thread.sleep(2_000);
     }
 
@@ -324,6 +326,21 @@ public class DeviceAtomTestCase extends AtomTestCase {
             counter++;
         }
         LogUtil.CLog.w("Stats service did not start after %d ms", waitTime);
+        return false;
+    }
+
+    protected boolean waitForSystemBootComplete(final long waitTime) throws Exception {
+        LogUtil.CLog.i("Waiting %d ms for all system services to start", waitTime);
+        int counter = 1;
+        long startTime = System.currentTimeMillis();
+        while ((System.currentTimeMillis() - startTime) < waitTime) {
+            if ("1".equals(getProperty("sys.boot_completed"))) {
+                return true;
+            }
+            Thread.sleep(Math.min(200 * counter, 2_000));
+            counter++;
+        }
+        LogUtil.CLog.w("System did not start after %d ms", waitTime);
         return false;
     }
 
