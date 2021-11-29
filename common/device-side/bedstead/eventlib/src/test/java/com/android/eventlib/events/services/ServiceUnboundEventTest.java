@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.testapp;
+package com.android.eventlib.events.services;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import com.android.eventlib.premade.EventLibService;
-
-/**
- * A single-purpose {@link Service} to allow test apps to act as account authenticators.
- */
-public final class TestAppAccountAuthenticatorService extends EventLibService {
-    @Override
-    public IBinder onBind(Intent intent) {
-        super.onBind(intent);
-        return TestAppAccountAuthenticator.getAuthenticator(this).getIBinder();
-    }
+//TODO(b/204770471) Currently unable to create these tests without an instrumented service.
+@RunWith(JUnit4.class)
+public class ServiceUnboundEventTest {
 }
