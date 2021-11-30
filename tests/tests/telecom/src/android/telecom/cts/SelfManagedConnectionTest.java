@@ -167,9 +167,11 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
                 .asInterface(controlConn.getService());
         control.resetLatchForServiceBound(true /* bind */);
 
+        mUiAutomation.adoptShellPermissionIdentity("android.permission.CONTROL_INCALL_EXPERIENCE");
         SelfManagedConnection connection = placeAndVerifySelfManagedCall();
-        control.checkBindStatus(true /* bindStatus */);
+        assertTrue(control.checkBindStatus(true /* bindStatus */));
         assertTrue(connection.isTracked());
+        mUiAutomation.dropShellPermissionIdentity();
 
         connection.disconnectAndDestroy();
         assertIsInCall(false);
@@ -188,15 +190,16 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
                 DEFAULT_DIALER_INCALLSERVICE_2);
         ICtsThirdPartyInCallServiceControl control = ICtsThirdPartyInCallServiceControl.Stub
                 .asInterface(controlConn.getService());
-        assertTrue(setDefaultDialer(DEFAULT_DIALER_PKG_2));
+        TestUtils.setDefaultDialer(getInstrumentation(), DEFAULT_DIALER_PKG_2);
         control.resetLatchForServiceBound(true /* bind */);
 
         SelfManagedConnection connection = placeAndVerifySelfManagedCall();
-        control.checkBindStatus(true /* bindStatus */);
+        assertTrue(control.checkBindStatus(true /* bindStatus */));
 
         connection.waitOnInCallServiceTrackingChanged();
         assertTrue(connection.isTracked());
         assertTrue(connection.isAlternativeUiShowing());
+        mUiAutomation.dropShellPermissionIdentity();
 
         connection.disconnectAndDestroy();
         assertIsInCall(false);
