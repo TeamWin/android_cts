@@ -37,6 +37,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
@@ -135,7 +136,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
+    @RequireRunNotOnSecondaryUser
     public void stop_userStarted_userIsStopped() {
         sDeviceState.secondaryUser().stop();
 
@@ -144,7 +145,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
+    @RequireRunNotOnSecondaryUser
     public void stop_userNotStarted_doesNothing() {
         sDeviceState.secondaryUser().stop();
 
@@ -155,7 +156,7 @@ public class UserReferenceTest {
 
     @Test
     @EnsureHasSecondaryUser
-    @RequireRunOnPrimaryUser // TODO(201319776): Use @RequireRunNotOnSecondaryUser
+    @RequireRunNotOnSecondaryUser
     @RequireSdkVersion(min = Q)
     public void switchTo_userIsSwitched() {
         try (PermissionContext p =
