@@ -933,7 +933,7 @@ public class MediaSessionTest extends AndroidTestCase {
     }
 
     public void testSetQueueWithLargeNumberOfItems() throws Exception {
-        int queueSize = 1_000_000;
+        int queueSize = 500_000;
         List<QueueItem> queue = new ArrayList<>();
         for (int id = 0; id < queueSize; id++) {
             MediaDescription description = new MediaDescription.Builder()
