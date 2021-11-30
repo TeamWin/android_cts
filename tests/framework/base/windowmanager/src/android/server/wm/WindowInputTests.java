@@ -266,6 +266,7 @@ public class WindowInputTests {
         mInstrumentation.sendPointerSync(eventDown);
 
         final ExecutorService executor = Executors.newSingleThreadExecutor();
+        boolean[] securityExceptionCaught = new boolean[1];
         executor.execute(() -> {
             mInstrumentation.sendPointerSync(eventDown);
             for (int i = 0; i < 20; i++) {
@@ -275,7 +276,7 @@ public class WindowInputTests {
                 try {
                     mInstrumentation.sendPointerSync(eventMove);
                 } catch (SecurityException e) {
-                    fail("Should be allowed to inject event.");
+                    securityExceptionCaught[0] = true;
                 }
             }
         });
@@ -287,6 +288,12 @@ public class WindowInputTests {
 
         executor.shutdown();
         executor.awaitTermination(5L, TimeUnit.SECONDS);
+
+        if (securityExceptionCaught[0]) {
+            // Fail the test here instead of in the executor lambda,
+            // so the failure is thrown in the test thread.
+            fail("Should be allowed to inject event.");
+        }
     }
 
     public static class TestActivity extends Activity {
