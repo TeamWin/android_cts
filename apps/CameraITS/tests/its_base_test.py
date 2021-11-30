@@ -22,6 +22,7 @@ from mobly import utils
 from mobly.controllers import android_device
 
 import its_session_utils
+import lighting_control_utils
 
 ADAPTIVE_BRIGHTNESS_OFF = '0'
 TABLET_CMD_DELAY_SEC = 0.5  # found empirically
@@ -76,6 +77,13 @@ class ItsBaseTest(base_test.BaseTestClass):
     if self.user_params.get('chart_distance'):
       self.chart_distance = float(self.user_params['chart_distance'])
       logging.debug('Chart distance: %s cm', self.chart_distance)
+    if (self.user_params.get('lighting_cntl') and
+        self.user_params.get('lighting_ch')):
+      self.lighting_cntl = self.user_params['lighting_cntl']
+      self.lighting_ch = str(self.user_params['lighting_ch'])
+    else:
+      self.lighting_cntl = 'None'
+      self.lighting_ch = '1'
     if self.user_params.get('chart_loc_arg'):
       self.chart_loc_arg = self.user_params['chart_loc_arg']
     else:
@@ -113,6 +121,15 @@ class ItsBaseTest(base_test.BaseTestClass):
         logging.debug('Not all arguments set. Manual run.')
 
     self._setup_devices(num_devices)
+
+    arduino_serial_port = lighting_control_utils.lighting_control(
+      self.lighting_cntl, self.lighting_ch)
+    if arduino_serial_port:
+      lighting_control_utils.set_light_brightness(
+      self.lighting_ch, 255, arduino_serial_port)
+      logging.debug('Light is turned ON.')
+    else:
+      logging.info('Ensure lights ON')
 
   def _setup_devices(self, num):
     """Sets up each device in parallel if more than one device."""

@@ -28,6 +28,8 @@ TestBeds:
       brightness: 96
       chart_distance: 31.0
       debug_mode: "False"  # quotes are needed here
+      lighting_cntl: <controller-type>  # can be arduino or "None"
+      lighting_ch: <controller-channel>
       chart_loc_arg: ""
       camera: <camera-id>
       scene: <scene-name>  # if <scene-name> left as-is runs all scenes
