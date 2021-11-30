@@ -43,6 +43,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
@@ -59,6 +60,8 @@ public final class StartProfilesTest {
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final ActivityManager sActivityManager =
             sContext.getSystemService(ActivityManager.class);
+
+    private static final int START_PROFILE_BROADCAST_TIMEOUT = 480_000; // 8 minutes
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -83,6 +86,7 @@ public final class StartProfilesTest {
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS})
+    @SlowApiTest("Start profile broadcasts can take a long time")
     public void startProfile_broadcastIsReceived_profileIsStarted() {
         sDeviceState.workProfile().stop();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
@@ -90,7 +94,7 @@ public final class StartProfilesTest {
                 userIsEqual(sDeviceState.workProfile()));
         sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
 
-        broadcastReceiver.awaitForBroadcastOrFail();
+        broadcastReceiver.awaitForBroadcastOrFail(START_PROFILE_BROADCAST_TIMEOUT);
 
         assertThat(sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
     }

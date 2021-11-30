@@ -28,7 +28,7 @@ import java.lang.reflect.Field;
 /** SDK Version checks. */
 public final class Versions {
 
-    public static final int S_V2 = CUR_DEVELOPMENT;
+    public static final int T = CUR_DEVELOPMENT;
 
     /** Any version. */
     public static final int ANY = -1;

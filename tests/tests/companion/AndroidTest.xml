@@ -32,4 +32,15 @@
         <option name="package" value="android.companion.cts" />
         <option name="runtime-hint" value="1s" />
     </test>
+
+    <!-- Create a temporary directory for test APKs.  -->
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="mkdir -p /data/local/tmp/cts/companion" />
+        <option name="run-command" value="am wait-for-broadcast-idle" />
+        <option name="teardown-command" value="rm -rf /data/local/tmp/cts/companion" />
+    </target_preparer>
+    <!-- Push test APKs into the temporary directory. -->
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="push" value="CtsCompanionTestApp.apk->/data/local/tmp/cts/companion/CtsCompanionTestApp.apk" />
+    </target_preparer>
 </configuration>

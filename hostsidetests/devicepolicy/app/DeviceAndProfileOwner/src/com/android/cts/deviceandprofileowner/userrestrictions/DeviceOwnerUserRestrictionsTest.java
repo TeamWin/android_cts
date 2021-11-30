@@ -64,7 +64,8 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_CAMERA_TOGGLE,
             UserManager.DISALLOW_MICROPHONE_TOGGLE,
             UserManager.DISALLOW_CHANGE_WIFI_STATE,
-            UserManager.DISALLOW_WIFI_TETHERING
+            UserManager.DISALLOW_WIFI_TETHERING,
+            UserManager.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI
     };
 
     public static final String[] DISALLOWED = new String[] {

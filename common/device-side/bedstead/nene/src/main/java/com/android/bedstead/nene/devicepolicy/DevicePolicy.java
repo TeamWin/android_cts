@@ -209,7 +209,7 @@ public final class DevicePolicy {
      */
     private void setDeviceOwnerOnly(DevicePolicyManager devicePolicyManager,
             ComponentName component, String name, int deviceOwnerUserId) {
-        if (Versions.meetsMinimumSdkVersionRequirement(Versions.S_V2)) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S_V2)) {
             devicePolicyManager.setDeviceOwnerOnly(component, name, deviceOwnerUserId);
         } else {
             devicePolicyManager.setDeviceOwner(component, name, deviceOwnerUserId);

@@ -728,10 +728,33 @@ public class AtomTests {
         builder.setOverrideDeadline(0);
         JobInfo job = builder.build();
 
-        long startTime = System.currentTimeMillis();
         CountDownLatch latch = StatsdJobService.resetCountDownLatch();
         js.schedule(job);
         waitForReceiver(context, 5_000, latch, null);
+    }
+
+    @Test
+    public void testScheduledJobPriority() throws Exception {
+        final ComponentName name =
+                new ComponentName(MY_PACKAGE_NAME, StatsdJobService.class.getName());
+
+        Context context = InstrumentationRegistry.getContext();
+        JobScheduler js = context.getSystemService(JobScheduler.class);
+        assertWithMessage("JobScheduler service not available").that(js).isNotNull();
+
+        final int[] priorities = {
+                JobInfo.PRIORITY_HIGH, JobInfo.PRIORITY_DEFAULT,
+                JobInfo.PRIORITY_LOW, JobInfo.PRIORITY_MIN};
+        for (int priority : priorities) {
+            JobInfo job = new JobInfo.Builder(priority, name)
+                    .setOverrideDeadline(0)
+                    .setPriority(priority)
+                    .build();
+
+            CountDownLatch latch = StatsdJobService.resetCountDownLatch();
+            js.schedule(job);
+            waitForReceiver(context, 5_000, latch, null);
+        }
     }
 
     @Test

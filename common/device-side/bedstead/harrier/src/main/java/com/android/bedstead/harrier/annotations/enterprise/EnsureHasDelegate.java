@@ -37,6 +37,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasDelegate {
 
+    int ENSURE_HAS_DELEGATE_WEIGHT = DO_PO_WEIGHT + 1; // Should run after setting DO/PO
+
     enum AdminType {
         DEVICE_OWNER,
         PROFILE_OWNER,
@@ -71,5 +73,5 @@ public @interface EnsureHasDelegate {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default DO_PO_WEIGHT + 1; // Should run after setting DO/PO
+    int weight() default ENSURE_HAS_DELEGATE_WEIGHT;
 }

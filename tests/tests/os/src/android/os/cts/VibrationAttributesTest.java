@@ -29,6 +29,9 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class VibrationAttributesTest {
@@ -52,11 +55,55 @@ public class VibrationAttributesTest {
     private static final VibrationEffect TEST_PREBAKED =
             VibrationEffect.get(VibrationEffect.EFFECT_CLICK, true);
 
+    private static final Map<Integer, Integer> AUDIO_TO_VIBRATION_USAGE_MAP;
+    static {
+        Map<Integer, Integer> map = new HashMap<>();
+        map.put(AudioAttributes.USAGE_ALARM, VibrationAttributes.USAGE_ALARM);
+        map.put(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY,
+                VibrationAttributes.USAGE_ACCESSIBILITY);
+        map.put(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION, VibrationAttributes.USAGE_TOUCH);
+        map.put(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE,
+                VibrationAttributes.USAGE_COMMUNICATION_REQUEST);
+        map.put(AudioAttributes.USAGE_ASSISTANT, VibrationAttributes.USAGE_COMMUNICATION_REQUEST);
+        map.put(AudioAttributes.USAGE_GAME, VibrationAttributes.USAGE_MEDIA);
+        map.put(AudioAttributes.USAGE_MEDIA, VibrationAttributes.USAGE_MEDIA);
+        map.put(AudioAttributes.USAGE_NOTIFICATION, VibrationAttributes.USAGE_NOTIFICATION);
+        map.put(AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED,
+                VibrationAttributes.USAGE_NOTIFICATION);
+        map.put(AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_REQUEST,
+                VibrationAttributes.USAGE_NOTIFICATION);
+        map.put(AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT,
+                VibrationAttributes.USAGE_NOTIFICATION);
+        map.put(AudioAttributes.USAGE_NOTIFICATION_EVENT, VibrationAttributes.USAGE_NOTIFICATION);
+        map.put(AudioAttributes.USAGE_NOTIFICATION_RINGTONE, VibrationAttributes.USAGE_RINGTONE);
+        map.put(AudioAttributes.USAGE_UNKNOWN, VibrationAttributes.USAGE_UNKNOWN);
+        map.put(AudioAttributes.USAGE_VOICE_COMMUNICATION,
+                VibrationAttributes.USAGE_COMMUNICATION_REQUEST);
+        map.put(AudioAttributes.USAGE_VOICE_COMMUNICATION_SIGNALLING,
+                VibrationAttributes.USAGE_COMMUNICATION_REQUEST);
+        AUDIO_TO_VIBRATION_USAGE_MAP = map;
+    }
+
+    private static final Map<Integer, Integer> VIBRATION_TO_AUDIO_USAGE_MAP;
+    static {
+        Map<Integer, Integer> map = new HashMap<>();
+        map.put(VibrationAttributes.USAGE_ALARM, AudioAttributes.USAGE_ALARM);
+        map.put(VibrationAttributes.USAGE_ACCESSIBILITY,
+                AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY);
+        map.put(VibrationAttributes.USAGE_COMMUNICATION_REQUEST,
+                AudioAttributes.USAGE_VOICE_COMMUNICATION);
+        map.put(VibrationAttributes.USAGE_HARDWARE_FEEDBACK, AudioAttributes.USAGE_UNKNOWN);
+        map.put(VibrationAttributes.USAGE_MEDIA, AudioAttributes.USAGE_MEDIA);
+        map.put(VibrationAttributes.USAGE_NOTIFICATION, AudioAttributes.USAGE_NOTIFICATION);
+        map.put(VibrationAttributes.USAGE_PHYSICAL_EMULATION, AudioAttributes.USAGE_UNKNOWN);
+        map.put(VibrationAttributes.USAGE_RINGTONE, AudioAttributes.USAGE_NOTIFICATION_RINGTONE);
+        map.put(VibrationAttributes.USAGE_TOUCH, AudioAttributes.USAGE_ASSISTANCE_SONIFICATION);
+        VIBRATION_TO_AUDIO_USAGE_MAP = map;
+    }
+
     @Test
     public void testCreate() {
-        AudioAttributes tmp = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .build();
+        AudioAttributes tmp = createAudioAttributes(AudioAttributes.USAGE_ALARM);
         VibrationAttributes attr = new VibrationAttributes.Builder(tmp, null).build();
         assertEquals(attr.getUsage(), VibrationAttributes.USAGE_ALARM);
         assertEquals(attr.getUsageClass(), VibrationAttributes.USAGE_CLASS_ALARM);
@@ -66,12 +113,10 @@ public class VibrationAttributesTest {
 
     @Test
     public void testGetAudioUsageReturnOriginalUsage() {
-        AudioAttributes tmp = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                .build();
+        AudioAttributes tmp = createAudioAttributes(AudioAttributes.USAGE_ASSISTANT);
         VibrationAttributes attr = new VibrationAttributes.Builder(tmp, null).build();
         assertEquals(attr.getUsage(), VibrationAttributes.USAGE_COMMUNICATION_REQUEST);
-        assertEquals(attr.getAudioUsage(), AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY);
+        assertEquals(attr.getAudioUsage(), AudioAttributes.USAGE_ASSISTANT);
     }
 
     @Test
@@ -80,6 +125,25 @@ public class VibrationAttributesTest {
                 .setUsage(VibrationAttributes.USAGE_NOTIFICATION).build();
         assertEquals(attr.getUsage(), VibrationAttributes.USAGE_NOTIFICATION);
         assertEquals(attr.getAudioUsage(), AudioAttributes.USAGE_NOTIFICATION);
+    }
+
+    @Test
+    public void testAudioToVibrationUsageMapping() {
+        for (Map.Entry<Integer, Integer> entry : AUDIO_TO_VIBRATION_USAGE_MAP.entrySet()) {
+            assertEquals(entry.getValue().intValue(), new VibrationAttributes.Builder(
+                    createAudioAttributes(entry.getKey())).build().getUsage());
+        }
+    }
+
+    @Test
+    public void testVibrationToAudioUsageMapping() {
+        for (Map.Entry<Integer, Integer> entry : VIBRATION_TO_AUDIO_USAGE_MAP.entrySet()) {
+            assertEquals(entry.getValue().intValue(),
+                    new VibrationAttributes.Builder()
+                            .setUsage(entry.getKey())
+                            .build()
+                            .getAudioUsage());
+        }
     }
 
     @Test
