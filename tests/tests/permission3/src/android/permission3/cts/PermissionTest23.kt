@@ -246,11 +246,10 @@ class PermissionTest23 : BaseUsePermissionTest() {
             android.Manifest.permission.READ_SMS,
             android.Manifest.permission.CALL_PHONE,
             android.Manifest.permission.RECORD_AUDIO,
-            android.Manifest.permission.BODY_SENSORS,
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23
         )
-        // Don't use UI for granting location permission as this shows another dialog
+        // Don't use UI for granting location and sensor permissions as they show another dialog
         uiAutomation.grantRuntimePermission(
             APP_PACKAGE_NAME, android.Manifest.permission.ACCESS_FINE_LOCATION
         )
@@ -259,6 +258,9 @@ class PermissionTest23 : BaseUsePermissionTest() {
         )
         uiAutomation.grantRuntimePermission(
             APP_PACKAGE_NAME, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        )
+        uiAutomation.grantRuntimePermission(
+            APP_PACKAGE_NAME, android.Manifest.permission.BODY_SENSORS
         )
 
         uninstallPackage(APP_PACKAGE_NAME)
