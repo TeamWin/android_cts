@@ -34,7 +34,6 @@ import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.policies.KeyManagement;
@@ -71,7 +70,7 @@ import java.util.concurrent.TimeUnit;
  * keys by requesting access to them and retrieving them via KeyChain APIs.
  */
 @RunWith(BedsteadJUnit4.class)
-public class KeyManagementTest {
+public final class KeyManagementTest {
 
     @ClassRule
     @Rule
@@ -273,8 +272,6 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
-    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
-            + "takes a long time to callback")
     public void choosePrivateKeyAlias_aliasIsSelectedByAdmin_returnAlias() throws Exception {
         try {
             // Install keypair
@@ -295,8 +292,6 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
-    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
-            + "takes a long time to callback")
     public void choosePrivateKeyAlias_nonUserSelectedAliasIsSelectedByAdmin_returnAlias()
             throws Exception {
         try {
@@ -318,8 +313,6 @@ public class KeyManagementTest {
     @Test
     @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = KeyManagement.class)
-    @SlowApiTest(reason = "The KeyChain.choosePrivateKeyAlias API sometimes "
-            + "takes a long time to callback")
     public void getPrivateKey_aliasIsGranted_returnPrivateKey() throws Exception {
         try {
             // Install keypair

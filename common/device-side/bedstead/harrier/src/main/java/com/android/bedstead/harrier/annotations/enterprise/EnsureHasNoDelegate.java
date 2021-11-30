@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
+import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.ENSURE_HAS_DELEGATE_WEIGHT;
 
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
@@ -27,41 +27,32 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test requires that the given admin delegates the given scope to a test app.
+ * Mark that a test requires that the given admin does not delegate the given scope to a test app.
  *
  * <p>You should use {@link DeviceState} to ensure that the device enters
- * the correct state for the method. You can use {@link DeviceState#delegate()} to interact with
- * the delegate.
+ * the correct state for the method.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasDelegate {
-
-    int ENSURE_HAS_DELEGATE_WEIGHT = DO_PO_WEIGHT + 1; // Should run after setting DO/PO
+public @interface EnsureHasNoDelegate {
 
     enum AdminType {
         DEVICE_OWNER,
         PROFILE_OWNER,
-        PRIMARY
+        PRIMARY,
+        ANY
     }
 
+
     /**
-     * The admin that should delegate this scope.
+     * The admin that should not delegate this scope.
+     *
+     * <p>Defaults to any admin
      *
      * <p>If this is set to {@link AdminType#PRIMARY} and {@link #isPrimary()} is true, then the
      * delegate will replace the primary dpc as primary without error.
      */
-    AdminType admin();
-
-    /** The scope being delegated. */
-    String[] scopes();
-
-    /**
-     * Whether this delegate should be returned by calls to {@link DeviceState#policyManager()}.
-     *
-     * <p>Only one policy manager per test should be marked as primary.
-     */
-    boolean isPrimary() default false;
+    AdminType admin() default AdminType.ANY;
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -73,5 +64,5 @@ public @interface EnsureHasDelegate {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default ENSURE_HAS_DELEGATE_WEIGHT;
+    int weight() default ENSURE_HAS_DELEGATE_WEIGHT + 1; // Should run after setting delegate
 }

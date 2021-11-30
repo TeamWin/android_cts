@@ -190,21 +190,27 @@ public final class SetQueryHelper<E extends Queryable, F, G extends Query<F>> im
     public String describeQuery(String fieldName) {
         List<String> queryStrings = new ArrayList<>();
         queryStrings.add(mSizeQuery.describeQuery(fieldName + ".size"));
-        if (!mContainsByQuery.isEmpty() && !mContainsByType.isEmpty()) {
+        if (!mContainsByQuery.isEmpty()) {
             queryStrings.add(fieldName + " contains matches of ["
                     + mContainsByQuery.stream().map(t -> "{" + t.describeQuery("")
-                    + "}").collect(Collectors.joining(", ")) + "]"
-                    + mContainsByType.stream().map(t -> "{" + t.toString()
                     + "}").collect(Collectors.joining(", ")) + "]");
         }
-        if (!mDoesNotContainByQuery.isEmpty() && !mDoesNotContainByType.isEmpty()) {
-            queryStrings.add(fieldName + " does not contain anything matching any of ["
-                    + mDoesNotContainByQuery.stream().map(t -> "{" + t.describeQuery("")
-                    + "}").collect(Collectors.joining(", ")) + "]"
-                    + mDoesNotContainByType.stream().map(t -> "{" + t.toString()
-                    + "}").collect(Collectors.joining(", ")) + "]");
+        if (!mContainsByType.isEmpty()) {
+            queryStrings.add(fieldName + " contains ["
+                    + mContainsByType.stream().map(Object::toString)
+                    .collect(Collectors.joining(", ")) + "]");
         }
 
+        if (!mDoesNotContainByQuery.isEmpty()) {
+            queryStrings.add(fieldName + " does not contain anything matching any of ["
+                    + mDoesNotContainByQuery.stream().map(t -> "{" + t.describeQuery("")
+                    + "}").collect(Collectors.joining(", ")) + "]");
+        }
+        if (!mDoesNotContainByType.isEmpty()) {
+            queryStrings.add(fieldName + " does not contain ["
+                    + mDoesNotContainByType.stream().map(Object::toString)
+                    .collect(Collectors.joining(", ")) + "]");
+        }
         return Queryable.joinQueryStrings(queryStrings);
     }
 }

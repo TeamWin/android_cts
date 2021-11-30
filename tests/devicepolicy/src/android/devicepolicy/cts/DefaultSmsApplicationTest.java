@@ -50,7 +50,7 @@ import org.junit.runner.RunWith;
 
 // TODO(b/198442101): Add tests for the COPE case when we can sideload system apps
 @RunWith(BedsteadJUnit4.class)
-public class DefaultSmsApplicationTest {
+public final class DefaultSmsApplicationTest {
     @ClassRule
     @Rule
     public static DeviceState sDeviceState = new DeviceState();

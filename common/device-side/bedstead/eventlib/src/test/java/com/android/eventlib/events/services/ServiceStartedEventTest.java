@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
+package com.android.eventlib.events.services;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-/**
- * Annotation to indicate that a test can take a long time to run.
- */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface SlowApiTest {
-    String value();
+//TODO(b/204770471) Currently unable to create these tests without an instrumented service.
+@RunWith(JUnit4.class)
+public class ServiceStartedEventTest {
 }

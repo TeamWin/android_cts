@@ -48,6 +48,7 @@ public final class TestAppQueryBuilder implements Queryable {
             new SetQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ServiceInfo, ServiceQuery<?>> mServices =
             new SetQueryHelper<>(this);
+    StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
@@ -107,6 +108,13 @@ public final class TestAppQueryBuilder implements Queryable {
      */
     public BooleanQuery<TestAppQueryBuilder> whereTestOnly() {
         return mTestOnly;
+    }
+
+    /**
+     * Query for a {@link TestApp} by its sharedUserId;
+     */
+    public StringQuery<TestAppQueryBuilder> whereSharedUserId() {
+        return mSharedUserId;
     }
 
     /**
@@ -186,6 +194,16 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        if (mSharedUserId.isEmpty()) {
+            if (details.sharedUserId() != null) {
+                return false;
+            }
+        } else {
+            if (!StringQueryHelper.matches(mSharedUserId, details.sharedUserId())) {
+                return false;
+            }
+        }
+
         if (details.mMetadata.getString("testapp-package-query-only", "false")
                 .equals("true")) {
             if (!mPackageName.isQueryingForExactMatch()) {
@@ -207,6 +225,7 @@ public final class TestAppQueryBuilder implements Queryable {
                 mActivities.describeQuery("activities"),
                 mServices.describeQuery("services"),
                 mPermissions.describeQuery("permissions"),
+                mSharedUserId.describeQuery("sharedUserId"),
                 mTestOnly.describeQuery("testOnly")
         ) + "}";
     }
