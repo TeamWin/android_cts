@@ -53,12 +53,6 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserRemovedEv
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserStartedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserStoppedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminUserSwitchedEvent;
-import com.android.eventlib.events.services.ServiceBoundEvent;
-import com.android.eventlib.events.services.ServiceCreatedEvent;
-import com.android.eventlib.events.services.ServiceDestroyedEvent;
-import com.android.eventlib.events.services.ServiceEvents;
-import com.android.eventlib.events.services.ServiceStartedEvent;
-import com.android.eventlib.events.services.ServiceUnboundEvent;
 
 /**
  * Quick access to events on this test app.
@@ -68,7 +62,7 @@ import com.android.eventlib.events.services.ServiceUnboundEvent;
  * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
  */
 public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
-        DeviceAdminReceiverEvents, ServiceEvents {
+        DeviceAdminReceiverEvents {
 
     private final TestAppInstance mTestApp;
 
@@ -311,41 +305,6 @@ public class TestAppEvents implements ActivityEvents, BroadcastReceiverEvents,
     public DeviceAdminUserSwitchedEvent.DeviceAdminUserSwitchedEventQuery userSwitched() {
         return DeviceAdminUserSwitchedEvent.queryPackage(
                 mTestApp.packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
-    public ServiceBoundEvent.ServiceBoundEventQuery serviceBound() {
-        return ServiceBoundEvent.queryPackage(
-                mTestApp.testApp().packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
-    public ServiceUnboundEvent.ServiceUnboundEventQuery serviceUnbound() {
-        return ServiceUnboundEvent.queryPackage(
-                mTestApp.testApp().packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
-    public ServiceCreatedEvent.ServiceCreatedEventQuery serviceCreated() {
-        return ServiceCreatedEvent.queryPackage(
-                mTestApp.testApp().packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
-    public ServiceStartedEvent.ServiceStartedEventQuery serviceStarted() {
-        return ServiceStartedEvent.queryPackage(
-                mTestApp.testApp().packageName())
-                .onUser(mTestApp.user());
-    }
-
-    @Override
-    public ServiceDestroyedEvent.ServiceDestroyedEventQuery serviceDestroyed() {
-        return ServiceDestroyedEvent.queryPackage(
-                mTestApp.testApp().packageName())
                 .onUser(mTestApp.user());
     }
 }
