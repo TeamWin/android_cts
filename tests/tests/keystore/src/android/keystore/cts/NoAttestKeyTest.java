@@ -18,9 +18,9 @@ package android.keystore.cts;
 
 import static android.security.keystore.KeyProperties.KEY_ALGORITHM_EC;
 import static android.security.keystore.KeyProperties.PURPOSE_ATTEST_KEY;
+import static android.security.keystore.KeyProperties.PURPOSE_SIGN;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
@@ -69,17 +69,23 @@ public class NoAttestKeyTest {
     @Test
     public void testEcAttestKeyFail() throws Exception {
         final String attestKeyAlias = "attestKey";
+        final String attestedKeyAlias = "attestedKey";
 
-        // The device does not have the attest key feature, so attempting to create a
+        // The device does not have the attest key feature, so attempting to create and use a
         // key with ATTEST_KEY purpose should fail.
         try {
             Certificate attestKeyCertChain[] = generateKeyPair(KEY_ALGORITHM_EC,
                     new KeyGenParameterSpec.Builder(attestKeyAlias, PURPOSE_ATTEST_KEY)
                             .setAttestationChallenge("challenge".getBytes())
                             .build());
+            Certificate attestedKeyCertChain[] = generateKeyPair(KEY_ALGORITHM_EC,
+                    new KeyGenParameterSpec.Builder(attestedKeyAlias, PURPOSE_SIGN)
+                            .setAttestationChallenge("challenge".getBytes())
+                            .setAttestKeyAlias(attestKeyAlias)
+                            .build());
             fail("Expected exception.");
         } catch (InvalidAlgorithmParameterException e) {
-            assertThat(e.getMessage(), is("@@@@@"));
+            // ATTEST_KEY generation/use has failed as expected
         }
     }
 
