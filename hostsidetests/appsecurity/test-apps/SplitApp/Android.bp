@@ -36,6 +36,7 @@ java_defaults {
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
+    target_sdk_version: "current"
 }
 
 android_test_helper_app {
