@@ -1969,12 +1969,12 @@ public class TunerTest {
                         layerBuilder.setModulation(modulation);
                         layerBuilder.setCodeRate(codeRate);
                         if (isSegmentAutoSupported) {
-                            layerBuilder.setNumberOfSegment(0xFF);
+                            layerBuilder.setNumberOfSegments(0xFF);
                         } else {
                             if (isFullSegmentSupported) {
-                                layerBuilder.setNumberOfSegment(13);
+                                layerBuilder.setNumberOfSegments(13);
                             } else {
-                                layerBuilder.setNumberOfSegment(1);
+                                layerBuilder.setNumberOfSegments(1);
                             }
                         }
                         IsdbtFrontendSettings.IsdbtLayerSettings layer = layerBuilder.build();
