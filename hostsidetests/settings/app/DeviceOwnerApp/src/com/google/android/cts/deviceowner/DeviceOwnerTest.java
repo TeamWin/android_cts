@@ -31,6 +31,9 @@ import android.provider.Settings;
 import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -52,6 +55,8 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
     private static final String TAG = DeviceOwnerTest.class.getSimpleName();
 
     public static final int TIMEOUT_MS = 2_000;
+
+    public static final double DEADZONE_PCT = 0.2;
 
     protected Context mContext;
     protected UiDevice mDevice;
@@ -139,6 +144,16 @@ public final class DeviceOwnerTest extends InstrumentationTestCase {
 
         boolean found = null != mDevice.wait(Until.findObject(By.text(mWorkPolicyInfoText)),
                 TIMEOUT_MS);
+
+        // Try to scroll the list to find the item
+        if (!found) {
+            UiScrollable scroller = new UiScrollable(new UiSelector().scrollable(true));
+            try {
+                // Swipe far away from the edges to avoid triggering navigation gestures
+                scroller.setSwipeDeadZonePercentage(DEADZONE_PCT);
+                found = scroller.scrollTextIntoView(mWorkPolicyInfoText);
+            } catch (UiObjectNotFoundException e) { }
+        }
 
         Log.d(TAG, "Message found: " + found);
         return found;
