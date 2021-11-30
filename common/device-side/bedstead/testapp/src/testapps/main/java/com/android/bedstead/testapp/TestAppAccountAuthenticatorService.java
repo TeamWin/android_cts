@@ -20,15 +20,13 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
-import com.android.eventlib.premade.EventLibService;
-
+// TODO(b/199143717): Create EventLibService
 /**
  * A single-purpose {@link Service} to allow test apps to act as account authenticators.
  */
-public final class TestAppAccountAuthenticatorService extends EventLibService {
+public final class TestAppAccountAuthenticatorService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
-        super.onBind(intent);
         return TestAppAccountAuthenticator.getAuthenticator(this).getIBinder();
     }
 }
