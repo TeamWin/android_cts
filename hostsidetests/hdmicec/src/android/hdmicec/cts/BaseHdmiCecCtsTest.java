@@ -378,7 +378,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         checkDeviceAsleep();
     }
 
-    private void waitForTransitionTo(int finalState) throws Exception {
+    public void waitForTransitionTo(int finalState) throws Exception {
         int powerStatus;
         int waitTimeSeconds = 0;
         LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
