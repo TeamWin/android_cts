@@ -46,7 +46,22 @@ class AppHelper(
 
     fun clearData() = runShellCommand("pm clear --user $userId $packageName")
 
-    fun runShellCommand(cmd: String): String {
+    fun addToHoldersOfRole(role: String) =
+            runShellCommand("cmd role add-role-holder --user $userId $role $packageName")
+
+    fun removeFromHoldersOfRole(role: String) =
+            runShellCommand("cmd role remove-role-holder --user $userId $role $packageName")
+
+    fun withRole(role: String, block: () -> Unit) {
+        addToHoldersOfRole(role)
+        try {
+            block()
+        } finally {
+            removeFromHoldersOfRole(role)
+        }
+    }
+
+    private fun runShellCommand(cmd: String): String {
         Log.i(TAG, "Running shell command: '$cmd'")
         try {
             val out = SystemUtil.runShellCommand(instrumentation, cmd)
