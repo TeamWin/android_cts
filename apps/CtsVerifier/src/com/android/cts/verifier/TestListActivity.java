@@ -118,6 +118,11 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
         }
         sInitialLaunch = true;
 
+        // Restores the last display mode when launching the app after killing the process.
+        if (getCurrentDisplayMode().equals(DisplayMode.FOLDED.toString())) {
+            sCurrentDisplayMode = DisplayMode.FOLDED.toString();
+        }
+
         setTitle(getString(R.string.title_version, Version.getVersionName(this)));
 
         if (!getWindow().hasFeature(Window.FEATURE_ACTION_BAR)) {
@@ -179,14 +184,8 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
         item.setActionView(R.layout.display_mode_switch);
         Switch displayModeSwitch = item.getActionView().findViewById(R.id.switch_button);
 
-        // Restores the original display mode when launching the app after killing the process.
-        // Otherwise, gets the current display mode to show switch status.
-        boolean isFoldedMode;
-        if (sInitialLaunch) {
-            isFoldedMode = getCurrentDisplayMode().equals(DisplayMode.FOLDED.toString());
-        } else {
-            isFoldedMode = sCurrentDisplayMode.equals(DisplayMode.FOLDED.toString());
-        }
+        // Get the current display mode to show switch status.
+        boolean isFoldedMode = sCurrentDisplayMode.equals(DisplayMode.FOLDED.toString());
         displayModeSwitch.setChecked(isFoldedMode);
 
         displayModeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
