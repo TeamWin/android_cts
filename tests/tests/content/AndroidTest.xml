@@ -113,6 +113,7 @@
         <option name="test-file-name" value="CtsBinderPermissionTestService.apk" />
         <option name="test-file-name" value="CtsIntentResolutionTestApp.apk" />
         <option name="test-file-name" value="CtsIntentResolutionTestAppApi30.apk" />
+        <option name="test-file-name" value="CtsContentNoApplicationTestApp.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

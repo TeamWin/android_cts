@@ -67,6 +67,8 @@ public class ApplicationInfoTest {
             "android.content.cts.directbootunaware";
     private static final String PARTIALLY_DIRECT_BOOT_AWARE_PACKAGE_NAME =
             "android.content.cts.partiallydirectbootaware";
+    private static final String NO_APPLICATION_PACKAGE_NAME =
+            "android.content.cts.emptytestapp.stub";
 
     private ApplicationInfo mApplicationInfo;
     private String mPackageName;
@@ -224,6 +226,13 @@ public class ApplicationInfoTest {
         mApplicationInfo = getContext().getPackageManager().getApplicationInfo(
                 DIRECT_BOOT_UNAWARE_PACKAGE_NAME, 0);
         assertEquals(CATEGORY_ACCESSIBILITY, mApplicationInfo.category);
+    }
+
+    @Test
+    public void testDefaultAppCategoryIsUndefined() throws Exception {
+        final ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
+                NO_APPLICATION_PACKAGE_NAME, 0 /* flags */);
+        assertEquals(CATEGORY_UNDEFINED, applicationInfo.category);
     }
 
     @Test
