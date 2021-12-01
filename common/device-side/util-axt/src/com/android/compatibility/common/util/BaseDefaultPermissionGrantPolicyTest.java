@@ -471,7 +471,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
         Context context = getInstrumentation().getTargetContext();
 
         for (PackageInfo pkg : packageInfos.values()) {
-            int targetSdk = pkg.applicationInfo.targetSandboxVersion;
+            int targetSdk = pkg.applicationInfo.targetSdkVersion;
             int uid = pkg.applicationInfo.uid;
 
             for (String permission : pkg.requestedPermissions) {
