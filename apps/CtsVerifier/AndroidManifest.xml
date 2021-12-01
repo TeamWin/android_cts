@@ -3691,7 +3691,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
-                       android:value="android.software.leanback" />
+                       android:value="android.software.leanback:android.hardware.microphone" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>
