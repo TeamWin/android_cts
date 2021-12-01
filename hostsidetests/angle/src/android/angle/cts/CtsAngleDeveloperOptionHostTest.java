@@ -99,7 +99,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testEnableAngleForAll() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
         installApp(ANGLE_DRIVER_TEST_SEC_APP);
@@ -124,7 +124,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseDefaultDriver() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -142,7 +142,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseAngleDriver() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -160,7 +160,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseNativeDriver() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -178,7 +178,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testSettingsLengthMismatch() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -202,7 +202,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUseInvalidDriver() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -219,7 +219,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUpdateDriverValues() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -242,7 +242,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testMultipleDevOptionsAngleNative() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -267,7 +267,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testMultipleUpdateDriverValues() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         installApp(ANGLE_DRIVER_TEST_APP);
@@ -325,7 +325,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testAngleInUseDialogBoxWithAngle() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
@@ -341,7 +341,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testAngleInUseDialogBoxWithNative() throws Exception {
-        Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
         Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         setGlobalSetting(getDevice(), SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "1");
