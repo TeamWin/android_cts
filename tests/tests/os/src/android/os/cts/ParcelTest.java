@@ -4161,6 +4161,64 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals(56, list.get(1).getValue());
     }
 
+    public void testReadParcelableListWithClass_whenNull(){
+        final Parcel p = Parcel.obtain();
+        ArrayList<Intent> list = new ArrayList<>();
+        list.add(new Intent("test"));
+
+        p.writeParcelableList(null, 0);
+        p.setDataPosition(0);
+        p.readParcelableList(list, getClass().getClassLoader(), Intent.class);
+        assertEquals(0, list.size());
+        p.recycle();
+    }
+
+    public void testReadParcelableListWithClass_whenMismatchingClass(){
+        final Parcel p = Parcel.obtain();
+        ArrayList<Signature> list = new ArrayList<>();
+        ArrayList<Intent> list1 = new ArrayList<>();
+        list.add(new Signature("1234"));
+        p.writeParcelableList(list, 0);
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () ->
+                p.readParcelableList(list1, getClass().getClassLoader(), Intent.class));
+
+        p.recycle();
+    }
+
+    public void testReadParcelableListWithClass_whenSameClass(){
+        final Parcel p = Parcel.obtain();
+        ArrayList<Signature> list = new ArrayList<>();
+        ArrayList<Signature> list1 = new ArrayList<>();
+        list.add(new Signature("1234"));
+        list.add(new Signature("4321"));
+        p.writeParcelableList(list, 0);
+        p.setDataPosition(0);
+        p.readParcelableList(list1, getClass().getClassLoader(), Signature.class);
+
+        assertEquals(list, list1);
+        p.recycle();
+    }
+
+    public void testReadParcelableListWithClass_whenSubClass(){
+        final Parcel p = Parcel.obtain();
+        final Intent baseIntent = new Intent();
+
+        ArrayList<Intent> intentArrayList = new ArrayList<>();
+        ArrayList<Intent> intentArrayList1 = new ArrayList<>();
+
+        intentArrayList.add(new TestSubIntent(baseIntent, "1234567890abcdef"));
+        intentArrayList.add(null);
+        intentArrayList.add(new TestSubIntent(baseIntent, "abcdef1234567890"));
+
+        p.writeParcelableList(intentArrayList, 0);
+        p.setDataPosition(0);
+        p.readParcelableList(intentArrayList1, getClass().getClassLoader(), Intent.class);
+
+        assertEquals(intentArrayList, intentArrayList1);
+        p.recycle();
+    }
+
     // http://b/35384981
     public void testCreateArrayWithTruncatedParcel() {
         Parcel parcel = Parcel.obtain();
