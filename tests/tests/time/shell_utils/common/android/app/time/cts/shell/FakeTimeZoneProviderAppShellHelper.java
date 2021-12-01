@@ -48,13 +48,15 @@ public final class FakeTimeZoneProviderAppShellHelper {
     public static final String FAKE_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_ID =
                     "FakeLocationTimeZoneProviderService2";
 
-    public static final int STATE_UNKNOWN = 0;
-    public static final int STATE_INITIALIZING = 1;
-    public static final int STATE_CERTAIN = 2;
-    public static final int STATE_UNCERTAIN = 3;
-    public static final int STATE_DISABLED = 4;
-    public static final int STATE_PERM_FAILED = 5;
-    public static final int STATE_DESTROYED = 6;
+    // The following constant values correspond to enum values from
+    // frameworks/base/core/proto/android/app/location_time_zone_manager.proto
+    public static final int PROVIDER_STATE_UNKNOWN = 0;
+    public static final int PROVIDER_STATE_INITIALIZING = 1;
+    public static final int PROVIDER_STATE_CERTAIN = 2;
+    public static final int PROVIDER_STATE_UNCERTAIN = 3;
+    public static final int PROVIDER_STATE_DISABLED = 4;
+    public static final int PROVIDER_STATE_PERM_FAILED = 5;
+    public static final int PROVIDER_STATE_DESTROYED = 6;
 
     private static final String METHOD_GET_STATE = "get_state";
     private static final String CALL_RESULT_KEY_GET_STATE_STATE = "state";

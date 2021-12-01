@@ -46,3 +46,34 @@ def set_light_brightness(ch, brightness, serial_port, delay=0):
   sensor_fusion_utils.arduino_send_cmd(serial_port, cmd)
   time.sleep(delay)
 
+
+def lighting_control(lighting_cntl, lighting_ch):
+  """Establish communication with lighting controller.
+
+  lighting_ch is hard wired and must be determined from physical setup.
+
+  First initialize the port and send a test string defined by ARDUINO_TEST_CMD
+  to establish communications.
+
+  Args:
+    lighting_cntl: str to identify 'arduino' controller.
+    lighting_ch: str to identify lighting channel number.
+  Returns:
+    serial port pointer
+  """
+
+  logging.debug('Controller: %s, ch: %s', lighting_cntl, lighting_ch)
+  if lighting_cntl.lower() == 'arduino':
+    # identify port
+    arduino_serial_port = sensor_fusion_utils.serial_port_def('arduino')
+
+    # send test cmd to Arduino until cmd returns properly
+    sensor_fusion_utils.establish_serial_comm(arduino_serial_port)
+
+    # return serial port
+    return arduino_serial_port
+
+  else:
+    logging('No lighting control: need to control lights manually.')
+    return None
+
