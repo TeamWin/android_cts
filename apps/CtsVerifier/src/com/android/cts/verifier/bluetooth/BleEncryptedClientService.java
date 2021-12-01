@@ -388,7 +388,9 @@ public class BleEncryptedClientService extends Service {
                     public void run() {
                         if (status == BluetoothGatt.GATT_SUCCESS) {
                             if (mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 if (WRITE_VALUE.equals(value)) {
                                     Intent intent = new Intent(INTENT_BLE_WRITE_ENCRYPTED_CHARACTERISTIC);
                                     sendBroadcast(intent);
@@ -398,11 +400,15 @@ public class BleEncryptedClientService extends Service {
                             }
                         } else {
                             if (!mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_WRITE_NOT_ENCRYPTED_CHARACTERISTIC);
                                 sendBroadcast(intent);
                             } else {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_WRITE_FAIL_ENCRYPTED_CHARACTERISTIC);
                                 sendBroadcast(intent);
                             }
@@ -424,7 +430,9 @@ public class BleEncryptedClientService extends Service {
                     public void run() {
                         if (status == BluetoothGatt.GATT_SUCCESS) {
                             if (mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 if (Arrays.equals(BleEncryptedServerService.WRITE_VALUE.getBytes(), characteristic.getValue())) {
                                     Intent intent = new Intent(INTENT_BLE_READ_ENCRYPTED_CHARACTERISTIC);
                                     sendBroadcast(intent);
@@ -432,17 +440,23 @@ public class BleEncryptedClientService extends Service {
                                     showMessage("Read data is not correct");
                                 }
                             } else {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_READ_NOT_ENCRYPTED_CHARACTERISTIC);
                                 sendBroadcast(intent);
                             }
                         } else {
                             if (!mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_READ_ENCRYPTED_CHARACTERISTIC);
                                 sendBroadcast(intent);
                             } else {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_READ_FAIL_ENCRYPTED_CHARACTERISTIC);
                                 sendBroadcast(intent);
                             }
@@ -465,7 +479,9 @@ public class BleEncryptedClientService extends Service {
                     if ((status == BluetoothGatt.GATT_SUCCESS)) {
                         if (uid.equals(DESCRIPTOR_ENCRYPTED_READ_UUID)) {
                             if (mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 if (Arrays.equals(BleEncryptedServerService.WRITE_VALUE.getBytes(), descriptor.getValue())) {
                                     Intent intent = new Intent(INTENT_BLE_READ_ENCRYPTED_DESCRIPTOR);
                                     sendBroadcast(intent);
@@ -473,19 +489,25 @@ public class BleEncryptedClientService extends Service {
                                     showMessage("Read data is not correct");
                                 }
                             } else {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_READ_NOT_ENCRYPTED_DESCRIPTOR);
                                 sendBroadcast(intent);
                             }
                         }
                     } else {
                         if (!mSecure) {
-                            mBluetoothGatt.disconnect();
+                            if (mBluetoothGatt != null) {
+                                mBluetoothGatt.disconnect();
+                            }
                             Intent intent = new Intent(INTENT_BLE_READ_ENCRYPTED_DESCRIPTOR);
                             sendBroadcast(intent);
                         } else {
                             if (uid.equals(DESCRIPTOR_ENCRYPTED_READ_UUID)) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_READ_FAIL_ENCRYPTED_DESCRIPTOR);
                                 sendBroadcast(intent);
                             }
@@ -508,7 +530,9 @@ public class BleEncryptedClientService extends Service {
                     if (uid.equals(DESCRIPTOR_ENCRYPTED_WRITE_UUID)) {
                         if ((status == BluetoothGatt.GATT_SUCCESS)) {
                             if (mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 if (Arrays.equals(WRITE_VALUE.getBytes(), descriptor.getValue())) {
                                     Intent intent = new Intent(INTENT_BLE_WRITE_ENCRYPTED_DESCRIPTOR);
                                     sendBroadcast(intent);
@@ -518,11 +542,15 @@ public class BleEncryptedClientService extends Service {
                             }
                         } else {
                             if (!mSecure) {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_WRITE_NOT_ENCRYPTED_DESCRIPTOR);
                                 sendBroadcast(intent);
                             } else {
-                                mBluetoothGatt.disconnect();
+                                if (mBluetoothGatt != null) {
+                                    mBluetoothGatt.disconnect();
+                                }
                                 Intent intent = new Intent(INTENT_BLE_WRITE_FAIL_ENCRYPTED_DESCRIPTOR);
                                 sendBroadcast(intent);
                             }
