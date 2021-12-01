@@ -724,7 +724,7 @@ public class AccessibilityWindowQueryTest {
                                 WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG);
                         params.accessibilityTitle = windowTitle;
 
-                        SystemUtil.runWithShellPermissionIdentity(
+                        SystemUtil.runWithShellPermissionIdentity(sUiAutomation,
                                 () -> wm.addView(view, params),
                                 "android.permission.INTERNAL_SYSTEM_WINDOW");
                     }),
