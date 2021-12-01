@@ -3645,8 +3645,21 @@ You should be prompted to select credentials; choose the ones you just installed
             Please make sure you can connect to it. The test is successful if the config is editable
             and can be connected to.
     </string>
+    <string name="device_owner_wifi_config_unlocked_modification_test_info" product="automotive">
+            Please press the button to ensure WiFi config lockdown is NOT in effect. Then go to
+            Settings &gt; WiFi and see if the CTSVerifier created WiFi configuration is editable
+            (it\'s ok if it\'s not editable, but then take note so the next test can be skipped).
+            Please make sure you can connect to it. The test is successful if the config can be
+            connected to.
+    </string>
     <string name="device_owner_wifi_config_locked_modification_test">Locked config is not modifiable in Settings</string>
     <string name="device_owner_wifi_config_locked_modification_test_info">
+            Please press the button to ensure WiFi config lockdown is in effect. Then go to
+            Settings &gt; WiFi and see if the CTSVerifier created WiFi configuration can NOT be edited
+            or removed. The test is successful if the config is NOT modifiable.
+    </string>
+    <string name="device_owner_wifi_config_locked_modification_test_info" product="automotive">
+            NOTE: if the WiFi was not editable in the previous step, please skip this test.
             Please press the button to ensure WiFi config lockdown is in effect. Then go to
             Settings &gt; WiFi and see if the CTSVerifier created WiFi configuration can NOT be edited
             or removed. The test is successful if the config is NOT modifiable.

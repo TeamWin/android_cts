@@ -282,6 +282,8 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_SET_GLOBAL_SETTING: {
                     final String setting = intent.getStringExtra(EXTRA_SETTING);
                     final String value = intent.getStringExtra(EXTRA_VALUE);
+                    Log.d(TAG, "Setting global property '" + setting + "' to '" + value
+                            + "' using " + mDpm);
                     mDpm.setGlobalSetting(mAdmin, setting, value);
                 } break;
                 case COMMAND_REMOVE_DEVICE_OWNER: {
