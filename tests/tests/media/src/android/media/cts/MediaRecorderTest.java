@@ -23,6 +23,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioRecordingConfiguration;
 import android.media.CamcorderProfile;
 import android.media.EncoderCapabilities;
@@ -39,7 +41,6 @@ import android.media.MediaRecorder.OnErrorListener;
 import android.media.MediaRecorder.OnInfoListener;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
-import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.RecordingSession;
@@ -1694,13 +1695,46 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
     }
 
+    static class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
+        boolean mCalled;
+        List<AudioRecordingConfiguration> mConfigs;
+        private final int mTestSource;
+        private final int mTestSession;
+        private CountDownLatch mCountDownLatch;
+
+        void reset() {
+            mCountDownLatch = new CountDownLatch(1);
+            mCalled = false;
+            mConfigs = new ArrayList<AudioRecordingConfiguration>();
+        }
+
+        MyAudioRecordingCallback(int session, int source) {
+            mTestSource = source;
+            mTestSession = session;
+            reset();
+        }
+
+        @Override
+        public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
+            mCalled = true;
+            mConfigs = configs;
+            mCountDownLatch.countDown();
+        }
+
+        void await(long timeoutMs) {
+            try {
+                mCountDownLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+
     public void testAudioRecordInfoCallback() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
         }
-        AudioRecordingConfigurationTest.MyAudioRecordingCallback callback =
-                new AudioRecordingConfigurationTest.MyAudioRecordingCallback(
+        MyAudioRecordingCallback callback = new MyAudioRecordingCallback(
                         0 /*unused*/, MediaRecorder.AudioSource.DEFAULT);
         mMediaRecorder.registerAudioRecordingCallback(mExec, callback);
         configureDefaultMediaRecorder();
