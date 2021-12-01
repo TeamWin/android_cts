@@ -34,7 +34,7 @@
     </device>
 
     <test class="com.android.tradefed.testtype.mobly.MoblyBinaryHostTest">
-      <option name="mobly-par-file-name" value="mobly-multidevice-test" />
+      <option name="mobly-par-file-name" value="CtsSampleMoblyTestCases" />
       <option name="mobly-config-file-name" value="config.yaml" />
       <option name="mobly-test-timeout" value="1800000" />
     </test>
