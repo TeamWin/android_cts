@@ -499,6 +499,12 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                             && dupeJars.contains(ANDROID_TEST_MOCK_JAR)) {
                         return false;
                     }
+                    // Different versions of the same library may have different names, and there's
+                    // no reliable way to dedupe them. Ignore duplicates if they do not
+                    // include apex jars.
+                    if (dupeJars.stream().noneMatch(lib -> lib.startsWith("/apex/"))) {
+                        return false;
+                    }
                 } catch (DeviceNotAvailableException e) {
                     throw new RuntimeException(e);
                 }
