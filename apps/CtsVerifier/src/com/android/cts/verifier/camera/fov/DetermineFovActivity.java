@@ -22,8 +22,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.media.ExifInterface;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.SurfaceHolder;
@@ -75,6 +77,28 @@ public class DetermineFovActivity extends Activity {
                     BitmapFactory.decodeStream(new FileInputStream(pictureFile));
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        int previewOrientation;
+        try {
+            ExifInterface exif = new ExifInterface(pictureFile);
+            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                                                       ExifInterface.ORIENTATION_NORMAL);
+            switch (exifOrientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90: previewOrientation = 90; break;
+                case ExifInterface.ORIENTATION_ROTATE_180: previewOrientation = 180; break;
+                case ExifInterface.ORIENTATION_ROTATE_270: previewOrientation = 270; break;
+                default: previewOrientation = 0; break;
+            }
+        } catch (IOException e) {
+            previewOrientation = 0;
+        }
+
+        if (previewOrientation != 0) {
+            Matrix transform = new Matrix();
+            transform.setRotate(previewOrientation);
+            mPhotoBitmap = Bitmap.createBitmap(mPhotoBitmap, 0, 0, mPhotoBitmap.getWidth(),
+                                               mPhotoBitmap.getHeight(), transform, true);
         }
 
         mSurfaceView = (SurfaceView) findViewById(R.id.camera_fov_photo_surface);
