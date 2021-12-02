@@ -33,6 +33,7 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.ServiceConnection
 import android.os.IBinder
+import android.os.Process
 import android.platform.test.annotations.AppModeFull
 import android.provider.Settings
 import android.provider.Settings.Global.APP_OPS_CONSTANTS
@@ -47,12 +48,14 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.TimeoutException
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatcanbeforcedintoforegroundstates"
 private const val TIMEOUT_MILLIS = 45000L
+private const val EXPECTED_TIMEOUT_MILLIS = 5000L
 
 @AppModeFull(reason = "This test connects to other test app")
-class ForegroundModeTest {
+class ForegroundModeAndActiveTest {
     private var previousAppOpsConstants: String? = null
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -359,6 +362,54 @@ class ForegroundModeTest {
         foregroundControlService.stopLocationForegroundService()
 
         gotCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+    }
+
+    @Test
+    fun activeNotChangedAfterMultipleStartsUidModeChangeAndOneStop() {
+        val finishCallback = CompletableFuture<Unit>()
+        val startCallback = CompletableFuture<Unit>()
+        runWithShellPermissionIdentity {
+            appopsManager.startWatchingActive(arrayOf(OPSTR_FINE_LOCATION), context.mainExecutor) {
+                op, uid, pkgName, active ->
+                if (pkgName == context.packageName) {
+                    if (active) {
+                        startCallback.complete(Unit)
+                    } else {
+                        finishCallback.complete(Unit)
+                    }
+                }
+            }
+        }
+
+        // Start three times
+        val numStarts = 3
+        for (i in 1..numStarts) {
+            appopsManager.startOp(OPSTR_FINE_LOCATION, Process.myUid(), context.packageName, null,
+                null)
+        }
+
+        // Wait for start
+        startCallback.get(TIMEOUT_MILLIS, MILLISECONDS)
+        withTopActivity {
+            // After moving to foreground, finish three times. We expect no callback until the third
+            for (i in 1..numStarts) {
+                context.getSystemService(AppOpsManager::class.java)!!.finishOp(OPSTR_FINE_LOCATION,
+                    Process.myUid(), context.packageName, null)
+                val exception = try {
+                    finishCallback.get(EXPECTED_TIMEOUT_MILLIS, MILLISECONDS)
+                    null
+                } catch (e: TimeoutException) {
+                    e
+                }
+                if (i < numStarts) {
+                    Assert.assertNotNull("Got an active=false callback, but did not expect to",
+                        exception)
+                } else {
+                    Assert.assertNull("Expected to get an active=false callback after 3 stops",
+                        exception)
+                }
+            }
+        }
     }
 
     @After
