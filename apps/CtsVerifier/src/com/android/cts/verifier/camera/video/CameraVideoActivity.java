@@ -866,10 +866,6 @@ public class CameraVideoActivity extends PassFailButtons.Activity
             mVideoRotation = (info.orientation - degrees + 360) % 360;
             mPreviewRotation = mVideoRotation;
         }
-        if (mPreviewRotation != 0 && mPreviewRotation != 180) {
-            Log.w(TAG,
-                "Display orientation correction is not 0 or 180, as expected!");
-        }
 
         mCamera.setDisplayOrientation(mPreviewRotation);
 
@@ -898,24 +894,34 @@ public class CameraVideoActivity extends PassFailButtons.Activity
         Matrix transform = new Matrix();
         float widthRatio = mNextPreviewSize.width / (float)mPreviewTexWidth;
         float heightRatio = mNextPreviewSize.height / (float)mPreviewTexHeight;
+        float scaledWidth = (float) mPreviewTexWidth;
+        float scaledHeight = (float) mPreviewTexHeight;
         if (VERBOSE) {
             Log.v(TAG, "startPreview: widthRatio=" + widthRatio + " " + "heightRatio=" +
                     heightRatio);
         }
 
         if (heightRatio < widthRatio) {
+            scaledHeight = mPreviewTexHeight * (heightRatio / widthRatio);
             transform.setScale(1, heightRatio / widthRatio);
-            transform.postTranslate(0,
-                    mPreviewTexHeight * (1 - heightRatio / widthRatio) / 2);
+            transform.postTranslate(0, (mPreviewTexHeight - scaledHeight) / 2);
             if (VERBOSE) {
                 Log.v(TAG, "startPreview: shrink vertical by " + heightRatio / widthRatio);
             }
         } else {
+            scaledWidth = mPreviewTexWidth * (widthRatio / heightRatio);
             transform.setScale(widthRatio / heightRatio, 1);
-            transform.postTranslate(mPreviewTexWidth * (1 - widthRatio / heightRatio) / 2, 0);
+            transform.postTranslate((mPreviewTexWidth - scaledWidth) / 2, 0);
             if (VERBOSE) {
                 Log.v(TAG, "startPreview: shrink horizontal by " + widthRatio / heightRatio);
             }
+        }
+
+        if (mPreviewRotation == 90 || mPreviewRotation == 270) {
+            float scaledAspect = scaledWidth / scaledHeight;
+            float previewAspect = (float) mNextPreviewSize.width / (float) mNextPreviewSize.height;
+            transform.postScale(1.0f, scaledAspect * previewAspect,
+                                (float) mPreviewTexWidth / 2, (float) mPreviewTexHeight / 2);
         }
 
         mPreviewView.setTransform(transform);
