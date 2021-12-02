@@ -2684,7 +2684,6 @@
         <activity
             android:name=".camera.fov.PhotoCaptureActivity"
             android:label="@string/camera_fov_calibration"
-            android:screenOrientation="landscape"
             android:exported="true"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
             <intent-filter android:label="@string/camera_fov_calibration" >
@@ -2701,7 +2700,6 @@
         <activity
             android:name=".camera.fov.DetermineFovActivity"
             android:label="@string/camera_fov_calibration"
-            android:screenOrientation="landscape"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
