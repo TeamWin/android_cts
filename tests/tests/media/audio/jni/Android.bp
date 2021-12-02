@@ -18,14 +18,17 @@ package {
 }
 
 cc_test_library {
-    name: "libaudio_jni",
+    name: "libaudiocts_jni",
     srcs: [
-        "audio-record-native.cpp",
-        "audio-track-native.cpp",
-        "sl-utils.cpp",
+        "appendix-b-1-1-buffer-queue.cpp",
+        "appendix-b-1-2-recording.cpp",
+        "audio-metadata-native.cpp",
     ],
-    include_dirs: ["system/core/include"],
+    include_dirs: ["system/core/include",
+                   "cts/tests/tests/media/libaudiojni"],
+
     shared_libs: [
+        "libaudio_jni",
         "libandroid",
         "liblog",
         "libnativehelper_compat_libc++",
