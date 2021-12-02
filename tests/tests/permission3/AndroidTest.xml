@@ -58,6 +58,7 @@
         <option name="push" value="CtsUsePermissionAppLatest.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppLatest.apk" />
         <option name="push" value="CtsUsePermissionAppLatestNone.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppLatestNone.apk" />
         <option name="push" value="CtsUsePermissionAppWithOverlay.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppWithOverlay.apk" />
+        <option name="push" value="CtsHelperAppOverlay.apk->/data/local/tmp/cts/permission3/CtsHelperAppOverlay.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
