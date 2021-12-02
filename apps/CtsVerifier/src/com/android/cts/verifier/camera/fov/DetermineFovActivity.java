@@ -16,8 +16,6 @@
 
 package com.android.cts.verifier.camera.fov;
 
-import com.android.cts.verifier.R;
-
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -34,6 +32,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+
+import com.android.cts.verifier.R;
 
 import java.io.File;
 import java.io.FileInputStream;
