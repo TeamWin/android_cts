@@ -25,4 +25,6 @@ LOCAL_SIGNATURE_API_FILES := \
     car-system-current.api \
     car-system-removed.api \
 
+LOCAL_HOST_REQUIRED_MODULES := cts-dynamic-config
+
 include $(LOCAL_PATH)/../build_signature_apk.mk

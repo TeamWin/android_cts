@@ -67,13 +67,13 @@ public class AnnotationChecker extends AbstractApiChecker {
     @Override
     public void checkDeferred() {
         for (Class<?> clazz : annotatedClassesMap.values()) {
-            resultObserver.notifyFailure(FailureType.EXTRA_CLASS, clazz.getName(),
+            resultObserver.notifyFailure(FailureType.extra(clazz), clazz.getName(),
                     "Class annotated with " + annotationClass.getName()
                             + " does not exist in the documented API");
         }
         for (Set<Constructor<?>> set : annotatedConstructorsMap.values()) {
             for (Constructor<?> c : set) {
-                resultObserver.notifyFailure(FailureType.EXTRA_METHOD, c.toString(),
+                resultObserver.notifyFailure(FailureType.EXTRA_CONSTRUCTOR, c.toString(),
                         "Constructor annotated with " + annotationClass.getName()
                                 + " does not exist in the API");
             }
