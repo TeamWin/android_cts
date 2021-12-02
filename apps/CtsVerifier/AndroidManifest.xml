@@ -2631,8 +2631,7 @@
 
         <activity android:name=".camera.formats.CameraFormatsActivity"
                  android:label="@string/camera_format"
-                 android:exported="true"
-                 android:screenOrientation="landscape">
+                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
