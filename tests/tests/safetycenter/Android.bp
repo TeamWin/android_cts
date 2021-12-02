@@ -35,6 +35,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "kotlin-stdlib",
+        "kotlin-test",
         "modules-utils-build_system",
         "truth-prebuilt",
     ],
