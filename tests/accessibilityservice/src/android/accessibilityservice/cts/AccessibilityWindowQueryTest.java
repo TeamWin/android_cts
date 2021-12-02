@@ -567,52 +567,6 @@ public class AccessibilityWindowQueryTest {
         }
     }
 
-    @MediumTest
-    @Test
-    public void testToggleSplitScreen() throws Exception {
-        assumeTrue(
-                "Skipping test: no multi-window support",
-                ActivityTaskManager.supportsSplitScreenMultiWindow(mActivity));
-
-        final int initialWindowingMode =
-                mActivity.getResources().getConfiguration().windowConfiguration.getWindowingMode();
-
-        assertTrue(
-                sUiAutomation.performGlobalAction(
-                        AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
-
-        TestUtils.waitUntil(
-                "waiting until activity becomes split screen windowing mode",
-                () -> {
-                    final int windowingMode =
-                            mActivity
-                                    .getResources()
-                                    .getConfiguration()
-                                    .windowConfiguration
-                                    .getWindowingMode();
-                    return windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
-                            || windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
-                });
-
-        sUiAutomation.waitForIdle(TIMEOUT_WINDOW_STATE_IDLE, DEFAULT_TIMEOUT_MS);
-
-        assertTrue(
-                sUiAutomation.performGlobalAction(
-                        AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
-
-        TestUtils.waitUntil(
-                "waiting until activity goes back to default screen windowing mode",
-                () -> {
-                    final int windowingMode =
-                            mActivity
-                                    .getResources()
-                                    .getConfiguration()
-                                    .windowConfiguration
-                                    .getWindowingMode();
-                    return windowingMode == initialWindowingMode;
-                });
-    }
-
     @Test
     public void testFindPictureInPictureWindow() throws Exception {
         if (!sInstrumentation.getContext().getPackageManager()
