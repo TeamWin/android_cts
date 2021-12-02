@@ -24,7 +24,9 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import android.os.Parcel
 import android.safetycenter.SafetySourceData
 import android.safetycenter.SafetySourceIssue
+import android.safetycenter.SafetySourceIssue.ISSUE_CATEGORY_ACCOUNT
 import android.safetycenter.SafetySourceStatus
+import android.safetycenter.SafetySourceStatus.IconAction.ICON_TYPE_GEAR
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
@@ -51,23 +53,33 @@ class SafetySourceDataTest {
             SafetySourceStatus.STATUS_LEVEL_RECOMMENDATION,
             PendingIntent.getActivity(context, 0 /* requestCode= */,
                     Intent("Status PendingIntent 2"), FLAG_IMMUTABLE))
+            .setIconAction(SafetySourceStatus.IconAction(ICON_TYPE_GEAR,
+                    PendingIntent.getActivity(context, 0 /* requestCode= */,
+                            Intent("IconAction PendingIntent 2"), FLAG_IMMUTABLE)))
             .build()
     private val issue1 = SafetySourceIssue.Builder(
-            "Issue title 1",
+            "Issue id 1",
+            "Issue summary 1",
             "Issue summary 1",
             SafetySourceIssue.SEVERITY_LEVEL_INFORMATION)
+            .setSubtitle("Issue subtitle 1")
+            .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
             .addAction(SafetySourceIssue.Action.Builder("Action label 1",
                     PendingIntent.getActivity(context, 0 /* requestCode= */,
                             Intent("Issue PendingIntent 1"), FLAG_IMMUTABLE))
                     .build())
             .build()
     private val issue2 = SafetySourceIssue.Builder(
+            "Issue id 2",
             "Issue title 2",
             "Issue summary 2",
             SafetySourceIssue.SEVERITY_LEVEL_RECOMMENDATION)
             .addAction(SafetySourceIssue.Action.Builder("Action label 2",
                     PendingIntent.getService(context, 0 /* requestCode= */,
                             Intent("Issue PendingIntent 2"), FLAG_IMMUTABLE)).build())
+            .setOnDismissPendingIntent(PendingIntent.getService(context,
+                    0 /* requestCode= */,
+                    Intent("Issue OnDismissPendingIntent 2"), FLAG_IMMUTABLE))
             .build()
 
     @Test

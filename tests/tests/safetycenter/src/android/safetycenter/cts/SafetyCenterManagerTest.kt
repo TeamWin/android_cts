@@ -87,7 +87,7 @@ class SafetyCenterManagerTest {
             ).build()
         ).addIssue(
             SafetySourceIssue.Builder(
-                "Issue title", "Summary of the issue",
+                "Issue id", "Issue title", "Summary of the issue",
                 SEVERITY_LEVEL_CRITICAL_WARNING
             ).addAction(
                 SafetySourceIssue.Action.Builder(
