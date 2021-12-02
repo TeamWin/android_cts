@@ -127,14 +127,6 @@
              android:label="ResourceManagerTestActivity2"
              android:process=":mediaCodecTestProcess2">
         </activity>
-        <activity android:name="android.media.cts.RingtonePickerActivity"
-             android:label="RingtonePickerActivity"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-            </intent-filter>
-        </activity>
         <activity android:name="android.media.cts.MockActivity"/>
         <activity android:name="android.media.cts.MediaRouter2TestActivity"/>
         <service android:name="android.media.cts.RemoteVirtualDisplayService"
