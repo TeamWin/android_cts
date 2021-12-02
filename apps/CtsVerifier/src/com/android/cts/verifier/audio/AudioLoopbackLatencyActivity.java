@@ -16,7 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
-import android.app.AlertDialog;
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
@@ -27,7 +29,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
@@ -35,15 +36,12 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
-import com.android.cts.verifier.audio.audiolib.StatUtils;
-import com.android.cts.verifier.audio.audiolib.AudioUtils;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
-
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
+import com.android.cts.verifier.audio.audiolib.AudioUtils;
+import com.android.cts.verifier.audio.audiolib.StatUtils;
 
 /**
  * CtsVerifier Audio Loopback Latency Test
@@ -683,11 +681,9 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.audio_loopback_test_btn:
-                    Log.i(TAG, "audio loopback test");
-                    startAudioTest(mMessageHandler);
-                    break;
+            if (v.getId() == R.id.audio_loopback_test_btn) {
+                Log.i(TAG, "audio loopback test");
+                startAudioTest(mMessageHandler);
             }
         }
     }

@@ -379,25 +379,20 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
     public void actionPressed(View v) {
         if (mCurrentTest != null) {
-            switch (v.getId()) {
-                case R.id.tiles_action_pass:
-                    mCurrentTest.status = PASS;
-                    mCurrentTest.mUserVerified = true;
-                    next();
-                    break;
-                case R.id.tiles_action_fail:
-                    mCurrentTest.status = FAIL;
-                    mCurrentTest.mUserVerified = true;
-                    next();
-                    break;
-                case R.id.tiles_action_request:
-                    mCurrentTest.status = WAIT_FOR_USER;
-                    v.setEnabled(false);
-                    mHandler.post(mCurrentTest::requestAction);
-                    next();
-                    break;
-                default:
-                    break;
+            int id = v.getId();
+            if (id == R.id.tiles_action_pass) {
+                mCurrentTest.status = PASS;
+                mCurrentTest.mUserVerified = true;
+                next();
+            } else if (id == R.id.tiles_action_fail) {
+                mCurrentTest.status = FAIL;
+                mCurrentTest.mUserVerified = true;
+                next();
+            } else if (id == R.id.tiles_action_request) {
+                mCurrentTest.status = WAIT_FOR_USER;
+                v.setEnabled(false);
+                mHandler.post(mCurrentTest::requestAction);
+                next();
             }
         }
     }

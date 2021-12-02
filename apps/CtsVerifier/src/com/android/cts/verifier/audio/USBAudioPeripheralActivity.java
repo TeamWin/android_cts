@@ -87,20 +87,15 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.uap_tests_yes_btn:
-                    mHasHostMode = true;
-                    setUsbAudioStatus(mHasHostMode);
-                    break;
-
-                case R.id.uap_tests_no_btn:
-                    mHasHostMode = false;
-                    setUsbAudioStatus(mHasHostMode);
-                    break;
-
-                case R.id.uap_test_info_btn:
-                    showUAPInfoDialog();
-                    break;
+            int id = v.getId();
+            if (id == R.id.uap_tests_yes_btn) {
+                mHasHostMode = true;
+                setUsbAudioStatus(mHasHostMode);
+            } else if (id == R.id.uap_tests_no_btn) {
+                mHasHostMode = false;
+                setUsbAudioStatus(mHasHostMode);
+            } else if (id == R.id.uap_test_info_btn) {
+                showUAPInfoDialog();
             }
         }
     }

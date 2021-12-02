@@ -56,20 +56,17 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     private class OnBtnClickListener implements OnClickListener {
         @Override
         public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.audio_wired_no:
-                    Log.i(TAG, "User denies wired device existence");
-                    enableTestButtons(false);
-                    recordWiredPortFound(false);
-                    getPassButton().setEnabled(true);
-                    break;
-
-                case R.id.audio_wired_yes:
-                    Log.i(TAG, "User confirms wired device existence");
-                    enableTestButtons(true);
-                    recordWiredPortFound(true);
-                    getPassButton().setEnabled(false);
-                    break;
+            int id = v.getId();
+            if (id == R.id.audio_wired_no) {
+                Log.i(TAG, "User denies wired device existence");
+                enableTestButtons(false);
+                recordWiredPortFound(false);
+                getPassButton().setEnabled(true);
+            } else if (id == R.id.audio_wired_yes) {
+                Log.i(TAG, "User confirms wired device existence");
+                enableTestButtons(true);
+                recordWiredPortFound(true);
+                getPassButton().setEnabled(false);
             }
         }
     }
