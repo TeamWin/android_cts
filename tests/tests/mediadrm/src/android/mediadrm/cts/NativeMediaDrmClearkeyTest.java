@@ -21,11 +21,13 @@ import android.media.cts.ConnectionStatus;
 import android.media.cts.IConnectionStatus;
 import android.media.cts.MediaCodecBlockModelHelper;
 import android.net.Uri;
+import android.os.Build;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Surface;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
@@ -297,6 +299,9 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
 
     private static native boolean testQueryKeyStatusNative(final byte[] uuid);
 
+    private static native boolean testGetKeyRequestNative(final byte[] uuid,
+            PlaybackParams params);
+
     public void testClearKeyPlaybackCenc() throws Exception {
         testClearKeyPlayback(
             COMMON_PSSH_SCHEME_UUID,
@@ -315,6 +320,21 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
             Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH),
             Uri.parse(Utils.getMediaPath() + CENC_CLEARKEY_VIDEO_PATH),
             VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
+    }
+
+    // TODO(b/208938664) Change this sdk version suppression to T once it's defined to number (33).
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S_V2)
+    public void testClearKeyGetKeyRequest() throws Exception {
+        PlaybackParams params = new PlaybackParams();
+        params.surface = mActivity.getSurfaceHolder().getSurface();
+        params.mimeType = ISO_BMFF_VIDEO_MIME_TYPE;
+        params.audioUrl = Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH).toString();
+        params.videoUrl = Uri.parse(Utils.getMediaPath() + CENC_CLEARKEY_VIDEO_PATH).toString();
+        boolean status = testGetKeyRequestNative(
+                uuidByteArray(CLEARKEY_SCHEME_UUID),
+                params);
+        assertTrue(status);
+        params.surface.release();
     }
 }
 
