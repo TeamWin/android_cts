@@ -1463,32 +1463,6 @@ public class ContentResolverTest extends AndroidTestCase {
         mContentResolver.unregisterContentObserver(observer2);
     }
 
-    public void testNotifyChange_VerifyUserId() {
-        final MockContentObserver mco = new MockContentObserver();
-
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mContentResolver,
-                (cr) -> cr.registerContentObserverForAllUsers(LEVEL1_URI, true, mco)
-        );
-        assertFalse(mco.hadOnChanged());
-
-        mContentResolver.notifyChange(
-                Arrays.asList(LEVEL1_URI), null, 0);
-
-        final List<Change> expected = Arrays.asList(
-                new Change(false, Arrays.asList(LEVEL1_URI), 0, mContext.getUserId()));
-
-        new PollingCheck() {
-            @Override
-            protected boolean check() {
-                return mco.hadChanges(expected);
-            }
-        }.run();
-
-        mco.reset();
-        mContentResolver.unregisterContentObserver(mco);
-    }
-
     public void testStartCancelSync() {
         Bundle extras = new Bundle();
 
