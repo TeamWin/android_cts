@@ -16,6 +16,8 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.MagnificationConfig.MAGNIFICATION_MODE_FULLSCREEN;
+
 import static org.junit.Assert.assertEquals;
 
 import android.accessibilityservice.MagnificationConfig;
@@ -34,7 +36,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class MagnificationConfigTest {
 
-    private final int mMode = MagnificationConfig.FULLSCREEN_MODE;
+    private final int mMode = MAGNIFICATION_MODE_FULLSCREEN;
     private final float mScale = 1;
     private final float mCenterX = 2;
     private final float mCenterY = 3;
