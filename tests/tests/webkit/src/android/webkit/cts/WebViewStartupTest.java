@@ -58,9 +58,13 @@ public class WebViewStartupTest extends InstrumentationTestCase {
 
             // Create WebView on the app's main thread
             if (alreadyOnMainThread) {
-                new WebView(ctx);
+                WebView webView = new WebView(ctx);
+                webView.destroy();
             } else {
-                WebkitUtils.onMainThreadSync(() -> { new WebView(ctx); });
+                WebkitUtils.onMainThreadSync(() -> {
+                  WebView webView = new WebView(ctx);
+                  webView.destroy();
+                });
             }
 
             // Ensure we are still using the same WebView package.
@@ -117,7 +121,8 @@ public class WebViewStartupTest extends InstrumentationTestCase {
             // already be used in other processes.
             WebView.setDataDirectorySuffix(TEST_PROCESS_DATA_DIR_SUFFIX);
 
-            createAndCheckWebViewLooper(ctx);
+            WebView webView = createAndCheckWebViewLooper(ctx);
+            webView.destroy();
         }
     }
 
@@ -145,6 +150,7 @@ public class WebViewStartupTest extends InstrumentationTestCase {
             WebView webView =
                     WebkitUtils.onMainThreadSync(() -> createAndCheckWebViewLooper(ctx));
             assertEquals(Looper.getMainLooper(), webView.getWebViewLooper());
+            WebkitUtils.onMainThreadSync(() -> webView.destroy());
         }
     }
 
