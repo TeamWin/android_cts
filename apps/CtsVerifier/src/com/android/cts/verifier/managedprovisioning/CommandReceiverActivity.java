@@ -474,32 +474,25 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.uninstallCaCert(mAdmin, TEST_CA.getBytes());
                 } break;
                 case COMMAND_SET_MAXIMUM_PASSWORD_ATTEMPTS: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
-                        return;
-                    }
-                    mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 100);
+                    if (!isDeviceOwner()) return;
+                    int max = 100;
+                    Log.d(TAG, "Setting maximum password attempts to " + max + " using" + mDpm);
+                    mDpm.setMaximumFailedPasswordsForWipe(mAdmin, max);
                 } break;
                 case COMMAND_CLEAR_MAXIMUM_PASSWORD_ATTEMPTS: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
-                        return;
-                    }
+                    if (!isDeviceOwner()) return;
+                    Log.d(TAG, "Clearing maximum password attempts using" + mDpm);
                     mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
                 } break;
                 case COMMAND_SET_DEFAULT_IME: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())
-                            && !UserManager.isHeadlessSystemUserMode()) {
-                        return;
-                    }
+                    if (!isDeviceOwner()) return;
                     Log.d(TAG, "Setting " + Settings.Secure.DEFAULT_INPUT_METHOD + " using "
                             + mDpm);
                     mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD,
                             getPackageName());
                 } break;
                 case COMMAND_CLEAR_DEFAULT_IME: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())
-                            && !UserManager.isHeadlessSystemUserMode()) {
-                        return;
-                    }
+                    if (!isDeviceOwner()) return;
                     Log.d(TAG, "Clearing " + Settings.Secure.DEFAULT_INPUT_METHOD + " using "
                             + mDpm);
                     mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
@@ -575,6 +568,19 @@ public class CommandReceiverActivity extends Activity {
         } finally {
             finish();
         }
+    }
+
+    /**
+     * Checks if {@code CtsVerifier} is the device owner.
+     */
+    private boolean isDeviceOwner() {
+        // Cannot use mDpm as it would be the DPM of the current user on headless system user mode,
+        // which would return false
+        DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
+                DeviceAdminTestReceiver.class, /* forDeviceOwner= */ true);
+        boolean isIt = dpm.isDeviceOwnerApp(getPackageName());
+        Log.v(TAG, "is " + getPackageName() + " DO, using " + dpm + "? " + isIt);
+        return isIt;
     }
 
     private void installHelperPackage() throws Exception {
