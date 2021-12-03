@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package com.android.tests.stagedinstall;
+package com.android.cts.install.lib;
 
 import android.content.pm.PackageInstaller;
 
@@ -24,7 +24,7 @@ import com.google.common.truth.Truth;
 
 import javax.annotation.Nullable;
 
-final class PackageInstallerSessionInfoSubject extends Subject {
+public final class PackageInstallerSessionInfoSubject extends Subject {
     private final PackageInstaller.SessionInfo mActual;
 
     private PackageInstallerSessionInfoSubject(FailureMetadata failureMetadata,
@@ -45,7 +45,7 @@ final class PackageInstallerSessionInfoSubject extends Subject {
         };
     }
 
-    static PackageInstallerSessionInfoSubject assertThat(
+    public static PackageInstallerSessionInfoSubject assertThat(
             PackageInstaller.SessionInfo session) {
         return Truth.assertAbout(sessions()).that(session);
     }
