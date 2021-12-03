@@ -469,6 +469,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchHomeActivity();
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
 
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
         // Check the order of the callbacks accounting for a task overlay activity that might show.
@@ -502,6 +503,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mBroadcastActionTrigger.doAction(ACTION_ON_PIP_REQUESTED);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
 
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
         // Check the order of the callbacks accounting for a task overlay activity that might show.
