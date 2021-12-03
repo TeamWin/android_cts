@@ -41,6 +41,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -76,6 +77,15 @@ public class AlertWindowsAppOpsTests {
     public static void revokeSystemAlertWindowAccess() throws IOException {
         AppOpsUtils.setOpMode(getInstrumentation().getContext().getPackageName(),
                 OPSTR_SYSTEM_ALERT_WINDOW, sPreviousSawAppOp);
+    }
+
+    /**
+     * Want to be especially sure we don't leave up the system alert dialog, so try and dismiss
+     * after test.
+     */
+    @After
+    public void tearDown() {
+        getInstrumentation().runOnMainSync(mActivityRule.getActivity()::hideSystemAlertWindow);
     }
 
     @Test
