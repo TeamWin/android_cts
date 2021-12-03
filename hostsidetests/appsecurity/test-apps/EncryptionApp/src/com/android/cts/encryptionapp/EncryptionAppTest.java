@@ -115,8 +115,8 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         // Set a PIN for this user
         mDevice.executeShellCommand("settings put global require_password_to_decrypt 0");
         mDevice.executeShellCommand("locksettings set-disabled false");
-        String output = mDevice.executeShellCommand("locksettings set-pin 12345");
-        assertTrue("set-pin failed. Output: " + output, output.contains("12345"));
+        String output = mDevice.executeShellCommand("locksettings set-pin 1234");
+        assertTrue("set-pin failed. Output: " + output, output.contains("1234"));
     }
 
     public void testTearDown() throws Exception {
@@ -128,7 +128,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
 
         // Clear PIN for this user
-        mDevice.executeShellCommand("locksettings clear --old 12345");
+        mDevice.executeShellCommand("locksettings clear --old 1234");
         mDevice.executeShellCommand("locksettings set-disabled true");
         mDevice.executeShellCommand("settings delete global require_password_to_decrypt");
     }
@@ -205,7 +205,6 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.pressKeyCode(KeyEvent.KEYCODE_2);
         mDevice.pressKeyCode(KeyEvent.KEYCODE_3);
         mDevice.pressKeyCode(KeyEvent.KEYCODE_4);
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_5);
         mDevice.waitForIdle();
         mDevice.pressEnter();
         mDevice.waitForIdle();
