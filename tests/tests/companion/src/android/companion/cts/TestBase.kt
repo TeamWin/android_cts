@@ -32,6 +32,7 @@ import org.junit.AssumptionViolatedException
 import org.junit.Before
 import java.util.concurrent.Executor
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -73,6 +74,10 @@ abstract class TestBase {
             if (!isInstalled()) install()
             assertTrue("Test app $packageName is not installed") { isInstalled() }
         }
+
+        // Make sure CompanionDeviceServices are not bound.
+        assertFalse(PrimaryCompanionService.isBound)
+        assertFalse(SecondaryCompanionService.isBound)
 
         setUp()
     }
@@ -135,18 +140,18 @@ fun assertAssociations(
 ) = assertEquals(actual = actual.map { it.packageName to it.deviceMacAddress }.toSet(),
         expected = expected)
 
+/**
+ * @return whether the condition was met before time ran out.
+ */
 fun waitFor(
-    message: String,
     timeout: Long = 10_000,
     interval: Long = 1_000,
     condition: () -> Boolean
-) {
+): Boolean {
     val startTime = uptimeMillis()
     while (!condition()) {
-        if (uptimeMillis() - startTime > timeout) {
-            throw RuntimeException("Condition is not satisfied: $message")
-        }
-
+        if (uptimeMillis() - startTime > timeout) return false
         sleep(interval)
     }
+    return true
 }

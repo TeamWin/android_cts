@@ -50,11 +50,7 @@ class AssociationsCleanUpTest : TestBase() {
 
         /** Clear test app's data. */
         testApp.clearData()
-        waitFor("Associations for ${testApp.packageName} were not removed.") {
-            withShellPermissionIdentity {
-                cdm.getAssociationForPackage(testApp.userId, testApp.packageName).isEmpty()
-            }
-        }
+        assertAssociationsRemovedFor(testApp)
 
         /** Only Test App's associations should have been removed. Others - should remain. */
         assertAssociations(
@@ -80,11 +76,7 @@ class AssociationsCleanUpTest : TestBase() {
 
         /** Uninstall test app. */
         testApp.uninstall()
-        waitFor("Associations for ${testApp.packageName} were not removed.") {
-            withShellPermissionIdentity {
-                cdm.getAssociationForPackage(testApp.userId, testApp.packageName).isEmpty()
-            }
-        }
+        assertAssociationsRemovedFor(testApp)
 
         /** Only Test App's associations should have been removed. Others - should remain. */
         assertAssociations(
@@ -92,6 +84,15 @@ class AssociationsCleanUpTest : TestBase() {
                 expected = setOf(
                         targetApp.packageName to MAC_ADDRESS_C
                 ))
+    }
+
+    private fun assertAssociationsRemovedFor(app: AppHelper) = waitFor {
+        withShellPermissionIdentity {
+            cdm.getAssociationForPackage(app.userId, app.packageName).isEmpty()
+        }
+    }.let { removed ->
+        if (!removed)
+            throw AssertionError("Associations for ${app.packageName} were not removed.")
     }
 }
 
