@@ -69,7 +69,7 @@ public class ExpectedFailuresFilterAnnotationCheckerTest
 
     @Test
     public void testIgnoreExpectedFailures_TestStillFails() {
-        NoFailures observer = new NoFailures();
+        ExpectFailure observer = new ExpectFailure(FailureType.MISSING_ANNOTATION);
 
         ResultObserver filter = new ExpectedFailuresFilter(observer, Arrays.asList(
             "extra_method:public void android.signature.cts.tests.data.SystemApiClass.apiMethod()",
