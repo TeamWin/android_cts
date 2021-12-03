@@ -221,6 +221,7 @@ public class StorageManagerTest extends AndroidTestCase {
         final boolean removable = volume.isRemovable();
         final boolean emulated = volume.isEmulated();
         if (emulated) {
+            assertFalse("Should not be a stub volume", volume.isStub());
             assertFalse("Should not be removable", removable);
             assertNull("Should not have fsUuid", fsUuid);
             assertEquals("Should have uuid_default", StorageManager.UUID_DEFAULT, uuid);
