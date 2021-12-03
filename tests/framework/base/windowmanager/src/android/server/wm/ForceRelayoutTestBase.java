@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
+import android.content.res.Resources;
 import android.graphics.Insets;
 import android.os.Bundle;
 import android.view.View;
@@ -54,6 +55,7 @@ public class ForceRelayoutTestBase {
         assertNotNull("test setup failed", activity.mLastContentInsets);
         assumeFalse(Insets.NONE.equals(activity.mLastContentInsets.getInsetsIgnoringVisibility(
                 statusBars() | navigationBars())));
+        assumeFalse(usesRemoteInsetsController());
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
             activity.mLayoutHappened = false;
@@ -109,6 +111,18 @@ public class ForceRelayoutTestBase {
                 return WindowInsets.CONSUMED;
             });
             setContentView(view);
+        }
+    }
+
+    private boolean usesRemoteInsetsController() {
+        try {
+            return InstrumentationRegistry.getInstrumentation().getTargetContext().getResources()
+                    .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
+        } catch (Resources.NotFoundException e) {
+            // TestApi config_remoteInsetsControllerControlsSystemBars was only added in R QPR1
+            // and might not be present on all devices running R, in that case the default behavior
+            // should be assumed.
+            return false;
         }
     }
 }

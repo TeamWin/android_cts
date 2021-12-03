@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.graphics.Insets.NONE;
+import static android.server.wm.WindowInsetsControllerTests.usesRemoteInsetsController;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
@@ -26,6 +27,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -66,6 +68,7 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
         assumeTrue(hasWindowInsets(mRootView, systemBars()));
+        assumeFalse(usesRemoteInsetsController());
     }
 
     @Test
