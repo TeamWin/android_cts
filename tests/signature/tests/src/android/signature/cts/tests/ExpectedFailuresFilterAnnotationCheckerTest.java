@@ -35,12 +35,12 @@ import org.junit.runners.JUnit4;
  */
 @RunWith(JUnit4.class)
 public class ExpectedFailuresFilterAnnotationCheckerTest
-    extends AbstractApiCheckerTest<AnnotationChecker> {
+    extends ApiPresenceCheckerTest<AnnotationChecker> {
 
     @Override
     protected AnnotationChecker createChecker(ResultObserver resultObserver,
             ClassProvider provider) {
-        return new AnnotationChecker(resultObserver, provider, ApiAnnotation.class.getName());
+        return new AnnotationChecker(resultObserver, provider, ApiAnnotation.class.getName(), null);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ExpectedFailuresFilterAnnotationCheckerTest
 
     @Test
     public void testIgnoreExpectedFailures_TestStillFails() {
-        NoFailures observer = new NoFailures();
+        ExpectFailure observer = new ExpectFailure(FailureType.MISSING_ANNOTATION);
 
         ResultObserver filter = new ExpectedFailuresFilter(observer, Arrays.asList(
             "extra_method:public void android.signature.cts.tests.data.SystemApiClass.apiMethod()",
