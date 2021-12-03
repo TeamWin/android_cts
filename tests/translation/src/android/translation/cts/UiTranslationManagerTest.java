@@ -57,6 +57,7 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureContext;
 import android.view.inputmethod.InputMethodManager;
+import android.view.translation.TranslationContext;
 import android.view.translation.TranslationRequest;
 import android.view.translation.TranslationResponse;
 import android.view.translation.TranslationResponseValue;
@@ -210,6 +211,13 @@ public class UiTranslationManagerTest {
             assertThat(viewRequest.getKeys()).containsExactly(ViewTranslationRequest.ID_TEXT);
             assertThat(viewRequest.getValue(ViewTranslationRequest.ID_TEXT).getText())
                     .isEqualTo(originalText.toString());
+            CtsTranslationService translationService =
+                    mTranslationServiceServiceWatcher.getService();
+            TranslationContext translationContext = translationService.getTranslationContext();
+            assertThat(translationContext).isNotNull();
+            assertThat(translationContext.getActivityId()).isNotNull();
+            assertThat(translationContext.getActivityId())
+                    .isEqualTo(contentCaptureContext.getActivityId());
 
             assertThat(helloText.getText()).isEqualTo(translatedText);
             assertThat(mTextView.getViewTranslationResponse())
@@ -228,8 +236,6 @@ public class UiTranslationManagerTest {
             assertThat(helloText.getText()).isEqualTo(originalText.toString());
 
             // Check the Translation session is destroyed after calling finishTranslation()
-            CtsTranslationService translationService =
-                    mTranslationServiceServiceWatcher.getService();
             translationService.awaitSessionDestroyed();
 
             // Test re-translating.
