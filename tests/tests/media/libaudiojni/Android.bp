@@ -20,9 +20,6 @@ package {
 cc_test_library {
     name: "libaudio_jni",
     srcs: [
-        "appendix-b-1-1-buffer-queue.cpp",
-        "appendix-b-1-2-recording.cpp",
-        "audio-metadata-native.cpp",
         "audio-record-native.cpp",
         "audio-track-native.cpp",
         "sl-utils.cpp",

@@ -150,19 +150,30 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      * will have the same effect as calling {@link #keepAlive()}.
      */
     public void registerReceiver(IntentFilter intentFilter) {
+        registerReceiver(intentFilter, 0);
+    }
+
+    /**
+     * See {@link registerReceiver(IntentFilter)}.
+     */
+    public void registerReceiver(IntentFilter intentFilter, int flags) {
         if (mRegisteredBroadcastReceivers.containsKey(intentFilter)) {
             return;
         }
 
         long receiverId = UUID.randomUUID().getMostSignificantBits();
-        registerReceiver(intentFilter, receiverId);
+        registerReceiver(intentFilter, receiverId, flags);
         keepAlive(/* manualKeepAlive= */ false);
     }
 
     private void registerReceiver(IntentFilter intentFilter, long receiverId) {
+        registerReceiver(intentFilter, receiverId, 0);
+    }
+
+    private void registerReceiver(IntentFilter intentFilter, long receiverId, int flags) {
         try {
             mConnector.connect();
-            mTestAppController.other().registerReceiver(receiverId, intentFilter);
+            mTestAppController.other().registerReceiver(receiverId, intentFilter, flags);
             mRegisteredBroadcastReceivers.put(intentFilter, receiverId);
         } catch (UnavailableProfileException e) {
             throw new IllegalStateException("Could not connect to test app", e);

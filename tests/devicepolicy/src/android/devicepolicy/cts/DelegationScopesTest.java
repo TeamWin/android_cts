@@ -23,6 +23,7 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_SELECTION;
 import static android.app.admin.DevicePolicyManager.DELEGATION_NETWORK_LOGGING;
 import static android.app.admin.DevicePolicyManager.DELEGATION_SECURITY_LOGGING;
 import static android.app.admin.DevicePolicyManager.EXTRA_DELEGATION_SCOPES;
+import static android.content.Context.RECEIVER_EXPORTED;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -422,7 +423,8 @@ public final class DelegationScopesTest {
             testApp.activities().any().start();
             // TODO(b/198588980): automatically register every test app for this broadcast.
             testApp.registerReceiver(
-                    new IntentFilter(ACTION_APPLICATION_DELEGATION_SCOPES_CHANGED));
+                    new IntentFilter(ACTION_APPLICATION_DELEGATION_SCOPES_CHANGED),
+                    RECEIVER_EXPORTED);
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(

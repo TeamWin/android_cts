@@ -164,7 +164,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
                 : createFullUser("PreCreatedUsersTest_Reference_User");
         // Some permissions (e.g. Role permission) are given only after initialization.
         switchUser(referenceUserId);
-        waitUntilUserPermissionsIsReady(referenceUserId);
+        waitUntilUserPermissionsIsReady(/* waitTime= */ 30, referenceUserId);
         Map<String, List<String>> refPkgMap = getPackagesAndPermissionsForUser(referenceUserId);
 
         // There can be just one guest by default, so remove it now otherwise
@@ -182,7 +182,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         convertPreCreatedUser(isGuest, preCreatedUserId);
         // Some permissions (e.g. Role permission) are given only after initialization.
         switchUser(preCreatedUserId);
-        waitUntilUserPermissionsIsReady(preCreatedUserId);
+        waitUntilUserPermissionsIsReady(/* waitTime= */ 20, preCreatedUserId);
         Map<String, List<String>> actualPkgMap = getPackagesAndPermissionsForUser(preCreatedUserId);
 
         List<String> errors = new ArrayList<>();
@@ -191,6 +191,20 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
                     assertWithMessage("permissions state mismatch for %s", pkg)
                             .that(actualPkgMap.get(pkg))
                             .isEqualTo(refPkgMap.get(pkg)));
+        }
+
+        if (!errors.isEmpty()) {
+            // if there are errors, wait for some more time and check again.
+            waitUntilUserPermissionsIsReady(/* waitTime= */ 20, preCreatedUserId);
+            Map<String, List<String>> actualPkgMap2 = getPackagesAndPermissionsForUser(
+                    preCreatedUserId);
+
+            errors = new ArrayList<>();
+            for (String pkg : refPkgMap.keySet()) {
+                addError(errors, () -> assertWithMessage("permissions state mismatch for %s", pkg)
+                        .that(actualPkgMap2.get(pkg))
+                        .isEqualTo(refPkgMap.get(pkg)));
+            }
         }
         assertWithMessage("found %s error", errors.size()).that(errors).isEmpty();
     }
@@ -246,10 +260,10 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     }
 
     // TODO(b/170263003): update this method after core framewokr's refactoring for proto
-    private void waitUntilUserPermissionsIsReady(int userId) throws InterruptedException {
-        int napTimeSec = 20;
-        CLog.i("Sleeping %ds to make permissions for user %d is ready", napTimeSec, userId);
-        sleep(napTimeSec * 1_000);
+    private void waitUntilUserPermissionsIsReady(int waitTime, int userId)
+            throws InterruptedException {
+        CLog.i("Sleeping %ds to make permissions for user %d is ready", waitTime, userId);
+        sleep(waitTime * 1_000);
     }
 
     private void deletePreCreatedUsers() throws Exception {

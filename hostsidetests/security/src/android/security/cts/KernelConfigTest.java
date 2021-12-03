@@ -416,4 +416,24 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
                     getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
         }
     }
+
+    /**
+     * Test that the kernel is using kASLR.
+     *
+     * @throws Exception
+     */
+    @CddTest(requirement="9.7")
+    @Test
+    public void testConfigRandomizeBase() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 33) {
+            return;
+        }
+
+        if (CpuFeatures.isArm32(mDevice)) {
+            return;
+        }
+
+        assertTrue("The kernel's base address must be randomized",
+                configSet.contains("CONFIG_RANDOMIZE_BASE=y"));
+    }
 }

@@ -15,6 +15,7 @@
  */
 package android.devicepolicy.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.Intent.ACTION_APPLICATION_RESTRICTIONS_CHANGED;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
@@ -303,7 +304,8 @@ public final class ApplicationRestrictionsTest {
         Bundle bundle = createBundle("setApplicationRestrictions_restrictionsChangedBroadcastIsReceived");
 
         try (TestAppInstance testApp = sTestApp.install()) {
-            testApp.registerReceiver(new IntentFilter(ACTION_APPLICATION_RESTRICTIONS_CHANGED));
+            testApp.registerReceiver(new IntentFilter(ACTION_APPLICATION_RESTRICTIONS_CHANGED),
+                    RECEIVER_EXPORTED);
 
             sDeviceState.dpc().devicePolicyManager()
                     .setApplicationRestrictions(

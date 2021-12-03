@@ -462,7 +462,7 @@ public class AccessibilityWindowReportingTest {
             intent.setAction(NotTouchableWindowTestActivity.ADD_TRUSTED_WINDOW);
 
             try {
-                SystemUtil.runWithShellPermissionIdentity(() -> {
+                SystemUtil.runWithShellPermissionIdentity(sUiAutomation, () -> {
                     sendIntentAndWaitForEvent(intent,
                             filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
                                     WINDOWS_CHANGE_ADDED,
@@ -493,7 +493,7 @@ public class AccessibilityWindowReportingTest {
     // Use shell command instead of ActivityLaunchUtils to get INTERNAL_SYSTEM_WINDOW
     // permission when the Session is created.
     private void launchNotTouchableWindowTestActivityFromShell() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        SystemUtil.runWithShellPermissionIdentity(sUiAutomation, () -> {
             sUiAutomation.executeAndWaitForEvent(
                     () -> {
                         final ComponentName componentName = new ComponentName(
