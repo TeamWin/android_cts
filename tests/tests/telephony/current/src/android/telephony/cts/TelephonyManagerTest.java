@@ -1669,6 +1669,11 @@ public class TelephonyManagerTest {
                 TelephonyManager.RADIO_POWER_ON);
         assertThat(mRadioRebootTriggered).isTrue();
 
+        if (mListener != null) {
+            // unregister the listener
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+        }
+
         // note, other telephony states might not resumes properly at this point. e.g, service state
         // might still in the transition from OOS to In service. Thus we need to wait for in
         // service state before running next tests.
