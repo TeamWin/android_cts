@@ -29,8 +29,10 @@ import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
+import static android.scopedstorage.cts.lib.TestUtils.assertCantInsertToOtherPrivateAppDirectories;
 import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameFile;
+import static android.scopedstorage.cts.lib.TestUtils.assertCantUpdateToOtherPrivateAppDirectories;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.assertMountMode;
@@ -2842,18 +2844,57 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         }
     }
 
+    /**
+     * Tests that System Gallery apps cannot insert files in other app's private directories.
+     */
+    @Test
+    public void testCantInsertFilesInOtherAppPrivateDir_hasSystemGallery() throws Exception {
+        int uid = Process.myUid();
+        try {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ALLOWED, SYSTEM_GALERY_APPOPS);
+            assertCantInsertToOtherPrivateAppDirectories(IMAGE_FILE_NAME,
+                    /* throwsExceptionForDataValue */ false, APP_B_NO_PERMS, THIS_PACKAGE_NAME);
+        } finally {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ERRORED, SYSTEM_GALERY_APPOPS);
+        }
+    }
+
+    /**
+     * Tests that System Gallery apps cannot update files in other app's private directories.
+     */
+    @Test
+    public void testCantUpdateFilesInOtherAppPrivateDir_hasSystemGallery() throws Exception {
+        int uid = Process.myUid();
+        try {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ALLOWED, SYSTEM_GALERY_APPOPS);
+            assertCantUpdateToOtherPrivateAppDirectories(IMAGE_FILE_NAME,
+                    /* throwsExceptionForDataValue */ false, APP_B_NO_PERMS, THIS_PACKAGE_NAME);
+        } finally {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ERRORED, SYSTEM_GALERY_APPOPS);
+        }
+    }
+
+    /**
+     * This test is for operations to the calling app's own private packages.
+     */
     @Test
     public void testInsertFromExternalDirsViaRelativePath() throws Exception {
         verifyInsertFromExternalMediaDirViaRelativePath_allowed();
         verifyInsertFromExternalPrivateDirViaRelativePath_denied();
     }
 
+    /**
+     * This test is for operations to the calling app's own private packages.
+     */
     @Test
     public void testUpdateToExternalDirsViaRelativePath() throws Exception {
         verifyUpdateToExternalMediaDirViaRelativePath_allowed();
         verifyUpdateToExternalPrivateDirsViaRelativePath_denied();
     }
 
+    /**
+     * This test is for operations to the calling app's own private packages.
+     */
     @Test
     public void testInsertFromExternalDirsViaRelativePathAsSystemGallery() throws Exception {
         int uid = Process.myUid();
@@ -2866,6 +2907,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         }
     }
 
+    /**
+     * This test is for operations to the calling app's own private packages.
+     */
     @Test
     public void testUpdateToExternalDirsViaRelativePathAsSystemGallery() throws Exception {
         int uid = Process.myUid();
