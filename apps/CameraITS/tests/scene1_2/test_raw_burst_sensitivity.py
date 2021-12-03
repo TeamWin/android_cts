@@ -77,9 +77,9 @@ class RawSensitivityBurstTest(its_base_test.ItsBaseTest):
           camera_properties_utils.per_frame_control(props) and
           not camera_properties_utils.mono_camera(props))
 
-      # Load chart for scene
+      # Load chart for scene (chart_distance=0 for no chart scaling)
       its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
+          cam, props, self.scene, self.tablet, chart_distance=0)
 
       # Find sensitivity range and create capture requests
       sens_min, _ = props['android.sensor.info.sensitivityRange']
