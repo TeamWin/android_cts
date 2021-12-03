@@ -83,9 +83,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.ImmutableSet;
 
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-
 import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
@@ -1141,7 +1138,7 @@ public class KeyAttestationTest {
                     assertThat("Software KM is version 3", attestation.getKeymasterVersion(),
                             is(3));
                     assertThat(softwareEnforced.getOsVersion(), is(systemOsVersion));
-                    checkSystemPatchLevel(teeEnforced.getOsPatchLevel(), systemPatchLevel);
+                    checkSystemPatchLevel(softwareEnforced.getOsPatchLevel(), systemPatchLevel);
                 }
 
                 assertNull("Software attestation cannot provide root of trust",
