@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.cts.verifier.qstiles;
+package com.android.cts.tileserviceapp;
 
 import android.service.quicksettings.TileService;
 
+/** TileService for test */
 public class RequestTileService extends TileService {
 }

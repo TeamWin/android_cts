@@ -2373,9 +2373,20 @@
         Settings. Check that the Tile Service for CTS Verifier is available to be added</string>
     <string name="tiles_removing_tile">Check that Tile Service is disabled</string>
     <string name="tile_request_service_name">Request Tile Service</string>
+    <string name="tile_request_helper_app_name">CtsTileServiceApp</string>
     <string name="tiles_request_test">Tile Service Request Test</string>
     <string name="tiles_request_info">This test checks that a request to add a TileService is
     shown correctly to the user and the correct answer is relayed to the app.</string>
+    <string name="tiles_request_uninstall">This will verify that the helper app is not installed.
+    If that is correct, the test will pass automatically. If the app is installed, press the button
+    and you will be prompted for confirmation to uninstall the app.</string>
+    <string name="tiles_request_install">You should have received a helper app apk with this CTS
+    Verifier package. Its name is \"CtsTileServiceApp\". Install the test app, by running\n
+    \"adb install /path/to/CtsTileServiceApp.apk\".\n
+    Pass the test if the install was successful. Fail it otherwise.
+    </string>
+    <string name="tiles_request_install_verify">This will automatically verify that the helper app
+    is correctly installed.</string>
     <string name="tiles_request_tile_not_present">Open Quick Settings and pass this test
     if there are no tiles named %1$s in any page.</string>
     <string name="tiles_request_dismissed">After pressing \"Start request\", a dialog will appear

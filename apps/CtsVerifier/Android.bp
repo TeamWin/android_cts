@@ -142,6 +142,7 @@ filegroup {
 filegroup {
     name: "other_required_apps",
     srcs: [
+        ":CtsTileServiceApp",
         ":CtsVerifierUSBCompanion",
         ":CtsVpnFirewallAppApi23",
         ":CtsVpnFirewallAppApi24",

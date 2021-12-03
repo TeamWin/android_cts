@@ -48,6 +48,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_PASSWORD_COMPLEXITY" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
@@ -3131,17 +3132,6 @@
         <service android:name=".qstiles.MockTileService"
                  android:icon="@android:drawable/ic_dialog_alert"
                  android:label="@string/tile_service_name"
-                 android:enabled="false"
-                  android:exported="true"
-                 android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-
-        <service android:name=".qstiles.RequestTileService"
-                 android:icon="@android:drawable/ic_dialog_alert"
-                 android:label="@string/tile_request_service_name"
                  android:enabled="false"
                  android:exported="true"
                  android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
