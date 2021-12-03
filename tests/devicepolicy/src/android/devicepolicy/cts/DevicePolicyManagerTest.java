@@ -18,7 +18,6 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
@@ -28,6 +27,8 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASS
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
+import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
@@ -54,7 +55,6 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.provider.Settings;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -62,13 +62,20 @@ import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.SystemUtil;
@@ -152,8 +159,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedManagedProfile_createsProfile() throws Exception {
@@ -173,8 +180,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedManagedProfile_createsManagedProfile() throws Exception {
@@ -194,8 +201,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS_FULL})
     @Test
     public void newlyProvisionedManagedProfile_setsActiveAdmin() throws Exception {
@@ -217,8 +224,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS, INTERACT_ACROSS_USERS})
     @Test
     public void newlyProvisionedManagedProfile_setsProfileOwner() throws Exception {
@@ -239,8 +246,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Ignore
     @Test
@@ -264,8 +271,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedManagedProfile_removesAccountFromParentByDefault()
@@ -289,8 +296,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Ignore
     @Test
@@ -315,8 +322,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedManagedProfile_removesNonRequiredAppsFromProfile()
@@ -341,8 +348,8 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
-    @RequireFeature(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedManagedProfile_setsCrossProfilePackages()
@@ -452,109 +459,123 @@ public final class DevicePolicyManagerTest {
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     @EnsureHasPermission({MANAGE_PROFILE_AND_DEVICE_OWNERS})
     @Test
     public void newlyProvisionedFullyManagedDevice_setsDeviceOwner() throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
         try {
+
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder().build();
-            resetUserSetupCompletedFlag();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
             assertThat(sDevicePolicyManager.isDeviceOwnerApp(sContext.getPackageName())).isTrue();
+
         } finally {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
-            setUserSetupCompletedFlag();
+            TestApis.users().current().setSetupComplete(setupComplete);
         }
     }
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedFullyManagedDevice_doesNotThrowException() throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
         try {
+
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder().build();
-            resetUserSetupCompletedFlag();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
+
         } finally {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
-            setUserSetupCompletedFlag();
+            TestApis.users().current().setSetupComplete(setupComplete);
         }
     }
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
             throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
         try {
+
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder().build();
-            resetUserSetupCompletedFlag();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
             assertThat(sDevicePolicyManager.canAdminGrantSensorsPermissions()).isTrue();
+
         } finally {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
-            setUserSetupCompletedFlag();
+            TestApis.users().current().setSetupComplete(setupComplete);
         }
     }
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     @Test
     public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
             throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
         try {
+
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder()
                             .setDeviceOwnerCanGrantSensorsPermissions(false)
                             .build();
-            resetUserSetupCompletedFlag();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
             assertThat(sDevicePolicyManager.canAdminGrantSensorsPermissions()).isFalse();
+
         } finally {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
-            setUserSetupCompletedFlag();
+            TestApis.users().current().setSetupComplete(setupComplete);
         }
     }
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
-    @RequireFeature(PackageManager.FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Test
     public void newlyProvisionedFullyManagedDevice_leavesAllSystemAppsEnabledWhenRequested()
             throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
         try {
+            Set<String> systemAppsBeforeProvisioning = findSystemApps();
+
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder()
                             .setLeaveAllSystemAppsEnabled(true)
                             .build();
-            resetUserSetupCompletedFlag();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
-            Set<String> systemAppsBeforeProvisioning = findSystemApps();
 
             Set<String> systemAppsAfterProvisioning = findSystemApps();
             assertThat(systemAppsAfterProvisioning).isEqualTo(systemAppsBeforeProvisioning);
         } finally {
             sDevicePolicyManager.forceRemoveActiveAdmin(
                     DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
-            setUserSetupCompletedFlag();
+            TestApis.users().current().setSetupComplete(setupComplete);
         }
     }
 
@@ -576,20 +597,6 @@ public final class DevicePolicyManagerTest {
                 // Don't remove system apps during provisioning until the testing
                 // infrastructure supports restoring uninstalled apps.
                 .setLeaveAllSystemAppsEnabled(true);
-    }
-
-    private void resetUserSetupCompletedFlag() {
-        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
-            Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 0);
-        }
-        sDevicePolicyManager.forceUpdateUserSetupComplete(sContext.getUserId());
-    }
-
-    private void setUserSetupCompletedFlag() {
-        try (PermissionContext p = TestApis.permissions().withPermission(WRITE_SECURE_SETTINGS)) {
-            Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 1);
-        }
-        sDevicePolicyManager.forceUpdateUserSetupComplete(sContext.getUserId());
     }
 
     private Set<String> findSystemApps() {
@@ -857,5 +864,349 @@ public final class DevicePolicyManagerTest {
         NdefRecord record = NdefRecord.createMime(mime, stream.toByteArray());
 
         return new NdefMessage(new NdefRecord[]{record});
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void checkProvisioningPreCondition_withoutRequiredPermission_throwsSecurityException() {
+        assertThrows(SecurityException.class, () ->
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()));
+
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void checkProvisioningPreCondition_withRequiredPermission_doesNotThrowSecurityException() {
+        sDevicePolicyManager.checkProvisioningPreCondition(
+                DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                DEVICE_ADMIN_COMPONENT_NAME.getPackageName());
+
+        // Doesn't throw exception.
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireDoesNotHaveFeature(FEATURE_DEVICE_ADMIN)
+    public void checkProvisioningPreCondition_withoutDeviceAdminFeature_returnsDeviceAdminNotSupported() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_DEVICE_ADMIN_NOT_SUPPORTED);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    public void checkProvisioningPreCondition_actionPO_returnsOk() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_OK);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireDoesNotHaveFeature(FEATURE_MANAGED_USERS)
+    public void checkProvisioningPreCondition_actionPO_withoutManagedUserFeature_returnsManagedUsersNotSupported() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_MANAGED_USERS_NOT_SUPPORTED);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasProfileOwner
+    @RequireRunOnSecondaryUser
+    public void checkProvisioningPreCondition_actionPO_onManagedUser_returnsHasProfileOwner() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_USER_HAS_PROFILE_OWNER);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnWorkProfile
+    public void checkProvisioningPreCondition_actionPO_onManagedProfile_returnsHasProfileOwner() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_USER_HAS_PROFILE_OWNER);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasDeviceOwner
+    public void checkProvisioningPreCondition_actionPO_onManagedDevice_returnsCanNotAddManagedProfile() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_CANNOT_ADD_MANAGED_PROFILE);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasWorkProfile
+    @RequireRunOnPrimaryUser
+    public void checkProvisioningPreCondition_actionPO_withWorkProfile_returnsCanNotAddManagedProfile() {
+        assertThat(
+                sDevicePolicyManager.checkProvisioningPreCondition(
+                        DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE,
+                        DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                .isEqualTo(DevicePolicyManager.CODE_CANNOT_ADD_MANAGED_PROFILE);
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireNotHeadlessSystemUserMode
+    public void checkProvisioningPreCondition_actionDO_returnsOk() {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPreCondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.CODE_OK);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireNotHeadlessSystemUserMode
+    public void checkProvisioningPreCondition_actionDO_setupComplete_returnsUserSetupCompleted() {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(true);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPreCondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.CODE_USER_SETUP_COMPLETED);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasDeviceOwner
+    @EnsureHasNoWorkProfile
+    @RequireNotHeadlessSystemUserMode
+    public void checkProvisioningPreCondition_actionDO_onManagedDevice_returnsHasDeviceOwner() {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPreCondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.CODE_HAS_DEVICE_OWNER);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnWorkProfile
+    @RequireNotHeadlessSystemUserMode
+    public void checkProvisioningPreCondition_actionDO_onManagedProfile_returnsHasProfileOwner() {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPreCondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.CODE_USER_HAS_PROFILE_OWNER);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnSecondaryUser
+    @EnsureHasProfileOwner
+    @RequireNotHeadlessSystemUserMode
+    public void checkProvisioningPreCondition_actionDO_onManagedUser_returnsHasProfileOwner() {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPreCondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.CODE_USER_HAS_PROFILE_OWNER);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnSecondaryUser
+    @EnsureHasNoProfileOwner
+    @RequireNotHeadlessSystemUserMode
+    public void checkProvisioningPreCondition_actionDO_onNonSystemUser_returnsNotSystemUser() {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+
+        try {
+            assertThat(
+                    sDevicePolicyManager.checkProvisioningPreCondition(
+                            DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE,
+                            DEVICE_ADMIN_COMPONENT_NAME.getPackageName()))
+                    .isEqualTo(DevicePolicyManager.CODE_NOT_SYSTEM_USER);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+        }
+    }
+
+    // TODO(b/208843126): add more CTS coverage for setUserProvisioningState
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setUserProvisioningState_withoutRequiredPermission_throwsSecurityException() {
+        assertThrows(SecurityException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_UNMANAGED,
+                        TestApis.users().current().userHandle()));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @RequireRunOnWorkProfile
+    public void setUserProvisioningState_withRequiredPermission_doesNotThrowSecurityException() {
+        sDevicePolicyManager.setUserProvisioningState(
+                DevicePolicyManager.STATE_USER_PROFILE_FINALIZED,
+                TestApis.users().current().userHandle());
+
+        // Doesn't throw exception.
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoDpc
+    public void setUserProvisioningState_unmanagedDevice_stateUserSetupIncomplete_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_SETUP_INCOMPLETE,
+                        TestApis.users().current().userHandle()));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoDpc
+    public void setUserProvisioningState_unmanagedDevice_stateUserSetupComplete_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_SETUP_COMPLETE,
+                        TestApis.users().current().userHandle()));
+
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoDpc
+    public void setUserProvisioningState_unmanagedDevice_stateUserSetupFinalized_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_SETUP_FINALIZED,
+                        TestApis.users().current().userHandle()));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoDpc
+    public void setUserProvisioningState_unmanagedDevice_stateUserProfileComplete_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_PROFILE_COMPLETE,
+                        TestApis.users().current().userHandle()));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoDpc
+    public void setUserProvisioningState_unmanagedDevice_stateUserProfileFinalized_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_PROFILE_FINALIZED,
+                        TestApis.users().current().userHandle()));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasNoDpc
+    public void setUserProvisioningState_settingToSameState_throwIllegalStateException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.setUserProvisioningState(
+                        DevicePolicyManager.STATE_USER_UNMANAGED,
+                        TestApis.users().current().userHandle()));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasDeviceOwner
+    public void setUserProvisioningState_unmanagedDevice_stateUserUnmanaged_doesNotThrowIllegalStateException() {
+        sDevicePolicyManager.setUserProvisioningState(
+                DevicePolicyManager.STATE_USER_PROFILE_FINALIZED,
+                TestApis.users().current().userHandle());
+
+        assertThat(sDevicePolicyManager.getUserProvisioningState())
+                .isEqualTo(DevicePolicyManager.STATE_USER_PROFILE_FINALIZED);
     }
 }
