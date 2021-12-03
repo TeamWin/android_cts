@@ -248,6 +248,21 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testEnforceNoDataAvail(){
+        final Parcel p = Parcel.obtain();
+        p.writeInt(1);
+        p.writeString("test");
+
+        p.setDataPosition(0);
+        p.readInt();
+        Throwable error = assertThrows(BadParcelableException.class, () -> p.enforceNoDataAvail());
+        assertTrue(error.getMessage().contains("Parcel data not fully consumed"));
+
+        p.readString();
+        p.enforceNoDataAvail();
+        p.recycle();
+    }
+
     public void testMarshall() {
         final byte[] c = {Byte.MAX_VALUE, (byte) 111, (byte) 11, (byte) 1, (byte) 0,
                     (byte) -1, (byte) -11, (byte) -111, Byte.MIN_VALUE};
