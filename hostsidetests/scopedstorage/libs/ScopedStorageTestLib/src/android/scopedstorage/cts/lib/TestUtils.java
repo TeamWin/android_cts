@@ -16,6 +16,7 @@
 
 package android.scopedstorage.cts.lib;
 
+import static android.provider.MediaStore.VOLUME_EXTERNAL;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.EXIF_METADATA_QUERY;
 
 import static androidx.test.InstrumentationRegistry.getContext;
@@ -936,6 +937,105 @@ public class TestUtils {
         assertThat(oldFile.renameTo(newFile)).isFalse();
         assertThat(oldFile.exists()).isTrue();
         assertThat(getFileRowIdFromDatabase(oldFile)).isEqualTo(rowId);
+    }
+
+    /**
+     * Assert that app cannot insert files in other app's private directories
+     *
+     * @param fileName name of the file
+     * @param throwsExceptionForDataValue Apps like System Gallery for which Data column is not
+     * respected, will not throw an Exception as the Data value is ignored.
+     * @param otherApp Other test app in whose external private directory we will attempt to insert
+     * @param callingPackageName Calling package name
+     */
+    public static void assertCantInsertToOtherPrivateAppDirectories(String fileName,
+            boolean throwsExceptionForDataValue, TestApp otherApp, String callingPackageName)
+            throws Exception {
+        // Create directory in which the device test will try to insert file to
+        final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
+                callingPackageName, otherApp.getPackageName()));
+        final File file = new File(otherAppExternalDataDir, fileName);
+        assertThat(createFileAs(otherApp, file.getPath())).isTrue();
+        try {
+            final ContentValues valuesWithData = new ContentValues();
+            valuesWithData.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
+            try {
+                Uri uri = getContentResolver().insert(
+                        MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
+                        valuesWithData);
+
+                if (throwsExceptionForDataValue) {
+                    fail("File insert expected to fail: " + file);
+                } else {
+                    try (Cursor c = getContentResolver().query(uri, new String[]{
+                            MediaStore.MediaColumns.DATA}, null, null)) {
+                        assertThat(c.moveToFirst()).isTrue();
+                        assertThat(c.getString(0)).isNotEqualTo(file.getAbsolutePath());
+                    }
+                }
+            } catch (IllegalArgumentException expected) {
+            }
+
+            final ContentValues valuesWithRelativePath = new ContentValues();
+            final String path = file.getAbsolutePath();
+            valuesWithRelativePath.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                    path.substring(path.indexOf("Android")));
+            valuesWithRelativePath.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            try {
+                getContentResolver().insert(MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
+                        valuesWithRelativePath);
+                fail("File insert expected to fail: " + file);
+            } catch (IllegalArgumentException expected) {
+            }
+        } finally {
+            assertThat(deleteFileAs(otherApp, file.getPath())).isTrue();
+        }
+    }
+
+    /**
+     * Assert that app cannot update files in other app's private directories
+     *
+     * @param fileName name of the file
+     * @param throwsExceptionForDataValue Apps like non-legacy System Gallery/MES for which
+     * Data column is not respected, will not throw an Exception as the Data value is ignored.
+     * @param otherApp Other test app in whose external private directory we will attempt to insert
+     * @param callingPackageName Calling package name
+     */
+    public static void assertCantUpdateToOtherPrivateAppDirectories(String fileName,
+            boolean throwsExceptionForDataValue, TestApp otherApp, String callingPackageName)
+            throws Exception {
+        // Create priv-app file and add to the database that we will try to update
+        final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
+                callingPackageName, otherApp.getPackageName()));
+        final File file = new File(otherAppExternalDataDir, fileName);
+        assertThat(createFileAs(otherApp, file.getPath())).isTrue();
+        MediaStore.scanFile(getContentResolver(), file);
+
+        final ContentValues valuesWithData = new ContentValues();
+        valuesWithData.put(MediaStore.MediaColumns.DATA, file.getAbsolutePath());
+        try {
+            int res = getContentResolver().update(MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
+                    valuesWithData, Bundle.EMPTY);
+
+            if (throwsExceptionForDataValue) {
+                fail("File update expected to fail: " + file);
+            } else {
+                assertThat(res).isEqualTo(0);
+            }
+        } catch (IllegalArgumentException expected) {
+        }
+
+        final ContentValues valuesWithRelativePath = new ContentValues();
+        final String path = file.getAbsolutePath();
+        valuesWithRelativePath.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                path.substring(path.indexOf("Android")));
+        valuesWithRelativePath.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+        try {
+            getContentResolver().update(MediaStore.Files.getContentUri(VOLUME_EXTERNAL),
+                    valuesWithRelativePath, Bundle.EMPTY);
+            fail("File update expected to fail: " + file);
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     /**

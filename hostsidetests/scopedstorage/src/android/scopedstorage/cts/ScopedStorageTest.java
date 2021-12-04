@@ -21,6 +21,8 @@ import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdenti
 import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidDataDir;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidObbDir;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
+import static android.scopedstorage.cts.lib.TestUtils.assertCantInsertToOtherPrivateAppDirectories;
+import static android.scopedstorage.cts.lib.TestUtils.assertCantUpdateToOtherPrivateAppDirectories;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.assertMountMode;
@@ -226,6 +228,28 @@ public class ScopedStorageTest {
                 () -> {
                     otherAppExternalDataFile.createNewFile();
                 });
+    }
+
+    /**
+     * Tests that apps with MANAGE_EXTERNAL_STORAGE permission cannot insert files in other app's
+     * private directories.
+     */
+    @Test
+    public void testManageExternalStorageCantInsertFilesInOtherAppPrivateDir() throws Exception {
+        pollForManageExternalStorageAllowed();
+        assertCantInsertToOtherPrivateAppDirectories(IMAGE_FILE_NAME,
+                /* throwsExceptionForDataValue */ true, APP_B_NO_PERMS, THIS_PACKAGE_NAME);
+    }
+
+    /**
+     * Tests that apps with MANAGE_EXTERNAL_STORAGE permission cannot update files in other app's
+     * private directories.
+     */
+    @Test
+    public void testManageExternalStorageCantUpdateFilesInOtherAppPrivateDir() throws Exception {
+        pollForManageExternalStorageAllowed();
+        assertCantUpdateToOtherPrivateAppDirectories(IMAGE_FILE_NAME,
+                /* throwsExceptionForDataValue */ false, APP_B_NO_PERMS, THIS_PACKAGE_NAME);
     }
 
     @Test

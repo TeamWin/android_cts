@@ -40,6 +40,9 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBIL
 
 import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
@@ -59,6 +62,7 @@ import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -91,6 +95,7 @@ import java.util.concurrent.Executors;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
+@Presubmit
 public class TouchInteractionControllerTest {
     // Constants
     private static final float GESTURE_LENGTH_MM = 15.0f;
@@ -206,11 +211,19 @@ public class TouchInteractionControllerTest {
         mService.disableSelfAndRemove();
     }
 
+    public void assertBasicConsistency() {
+        assertEquals(Display.DEFAULT_DISPLAY, mController.getDisplayId());
+        assertTrue(mController.getMaxPointerCount() > 0);
+        int state = mController.getState();
+        assertNotEquals("Unknown state: " + state, TouchInteractionController.stateToString(state));
+    }
+
     /** Test whether we can initiate touch exploration when performing a single tap. */
     @Test
     @AppModeFull
     public void testSingleTap_initiatesTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
                 new BaseCallback() {
@@ -230,6 +243,7 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testTwoFingerDrag_sendsTouchEvents() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
                 new BaseCallback() {
@@ -266,6 +280,7 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testTwoFingersMovingIndependently_shouldDelegate() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
                 new BaseCallback() {
@@ -293,6 +308,7 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testDoubleTap_producesSingleInteraction() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         dispatch(doubleTap(mTapLocation));
         mService.assertPropagated(TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
     }
@@ -307,6 +323,7 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testPerformClickAccessibilityFocus_performsClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         syncAccessibilityFocusToInputFocus();
         mController.performClick();
         mService.assertPropagated(TYPE_VIEW_ACCESSIBILITY_FOCUSED);
@@ -323,6 +340,7 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testPerformClickNoFocus_doesNotPerformClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         mController.performClick();
         mHoverListener.assertNonePropagated();
         mTouchListener.assertNonePropagated();
@@ -334,6 +352,7 @@ public class TouchInteractionControllerTest {
     @AppModeFull
     public void testPerformLongClick_sendsMotionEvents() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
         // First perform touch exploration.
         mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
@@ -371,6 +390,23 @@ public class TouchInteractionControllerTest {
         assertThat(
                 motionEvents.get(motionEvents.size() - 1),
                 both(IS_ACTION_UP).and(isRawAtPoint(endPoint, 1.0f)));
+    }
+
+    @Test
+    @AppModeFull
+    public void testRemove_shouldReturnControlToFramework() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
+        TouchInteractionController.Callback callback = new BaseCallback();
+        mController.registerCallback(Executors.newSingleThreadExecutor(), callback);
+        dispatch(click(mTapLocation));
+        // Nothing should happen because the callback is empty.
+        mTouchListener.assertNonePropagated();
+        mController.unregisterCallback(callback);
+        mHoverListener.assertNonePropagated();
+        dispatch(click(mTapLocation));
+        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_EXIT);
+        mTouchListener.assertNonePropagated();
     }
 
     private void syncAccessibilityFocusToInputFocus() {

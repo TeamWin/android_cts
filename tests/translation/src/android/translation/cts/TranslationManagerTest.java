@@ -257,6 +257,12 @@ public class TranslationManagerTest {
 
         sTranslationReplier.getNextTranslationRequest();
 
+        CtsTranslationService translationService =
+                mServiceWatcher.getService();
+        TranslationContext sessionContext = translationService.getTranslationContext();
+        assertThat(sessionContext).isNotNull();
+        assertThat(sessionContext.getActivityId()).isNull();
+
         translator.destroy();
         assertThat(translator.isDestroyed()).isTrue();
         try {
