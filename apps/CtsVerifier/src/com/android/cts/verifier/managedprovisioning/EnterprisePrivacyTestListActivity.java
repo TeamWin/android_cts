@@ -239,10 +239,10 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                             new ButtonInfo(R.string.enterprise_privacy_open_settings,
                                     new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
                             new ButtonInfo(R.string.enterprise_privacy_set_limit,
-                                    buildCommandIntent(CommandReceiverActivity
+                                    buildCommandIntentForCurrentUser(CommandReceiverActivity
                                             .COMMAND_SET_MAXIMUM_PASSWORD_ATTEMPTS)),
                             new ButtonInfo(R.string.enterprise_privacy_finish,
-                                    buildCommandIntent(CommandReceiverActivity
+                                    buildCommandIntentForCurrentUser(CommandReceiverActivity
                                             .COMMAND_CLEAR_MAXIMUM_PASSWORD_ATTEMPTS))}));
         }
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_QUICK_SETTINGS,
