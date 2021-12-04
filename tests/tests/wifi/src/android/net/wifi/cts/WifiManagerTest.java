@@ -4897,4 +4897,73 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mBlocker.countDown();
         }
     }
+
+    /**
+     * Tests {@link WifiManager#setStaConcurrencyForMultiInternetMode)} raise security exception
+     * without permission.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testIsStaConcurrencyForMultiInternetSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // ensure no crash.
+        mWifiManager.isStaConcurrencyForMultiInternetSupported();
+    }
+
+    /**
+     * Tests {@link WifiManager#setStaConcurrencyForMultiInternetMode)} raise security exception
+     * without permission.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetStaConcurrencyForMultiInternetModeWithoutPermission() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())
+                || !mWifiManager.isStaConcurrencyForMultiInternetSupported()) {
+            // skip the test if WiFi is not supported or multi internet feature not supported.
+            return;
+        }
+        try {
+            mWifiManager.setStaConcurrencyForMultiInternetMode(
+                    WifiManager.WIFI_MULTI_INTERNET_MODE_DISABLED);
+            fail("setWifiPasspointEnabled() expected to fail - privileged call");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#setStaConcurrencyForMultiInternetMode)} does not crash.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetStaConcurrencyForMultiInternetMode() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())
+                || !mWifiManager.isStaConcurrencyForMultiInternetSupported()) {
+            // skip the test if WiFi is not supported or multi internet feature not supported.
+            return;
+        }
+
+        // The below API only works with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Try to disable multi internet
+            mWifiManager.setStaConcurrencyForMultiInternetMode(
+                    WifiManager.WIFI_MULTI_INTERNET_MODE_DISABLED);
+            PollingCheck.check(
+                    "Wifi multi internet disable failed!", 2_000,
+                    () -> mWifiManager.getStaConcurrencyForMultiInternetMode()
+                            == WifiManager.WIFI_MULTI_INTERNET_MODE_DISABLED);
+            // Try to enable multi internet
+            mWifiManager.setStaConcurrencyForMultiInternetMode(
+                    WifiManager.WIFI_MULTI_INTERNET_MODE_MULTI_AP);
+            PollingCheck.check(
+                    "Wifi multi internet turn on failed!", 2_000,
+                    () -> mWifiManager.getStaConcurrencyForMultiInternetMode()
+                            == WifiManager.WIFI_MULTI_INTERNET_MODE_MULTI_AP);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
