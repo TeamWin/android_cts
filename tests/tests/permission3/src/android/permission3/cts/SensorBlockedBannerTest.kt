@@ -22,11 +22,13 @@ import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.location.LocationManager
 import android.os.Build
+import android.provider.DeviceConfig
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import org.junit.After
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
@@ -38,18 +40,42 @@ import org.junit.Test
 class SensorBlockedBannerTest : BaseUsePermissionTest() {
     companion object {
         const val LOCATION = -1
+        const val WARNING_BANNER_ENABLED = "warning_banner_enabled"
     }
 
     val sensorPrivacyManager = context.getSystemService(SensorPrivacyManager::class.java)!!
     val locationManager = context.getSystemService(LocationManager::class.java)!!
+    lateinit var originalEnabledValue: String
 
     private val permToLabel = mapOf(CAMERA to "privdash_label_camera",
             MICROPHONE to "privdash_label_microphone",
             LOCATION to "privdash_label_location")
 
+    private val permToTitle = mapOf(CAMERA to "blocked_camera_title",
+            MICROPHONE to "blocked_microphone_title",
+            LOCATION to "blocked_location_title")
+
     @Before
     fun install() {
         installPackage(APP_APK_PATH_31)
+    }
+
+    @Before
+    fun enableWarningBanner() {
+        runWithShellPermissionIdentity {
+            originalEnabledValue = DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
+                    WARNING_BANNER_ENABLED, false.toString())
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    WARNING_BANNER_ENABLED, true.toString(), false)
+        }
+    }
+
+    @After
+    fun restoreWarningBannerState() {
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    WARNING_BANNER_ENABLED, originalEnabledValue, false)
+        }
     }
 
     private fun navigateAndTest(sensor: Int) {
@@ -59,7 +85,8 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
         context.startActivity(intent)
         click(By.text(getPermissionControllerString("app_permission_manager")))
         click(By.text(getPermissionControllerString(permLabel)))
-        waitFindObject(By.res("android:id/title"))
+        val bannerTitle = permToTitle.getOrDefault(sensor, "Break")
+        waitFindObject(By.text(getPermissionControllerString(bannerTitle)))
         pressBack()
         pressBack()
         pressBack()
@@ -100,7 +127,7 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
             }
             if (!enable) {
                 try {
-                    waitFindObject(By.text("No location access"))
+                    waitFindObject(By.text("CLOSE"))
                     click(By.text("CLOSE"))
                 } catch (e: Exception) {
                     // Do nothing, warning didn't show up so test can proceed
