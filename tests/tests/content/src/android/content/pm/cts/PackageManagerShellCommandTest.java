@@ -20,23 +20,36 @@ import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
+import static android.content.pm.PackageManager.GET_SHARED_LIBRARY_FILES;
+import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
+import static android.content.pm.PackageManager.MATCH_STATIC_SHARED_AND_SDK_LIBRARIES;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.DataLoaderParams;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
+import android.content.pm.SharedLibraryInfo;
+import android.content.pm.Signature;
+import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
+import android.util.PackageUtils;
 
 import androidx.test.InstrumentationRegistry;
+
+import libcore.util.HexEncoding;
 
 import org.junit.After;
 import org.junit.Before;
@@ -55,6 +68,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -78,6 +92,20 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_HW7_SPLIT3 = "HelloWorld7_xxhdpi-v4.apk";
     private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
 
+    private static final String TEST_SDK1_PACKAGE = "com.test.sdk1_1";
+    private static final String TEST_SDK2_PACKAGE = "com.test.sdk2_2";
+    private static final String TEST_SDK_USER_PACKAGE = "com.test.sdk.user";
+
+    private static final String TEST_SDK1_NAME = "com.test.sdk1";
+    private static final String TEST_SDK2_NAME = "com.test.sdk2";
+
+    private static final String TEST_SDK1 = "HelloWorldSdk1.apk";
+    private static final String TEST_SDK1_UPDATED = "HelloWorldSdk1Updated.apk";
+    private static final String TEST_SDK2 = "HelloWorldSdk2.apk";
+    private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
+    private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
+    private static final String TEST_USING_SDK1_AND_SDK2 = "HelloWorldUsingSdk1And2.apk";
+
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
@@ -94,9 +122,14 @@ public class PackageManagerShellCommandTest {
     private boolean mIncremental = false;
     private String mInstall = "";
     private String mPackageVerifier = null;
+    private String mUnusedStaticSharedLibsMinCachePeriod = null;
 
     private static PackageInstaller getPackageInstaller() {
-        return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+        return getPackageManager().getPackageInstaller();
+    }
+
+    private static PackageManager getPackageManager() {
+        return InstrumentationRegistry.getContext().getPackageManager();
     }
 
     private static UiAutomation getUiAutomation() {
@@ -170,9 +203,16 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
 
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
+        uninstallPackageSilently(TEST_SDK2_PACKAGE);
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
         // Disable the package verifier to avoid the dialog when installing an app.
         mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
         executeShellCommand("settings put global verifier_verify_adb_installs 0");
+
+        mUnusedStaticSharedLibsMinCachePeriod = executeShellCommand(
+                "settings get global unused_static_shared_lib_min_cache_period");
     }
 
     @After
@@ -181,8 +221,18 @@ public class PackageManagerShellCommandTest {
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
 
-        // Reset the package verifier setting to its original value.
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
+        uninstallPackageSilently(TEST_SDK2_PACKAGE);
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
+        // Reset the global settings to their original values.
         executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
+        executeShellCommand("settings put global unused_static_shared_lib_min_cache_period "
+                + mUnusedStaticSharedLibsMinCachePeriod);
+
+        // Set the test override to invalid.
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid");
+        setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "invalid");
     }
 
     private boolean checkIncrementalDeliveryFeature() {
@@ -575,6 +625,253 @@ public class PackageManagerShellCommandTest {
         }
     }
 
+    @Test
+    public void testSdkInstallAndUpdate() throws Exception {
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Same APK.
+        installPackage(TEST_SDK1);
+
+        // Updated APK.
+        installPackage(TEST_SDK1_UPDATED);
+
+        // Reverted APK.
+        installPackage(TEST_SDK1);
+
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+    }
+
+    @Test
+    public void testSdkInstallAndUpdateTwoMajorVersions() throws Exception {
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        installPackage(TEST_SDK2);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        // Same APK.
+        installPackage(TEST_SDK1);
+        installPackage(TEST_SDK2);
+
+        // Updated APK.
+        installPackage(TEST_SDK1_UPDATED);
+        installPackage(TEST_SDK2_UPDATED);
+
+        // Reverted APK.
+        installPackage(TEST_SDK1);
+        installPackage(TEST_SDK2);
+
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+    }
+
+    @Test
+    public void testAppUsingSdkInstallAndUpdate() throws Exception {
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+
+        // Now install the required SDK1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
+                getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+        // Install and uninstall.
+        installPackage(TEST_USING_SDK1);
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
+        // Update SDK1.
+        installPackage(TEST_SDK1_UPDATED);
+
+        // Install again.
+        installPackage(TEST_USING_SDK1);
+
+        // Check resolution API.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
+                    GET_SHARED_LIBRARY_FILES);
+            assertEquals(1, appInfo.sharedLibraryInfos.size());
+            SharedLibraryInfo libInfo = appInfo.sharedLibraryInfos.get(0);
+            assertEquals("com.test.sdk1", libInfo.getName());
+            assertEquals(1, libInfo.getLongVersion());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+
+        // Try to install without required SDK2.
+        installPackage(TEST_USING_SDK1_AND_SDK2, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+
+        // Now install the required SDK2.
+        installPackage(TEST_SDK2);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        // Install and uninstall.
+        installPackage(TEST_USING_SDK1_AND_SDK2);
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
+        // Update both SDKs.
+        installPackage(TEST_SDK1_UPDATED);
+        installPackage(TEST_SDK2_UPDATED);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        // Install again.
+        installPackage(TEST_USING_SDK1_AND_SDK2);
+
+        // Check resolution API.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
+                    GET_SHARED_LIBRARY_FILES);
+            assertEquals(2, appInfo.sharedLibraryInfos.size());
+            assertEquals("com.test.sdk1", appInfo.sharedLibraryInfos.get(0).getName());
+            assertEquals(1, appInfo.sharedLibraryInfos.get(0).getLongVersion());
+            assertEquals("com.test.sdk2", appInfo.sharedLibraryInfos.get(1).getName());
+            assertEquals(2, appInfo.sharedLibraryInfos.get(1).getLongVersion());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testInstallFailsMismatchingCertificate() throws Exception {
+        // Install the required SDK1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Try to install the package with empty digest.
+        installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+    }
+
+    @Test
+    public void testUninstallSdkWhileAppUsing() throws Exception {
+        // Install the required SDK1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
+                getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+        // Install the package.
+        installPackage(TEST_USING_SDK1);
+
+        uninstallPackage(TEST_SDK1_PACKAGE, "Failure [DELETE_FAILED_USED_SHARED_LIBRARY]");
+    }
+
+    @Test
+    public void testGetSharedLibraries() throws Exception {
+        // Install the SDK1.
+        installPackage(TEST_SDK1);
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNull(sdk2);
+        }
+
+        // Install the SDK2.
+        installPackage(TEST_SDK2);
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+        }
+
+        // Install and uninstall the user package.
+        {
+            setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
+                    getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+            installPackage(TEST_USING_SDK1_AND_SDK2);
+
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNotNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk1.getDependentPackages().get(0).getPackageName());
+            assertEquals(TEST_SDK_USER_PACKAGE,
+                    sdk2.getDependentPackages().get(0).getPackageName());
+
+            uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        }
+
+        // Uninstall the SDK1.
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNotNull(sdk2);
+        }
+
+        // Uninstall the SDK2.
+        uninstallPackageSilently(TEST_SDK2_PACKAGE);
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk1 = findLibrary(libs, "com.test.sdk1", 1);
+            assertNull(sdk1);
+            SharedLibraryInfo sdk2 = findLibrary(libs, "com.test.sdk2", 2);
+            assertNull(sdk2);
+        }
+    }
+
+    @Test
+    public void testUninstallUnusedSdks() throws Exception {
+        installPackage(TEST_SDK1);
+        installPackage(TEST_SDK2);
+
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
+                getPackageCertDigest(TEST_SDK1_PACKAGE));
+        installPackage(TEST_USING_SDK1_AND_SDK2);
+
+        setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "0");
+        executeShellCommand("settings put global unused_static_shared_lib_min_cache_period 0");
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
+        // Wait for 3secs max.
+        for (int i = 0; i < 30; ++i) {
+            if (!isSdkInstalled(TEST_SDK1_NAME, 1) && !isSdkInstalled(TEST_SDK2_NAME, 2)) {
+                break;
+            }
+            final int beforeRetryDelayMs = 100;
+            Thread.currentThread().sleep(beforeRetryDelayMs);
+        }
+        assertFalse(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertFalse(isSdkInstalled(TEST_SDK2_NAME, 2));
+    }
+
+    private List<SharedLibraryInfo> getSharedLibraries() {
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            return getPackageManager().getSharedLibraries(0);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    private SharedLibraryInfo findLibrary(List<SharedLibraryInfo> libs, String name, long version) {
+        for (int i = 0, size = libs.size(); i < size; ++i) {
+            SharedLibraryInfo lib = libs.get(i);
+            if (name.equals(lib.getName()) && version == lib.getLongVersion()) {
+                return lib;
+            }
+        }
+        return null;
+    }
+
     private String createUpdateSession(String packageName) throws IOException {
         return createSession("-p " + packageName);
     }
@@ -631,6 +928,30 @@ public class PackageManagerShellCommandTest {
                 .anyMatch(line -> line.substring(prefixLength).equals(packageName));
     }
 
+    private boolean isSdkInstalled(String name, int versionMajor) throws IOException {
+        final String sdkString = name + ":" + versionMajor;
+        final String commandResult = executeShellCommand("pm list sdks");
+        final int prefixLength = "sdk:".length();
+        return Arrays.stream(commandResult.split("\\r?\\n"))
+                .anyMatch(line -> line.length() > prefixLength && line.substring(
+                        prefixLength).equals(sdkString));
+    }
+
+    private String getPackageCertDigest(String packageName) throws Exception {
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            PackageInfo sdkPackageInfo = getPackageManager().getPackageInfo(packageName,
+                    GET_SIGNING_CERTIFICATES | MATCH_STATIC_SHARED_AND_SDK_LIBRARIES);
+            SigningInfo signingInfo = sdkPackageInfo.signingInfo;
+            Signature[] signatures =
+                    signingInfo != null ? signingInfo.getSigningCertificateHistory() : null;
+            byte[] digest = PackageUtils.computeSha256DigestBytes(signatures[0].toByteArray());
+            return new String(HexEncoding.encode(digest));
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
     private String getSplits(String packageName) throws IOException {
         final String commandResult = executeShellCommand("pm dump " + packageName);
         final String prefix = "    splits=[";
@@ -652,6 +973,13 @@ public class PackageManagerShellCommandTest {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n", executeShellCommand(
                 "pm " + mInstall + " -t -g " + file.getPath()));
+    }
+
+    private void installPackage(String baseName, String expectedResultStartsWith)
+            throws IOException {
+        File file = new File(createApkPath(baseName));
+        String result = executeShellCommand("pm " + mInstall + " -t -g " + file.getPath());
+        assertTrue(result, result.startsWith(expectedResultStartsWith));
     }
 
     private void updatePackage(String packageName, String baseName) throws IOException {
@@ -730,6 +1058,12 @@ public class PackageManagerShellCommandTest {
                         splits)));
     }
 
+    private void uninstallPackage(String packageName, String expectedResultStartsWith)
+            throws IOException {
+        String result = uninstallPackageSilently(packageName);
+        assertTrue(result, result.startsWith(expectedResultStartsWith));
+    }
+
     private String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
@@ -744,6 +1078,10 @@ public class PackageManagerShellCommandTest {
     private void uninstallSplitsBatch(String packageName, String[] splitNames) throws IOException {
         assertEquals("Success\n", executeShellCommand(
                 "pm uninstall " + packageName + " " + String.join(" ", splitNames)));
+    }
+
+    private void setSystemProperty(String name, String value) throws Exception {
+        executeShellCommand("setprop " + name + " " + value);
     }
 }
 
