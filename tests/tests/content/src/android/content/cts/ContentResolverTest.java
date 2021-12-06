@@ -1192,7 +1192,7 @@ public class ContentResolverTest extends AndroidTestCase {
     public void testRegisterContentObserverForAllUsersWithoutPermission() {
         final MockContentObserver mco = new MockContentObserver();
         try {
-            mContentResolver.registerContentObserverForAllUsers(TABLE1_URI, true, mco);
+            mContentResolver.registerContentObserverAsUser(TABLE1_URI, true, mco, UserHandle.ALL);
             fail("testRegisterContentObserverForAllUsers: "
                     + "SecurityException expected on testRegisterContentObserverForAllUsers");
         } catch (SecurityException se) {
@@ -1200,12 +1200,40 @@ public class ContentResolverTest extends AndroidTestCase {
         }
     }
 
+    public void testRegisterContentObserverAsUser() {
+        final MockContentObserver mco = new MockContentObserver();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mContentResolver,
+                (cr) -> cr.registerContentObserverAsUser(TABLE1_URI, true, mco, mContext.getUser())
+        );
+        assertFalse(mco.hadOnChanged());
+
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_KEY_NAME, "key10");
+        values.put(COLUMN_VALUE_NAME, 10);
+        mContentResolver.update(TABLE1_URI, values, null, null);
+        new PollingCheck() {
+            @Override
+            protected boolean check() {
+                return mco.hadOnChanged();
+            }
+        }.run();
+
+        mco.reset();
+        mContentResolver.unregisterContentObserver(mco);
+        assertFalse(mco.hadOnChanged());
+        mContentResolver.update(TABLE1_URI, values, null, null);
+
+        assertFalse(mco.hadOnChanged());
+    }
+
     public void testRegisterContentObserverForAllUsers() {
         final MockContentObserver mco = new MockContentObserver();
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mContentResolver,
-                (cr) -> cr.registerContentObserverForAllUsers(TABLE1_URI, true, mco)
+                (cr) -> cr.registerContentObserverAsUser(TABLE1_URI, true, mco, UserHandle.ALL)
         );
         assertFalse(mco.hadOnChanged());
 
@@ -1230,7 +1258,7 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mContentResolver,
-                    (cr) -> cr.registerContentObserverForAllUsers(null, false, mco)
+                    (cr) -> cr.registerContentObserverAsUser(null, false, mco, UserHandle.ALL)
             );
             fail("did not throw NullPointerException or IllegalArgumentException when uri is null"
                     + ".");
@@ -1243,7 +1271,8 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                     mContentResolver,
-                    (cr) -> cr.registerContentObserverForAllUsers(TABLE1_URI, false, null)
+                    (cr) -> cr.registerContentObserverAsUser(TABLE1_URI, false, null,
+                            UserHandle.ALL)
             );
             fail("did not throw NullPointerException when register null content observer.");
         } catch (NullPointerException e) {
@@ -1313,11 +1342,11 @@ public class ContentResolverTest extends AndroidTestCase {
         // another with true.
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mContentResolver,
-                (cr) -> cr.registerContentObserverForAllUsers(LEVEL2_URI, false, mco1)
+                (cr) -> cr.registerContentObserverAsUser(LEVEL2_URI, false, mco1, UserHandle.ALL)
         );
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mContentResolver,
-                (cr) -> cr.registerContentObserverForAllUsers(LEVEL2_URI, true, mco2)
+                (cr) -> cr.registerContentObserverAsUser(LEVEL2_URI, true, mco2, UserHandle.ALL)
         );
 
         // Initially nothing has happened.
