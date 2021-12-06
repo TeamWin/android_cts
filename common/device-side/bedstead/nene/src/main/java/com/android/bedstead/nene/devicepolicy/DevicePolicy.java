@@ -162,15 +162,17 @@ public final class DevicePolicy {
                          TestApis.permissions().withPermission(
                                  MANAGE_PROFILE_AND_DEVICE_OWNERS, MANAGE_DEVICE_ADMINS,
                                  INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS)) {
-                devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
-                        /* refreshing= */ true, user.id());
 
                 // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
                 retryIfNotTerminal(
-                        () -> setDeviceOwnerOnly(devicePolicyManager,
-                                deviceOwnerComponent, "Nene", user.id()),
+                        () -> {
+                            devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
+                                    /* refreshing= */ true, user.id());
+                            setDeviceOwnerOnly(devicePolicyManager,
+                                    deviceOwnerComponent, "Nene", user.id());
+                        },
                         () -> checkForTerminalDeviceOwnerFailures(
                                 user, deviceOwnerComponent, /* allowAdditionalUsers= */ true),
                         NeneException.class);
