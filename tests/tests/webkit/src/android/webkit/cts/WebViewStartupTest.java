@@ -29,6 +29,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 /**
  * Test class testing different aspects of WebView loading.
  *
@@ -177,16 +179,22 @@ public class WebViewStartupTest extends InstrumentationTestCase {
             // already be used in other processes.
             WebView.setDataDirectorySuffix(TEST_PROCESS_DATA_DIR_SUFFIX);
 
-            // Create a WebView on a background thread, check it from the UI thread
-            final WebView webviewHolder[] = new WebView[1];
-
             // Use a HandlerThread, because such a thread owns a Looper.
             HandlerThread backgroundThread = new HandlerThread("WebViewLooperCtsHandlerThread");
             backgroundThread.start();
-            new Handler(backgroundThread.getLooper())
-                    .post(() -> webviewHolder[0] = createAndCheckWebViewLooper(ctx));
-            backgroundThread.join(TEST_TIMEOUT_MS);
-            assertEquals(backgroundThread.getLooper(), webviewHolder[0].getWebViewLooper());
+            Handler backgroundHandler = new Handler(backgroundThread.getLooper());
+
+            final SettableFuture<WebView> webViewFuture = SettableFuture.create();
+            backgroundHandler.post(() -> {
+                try {
+                    webViewFuture.set(createAndCheckWebViewLooper(ctx));
+                } catch (RuntimeException e) {
+                    webViewFuture.setException(e);
+                }
+            });
+            final WebView webview = WebkitUtils.waitForFuture(webViewFuture);
+            assertEquals(backgroundThread.getLooper(), webview.getWebViewLooper());
+            backgroundHandler.post(() -> { webview.destroy(); });
         }
     }
 
