@@ -672,7 +672,8 @@ public class ChecksumsTest {
             {
                 LocalListener receiver = new LocalListener();
 
-                session.requestChecksums("hw5.apk", 0, TRUST_ALL, receiver);
+                session.requestChecksums("hw5.apk", 0, TRUST_ALL, getContext().getMainExecutor(),
+                        receiver);
                 ApkChecksum[] checksums = receiver.getResult();
                 assertNotNull(checksums);
                 assertEquals(checksums.length, 3);
@@ -697,7 +698,8 @@ public class ChecksumsTest {
             {
                 LocalListener receiver = new LocalListener();
 
-                session.requestChecksums("hw5_split0.apk", 0, TRUST_ALL, receiver);
+                session.requestChecksums("hw5_split0.apk", 0, TRUST_ALL,
+                        getContext().getMainExecutor(), receiver);
                 ApkChecksum[] checksums = receiver.getResult();
                 assertNotNull(checksums);
                 assertEquals(checksums.length, 3);
