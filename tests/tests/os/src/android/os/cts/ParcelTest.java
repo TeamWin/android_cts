@@ -2078,6 +2078,17 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testReadSerializableWithClass_whenNullClassLoader(){
+        Parcel p = Parcel.obtain();
+        TestSubException testSubException = new TestSubException("test");
+        p.writeSerializable(testSubException);
+        p.setDataPosition(0);
+        Throwable error = assertThrows(BadParcelableException.class, () ->
+                p.readSerializable(null, TestSubException.class));
+        assertTrue(error.getMessage().contains("ClassNotFoundException reading a Serializable"));
+        p.recycle();
+    }
+
     public void testReadSerializableWithClass_whenSameClass(){
         Parcel p = Parcel.obtain();
         MockClassLoader mcl = new MockClassLoader();
@@ -4402,6 +4413,12 @@ public class ParcelTest extends AndroidTestCase {
         @Override
         public int hashCode() {
             return mString.hashCode();
+        }
+    }
+
+    private static class TestSubException extends Exception{
+        public TestSubException(String msg) {
+            super(msg);
         }
     }
 
