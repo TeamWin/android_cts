@@ -881,6 +881,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     private void tapAndAssertEditorFocusedOnImeActivity(
             TestActivitySession<? extends ImeTestActivity> activitySession, int expectDisplayId) {
         final int[] location = new int[2];
+        waitAndAssertActivityStateOnDisplay(activitySession.getActivity().getComponentName(),
+                STATE_RESUMED, expectDisplayId,
+                "ImeActivity failed to appear on display#" + expectDisplayId);
         activitySession.runOnMainSyncAndWait(() -> {
             final EditText editText = activitySession.getActivity().mEditText;
             editText.getLocationOnScreen(location);
