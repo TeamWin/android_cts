@@ -17,6 +17,9 @@
 package com.android.cts.readsettingsfieldsapp;
 
 import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
@@ -24,7 +27,7 @@ import android.util.ArraySet;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.ArrayList;
 
 public class ReadSettingsFieldsTest extends AndroidTestCase {
     /** Test public keys are readable with annotation */
@@ -236,6 +239,84 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
             callGetStringMethod(Settings.System.class, keyWithTargetSdkR);
         } catch (SecurityException ex) {
             fail("Reading hidden settings key <" + keyWithTargetSdkR + "> should not raise!");
+        }
+    }
+
+    public void testQueryGlobalSettingsNoHiddenKeysWithoutAnnotation() {
+        checkQueryResults(Settings.Global.CONTENT_URI, Settings.Global.class);
+    }
+
+    public void testQuerySystemSettingsNoHiddenKeysWithoutAnnotation() {
+        checkQueryResults(Settings.System.CONTENT_URI, Settings.System.class);
+    }
+
+    public void testQuerySecureSettingsNoHiddenKeysWithoutAnnotation() {
+        checkQueryResults(Settings.Secure.CONTENT_URI, Settings.Secure.class);
+    }
+
+    /**
+     * Check the result of ContentResolver.query() and make sure all the settings keys in the result
+     * is Readable.
+     */
+    private <T extends Settings.NameValueTable> void checkQueryResults(Uri uri,
+            Class<T> settingsClass) {
+        try {
+            final ContentResolver resolver = getContext().getContentResolver();
+            final Cursor cursor = resolver.query(uri, new String[]{"name", "value"}, null,
+                    null, null);
+            assertTrue(cursor.getCount() > 0);
+            while (cursor.moveToNext()) {
+                final String key = cursor.getString(0);
+                try {
+                    // every key in the result should be readable
+                    callGetStringMethod(settingsClass, key);
+                } catch (SecurityException ex) {
+                    fail("Hidden settings key <" + key + "> should not be included in the "
+                            + "query result!");
+                }
+            }
+            cursor.close();
+        } catch (Exception e) {
+            fail("Failed to query ContentResolver: " + e.getMessage());
+        }
+    }
+
+    public void testListGlobalSettingsNoHiddenKeysWithoutAnnotation() {
+        checkListResults("LIST_global", Settings.Global.class);
+    }
+
+    public void testListSystemSettingsNoHiddenKeysWithoutAnnotation() {
+        checkListResults("LIST_system", Settings.System.class);
+    }
+
+    public void testListSecureSettingsNoHiddenKeysWithoutAnnotation() {
+        checkListResults("LIST_secure", Settings.Secure.class);
+    }
+
+    /**
+     * Check the result of ContentResolver.call() and make sure all the settings keys in the result
+     * is Readable.
+     */
+    private  <T extends Settings.NameValueTable> void checkListResults(String listSettingsType,
+            Class<T> settingsClass) {
+        try {
+            final ContentResolver resolver = getContext().getContentResolver();
+            final Bundle data = resolver.call(Settings.Global.CONTENT_URI, listSettingsType, null,
+                    null);
+            final ArrayList<String> result = data.getStringArrayList("result_settings_list");
+            assertTrue(result.size() > 0);
+            for (String line : result) {
+                String key = line.split("=")[0];
+                try {
+                    // every key in the result should be readable
+                    callGetStringMethod(settingsClass, key);
+                } catch (SecurityException ex) {
+                    fail("Hidden settings key <" + key + "> should not be included in the "
+                            + "call result!");
+                }
+            }
+        } catch (Exception e) {
+            fail("Failed to query ContentResolver: " + e.getMessage());
         }
     }
 }
