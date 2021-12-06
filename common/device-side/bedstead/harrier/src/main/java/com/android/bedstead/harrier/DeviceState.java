@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.LOCK_DEVICE;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
 
@@ -47,6 +48,7 @@ import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -57,6 +59,7 @@ import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.RequirePasswordNotSet;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
@@ -216,7 +219,7 @@ public final class DeviceState implements TestRule {
 
                     mMinSdkVersionCurrentTest = mMinSdkVersion;
                     List<Annotation> annotations = getAnnotations(description);
-                    permissionContext = applyAnnotations(annotations);
+                    permissionContext = applyAnnotations(annotations, /* isTest= */ true);
 
                     Log.d(LOG_TAG,
                             "Finished preparing state for test " + description.getMethodName());
@@ -241,7 +244,7 @@ public final class DeviceState implements TestRule {
             }};
     }
 
-    private PermissionContextImpl applyAnnotations(List<Annotation> annotations)
+    private PermissionContextImpl applyAnnotations(List<Annotation> annotations, boolean isTest)
             throws Throwable {
         PermissionContextImpl permissionContext = null;
         for (Annotation annotation : annotations) {
@@ -553,12 +556,24 @@ public final class DeviceState implements TestRule {
                 }
                 continue;
             }
+
+            if (annotation instanceof EnsureScreenIsOn) {
+                ensureScreenIsOn();
+                continue;
+            }
+
+            if (annotation instanceof RequirePasswordNotSet) {
+                RequirePasswordNotSet requirePasswordNotSetAnnotation =
+                        (RequirePasswordNotSet) annotation;
+                requirePasswordNotSet(requirePasswordNotSetAnnotation.forUser());
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
                 /* max= */ Integer.MAX_VALUE, FailureMode.SKIP);
 
-        if (!mHasRequireGmsInstrumentation) {
+        if (isTest && !mHasRequireGmsInstrumentation) {
             // TODO(scottjonathan): Only enforce if we've configured GMS Instrumentation
             requireNoGmsInstrumentation();
         }
@@ -636,7 +651,7 @@ public final class DeviceState implements TestRule {
                     try {
                         List<Annotation> annotations =
                                 new ArrayList<>(getAnnotations(description));
-                        permissionContext = applyAnnotations(annotations);
+                        permissionContext = applyAnnotations(annotations, /* isTest= */ false);
                     } catch (AssumptionViolatedException e) {
                         Log.i(LOG_TAG, "Assumption failed during class setup", e);
                         mSkipTests = true;
@@ -1838,6 +1853,9 @@ public final class DeviceState implements TestRule {
         if (permission.equals(NOTIFY_PENDING_SYSTEM_UPDATE)) {
             requireGmsInstrumentation(1, Build.VERSION_CODES.R);
         }
+        if (permission.equals(LOCK_DEVICE)) {
+            requireGmsInstrumentation(1, Build.VERSION_CODES.S_V2);
+        }
         // TODO(scottjonathan): Apply version-specific constraints automatically
         if (permission.equals(INTERACT_ACROSS_USERS_FULL)) {
             requireSdkVersion(
@@ -1910,5 +1928,15 @@ public final class DeviceState implements TestRule {
                         .getSystemService(ActivityManager.class)
                         .isLowRamDevice(),
                 failureMode);
+    }
+
+    private void ensureScreenIsOn() {
+        TestApis.device().wakeUp();
+    }
+
+    private void requirePasswordNotSet(UserType forUser) {
+        UserReference user = resolveUserTypeToUser(forUser);
+        assertWithMessage("Test requires user "
+                + forUser + " does not have a password").that(user.hasPassword()).isFalse();
     }
 }
