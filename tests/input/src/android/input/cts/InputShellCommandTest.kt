@@ -20,6 +20,7 @@ import android.view.View
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.ShellUtils
 import com.google.common.truth.Truth.assertThat
@@ -44,6 +45,7 @@ private fun getViewCenterOnScreen(v: View): Pair<Int, Int> {
 class InputShellCommandTest {
     @get:Rule
     val activityRule = ActivityScenarioRule(CaptureEventActivity::class.java)
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var activity: CaptureEventActivity
 
     @Before
@@ -52,6 +54,7 @@ class InputShellCommandTest {
             activity = it
         }
         PollingCheck.waitFor { activity.hasWindowFocus() }
+        instrumentation.uiAutomation.syncInputTransactions()
     }
 
     /**
