@@ -173,8 +173,17 @@ public class UserReference implements AutoCloseable {
 
     /**
      * Make the user the foreground user.
+     *
+     * <p>If the user is a profile, then this will make the parent the foreground user. It will
+     * still return the {@link UserReference} of the profile in that case.
      */
     public UserReference switchTo() {
+        UserReference parent = parent();
+        if (parent != null) {
+            parent.switchTo();
+            return this;
+        }
+
         if (TestApis.users().current().equals(this)) {
             // Already switched to
             return this;
