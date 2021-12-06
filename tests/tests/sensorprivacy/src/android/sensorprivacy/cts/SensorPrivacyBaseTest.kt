@@ -40,6 +40,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume
@@ -60,6 +61,8 @@ abstract class SensorPrivacyBaseTest(
                 "android.sensorprivacy.cts.usemiccamera.action.USE_MIC_CAM"
         const val MIC_CAM_OVERLAY_ACTIVITY_ACTION =
                 "android.sensorprivacy.cts.usemiccamera.overlay.action.USE_MIC_CAM"
+        const val SHOW_OVERLAY_ACTION =
+                "android.sensorprivacy.cts.usemiccamera.action.SHOW_OVERLAY_ACTION"
         const val FINISH_MIC_CAM_ACTIVITY_ACTION =
                 "android.sensorprivacy.cts.usemiccamera.action.FINISH_USE_MIC_CAM"
         const val USE_MIC_EXTRA =
@@ -213,16 +216,19 @@ abstract class SensorPrivacyBaseTest(
     }
 
     fun unblockSensorWithDialogAndAssert() {
-        val buttonResId = if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
-            "com.android.systemui:id/bottom_sheet_positive_button"
-        } else {
-            "android:id/button1"
-        }
+        val buttonResId = getDialogPositiveButtonId()
         UiAutomatorUtils.waitFindObject(By.res(buttonResId)).click()
         eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
     }
+
+    private fun getDialogPositiveButtonId() =
+            if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+                "com.android.systemui:id/bottom_sheet_positive_button"
+            } else {
+                "android:id/button1"
+            }
 
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
@@ -335,6 +341,8 @@ abstract class SensorPrivacyBaseTest(
     fun testTapjacking() {
         setSensor(true)
         startTestOverlayApp(false)
+        assertNotNull("Dialog never showed",
+                UiAutomatorUtils.waitFindObject(By.res(getDialogPositiveButtonId())))
         val view = UiAutomatorUtils.waitFindObjectOrNull(By.text("This Should Be Hidden"), 10_000)
         assertNull("Overlay should not have shown.", view)
     }
@@ -367,6 +375,8 @@ abstract class SensorPrivacyBaseTest(
         context.startActivity(intent)
         // Wait for app to open
         UiAutomatorUtils.waitFindObject(By.textContains(ACTIVITY_TITLE_SNIP))
+
+        context.sendBroadcast(Intent(SHOW_OVERLAY_ACTION))
     }
 
     private fun finishTestApp() {
