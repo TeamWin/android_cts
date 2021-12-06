@@ -18,9 +18,11 @@ package android.gamemanager.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
+import android.app.GameModeInfo;
 import android.app.GameState;
 import android.app.Instrumentation;
 import android.content.Context;
@@ -32,7 +34,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -87,7 +88,7 @@ public class GameManagerTest {
 
         int gameMode = mActivity.getGameMode();
 
-        Assert.assertEquals("Game Manager returned incorrect value.",
+        assertEquals("Game Manager returned incorrect value.",
                 GameManager.GAME_MODE_UNSUPPORTED, gameMode);
     }
 
@@ -106,7 +107,7 @@ public class GameManagerTest {
 
         int gameMode = mActivity.getGameMode();
 
-        Assert.assertEquals("Game Manager returned incorrect value.",
+        assertEquals("Game Manager returned incorrect value.",
                 GameManager.GAME_MODE_STANDARD, gameMode);
     }
 
@@ -125,7 +126,7 @@ public class GameManagerTest {
 
         int gameMode = mActivity.getGameMode();
 
-        Assert.assertEquals("Game Manager returned incorrect value.",
+        assertEquals("Game Manager returned incorrect value.",
                 GameManager.GAME_MODE_PERFORMANCE, gameMode);
     }
 
@@ -144,7 +145,7 @@ public class GameManagerTest {
 
         int gameMode = mActivity.getGameMode();
 
-        Assert.assertEquals("Game Manager returned incorrect value.",
+        assertEquals("Game Manager returned incorrect value.",
                 GameManager.GAME_MODE_BATTERY, gameMode);
     }
 
@@ -168,7 +169,7 @@ public class GameManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
         Thread.sleep(500);  // Wait for change to take effect.
-        Assert.assertEquals(gameLoadingCountBefore, getGameLoadingCount());
+        assertEquals(gameLoadingCountBefore, getGameLoadingCount());
     }
 
     /**
@@ -184,6 +185,25 @@ public class GameManagerTest {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
         Thread.sleep(500);  // Wait for change to take effect.
-        Assert.assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
+        assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
+    }
+
+    /**
+     * Test that GameManager::getGameModeInfo() returns correct values for a game.
+     */
+    @Test
+    public void testGetGameModeInfo() {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
+                        GameManager.GAME_MODE_BATTERY));
+
+        GameModeInfo gameModeInfo = mGameManager.getGameModeInfo(mActivity.getPackageName());
+        assertEquals("GameManager#getGameModeInfo returned incorrect available game modes.",
+                3, gameModeInfo.getAvailableGameModes().length);
+        assertEquals("GameManager#getGameModeInfo returned incorrect active game mode.",
+                GameManager.GAME_MODE_BATTERY, gameModeInfo.getActiveGameMode());
     }
 }
