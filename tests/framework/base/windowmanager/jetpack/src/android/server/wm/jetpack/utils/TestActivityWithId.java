@@ -27,7 +27,7 @@ import androidx.annotation.Nullable;
 /**
  * Test activity that has a unique Id passed in from the launching context.
  */
-public class TestActivityWithId extends Activity {
+public class TestActivityWithId extends TestActivity {
 
     private static final String DEFAULT_ID = "unknown";
     private String mId = DEFAULT_ID;
