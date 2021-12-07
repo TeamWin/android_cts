@@ -37,6 +37,7 @@ import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.TelephonyUtils;
 import android.telephony.ims.DelegateRegistrationState;
 import android.telephony.ims.DelegateRequest;
 import android.telephony.ims.FeatureTagState;
@@ -86,9 +87,11 @@ public class SipDelegateManagerTest {
             "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gppservice.ims.icsi.oma.cpm.session\"";
     private static final String FILE_TRANSFER_HTTP_TAG =
             "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gppapplication.ims.iari.rcs.fthttp\"";
-
+    private static final String CHATBOT_COMMUNICATION_USING_SESSION_TAG =
+            "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.chatbot\"";
     private static final String[] DEFAULT_FEATURE_TAGS = {
-            ONE_TO_ONE_CHAT_TAG, GROUP_CHAT_TAG, FILE_TRANSFER_HTTP_TAG};
+            ONE_TO_ONE_CHAT_TAG, GROUP_CHAT_TAG, FILE_TRANSFER_HTTP_TAG,
+            CHATBOT_COMMUNICATION_USING_SESSION_TAG};
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {
         private CountDownLatch mLatch = new CountDownLatch(1);
@@ -706,28 +709,110 @@ public class SipDelegateManagerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
-                Collections.emptySet(), 0);
-        ifaces.connectAndVerify();
-        Set<String> registeredTags = new ArraySet<>(ifaces.request.getFeatureTags());
+        try {
+            TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_REGISTERING_DELEGATE_STATE_STRING);
+            TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_DEREGISTERING_LOSING_PDN_STATE_STRING);
 
-        // move reg state to deregistering and then deregistered
-        ifaces.delegateConn.setOperationCountDownLatch(1);
-        DelegateRegistrationState s = getDeregisteringState(registeredTags,
-                DelegateRegistrationState.DEREGISTERING_REASON_PDN_CHANGE);
-        ifaces.delegate.notifyImsRegistrationUpdate(s);
-        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
-        ifaces.delegateConn.verifyRegistrationStateEquals(s);
+            TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                    Collections.emptySet(), 0);
+            ifaces.connectAndVerify();
+            Set<String> registeredTags = new ArraySet<>(ifaces.request.getFeatureTags());
 
-        ifaces.delegateConn.setOperationCountDownLatch(1);
-        s = getRegisteredRegistrationState(registeredTags);
-        ifaces.delegate.notifyImsRegistrationUpdate(s);
-        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
-        ifaces.delegateConn.verifyRegistrationStateEquals(s);
+            // move reg state to registering, deregistering and then deregistered
+            ifaces.delegateConn.setOperationCountDownLatch(1);
+            DelegateRegistrationState s = getRegisteringRegistrationState(registeredTags);
+            ifaces.delegate.notifyImsRegistrationUpdate(s);
+            ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+            ifaces.delegateConn.verifyRegistrationStateEquals(s);
 
-        destroySipDelegateAndVerify(ifaces);
-        assertEquals("There should be no more delegates", 0,
-                ifaces.transport.getDelegates().size());
+            ifaces.delegateConn.setOperationCountDownLatch(1);
+            s = getDeregisteringState(registeredTags,
+                    DelegateRegistrationState.DEREGISTERING_REASON_LOSING_PDN);
+            ifaces.delegate.notifyImsRegistrationUpdate(s);
+            ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+            ifaces.delegateConn.verifyRegistrationStateEquals(s);
+
+            ifaces.delegateConn.setOperationCountDownLatch(1);
+            s = getRegisteredRegistrationState(registeredTags);
+            ifaces.delegate.notifyImsRegistrationUpdate(s);
+            ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+            ifaces.delegateConn.verifyRegistrationStateEquals(s);
+
+            destroySipDelegateAndVerify(ifaces);
+            assertEquals("There should be no more delegates", 0,
+                    ifaces.transport.getDelegates().size());
+        } finally {
+            TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_REGISTERING_DELEGATE_STATE_STRING);
+            TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_DEREGISTERING_LOSING_PDN_STATE_STRING);
+        }
+    }
+
+    @Test
+    public void testDelegateRegistrationChangesCompatDisabled() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        try {
+            TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_REGISTERING_DELEGATE_STATE_STRING);
+            TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_DEREGISTERING_LOSING_PDN_STATE_STRING);
+
+            TransportInterfaces ifaces = new TransportInterfaces(getDefaultRequest(),
+                    Collections.emptySet(), 0);
+            ifaces.connectAndVerify();
+            Set<String> registeredTags = new ArraySet<>(ifaces.request.getFeatureTags());
+
+            // The registering state should move to the deregistered state
+            // with the reason DEREGISTERED_REASON_NOT_REGISTERED when the registering state is not
+            // supported.
+            ifaces.delegateConn.setOperationCountDownLatch(1);
+            DelegateRegistrationState s = getRegisteringRegistrationState(registeredTags);
+            ifaces.delegate.notifyImsRegistrationUpdate(s);
+            ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+            s = getDeregisteredState(registeredTags,
+                    DelegateRegistrationState.DEREGISTERED_REASON_NOT_REGISTERED);
+            ifaces.delegateConn.verifyRegistrationStateEquals(s);
+
+            // The reason DEREGISTERING_REASON_LOSING_PDN of the deregistering state will be changed
+            // to the reason DEREGISTERING_REASON_PDN_CHANGE when DEREGISTERING_LOSING_PDN_STATE is
+            // not supported.
+            ifaces.delegateConn.setOperationCountDownLatch(1);
+            s = getDeregisteringState(registeredTags,
+                    DelegateRegistrationState.DEREGISTERING_REASON_LOSING_PDN);
+            ifaces.delegate.notifyImsRegistrationUpdate(s);
+            ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+            s = getDeregisteringState(registeredTags,
+                    DelegateRegistrationState.DEREGISTERING_REASON_PDN_CHANGE);
+            ifaces.delegateConn.verifyRegistrationStateEquals(s);
+
+            ifaces.delegateConn.setOperationCountDownLatch(1);
+            s = getRegisteredRegistrationState(registeredTags);
+            ifaces.delegate.notifyImsRegistrationUpdate(s);
+            ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+            ifaces.delegateConn.verifyRegistrationStateEquals(s);
+
+            destroySipDelegateAndVerify(ifaces);
+            assertEquals("There should be no more delegates", 0,
+                    ifaces.transport.getDelegates().size());
+        } finally {
+            TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_REGISTERING_DELEGATE_STATE_STRING);
+            TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.SUPPORT_DEREGISTERING_LOSING_PDN_STATE_STRING);
+        }
     }
 
     @Test
@@ -887,6 +972,8 @@ public class SipDelegateManagerTest {
     public void testParcelUnparcelRegistrationState() {
         ArraySet<String> regTags = new ArraySet<>();
         regTags.add(MMTEL_TAG);
+        ArraySet<String> registeringTags = new ArraySet<>();
+        registeringTags.add(CHATBOT_COMMUNICATION_USING_SESSION_TAG);
         DelegateRegistrationState s = new DelegateRegistrationState.Builder()
                 .addRegisteredFeatureTags(regTags)
                 .addRegisteredFeatureTag(ONE_TO_ONE_CHAT_TAG)
@@ -894,6 +981,7 @@ public class SipDelegateManagerTest {
                         DelegateRegistrationState.DEREGISTERING_REASON_PDN_CHANGE)
                 .addDeregisteredFeatureTag(FILE_TRANSFER_HTTP_TAG,
                         DelegateRegistrationState.DEREGISTERED_REASON_NOT_REGISTERED)
+                .addRegisteringFeatureTags(registeringTags)
                 .build();
         Parcel p = Parcel.obtain();
         s.writeToParcel(p, 0);
@@ -903,6 +991,7 @@ public class SipDelegateManagerTest {
         assertEquals(s.getRegisteredFeatureTags(), unparcel.getRegisteredFeatureTags());
         assertEquals(s.getDeregisteringFeatureTags(), unparcel.getDeregisteringFeatureTags());
         assertEquals(s.getDeregisteredFeatureTags(), unparcel.getDeregisteredFeatureTags());
+        assertEquals(s.getRegisteringFeatureTags(), unparcel.getRegisteringFeatureTags());
     }
 
     @Test
@@ -2061,6 +2150,11 @@ public class SipDelegateManagerTest {
         return new DelegateRegistrationState.Builder().addRegisteredFeatureTags(registered).build();
     }
 
+    private DelegateRegistrationState getRegisteringRegistrationState(Set<String> registering) {
+        return new DelegateRegistrationState.Builder().addRegisteringFeatureTags(registering)
+                .build();
+    }
+
     private DelegateRegistrationState getDeregisteringState(Set<String> deregisterTags,
             int reason) {
         DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
@@ -2069,6 +2163,16 @@ public class SipDelegateManagerTest {
         }
         return b.build();
     }
+
+    private DelegateRegistrationState getDeregisteredState(Set<String> deregisterTags,
+            int reason) {
+        DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
+        for (String t : deregisterTags) {
+            b.addDeregisteredFeatureTag(t, reason);
+        }
+        return b.build();
+    }
+
 
     private void connectTestImsServiceWithSipTransportAndConfig() throws Exception {
         PersistableBundle b = new PersistableBundle();
