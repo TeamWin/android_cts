@@ -42,6 +42,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
@@ -112,6 +113,12 @@ public final class DevicePolicy {
             throw new NeneException("Could not set profile owner for user "
                     + user + " component " + profileOwnerComponent, e);
         }
+
+        Poll.forValue("Profile Owner", () -> TestApis.devicePolicy().getProfileOwner(user))
+                .toNotBeNull()
+                .errorOnFail()
+                .await();
+
         return new ProfileOwner(user,
                 TestApis.packages().find(
                         profileOwnerComponent.getPackageName()), profileOwnerComponent);
@@ -188,6 +195,11 @@ public final class DevicePolicy {
 
         Package deviceOwnerPackage = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
+
+        Poll.forValue("Device Owner", () -> TestApis.devicePolicy().getDeviceOwner())
+                .toNotBeNull()
+                .errorOnFail()
+                .await();
 
         return new DeviceOwner(user, deviceOwnerPackage, deviceOwnerComponent);
     }

@@ -26,11 +26,13 @@ import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.content.pm.PermissionInfo.PROTECTION_DANGEROUS;
 import static android.content.pm.PermissionInfo.PROTECTION_FLAG_DEVELOPMENT;
+import static android.os.Build.VERSION_CODES.P;
 import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -786,18 +788,28 @@ public final class Package {
      */
     @Experimental
     public boolean hasSystemFlag() {
-        ApplicationInfo appInfo = applicationInfoFromAnyUser(/* flags= */ 0);
-
-        if (appInfo == null) {
-            throw new NeneException("Package not installed: " + this);
-        }
-
-        return (appInfo.flags & FLAG_SYSTEM) > 0;
+        return (applicationInfoFromAnyUserOrError(/* flags= */ 0).flags & FLAG_SYSTEM) > 0;
     }
 
     @Experimental
     public boolean isInstantApp() {
         return sPackageManager.isInstantApp(mPackageName);
+    }
+
+    /** Get the AppComponentFactory for the package. */
+    @Experimental
+    @Nullable
+    @TargetApi(P)
+    public String appComponentFactory() {
+        return applicationInfoFromAnyUserOrError(/* flags= */ 0).appComponentFactory;
+    }
+
+    private ApplicationInfo applicationInfoFromAnyUserOrError(int flags) {
+        ApplicationInfo appInfo = applicationInfoFromAnyUser(flags);
+        if (appInfo == null) {
+            throw new NeneException("Package not installed: " + this);
+        }
+        return appInfo;
     }
 
     /**

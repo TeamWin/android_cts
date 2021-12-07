@@ -22,11 +22,17 @@ import android.content.ComponentName;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppInstance;
+import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -38,9 +44,17 @@ import org.junit.runner.RunWith;
 public class ProfileOwnerTest {
 
     private static final ComponentName DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
+    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    private static final TestApp sNonTestOnlyDpc = sTestAppProvider.query()
+            .whereIsDeviceAdmin().isTrue()
+            .whereTestOnly().isFalse()
+            .get();
+    private static final ComponentName NON_TEST_ONLY_DPC_COMPONENT_NAME = new ComponentName(
+            sNonTestOnlyDpc.packageName(),
+            "com.android.bedstead.testapp.DeviceAdminTestApp.DeviceAdminReceiver"
+    );
+
     private static UserReference sProfile;
-    private static TestApp sTestApp;
-    private static DevicePolicyController sProfileOwner;
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -48,36 +62,71 @@ public class ProfileOwnerTest {
     @Before
     public void setUp() {
         sProfile = TestApis.users().instrumented();
-        sTestApp = sDeviceState.dpc().testApp();
-        sProfileOwner = sDeviceState.profileOwner().devicePolicyController();
     }
 
     @Test
     @EnsureHasProfileOwner
     public void user_returnsUser() {
-        assertThat(sProfileOwner.user()).isEqualTo(sProfile);
+        assertThat(sDeviceState.profileOwner().devicePolicyController().user()).isEqualTo(sProfile);
     }
 
     @Test
     @EnsureHasProfileOwner
     public void pkg_returnsPackage() {
-        assertThat(sProfileOwner.pkg()).isEqualTo(sTestApp.pkg());
+        assertThat(sDeviceState.profileOwner().devicePolicyController().pkg()).isNotNull();
     }
 
     @Test
     @EnsureHasProfileOwner
     public void componentName_returnsComponentName() {
-        assertThat(sProfileOwner.componentName()).isEqualTo(DPC_COMPONENT_NAME);
+        assertThat(sDeviceState.profileOwner().devicePolicyController().componentName())
+                .isEqualTo(DPC_COMPONENT_NAME);
     }
 
     @Test
     @EnsureHasProfileOwner
     public void remove_removesProfileOwner() {
-        sProfileOwner.remove();
+        sDeviceState.profileOwner().devicePolicyController().remove();
         try {
             assertThat(TestApis.devicePolicy().getProfileOwner(sProfile)).isNull();
         } finally {
-            sProfileOwner = TestApis.devicePolicy().setProfileOwner(sProfile, DPC_COMPONENT_NAME);
+            TestApis.devicePolicy().setProfileOwner(sProfile, DPC_COMPONENT_NAME);
         }
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    public void remove_nonTestOnlyDpc_removesProfileOwner() {
+        try (TestAppInstance dpc = sNonTestOnlyDpc.install()) {
+            ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(
+                    TestApis.users().instrumented(), NON_TEST_ONLY_DPC_COMPONENT_NAME);
+
+            profileOwner.remove();
+
+            assertThat(TestApis.devicePolicy().getProfileOwner()).isNull();
+        }
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    @RequireRunNotOnSecondaryUser
+    public void remove_onOtherUser_removesProfileOwner() {
+        try (TestAppInstance dpc = sNonTestOnlyDpc.install(sDeviceState.secondaryUser())) {
+            ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(
+                    sDeviceState.secondaryUser(), NON_TEST_ONLY_DPC_COMPONENT_NAME);
+
+            profileOwner.remove();
+
+            assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()))
+                    .isNull();
+        }
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void remove_onWorkProfile_testDpc_removesProfileOwner() {
+        TestApis.devicePolicy().getProfileOwner().remove();
+
+        assertThat(TestApis.devicePolicy().getProfileOwner()).isNull();
     }
 }
