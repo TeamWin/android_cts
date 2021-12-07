@@ -368,8 +368,11 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
             // Wait for animation finished.
             mWmState.waitForActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
-            mWmState.assertVisibility(ASSISTANT_ACTIVITY, isAssistantOnTop());
-
+            if (isAssistantOnTop()) {
+                mWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
+            } else {
+                mWmState.waitAndAssertVisibilityGone(ASSISTANT_ACTIVITY);
+            }
             // Launch the assistant again and ensure that it goes into the same task
             launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION,
                     mAssistantDisplayId);
