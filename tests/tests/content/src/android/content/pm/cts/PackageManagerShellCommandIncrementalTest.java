@@ -105,6 +105,16 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK_SPLIT2_IDSIG = "HelloWorld5_xhdpi-v4.apk.idsig";
     private static final String TEST_APK_MALFORMED = "malformed.apk";
 
+    private static final String TEST_HW7 = "HelloWorld7.apk";
+    private static final String TEST_HW7_IDSIG = "HelloWorld7.apk.idsig";
+    private static final String TEST_HW7_SPLIT0 = "HelloWorld7_hdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT0_IDSIG = "HelloWorld7_hdpi-v4.apk.idsig";
+    private static final String TEST_HW7_SPLIT1 = "HelloWorld7_mdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT1_IDSIG = "HelloWorld7_mdpi-v4.apk.idsig";
+    private static final String TEST_HW7_SPLIT2 = "HelloWorld7_xhdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT3 = "HelloWorld7_xxhdpi-v4.apk";
+    private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
+
     private static final long EXPECTED_READ_TIME = 1000L;
 
     private IncrementalInstallSession mSession = null;
@@ -750,12 +760,12 @@ public class PackageManagerShellCommandIncrementalTest {
 
         mSession =
                 new IncrementalInstallSession.Builder()
-                        .addApk(Paths.get(createApkPath(TEST_APK)),
-                                Paths.get(createApkPath(TEST_APK_IDSIG)))
-                        .addApk(Paths.get(createApkPath(TEST_APK_SPLIT0)),
-                                Paths.get(createApkPath(TEST_APK_SPLIT0_IDSIG)))
-                        .addApk(Paths.get(createApkPath(TEST_APK_SPLIT1)),
-                                Paths.get(createApkPath(TEST_APK_SPLIT1_IDSIG)))
+                        .addApk(Paths.get(createApkPath(TEST_HW7)),
+                                Paths.get(createApkPath(TEST_HW7_IDSIG)))
+                        .addApk(Paths.get(createApkPath(TEST_HW7_SPLIT0)),
+                                Paths.get(createApkPath(TEST_HW7_SPLIT0_IDSIG)))
+                        .addApk(Paths.get(createApkPath(TEST_HW7_SPLIT1)),
+                                Paths.get(createApkPath(TEST_HW7_SPLIT1_IDSIG)))
                         .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME)
                         .setLogger(new IncrementalDeviceConnection.Logger())
                         .build();
@@ -783,6 +793,9 @@ public class PackageManagerShellCommandIncrementalTest {
             final File apkToRead = getSplit("split_config.mdpi.apk");
             final long readTime0 = readAndReportTime(apkToRead, 1000);
 
+            if (readTime0 < EXPECTED_READ_TIME) {
+                executeShellCommand("atrace --async-dump");
+            }
             assertTrue(
                     "Must take longer than " + EXPECTED_READ_TIME + "ms: time0=" + readTime0 + "ms",
                     readTime0 >= EXPECTED_READ_TIME);
