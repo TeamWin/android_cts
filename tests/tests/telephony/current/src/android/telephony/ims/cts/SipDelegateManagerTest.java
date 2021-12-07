@@ -86,9 +86,11 @@ public class SipDelegateManagerTest {
             "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gppservice.ims.icsi.oma.cpm.session\"";
     private static final String FILE_TRANSFER_HTTP_TAG =
             "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gppapplication.ims.iari.rcs.fthttp\"";
-
+    private static final String CHATBOT_COMMUNICATION_USING_SESSION_TAG =
+            "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.chatbot\"";
     private static final String[] DEFAULT_FEATURE_TAGS = {
-            ONE_TO_ONE_CHAT_TAG, GROUP_CHAT_TAG, FILE_TRANSFER_HTTP_TAG};
+            ONE_TO_ONE_CHAT_TAG, GROUP_CHAT_TAG, FILE_TRANSFER_HTTP_TAG,
+            CHATBOT_COMMUNICATION_USING_SESSION_TAG};
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {
         private CountDownLatch mLatch = new CountDownLatch(1);
@@ -711,9 +713,15 @@ public class SipDelegateManagerTest {
         ifaces.connectAndVerify();
         Set<String> registeredTags = new ArraySet<>(ifaces.request.getFeatureTags());
 
-        // move reg state to deregistering and then deregistered
+        // move reg state to registering, deregistering and then deregistered
         ifaces.delegateConn.setOperationCountDownLatch(1);
-        DelegateRegistrationState s = getDeregisteringState(registeredTags,
+        DelegateRegistrationState s = getRegisteringRegistrationState(registeredTags);
+        ifaces.delegate.notifyImsRegistrationUpdate(s);
+        ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        ifaces.delegateConn.verifyRegistrationStateEquals(s);
+
+        ifaces.delegateConn.setOperationCountDownLatch(1);
+        s = getDeregisteringState(registeredTags,
                 DelegateRegistrationState.DEREGISTERING_REASON_PDN_CHANGE);
         ifaces.delegate.notifyImsRegistrationUpdate(s);
         ifaces.delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
@@ -887,6 +895,8 @@ public class SipDelegateManagerTest {
     public void testParcelUnparcelRegistrationState() {
         ArraySet<String> regTags = new ArraySet<>();
         regTags.add(MMTEL_TAG);
+        ArraySet<String> registeringTags = new ArraySet<>();
+        registeringTags.add(CHATBOT_COMMUNICATION_USING_SESSION_TAG);
         DelegateRegistrationState s = new DelegateRegistrationState.Builder()
                 .addRegisteredFeatureTags(regTags)
                 .addRegisteredFeatureTag(ONE_TO_ONE_CHAT_TAG)
@@ -894,6 +904,7 @@ public class SipDelegateManagerTest {
                         DelegateRegistrationState.DEREGISTERING_REASON_PDN_CHANGE)
                 .addDeregisteredFeatureTag(FILE_TRANSFER_HTTP_TAG,
                         DelegateRegistrationState.DEREGISTERED_REASON_NOT_REGISTERED)
+                .addRegisteringFeatureTags(registeringTags)
                 .build();
         Parcel p = Parcel.obtain();
         s.writeToParcel(p, 0);
@@ -903,6 +914,7 @@ public class SipDelegateManagerTest {
         assertEquals(s.getRegisteredFeatureTags(), unparcel.getRegisteredFeatureTags());
         assertEquals(s.getDeregisteringFeatureTags(), unparcel.getDeregisteringFeatureTags());
         assertEquals(s.getDeregisteredFeatureTags(), unparcel.getDeregisteredFeatureTags());
+        assertEquals(s.getRegisteringFeatureTags(), unparcel.getRegisteringFeatureTags());
     }
 
     @Test
@@ -2059,6 +2071,11 @@ public class SipDelegateManagerTest {
 
     private DelegateRegistrationState getRegisteredRegistrationState(Set<String> registered) {
         return new DelegateRegistrationState.Builder().addRegisteredFeatureTags(registered).build();
+    }
+
+    private DelegateRegistrationState getRegisteringRegistrationState(Set<String> registering) {
+        return new DelegateRegistrationState.Builder().addRegisteringFeatureTags(registering)
+                .build();
     }
 
     private DelegateRegistrationState getDeregisteringState(Set<String> deregisterTags,
