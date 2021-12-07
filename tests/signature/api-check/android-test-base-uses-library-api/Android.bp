@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package {
 }
 
 android_test {
-    name: "CtsAndroidTestBaseCurrentApiSignatureTestCases",
+    name: "CtsAndroidTestBaseUsesLibraryApiSignatureTestCases",
     defaults: [
         "signature-api-check-defaults",
     ],
@@ -26,6 +26,7 @@ android_test {
         ":cts-android-test-mock-current-api-gz",
         ":cts-android-test-runner-current-api-gz",
     ],
+    min_sdk_version: "30",
 
     use_embedded_native_libs: false,
     test_suites: [
