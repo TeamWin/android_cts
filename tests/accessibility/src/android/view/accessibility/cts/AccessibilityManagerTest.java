@@ -34,16 +34,19 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
+import android.provider.Settings;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
+import android.view.accessibility.AccessibilityManager.AudioDescriptionByDefaultStateChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 
@@ -79,14 +82,6 @@ public class AccessibilityManagerTest {
             new InstrumentedAccessibilityServiceTestRule<>(
                     SpeakingAndVibratingAccessibilityService.class, false);
 
-    @Rule
-    public final RuleChain mRuleChain = RuleChain
-            .outerRule(mSpeakingAndVibratingAccessibilityServiceRule)
-            .around(mVibratingAccessibilityServiceRule)
-            .around(mSpeakingAccessibilityServiceRule)
-            // Inner rule capture failure and dump data before finishing activity and a11y service
-            .around(mDumpOnFailureRule);
-
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
 
@@ -106,6 +101,25 @@ public class AccessibilityManagerTest {
             "accessibility_interactive_ui_timeout_ms";
     private static final String ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT =
             "enabled_accessibility_audio_description_by_default";
+
+    private final String mOriginalAudioDescriptionState = Settings.Secure.getString(
+            sInstrumentation.getContext().getContentResolver(),
+            ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT);
+
+    private final SettingsStateChangerRule mAudioDescriptionSetterRule =
+            new SettingsStateChangerRule(
+                    sInstrumentation.getContext(),
+                    ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT,
+                    mOriginalAudioDescriptionState);
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mSpeakingAndVibratingAccessibilityServiceRule)
+            .around(mVibratingAccessibilityServiceRule)
+            .around(mSpeakingAccessibilityServiceRule)
+            // Inner rule capture failure and dump data before finishing activity and a11y service
+            .around(mDumpOnFailureRule)
+            .around(mAudioDescriptionSetterRule);
 
     private AccessibilityManager mAccessibilityManager;
 
@@ -142,6 +156,19 @@ public class AccessibilityManagerTest {
         assertTrue(mAccessibilityManager.addTouchExplorationStateChangeListener(listener));
         assertTrue(mAccessibilityManager.removeTouchExplorationStateChangeListener(listener));
         assertFalse(mAccessibilityManager.removeTouchExplorationStateChangeListener(listener));
+    }
+
+    @Test
+    public void testAddAndRemoveAudioDescriptionStateChangeListener() throws Exception {
+        AudioDescriptionByDefaultStateChangeListener listener = (boolean enabled) -> {
+            // Do nothing.
+        };
+        mAccessibilityManager.addAudioDescriptionByDefaultStateChangeListener(
+                mTargetContext.getMainExecutor(), listener);
+        assertTrue(
+                mAccessibilityManager.removeAudioDescriptionByDefaultStateChangeListener(listener));
+        assertFalse(
+                mAccessibilityManager.removeAudioDescriptionByDefaultStateChangeListener(listener));
     }
 
     @Test
@@ -441,6 +468,42 @@ public class AccessibilityManagerTest {
     }
 
     @Test
+    public void testAudioDescriptionByDefaultStateChangeListenerWithExecutor() {
+        final UiAutomation automan = sInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final Object waitObject = new Object();
+        final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+
+        AudioDescriptionByDefaultStateChangeListener listener = (boolean b) -> {
+            synchronized (waitObject) {
+                atomicBoolean.set(b);
+                waitObject.notifyAll();
+            }
+        };
+
+        try {
+            mAccessibilityManager.addAudioDescriptionByDefaultStateChangeListener(
+                    mTargetContext.getMainExecutor(), listener);
+            putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "1");
+            waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
+                    "Audio description state listener called when services enabled");
+            assertTrue("Listener told that audio description by default is request.",
+                    mAccessibilityManager.isAudioDescriptionRequested());
+
+            putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "0");
+            waitForAtomicBooleanBecomes(atomicBoolean, false, waitObject,
+                    "Audio description state listener called when services disabled");
+            assertFalse("Listener told that audio description by default is not request.",
+                    mAccessibilityManager.isAudioDescriptionRequested());
+            assertTrue(
+                    mAccessibilityManager.removeAudioDescriptionByDefaultStateChangeListener(
+                            listener));
+        } finally {
+            automan.destroy();
+        }
+    }
+
+    @Test
     public void testIsAudioDescriptionEnabled() throws Exception {
         final UiAutomation automan = sInstrumentation.getUiAutomation(
                 UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
@@ -464,7 +527,6 @@ public class AccessibilityManagerTest {
             });
             assertFalse(mAccessibilityManager.isAudioDescriptionRequested());
         } finally {
-            putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "0");
             automan.destroy();
         }
     }
