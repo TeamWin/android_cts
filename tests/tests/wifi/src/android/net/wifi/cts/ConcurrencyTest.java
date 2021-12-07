@@ -37,16 +37,15 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
-import android.provider.Settings;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -725,11 +724,9 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         });
 
         resetResponse(mMyResponse);
-        ShellIdentityUtils.invokeWithShellPermissions(() -> {
-            mWifiP2pManager.stopListening(mWifiP2pChannel, mActionListener);
-            assertTrue(waitForServiceResponse(mMyResponse));
-            assertTrue(mMyResponse.success);
-        });
+        mWifiP2pManager.stopListening(mWifiP2pChannel, mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(mMyResponse.success);
     }
 
     public void testP2pService() {
