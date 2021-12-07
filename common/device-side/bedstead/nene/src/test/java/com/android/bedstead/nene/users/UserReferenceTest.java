@@ -17,18 +17,16 @@
 package com.android.bedstead.nene.users;
 
 import static android.Manifest.permission.CREATE_USERS;
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
+
+import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Process;
 import android.os.UserManager;
 
@@ -39,12 +37,10 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.eventlib.EventLogs;
-import com.android.eventlib.events.activities.ActivityCreatedEvent;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -159,28 +155,17 @@ public class UserReferenceTest {
     @RequireRunNotOnSecondaryUser
     @RequireSdkVersion(min = Q)
     public void switchTo_userIsSwitched() {
-        try (PermissionContext p =
-                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+        sDeviceState.secondaryUser().switchTo();
 
-            TestApis.packages().find(sContext.getPackageName())
-                    .installExisting(sDeviceState.secondaryUser());
-            sDeviceState.secondaryUser().switchTo();
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.secondaryUser());
+    }
 
-            Intent intent = new Intent();
-            intent.setPackage(sContext.getPackageName());
-            intent.setClassName(sContext.getPackageName(), TEST_ACTIVITY_NAME);
-            intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
-            sContext.startActivityAsUser(intent, sDeviceState.secondaryUser().userHandle());
+    @Test
+    @RequireRunOnWorkProfile(switchedToParentUser = FALSE)
+    public void switchTo_profile_switchesToParent() {
+        sDeviceState.workProfile().switchTo();
 
-            EventLogs<ActivityCreatedEvent> logs =
-                    ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                            .whereActivity().activityClass()
-                                .className().isEqualTo(TEST_ACTIVITY_NAME)
-                            .onUser(sDeviceState.secondaryUser());
-            assertThat(logs.poll()).isNotNull();
-        } finally {
-            TestApis.users().system().switchTo();
-        }
+        assertThat(TestApis.users().current()).isEqualTo(sDeviceState.workProfile().parent());
     }
 
     @Test

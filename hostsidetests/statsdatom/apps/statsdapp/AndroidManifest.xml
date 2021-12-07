@@ -62,6 +62,11 @@
                   android:resizeableActivity="false"
                   android:screenOrientation="portrait"
                   android:exported="true"/>
+        <activity android:name=".StatsdCtsMinAspectRatioPortraitActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:minAspectRatio="3"
+                  android:exported="true"/>
 
         <activity android:name=".VideoPlayerActivity"
              android:label="@string/app_name"
