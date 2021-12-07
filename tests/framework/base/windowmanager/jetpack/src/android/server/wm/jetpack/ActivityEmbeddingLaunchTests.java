@@ -17,57 +17,36 @@
 package android.server.wm.jetpack;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.getPrimaryStackTopActivity;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.getSecondaryStackTopActivity;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.TAG;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.getSecondActivity;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForResumed;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
-import android.util.Pair;
-import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
+import android.server.wm.jetpack.utils.ActivityEmbeddingTestBase;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
-import android.server.wm.jetpack.utils.TestValueCountConsumer;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.window.extensions.WindowExtensions;
-import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.ActivityRule;
-import androidx.window.extensions.embedding.EmbeddingRule;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 
 import com.google.common.collect.Sets;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 /**
@@ -79,27 +58,7 @@ import java.util.function.Predicate;
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingLaunchTests
  */
 @RunWith(AndroidJUnit4.class)
-public class ActivityEmbeddingLaunchTests extends WindowManagerJetpackTestBase {
-
-    private ActivityEmbeddingComponent mActivityEmbeddingComponent;
-    private TestValueCountConsumer<List<SplitInfo>> mSplitInfoConsumer;
-
-    @Before
-    public void setUp() {
-        super.setUp();
-        assumeExtensionSupportedDevice();
-        WindowExtensions windowExtensions = getWindowExtensions();
-        assumeNotNull(windowExtensions);
-        mInstrumentation.runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mActivityEmbeddingComponent = windowExtensions.getActivityEmbeddingComponent();
-            }
-        });
-        assumeNotNull(mActivityEmbeddingComponent);
-        mSplitInfoConsumer = new TestValueCountConsumer<>();
-        mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
-    }
+public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
 
     /**
      * Tests splitting activities with the same primary activity.
