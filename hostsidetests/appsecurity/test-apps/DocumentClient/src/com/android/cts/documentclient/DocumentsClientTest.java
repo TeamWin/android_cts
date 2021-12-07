@@ -556,11 +556,25 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         mDevice.waitForIdle();
 
-        assertTrue(findDocument(queryString).exists());
-
         UiObject textField = findSearchViewTextField();
+        int tryLimit = 3;
+
+        textField.waitForExists(TIMEOUT);
         assertTrue(textField.exists());
+
+        while (tryLimit-- > 0) {
+            if (queryString.equals(textField.getText())) {
+                // start search, hide IME
+                mDevice.pressEnter();
+                break;
+            } else {
+                SystemClock.sleep(500);
+            }
+        }
+
         assertEquals(queryString, textField.getText());
+
+        assertTrue(findDocument(queryString).exists());
     }
 
     public void testGetContent_returnsResultToCallingActivity() throws Exception {
