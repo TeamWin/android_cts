@@ -26,6 +26,7 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddOrSelectButton;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -293,7 +294,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         selectCheckButton.click();
         mDevice.waitForIdle();
 
-        final UiObject addButton = findPreviewAddOrSelectButton();
+        final UiObject addButton = findPreviewAddButton();
         addButton.click();
         mDevice.waitForIdle();
 
