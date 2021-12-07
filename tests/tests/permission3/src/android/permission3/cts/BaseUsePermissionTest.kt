@@ -451,7 +451,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             if (isWatch) {
                 click(By.text(permissionLabel), 40_000)
             } else {
-                click(By.text(permissionLabel))
+                clickPermissionControllerUi(By.text(permissionLabel))
             }
 
             val wasGranted = if (isAutomotive) {
