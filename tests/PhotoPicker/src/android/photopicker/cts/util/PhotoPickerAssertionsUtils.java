@@ -73,7 +73,7 @@ public class PhotoPickerAssertionsUtils {
         assertThat(c).isNotNull();
         assertThat(c.moveToFirst()).isTrue();
 
-        if (getBoolean("sys.photopicker.pickerdb.enabled", false)) {
+        if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
             final String mimeType = c.getString(c.getColumnIndex(
                             CloudMediaProviderContract.MediaColumns.MIME_TYPE));
             if (mimeType.startsWith("image")) {
