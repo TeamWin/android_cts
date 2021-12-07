@@ -16,7 +16,11 @@
 
 package android.server.wm.jetpack.utils;
 
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
+
 import android.app.Activity;
+import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.View;
 
@@ -33,6 +37,8 @@ public class TestActivity extends Activity implements View.OnLayoutChangeListene
 
     private int mRootViewId;
     private CountDownLatch mLayoutLatch;
+    private CountDownLatch mBoundsChangeLatch;
+    private final Rect mPreviousBounds = new Rect();
     private static CountDownLatch sResumeLatch = new CountDownLatch(1);
 
     @Override
@@ -44,6 +50,7 @@ public class TestActivity extends Activity implements View.OnLayoutChangeListene
         setContentView(contentView);
 
         resetLayoutCounter();
+        resetBoundsChangeCounter();
         getWindow().getDecorView().addOnLayoutChangeListener(this);
     }
 
@@ -67,12 +74,32 @@ public class TestActivity extends Activity implements View.OnLayoutChangeListene
         sResumeLatch.countDown();
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        final Rect newActivityBounds = getActivityBounds(this);
+        if (!newActivityBounds.equals(mPreviousBounds)) {
+            mPreviousBounds.set(newActivityBounds);
+            mBoundsChangeLatch.countDown();
+        }
+    }
+
     /**
      * Resets layout counter when waiting for a layout to happen before calling
      * {@link #waitForLayout()}.
      */
     public void resetLayoutCounter() {
         mLayoutLatch = new CountDownLatch(1);
+    }
+
+    /**
+     * Resets bounds change counter when waiting for a bounds change to happen before calling
+     * {@link #waitForBoundsChange()}.
+     */
+    public void resetBoundsChangeCounter() {
+        mPreviousBounds.set(getActivityBounds(this));
+        mBoundsChangeLatch = new CountDownLatch(1);
     }
 
     /**
@@ -84,6 +111,20 @@ public class TestActivity extends Activity implements View.OnLayoutChangeListene
     public boolean waitForLayout() {
         try {
             return mLayoutLatch.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Blocks and waits for the next bounds change to happen. {@link #resetBoundsChangeCounter()}
+     * must be called before calling this method.
+     * @return {@code true} if the bounds change happened before the timeout count reached zero and
+     *         {@code false} if the waiting time elapsed before the bounds change happened.
+     */
+    public boolean waitForBoundsChange() {
+        try {
+            return mBoundsChangeLatch.await(3, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             return false;
         }
