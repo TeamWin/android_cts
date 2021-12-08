@@ -54,6 +54,7 @@ import android.telecom.TelecomManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -76,6 +77,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
@@ -88,20 +91,24 @@ public final class LockTaskTest {
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
-    private static final int[] INDIVIDUALLY_SETTABLE_FLAGS = new int[]{
+    @IntTestParameter({
             LOCK_TASK_FEATURE_SYSTEM_INFO,
             LOCK_TASK_FEATURE_HOME,
             LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
-            LOCK_TASK_FEATURE_KEYGUARD
-    };
+            LOCK_TASK_FEATURE_KEYGUARD})
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface IndividuallySettableFlagTestParameter {
+    }
 
-    private static final int[] FLAGS_SETTABLE_WITH_HOME = new int[]{
+    @IntTestParameter({
             LOCK_TASK_FEATURE_SYSTEM_INFO,
             LOCK_TASK_FEATURE_OVERVIEW,
             LOCK_TASK_FEATURE_NOTIFICATIONS,
             LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
-            LOCK_TASK_FEATURE_KEYGUARD
-    };
+            LOCK_TASK_FEATURE_KEYGUARD})
+    @Retention(RetentionPolicy.RUNTIME)
+    private @interface SettableWithHomeFlagTestParameter {
+    }
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
     private static final TestApp sLockTaskTestApp = sTestAppProvider.query()
@@ -322,20 +329,19 @@ public final class LockTaskTest {
     @PositivePolicyTest(policy = LockTask.class)
     // TODO(b/188893663): Support additional parameterization for cases like this
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
-    public void setLockTaskFeatures_overviewFeature_setsFeature() {
+    public void setLockTaskFeatures_individuallySettableFlag_setsFeature(
+            @IndividuallySettableFlagTestParameter int flag) {
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
                         .getLockTaskFeatures(DPC_COMPONENT_NAME);
 
         try {
-            for (int flag : INDIVIDUALLY_SETTABLE_FLAGS) {
-                sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskFeatures(DPC_COMPONENT_NAME, flag);
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskFeatures(DPC_COMPONENT_NAME, flag);
 
-                assertThat(sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME))
-                        .isEqualTo(flag);
-            }
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getLockTaskFeatures(DPC_COMPONENT_NAME))
+                    .isEqualTo(flag);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
                     .setLockTaskFeatures(DPC_COMPONENT_NAME, originalLockTaskFeatures);
@@ -387,20 +393,19 @@ public final class LockTaskTest {
     @PositivePolicyTest(policy = LockTask.class)
     // TODO(b/188893663): Support additional parameterization for cases like this
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
-    public void setLockTaskFeatures_multipleFeatures_setsFeatures() {
+    public void setLockTaskFeatures_multipleFeatures_setsFeatures(
+            @SettableWithHomeFlagTestParameter int flag) {
         int originalLockTaskFeatures =
                 sDeviceState.dpc().devicePolicyManager()
                         .getLockTaskFeatures(DPC_COMPONENT_NAME);
 
         try {
-            for (int flag : FLAGS_SETTABLE_WITH_HOME) {
-                sDeviceState.dpc().devicePolicyManager()
-                        .setLockTaskFeatures(DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_HOME | flag);
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskFeatures(DPC_COMPONENT_NAME, LOCK_TASK_FEATURE_HOME | flag);
 
-                assertThat(sDeviceState.dpc().devicePolicyManager()
-                        .getLockTaskFeatures(DPC_COMPONENT_NAME))
-                        .isEqualTo(LOCK_TASK_FEATURE_HOME | flag);
-            }
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getLockTaskFeatures(DPC_COMPONENT_NAME))
+                    .isEqualTo(LOCK_TASK_FEATURE_HOME | flag);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
                     .setLockTaskFeatures(DPC_COMPONENT_NAME, originalLockTaskFeatures);
