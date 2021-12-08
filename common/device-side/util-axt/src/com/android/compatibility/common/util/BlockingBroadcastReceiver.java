@@ -143,7 +143,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
 
     public BlockingBroadcastReceiver register() {
         for (IntentFilter intentFilter : mIntentFilters) {
-            mContext.registerReceiver(this, intentFilter);
+            mContext.registerReceiver(this, intentFilter,
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
         }
 
         return this;
@@ -153,7 +154,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
         for (IntentFilter intentFilter : mIntentFilters) {
             mContext.registerReceiverForAllUsers(
                     this, intentFilter, /* broadcastPermission= */ null,
-                    /* scheduler= */ null);
+                    /* scheduler= */ null,
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
         }
 
         return this;
