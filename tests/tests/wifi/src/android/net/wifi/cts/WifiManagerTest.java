@@ -2286,6 +2286,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * configuration.
      * @throws Exception
      */
+    @VirtualDeviceNotSupported
     public void testSetGetSoftApConfigurationAndSoftApCapabilityCallback() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -2375,6 +2376,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Verify that startTetheredHotspot with specific channel config.
      * @throws Exception
      */
+    @VirtualDeviceNotSupported
     public void testStartTetheredHotspotWithChannelConfigAndSoftApStateAndInfoCallback()
             throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
