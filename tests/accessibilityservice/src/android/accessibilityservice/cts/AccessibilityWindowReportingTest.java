@@ -55,10 +55,12 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -513,6 +515,32 @@ public class AccessibilityWindowReportingTest {
                         return window != null;
                     }, DEFAULT_TIMEOUT_MS);
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW);
+    }
+
+        /**
+        * Test whether we can successfully enable and disable window animations.
+        */
+    @Test
+    public void testDisableWindowAnimations() {
+        setAndAssertAnimationScale(0.0f);
+        setAndAssertAnimationScale(0.5f);
+        setAndAssertAnimationScale(1.0f);
+    }
+
+    /** Sets the animation scale to a specified value and asserts that the value has been set. */
+    private void setAndAssertAnimationScale(float value) {
+        Context context = sInstrumentation.getContext();
+        sUiAutomation.setAnimationScale(value);
+        assertEquals(value, getGlobalFloat(context, Settings.Global.WINDOW_ANIMATION_SCALE), 0.0f);
+        assertEquals(
+                value, getGlobalFloat(context, Settings.Global.TRANSITION_ANIMATION_SCALE), 0.0f);
+        assertEquals(value, getGlobalFloat(context, Settings.Global.ANIMATOR_DURATION_SCALE), 0.0f);
+    }
+
+    /** Returns value of constants in Settings.Global. */
+    private static float getGlobalFloat(Context context, String constantName) {
+        float value = Settings.Global.getFloat(context.getContentResolver(), constantName, -1);
+        return value;
     }
 
     private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
