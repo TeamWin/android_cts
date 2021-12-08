@@ -162,7 +162,7 @@ public class NotificationPrivacyVerifierActivity extends InteractiveVerifierActi
 
         Notification publicVersion = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle(getString(R.string.np_public_version_text))
-                .setSmallIcon(R.drawable.ic_stat_bob)
+                .setSmallIcon(R.drawable.ic_stat_alice)
                 .setWhen(when)
                 .build();
         Notification privateVersion = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
