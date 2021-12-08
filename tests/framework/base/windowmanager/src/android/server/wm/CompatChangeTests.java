@@ -689,6 +689,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 .setTargetActivity(activity)
                 .setWindowingMode(windowingMode)
                 .setUseInstrumentation()
+                .allowMultipleInstances(false)
                 .execute();
     }
 

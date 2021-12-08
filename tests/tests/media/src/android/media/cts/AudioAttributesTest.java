@@ -222,6 +222,47 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
         assertEquals(attr1, attr2);
     }
 
+    /**
+     * Test AudioAttributes Builder error handling.
+     *
+     * @throws Exception
+     */
+    public void testAudioAttributesBuilderError() throws Exception {
+        final int BIGNUM = Integer.MAX_VALUE;
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new AudioAttributes.Builder()
+                    .setContentType(BIGNUM)
+                    .build();
+        });
+
+        // TODO(b/207021564): This should throw IAE in AudioAttributes.Builder.
+        //assertThrows(IllegalArgumentException.class, () -> {
+            new AudioAttributes.Builder()
+                    .setFlags(BIGNUM)
+                    .build();
+        //});
+
+        // TODO(b/207016008): This should throw IAE in AudioAttributes.Builder.
+        //assertThrows(IllegalArgumentException.class, () -> {
+            new AudioAttributes.Builder()
+                    .setLegacyStreamType(BIGNUM)
+                    .build();
+        //});
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new AudioAttributes.Builder()
+                    .setSpatializationBehavior(BIGNUM)
+                    .build();
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new AudioAttributes.Builder()
+                    .setUsage(BIGNUM)
+                    .build();
+        });
+    }
+
     // -----------------------------------------------------------------
     // audio_policy_configuration.xsd converter tests
     // ----------------------------------
