@@ -119,6 +119,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -594,6 +595,23 @@ public class RemoteViewsTest {
 
         mRemoteViews.setImageViewBitmap(R.id.remoteView_absolute, bitmap);
         assertThrowsOnReapply(ActionException.class);
+    }
+
+    @Test
+    public void testSetImageViewBitmap_afterCopying() throws Throwable {
+        Bitmap bitmap =
+                BitmapFactory.decodeResource(mContext.getResources(), R.drawable.testimage);
+        RemoteViews original =
+                new RemoteViews(mContext.getPackageName(), R.layout.remoteviews_good);
+        original.setImageViewBitmap(R.id.remoteView_image, bitmap);
+        RemoteViews copy = new RemoteViews(original);
+
+        AtomicReference<View> view = new AtomicReference<>();
+        mActivityRule.runOnUiThread(() -> view.set(copy.apply(mContext, null)));
+
+        ImageView image = view.get().findViewById(R.id.remoteView_image);
+        assertNotNull(image.getDrawable());
+        WidgetTestUtils.assertEquals(bitmap, ((BitmapDrawable) image.getDrawable()).getBitmap());
     }
 
     @Test
