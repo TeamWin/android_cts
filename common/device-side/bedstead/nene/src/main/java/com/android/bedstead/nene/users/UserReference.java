@@ -22,8 +22,10 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION_CODES.R;
 import static android.os.Build.VERSION_CODES.S;
 
+import static com.android.bedstead.nene.permissions.Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.users.Users.users;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.content.pm.UserInfo;
 import android.os.UserHandle;
@@ -33,6 +35,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -59,6 +62,8 @@ public class UserReference implements AutoCloseable {
     );
 
     private static final String LOG_TAG = "UserReference";
+
+    private static final String USER_SETUP_COMPLETE_KEY = "user_setup_complete";
 
     private final int mId;
 
@@ -369,6 +374,36 @@ public class UserReference implements AutoCloseable {
             return TestApis.users().all().stream().anyMatch(u -> u.equals(this));
         }
         return users().anyMatch(ui -> ui.id == id());
+    }
+
+    /**
+     * Sets the value of {@code user_setup_complete} in secure settings to {@code complete}.
+     */
+    @Experimental
+    public void setSetupComplete(boolean complete) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+            return;
+        }
+        DevicePolicyManager devicePolicyManager =
+                TestApis.context().androidContextAsUser(this)
+                        .getSystemService(DevicePolicyManager.class);
+        TestApis.settings().secure().putInt(
+        /* user= */ this, USER_SETUP_COMPLETE_KEY, complete ? 1 : 0);
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            devicePolicyManager.forceUpdateUserSetupComplete(id());
+        }
+    }
+
+    /**
+     * Gets the value of {@code user_setup_complete} from secure settings.
+     */
+    @Experimental
+    public boolean getSetupComplete() {
+        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+            return TestApis.settings().secure()
+                    .getInt(/*user= */ this, USER_SETUP_COMPLETE_KEY, /* def= */ 0) == 1;
+        }
     }
 
     @Override

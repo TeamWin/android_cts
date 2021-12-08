@@ -64,8 +64,6 @@ public final class DevicePolicy {
 
     private static final String LOG_TAG = "DevicePolicy";
 
-    private static final String USER_SETUP_COMPLETE_KEY = "user_setup_complete";
-
     private final AdbDevicePolicyParser mParser;
 
     private DeviceOwner mCachedDeviceOwner;
@@ -162,11 +160,11 @@ public final class DevicePolicy {
                         .getSystemService(DevicePolicyManager.class);
         UserReference user = TestApis.users().system();
 
-        boolean dpmUserSetupComplete = getUserSetupComplete(user);
+        boolean dpmUserSetupComplete = user.getSetupComplete();
         Boolean currentUserSetupComplete = null;
 
         try {
-            setUserSetupComplete(user, false);
+            user.setSetupComplete(false);
 
             try (PermissionContext p =
                          TestApis.permissions().withPermission(
@@ -188,9 +186,9 @@ public final class DevicePolicy {
                 throw new NeneException("Error setting device owner", e);
             }
         } finally {
-            setUserSetupComplete(user, dpmUserSetupComplete);
+            user.setSetupComplete(dpmUserSetupComplete);
             if (currentUserSetupComplete != null) {
-                setUserSetupComplete(TestApis.users().current(), currentUserSetupComplete);
+                TestApis.users().current().setSetupComplete(currentUserSetupComplete);
             }
         }
 
@@ -265,26 +263,6 @@ public final class DevicePolicy {
             } catch (AssertionError e3) {
                 operation.run();
             }
-        }
-    }
-
-
-    private void setUserSetupComplete(UserReference user, boolean complete) {
-        DevicePolicyManager devicePolicyManager =
-                TestApis.context().androidContextAsUser(user)
-                        .getSystemService(DevicePolicyManager.class);
-        TestApis.settings().secure().putInt(user, USER_SETUP_COMPLETE_KEY, complete ? 1 : 0);
-        try (PermissionContext p =
-                     TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
-            devicePolicyManager.forceUpdateUserSetupComplete(user.id());
-        }
-    }
-
-    private boolean getUserSetupComplete(UserReference user) {
-        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
-            return
-                    TestApis.settings().secure()
-                            .getInt(user, USER_SETUP_COMPLETE_KEY, /* def= */ 0) == 1;
         }
     }
 
