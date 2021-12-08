@@ -102,7 +102,6 @@ android_test {
         "CtsCameraUtils",
     ],
     jni_libs: [
-        "libaudio_jni",
         "libctscodecutils_jni",
         "libctsimagereader_jni",
         "libctsmediadrm_jni",
