@@ -280,6 +280,12 @@ public class WindowManagerStateHelper extends WindowManagerState {
                         "keyguard window to dismiss"));
     }
 
+    void waitForWindowSurfaceShown(String windowName) {
+        waitForWithAmState(state -> {
+            return state.isWindowSurfaceShown(windowName);
+        }, windowName + "'s surface is shown");
+    }
+
     void waitForWindowSurfaceDisappeared(String windowName) {
         waitForWithAmState(state -> {
             return !state.isWindowSurfaceShown(windowName);

@@ -67,6 +67,7 @@ import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
 import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
+import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.UiDeviceUtils.pressAppSwitchButton;
@@ -1118,6 +1119,7 @@ public abstract class ActivityManagerTestBase {
         final String activityClassName = getActivityName(activityName);
         mWmState.waitForWithAmState(state -> activityClassName.equals(state.getFocusedActivity()),
                 "activity to be on top");
+        mWmState.waitForWindowSurfaceShown(getWindowName(activityName));
 
         mWmState.assertSanity();
         mWmState.assertFocusedActivity(message, activityName);
