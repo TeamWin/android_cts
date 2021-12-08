@@ -42,11 +42,13 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.PollingCheck;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -89,44 +91,34 @@ public final class DevicePolicy {
         // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
         //  we retry because if the profile owner was recently removed, it can take some time
         //  to be allowed to set it again
-        retryIfNotTerminal(
-                () -> command.executeOrThrowNeneException("Could not set profile owner for user "
-                        + user + " component " + profileOwnerComponent),
-                () -> checkForTerminalProfileOwnerFailures(user, profileOwnerComponent),
-                NeneException.class);
+        try {
+            Retry.logic(command::execute)
+                    .terminalException((ex) -> {
+                        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+                            return false; // Just retry on old versions as we don't have stderr
+                        }
+                        if (ex instanceof AdbException) {
+                            if (((AdbException) ex).error().contains("is being removed")) {
+                                return false;
+                            }
+                        }
+
+                        // Assume all other errors are terminal
+                        return true;
+                    })
+                    .timeout(Duration.ofMinutes(5))
+                    .run();
+        } catch (Throwable e) {
+            throw new NeneException("Could not set profile owner for user "
+                    + user + " component " + profileOwnerComponent, e);
+        }
         return new ProfileOwner(user,
                 TestApis.packages().find(
                         profileOwnerComponent.getPackageName()), profileOwnerComponent);
     }
 
-    private void checkForTerminalProfileOwnerFailures(
-            UserReference user, ComponentName profileOwnerComponent) {
-        ProfileOwner profileOwner = getProfileOwner(user);
-        if (profileOwner != null) {
-            // TODO(scottjonathan): Should we actually fail here if the component name is the
-            //  same?
-
-            throw new NeneException(
-                    "Could not set profile owner for user " + user
-                            + " as a profile owner is already set: " + profileOwner);
-        }
-
-        Package pkg = TestApis.packages().find(
-                profileOwnerComponent.getPackageName());
-        if (!TestApis.packages().installedForUser(user).contains(pkg)) {
-            throw new NeneException(
-                    "Could not set profile owner for user " + user
-                            + " as the package " + pkg + " is not installed");
-        }
-
-        if (!componentCanBeSetAsDeviceAdmin(profileOwnerComponent, user)) {
-            throw new NeneException("Could not set profile owner for user "
-                    + user + " as component " + profileOwnerComponent + " is not valid");
-        }
-    }
-
     /**
-     * Get the profile owner for the instrumented user..
+     * Get the profile owner for the instrumented user.
      */
     public ProfileOwner getProfileOwner() {
         return getProfileOwner(TestApis.users().instrumented());
