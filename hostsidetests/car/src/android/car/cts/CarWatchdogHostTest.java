@@ -29,6 +29,7 @@ import com.android.os.AtomsProto.CarWatchdogIoOveruseStats;
 import com.android.os.AtomsProto.CarWatchdogIoOveruseStatsReported;
 import com.android.os.AtomsProto.CarWatchdogKillStatsReported;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -36,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +46,8 @@ import java.util.regex.Pattern;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
+    public static final String TAG = CarWatchdogHostTest.class.getSimpleName();
+
     /**
      * CarWatchdog app package.
      */
@@ -120,7 +124,18 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
 
     private static final long WATCHDOG_ACTION_TIMEOUT_MS = 15_000;
 
+    private boolean mDidModifyDateTime;
     private long mOriginalForegroundBytes;
+
+    @Before
+    public void dateSetUp() throws Exception {
+        checkAndSetDate();
+    }
+
+    @After
+    public void dateReset() throws Exception {
+        checkAndResetDate();
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -327,5 +342,27 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand(
                 "am start -W -a android.intent.action.MAIN -n %s/%s --el bytes_to_kill %d",
                 appPkg, ACTIVITY_CLASS, remainingBytes);
+    }
+
+    private void checkAndSetDate() throws Exception {
+        // Get date in ISO-8601 format
+        LocalDateTime now = LocalDateTime.parse(executeCommand("date +%%FT%%T").trim());
+        if (now.getHour() < 23) {
+            return;
+        }
+        LocalDateTime nowMinusOneHour = now.minusHours(1);
+        executeCommand("date %s", nowMinusOneHour);
+        CLog.d(TAG, "checkAndSetDate: DateTime changed from %s to %s", now, nowMinusOneHour);
+        mDidModifyDateTime = true;
+    }
+
+    private void checkAndResetDate() throws Exception {
+        if (!mDidModifyDateTime) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.parse(executeCommand("date +%%FT%%T").trim());
+        LocalDateTime nowPlusOneHour = now.plusHours(1);
+        executeCommand("date %s", nowPlusOneHour);
+        CLog.d(TAG, "checkAndResetDate: DateTime changed from %s to %s", now, nowPlusOneHour);
     }
 }
