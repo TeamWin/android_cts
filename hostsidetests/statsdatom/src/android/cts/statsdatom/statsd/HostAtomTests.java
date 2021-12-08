@@ -263,6 +263,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, set battery level to full.
         setBatteryLevel(100);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.BATTERY_LEVEL_CHANGED_FIELD_NUMBER;
@@ -282,15 +283,20 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Trigger events in same order.
         setBatteryLevel(2);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         setBatteryLevel(25);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         setBatteryLevel(50);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         setBatteryLevel(75);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         setBatteryLevel(100);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.flushBatteryStatsHandlers(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
@@ -300,7 +306,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
                 atom -> atom.getBatteryLevelChanged().getBatteryLevel());
     }
 
