@@ -382,11 +382,29 @@ public class CommandReceiverActivity extends Activity {
                     uninstallHelperPackage();
                 } break;
                 case COMMAND_SET_PERMISSION_GRANT_STATE: {
-                    Log.d(TAG, "Granting permission using " + mDpm);
-                    mDpm.setPermissionGrantState(mAdmin, getPackageName(),
-                            intent.getStringExtra(EXTRA_PERMISSION),
-                            intent.getIntExtra(EXTRA_GRANT_STATE,
-                                    DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT));
+                    String pkgName = getPackageName();
+                    String permission = intent.getStringExtra(EXTRA_PERMISSION);
+                    int grantState = intent.getIntExtra(EXTRA_GRANT_STATE,
+                            DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
+                    String action;
+                    switch (grantState) {
+                        case DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED:
+                            action = "Granting " + permission;
+                            break;
+                        case DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED:
+                            action = "Denying " + permission;
+                            break;
+                        case DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT:
+                            action = "Setting " + permission + " to default state";
+                            break;
+                        default:
+                            action = "Setting grantState of " + permission + " to " + grantState;
+                    }
+                    Log.d(TAG, action + " to " + pkgName + " using " + mDpm);
+                    int stateBefore = mDpm.getPermissionGrantState(mAdmin, pkgName, permission);
+                    mDpm.setPermissionGrantState(mAdmin, pkgName, permission, grantState);
+                    int stateAfter = mDpm.getPermissionGrantState(mAdmin, pkgName, permission);
+                    Log.d(TAG, "Grant state: before=" + stateBefore + ", after=" + stateAfter);
                 } break;
                 case COMMAND_ADD_PERSISTENT_PREFERRED_ACTIVITIES: {
                     final ComponentName componentName =
