@@ -1550,6 +1550,7 @@ public class WindowManagerState {
         boolean frontOfTask;
         boolean inSizeCompatMode;
         float minAspectRatio;
+        boolean providesMaxBounds;
         int procId = -1;
         public boolean translucent;
         private WindowContainer mParent;
@@ -1562,6 +1563,7 @@ public class WindowManagerState {
             frontOfTask = proto.frontOfTask;
             inSizeCompatMode = proto.inSizeCompatMode;
             minAspectRatio = proto.minAspectRatio;
+            providesMaxBounds = proto.providesMaxBounds;
             if (proto.procId != 0) {
                 procId = proto.procId;
             }
@@ -1599,6 +1601,10 @@ public class WindowManagerState {
 
         public float getMinAspectRatio() {
             return minAspectRatio;
+        }
+
+        public boolean providesMaxBounds() {
+            return providesMaxBounds;
         }
 
         @Override
