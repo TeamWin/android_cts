@@ -29,6 +29,7 @@ import android.content.res.Configuration;
 import android.graphics.Point;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.InputType;
 import android.text.Layout;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -693,4 +694,32 @@ public class EditTextTest {
         assertEquals(et.getFilters()[0], myFilter);
     }
 
+    @UiThreadTest
+    @Test
+    public void testInputTypeForConversionSuggestions() {
+        EditText editText = new EditText(mActivity);
+        editText.setInputType(EditorInfo.TYPE_CLASS_TEXT
+                | EditorInfo.TYPE_TEXT_FLAG_ENABLE_TEXT_CONVERSION_SUGGESTIONS);
+        editText.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+
+        // The value of the input type is put into the EditorInfo parameter, and then the
+        // InputMethodManager can retrieve the value of the input type from EditorInfo.
+        EditorInfo editorInfo = new EditorInfo();
+        editText.onCreateInputConnection(editorInfo);
+
+        assertEquals(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_ENABLE_TEXT_CONVERSION_SUGGESTIONS,
+                        editorInfo.inputType);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testAttributeTextConversionSuggestion() {
+        mActivity.setContentView(R.layout.edittext_layout);
+        TextView tv = (TextView) mActivity.findViewById(
+                R.id.edittext_conversion_suggestion);
+
+        assertEquals(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_FLAG_ENABLE_TEXT_CONVERSION_SUGGESTIONS, tv.getInputType());
+    }
 }

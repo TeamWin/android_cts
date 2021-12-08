@@ -471,7 +471,7 @@ public class TunerFrontendTest {
             layerBuilder.setTimeInterleaveMode(IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
             layerBuilder.setModulation(IsdbtFrontendSettings.MODULATION_MOD_16QAM);
             layerBuilder.setCodeRate(DvbtFrontendSettings.CODERATE_5_6);
-            layerBuilder.setNumberOfSegment(0xFF);
+            layerBuilder.setNumberOfSegments(0xFF);
             IsdbtFrontendSettings.IsdbtLayerSettings layer = layerBuilder.build();
             builder.setLayerSettings(new IsdbtFrontendSettings.IsdbtLayerSettings[] {layer, layer});
             builder.setPartialReceptionFlag(IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
@@ -514,12 +514,12 @@ public class TunerFrontendTest {
             assertEquals(layers[0].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
             assertEquals(layers[0].getTimeInterleaveMode(),
                     IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
-            assertEquals(layers[0].getNumberOfSegment(), 0xFF);
+            assertEquals(layers[0].getNumberOfSegments(), 0xFF);
             assertEquals(layers[1].getModulation(), IsdbtFrontendSettings.MODULATION_MOD_16QAM);
             assertEquals(layers[1].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
             assertEquals(layers[1].getTimeInterleaveMode(),
                     IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
-            assertEquals(layers[1].getNumberOfSegment(), 0xFF);
+            assertEquals(layers[1].getNumberOfSegments(), 0xFF);
             assertEquals(settings.getPartialReceptionFlag(),
                     IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
         }
@@ -992,7 +992,7 @@ public class TunerFrontendTest {
             layerBuilder.setTimeInterleaveMode(IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
             layerBuilder.setModulation(IsdbtFrontendSettings.MODULATION_MOD_16QAM);
             layerBuilder.setCodeRate(DvbtFrontendSettings.CODERATE_5_6);
-            layerBuilder.setNumberOfSegment(0xFF);
+            layerBuilder.setNumberOfSegments(0xFF);
             IsdbtFrontendSettings.IsdbtLayerSettings layer = layerBuilder.build();
             builder.setLayerSettings(new IsdbtFrontendSettings.IsdbtLayerSettings[] {layer, layer});
             builder.setPartialReceptionFlag(IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
@@ -1035,12 +1035,12 @@ public class TunerFrontendTest {
             assertEquals(layers[0].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
             assertEquals(layers[0].getTimeInterleaveMode(),
                     IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
-            assertEquals(layers[0].getNumberOfSegment(), 0xFF);
+            assertEquals(layers[0].getNumberOfSegments(), 0xFF);
             assertEquals(layers[1].getModulation(), IsdbtFrontendSettings.MODULATION_MOD_16QAM);
             assertEquals(layers[1].getCodeRate(), DvbtFrontendSettings.CODERATE_5_6);
             assertEquals(layers[1].getTimeInterleaveMode(),
                     IsdbtFrontendSettings.TIME_INTERLEAVE_MODE_AUTO);
-            assertEquals(layers[1].getNumberOfSegment(), 0xFF);
+            assertEquals(layers[1].getNumberOfSegments(), 0xFF);
             assertEquals(settings.getPartialReceptionFlag(),
                     IsdbtFrontendSettings.PARTIAL_RECEPTION_FLAG_TRUE);
         }

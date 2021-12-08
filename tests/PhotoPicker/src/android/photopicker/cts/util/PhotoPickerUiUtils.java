@@ -73,6 +73,11 @@ public class PhotoPickerUiUtils {
         return itemList;
     }
 
+    public static UiObject findPreviewAddButton() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/preview_add_button"));
+    }
+
     public static UiObject findPreviewAddOrSelectButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/preview_add_or_select_button"));

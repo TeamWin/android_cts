@@ -259,6 +259,19 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    public void testLastTimeVisible_launchActivityShouldBeDetected() throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+
+        final long startTime = System.currentTimeMillis();
+        launchSubActivity(Activities.ActivityOne.class);
+        final long endTime = System.currentTimeMillis();
+
+        verifyLastTimeVisibleWithinRange(startTime, endTime, mTargetPackage);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
     public void testLastTimeAnyComponentUsed_launchActivityShouldBeDetected() throws Exception {
         mUiDevice.wakeUp();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
@@ -309,6 +322,17 @@ public class UsageStatsTest {
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
+    }
+
+    private void verifyLastTimeVisibleWithinRange(
+            long startTime, long endTime, String targetPackage) {
+        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        final UsageStats stats = map.get(targetPackage);
+        assertNotNull(stats);
+        final long lastTimeVisible = stats.getLastTimeVisible();
+        assertLessThanOrEqual(startTime, lastTimeVisible);
+        assertLessThanOrEqual(lastTimeVisible, endTime);
     }
 
     private void verifyLastTimeAnyComponentUsedWithinRange(

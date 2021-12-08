@@ -48,7 +48,7 @@ public class BaseReceiver extends BroadcastReceiver {
         m.startElapsedRealtime = Process.getStartElapsedRealtime();
         m.startUptimeMillis = Process.getStartUptimeMillis();
         m.startRequestedElapsedRealtime = Process.getStartRequestedElapsedRealtime();
-        m.startRequestedUptimeMillis = Process.getStartUptimeMillis();
+        m.startRequestedUptimeMillis = Process.getStartRequestedUptimeMillis();
 
         BroadcastMessenger.send(context, Consts.TAG, m);
     }
