@@ -16,7 +16,7 @@
 
 package com.android.bedstead.remoteframeworkclasses;
 
-import android.app.admin.RemoteDevicePolicyManager;
+import android.accounts.AccountManagerCallback;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -27,30 +27,30 @@ import com.google.android.enterprise.connectedapps.internal.BundlerType;
 /**
  * This parcelable wrapper just passes null to callers.
  *
- * <p>It is not functional and only enables use of {@link RemoteDevicePolicyManager} for clients
- * which do not need to actually use the {@link RemoteDevicePolicyManager} param or return value.
+ * <p>It is not functional and only enables use of {@link AccountManagerCallback} for clients
+ * which do not need to actually use the {@link AccountManagerCallback} param or return value.
  */
-@CustomParcelableWrapper(originalType = RemoteDevicePolicyManager.class)
-public final class NullParcelableRemoteDevicePolicyManager implements Parcelable {
+@CustomParcelableWrapper(originalType = AccountManagerCallback.class)
+public final class NullParcelableAccountManagerCallback<F> implements Parcelable {
 
     /**
-     * Create a wrapper for a given {@link RemoteDevicePolicyManager}.
+     * Create a wrapper for a given {@link AccountManagerCallback}.
      */
-    public static <F> NullParcelableRemoteDevicePolicyManager of(
+    public static <F> NullParcelableAccountManagerCallback of(
             Bundler bundler, BundlerType type,
-            RemoteDevicePolicyManager remoteDevicePolicyManager) {
+            AccountManagerCallback<F> accountManagerCallback) {
 
-        if (remoteDevicePolicyManager != null) {
-            throw new IllegalArgumentException("remoteDevicePolicyManager can only be null");
+        if (accountManagerCallback != null) {
+            throw new IllegalArgumentException("accountManagerCallback can only be null");
         }
 
-        return new NullParcelableRemoteDevicePolicyManager();
+        return new NullParcelableAccountManagerCallback<F>();
     }
 
-    private NullParcelableRemoteDevicePolicyManager() {
+    private NullParcelableAccountManagerCallback() {
     }
 
-    public RemoteDevicePolicyManager get() {
+    public AccountManagerCallback<F> get() {
         return null;
     }
 
@@ -64,16 +64,16 @@ public final class NullParcelableRemoteDevicePolicyManager implements Parcelable
     }
 
     @SuppressWarnings("rawtypes")
-    public static final Creator<NullParcelableRemoteDevicePolicyManager> CREATOR =
-            new Creator<NullParcelableRemoteDevicePolicyManager>() {
+    public static final Creator<NullParcelableAccountManagerCallback> CREATOR =
+            new Creator<NullParcelableAccountManagerCallback>() {
                 @Override
-                public NullParcelableRemoteDevicePolicyManager createFromParcel(Parcel in) {
-                    return new NullParcelableRemoteDevicePolicyManager();
+                public NullParcelableAccountManagerCallback createFromParcel(Parcel in) {
+                    return new NullParcelableAccountManagerCallback();
                 }
 
                 @Override
-                public NullParcelableRemoteDevicePolicyManager[] newArray(int size) {
-                    return new NullParcelableRemoteDevicePolicyManager[size];
+                public NullParcelableAccountManagerCallback[] newArray(int size) {
+                    return new NullParcelableAccountManagerCallback[size];
                 }
             };
 }

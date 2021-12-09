@@ -140,22 +140,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         executeDeviceTestClass(".AdminConfiguredNetworksTest");
     }
 
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197909577",
-            reason = "Will be migrated to new test infra")
-    public void testAccountManagement_userRestrictionAddAccount() throws Exception {
-        super.testAccountManagement_userRestrictionAddAccount();
-    }
-
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197909577",
-            reason = "Will be migrated to new test infra")
-    public void testAccountManagement_userRestrictionRemoveAccount() throws Exception {
-        super.testAccountManagement_userRestrictionRemoveAccount();
-    }
-
     @Test
     public void testSetTime() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
