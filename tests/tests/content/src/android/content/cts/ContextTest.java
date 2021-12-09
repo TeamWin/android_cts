@@ -23,6 +23,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import android.app.Activity;
 import android.app.AppOpsManager;
+import android.app.BroadcastOptions;
 import android.app.Instrumentation;
 import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
@@ -1569,6 +1570,105 @@ public class ContextTest extends AndroidTestCase {
                 return receiver.hasReceivedBroadCast();
             }
         }.run();
+    }
+
+    /**
+     * Verify the receiver should get the broadcast since it has all of the required permissions.
+     */
+    public void testSendBroadcastRequireAllOfPermissions_receiverHasAllPermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+        BroadcastOptions options = BroadcastOptions.makeBasic();
+        options.setRequireAllOfPermissions(
+                new String[] { // this test APK has both these permissions
+                        android.Manifest.permission.ACCESS_WIFI_STATE,
+                        android.Manifest.permission.ACCESS_NETWORK_STATE
+                });
+        mContext.sendBroadcast(new Intent(ResultReceiver.MOCK_ACTION), null,
+                options.toBundle());
+
+        new PollingCheck(BROADCAST_TIMEOUT) {
+            @Override
+            protected boolean check() {
+                return receiver.hasReceivedBroadCast();
+            }
+        }.run();
+    }
+
+    /** The receiver should not get the broadcast if it does not have all the permissions. */
+    public void testSendBroadcastRequireAllOfPermissions_receiverHasSomePermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+        BroadcastOptions options = BroadcastOptions.makeBasic();
+        options.setRequireAllOfPermissions(
+                new String[] { // this test APK only has ACCESS_WIFI_STATE
+                        android.Manifest.permission.ACCESS_WIFI_STATE,
+                        android.Manifest.permission.NETWORK_STACK,
+                });
+
+        mContext.sendBroadcast(
+                new Intent(ResultReceiver.MOCK_ACTION), null,
+                options.toBundle());
+
+        Thread.sleep(BROADCAST_TIMEOUT);
+        assertFalse(receiver.hasReceivedBroadCast());
+    }
+
+    /**
+     * Verify the receiver will get the broadcast since it has none of the excluded permissions.
+     */
+    public void testSendBroadcastRequireNoneOfPermissions_receiverHasNoneOfExcludedPermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+        BroadcastOptions options = BroadcastOptions.makeBasic();
+        options.setRequireAllOfPermissions(
+                new String[] { // this test APK has both these permissions
+                        android.Manifest.permission.ACCESS_WIFI_STATE,
+                        android.Manifest.permission.ACCESS_NETWORK_STATE
+                });
+        options.setRequireNoneOfPermissions(
+                new String[] { // test package does not have NETWORK_STACK
+                        android.Manifest.permission.NETWORK_STACK
+                });
+        mContext.sendBroadcast(new Intent(ResultReceiver.MOCK_ACTION), null,
+                options.toBundle());
+
+        new PollingCheck(BROADCAST_TIMEOUT) {
+            @Override
+            protected boolean check() {
+                return receiver.hasReceivedBroadCast();
+            }
+        }.run();
+    }
+
+    /**
+     * Verify the receiver will not get the broadcast since it has one of the excluded permissions.
+     */
+    public void testSendBroadcastRequireNoneOfPermissions_receiverHasExcludedPermissions()
+            throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION));
+        BroadcastOptions options = BroadcastOptions.makeBasic();
+        options.setRequireAllOfPermissions(
+                new String[] { // this test APK has ACCESS_WIFI_STATE
+                        android.Manifest.permission.ACCESS_WIFI_STATE
+                });
+        options.setRequireNoneOfPermissions(
+                new String[] { // test package has ACCESS_NETWORK_STATE
+                        android.Manifest.permission.ACCESS_NETWORK_STATE
+                });
+        mContext.sendBroadcast(new Intent(ResultReceiver.MOCK_ACTION), null,
+                options.toBundle());
+
+        Thread.sleep(BROADCAST_TIMEOUT);
+        assertFalse(receiver.hasReceivedBroadCast());
     }
 
     /** The receiver should get the broadcast if it has all the permissions. */
