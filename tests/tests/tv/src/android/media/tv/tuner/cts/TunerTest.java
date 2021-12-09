@@ -119,6 +119,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -1660,7 +1662,7 @@ public class TunerTest {
 
     @Test
     public void testSharedFilterOneProcess() throws Exception {
-        Filter f = createFilterForSharedFilterTest(mTuner, getExecutor(), getFilterCallback());
+        Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
         assertTrue(f != null);
 
         String token1 = f.acquireSharedFilterToken();
@@ -1778,7 +1780,7 @@ public class TunerTest {
 
     @Test
     public void testSharedFilterTwoProcessesVerifySharedFilter() throws Exception {
-        Filter f = createFilterForSharedFilterTest(mTuner, getExecutor(), getFilterCallback());
+        Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
         assertTrue(f != null);
 
         String token = f.acquireSharedFilterToken();
@@ -1801,7 +1803,31 @@ public class TunerTest {
         f = null;
     }
 
-    static public Filter createFilterForSharedFilterTest(
+    @Test
+    public void testFilterTimeDelay() throws Exception {
+        Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
+
+        int timeDelayInMs = 5000;
+        Instant start = Instant.now();
+        f.delayCallbackUntilTimeMillis(timeDelayInMs);
+
+        // start / stop prevents initial race condition after first setting the time delay.
+        f.start();
+        f.stop();
+
+        mLockLatch = new CountDownLatch(1);
+        f.start();
+        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        Instant finish = Instant.now();
+        Duration timeElapsed = Duration.between(start, finish);
+        assertTrue(timeElapsed.toMillis() >= timeDelayInMs);
+
+        f.close();
+        f = null;
+    }
+
+    public static Filter createTsSectionFilter(
             Tuner tuner, Executor e, FilterCallback cb) {
         Filter f = tuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, e, cb);
         Settings settings = SectionSettingsWithTableInfo
@@ -1869,6 +1895,9 @@ public class TunerTest {
                     } else if (e instanceof RestartEvent) {
                         testRestartEvent(filter, (RestartEvent) e);
                     }
+                }
+                if (mLockLatch != null) {
+                    mLockLatch.countDown();
                 }
             }
             @Override
