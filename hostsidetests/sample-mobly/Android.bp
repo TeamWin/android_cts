@@ -27,5 +27,5 @@ python_test_host {
     test_options: {
         unit_test: false,
     },
-    data: ["config.yaml"],
+    data: ["CtsSampleMoblyTestCases_config.yaml"],
 }
