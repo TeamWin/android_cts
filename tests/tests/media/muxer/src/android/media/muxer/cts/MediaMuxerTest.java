@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.muxer.cts;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -23,6 +23,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.media.cts.Preconditions;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
