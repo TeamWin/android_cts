@@ -2323,9 +2323,9 @@
     <string name="np_start_security_settings">Launch Security Settings</string>
     <string name="np_start_notif_settings">Launch Notification Settings</string>
     <string name="np_when_locked_see_redacted">Lock the screen and find the NotifPrivacyTest notification.\n
-        Pass the test if the notification content is REDACTED and the icon is B.</string>
+        Pass the test if the notification content is REDACTED.</string>
     <string name="np_when_locked_see_private">Lock the screen and find the NotifPrivacyTest notification.\n
-        Pass the test if the notification content is EXPOSED and the icon is A.</string>
+        Pass the test if the notification content is EXPOSED.</string>
     <string name="np_when_locked_hidden">Lock the screen and look for the NotifPrivacyTest notification.\n
         Fail the test if it can be found without unlocking the device.</string>
     <string name="np_start_occluding">Launch CallSimulator</string>
@@ -2334,13 +2334,13 @@
         \n\n(Like a call, this screen will be visible even when the device is locked.)
         \n\nLock the screen, then come back here without unlocking.
         \nPull down the notification shade and find the NotifPrivacyTest notification.
-        \nPass the test if the notification content is REDACTED and the icon is B.
+        \nPass the test if the notification content is REDACTED.
         \n\nGo back when ready to Pass/Fail the step.</string>
     <string name="np_occluding_see_private">CallSimulator
         \n\n(Like a call, this screen will be visible even when the device is locked.)
         \n\nLock the screen, then come back here without unlocking.
         \nPull down the notification shade and find the NotifPrivacyTest notification.
-        \nPass the test if the notification content is EXPOSED and the icon is A.
+        \nPass the test if the notification content is EXPOSED.
         \n\nGo back when ready to Pass/Fail the step.</string>
     <string name="np_occluding_hidden">CallSimulator
         \n\n(Like a call, this screen will be visible even when the device is locked.)
