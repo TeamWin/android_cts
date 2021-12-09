@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyObject;
@@ -62,6 +63,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testEnroll() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(prop.getSensorId())){
@@ -76,6 +78,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testSensorPropertiesAndDumpsysMatch() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         final BiometricServiceState state = getCurrentState();
 
         assertEquals(mSensorProperties.size(), state.mSensorStates.sensorStates.size());
@@ -89,6 +92,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testPackageManagerAndDumpsysMatch() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         final BiometricServiceState state = getCurrentState();
         final PackageManager pm = mContext.getPackageManager();
         if (mSensorProperties.isEmpty()) {
@@ -111,6 +115,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
 
     @Test
     public void testCanAuthenticate_whenNoSensors() {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         if (mSensorProperties.isEmpty()) {
             assertEquals(BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
                     mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK));
@@ -121,6 +126,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
 
     @Test
     public void testInvalidInputs() {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (int i = 0; i < 32; i++) {
             final int authenticator = 1 << i;
             // If it's a public constant, no need to test
@@ -150,6 +156,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testWhenCredentialNotEnrolled() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         // First case above
         final int result = mBiometricManager.canAuthenticate(BiometricManager
                 .Authenticators.DEVICE_CREDENTIAL);
@@ -187,6 +194,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testWhenCredentialEnrolled() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         try (CredentialSession session = new CredentialSession()) {
             session.setCredential();
 
@@ -275,6 +283,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testSimpleBiometricAuth_nonConvenience() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties props : mSensorProperties) {
             if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
@@ -344,6 +353,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testSimpleCredentialAuth() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         try (CredentialSession session = new CredentialSession()){
             session.setCredential();
 
@@ -385,6 +395,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
      */
     @Test
     public void testBiometricCancellation() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties props : mSensorProperties) {
             if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
