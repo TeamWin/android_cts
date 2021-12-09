@@ -80,6 +80,7 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -2025,5 +2026,19 @@ public class PackageManagerTest {
         cmd.append(UserHandle.myUserId()).append(" ");
         cmd.append(packageName);
         SystemUtil.runShellCommand(cmd.toString());
+    }
+
+    @Test
+    public void testPrebuiltSharedLibraries_existOnDevice() {
+        final List<SharedLibraryInfo> infos =
+                mPackageManager.getSharedLibraries(0 /* flags */).stream()
+                        .filter(info -> info.isBuiltin() && !info.isNative())
+                        .collect(Collectors.toList());
+        assertThat(infos).isNotEmpty();
+
+        final List<SharedLibraryInfo> fileNotExistInfos = infos.stream()
+                .filter(info -> !(new File(info.getPath()).exists())).collect(
+                Collectors.toList());
+        assertThat(fileNotExistInfos).isEmpty();
     }
 }

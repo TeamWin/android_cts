@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.tv.tuner.DemuxCapabilities;
@@ -105,21 +104,25 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.RequiredFeatureRule;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -154,6 +157,23 @@ public class TunerTest {
             final IBinder service =
                     mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC, TimeUnit.SECONDS);
             return service;
+        }
+    }
+
+    private class TunerResourceTestServiceConnection implements ServiceConnection {
+        private BlockingQueue<IBinder> mBlockingQueue = new LinkedBlockingQueue<>();
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBlockingQueue.offer(service);
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName componentName){}
+
+        public ITunerResourceTestServer getService() throws Exception {
+            final IBinder service =
+                    mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC, TimeUnit.SECONDS);
+            return ITunerResourceTestServer.Stub.asInterface(service);
         }
     }
 
@@ -882,6 +902,7 @@ public class TunerTest {
         higherPrioTuner.close();
     }
 
+    // TODO: change this to use ITunerResourceTestServer
     @Test
     public void testResourceReclaimedDifferentThread() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
@@ -908,6 +929,15 @@ public class TunerTest {
         msgTune.obj = (Object) feSettings;
         tunerHandler.sendMessage(msgTune);
 
+        // call mTuner.close in parallel
+        int sleepMS = 1;
+        //int sleepMS = (int) (Math.random() * 3.);
+        try {
+            Thread.sleep(sleepMS);
+        } catch (Exception e) { } // ignore
+        mTuner.close();
+        mTuner = null;
+
         mTunerHandlerTaskComplete.block();
         mTunerHandlerTaskComplete.close();
         res = tunerHandler.getResult();
@@ -920,9 +950,81 @@ public class TunerTest {
         msgClose.what = MSG_TUNER_HANDLER_CLOSE;
         tunerHandler.sendMessage(msgClose);
 
-        // call mTuner.close in parallel
+    }
+
+    @Test
+    public void testResourceReclaimedDifferentProcess() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        int frontendIndex = 0;
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(frontendIndex));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // set up the test server
+        TunerResourceTestServiceConnection connection = new TunerResourceTestServiceConnection();
+        ITunerResourceTestServer tunerResourceTestServer = null;
+        Intent intent = new Intent(mContext, TunerResourceTestService.class);
+
+        // get the TunerResourceTestService
+        mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        tunerResourceTestServer = connection.getService();
+
+        // CASE1 - normal reclaim
+        //
+        // first tune with mTuner to acquire resource
+        int res = mTuner.tune(feSettings);
+        boolean tunerReclaimed = false;
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        // now tune with a higher priority tuner to have mTuner's resource reclaimed
+
+        // create higher priority tuner
+        tunerResourceTestServer.createTuner(200);
+
+        // now tune on higher priority tuner to get mTuner reclaimed
+        res = tunerResourceTestServer.tune(frontendIndex);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        try {
+            int[] statusCapabilities = info.getStatusCapabilities();
+            mTuner.getFrontendStatus(statusCapabilities);
+
+        } catch (IllegalStateException e) {
+            tunerReclaimed = true;
+            mTuner.close();
+            mTuner = null;
+        }
+
+        // confirm if the mTuner is reclaimed
+        assertTrue(tunerReclaimed);
+
+        tunerResourceTestServer.closeTuner();
+        assertTrue(tunerResourceTestServer.verifyTunerIsNull());
+
+
+        // CASE2 - race between Tuner#close() and reclaim
+        mTuner = new Tuner(mContext, null, 100);
+        res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        tunerResourceTestServer.createTuner(200);
+        tunerResourceTestServer.tuneAsync(frontendIndex);
+
+        // adjust timing to induce race/deadlock
+        int sleepMS = 4;
+        //int sleepMS = (int) (Math.random() * 5.);
+        try {
+            Thread.sleep(sleepMS);
+        } catch (Exception e) { } // ignore
         mTuner.close();
         mTuner = null;
+
+        tunerResourceTestServer.closeTuner();
+
+        // unbind
+        mContext.unbindService(connection);
     }
 
     @Test

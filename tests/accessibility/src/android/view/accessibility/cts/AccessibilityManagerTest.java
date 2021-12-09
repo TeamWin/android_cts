@@ -34,12 +34,11 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
-import android.provider.Settings;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityServicesStateChangeListener;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
-import android.view.accessibility.AccessibilityManager.AudioDescriptionByDefaultStateChangeListener;
+import android.view.accessibility.AccessibilityManager.AudioDescriptionRequestedChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
 
 import androidx.test.InstrumentationRegistry;
@@ -102,15 +101,11 @@ public class AccessibilityManagerTest {
     private static final String ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT =
             "enabled_accessibility_audio_description_by_default";
 
-    private final String mOriginalAudioDescriptionState = Settings.Secure.getString(
-            sInstrumentation.getContext().getContentResolver(),
-            ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT);
-
     private final SettingsStateChangerRule mAudioDescriptionSetterRule =
             new SettingsStateChangerRule(
                     sInstrumentation.getContext(),
                     ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT,
-                    mOriginalAudioDescriptionState);
+                    "0");
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
@@ -159,16 +154,16 @@ public class AccessibilityManagerTest {
     }
 
     @Test
-    public void testAddAndRemoveAudioDescriptionStateChangeListener() throws Exception {
-        AudioDescriptionByDefaultStateChangeListener listener = (boolean enabled) -> {
+    public void testAddAndRemoveAudioDescriptionRequestedChangeListener() throws Exception {
+        AudioDescriptionRequestedChangeListener listener = (boolean enabled) -> {
             // Do nothing.
         };
-        mAccessibilityManager.addAudioDescriptionByDefaultStateChangeListener(
+        mAccessibilityManager.addAudioDescriptionRequestedChangeListener(
                 mTargetContext.getMainExecutor(), listener);
         assertTrue(
-                mAccessibilityManager.removeAudioDescriptionByDefaultStateChangeListener(listener));
+                mAccessibilityManager.removeAudioDescriptionRequestedChangeListener(listener));
         assertFalse(
-                mAccessibilityManager.removeAudioDescriptionByDefaultStateChangeListener(listener));
+                mAccessibilityManager.removeAudioDescriptionRequestedChangeListener(listener));
     }
 
     @Test
@@ -468,13 +463,13 @@ public class AccessibilityManagerTest {
     }
 
     @Test
-    public void testAudioDescriptionByDefaultStateChangeListenerWithExecutor() {
+    public void testAudioDescriptionRequestedChangeListenerWithExecutor() {
         final UiAutomation automan = sInstrumentation.getUiAutomation(
                 UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         final Object waitObject = new Object();
         final AtomicBoolean atomicBoolean = new AtomicBoolean(false);
 
-        AudioDescriptionByDefaultStateChangeListener listener = (boolean b) -> {
+        AudioDescriptionRequestedChangeListener listener = (boolean b) -> {
             synchronized (waitObject) {
                 atomicBoolean.set(b);
                 waitObject.notifyAll();
@@ -482,7 +477,7 @@ public class AccessibilityManagerTest {
         };
 
         try {
-            mAccessibilityManager.addAudioDescriptionByDefaultStateChangeListener(
+            mAccessibilityManager.addAudioDescriptionRequestedChangeListener(
                     mTargetContext.getMainExecutor(), listener);
             putSecureSetting(automan, ENABLED_ACCESSIBILITY_AUDIO_DESCRIPTION_BY_DEFAULT, "1");
             waitForAtomicBooleanBecomes(atomicBoolean, true, waitObject,
@@ -496,7 +491,7 @@ public class AccessibilityManagerTest {
             assertFalse("Listener told that audio description by default is not request.",
                     mAccessibilityManager.isAudioDescriptionRequested());
             assertTrue(
-                    mAccessibilityManager.removeAudioDescriptionByDefaultStateChangeListener(
+                    mAccessibilityManager.removeAudioDescriptionRequestedChangeListener(
                             listener));
         } finally {
             automan.destroy();

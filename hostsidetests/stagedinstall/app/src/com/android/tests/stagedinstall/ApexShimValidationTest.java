@@ -16,8 +16,8 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.install.lib.PackageInstallerSessionInfoSubject.assertThat;
 import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
-import static com.android.tests.stagedinstall.PackageInstallerSessionInfoSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
 

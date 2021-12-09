@@ -19,11 +19,11 @@ package com.android.tests.stagedinstall;
 import static com.android.cts.install.lib.InstallUtils.assertStatusFailure;
 import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
+import static com.android.cts.install.lib.PackageInstallerSessionInfoSubject.assertThat;
 import static com.android.cts.shim.lib.ShimPackage.DIFFERENT_APEX_PACKAGE_NAME;
 import static com.android.cts.shim.lib.ShimPackage.NOT_PRE_INSTALL_APEX_PACKAGE_NAME;
 import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
 import static com.android.cts.shim.lib.ShimPackage.SHIM_PACKAGE_NAME;
-import static com.android.tests.stagedinstall.PackageInstallerSessionInfoSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;

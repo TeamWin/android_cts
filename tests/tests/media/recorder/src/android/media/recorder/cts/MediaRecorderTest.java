@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.recorder.cts;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
@@ -44,6 +44,9 @@ import android.media.MicrophoneInfo;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.RecordingSession;
+import android.media.cts.InputSurface;
+import android.media.cts.MediaStubActivity;
+import android.media.cts.NonMediaMainlineTest;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
@@ -143,7 +146,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     public MediaRecorderTest() {
-        super("android.media.cts", MediaStubActivity.class);
+        super("android.media.recorder.cts", MediaStubActivity.class);
         OUTPUT_PATH = new File(Environment.getExternalStorageDirectory(),
                 "record.out").getAbsolutePath();
         OUTPUT_PATH2 = new File(Environment.getExternalStorageDirectory(),
@@ -1695,40 +1698,6 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         }
     }
 
-    static class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
-        boolean mCalled;
-        List<AudioRecordingConfiguration> mConfigs;
-        private final int mTestSource;
-        private final int mTestSession;
-        private CountDownLatch mCountDownLatch;
-
-        void reset() {
-            mCountDownLatch = new CountDownLatch(1);
-            mCalled = false;
-            mConfigs = new ArrayList<AudioRecordingConfiguration>();
-        }
-
-        MyAudioRecordingCallback(int session, int source) {
-            mTestSource = source;
-            mTestSession = session;
-            reset();
-        }
-
-        @Override
-        public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
-            mCalled = true;
-            mConfigs = configs;
-            mCountDownLatch.countDown();
-        }
-
-        void await(long timeoutMs) {
-            try {
-                mCountDownLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-            }
-        }
-    }
-
     public void testAudioRecordInfoCallback() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
@@ -1867,6 +1836,40 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         assertEquals(recordingSession.getSessionId(), recorder.getLogSessionId());
 
         recorder.release();
+    }
+
+    private static class MyAudioRecordingCallback extends AudioManager.AudioRecordingCallback {
+        public boolean mCalled;
+        public List<AudioRecordingConfiguration> mConfigs;
+        private final int mTestSource;
+        private final int mTestSession;
+        private CountDownLatch mCountDownLatch;
+
+        void reset() {
+            mCountDownLatch = new CountDownLatch(1);
+            mCalled = false;
+            mConfigs = new ArrayList<AudioRecordingConfiguration>();
+        }
+
+        MyAudioRecordingCallback(int session, int source) {
+            mTestSource = source;
+            mTestSession = session;
+            reset();
+        }
+
+        @Override
+        public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs) {
+            mCalled = true;
+            mConfigs = configs;
+            mCountDownLatch.countDown();
+        }
+
+        void await(long timeoutMs) {
+            try {
+                mCountDownLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+            }
+        }
     }
 
 }

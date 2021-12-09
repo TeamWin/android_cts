@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.cts.verifier.qstiles;
+package android.media.tv.tuner.cts;
 
-import android.service.quicksettings.TileService;
-
-public class RequestTileService extends TileService {
+interface ITunerResourceTestServer {
+    void createTuner(int useCase);
+    int tune(int frontendIndex);
+    oneway void tuneAsync(int frontendIndex);
+    void closeTuner();
+    boolean verifyTunerIsNull();
 }
