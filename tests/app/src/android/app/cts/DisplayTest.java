@@ -62,6 +62,8 @@ public class DisplayTest extends ActivityInstrumentationTestCase2<DisplayTestAct
         final Point origSize = new Point();
         origDisplay.getRealSize(origSize);
 
+        final int origRotation = origDisplay.getRotation();
+
         // Change orientation
         mActivity.configurationChangeObserver.startObserving();
         OrientationTestUtils.switchOrientation(mActivity);
@@ -81,14 +83,15 @@ public class DisplayTest extends ActivityInstrumentationTestCase2<DisplayTestAct
         final Display updatedDisplay = mActivity.getDisplay();
         final Point updatedSize = new Point();
         updatedDisplay.getRealSize(updatedSize);
+        final int newRotation = updatedDisplay.getRotation();
 
         // For square screens the following assertions do not make sense and will always fail.
-        if (!closeToSquareDisplay) {
+        // Note there are also some cases where width and height may not all be updated, such as on
+        // docked devices where the app is letterboxed. As getRealSize() returns the pure display
+        // size, this assersion doesn't make sense.
+        if (!closeToSquareDisplay && origRotation != newRotation) {
             // Ensure that the width and height of the original instance no longer are the same. Note
             // that this will be false if the device width and height are identical.
-            // Note there are cases where width and height may not all be updated, such as on docked
-            // devices where the app is letterboxed. However at least one dimension needs to be
-            // updated.
             assertFalse("size from original display instance should have changed",
                     origSize.equals(newOrigSize));
         }
