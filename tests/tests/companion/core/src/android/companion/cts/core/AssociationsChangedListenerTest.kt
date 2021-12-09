@@ -19,11 +19,15 @@ package android.companion.cts.core
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.SIMPLE_EXECUTOR
+import android.companion.cts.common.RecordingOnAssociationsChangedListener
+import android.companion.cts.common.MAC_ADDRESS_A
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
+import kotlin.test.assertEquals
 import org.junit.runner.RunWith
 import kotlin.test.assertFailsWith
+import android.companion.cts.common.assertEmpty
 
 /**
  * Test CDM APIs for listening for changes to [android.companion.AssociationInfo].
@@ -55,6 +59,35 @@ class AssociationsChangedListenerTest : CoreTestBase() {
             /** Succeeded, now remove. */
             cdm.removeOnAssociationsChangedListener(NO_OP_LISTENER)
         }
+    }
+
+    @Test
+    fun test_addOnAssociationsChangedListener() {
+        val callback = RecordingOnAssociationsChangedListener()
+
+        withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, callback)
+        }
+
+        testApp.associate(MAC_ADDRESS_A)
+
+        callback.waitForInvocation()
+
+        callback.invocations[0].let { associations ->
+            assertEquals(actual = associations.size, expected = 1)
+            assertEquals(actual = associations[0].deviceMacAddress, expected = MAC_ADDRESS_A)
+            assertEquals(actual = associations[0].packageName, expected = TEST_APP_PACKAGE_NAME)
+        }
+
+        callback.clearRecordedInvocations()
+
+        withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.removeOnAssociationsChangedListener(callback)
+        }
+
+        testApp.disassociate(MAC_ADDRESS_A)
+        // The callback shouldn't get involved after removed the onAssociationsChangedListener.
+        assertEmpty(callback.invocations)
     }
 
     companion object {
