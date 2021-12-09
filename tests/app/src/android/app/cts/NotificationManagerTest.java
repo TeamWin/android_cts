@@ -3560,7 +3560,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         mListener.cancelNotifications(new String[]{ sbn.getKey() });
-        if (!checkNotificationExistence(notificationId, /*shouldExist=*/ false)) {
+        if (getCancellationReason(sbn.getKey())
+                != NotificationListenerService.REASON_LISTENER_CANCEL) {
             fail("Failed to cancel notification id=" + notificationId);
         }
     }
