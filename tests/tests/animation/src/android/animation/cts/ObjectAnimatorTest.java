@@ -162,7 +162,7 @@ public class ObjectAnimatorTest {
         mActivityRule.runOnUiThread(intAnimator::start);
 
         verify(mockListener, timeout(2000)).onAnimationRepeat(intAnimator);
-        verify(mockListener, timeout(2000)).onAnimationEnd(intAnimator, false);
+        verify(mockListener, timeout(3000)).onAnimationEnd(intAnimator, false);
     }
 
     @Test
@@ -196,7 +196,7 @@ public class ObjectAnimatorTest {
         mActivityRule.runOnUiThread(colorAnimator::start);
 
         verify(mockListener, timeout(2000)).onAnimationRepeat(colorAnimator);
-        verify(mockListener, timeout(2000)).onAnimationEnd(colorAnimator, false);
+        verify(mockListener, timeout(3000)).onAnimationEnd(colorAnimator, false);
     }
 
     @Test
