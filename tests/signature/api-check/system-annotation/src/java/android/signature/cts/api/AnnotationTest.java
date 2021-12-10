@@ -44,7 +44,6 @@ public class AnnotationTest extends AbstractApiTest {
 
     private String[] mExpectedApiFiles;
     private String mAnnotationForExactMatch;
-    private List<String> expectedFailures;
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
@@ -57,11 +56,8 @@ public class AnnotationTest extends AbstractApiTest {
 
         // Get the DynamicConfig.xml contents and extract the expected failures list.
         DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(MODULE_NAME);
-        expectedFailures = dcds.getValues("expected_failures");
-        Log.d(TAG, "Expected failure count: " + expectedFailures.size());
-        for (String failure: expectedFailures) {
-            Log.d(TAG, "Expected failure: \"" + failure + "\"");
-        }
+        List<String> expectedFailures = dcds.getValues("expected_failures");
+        initExpectedFailures(expectedFailures);
     }
 
     private Predicate<? super JDiffClassDescription> androidAutoClassesFilter() {
@@ -102,7 +98,7 @@ public class AnnotationTest extends AbstractApiTest {
                 return "android.R$styleable".equals(f.getDeclaringClass().getName());
             }
         };
-        runWithTestResultObserver(expectedFailures, resultObserver -> {
+        runWithTestResultObserver(resultObserver -> {
             AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
                     mClassProvider, mAnnotationForExactMatch, filter);
 
