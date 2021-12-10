@@ -16,10 +16,14 @@
 
 package com.android.bedstead.nene.devicepolicy;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+
 import static com.android.bedstead.nene.permissions.Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils.ACTION_DISABLE_SELF;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.os.Build;
 
 import com.android.bedstead.nene.TestApis;
@@ -28,6 +32,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
@@ -38,6 +43,10 @@ import java.util.Objects;
  * A reference to a Device Owner.
  */
 public final class DeviceOwner extends DevicePolicyController {
+
+    private static final String TEST_APP_APP_COMPONENT_FACTORY =
+            "com.android.bedstead.testapp.TestAppAppComponentFactory";
+
     DeviceOwner(UserReference user,
             Package pkg,
             ComponentName componentName) {
@@ -57,7 +66,24 @@ public final class DeviceOwner extends DevicePolicyController {
 
     @Override
     public void remove() {
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+        if (mPackage.appComponentFactory().equals(TEST_APP_APP_COMPONENT_FACTORY)) {
+            // Special case for removing TestApp DPCs - this works even when not testOnly
+            Intent intent = new Intent(ACTION_DISABLE_SELF);
+            intent.setComponent(new ComponentName(pkg().packageName(),
+                    "com.android.bedstead.testapp.TestAppBroadcastController"));
+            try (PermissionContext p =
+                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                TestApis.context().androidContextAsUser(mUser).sendBroadcast(intent);
+            }
+
+            Poll.forValue("Device Owner", () -> TestApis.devicePolicy().getDeviceOwner())
+                    .toBeNull()
+                    .errorOnFail().await();
+            return;
+        }
+
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)
+                || TestApis.packages().instrumented().isInstantApp()) {
             removePreS();
             return;
         }
