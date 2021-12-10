@@ -32,6 +32,7 @@
     Bug: 195605294 android.intent.action.MANAGE_UNUSED_APPS
     Bug: 195605294 android.intent.action.REVIEW_PERMISSION_HISTORY
     Bug: 206897736 android.intent.action.MANAGE_PERMISSION_USAGE
+    Bug: 206897736 android.intent.action.VIEW_APP_FEATURES
 
 -->
 <dynamicConfig>
@@ -53,5 +54,6 @@
       <value>android.intent.action.MANAGE_UNUSED_APPS</value>
       <value>android.intent.action.REVIEW_PERMISSION_HISTORY</value>
       <value>android.intent.action.MANAGE_PERMISSION_USAGE</value>
+      <value>android.intent.action.VIEW_APP_FEATURES</value>
     </entry>
 </dynamicConfig>
