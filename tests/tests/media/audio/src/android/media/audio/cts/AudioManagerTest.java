@@ -61,6 +61,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioProfile;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
@@ -1902,6 +1903,45 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertEquals(channelMasks, channelMasksFromProfile);
             assertEquals(channelIndexMasks, channelIndexMasksFromProfile);
             assertEquals(sampleRates, sampleRatesFromProfile);
+        }
+    }
+
+    public void testGetDirectPlaybackSupport() {
+        assertEquals(AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
+                AudioManager.getDirectPlaybackSupport(
+                        new AudioFormat.Builder().build(),
+                        new AudioAttributes.Builder().build()));
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        AudioAttributes attr = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setLegacyStreamType(STREAM_MUSIC).build();
+        for (AudioDeviceInfo device : devices) {
+            for (int encoding : device.getEncodings()) {
+                for (int channelMask : device.getChannelMasks()) {
+                    for (int sampleRate : device.getSampleRates()) {
+                        AudioFormat format = new AudioFormat.Builder()
+                                .setEncoding(encoding)
+                                .setChannelMask(channelMask)
+                                .setSampleRate(sampleRate).build();
+                        final int directPlaybackSupport =
+                                AudioManager.getDirectPlaybackSupport(format, attr);
+                        assertEquals(
+                                AudioTrack.isDirectPlaybackSupported(format, attr),
+                                directPlaybackSupport
+                                        != AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED);
+                        if (directPlaybackSupport == AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED) {
+                            assertEquals(
+                                    AudioManager.getPlaybackOffloadSupport(format, attr),
+                                    directPlaybackSupport);
+                        } else {
+                            assertNotEquals(
+                                    AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
+                                    AudioManager.getPlaybackOffloadSupport(format, attr)
+                                            & directPlaybackSupport);
+                        }
+                    }
+                }
+            }
         }
     }
 
