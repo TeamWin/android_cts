@@ -38,6 +38,8 @@ include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSystemApiSignatureTestCases
 
+LOCAL_STATIC_JAVA_LIBRARIES += cts-signature-with-dynamic-config
+
 LOCAL_SIGNATURE_API_FILES := \
     current.api \
     android-test-mock-current.api \
