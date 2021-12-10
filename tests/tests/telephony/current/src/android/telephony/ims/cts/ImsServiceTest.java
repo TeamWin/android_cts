@@ -41,9 +41,9 @@ import android.telephony.SmsMessage;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.AsyncSmsMessageListener;
+import android.telephony.cts.CarrierCapability;
 import android.telephony.cts.SmsReceiverHelper;
 import android.telephony.cts.TelephonyUtils;
-import android.telephony.cts.CarrierCapability;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -92,8 +92,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import android.util.Log;
 
 /**
  * CTS tests for ImsService API.
@@ -379,6 +377,24 @@ public class ImsServiceTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
+        // Connect to the ImsService with the RCS feature.
+        assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .build()));
+        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_CREATE_RCS);
+        assertNotNull("ImsService created, but ImsService#createRcsFeature was not called!",
+                sServiceConnector.getCarrierService().getRcsFeature());
+    }
+
+    @Test
+    public void testCarrierImsServiceBindRcsFeatureForExecutor() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        sServiceConnector.setExecutorTestType(true);
         // Connect to the ImsService with the RCS feature.
         assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
                 .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
