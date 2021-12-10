@@ -53,6 +53,18 @@ java_defaults {
     compile_multilib: "both",
 }
 
+// Defaults for signature api checks with dynamic config.
+java_defaults {
+    name: "signature-api-check-dynamic-config-defaults",
+    defaults: ["signature-api-check-defaults"],
+    defaults_visibility: [
+        "//cts/tests/signature:__subpackages__",
+    ],
+    static_libs: [
+        "cts-signature-with-dynamic-config",
+    ],
+}
+
 // Defaults for hiddenapi killswitch checks.
 java_defaults {
     name: "hiddenapi-killswitch-check-defaults",
