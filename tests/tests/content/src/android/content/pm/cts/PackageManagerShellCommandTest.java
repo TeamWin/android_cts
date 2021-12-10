@@ -16,23 +16,37 @@
 
 package android.content.pm.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+import static android.content.pm.Checksum.TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256;
+import static android.content.pm.Checksum.TYPE_WHOLE_MERKLE_ROOT_4K_SHA256;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
+import static android.content.pm.PackageInstaller.EXTRA_DATA_LOADER_TYPE;
+import static android.content.pm.PackageInstaller.EXTRA_SESSION_ID;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
+import static android.content.pm.PackageManager.EXTRA_VERIFICATION_ID;
+import static android.content.pm.PackageManager.EXTRA_VERIFICATION_ROOT_HASH;
 import static android.content.pm.PackageManager.GET_SHARED_LIBRARY_FILES;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_STATIC_SHARED_AND_SDK_LIBRARIES;
+import static android.content.pm.PackageManager.VERIFICATION_ALLOW;
+import static android.content.pm.PackageManager.VERIFICATION_REJECT;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApkChecksum;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.DataLoaderParams;
 import android.content.pm.PackageInfo;
@@ -48,6 +62,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.internal.util.ConcurrentUtils;
+import com.android.internal.util.HexDump;
 
 import libcore.util.HexEncoding;
 
@@ -67,16 +84,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.cert.CertificateEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 @AppModeFull
 public class PackageManagerShellCommandTest {
     private static final String TEST_APP_PACKAGE = "com.example.helloworld";
+
+    private static final String CTS_PACKAGE_NAME = "android.content.cts";
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_HW5 = "HelloWorld5.apk";
@@ -106,6 +130,10 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
     private static final String TEST_USING_SDK1_AND_SDK2 = "HelloWorldUsingSdk1And2.apk";
 
+    private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
+
+    private static final long DEFAULT_STREAMING_VERIFICATION_TIMEOUT = 3 * 1000;
+
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
@@ -123,6 +151,7 @@ public class PackageManagerShellCommandTest {
     private String mInstall = "";
     private String mPackageVerifier = null;
     private String mUnusedStaticSharedLibsMinCachePeriod = null;
+    private long mStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT;
 
     private static PackageInstaller getPackageInstaller() {
         return getPackageManager().getPackageInstaller();
@@ -130,6 +159,10 @@ public class PackageManagerShellCommandTest {
 
     private static PackageManager getPackageManager() {
         return InstrumentationRegistry.getContext().getPackageManager();
+    }
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getContext();
     }
 
     private static UiAutomation getUiAutomation() {
@@ -207,12 +240,19 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_SDK2_PACKAGE);
         uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
 
-        // Disable the package verifier to avoid the dialog when installing an app.
         mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
+        // Disable the package verifier for non-incremental installations to avoid the dialog
+        // when installing an app.
         executeShellCommand("settings put global verifier_verify_adb_installs 0");
 
         mUnusedStaticSharedLibsMinCachePeriod = executeShellCommand(
                 "settings get global unused_static_shared_lib_min_cache_period");
+
+        try {
+            mStreamingVerificationTimeoutMs = Long.parseUnsignedLong(
+                    executeShellCommand("settings get global streaming_verifier_timeout"));
+        } catch (NumberFormatException ignore) {
+        }
     }
 
     @After
@@ -233,6 +273,7 @@ public class PackageManagerShellCommandTest {
         // Set the test override to invalid.
         setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid");
         setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "invalid");
+        setSystemProperty("debug.pm.adb_verifier_override_package", "invalid");
     }
 
     private boolean checkIncrementalDeliveryFeature() {
@@ -853,6 +894,163 @@ public class PackageManagerShellCommandTest {
         assertFalse(isSdkInstalled(TEST_SDK2_NAME, 2));
     }
 
+    private void runPackageVerifierTest(BiConsumer<Context, Intent> onBroadcast)
+            throws Exception {
+        runPackageVerifierTest("Success", onBroadcast);
+    }
+
+    private void runPackageVerifierTest(String expectedResultStartsWith,
+            BiConsumer<Context, Intent> onBroadcast) throws Exception {
+        // Install a package.
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+
+        getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.PACKAGE_VERIFICATION_AGENT);
+
+        AtomicReference<Thread> onBroadcastThread = new AtomicReference<>();
+
+        // Create a single-use broadcast receiver
+        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                context.unregisterReceiver(this);
+                Thread thread = new Thread(() -> onBroadcast.accept(context, intent));
+                thread.start();
+                onBroadcastThread.set(thread);
+            }
+        };
+        // Create an intent-filter and register the receiver
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_NEEDS_VERIFICATION);
+        intentFilter.addDataType(PACKAGE_MIME_TYPE);
+        getContext().registerReceiver(broadcastReceiver, intentFilter, RECEIVER_EXPORTED);
+
+        // Enable verification.
+        executeShellCommand("settings put global verifier_verify_adb_installs 1");
+        // Override verifier for updates of debuggable apps.
+        setSystemProperty("debug.pm.adb_verifier_override_package", CTS_PACKAGE_NAME);
+
+        // Update the package, should trigger verifier override.
+        installPackage(TEST_HW7, expectedResultStartsWith);
+
+        onBroadcastThread.get().join();
+    }
+
+    @Test
+    public void testPackageVerifierAllow() throws Exception {
+        AtomicInteger dataLoaderType = new AtomicInteger(-1);
+
+        runPackageVerifierTest((context, intent) -> {
+            int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+            assertNotEquals(-1, verificationId);
+
+            dataLoaderType.set(intent.getIntExtra(EXTRA_DATA_LOADER_TYPE, -1));
+            int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+            assertNotEquals(-1, sessionId);
+
+            getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_ALLOW);
+        });
+
+        assertEquals(mDataLoaderType, dataLoaderType.get());
+    }
+
+    @Test
+    public void testPackageVerifierReject() throws Exception {
+        AtomicInteger dataLoaderType = new AtomicInteger(-1);
+
+        runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed]",
+                (context, intent) -> {
+                    int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+                    assertNotEquals(-1, verificationId);
+
+                    dataLoaderType.set(intent.getIntExtra(EXTRA_DATA_LOADER_TYPE, -1));
+                    int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+                    assertNotEquals(-1, sessionId);
+
+                    getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_REJECT);
+                });
+
+        assertEquals(mDataLoaderType, dataLoaderType.get());
+    }
+
+    @Test
+    public void testPackageVerifierWithExtensionAndTimeout() throws Exception {
+        AtomicInteger dataLoaderType = new AtomicInteger(-1);
+
+        runPackageVerifierTest((context, intent) -> {
+            int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+            assertNotEquals(-1, verificationId);
+
+            dataLoaderType.set(intent.getIntExtra(EXTRA_DATA_LOADER_TYPE, -1));
+            int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+            assertNotEquals(-1, sessionId);
+
+            try {
+                if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL) {
+                    // For streaming installations, the timeout is fixed at 3secs and always
+                    // allow the install. Try to extend the timeout and then reject after
+                    // much shorter time.
+                    getPackageManager().extendVerificationTimeout(verificationId,
+                            VERIFICATION_REJECT, mStreamingVerificationTimeoutMs * 3);
+                    Thread.sleep(mStreamingVerificationTimeoutMs * 2);
+                    getPackageManager().verifyPendingInstall(verificationId,
+                            VERIFICATION_REJECT);
+                } else {
+                    getPackageManager().verifyPendingInstall(verificationId,
+                            VERIFICATION_ALLOW);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertEquals(mDataLoaderType, dataLoaderType.get());
+    }
+
+    @Test
+    public void testPackageVerifierWithChecksums() throws Exception {
+        AtomicInteger dataLoaderType = new AtomicInteger(-1);
+        List<ApkChecksum> checksums = new ArrayList<>();
+        StringBuilder rootHash = new StringBuilder();
+
+        runPackageVerifierTest((context, intent) -> {
+            int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+            assertNotEquals(-1, verificationId);
+
+            dataLoaderType.set(intent.getIntExtra(EXTRA_DATA_LOADER_TYPE, -1));
+            int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+            assertNotEquals(-1, sessionId);
+
+            try {
+                PackageInstaller.Session session = getPackageInstaller().openSession(sessionId);
+                assertNotNull(session);
+
+                rootHash.append(intent.getStringExtra(EXTRA_VERIFICATION_ROOT_HASH));
+
+                String[] names = session.getNames();
+                assertEquals(1, names.length);
+                session.requestChecksums(names[0], 0, PackageManager.TRUST_ALL,
+                        ConcurrentUtils.DIRECT_EXECUTOR,
+                        result -> checksums.addAll(result));
+            } catch (IOException | CertificateEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        assertEquals(mDataLoaderType, dataLoaderType.get());
+
+        assertEquals(1, checksums.size());
+
+        if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL) {
+            assertEquals(TYPE_WHOLE_MERKLE_ROOT_4K_SHA256, checksums.get(0).getType());
+            assertEquals(rootHash.toString(),
+                    "base.apk:" + HexDump.toHexString(checksums.get(0).getValue()));
+        } else {
+            assertEquals(TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256, checksums.get(0).getType());
+        }
+    }
+
     private List<SharedLibraryInfo> getSharedLibraries() {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
@@ -1081,7 +1279,7 @@ public class PackageManagerShellCommandTest {
     }
 
     private void setSystemProperty(String name, String value) throws Exception {
-        executeShellCommand("setprop " + name + " " + value);
+        assertEquals("", executeShellCommand("setprop " + name + " " + value));
     }
 }
 
