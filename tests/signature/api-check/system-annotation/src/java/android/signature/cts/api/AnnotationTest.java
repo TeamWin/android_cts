@@ -39,7 +39,6 @@ public class AnnotationTest extends AbstractApiTest {
 
     private String[] expectedApiFiles;
     private String annotationForExactMatch;
-    private List<String> expectedFailures;
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
@@ -52,11 +51,8 @@ public class AnnotationTest extends AbstractApiTest {
 
         // Get the DynamicConfig.xml contents and extract the expected failures list.
         DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(MODULE_NAME);
-        expectedFailures = dcds.getValues("expected_failures");
-        Log.d(TAG, "Expected failure count: " + expectedFailures.size());
-        for (String failure: expectedFailures) {
-            Log.d(TAG, "Expected failure: \"" + failure + "\"");
-        }
+        List<String> expectedFailures = dcds.getValues("expected_failures");
+        initExpectedFailures(expectedFailures);
     }
 
     /**
@@ -66,7 +62,7 @@ public class AnnotationTest extends AbstractApiTest {
     public void testAnnotation() {
         if ("true".equals(PropertyUtil.getProperty("ro.treble.enabled")) &&
                 PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1) {
-            runWithTestResultObserver(expectedFailures, resultObserver -> {
+            runWithTestResultObserver(resultObserver -> {
                 AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
                         classProvider, annotationForExactMatch);
 
