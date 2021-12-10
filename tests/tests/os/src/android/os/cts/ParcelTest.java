@@ -2126,6 +2126,12 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals("test", e2.getMessage());
 
         p.setDataPosition(0);
+        Object object2 = p.readSerializable(null, Object.class);
+        assertTrue(object1 instanceof Exception);
+        Exception e3 = (Exception) object2;
+        assertEquals("test", e3.getMessage());
+
+        p.setDataPosition(0);
         assertThrows(BadParcelableException.class, () -> p.readSerializable(mcl, String.class));
         p.recycle();
     }
@@ -2175,6 +2181,9 @@ public class ParcelTest extends AndroidTestCase {
         p.writeParcelable(testSubIntent, 0);
         p.setDataPosition(0);
         assertEquals(testSubIntent, (p.readParcelable(getClass().getClassLoader(), Intent.class)));
+
+        p.setDataPosition(0);
+        assertEquals(testSubIntent, (p.readParcelable(getClass().getClassLoader(), Object.class)));
         p.recycle();
     }
 
