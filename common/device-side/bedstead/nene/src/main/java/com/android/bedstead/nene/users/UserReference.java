@@ -25,6 +25,7 @@ import static android.os.Build.VERSION_CODES.S;
 import static com.android.bedstead.nene.permissions.Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.users.Users.users;
 
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.content.pm.UserInfo;
@@ -388,7 +389,7 @@ public class UserReference implements AutoCloseable {
                 TestApis.context().androidContextAsUser(this)
                         .getSystemService(DevicePolicyManager.class);
         TestApis.settings().secure().putInt(
-        /* user= */ this, USER_SETUP_COMPLETE_KEY, complete ? 1 : 0);
+                /* user= */ this, USER_SETUP_COMPLETE_KEY, complete ? 1 : 0);
         try (PermissionContext p =
                      TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             devicePolicyManager.forceUpdateUserSetupComplete(id());
@@ -403,6 +404,50 @@ public class UserReference implements AutoCloseable {
         try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
             return TestApis.settings().secure()
                     .getInt(/*user= */ this, USER_SETUP_COMPLETE_KEY, /* def= */ 0) == 1;
+        }
+    }
+
+    /**
+     * True if the user has a password.
+     */
+    public boolean hasPassword() {
+        return TestApis.context().androidContextAsUser(this)
+                .getSystemService(KeyguardManager.class).isDeviceSecure();
+    }
+
+    /**
+     * Set a password for the user.
+     */
+    public void setPassword(String password) {
+        try {
+            ShellCommand.builder("cmd lock_settings")
+                    .addOperand("set-password")
+                    .addOperand(password)
+                    .addOption("--user", mId)
+                    .validate(s -> s.startsWith("Password set to "))
+                    .execute();
+        } catch (AdbException e) {
+            throw new NeneException("Error setting password", e);
+        }
+    }
+
+    /**
+     * Clear the password for the user.
+     */
+    public void clearPassword(String password) {
+        try {
+            ShellCommand.builder("cmd lock_settings")
+                    .addOperand("clear")
+                    .addOption("--old", password)
+                    .addOption("--user", mId)
+                    .validate(s -> s.startsWith("Lock credential cleared"))
+                    .execute();
+        } catch (AdbException e) {
+            if (e.output().contains("user has no password")) {
+                // No password anyway, fine
+                return;
+            }
+            throw new NeneException("Error clearing password", e);
         }
     }
 

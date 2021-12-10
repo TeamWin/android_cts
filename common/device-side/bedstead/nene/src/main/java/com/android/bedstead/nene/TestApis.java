@@ -19,6 +19,7 @@ package com.android.bedstead.nene;
 import com.android.bedstead.nene.activities.Activities;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.context.Context;
+import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
@@ -75,6 +76,11 @@ public final class TestApis {
     /** Access Test APIs related to notifications. */
     public static Notifications notifications() {
         return Notifications.sInstance;
+    }
+
+    /** Access Test APIs related to the device. */
+    public static Device device() {
+        return Device.sInstance;
     }
 
     /** @deprecated Use statically */

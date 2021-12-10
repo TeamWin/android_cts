@@ -109,15 +109,11 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @BeforeClass
-    public static void setup() {
-        setupApps();
-        setShouldForceStopTestApp(false);
-    }
-
-    private static void setupApps() {
+    public static void setupApps() {
         // Installed by target preparer
         assertThat(checkPermission(APP_B_NO_PERMS,
                 Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
+        setShouldForceStopTestApp(false);
     }
 
     @AfterClass

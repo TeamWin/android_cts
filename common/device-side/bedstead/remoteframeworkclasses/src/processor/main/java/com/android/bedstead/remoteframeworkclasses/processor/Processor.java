@@ -276,12 +276,10 @@ public final class Processor extends AbstractProcessor {
             // AccountManager
 
             // Uses Activity
-            "public android.accounts.AccountManagerFuture<android.os.Bundle> addAccount(String, String, String[], android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> finishSession(android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> editProperties(String, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthTokenByFeatures(String, String, String[], android.app.Activity, android.os.Bundle, android.os.Bundle, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
-            "public android.accounts.AccountManagerFuture<android.os.Bundle> removeAccount(android.accounts.Account, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> startAddAccountSession(String, String, String[], android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> startUpdateCredentialsSession(android.accounts.Account, String, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> updateCredentials(android.accounts.Account, String, android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
@@ -295,7 +293,6 @@ public final class Processor extends AbstractProcessor {
             // Uses AccountManagerCallback
             "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, android.os.Bundle, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
-            "public android.accounts.AccountManagerFuture<android.os.Bundle> addAccount(String, String, String[], android.os.Bundle, android.app.Activity, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.os.Bundle> getAuthToken(android.accounts.Account, String, android.os.Bundle, boolean, android.accounts.AccountManagerCallback<android.os.Bundle>, android.os.Handler)",
             "public android.os.Bundle hasFeatures(android.accounts.Account, String[], android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
@@ -304,7 +301,6 @@ public final class Processor extends AbstractProcessor {
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> hasFeatures(android.accounts.Account, String[], android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
             "public android.os.Bundle isCredentialsUpdateSuggested(android.accounts.AccountAuthenticatorResponse, android.accounts.Account, String) throws android.accounts.NetworkErrorException",
             "public android.accounts.AccountManagerFuture<java.lang.Boolean> isCredentialsUpdateSuggested(android.accounts.Account, String, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
-            "public android.accounts.AccountManagerFuture<java.lang.Boolean> removeAccount(android.accounts.Account, android.accounts.AccountManagerCallback<java.lang.Boolean>, android.os.Handler)",
             "public android.accounts.AccountManagerFuture<android.accounts.Account> renameAccount(android.accounts.Account, @Size(min=1) String, android.accounts.AccountManagerCallback<android.accounts.Account>, android.os.Handler)",
 
             // Uses android.accounts.AccountManager
@@ -641,6 +637,18 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME =
             ClassName.get("com.android.bedstead.remoteframeworkclasses",
                     "NullParcelableRemoteContentResolver");
+
+    // TODO(b/205562849): These only support passing null, which is fine for existing tests but will be misleading
+    private static final ClassName NULL_PARCELABLE_ACTIVITY_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableActivity");
+    private static final ClassName NULL_PARCELABLE_ACCOUNT_MANAGER_CALLBACK_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableAccountManagerCallback");
+    private static final ClassName NULL_HANDLER_CALLBACK_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableHandler");
+
     private static final ClassName COMPONENT_NAME_CLASSNAME =
             ClassName.get("android.content", "ComponentName");
 
@@ -678,6 +686,9 @@ public final class Processor extends AbstractProcessor {
     private void generateWrappers() {
         generateWrapper(NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME);
         generateWrapper(NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME);
+        generateWrapper(NULL_PARCELABLE_ACTIVITY_CLASSNAME);
+        generateWrapper(NULL_PARCELABLE_ACCOUNT_MANAGER_CALLBACK_CLASSNAME);
+        generateWrapper(NULL_HANDLER_CALLBACK_CLASSNAME);
     }
 
     private void generateWrapper(ClassName className) {
@@ -761,9 +772,8 @@ public final class Processor extends AbstractProcessor {
 
 
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
-                .addMember("parcelableWrappers", "{$T.class, $T.class}",
-                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
-                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME)
+                .addMember("parcelableWrappers", "{$T.class, $T.class, $T.class, $T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME, NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME, NULL_PARCELABLE_ACTIVITY_CLASSNAME, NULL_PARCELABLE_ACCOUNT_MANAGER_CALLBACK_CLASSNAME, NULL_HANDLER_CALLBACK_CLASSNAME)
                 .addMember("futureWrappers", "$T.class",
                         ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME)
                 .build());
@@ -815,9 +825,8 @@ public final class Processor extends AbstractProcessor {
                 TypeSpec.classBuilder(className).addModifiers(Modifier.FINAL, Modifier.PUBLIC);
 
         classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
-                .addMember("parcelableWrappers", "{$T.class, $T.class}",
-                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
-                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME)
+                .addMember("parcelableWrappers", "{$T.class, $T.class, $T.class, $T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME, NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME, NULL_PARCELABLE_ACTIVITY_CLASSNAME, NULL_PARCELABLE_ACCOUNT_MANAGER_CALLBACK_CLASSNAME, NULL_HANDLER_CALLBACK_CLASSNAME)
                 .build());
 
         classBuilder.addField(ClassName.get(frameworkClass),

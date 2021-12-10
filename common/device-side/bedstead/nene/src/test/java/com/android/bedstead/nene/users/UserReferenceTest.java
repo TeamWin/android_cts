@@ -35,6 +35,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequirePasswordNotSet;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -51,12 +52,11 @@ import org.junit.runner.RunWith;
 public class UserReferenceTest {
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
-    private static final String USER_NAME = "userName";
     private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
-    private static final int SERIAL_NO = 1000;
-    private static final UserType USER_TYPE = new UserType(new UserType.MutableUserType());
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
+    private static final String PASSWORD = "1234";
+    private static final String DIFFERENT_PASSWORD = "2345";
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -330,5 +330,60 @@ public class UserReferenceTest {
         }
 
         assertThat(TestApis.users().all()).hasSize(numUsers);
+    }
+
+    @Test
+    @RequirePasswordNotSet
+    public void setPassword_hasPassword() {
+        try {
+            TestApis.users().instrumented().setPassword(PASSWORD);
+
+            assertThat(TestApis.users().instrumented().hasPassword()).isTrue();
+        } finally {
+            TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
+    }
+
+    @Test
+    @RequirePasswordNotSet
+    public void clearPassword_doesNotHavePassword() {
+        TestApis.users().instrumented().setPassword(PASSWORD);
+        TestApis.users().instrumented().clearPassword(PASSWORD);
+
+        assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+    }
+
+    @Test
+    @RequirePasswordNotSet
+    public void clearPassword_doesNotHavePassword_doesNothing() {
+        TestApis.users().instrumented().clearPassword(PASSWORD);
+
+        assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+    }
+
+    @Test
+    @RequirePasswordNotSet
+    public void clearPassword_incorrectOldPassword_throwsException() {
+        try {
+            TestApis.users().instrumented().setPassword(PASSWORD);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().clearPassword(DIFFERENT_PASSWORD));
+        } finally {
+            TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
+    }
+
+    @Test
+    @RequirePasswordNotSet
+    public void setPassword_alreadyHasPassword_throwsException() {
+        try {
+            TestApis.users().instrumented().setPassword(PASSWORD);
+
+            assertThrows(NeneException.class,
+                    () -> TestApis.users().instrumented().setPassword(DIFFERENT_PASSWORD));
+        } finally {
+            TestApis.users().instrumented().clearPassword(PASSWORD);
+        }
     }
 }
