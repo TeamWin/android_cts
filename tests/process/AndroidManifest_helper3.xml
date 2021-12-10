@@ -15,13 +15,22 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.os.cts.process.helper" >
+    package="android.os.cts.process.helper"
+    android:sharedUserId="android.os.cts.process.helper.shared">
 
-    <application>
+    <application android:process="android.os.cts.process.helper.shared_process">
         <processes>
-            <process /> <!-- For the main process -->
-            <process android:process=":sub1" android:name=".Application1" />
+            <process android:process="android.os.cts.process.helper.shared_process" />
+            <process android:process=":sub1" android:name=".Application1c" />
             <process android:process=":sub2"/>
+            <process android:process="android.os.cts.process.helper.shared.sub3" android:name=".Application3" />
         </processes>
+        <receiver android:name=".MyReceiver3"
+            android:exported="true"
+            android:process="android.os.cts.process.helper.shared.sub3">
+            <intent-filter>
+                <action android:name="ACTION_SEND_BACK_START_TIME" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

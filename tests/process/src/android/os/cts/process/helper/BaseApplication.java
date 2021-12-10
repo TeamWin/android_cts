@@ -15,33 +15,30 @@
  */
 package android.os.cts.process.helper;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+import android.app.Application;
 import android.os.cts.process.common.Consts;
 import android.os.cts.process.common.Message;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BroadcastMessenger;
 
-public class BaseReceiver extends BroadcastReceiver {
+public abstract class BaseApplication extends Application {
     @Override
-    public void onReceive(Context context, Intent intent) {
-        Log.i(Consts.TAG, "onReceive: " + intent);
-        switch (intent.getAction()) {
-            case Consts.ACTION_SEND_BACK_START_TIME:
-                sendBackStartTime(context);
-                break;
-        }
+    public void onCreate() {
+        super.onCreate();
+
+        Log.i(Consts.TAG, "onCreate: this=" + this);
+
+        sendBackApplicationCreated();
     }
 
-    private void sendBackStartTime(Context context) {
+    private void sendBackApplicationCreated() {
         Message m = new Message();
 
-        m.fillInBasicInfo(context);
+        m.fillInBasicInfo(this);
 
-        m.receiverClassName = this.getClass().getCanonicalName();
+        m.applicationClassName = this.getClass().getCanonicalName();
 
-        BroadcastMessenger.send(context, Consts.TAG, m);
+        BroadcastMessenger.send(this, Consts.TAG, m);
     }
 }

@@ -16,7 +16,10 @@
 package android.os.cts.process.common;
 
 import android.annotation.Nullable;
+import android.content.Context;
 import android.os.Parcelable;
+import android.os.Process;
+import android.os.SystemClock;
 
 import com.android.internal.util.DataClass;
 
@@ -32,6 +35,30 @@ public class Message implements Parcelable {
     public Message() {
     }
 
+    public void fillInBasicInfo(Context context) {
+        // codegen fails for whatever reason if it's after the fields.
+        packageName = context.getPackageName();
+        processName = Process.myProcessName();
+
+        applicationContextClassName = context.getApplicationContext().getClass().getCanonicalName();
+
+        nowElapsedRealtime = SystemClock.elapsedRealtime();
+        nowUptimeMillis = SystemClock.uptimeMillis();
+
+        startElapsedRealtime = Process.getStartElapsedRealtime();
+        startUptimeMillis = Process.getStartUptimeMillis();
+        startRequestedElapsedRealtime = Process.getStartRequestedElapsedRealtime();
+        startRequestedUptimeMillis = Process.getStartRequestedUptimeMillis();
+    }
+
+    @Nullable
+    public String packageName;
+    @Nullable
+    public String applicationClassName;
+    @Nullable
+    public String receiverClassName;
+    @Nullable
+    public String applicationContextClassName;
     @Nullable
     public String processName;
     public long startElapsedRealtime;
@@ -63,6 +90,10 @@ public class Message implements Parcelable {
         // String fieldNameToString() { ... }
 
         return "Message { " +
+                "packageName = " + packageName + ", " +
+                "applicationClassName = " + applicationClassName + ", " +
+                "receiverClassName = " + receiverClassName + ", " +
+                "applicationContextClassName = " + applicationContextClassName + ", " +
                 "processName = " + processName + ", " +
                 "startElapsedRealtime = " + startElapsedRealtime + ", " +
                 "startUptimeMillis = " + startUptimeMillis + ", " +
@@ -79,9 +110,17 @@ public class Message implements Parcelable {
         // You can override field parcelling by defining methods like:
         // void parcelFieldName(Parcel dest, int flags) { ... }
 
-        byte flg = 0;
-        if (processName != null) flg |= 0x1;
-        dest.writeByte(flg);
+        int flg = 0;
+        if (packageName != null) flg |= 0x1;
+        if (applicationClassName != null) flg |= 0x2;
+        if (receiverClassName != null) flg |= 0x4;
+        if (applicationContextClassName != null) flg |= 0x8;
+        if (processName != null) flg |= 0x10;
+        dest.writeInt(flg);
+        if (packageName != null) dest.writeString(packageName);
+        if (applicationClassName != null) dest.writeString(applicationClassName);
+        if (receiverClassName != null) dest.writeString(receiverClassName);
+        if (applicationContextClassName != null) dest.writeString(applicationContextClassName);
         if (processName != null) dest.writeString(processName);
         dest.writeLong(startElapsedRealtime);
         dest.writeLong(startUptimeMillis);
@@ -102,8 +141,12 @@ public class Message implements Parcelable {
         // You can override field unparcelling by defining methods like:
         // static FieldType unparcelFieldName(Parcel in) { ... }
 
-        byte flg = in.readByte();
-        String _processName = (flg & 0x1) == 0 ? null : in.readString();
+        int flg = in.readInt();
+        String _packageName = (flg & 0x1) == 0 ? null : in.readString();
+        String _applicationClassName = (flg & 0x2) == 0 ? null : in.readString();
+        String _receiverClassName = (flg & 0x4) == 0 ? null : in.readString();
+        String _applicationContextClassName = (flg & 0x8) == 0 ? null : in.readString();
+        String _processName = (flg & 0x10) == 0 ? null : in.readString();
         long _startElapsedRealtime = in.readLong();
         long _startUptimeMillis = in.readLong();
         long _startRequestedElapsedRealtime = in.readLong();
@@ -111,6 +154,10 @@ public class Message implements Parcelable {
         long _nowElapsedRealtime = in.readLong();
         long _nowUptimeMillis = in.readLong();
 
+        this.packageName = _packageName;
+        this.applicationClassName = _applicationClassName;
+        this.receiverClassName = _receiverClassName;
+        this.applicationContextClassName = _applicationContextClassName;
         this.processName = _processName;
         this.startElapsedRealtime = _startElapsedRealtime;
         this.startUptimeMillis = _startUptimeMillis;
@@ -137,10 +184,10 @@ public class Message implements Parcelable {
     };
 
     @DataClass.Generated(
-            time = 1636764125263L,
+            time = 1639154672715L,
             codegenVersion = "1.0.23",
             sourceFile = "cts/tests/process/src/android/os/cts/process/common/Message.java",
-            inputSignatures = "public @android.annotation.Nullable java.lang.String processName\npublic  long startElapsedRealtime\npublic  long startUptimeMillis\npublic  long startRequestedElapsedRealtime\npublic  long startRequestedUptimeMillis\npublic  long nowElapsedRealtime\npublic  long nowUptimeMillis\nclass Message extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=false, genToString=true, genAidl=false)")
+            inputSignatures = "public @android.annotation.Nullable java.lang.String packageName\npublic @android.annotation.Nullable java.lang.String applicationClassName\npublic @android.annotation.Nullable java.lang.String receiverClassName\npublic @android.annotation.Nullable java.lang.String applicationContextClassName\npublic @android.annotation.Nullable java.lang.String processName\npublic  long startElapsedRealtime\npublic  long startUptimeMillis\npublic  long startRequestedElapsedRealtime\npublic  long startRequestedUptimeMillis\npublic  long nowElapsedRealtime\npublic  long nowUptimeMillis\npublic  void fillInBasicInfo(android.content.Context)\nclass Message extends java.lang.Object implements [android.os.Parcelable]\n@com.android.internal.util.DataClass(genConstructor=false, genSetters=false, genToString=true, genAidl=false)")
     @Deprecated
     private void __metadata() {}
 
