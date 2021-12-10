@@ -37,10 +37,13 @@ import android.os.PersistableBundle;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
 import android.os.UserHandle;
+import android.provider.DeviceConfig;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -640,5 +643,11 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
             q.setLocusIds(locusIds);
         }
         return getLauncherApps().getShortcuts(q, getUserHandle());
+    }
+
+    protected boolean isAppSearchEnabled() {
+        return SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_SYSTEMUI,
+                        "shortcut_appsearch_integration", false));
     }
 }
