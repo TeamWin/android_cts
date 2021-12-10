@@ -51,6 +51,7 @@ public class BiometricActivityTests extends BiometricTestBase {
 
     @Test
     public void testBiometricOnly_authenticateFromForegroundActivity() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
             if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
@@ -103,6 +104,7 @@ public class BiometricActivityTests extends BiometricTestBase {
 
     @Test
     public void testBiometricOnly_rejectThenErrorFromForegroundActivity() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
             if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
@@ -169,6 +171,7 @@ public class BiometricActivityTests extends BiometricTestBase {
 
     @Test
     public void testBiometricOnly_rejectThenAuthenticate() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
             if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
@@ -236,6 +239,7 @@ public class BiometricActivityTests extends BiometricTestBase {
 
     @Test
     public void testBiometricOnly_negativeButtonInvoked() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
             if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
@@ -284,6 +288,7 @@ public class BiometricActivityTests extends BiometricTestBase {
     @Test
     public void testBiometricOrCredential_credentialButtonInvoked_biometricEnrolled()
             throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         // Test behavior for each sensor when biometrics are enrolled
         try (CredentialSession credentialSession = new CredentialSession()) {
             credentialSession.setCredential();
@@ -307,6 +312,7 @@ public class BiometricActivityTests extends BiometricTestBase {
     @Test
     public void testBiometricOrCredential_credentialButtonInvoked_biometricNotEnrolled()
             throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         // Test behavior for each sensor when biometrics are not enrolled
         try (CredentialSession credentialSession = new CredentialSession()) {
             credentialSession.setCredential();
@@ -326,6 +332,7 @@ public class BiometricActivityTests extends BiometricTestBase {
     @Test
     public void testBiometricOrCredential_credentialButtonInvoked_noBiometricSensor()
             throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         assumeTrue(mSensorProperties.isEmpty());
         try (CredentialSession credentialSession = new CredentialSession()) {
             credentialSession.setCredential();

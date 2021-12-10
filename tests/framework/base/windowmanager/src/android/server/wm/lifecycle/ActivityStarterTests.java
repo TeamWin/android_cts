@@ -720,7 +720,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     /**
      * This test case tests behavior of activity with relinquishTaskIdentify attribute. Ensure the
-     * relinquishTaskIdentity doesn't work if the app is not installed in the system partition.
+     * relinquishTaskIdentity work if the activities are in the same app.
      */
     @Test
     public void testActivityWithRelinquishTaskIdentity() {
@@ -741,9 +741,9 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
         // verify the activities are in the same task
         assertEquals("Activity must be in the same task.", taskId, taskId2);
-        // verify the relinquishTaskIdentify function is ignored since it isn't a app that in system
-        // partition
-        assertEquals("Affinity should be same with the package name.",
+        // verify the relinquishTaskIdentify function should work since the activities are in the
+        // same app
+        assertNotEquals("Affinity should not be same with the package name.",
                 RELINQUISHTASKIDENTITY_ACTIVITY.getPackageName(), affinity);
     }
 
