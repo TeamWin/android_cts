@@ -35,6 +35,7 @@ import android.os.SystemClock;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -300,5 +301,22 @@ public class EditTextImeSupportTest extends EndToEndImeTestBase {
                 .isEqualTo(navigateNext ? EditorInfo.IME_FLAG_NAVIGATE_NEXT : 0);
         assertThat(editorInfo.imeOptions & EditorInfo.IME_FLAG_NAVIGATE_PREVIOUS)
                 .isEqualTo(navigatePrevious ? EditorInfo.IME_FLAG_NAVIGATE_PREVIOUS : 0);
+    }
+
+    /**
+     * Regression test for Bug 209958658.
+     */
+    @Test
+    public void testEndBatchEditReturnValue() {
+        EditText editText = new EditText(InstrumentationRegistry.getInstrumentation().getContext());
+        EditorInfo editorInfo = new EditorInfo();
+        InputConnection editableInputConnection = editText.onCreateInputConnection(editorInfo);
+        assertThat(editableInputConnection.beginBatchEdit()).isTrue();
+        assertThat(editableInputConnection.beginBatchEdit()).isTrue();
+        assertThat(editableInputConnection.endBatchEdit()).isTrue();
+        assertThat(editableInputConnection.endBatchEdit()).isFalse();
+
+        // Extra invocations of endBatchEdit() continue to return false.
+        assertThat(editableInputConnection.endBatchEdit()).isFalse();
     }
 }
