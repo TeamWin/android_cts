@@ -42,6 +42,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
@@ -112,6 +113,12 @@ public final class DevicePolicy {
             throw new NeneException("Could not set profile owner for user "
                     + user + " component " + profileOwnerComponent, e);
         }
+
+        Poll.forValue("Profile Owner", () -> TestApis.devicePolicy().getProfileOwner(user))
+                .toNotBeNull()
+                .errorOnFail()
+                .await();
+
         return new ProfileOwner(user,
                 TestApis.packages().find(
                         profileOwnerComponent.getPackageName()), profileOwnerComponent);
@@ -162,15 +169,17 @@ public final class DevicePolicy {
                          TestApis.permissions().withPermission(
                                  MANAGE_PROFILE_AND_DEVICE_OWNERS, MANAGE_DEVICE_ADMINS,
                                  INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, CREATE_USERS)) {
-                devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
-                        /* refreshing= */ true, user.id());
 
                 // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
                 retryIfNotTerminal(
-                        () -> setDeviceOwnerOnly(devicePolicyManager,
-                                deviceOwnerComponent, "Nene", user.id()),
+                        () -> {
+                            devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
+                                    /* refreshing= */ true, user.id());
+                            setDeviceOwnerOnly(devicePolicyManager,
+                                    deviceOwnerComponent, "Nene", user.id());
+                        },
                         () -> checkForTerminalDeviceOwnerFailures(
                                 user, deviceOwnerComponent, /* allowAdditionalUsers= */ true),
                         NeneException.class);
@@ -186,6 +195,11 @@ public final class DevicePolicy {
 
         Package deviceOwnerPackage = TestApis.packages().find(
                 deviceOwnerComponent.getPackageName());
+
+        Poll.forValue("Device Owner", () -> TestApis.devicePolicy().getDeviceOwner())
+                .toNotBeNull()
+                .errorOnFail()
+                .await();
 
         return new DeviceOwner(user, deviceOwnerPackage, deviceOwnerComponent);
     }

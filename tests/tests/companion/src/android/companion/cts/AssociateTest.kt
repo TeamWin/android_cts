@@ -73,8 +73,8 @@ class AssociateTest : TestBase() {
         withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
             cdm.associate(request, SIMPLE_EXECUTOR, callback)
         }
-        callback.waitForInvocation()
 
+        callback.waitForInvocation()
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationCreated() method.
         assertEquals(actual = callback.invocations.size, expected = 1)
@@ -109,8 +109,8 @@ class AssociateTest : TestBase() {
                 REQUEST_COMPANION_SELF_MANAGED, REQUEST_COMPANION_PROFILE_WATCH) {
             cdm.associate(request, SIMPLE_EXECUTOR, callback)
         }
-        callback.waitForInvocation()
 
+        callback.waitForInvocation()
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationCreated().
         assertEquals(actual = callback.invocations.size, expected = 1)
@@ -141,8 +141,3 @@ class AssociateTest : TestBase() {
         private const val ROLE_WATCH = DEVICE_PROFILE_WATCH
     }
 }
-
-private fun RecordingCallback.waitForInvocation() =
-        waitFor(message = "Callback hasn't been invoked", timeout = 1000, interval = 100) {
-            invocations.isNotEmpty()
-        }

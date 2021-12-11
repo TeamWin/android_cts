@@ -241,7 +241,8 @@ public final class TestAppQueryBuilder implements Queryable {
                 mServices.describeQuery("services"),
                 mPermissions.describeQuery("permissions"),
                 mSharedUserId.describeQuery("sharedUserId"),
-                mTestOnly.describeQuery("testOnly")
+                mTestOnly.describeQuery("testOnly"),
+                mIsDeviceAdmin.describeQuery("isDeviceAdmin")
         ) + "}";
     }
 }

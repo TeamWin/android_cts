@@ -30,8 +30,7 @@ import android.content.Context;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.utils.Poll;
@@ -85,8 +84,7 @@ public final class DeviceOwnerPrerequisitesTest {
 
     @Test
     @Postsubmit(reason = "new test with sleep")
-    @EnsureHasNoDeviceOwner
-    @EnsureHasNoProfileOwner
+    @EnsureHasNoDpc
     public void setDeviceOwnerViaAdb_deviceHasAccount_fails()
             throws InterruptedException {
         try (TestAppInstance accountAuthenticatorApp =

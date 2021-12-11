@@ -58,6 +58,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
             .build();
 
+    private static final String TEST_CALL_ID = "fake call";
 
     public void testInvalidAudioFocusRequestDelayNoListener() throws Exception {
         AudioFocusRequest req = null;
@@ -228,6 +229,148 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                 false /*no handler*/, false /* forceDucking */);
     }
 
+    /**
+     * Test delayed focus behaviors with the sequence:
+     * 1/ media requests FOCUS_GAIN
+     * 2/ (simulated) call with focus lock: media gets FOCUS_LOSS_TRANSIENT
+     * 3/ drive dir requests FOCUS_GAIN + delay OK: is delayed + media gets FOCUS_LOSS
+     * 4/ call ends: drive dir gets FOCUS_GAIN
+     * @throws Exception when failing
+     */
+    public void testAudioFocusDelayedByCall() throws Exception {
+        Log.i(TAG, "testAudioFocusDelayedByCall");
+        final AudioManager am = new AudioManager(getContext());
+        final HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        final Handler handler = new Handler(handlerThread.getLooper());
+
+        final AudioFocusRequest callFocusReq =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setLocksFocus(true).build();
+        final FocusChangeListener mediaListener = new FocusChangeListener();
+        final AudioFocusRequest mediaFocusReq =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(ATTR_MEDIA)
+                        .setOnAudioFocusChangeListener(mediaListener, handler)
+                        .build();
+        final FocusChangeListener driveListener = new FocusChangeListener();
+        final AudioFocusRequest driveFocusReq =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(ATTR_DRIVE_DIR)
+                        .setAcceptsDelayedFocusGain(true)
+                        .setOnAudioFocusChangeListener(driveListener, handler)
+                        .build();
+
+        // for focus request/abandon test methods
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.QUERY_AUDIO_STATE);
+        try {
+            // media requests audio focus
+            int res = am.requestAudioFocus(mediaFocusReq);
+            assertEquals("media request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
+            // call requests audio focus
+            am.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977, Build.VERSION_CODES.S);
+            assertEquals("call request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
+            // verify media lost focus with LOSS_TRANSIENT
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus loss not dispatched to media after call start",
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, mediaListener.getFocusChangeAndReset());
+            // drive dir requests audio focus, verify it's delayed
+            res = am.requestAudioFocus(driveFocusReq);
+            assertEquals("Focus request from drive dir. wasn't delayed",
+                    AudioManager.AUDIOFOCUS_REQUEST_DELAYED, res);
+            // verify media lost focus with LOSS as it's being kicked out of the focus stack
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus loss not dispatched to media after drive dir delayed focus",
+                    AudioManager.AUDIOFOCUS_LOSS, mediaListener.getFocusChangeAndReset());
+            // end the call, verify drive dir gets focus
+            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus gain not dispatched to drive dir after call",
+                    AudioManager.AUDIOFOCUS_GAIN, driveListener.getFocusChangeAndReset());
+        } finally {
+            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            am.abandonAudioFocusRequest(driveFocusReq);
+            am.abandonAudioFocusRequest(mediaFocusReq);
+            handler.getLooper().quit();
+            handlerThread.quitSafely();
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Test delayed focus behaviors with the sequence:
+     * 1/ media requests FOCUS_GAIN
+     * 2/ (simulated) call with focus lock: media gets FOCUS_LOSS_TRANSIENT
+     * 3/ drive dir requests AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK + delay OK: is delayed
+     * 4/ call ends: drive dir gets FOCUS_GAIN
+     * 5/ drive dir ends: media gets FOCUS_GAIN (because it was still in the stack,
+     *                    unlike in testAudioFocusDelayedByCall)
+     * @throws Exception when failing
+     */
+    public void testAudioFocusTransientDelayedByCall() throws Exception {
+        Log.i(TAG, "testAudioFocusDelayedByCall");
+        final AudioManager am = new AudioManager(getContext());
+        final HandlerThread handlerThread = new HandlerThread(TAG);
+        handlerThread.start();
+        final Handler handler = new Handler(handlerThread.getLooper());
+
+        final AudioFocusRequest callFocusReq =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setLocksFocus(true).build();
+        final FocusChangeListener mediaListener = new FocusChangeListener();
+        final AudioFocusRequest mediaFocusReq =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(ATTR_MEDIA)
+                        .setOnAudioFocusChangeListener(mediaListener, handler)
+                        .build();
+        final FocusChangeListener driveListener = new FocusChangeListener();
+        final AudioFocusRequest driveFocusReq =
+                new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                        .setAudioAttributes(ATTR_DRIVE_DIR)
+                        .setAcceptsDelayedFocusGain(true)
+                        .setOnAudioFocusChangeListener(driveListener, handler)
+                        .build();
+
+        // for focus request/abandon test methods
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.QUERY_AUDIO_STATE);
+        try {
+            // media requests audio focus
+            int res = am.requestAudioFocus(mediaFocusReq);
+            assertEquals("media request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
+            // call requests audio focus
+            am.requestAudioFocusForTest(callFocusReq, TEST_CALL_ID, 1977, Build.VERSION_CODES.S);
+            assertEquals("call request failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
+            // verify media lost focus with LOSS_TRANSIENT
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus loss not dispatched to media after call start",
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT, mediaListener.getFocusChangeAndReset());
+            // drive dir requests audio focus, verify it's delayed
+            res = am.requestAudioFocus(driveFocusReq);
+            assertEquals("Focus request from drive dir. wasn't delayed",
+                    AudioManager.AUDIOFOCUS_REQUEST_DELAYED, res);
+            // end the call, verify drive dir gets focus, and media didn't get focus change
+            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus gain not dispatched to drive dir after call",
+                    AudioManager.AUDIOFOCUS_GAIN, driveListener.getFocusChangeAndReset());
+            assertEquals("Focus change was dispatched to media",
+                    AudioManager.AUDIOFOCUS_NONE, mediaListener.getFocusChangeAndReset());
+            // end the drive dir, verify media gets focus
+            am.abandonAudioFocusRequest(driveFocusReq);
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+            assertEquals("Focus gain not dispatched to media after drive dir",
+                    AudioManager.AUDIOFOCUS_GAIN, mediaListener.getFocusChangeAndReset());
+        } finally {
+            am.abandonAudioFocusForTest(callFocusReq, TEST_CALL_ID);
+            am.abandonAudioFocusRequest(driveFocusReq);
+            am.abandonAudioFocusRequest(mediaFocusReq);
+            handler.getLooper().quit();
+            handlerThread.quitSafely();
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
     /**
      * Determine if automotive feature is available
      * @param context context to query
@@ -596,6 +739,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
         @Override
         public void onAudioFocusChange(int focusChange) {
+            Log.i(TAG, "onAudioFocusChange:" + focusChange + " listener:" + this);
             synchronized (mLock) {
                 mFocusChange = focusChange;
             }

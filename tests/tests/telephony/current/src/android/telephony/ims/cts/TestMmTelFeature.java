@@ -16,6 +16,7 @@
 
 package android.telephony.ims.cts;
 
+import android.app.UiAutomation;
 import android.os.Bundle;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsStreamMediaProfile;
@@ -26,9 +27,12 @@ import android.telephony.ims.stub.ImsCallSessionImplBase;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 
 public class TestMmTelFeature extends MmTelFeature {
 
@@ -147,5 +151,37 @@ public class TestMmTelFeature extends MmTelFeature {
 
     public TestImsCallSessionImpl getImsCallsession() {
         return mCallSession;
+    }
+
+    public boolean isCallSessionCreated() {
+        return (mCallSession != null) ? true : false;
+    }
+
+    public void onIncomingCallReceived(Bundle extras) {
+        Log.d(TAG, "onIncomingCallReceived");
+
+        ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.VIDEO_QUALITY_NONE,
+                ImsStreamMediaProfile.DIRECTION_INVALID,
+                ImsStreamMediaProfile.RTT_MODE_DISABLED);
+
+        ImsCallProfile callProfile = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE, new Bundle(), mediaProfile);
+
+        TestImsCallSessionImpl incomingSession = new TestImsCallSessionImpl(callProfile);
+        mCallSession = incomingSession;
+
+        Executor executor = incomingSession.getExecutor();
+        executor.execute(() -> {
+            UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+            try {
+                ui.adoptShellPermissionIdentity();
+                notifyIncomingCall(incomingSession, extras);
+            } finally {
+                ui.dropShellPermissionIdentity();
+            }
+        });
     }
 }

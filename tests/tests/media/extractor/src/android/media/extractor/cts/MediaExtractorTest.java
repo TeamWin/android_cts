@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.extractor.cts;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -27,6 +27,9 @@ import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.Preconditions;
+import android.media.cts.TestMediaDataSource;
+import android.media.cts.StreamUtils;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION;
 
 import static org.junit.Assert.assertEquals;

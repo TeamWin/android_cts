@@ -172,7 +172,7 @@ public class AccessibilityMagnificationTest {
                 .getSystemService(Context.WINDOW_SERVICE);
         final float scale = 2.0f;
         final float x = windowManager.getCurrentWindowMetrics().getBounds().centerX();
-        final float y = windowManager.getCurrentWindowMetrics().getBounds().centerX();
+        final float y = windowManager.getCurrentWindowMetrics().getBounds().centerY();
         final AtomicBoolean setConfig = new AtomicBoolean();
 
         final MagnificationConfig config = new MagnificationConfig.Builder()
@@ -492,7 +492,7 @@ public class AccessibilityMagnificationTest {
 
     private void waitUntilMagnificationConfig(MagnificationController controller, float centerX,
             float centerY) throws Exception {
-        TestUtils.waitUntil("Wait until magnification config is set",
+        TestUtils.waitUntil("Failed to apply the config.",
                 () -> {
                     final MagnificationConfig tmpConfig = controller.getMagnificationConfig();
                     return tmpConfig.getCenterX() == centerX && tmpConfig.getCenterY() == centerY;
