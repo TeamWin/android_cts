@@ -17,11 +17,9 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.Manifest.permission.LOCK_DEVICE;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
 
-import static com.android.bedstead.nene.permissions.Permissions.NOTIFY_PENDING_SYSTEM_UPDATE;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -40,6 +38,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -52,7 +51,6 @@ import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
-import com.android.bedstead.harrier.annotations.RequireGmsInstrumentation;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
@@ -139,7 +137,6 @@ import java.util.function.Function;
  */
 public final class DeviceState implements TestRule {
 
-    private static final String GMS_PKG = "com.google.android.gms";
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
     private static final String SWITCHED_TO_USER = "switchedToUser";
@@ -154,6 +151,8 @@ public final class DeviceState implements TestRule {
     private static final String SKIP_CLASS_TEARDOWN_KEY = "skip-class-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
     private static final String MIN_SDK_VERSION_KEY = "min-sdk-version";
+    private static final String PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY =
+            "permission-instrumentation-package";
     private boolean mSkipTestTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
@@ -164,10 +163,13 @@ public final class DeviceState implements TestRule {
     // The minimum version supported by tests, defaults to current version
     private final int mMinSdkVersion;
     private int mMinSdkVersionCurrentTest;
+    private @Nullable String mPermissionsInstrumentationPackage;
+    private final Set<String> mPermissionsInstrumentationPackagePermissions = new HashSet<>();
 
-    // Marks if the conditions for requiring running under GMS instrumentation have been set
-    // if not - we assume the test should never run under GMS instrumentation
-    private boolean mHasRequireGmsInstrumentation = false;
+    // Marks if the conditions for requiring running under permission instrumentation have been set
+    // if not - we assume the test should never run under permission instrumentation
+    // This is only used if a permission instrumentation package is set
+    private boolean mHasRequirePermissionInstrumentation = false;
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
@@ -180,6 +182,13 @@ public final class DeviceState implements TestRule {
         mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
         mSkipTests = !mSkipTestsReason.isEmpty();
         mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, Build.VERSION.SDK_INT);
+        mPermissionsInstrumentationPackage =
+                arguments.getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
+        if (mPermissionsInstrumentationPackage != null) {
+            mPermissionsInstrumentationPackagePermissions.addAll(
+                    TestApis.packages().find(mPermissionsInstrumentationPackage)
+                            .requestedPermissions());
+        }
     }
 
     void setSkipTestTeardown(boolean skipTestTeardown) {
@@ -430,14 +439,6 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
-            if (annotation instanceof RequireGmsInstrumentation) {
-                RequireGmsInstrumentation requireGmsInstrumentationAnnotation =
-                        (RequireGmsInstrumentation) annotation;
-                requireGmsInstrumentation(requireGmsInstrumentationAnnotation.min(),
-                        requireGmsInstrumentationAnnotation.max());
-                continue;
-            }
-
             if (annotation instanceof RequireLowRamDevice) {
                 RequireLowRamDevice requireLowRamDeviceAnnotation =
                         (RequireLowRamDevice) annotation;
@@ -573,9 +574,9 @@ public final class DeviceState implements TestRule {
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
                 /* max= */ Integer.MAX_VALUE, FailureMode.SKIP);
 
-        if (isTest && !mHasRequireGmsInstrumentation) {
-            // TODO(scottjonathan): Only enforce if we've configured GMS Instrumentation
-            requireNoGmsInstrumentation();
+        if (isTest && mPermissionsInstrumentationPackage != null
+                && !mHasRequirePermissionInstrumentation) {
+            requireNoPermissionsInstrumentation();
         }
 
         return permissionContext;
@@ -814,38 +815,33 @@ public final class DeviceState implements TestRule {
                 !TestApis.packages().features().contains(feature), failureMode);
     }
 
-    private void requireNoGmsInstrumentation() {
-        boolean instrumentingGms =
-                TestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
+    private void requireNoPermissionsInstrumentation() {
+        boolean instrumentingPermissions =
+                TestApis.context()
+                        .instrumentedContext().getPackageName()
+                        .equals(mPermissionsInstrumentationPackage);
 
         checkFailOrSkip(
-                "This test never runs using gms instrumentation",
-                !instrumentingGms,
+                "This test never runs using permissions instrumentation on this version"
+                        + " of Android",
+                !instrumentingPermissions,
                 FailureMode.SKIP
         );
     }
 
-    private void requireGmsInstrumentation(int min, int max) {
-        mHasRequireGmsInstrumentation = true;
-        boolean instrumentingGms =
-                TestApis.context().instrumentedContext().getPackageName().equals(GMS_PKG);
+    private void requirePermissionsInstrumentation() {
+        mHasRequirePermissionInstrumentation = true;
+        boolean instrumentingPermissions =
+                TestApis.context()
+                        .instrumentedContext().getPackageName()
+                        .equals(mPermissionsInstrumentationPackage);
 
-        if (meetsSdkVersionRequirements(min, max)) {
-            checkFailOrSkip(
-                    "For SDK versions between " + min +  " and " + max
-                            + " (inclusive), this test only runs when using gms instrumentation",
-                    instrumentingGms,
-                    FailureMode.SKIP
-            );
-        } else {
-            checkFailOrSkip(
-                    "For SDK versions between " + min +  " and " + max
-                            + " (inclusive), this test only runs when not using gms "
-                            + "instrumentation",
-                    !instrumentingGms,
-                    FailureMode.SKIP
-            );
-        }
+        checkFailOrSkip(
+                "This test only runs when using permissions instrumentation on this"
+                        + " version of Android",
+                instrumentingPermissions,
+                FailureMode.SKIP
+        );
     }
 
     private void requireSdkVersion(int min, int max, FailureMode failureMode) {
@@ -1848,19 +1844,30 @@ public final class DeviceState implements TestRule {
     }
 
     private void ensureCanGetPermission(String permission) {
-        // TODO(scottjonathan): Apply gms permission switches automatically rather than hard-coding
-        // TODO(scottjonathan): Add a config to only enforce gms permission when needed
-        if (permission.equals(NOTIFY_PENDING_SYSTEM_UPDATE)) {
-            requireGmsInstrumentation(1, Build.VERSION_CODES.R);
+        if (mPermissionsInstrumentationPackage == null) {
+            // We just need to check if we can get it generally
+
+            if (TestApis.permissions().usablePermissions().contains(permission)) {
+                return;
+            }
+
+            TestApis.permissions().throwPermissionException(
+                    "Can not get required permission", permission);
         }
-        if (permission.equals(LOCK_DEVICE)) {
-            requireGmsInstrumentation(1, Build.VERSION_CODES.S_V2);
-        }
-        // TODO(scottjonathan): Apply version-specific constraints automatically
-        if (permission.equals(INTERACT_ACROSS_USERS_FULL)) {
-            requireSdkVersion(
-                    Build.VERSION_CODES.Q, Integer.MAX_VALUE, FailureMode.SKIP,
-                    "This test requires INTERACT_ACROSS_USERS_FULL which can only be used on Q+");
+
+        if (TestApis.permissions().adoptablePermissions().contains(permission)) {
+            requireNoPermissionsInstrumentation();
+        } else if (mPermissionsInstrumentationPackagePermissions.contains(permission)) {
+            requirePermissionsInstrumentation();
+        } else {
+            // Can't get permission at all - error (including the permissions for both)
+            TestApis.permissions().throwPermissionException(
+                    "Can not get permission including by instrumenting "
+                            + mPermissionsInstrumentationPackage
+                            + "\n " + mPermissionsInstrumentationPackage + " permissions: "
+                            + mPermissionsInstrumentationPackagePermissions,
+                    permission
+            );
         }
     }
 
