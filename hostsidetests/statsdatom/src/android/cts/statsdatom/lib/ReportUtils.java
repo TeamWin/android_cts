@@ -118,7 +118,7 @@ public final class ReportUtils {
         assertThat(reportList.getReportsCount()).isEqualTo(1);
         ConfigMetricsReport report = reportList.getReports(0);
         assertThat(report.getMetricsCount()).isEqualTo(1);
-
+        CLog.d("Got the following report: " + report.getMetrics(0).getGaugeMetrics().toString());
         List<Atom> atoms = new ArrayList<>();
         for (GaugeMetricData d : report.getMetrics(0).getGaugeMetrics().getDataList()) {
             assertThat(d.getBucketInfoCount()).isEqualTo(1);
@@ -126,7 +126,7 @@ public final class ReportUtils {
             if (bucketInfo.getAtomCount() != 0) {
                 atoms.addAll(bucketInfo.getAtomList());
             } else {
-                backFillGaugeBucketAtoms(bucketInfo.getAggregatedAtomInfoList());
+                atoms.addAll(backFillGaugeBucketAtoms(bucketInfo.getAggregatedAtomInfoList()));
             }
             if (checkTimestampTruncated) {
                 for (long timestampNs : bucketInfo.getElapsedTimestampNanosList()) {
