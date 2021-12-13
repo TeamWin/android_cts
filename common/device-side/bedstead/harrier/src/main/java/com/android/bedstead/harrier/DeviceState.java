@@ -48,6 +48,8 @@ import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
+import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
+import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -59,7 +61,6 @@ import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode
 import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
-import com.android.bedstead.harrier.annotations.RequirePasswordNotSet;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
@@ -170,6 +171,13 @@ public final class DeviceState implements TestRule {
     private boolean mHasRequireGmsInstrumentation = false;
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
+
+    /**
+     * The password to be used in tests.
+     *
+     * The infrastructure will use this password when a password exists and is required.
+     */
+    public static final String DEFAULT_PASSWORD = "1234";
 
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
@@ -562,10 +570,19 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
-            if (annotation instanceof RequirePasswordNotSet) {
-                RequirePasswordNotSet requirePasswordNotSetAnnotation =
-                        (RequirePasswordNotSet) annotation;
-                requirePasswordNotSet(requirePasswordNotSetAnnotation.forUser());
+            if (annotation instanceof EnsurePasswordSet) {
+                EnsurePasswordSet ensurePasswordSetAnnotation =
+                        (EnsurePasswordSet) annotation;
+                ensurePasswordSet(
+                        ensurePasswordSetAnnotation.forUser(),
+                        ensurePasswordSetAnnotation.password());
+                continue;
+            }
+
+            if (annotation instanceof EnsurePasswordNotSet) {
+                EnsurePasswordNotSet ensurePasswordNotSetAnnotation =
+                        (EnsurePasswordNotSet) annotation;
+                ensurePasswordNotSet(ensurePasswordNotSetAnnotation.forUser());
                 continue;
             }
         }
@@ -921,6 +938,7 @@ public final class DeviceState implements TestRule {
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
+    private final List<UserReference> mUsersSetPasswords = new ArrayList<>();
     private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
     private boolean mHasChangedDeviceOwner = false;
     private DevicePolicyController mOriginalDeviceOwner;
@@ -1383,6 +1401,15 @@ public final class DeviceState implements TestRule {
             }
         }
         mChangedProfileOwners.clear();
+
+        for (UserReference user : mUsersSetPasswords) {
+            if (mCreatedUsers.contains(user)) {
+                continue; // Will be removed anyway
+            }
+            user.clearPassword();
+        }
+
+        mUsersSetPasswords.clear();
 
         for (UserReference user : mCreatedUsers) {
             user.remove();
@@ -1934,9 +1961,35 @@ public final class DeviceState implements TestRule {
         TestApis.device().wakeUp();
     }
 
-    private void requirePasswordNotSet(UserType forUser) {
+    private void ensurePasswordSet(UserType forUser, String password) {
         UserReference user = resolveUserTypeToUser(forUser);
-        assertWithMessage("Test requires user "
-                + forUser + " does not have a password").that(user.hasPassword()).isFalse();
+
+        if (user.hasPassword()) {
+            return;
+        }
+
+        try {
+            user.setPassword(password);
+        } catch (NeneException e) {
+            throw new AssertionError("Require password set but error when setting password", e);
+        }
+        mUsersSetPasswords.add(user);
+    }
+
+    private void ensurePasswordNotSet(UserType forUser) {
+        UserReference user = resolveUserTypeToUser(forUser);
+
+        if (!user.hasPassword()) {
+            return;
+        }
+
+        try {
+            user.clearPassword(DEFAULT_PASSWORD);
+        } catch (NeneException e) {
+            throw new AssertionError(
+                    "Test requires user " + user + " does not have a password. "
+                            + "Password is set and is not DEFAULT_PASSWORD.");
+        }
+        mUsersSetPasswords.remove(user);
     }
 }

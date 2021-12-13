@@ -76,6 +76,7 @@ public class UserReference implements AutoCloseable {
     private Boolean mIsPrimary;
     private boolean mParentCached = false;
     private UserReference mParent;
+    private @Nullable String mPassword;
 
     UserReference(int id) {
         mId = id;
@@ -429,6 +430,14 @@ public class UserReference implements AutoCloseable {
         } catch (AdbException e) {
             throw new NeneException("Error setting password", e);
         }
+        mPassword = password;
+    }
+
+    /**
+     * Clear the password for the user, using the password that was last set using Nene.
+     */
+    public void clearPassword() {
+        clearPassword(mPassword);
     }
 
     /**
@@ -445,10 +454,24 @@ public class UserReference implements AutoCloseable {
         } catch (AdbException e) {
             if (e.output().contains("user has no password")) {
                 // No password anyway, fine
+                mPassword = null;
                 return;
             }
             throw new NeneException("Error clearing password", e);
         }
+
+        mPassword = null;
+    }
+
+    /**
+     * Returns the password for this user if that password was set using Nene.
+     *
+     *
+     * <p>If there is no password, or the password was not set using Nene, then this will
+     * return {@code null}.
+     */
+    public @Nullable String password() {
+        return mPassword;
     }
 
     @Override

@@ -58,6 +58,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -73,6 +74,7 @@ public final class Users {
     private final AdbUserParser mParser;
     private static final UserManager sUserManager =
             TestApis.context().instrumentedContext().getSystemService(UserManager.class);
+    private Map<Integer, UserReference> mUsers = new ConcurrentHashMap<>();
 
     public static final Users sInstance = new Users();
 
@@ -89,7 +91,7 @@ public final class Users {
         }
 
         return users().map(
-                ui -> new UserReference(ui.id)
+                ui -> find(ui.id)
         ).collect(Collectors.toSet());
     }
 
@@ -152,12 +154,15 @@ public final class Users {
 
     /** Get a {@link UserReference} by {@code id}. */
     public UserReference find(int id) {
-        return new UserReference(id);
+        if (!mUsers.containsKey(id)) {
+            mUsers.put(id, new UserReference(id));
+        }
+        return mUsers.get(id);
     }
 
     /** Get a {@link UserReference} by {@code userHandle}. */
     public UserReference find(UserHandle userHandle) {
-        return new UserReference(userHandle.getIdentifier());
+        return find(userHandle.getIdentifier());
     }
 
     /** Get all supported {@link UserType}s. */
@@ -328,7 +333,7 @@ public final class Users {
             id++;
         }
 
-        return new UserReference(id);
+        return find(id);
     }
 
     private void fillCache() {
