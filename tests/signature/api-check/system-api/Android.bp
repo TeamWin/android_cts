@@ -19,7 +19,7 @@ package {
 
 android_test {
     name: "CtsSystemApiSignatureTestCases",
-    defaults: ["cts_defaults"],
+    defaults: ["signature-api-check-dynamic-config-defaults"],
     java_resources: [
         ":CtsSystemApiSignatureTestCases_system-all.api",
         ":cts-current-api-gz",
@@ -33,9 +33,6 @@ android_test {
         "general-tests",
     ],
     sdk_version: "current",
-    static_libs: ["cts-api-signature-test"],
-    jni_libs: ["libclassdescriptors"],
-    compile_multilib: "both",
     dex_preopt: {
         enabled: false,
     },
@@ -43,7 +40,6 @@ android_test {
         enabled: false,
     },
     use_embedded_native_libs: false,
-    srcs: ["src/**/*.java"],
 }
 
 genrule {
