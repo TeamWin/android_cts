@@ -37,6 +37,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import repackaged.android.test.InstrumentationTestCase;
@@ -51,6 +52,11 @@ public class AbstractApiTest extends InstrumentationTestCase {
     private TestResultObserver mResultObserver;
 
     ClassProvider mClassProvider;
+
+    /**
+     * The list of expected failures.
+     */
+    private Collection<String> expectedFailures = Collections.emptyList();
 
     protected String getGlobalExemptions() {
         return Settings.Global.getString(
@@ -97,6 +103,22 @@ public class AbstractApiTest extends InstrumentationTestCase {
         initializeFromArgs(instrumentationArgs);
     }
 
+    /**
+     * Initialize the expected failures.
+     *
+     * <p>Call from with {@code #initializeFromArgs}</p>
+     *
+     * @param expectedFailures the expected failures.
+     */
+    protected void initExpectedFailures(Collection<String> expectedFailures) {
+        this.expectedFailures = expectedFailures;
+        String tag = getClass().getName();
+        Log.d(tag, "Expected failure count: " + expectedFailures.size());
+        for (String failure: expectedFailures) {
+            Log.d(tag, "Expected failure: \"" + failure + "\"");
+        }
+    }
+
     protected String getExpectedBlocklistExemptions() {
         return null;
     }
@@ -110,10 +132,11 @@ public class AbstractApiTest extends InstrumentationTestCase {
     }
 
     void runWithTestResultObserver(RunnableWithResultObserver runnable) {
-        runWithTestResultObserver(Collections.emptyList(), runnable);
+        runWithTestResultObserver(expectedFailures, runnable);
     }
 
-    void runWithTestResultObserver(Collection<String> expectedFailures, RunnableWithResultObserver runnable) {
+    private void runWithTestResultObserver(
+            Collection<String> expectedFailures, RunnableWithResultObserver runnable) {
         try {
             ResultObserver observer = mResultObserver;
             if (!expectedFailures.isEmpty()) {
