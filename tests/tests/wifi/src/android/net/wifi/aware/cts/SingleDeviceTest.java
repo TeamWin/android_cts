@@ -157,6 +157,14 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             mBlocker.countDown();
         }
 
+        @Override
+        public void onShutDown() {
+            synchronized (mLock) {
+                mSessions.remove(mSession);
+            }
+            mSession = null;
+        }
+
         /**
          * Waits for any of the callbacks to be called - or an error (timeout, interruption).
          * Returns one of the ATTACHED, ATTACH_FAILED, or ERROR values.
@@ -164,6 +172,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         int waitForAnyCallback() {
             try {
                 boolean noTimeout = mBlocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+                mBlocker = new CountDownLatch(1);
                 if (noTimeout) {
                     return mCallbackCalled;
                 } else {
@@ -554,8 +563,10 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             return;
         }
 
-        WifiAwareSession session = attachAndGetSession();
-        session.close();
+        AttachCallbackTest callback = attachAndGetCallback();
+        callback.getSession().close();
+        callback.waitForAnyCallback();
+        assertNull(callback.getSession());
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             assertFalse(mWifiAwareManager.isDeviceAttached());
         }
@@ -1010,5 +1021,15 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
 
         return session;
+    }
+
+    // local utilities
+
+    private AttachCallbackTest attachAndGetCallback() {
+        AttachCallbackTest attachCb = new AttachCallbackTest();
+        mWifiAwareManager.attach(attachCb, mHandler);
+        int cbCalled = attachCb.waitForAnyCallback();
+        assertEquals("Wi-Fi Aware attach", AttachCallbackTest.ATTACHED, cbCalled);
+        return attachCb;
     }
 }
