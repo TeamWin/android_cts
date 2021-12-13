@@ -66,6 +66,9 @@ static_assert(alignof(FixedSizeUnion) == 8);
 
 static_assert(FixedSizeUnion::fixed_size::value);
 
+class MyEmpty : public ::aidl::test_package::BnEmpty {};
+class YourEmpty : public ::aidl::test_package::BnEmpty {};
+
 // AIDL tests which are independent of the service
 class NdkBinderTest_AidlLocal : public NdkBinderTest {};
 
@@ -337,8 +340,6 @@ TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
-  class MyEmpty : public ::aidl::test_package::BnEmpty {};
-
   std::shared_ptr<IEmpty> empty = SharedRefBase::make<MyEmpty>();
 
   std::shared_ptr<IEmpty> ret;
@@ -740,6 +741,23 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                                  {{"hexagon", 6, 2.0f}},
                                  {{"hexagon", 6, 2.0f}, {"square", 4, 7.0f}, {"pentagon", 5, 4.2f}},
                              });
+  std::shared_ptr<IEmpty> my_empty = SharedRefBase::make<MyEmpty>();
+  testRepeat<SpAIBinder>(iface, &ITest::RepeatBinderArray,
+                         {
+                             {},
+                             {iface->asBinder()},
+                             {iface->asBinder(), my_empty->asBinder()},
+                         });
+
+  std::shared_ptr<IEmpty> your_empty = SharedRefBase::make<YourEmpty>();
+  testRepeat<std::shared_ptr<IEmpty>>(iface, &ITest::RepeatInterfaceArray,
+                                      {
+                                          {},
+                                          {my_empty},
+                                          {my_empty, your_empty},
+                                          // Legacy behavior: allow null for non-nullable interface
+                                          {my_empty, your_empty, nullptr},
+                                      });
 }
 
 TEST_P(NdkBinderTest_Aidl, Lists) {
@@ -888,6 +906,26 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
                               {{"aoeu", "lol", "brb"}},
                               {{"", "aoeu", std::nullopt, "brb"}},
                           });
+  std::shared_ptr<IEmpty> my_empty = SharedRefBase::make<MyEmpty>();
+  testRepeat<SpAIBinder>(iface, &ITest::RepeatNullableBinderArray,
+                         {
+                             std::nullopt,
+                             {{}},
+                             {{iface->asBinder()}},
+                             {{nullptr}},
+                             {{iface->asBinder(), my_empty->asBinder()}},
+                             {{iface->asBinder(), nullptr, my_empty->asBinder()}},
+                         });
+  std::shared_ptr<IEmpty> your_empty = SharedRefBase::make<YourEmpty>();
+  testRepeat<std::shared_ptr<IEmpty>>(iface, &ITest::RepeatNullableInterfaceArray,
+                                      {
+                                          std::nullopt,
+                                          {{}},
+                                          {{my_empty}},
+                                          {{nullptr}},
+                                          {{my_empty, your_empty}},
+                                          {{my_empty, nullptr, your_empty}},
+                                      });
 }
 
 class DefaultImpl : public ::aidl::test_package::ICompatTestDefault {
