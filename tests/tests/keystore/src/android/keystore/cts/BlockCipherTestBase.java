@@ -34,6 +34,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.AssertionFailedError;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.security.AlgorithmParameters;
@@ -776,22 +777,41 @@ abstract class BlockCipherTestBase {
         byte[] expectedCiphertext = getKatCiphertext();
         int blockSize = getBlockSize();
         if (isStreamCipher()) {
+            ByteArrayOutputStream actualCiphertext = new ByteArrayOutputStream();
             // Stream cipher -- one byte in, one byte out
             for (int plaintextIndex = 0; plaintextIndex < plaintext.length; plaintextIndex++) {
                 byte[] output = update(new byte[] {plaintext[plaintextIndex]});
-                assertEquals("plaintext index: " + plaintextIndex, 1, output.length);
-                assertEquals("plaintext index: " + plaintextIndex,
-                        expectedCiphertext[plaintextIndex], output[0]);
+                if (output != null) {
+                    actualCiphertext.write(output);
+                }
+                // Some StrongBox implementations cannot support 1:1 input:output lengths, so
+                // we relax this API restriction for them.
+                if (!isStrongbox()) {
+                    assertEquals("plaintext index: " + plaintextIndex, 1, output.length);
+                    assertEquals("plaintext index: " + plaintextIndex,
+                            expectedCiphertext[plaintextIndex], output[0]);
+                }
             }
             byte[] finalOutput = doFinal();
-            byte[] expectedFinalOutput;
-            if (isAuthenticatedCipher()) {
-                expectedFinalOutput =
-                        subarray(expectedCiphertext, plaintext.length, expectedCiphertext.length);
-            } else {
-                expectedFinalOutput = EmptyArray.BYTE;
+            if (!isStrongbox()) {
+                byte[] expectedFinalOutput;
+                if (isAuthenticatedCipher()) {
+                    expectedFinalOutput =
+                            subarray(expectedCiphertext, plaintext.length,
+                                    expectedCiphertext.length);
+                } else {
+                    expectedFinalOutput = EmptyArray.BYTE;
+                }
+                assertArrayEquals(expectedFinalOutput, finalOutput);
             }
-            assertArrayEquals(expectedFinalOutput, finalOutput);
+
+            // StrongBox doesn't require 1:1 in:out, so just compare the full ciphertext. We perform
+            // this check on non-StrongBox implementations as well to ensure the test logic is
+            // exercised on non-StrongBox platforms.
+            if (finalOutput != null) {
+                actualCiphertext.write(finalOutput);
+            }
+            assertArrayEquals(expectedCiphertext, actualCiphertext.toByteArray());
         } else {
             // Not a stream cipher -- operates on full blocks only.
 
@@ -848,15 +868,33 @@ abstract class BlockCipherTestBase {
             byte[] finalOutput = doFinal();
             assertArrayEquals(expectedPlaintext, finalOutput);
         } else if (isStreamCipher()) {
+            ByteArrayOutputStream actualPlaintext = new ByteArrayOutputStream();
             // Unauthenticated stream cipher -- one byte in, one byte out
             for (int ciphertextIndex = 0; ciphertextIndex < ciphertext.length; ciphertextIndex++) {
                 byte[] output = update(new byte[] {ciphertext[ciphertextIndex]});
-                assertEquals("ciphertext index: " + ciphertextIndex, 1, output.length);
-                assertEquals("ciphertext index: " + ciphertextIndex,
-                        expectedPlaintext[ciphertextIndex], output[0]);
+                if (output != null) {
+                    actualPlaintext.write(output);
+                }
+                // Some StrongBox implementations cannot support 1:1 input:output lengths, so
+                // we relax this API restriction for them.
+                if (!isStrongbox()) {
+                    assertEquals("ciphertext index: " + ciphertextIndex, 1, output.length);
+                    assertEquals("ciphertext index: " + ciphertextIndex,
+                            expectedPlaintext[ciphertextIndex], output[0]);
+                }
             }
             byte[] finalOutput = doFinal();
-            assertEquals(0, finalOutput.length);
+            if (!isStrongbox()) {
+                assertEquals(0, finalOutput.length);
+            }
+
+            // StrongBox doesn't require 1:1 in:out, so just compare the full ciphertext. We perform
+            // this check on non-StrongBox implementations as well to ensure the test logic is
+            // exercised on non-StrongBox platforms.
+            if (finalOutput != null) {
+                actualPlaintext.write(finalOutput);
+            }
+            assertArrayEquals(expectedPlaintext, actualPlaintext.toByteArray());
         } else {
             // Unauthenticated block cipher -- operates in full blocks only
 
@@ -1231,43 +1269,65 @@ abstract class BlockCipherTestBase {
         int inputEndIndexInBuffer = inputOffsetInBuffer + input.length;
         int outputEndIndexInBuffer = outputOffsetInBuffer + expectedOutput.length;
 
+        assertTrue("StrongBox output assumptions below need input to be at least a block.",
+                input.length >= blockSize);
+
         // Test the update(byte[], int, int, byte[], int) variant
         byte[] buffer = new byte[Math.max(inputEndIndexInBuffer, outputEndIndexInBuffer)];
         System.arraycopy(input, 0, buffer, inputOffsetInBuffer, input.length);
         createCipher();
         initKat(opmode);
         String additionalInformation = "";
-        if (isStrongbox() && opmode == Cipher.ENCRYPT_MODE) {
-            additionalInformation = "May fail due to b/194134359";
+        int outputLength = update(buffer, inputOffsetInBuffer, input.length,
+                buffer, outputOffsetInBuffer);
+        if (isStrongbox()) {
+            // StrongBox does not have to support one byte of output per byte of input.
+            assertTrue("output length: " + outputLength,
+                    outputLength >= blockSize || (expectedOutput.length == 0 && outputLength == 0));
+            outputEndIndexInBuffer = outputOffsetInBuffer + outputLength;
+        } else {
+            assertEquals(expectedOutput.length, outputLength);
         }
-        assertEquals(additionalInformation, expectedOutput.length,
-                update(buffer, inputOffsetInBuffer, input.length,
-                        buffer, outputOffsetInBuffer));
-        assertArrayEquals(expectedOutput,
+        assertArrayEquals(subarray(expectedOutput, 0, outputLength),
                 subarray(buffer, outputOffsetInBuffer, outputEndIndexInBuffer));
 
         if (outputOffsetInBuffer == 0) {
             // We can use the update variant which assumes that output offset is 0.
-            buffer = new byte[Math.max(inputEndIndexInBuffer, outputEndIndexInBuffer)];
+            Arrays.fill(buffer, (byte)0);
             System.arraycopy(input, 0, buffer, inputOffsetInBuffer, input.length);
             createCipher();
             initKat(opmode);
-            assertEquals(expectedOutput.length,
-                    update(buffer, inputOffsetInBuffer, input.length, buffer));
-            assertArrayEquals(expectedOutput,
+            outputLength = update(buffer, inputOffsetInBuffer, input.length, buffer, outputOffsetInBuffer);
+            if (isStrongbox()) {
+                // StrongBox does not have to support one byte of output per byte of input.
+                assertTrue("output length: " + outputLength,
+                        outputLength >= blockSize || (expectedOutput.length == 0 && outputLength == 0));
+                outputEndIndexInBuffer = outputOffsetInBuffer + outputLength;
+            } else {
+                assertEquals(expectedOutput.length, outputLength);
+            }
+            assertArrayEquals(subarray(expectedOutput, 0, outputLength),
                     subarray(buffer, outputOffsetInBuffer, outputEndIndexInBuffer));
         }
 
         // Test the update(ByteBuffer, ByteBuffer) variant
-        buffer = new byte[Math.max(inputEndIndexInBuffer, outputEndIndexInBuffer)];
+        Arrays.fill(buffer, (byte)0);
         System.arraycopy(input, 0, buffer, inputOffsetInBuffer, input.length);
         ByteBuffer inputBuffer = ByteBuffer.wrap(buffer, inputOffsetInBuffer, input.length);
         ByteBuffer outputBuffer =
                 ByteBuffer.wrap(buffer, outputOffsetInBuffer, expectedOutput.length);
         createCipher();
         initKat(opmode);
-        assertEquals(expectedOutput.length, update(inputBuffer, outputBuffer));
-        assertArrayEquals(expectedOutput,
+        outputLength = update(inputBuffer, outputBuffer);
+        if (isStrongbox()) {
+            // StrongBox does not have to support one byte of output per byte of input.
+            assertTrue("output length: " + outputLength,
+                    outputLength >= blockSize || (expectedOutput.length == 0 && outputLength == 0));
+            outputEndIndexInBuffer = outputOffsetInBuffer + outputLength;
+        } else {
+            assertEquals(expectedOutput.length, outputLength);
+        }
+        assertArrayEquals(subarray(expectedOutput, 0, outputLength),
                 subarray(buffer, outputOffsetInBuffer, outputEndIndexInBuffer));
     }
 
@@ -1530,14 +1590,11 @@ abstract class BlockCipherTestBase {
         }
 
         if (isStreamCipher()) {
-            if (outputLength != inputLength) {
-                if (isStrongbox()) {
-                    fail("Output of update (" + outputLength + ") not same size as input ("
-                                + inputLength + ") b/194123581");
-                } else {
-                    fail("Output of update (" + outputLength + ") not same size as input ("
-                            + inputLength + ")");
-                }
+            // Some StrongBox implementations cannot support 1:1 input:output lengths, so
+            // we relax this API restriction for them.
+            if (outputLength != inputLength && !isStrongbox()) {
+                fail("Output of update (" + outputLength + ") not same size as input ("
+                        + inputLength + ")");
             }
         } else {
             if ((outputLength % getBlockSize()) != 0) {
