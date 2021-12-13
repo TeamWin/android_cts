@@ -35,7 +35,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
-import com.android.bedstead.harrier.annotations.RequirePasswordNotSet;
+import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.RequireRunNotOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
@@ -333,7 +333,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequirePasswordNotSet
+    @EnsurePasswordNotSet
     public void setPassword_hasPassword() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
@@ -345,7 +345,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequirePasswordNotSet
+    @EnsurePasswordNotSet
     public void clearPassword_doesNotHavePassword() {
         TestApis.users().instrumented().setPassword(PASSWORD);
         TestApis.users().instrumented().clearPassword(PASSWORD);
@@ -354,7 +354,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequirePasswordNotSet
+    @EnsurePasswordNotSet
     public void clearPassword_doesNotHavePassword_doesNothing() {
         TestApis.users().instrumented().clearPassword(PASSWORD);
 
@@ -362,7 +362,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequirePasswordNotSet
+    @EnsurePasswordNotSet
     public void clearPassword_incorrectOldPassword_throwsException() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
@@ -375,7 +375,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    @RequirePasswordNotSet
+    @EnsurePasswordNotSet
     public void setPassword_alreadyHasPassword_throwsException() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);

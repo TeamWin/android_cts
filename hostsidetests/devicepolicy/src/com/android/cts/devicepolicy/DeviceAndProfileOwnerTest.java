@@ -1320,16 +1320,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testLockNowLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testLockNowLogged");
-        }, new DevicePolicyEventWrapper.Builder(EventId.LOCK_NOW_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setInt(0)
-                .build());
-    }
-
-    @Test
     public void testSetKeyguardDisabledFeaturesLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(
