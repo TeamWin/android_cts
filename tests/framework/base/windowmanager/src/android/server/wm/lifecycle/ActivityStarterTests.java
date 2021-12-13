@@ -32,7 +32,6 @@ import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
-import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -40,21 +39,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityLauncher;
-import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components;
-import android.util.Log;
-import android.view.WindowManager;
 
 import org.junit.Test;
-
-import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Build/Install/Run:
@@ -720,7 +712,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     /**
      * This test case tests behavior of activity with relinquishTaskIdentify attribute. Ensure the
-     * relinquishTaskIdentity doesn't work if the app is not installed in the system partition.
+     * relinquishTaskIdentity work if the activities are in the same app.
      */
     @Test
     public void testActivityWithRelinquishTaskIdentity() {
@@ -741,9 +733,9 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
         // verify the activities are in the same task
         assertEquals("Activity must be in the same task.", taskId, taskId2);
-        // verify the relinquishTaskIdentify function is ignored since it isn't a app that in system
-        // partition
-        assertEquals("Affinity should be same with the package name.",
+        // verify the relinquishTaskIdentify function should work since the activities are in the
+        // same app
+        assertNotEquals("Affinity should not be same with the package name.",
                 RELINQUISHTASKIDENTITY_ACTIVITY.getPackageName(), affinity);
     }
 
