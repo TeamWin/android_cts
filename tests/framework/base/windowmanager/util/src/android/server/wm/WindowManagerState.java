@@ -42,6 +42,7 @@ import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.nano.RectProto;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.SparseArray;
@@ -1122,6 +1123,7 @@ public class WindowManagerState {
         private int mFixedToUserRotationMode;
         private int mLastOrientation;
         private boolean mIsFixedToUserRotation;
+        private List<Rect> mKeepClearRects;
 
         DisplayContent(DisplayContentProto proto) {
             super(proto.rootDisplayArea);
@@ -1169,6 +1171,10 @@ public class WindowManagerState {
                 mFixedToUserRotationMode = rotationProto.fixedToUserRotationMode;
                 mLastOrientation = rotationProto.lastOrientation;
                 mIsFixedToUserRotation = rotationProto.isFixedToUserRotation;
+            }
+            mKeepClearRects = new ArrayList();
+            for (RectProto r : proto.keepClearAreas) {
+                mKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
             }
         }
 
@@ -1287,6 +1293,8 @@ public class WindowManagerState {
         String getLastTransition() { return mLastTransition; }
 
         String getAppTransitionState() { return mAppTransitionState; }
+
+        List<Rect> getKeepClearRects() { return mKeepClearRects; }
 
         @Override
         public String toString() {
@@ -1977,6 +1985,7 @@ public class WindowManagerState {
         private float mGlobalScale;
         private int mRequestedWidth;
         private int mRequestedHeight;
+        private List<Rect> mKeepClearRects;
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
@@ -2019,6 +2028,10 @@ public class WindowManagerState {
             mGlobalScale = proto.globalScale;
             mRequestedWidth = proto.requestedWidth;
             mRequestedHeight = proto.requestedHeight;
+            mKeepClearRects = new ArrayList();
+            for (RectProto r : proto.keepClearAreas) {
+                mKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
+            }
         }
 
         boolean isStartingWindow() {
@@ -2087,6 +2100,10 @@ public class WindowManagerState {
 
         public int getRequestedHeight() {
             return mRequestedHeight;
+        }
+
+        public List<Rect> getKeepClearRects() {
+            return mKeepClearRects;
         }
 
         private String getWindowTypeSuffix(int windowType) {
