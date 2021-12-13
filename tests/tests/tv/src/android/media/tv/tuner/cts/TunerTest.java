@@ -1044,6 +1044,10 @@ public class TunerTest {
         res = tuner200.tune(feSettings);
         assertEquals(Tuner.RESULT_SUCCESS, res);
 
+        info = tuner200.getFrontendInfoById(ids.get(0));
+        res = tuner200.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
         tuner100 = new Tuner(mContext, null, 100);
         tuner100.shareFrontendFromTuner(tuner200);
         // call openFilter to trigger ITunerDemux.setFrontendDataSourceById()
@@ -1051,7 +1055,12 @@ public class TunerTest {
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
 
-        // now try to steal the resource from a higher priority
+        // tune again on the owner
+        info = tuner200.getFrontendInfoById(ids.get(1));
+        res = tuner200.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // now let the higher priority tuner steal the resource
         Tuner tuner300 = new Tuner(mContext, null, 300);
         res = tuner300.tune(feSettings);
         assertEquals(Tuner.RESULT_SUCCESS, res);
@@ -1123,7 +1132,8 @@ public class TunerTest {
         assertEquals(Tuner.RESULT_SUCCESS, res);
         assertNotNull(mTuner.getFrontendInfo());
 
-        // now create sharee
+        // Frontend sharing scenario 1: close owner first
+        // create sharee
         Tuner sharee = new Tuner(mContext, null, 100);
         sharee.shareFrontendFromTuner(mTuner);
 
@@ -1138,6 +1148,26 @@ public class TunerTest {
         assertEquals(Tuner.RESULT_UNAVAILABLE, res);
 
         sharee.close();
+
+        // Frontend sharing scenario 2: close sharee first
+        // create owner first
+        mTuner = new Tuner(mContext, null, 100);
+        res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // create sharee
+        sharee = new Tuner(mContext, null, 100);
+        sharee.shareFrontendFromTuner(mTuner);
+
+        // close sharee
+        sharee.close();
+
+        // confirm owner is still intact
+        int[] statusCapabilities = info.getStatusCapabilities();
+        assertNotNull(statusCapabilities);
+        FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
+        assertNotNull(status);
+
     }
 
     @Test
