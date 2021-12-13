@@ -312,6 +312,23 @@ class MyTest : public ::aidl::test_package::BnTest,
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 
+  ::ndk::ScopedAStatus RepeatBinderArray(const std::vector<::ndk::SpAIBinder>& in_value,
+                                         std::vector<::ndk::SpAIBinder>* out_repeated,
+                                         std::vector<::ndk::SpAIBinder>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus RepeatInterfaceArray(
+      const std::vector<std::shared_ptr<IEmpty>>& in_value,
+      std::vector<std::shared_ptr<IEmpty>>* out_repeated,
+      std::vector<std::shared_ptr<IEmpty>>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
   ::ndk::ScopedAStatus Repeat2StringList(const std::vector<std::string>& in_input,
                                          std::vector<std::string>* out_repeated,
                                          std::vector<std::string>* _aidl_return) override {
@@ -405,6 +422,18 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus RepeatNullableStringArray(
       const std::optional<std::vector<std::optional<std::string>>>& in_value,
       std::optional<std::vector<std::optional<std::string>>>* _aidl_return) {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableBinderArray(
+      const std::optional<std::vector<::ndk::SpAIBinder>>& in_value,
+      std::optional<std::vector<::ndk::SpAIBinder>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableInterfaceArray(
+      const std::optional<std::vector<std::shared_ptr<IEmpty>>>& in_value,
+      std::optional<std::vector<std::shared_ptr<IEmpty>>>* _aidl_return) override {
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
