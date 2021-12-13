@@ -40,6 +40,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
+import android.app.admin.DevicePolicyManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -84,6 +85,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile;
@@ -111,6 +113,11 @@ public class DeviceStateTest {
 
     private static final String TEST_PERMISSION_1 = INTERACT_ACROSS_PROFILES;
     private static final String TEST_PERMISSION_2 = INTERACT_ACROSS_USERS_FULL;
+
+    private static final DevicePolicyManager sLocalDevicePolicyManager =
+            TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+
+    private static final long TIMEOUT = 4000000;
 
     @Test
     @EnsureHasWorkProfile
@@ -788,5 +795,35 @@ public class DeviceStateTest {
     @RequirePasswordNotSet
     public void requirePasswordNotSetAnnotation_passwordNotSet() {
         assertThat(TestApis.users().instrumented().hasPassword()).isFalse();
+    }
+
+    @Test
+    @IncludeRunOnParentOfProfileOwnerUsingParentInstance
+    public void includeRunOnParentOfProfileOwnerUsingProfileInstanceAnnotation_runningOnParentOfProfile() {
+        assertThat(sDeviceState.workProfile().parent()).isEqualTo(TestApis.users().instrumented());
+    }
+
+    @Test
+    @IncludeRunOnParentOfProfileOwnerUsingParentInstance
+    public void includeRunOnParentOfProfileOwnerUsingProfileInstanceAnnotation_dpcIsOnProfile() {
+        assertThat(sDeviceState.dpc().user()).isEqualTo(sDeviceState.workProfile());
+    }
+
+    @Test
+    @IncludeRunOnParentOfProfileOwnerUsingParentInstance
+    public void includeRunOnParentOfProfileOwnerUsingProfileInstanceAnnotation_devicePolicyManagerAffectsParent() {
+        long previousRequiredStrongAuthTimeout =
+                sLocalDevicePolicyManager.getRequiredStrongAuthTimeout(/* admin= */ null);
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredStrongAuthTimeout(sDeviceState.dpc().componentName(), TIMEOUT);
+
+            assertThat(sLocalDevicePolicyManager
+                    .getRequiredStrongAuthTimeout(/* admin= */ null)).isEqualTo(TIMEOUT);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredStrongAuthTimeout(
+                            sDeviceState.dpc().componentName(), previousRequiredStrongAuthTimeout);
+        }
     }
 }

@@ -21,6 +21,9 @@ import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -51,6 +54,14 @@ public @interface EnsureHasProfileOwner {
      * <p>Only one policy manager per test should be marked as primary.
      */
     boolean isPrimary() default false;
+
+    /**
+     * If true, uses the {@link DevicePolicyManager#getParentProfileInstance(ComponentName)}
+     * instance of the dpc when calling to .dpc()
+     *
+     * <p>Only used if {@link #isPrimary()} is true.
+     */
+    boolean useParentInstance() default false;
 
     /**
      * Affiliation ids to be set for the profile owner.
