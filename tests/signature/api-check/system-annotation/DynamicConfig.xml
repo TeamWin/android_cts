@@ -65,5 +65,88 @@
       <value>extra_field:public static final byte android.util.StatsLog.ANNOTATION_ID_EXCLUSIVE_STATE</value>
       <value>extra_field:public static final byte android.util.StatsLog.ANNOTATION_ID_PRIMARY_FIELD_FIRST_UID</value>
       <value>extra_field:public static final byte android.util.StatsLog.ANNOTATION_ID_STATE_NESTED</value>
+      <!-- Bug: 202968174 -->
+      <value>extra_interface:android.net.wifi.WifiManager$WifiVerboseLoggingStatusChangedListener</value>
+      <value>extra_class:android.net.wifi.WifiConnectedSessionInfo</value>
+      <value>extra_class:android.net.wifi.WifiManager$CoexCallback</value>
+      <value>extra_class:android.net.wifi.CoexUnsafeChannel</value>
+      <value>extra_class:android.net.wifi.WifiAvailableChannel</value>
+      <value>extra_method:public int android.net.wifi.WifiNetworkSuggestion.getCarrierId()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiNetworkSuggestion.isOemPaid()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiNetworkSuggestion.isOemPrivate()</value>
+      <value>extra_method:public java.util.List android.net.wifi.rtt.RangingRequest.getRttResponders()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiInfo.isCarrierMerged()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiInfo.isOemPrivate()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiInfo.isPrimary()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiInfo.isTrusted()</value>
+      <value>extra_method:public boolean android.net.wifi.WifiInfo.isOemPaid()</value>
+      <value>extra_method:public int android.net.wifi.SoftApConfiguration.getMacRandomizationSetting()</value>
+      <value>extra_method:public boolean android.net.wifi.SoftApConfiguration.isUserConfiguration()</value>
+      <value>extra_method:public android.util.SparseIntArray android.net.wifi.SoftApConfiguration.getChannels()</value>
+      <value>extra_method:public boolean android.net.wifi.SoftApConfiguration.isBridgedModeOpportunisticShutdownEnabled()</value>
+      <value>extra_method:public boolean android.net.wifi.SoftApConfiguration.isIeee80211axEnabled()</value>
+      <value>extra_method:public int android.net.wifi.WifiConfiguration.getDeletionPriority()</value>
+      <value>extra_method:public java.lang.String android.net.wifi.WifiConfiguration.getProfileKey()</value>
+      <value>extra_method:public void android.net.wifi.WifiConfiguration.setDeletionPriority(int) throws java.lang.IllegalArgumentException</value>
+      <value>extra_method:public void android.net.wifi.aware.WifiAwareManager.enableInstantCommunicationMode(boolean)</value>
+      <value>extra_method:public void android.net.wifi.EasyConnectStatusCallback.onBootstrapUriGenerated(android.net.Uri)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.setCarrierNetworkOffloadEnabled(int,boolean,boolean)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.setCoexUnsafeChannels(java.util.List,int)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.unregisterCoexCallback(android.net.wifi.WifiManager$CoexCallback)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.removeAppState(int,java.lang.String)</value>
+      <value>extra_method:public static int android.net.wifi.WifiManager.getEasyConnectMaxAllowedResponderDeviceInfoLength()</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.stopRestrictingAutoJoinToSubscriptionId()</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.setDefaultCountryCode(java.lang.String)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.addWifiVerboseLoggingStatusChangedListener(java.util.concurrent.Executor,android.net.wifi.WifiManager$WifiVerboseLoggingStatusChangedListener)</value>
+      <value>extra_method:public boolean android.net.wifi.WifiManager.isStaConcurrencyForRestrictedConnectionsSupported()</value>
+      <value>extra_method:public java.util.List android.net.wifi.WifiManager.getAllowedChannels(int,int)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.clearOverrideCountryCode()</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.startRestrictingAutoJoinToSubscriptionId(int)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.restartWifiSubsystem()</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.removeWifiVerboseLoggingStatusChangedListener(android.net.wifi.WifiManager$WifiVerboseLoggingStatusChangedListener)</value>
+      <value>extra_method:public int android.net.wifi.WifiManager.getVerboseLoggingLevel()</value>
+      <value>extra_method:public java.util.List android.net.wifi.WifiManager.getUsableChannels(int,int)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.setVerboseLoggingLevel(int)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.setOverrideCountryCode(java.lang.String)</value>
+      <value>extra_method:public boolean android.net.wifi.WifiManager.setWifiScoringEnabled(boolean)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.startEasyConnectAsEnrolleeResponder(java.lang.String,int,java.util.concurrent.Executor,android.net.wifi.EasyConnectStatusCallback)</value>
+      <value>extra_method:public void android.net.wifi.WifiManager.registerCoexCallback(java.util.concurrent.Executor,android.net.wifi.WifiManager$CoexCallback)</value>
+      <value>extra_method:public android.net.wifi.WifiNetworkSuggestion$Builder android.net.wifi.WifiNetworkSuggestion$Builder.setOemPrivate(boolean)</value>
+      <value>extra_method:public android.net.wifi.WifiNetworkSuggestion$Builder android.net.wifi.WifiNetworkSuggestion$Builder.setOemPaid(boolean)</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_MBO_ASSOC_DISALLOWED_AUTH_SERVER_OVERLOADED</value>
+      <value>extra_field:public boolean android.net.wifi.WifiConfiguration.carrierMerged</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_DISCONNECTION_AP_BUSY</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_OCE_RSSI_BASED_ASSOCIATION_REJECTION</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_POOR_CHANNEL_CONDITIONS</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_MBO_ASSOC_DISALLOWED_INSUFFICIENT_RSSI</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_REFUSED_TEMPORARILY</value>
+      <value>extra_field:public int android.net.wifi.WifiConfiguration.lastConnectUid</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RANDOMIZATION_AUTO</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_MBO_ASSOC_DISALLOWED_MAX_NUM_STA_ASSOCIATED</value>
+      <value>extra_field:public int android.net.wifi.WifiConfiguration.subscriptionId</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RANDOMIZATION_NON_PERSISTENT</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_MBO_ASSOC_DISALLOWED_UNSPECIFIED</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_NETWORK_NOT_FOUND</value>
+      <value>extra_field:public static final int android.net.wifi.WifiConfiguration.RECENT_FAILURE_MBO_ASSOC_DISALLOWED_AIR_INTERFACE_OVERLOADED</value>
+      <value>extra_field:public static final int android.net.wifi.ScanResult.CIPHER_BIP_GMAC_128</value>
+      <value>extra_field:public static final int android.net.wifi.ScanResult.CIPHER_GCMP_128</value>
+      <value>extra_field:public static final int android.net.wifi.ScanResult.CIPHER_BIP_CMAC_256</value>
+      <value>extra_field:public static final int android.net.wifi.ScanResult.CIPHER_BIP_GMAC_256</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_BRAINPOOLP384R1</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_BRAINPOOLP512R1</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_BRAINPOOLP256R1</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.VERBOSE_LOGGING_LEVEL_DISABLED</value>
+      <value>extra_field:public static final java.lang.String android.net.wifi.WifiManager.ACTION_REFRESH_USER_PROVISIONING</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_PRIME256V1</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_SECP521R1</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_SECP384R1</value>
+      <value>extra_field:public static final int android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT</value>
+      <value>extra_field:public static final int android.net.wifi.SoftApConfiguration.BAND_60GHZ</value>
+      <value>extra_field:public static final int android.net.wifi.SoftApConfiguration.RANDOMIZATION_PERSISTENT</value>
+      <value>extra_field:public static final int android.net.wifi.SoftApConfiguration.RANDOMIZATION_NONE</value>
     </entry>
 </dynamicConfig>
