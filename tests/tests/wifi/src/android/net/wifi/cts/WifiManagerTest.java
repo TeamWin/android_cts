@@ -1332,14 +1332,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Skip the test if wifi module version is older than S.
             return;
         }
-        List<WifiConfiguration> testConfigs = new ArrayList<>();
-        testConfigs.add(createConfig("test-open-owe-jdur", WifiConfiguration.SECURITY_TYPE_OPEN));
-        testConfigs.add(createConfig("test-open-owe-jdur", WifiConfiguration.SECURITY_TYPE_OWE));
-        testConfigs.add(createConfig("test-psk-sae-ijfe", WifiConfiguration.SECURITY_TYPE_PSK));
-        testConfigs.add(createConfig("test-psk-sae-ijfe", WifiConfiguration.SECURITY_TYPE_SAE));
-        testConfigs.add(createConfig("test-wpa2e-wpa3e-plki",
+        List<WifiConfiguration> baseConfigs = new ArrayList<>();
+        baseConfigs.add(createConfig("test-open-owe-jdur", WifiConfiguration.SECURITY_TYPE_OPEN));
+        baseConfigs.add(createConfig("test-psk-sae-ijfe", WifiConfiguration.SECURITY_TYPE_PSK));
+        baseConfigs.add(createConfig("test-wpa2e-wpa3e-plki",
                 WifiConfiguration.SECURITY_TYPE_EAP));
-        testConfigs.add(createConfig("test-wpa2e-wpa3e-plki",
+        List<WifiConfiguration> upgradeConfigs = new ArrayList<>();
+        upgradeConfigs.add(createConfig("test-open-owe-jdur", WifiConfiguration.SECURITY_TYPE_OWE));
+        upgradeConfigs.add(createConfig("test-psk-sae-ijfe", WifiConfiguration.SECURITY_TYPE_SAE));
+        upgradeConfigs.add(createConfig("test-wpa2e-wpa3e-plki",
                 WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE));
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
@@ -1349,46 +1350,51 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     mWifiManager.getPrivilegedConfiguredNetworks().size();
             final int originalCallerConfiguredNetworksNumber =
                 mWifiManager.getCallerConfiguredNetworks().size();
-            for (WifiConfiguration c: testConfigs) {
+            for (WifiConfiguration c: baseConfigs) {
                 WifiManager.AddNetworkResult result = mWifiManager.addNetworkPrivileged(c);
                 assertEquals(WifiManager.AddNetworkResult.STATUS_SUCCESS, result.statusCode);
                 assertTrue(result.networkId >= 0);
                 c.networkId = result.networkId;
             }
-            List<WifiConfiguration> expectedConfigs = testConfigs;
+            for (WifiConfiguration c: upgradeConfigs) {
+                WifiManager.AddNetworkResult result = mWifiManager.addNetworkPrivileged(c);
+                assertEquals(WifiManager.AddNetworkResult.STATUS_SUCCESS, result.statusCode);
+                assertTrue(result.networkId >= 0);
+                c.networkId = result.networkId;
+            }
+            // open/owe, psk/sae, and wpa2e/wpa3e should be merged
+            // so they should have the same network ID.
+            for (int i = 0; i < baseConfigs.size(); i++) {
+                assertEquals(baseConfigs.get(i).networkId, upgradeConfigs.get(i).networkId);
+            }
+
+            int numAddedConfigs = baseConfigs.size();
+            List<WifiConfiguration> expectedConfigs = new ArrayList<>(baseConfigs);
             if (SdkLevel.isAtLeastS()) {
-                // open/owe, psk/sae, and wpa2e/wpa3e should be merged
-                // so they should have the same network ID.
-                assertEquals(testConfigs.get(0).networkId, testConfigs.get(1).networkId);
-                assertEquals(testConfigs.get(2).networkId, testConfigs.get(3).networkId);
-                assertEquals(testConfigs.get(4).networkId, testConfigs.get(5).networkId);
-            } else {
-                // Network IDs for different security types should be unique for R
-                assertNotEquals(testConfigs.get(0).networkId, testConfigs.get(1).networkId);
-                assertNotEquals(testConfigs.get(2).networkId, testConfigs.get(3).networkId);
-                assertNotEquals(testConfigs.get(4).networkId, testConfigs.get(5).networkId);
-                // WPA3-Enterprise is omitted when WPA2-Enterprise is present for R
-                expectedConfigs = testConfigs.subList(0, 5);
+                // S devices and above will return one additional config per each security type
+                // added, so we include the number of both base and upgrade configs.
+                numAddedConfigs += upgradeConfigs.size();
+                expectedConfigs.addAll(upgradeConfigs);
             }
             List<WifiConfiguration> configuredNetworks = mWifiManager.getConfiguredNetworks();
-            assertEquals(originalConfiguredNetworksNumber + expectedConfigs.size(),
+            assertEquals(originalConfiguredNetworksNumber + numAddedConfigs,
                     configuredNetworks.size());
             assertConfigsAreFound(expectedConfigs, configuredNetworks);
 
             List<WifiConfiguration> privilegedConfiguredNetworks =
                     mWifiManager.getPrivilegedConfiguredNetworks();
-            assertEquals(originalPrivilegedConfiguredNetworksNumber + expectedConfigs.size(),
+            assertEquals(originalPrivilegedConfiguredNetworksNumber + numAddedConfigs,
                     privilegedConfiguredNetworks.size());
             assertConfigsAreFound(expectedConfigs, privilegedConfiguredNetworks);
 
             List<WifiConfiguration> callerConfiguredNetworks =
                     mWifiManager.getCallerConfiguredNetworks();
-            assertEquals(originalCallerConfiguredNetworksNumber + expectedConfigs.size(),
+            assertEquals(originalCallerConfiguredNetworksNumber + numAddedConfigs,
                     callerConfiguredNetworks.size());
             assertConfigsAreFound(expectedConfigs, callerConfiguredNetworks);
 
         } finally {
-            for (WifiConfiguration c: testConfigs) {
+            for (WifiConfiguration c: baseConfigs) {
                 if (c.networkId >= 0) {
                     mWifiManager.removeNetwork(c.networkId);
                 }
@@ -2542,17 +2548,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertTrue(actionListener.onSuccessCalled);
             // Wait for connection to complete & ensure we are connected to the saved network.
             waitForConnection();
-            if (SdkLevel.isAtLeastS()) {
-                assertEquals(savedNetworkToConnect.networkId,
-                        mWifiManager.getConnectionInfo().getNetworkId());
-            } else {
-                // In R, auto-upgraded network IDs may be different from the original saved network.
-                // Since we may end up selecting the auto-upgraded network ID for connection and end
-                // up connected to the original saved network with a different network ID, we should
-                // instead match by SSID.
-                assertEquals(savedNetworkToConnect.SSID,
-                        mWifiManager.getConnectionInfo().getSSID());
-            }
+            assertEquals(savedNetworkToConnect.networkId,
+                    mWifiManager.getConnectionInfo().getNetworkId());
         } finally {
             // Re-enable all saved networks before exiting.
             if (savedNetworks != null) {
