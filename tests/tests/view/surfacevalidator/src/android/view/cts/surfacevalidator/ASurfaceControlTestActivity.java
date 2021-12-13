@@ -35,14 +35,17 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.PointerIcon;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
+import org.junit.Assert;
 import org.junit.rules.TestName;
 
 import java.io.File;
@@ -109,6 +112,10 @@ public class ASurfaceControlTestActivity extends Activity {
         mInstrumentation = getInstrumentation();
     }
 
+    public SurfaceControl getSurfaceControl() {
+        return mSurfaceView.getSurfaceControl();
+    }
+
     public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
             PixelChecker pixelChecker, TestName name) {
         try {
@@ -126,14 +133,17 @@ public class ASurfaceControlTestActivity extends Activity {
             return;
         }
 
-        final SurfaceHolderCallback surfaceHolderCallbackWrapper =
-                new SurfaceHolderCallback(surfaceHolderCallback);
+        final CountDownLatch readyFence = new CountDownLatch(1);
         mHandler.post(() -> {
-            mSurfaceView.getHolder().addCallback(surfaceHolderCallbackWrapper);
+            mSurfaceView.getHolder().addCallback(new SurfaceHolderCallback(surfaceHolderCallback,
+                    readyFence, mParent.getViewTreeObserver()));
             mParent.addView(mSurfaceView, mLayoutParams);
         });
-        mInstrumentation.waitForIdleSync();
-        surfaceHolderCallbackWrapper.waitForSurfaceCreated();
+        try {
+            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            Assert.fail("interrupted");
+        }
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
@@ -273,19 +283,22 @@ public class ASurfaceControlTestActivity extends Activity {
         }
     }
 
-    public static class SurfaceHolderCallback implements SurfaceHolder.Callback {
+    private static class SurfaceHolderCallback implements SurfaceHolder.Callback {
         private final SurfaceHolder.Callback mTestCallback;
         private final CountDownLatch mSurfaceCreatedLatch;
+        private final ViewTreeObserver mViewTreeObserver;
 
-        SurfaceHolderCallback(SurfaceHolder.Callback callback) {
+        SurfaceHolderCallback(SurfaceHolder.Callback callback, CountDownLatch readyFence,
+                ViewTreeObserver viewTreeObserver) {
             mTestCallback = callback;
-            mSurfaceCreatedLatch = new CountDownLatch(1);
+            mSurfaceCreatedLatch = readyFence;
+            mViewTreeObserver = viewTreeObserver;
         }
 
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
             mTestCallback.surfaceCreated(holder);
-            mSurfaceCreatedLatch.countDown();
+            mViewTreeObserver.registerFrameCommitCallback(mSurfaceCreatedLatch::countDown);
         }
 
         @Override
@@ -297,13 +310,6 @@ public class ASurfaceControlTestActivity extends Activity {
         @Override
         public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
             mTestCallback.surfaceDestroyed(holder);
-        }
-
-        public void waitForSurfaceCreated() {
-            try {
-                mSurfaceCreatedLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-            }
         }
     }
 

@@ -18,6 +18,7 @@
 
 #include <android/data_space.h>
 #include <android/hardware_buffer.h>
+#include <android/hardware_buffer_jni.h>
 #include <android/log.h>
 #include <android/native_window_jni.h>
 #include <android/surface_control.h>
@@ -98,6 +99,7 @@ static bool getSolidBuffer(int32_t width, int32_t height, uint32_t color,
     AHardwareBuffer_lock(buffer, AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, -1, &rect,
                                              &data);
     if (!data) {
+        AHardwareBuffer_release(buffer);
         return true;
     }
 
@@ -107,6 +109,16 @@ static bool getSolidBuffer(int32_t width, int32_t height, uint32_t color,
 
     *outHardwareBuffer = buffer;
     return false;
+}
+
+jobject Utils_getSolidBuffer(JNIEnv* env, jobject /*clazz*/, jint width, jint height, jint color) {
+    AHardwareBuffer* buffer;
+    if (getSolidBuffer(width, height, static_cast<uint32_t>(color), &buffer, nullptr)) {
+        return nullptr;
+    }
+    jobject result = AHardwareBuffer_toHardwareBuffer(env, buffer);
+    AHardwareBuffer_release(buffer);
+    return result;
 }
 
 static bool getQuadrantBuffer(int32_t width, int32_t height, jint colorTopLeft,
@@ -141,6 +153,19 @@ static bool getQuadrantBuffer(int32_t width, int32_t height, jint colorTopLeft,
 
     *outHardwareBuffer = buffer;
     return false;
+}
+
+jobject Utils_getQuadrantBuffer(JNIEnv* env, jobject /*clazz*/, jint width, jint height,
+                                jint colorTopLeft, jint colorTopRight, jint colorBottomRight,
+                                jint colorBottomLeft) {
+    AHardwareBuffer* buffer;
+    if (getQuadrantBuffer(width, height, colorTopLeft, colorTopRight, colorBottomRight,
+                          colorBottomLeft, &buffer, nullptr)) {
+        return nullptr;
+    }
+    jobject result = AHardwareBuffer_toHardwareBuffer(env, buffer);
+    AHardwareBuffer_release(buffer);
+    return result;
 }
 
 jlong SurfaceTransaction_create(JNIEnv* /*env*/, jclass) {
@@ -591,6 +616,9 @@ static const JNINativeMethod JNI_METHODS[] = {
         {"nSurfaceTransaction_setOnCommitCallbackWithoutContext",
          "(JLandroid/view/cts/util/ASurfaceControlTestUtils$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCommitCallbackWithoutContext},
+        {"getSolidBuffer", "(III)Landroid/hardware/HardwareBuffer;", (void*)Utils_getSolidBuffer},
+        {"getQuadrantBuffer", "(IIIIII)Landroid/hardware/HardwareBuffer;",
+         (void*)Utils_getQuadrantBuffer},
 };
 
 }  // anonymous namespace
