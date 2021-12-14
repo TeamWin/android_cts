@@ -18,6 +18,7 @@ package android.app.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
@@ -94,6 +95,7 @@ public class StatusBarManagerTest {
         assertTrue(info.isStatusBarExpansionDisabled());
         assertTrue(info.isRecentsDisabled());
         assertTrue(info.isSearchDisabled());
+        assertFalse(info.isRotationSuggestionDisabled());
     }
 
     /**
