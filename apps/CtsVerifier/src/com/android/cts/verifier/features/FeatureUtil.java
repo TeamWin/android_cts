@@ -18,6 +18,7 @@ package com.android.cts.verifier.features;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.UserManager;
 
 /**
  * Feature without feature flag for now will be skipped based on the devices temporarily.
@@ -65,11 +66,26 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether the device supports configuring VPN
+     */
+    public static boolean isConfigVpnSupported(Context context) {
+        return !isWatchOrAutomotive(context);
+    }
+
+    /**
      * Checks whether the device is watch or automotive
      */
     private static boolean isWatchOrAutomotive(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Checks whether the device supports managed secondary users.
+     */
+    public static boolean supportManagedSecondaryUsers(Context context) {
+        return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
+                || UserManager.isHeadlessSystemUserMode()) && UserManager.supportsMultipleUsers();
     }
 }

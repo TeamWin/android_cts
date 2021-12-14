@@ -72,9 +72,18 @@ public class CVE_2021_0481 extends BaseHostJUnit4Test {
         installPackage();
 
         //ensure the screen is woken up.
-        //(we need to do this twice. once wakes up the screen, and another unlocks the lock screen)
+        //KEYCODE_WAKEUP wakes up the screen
+        //KEYCODE_MENU called twice unlocks the screen (if locked)
+        //Note: (applies to Android 12 only):
+        //      KEYCODE_MENU called less than twice doesnot unlock the screen
+        //      no matter how many times KEYCODE_HOME is called.
+        //      This is likely a timing issue which has to be investigated further
         getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        getDevice().executeShellCommand("input keyevent KEYCODE_MENU");
+        getDevice().executeShellCommand("input keyevent KEYCODE_HOME");
+        getDevice().executeShellCommand("input keyevent KEYCODE_MENU");
+
+        //run the test
         Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, "testUserPhotoSetUp"));
 
         //Check if TEST_FILE_NAME has been copied by "Evil activity"

@@ -53,6 +53,10 @@ public class BiometricActivityTests extends BiometricTestBase {
     public void testBiometricOnly_authenticateFromForegroundActivity() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(prop.getSensorId());
                  ActivitySession activitySession =
@@ -102,6 +106,10 @@ public class BiometricActivityTests extends BiometricTestBase {
     public void testBiometricOnly_rejectThenErrorFromForegroundActivity() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(prop.getSensorId());
                  ActivitySession activitySession =
@@ -165,6 +173,10 @@ public class BiometricActivityTests extends BiometricTestBase {
     public void testBiometricOnly_rejectThenAuthenticate() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(prop.getSensorId());
                  ActivitySession activitySession =
@@ -229,6 +241,10 @@ public class BiometricActivityTests extends BiometricTestBase {
     public void testBiometricOnly_negativeButtonInvoked() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(prop.getSensorId());
                  ActivitySession activitySession =
@@ -277,6 +293,10 @@ public class BiometricActivityTests extends BiometricTestBase {
         try (CredentialSession credentialSession = new CredentialSession()) {
             credentialSession.setCredential();
             for (SensorProperties prop : mSensorProperties) {
+                if (prop.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                    continue;
+                }
+
                 try (BiometricTestSession session =
                              mBiometricManager.createTestSession(prop.getSensorId());
                      ActivitySession activitySession =
