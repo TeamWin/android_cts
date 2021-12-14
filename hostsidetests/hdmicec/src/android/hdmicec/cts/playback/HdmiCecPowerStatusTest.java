@@ -28,12 +28,15 @@ import android.hdmicec.cts.LogicalAddress;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * HDMI CEC tests verifying power status related messages of the device (CEC 2.0 CTS Section 7.6)
@@ -45,6 +48,24 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
+    private static final int OFF = 0x1;
+
+    private static final List<String> UCP_POWER_MSGS = new ArrayList<>(Arrays.asList(
+            CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
+                    CecOperand.USER_CONTROL_PRESSED, HdmiCecConstants.CEC_CONTROL_POWER),
+            CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
+                    CecOperand.USER_CONTROL_PRESSED,
+                    HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION),
+            CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
+                    CecOperand.USER_CONTROL_PRESSED,
+                    HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION),
+            CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
+                    CecOperand.USER_CONTROL_PRESSED,
+                    HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION)));
+
+    private static final List<CecOperand> VIEW_ON_MSGS =
+            new ArrayList<>(Arrays.asList(CecOperand.TEXT_VIEW_ON, CecOperand.IMAGE_VIEW_ON));
+
     @Rule
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
@@ -53,6 +74,33 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                             CecRules.requiresDeviceType(
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
+
+    /**
+     * Test HF4-6-1
+     *
+     * <p>Verify that the DUT initially tries sending either {@code <Image View On>} or
+     * {@code <Text View On>} to wake up the TV when the DUT wants to become the active source,
+     * before sending any {@code <User Control Pressed>} with power-related operands.
+     */
+    @Test
+    public void cect_hf4_6_1_otp_viewOnBeforeUcp_20() throws Exception {
+        ITestDevice device = getDevice();
+        /* Make sure the device is not booting up/in standby */
+        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+
+        setCec20();
+
+        /* simulate a TV that is in the Standby state. */
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                CecOperand.REPORT_POWER_STATUS, CecMessage.formatParams(OFF));
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        sendOtp();
+
+        hdmiCecClient.checkMessagesInOrder(LogicalAddress.TV, VIEW_ON_MSGS, UCP_POWER_MSGS);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
+    }
 
     /**
      * Test HF4-6-7
