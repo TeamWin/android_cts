@@ -2300,6 +2300,44 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests that the device properly sets the VoNr
+     */
+    @Test
+    public void testIsVoNrEnabled() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        try {
+            int result = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.setVoNrEnabled(true));
+            if (result ==  TelephonyManager.ENABLE_VONR_REQUEST_NOT_SUPPORTED) {
+                return;
+            }
+        } catch (Exception e) {
+        }
+
+        assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.isVoNrEnabled()));
+    }
+
+    /**
+     * Tests that a SecurityException is thrown when trying to set VoNR
+     */
+    @Test
+    public void testSetVoNrEnabledException() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
+        try {
+            mTelephonyManager.setVoNrEnabled(true);
+            fail("Expected SecurityException. App does not have carrier privileges.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
      * Construct a CallAttributes object and test getters.
      */
     @Test
