@@ -65,10 +65,6 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
     }
 
-    public void testLockNowLogged() {
-        mDevicePolicyManager.lockNow(0);
-    }
-
     public void testSetKeyguardDisabledFeaturesLogged() {
         mDevicePolicyManager.setKeyguardDisabledFeatures(
                 ADMIN_RECEIVER_COMPONENT, KEYGUARD_DISABLE_FEATURES_NONE);

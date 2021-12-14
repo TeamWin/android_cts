@@ -46,6 +46,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -187,6 +188,8 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     public void testTranslucentShowWhenLockedActivity() {
+        // TODO(b/209906849) remove assumeFalse after issue fix.
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
@@ -219,6 +222,8 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testDialogShowWhenLockedActivity() {
+        // TODO(b/209906849) remove assumeFalse after issue fix.
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         launchActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
         mWmState.computeState(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);

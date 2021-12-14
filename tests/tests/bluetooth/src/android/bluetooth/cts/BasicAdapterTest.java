@@ -19,6 +19,7 @@ package android.bluetooth.cts;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothStatusCodes;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -233,6 +234,15 @@ public class BasicAdapterTest extends AndroidTestCase {
                 new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06});
         assertNotNull(device);
         assertEquals("01:02:03:04:05:06", device.getAddress());
+    }
+
+    public void test_isLeAudioSupported() throws IOException {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        assertNotSame(BluetoothStatusCodes.ERROR_UNKNOWN, adapter.isLeAudioSupported());
     }
 
     public void test_listenUsingRfcommWithServiceRecord() throws IOException {
