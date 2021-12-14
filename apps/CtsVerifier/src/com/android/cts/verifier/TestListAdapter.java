@@ -92,16 +92,6 @@ public abstract class TestListAdapter extends BaseAdapter {
      *  respectively. */
     protected Map<String, List<TestListItem>> mDisplayModesTests = new HashMap<>();
 
-    /** Flag to identify the test data from {@link ManifestTestListAdapter}.
-     *  The source of data for the adapter is various, such as ManifestTestListAdapter and
-     *  ArrayTestListAdapter, and the data of foldable tests are from ManifestTestListAdapter. */
-    protected static boolean adapterFromManifest;
-
-    /** Flag to identify the test data in main view from {@link ManifestTestListAdapter}.
-     *  ManifestTestListAdapter provides test data for main view and subtests.
-     *  Getting foldable tests is from main view only. */
-    protected static boolean hasTestParentInManifestAdapter;
-
     /** {@link ListView} row that is either a test category header or a test. */
     public static class TestListItem {
 
@@ -241,7 +231,7 @@ public abstract class TestListAdapter extends BaseAdapter {
     }
 
     public void loadTestResults() {
-        new RefreshTestResultsTask().execute();
+        new RefreshTestResultsTask(false).execute();
     }
 
     public void clearTestResults() {
@@ -260,6 +250,13 @@ public abstract class TestListAdapter extends BaseAdapter {
     }
 
     class RefreshTestResultsTask extends AsyncTask<Void, Void, RefreshResult> {
+
+        private boolean mIsFromMainView;
+
+        RefreshTestResultsTask(boolean isFromMainView) {
+            mIsFromMainView = isFromMainView;
+        }
+
         @Override
         protected RefreshResult doInBackground(Void... params) {
             List<TestListItem> rows = getRows();
@@ -269,11 +266,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                 sInitialLaunch = false;
             }
 
-            if (checkTestsFromMainView()) {
+            if (mIsFromMainView) {
                 rows = mDisplayModesTests.get(sCurrentDisplayMode);
-            }else {
-                rows = getRows();
             }
+          
             return getRefreshResults(rows);
         }
 
@@ -455,17 +451,11 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        if (!sInitialLaunch && checkTestsFromMainView()) {
-            return mDisplayModesTests.getOrDefault(sCurrentDisplayMode, new ArrayList<>()).size();
-        }
         return mRows.size();
     }
 
     @Override
     public TestListItem getItem(int position) {
-        if (checkTestsFromMainView()) {
-            return mDisplayModesTests.get(sCurrentDisplayMode).get(position);
-        }
         return mRows.get(position);
     }
 
@@ -695,14 +685,5 @@ public abstract class TestListAdapter extends BaseAdapter {
             return name + DisplayMode.FOLDED.asSuffix();
         }
         return name;
-    }
-
-    /**
-     * Checks if the tests are from main view for foldable tests.
-     *
-     * @return True if the tests from main view, otherwise, return false.
-     */
-    private static boolean checkTestsFromMainView() {
-        return adapterFromManifest && !hasTestParentInManifestAdapter;
     }
 }
