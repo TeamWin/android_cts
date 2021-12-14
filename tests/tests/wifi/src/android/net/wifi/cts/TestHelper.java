@@ -227,19 +227,20 @@ public class TestHelper {
                 .setBssid(MacAddress.fromString(network.BSSID));
     }
 
-    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
-        private final CountDownLatch mCountDownLatch;
+    public static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
+        private CountDownLatch mBlocker;
         public boolean onAvailableCalled = false;
         public boolean onUnavailableCalled = false;
+        public boolean onLostCalled = false;
         public NetworkCapabilities networkCapabilities;
 
-        TestNetworkCallback(@NonNull CountDownLatch countDownLatch) {
-            mCountDownLatch = countDownLatch;
+        TestNetworkCallback() {
+            mBlocker = new CountDownLatch(1);
         }
 
-        TestNetworkCallback(@NonNull CountDownLatch countDownLatch, int flags) {
+        TestNetworkCallback(int flags) {
             super(flags);
-            mCountDownLatch = countDownLatch;
+            mBlocker = new CountDownLatch(1);
         }
 
         @Override
@@ -251,23 +252,38 @@ public class TestHelper {
         public void onCapabilitiesChanged(Network network,
                 NetworkCapabilities networkCapabilities) {
             this.networkCapabilities = networkCapabilities;
-            mCountDownLatch.countDown();
+            mBlocker.countDown();
         }
 
         @Override
         public void onUnavailable() {
             onUnavailableCalled = true;
-            mCountDownLatch.countDown();
+            mBlocker.countDown();
+        }
+
+        @Override
+        public void onLost(Network network) {
+            onLostCalled = true;
+            mBlocker.countDown();
+        }
+
+        boolean waitForAnyCallback(int timeout) {
+            try {
+                boolean noTimeout = mBlocker.await(timeout, TimeUnit.MILLISECONDS);
+                mBlocker = new CountDownLatch(1);
+                return noTimeout;
+            } catch (InterruptedException e) {
+                return false;
+            }
         }
     }
 
-    private static TestNetworkCallback createTestNetworkCallback(
-            @NonNull CountDownLatch countDownLatch) {
+    private static TestNetworkCallback createTestNetworkCallback() {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             // flags for NetworkCallback only introduced in S.
-            return new TestNetworkCallback(countDownLatch, FLAG_INCLUDE_LOCATION_INFO);
+            return new TestNetworkCallback(FLAG_INCLUDE_LOCATION_INFO);
         } else {
-            return new TestNetworkCallback(countDownLatch);
+            return new TestNetworkCallback();
         }
     }
 
@@ -321,9 +337,8 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFlowWithConnect(
             @NonNull WifiConfiguration network) throws Exception {
         CountDownLatch countDownLatchAl = new CountDownLatch(1);
-        CountDownLatch countDownLatchNr = new CountDownLatch(1);
         TestActionListener actionListener = new TestActionListener(countDownLatchAl);
-        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatchNr);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
@@ -347,8 +362,8 @@ public class TestHelper {
             assertThat(actionListener.onSuccessCalled).isTrue();
 
             // Wait for connection to complete & ensure we are connected to the saved network.
-            assertThat(countDownLatchNr.await(
-                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(testNetworkCallback.waitForAnyCallback(DURATION_NETWORK_CONNECTION_MILLIS))
+                    .isTrue();
             assertThat(testNetworkCallback.onAvailableCalled).isTrue();
             final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
             assertConnectionEquals(network, wifiInfo);
@@ -474,9 +489,8 @@ public class TestHelper {
             @NonNull ScheduledExecutorService executorService,
             @NonNull Set<Integer> restrictedNetworkCapabilities,
             boolean expectConnectionSuccess, boolean isRestricted) throws Exception {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
-        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatch);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback();
         try {
             // File a request for restricted (oem paid) wifi network.
             NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
@@ -506,8 +520,8 @@ public class TestHelper {
             }, 0, DURATION_MILLIS, TimeUnit.MILLISECONDS);
             if (expectConnectionSuccess) {
                 // now wait for connection to complete and wait for callback
-                assertThat(countDownLatch.await(
-                        DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+                assertThat(testNetworkCallback
+                        .waitForAnyCallback(DURATION_NETWORK_CONNECTION_MILLIS)).isTrue();
                 assertThat(testNetworkCallback.onAvailableCalled).isTrue();
                 final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
                 assertConnectionEquals(network, wifiInfo);
@@ -533,8 +547,8 @@ public class TestHelper {
                 }
             } else {
                 // now wait for connection to timeout.
-                assertThat(countDownLatch.await(
-                        DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isFalse();
+                assertThat(testNetworkCallback
+                        .waitForAnyCallback(DURATION_NETWORK_CONNECTION_MILLIS)).isFalse();
             }
         } catch (Throwable e /* catch assertions & exceptions */) {
             try {
@@ -681,9 +695,8 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSpecifierWithShellIdentity(
             WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject)
             throws Exception {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
-        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatch);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback();
 
         // Fork a thread to handle the UI interactions.
         Thread uiThread = new Thread(() -> {
@@ -712,8 +725,8 @@ public class TestHelper {
             // Start the UI interactions.
             uiThread.run();
             // now wait for callback
-            assertThat(countDownLatch.await(
-                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(testNetworkCallback.waitForAnyCallback(DURATION_NETWORK_CONNECTION_MILLIS))
+                    .isTrue();
             if (shouldUserReject) {
                 assertThat(testNetworkCallback.onUnavailableCalled).isTrue();
             } else {
@@ -792,8 +805,7 @@ public class TestHelper {
      * @throws Exception
      */
     public void assertWifiInternetConnectionAvailable() throws Exception {
-        CountDownLatch countDownLatchNr = new CountDownLatch(1);
-        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatchNr);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback();
         try {
             // File a callback for wifi network.
             NetworkRequest.Builder builder = new NetworkRequest.Builder()
@@ -808,8 +820,8 @@ public class TestHelper {
             mConnectivityManager.registerNetworkCallback(builder.build(), testNetworkCallback);
             // Wait for connection to complete & ensure we are connected to some network capable
             // of providing internet access.
-            assertThat(countDownLatchNr.await(
-                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(testNetworkCallback.waitForAnyCallback(DURATION_NETWORK_CONNECTION_MILLIS))
+                    .isTrue();
             assertThat(testNetworkCallback.onAvailableCalled).isTrue();
         } finally {
             mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
