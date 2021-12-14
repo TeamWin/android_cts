@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ public class BluetoothClassTest extends AndroidTestCase {
 
     @Override
     protected void setUp() {
-        mBluetoothClassHeadphones = new BluetoothClass(BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES);
+        mBluetoothClassHeadphones =
+                new BluetoothClass(BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES);
         mBluetoothClassPhone = new BluetoothClass(BluetoothClass.Device.Major.PHONE);
         mBluetoothClassService = new BluetoothClass(BluetoothClass.Service.NETWORKING);
     }
@@ -47,19 +48,27 @@ public class BluetoothClassTest extends AndroidTestCase {
 
     @SmallTest
     public void testGetMajorDeviceClass() {
-        assertEquals(mBluetoothClassHeadphones.getMajorDeviceClass(), BluetoothClass.Device.Major.AUDIO_VIDEO);
+        assertEquals(
+                mBluetoothClassHeadphones.getMajorDeviceClass(),
+                BluetoothClass.Device.Major.AUDIO_VIDEO);
         assertEquals(mBluetoothClassPhone.getMajorDeviceClass(), BluetoothClass.Device.Major.PHONE);
     }
 
     @SmallTest
     public void testGetDeviceClass() {
-        assertEquals(mBluetoothClassHeadphones.getDeviceClass(), BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES);
-        assertEquals(mBluetoothClassPhone.getDeviceClass(), BluetoothClass.Device.PHONE_UNCATEGORIZED);
+        assertEquals(
+                mBluetoothClassHeadphones.getDeviceClass(),
+                BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES);
+        assertEquals(
+                mBluetoothClassPhone.getDeviceClass(),
+                BluetoothClass.Device.PHONE_UNCATEGORIZED);
     }
 
     @SmallTest
     public void testGetClassOfDevice() {
-        assertEquals(mBluetoothClassHeadphones.getClassOfDevice(), BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES);
+        assertEquals(
+                mBluetoothClassHeadphones.getClassOfDevice(),
+                BluetoothClass.Device.AUDIO_VIDEO_HEADPHONES);
         assertEquals(mBluetoothClassPhone.getClassOfDevice(), BluetoothClass.Device.Major.PHONE);
     }
 
@@ -73,5 +82,14 @@ public class BluetoothClassTest extends AndroidTestCase {
 
         assertTrue(mBluetoothClassService.doesClassMatch(BluetoothClass.PROFILE_PANU));
         assertFalse(mBluetoothClassService.doesClassMatch(BluetoothClass.PROFILE_OPP));
+    }
+
+    @SmallTest
+    public void testInnerClasses() {
+        // Just instantiate static inner classes for exposing constants
+        // to make test coverage tool happy.
+        BluetoothClass.Device device = new BluetoothClass.Device();
+        BluetoothClass.Device.Major major = new BluetoothClass.Device.Major();
+        BluetoothClass.Service service = new BluetoothClass.Service();
     }
 }
