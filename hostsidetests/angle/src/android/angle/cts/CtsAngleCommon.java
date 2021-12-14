@@ -148,8 +148,18 @@ class CtsAngleCommon {
                 + " mode=3,useAngle=" + Boolean.toString(useAngle));
     }
 
+    static void setGameModeStandardConfig(ITestDevice device, String packageName, boolean useAngle)
+            throws Exception {
+        device.executeShellCommand("device_config put game_overlay " + packageName
+                + " mode=1,useAngle=" + Boolean.toString(useAngle));
+    }
+
     static void setGameModeBattery(ITestDevice device, String packageName) throws Exception {
         device.executeShellCommand("cmd game mode battery " + packageName);
+    }
+
+    static void setGameModeStandard(ITestDevice device, String packageName) throws Exception {
+        device.executeShellCommand("cmd game mode standard " + packageName);
     }
 
     /**
