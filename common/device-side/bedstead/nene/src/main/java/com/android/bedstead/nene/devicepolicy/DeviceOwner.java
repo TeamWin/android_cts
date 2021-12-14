@@ -66,7 +66,7 @@ public final class DeviceOwner extends DevicePolicyController {
 
     @Override
     public void remove() {
-        if (mPackage.appComponentFactory().equals(TEST_APP_APP_COMPONENT_FACTORY)) {
+        if (TEST_APP_APP_COMPONENT_FACTORY.equals(mPackage.appComponentFactory())) {
             // Special case for removing TestApp DPCs - this works even when not testOnly
             Intent intent = new Intent(ACTION_DISABLE_SELF);
             intent.setComponent(new ComponentName(pkg().packageName(),
