@@ -75,7 +75,7 @@ public final class ScreenCaptureDisabledTest {
     public void setUp() {
         mAdmin = sDeviceState.dpc().componentName();
         mDevicePolicyManager = sDeviceState.dpc().devicePolicyManager();
-        //TODO(b/198593716) : Use TestApi to take screnshot instead of UiAutomation.
+        //TODO(b/198593716) : Use TestApi to take screenshot instead of UiAutomation.
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mLocalDevicePolicyManager = ApplicationProvider.getApplicationContext().getSystemService(
                 DevicePolicyManager.class);

@@ -93,6 +93,7 @@ import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.remotedpc.RemoteDpcUsingParentInstance;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -149,6 +150,7 @@ public final class DeviceState implements TestRule {
     public static final String FOR_USER = "forUser";
     public static final String DPC_IS_PRIMARY = "dpcIsPrimary";
     public static final String AFFILIATION_IDS = "affiliationIds";
+    private static final String USE_PARENT_INSTANCE_OF_DPC = "useParentInstanceOfDpc";
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
@@ -279,10 +281,18 @@ public final class DeviceState implements TestRule {
                                 .getMethod(INSTALL_INSTRUMENTED_APP).invoke(annotation);
 
                 boolean dpcIsPrimary = false;
+                boolean useParentInstance = false;
                 if (ensureHasProfileAnnotation.hasProfileOwner()) {
                     dpcIsPrimary = (boolean)
                             annotation.annotationType()
                                     .getMethod(DPC_IS_PRIMARY).invoke(annotation);
+
+                    if (dpcIsPrimary) {
+                        useParentInstance = (boolean)
+                                annotation.annotationType()
+                                        .getMethod(USE_PARENT_INSTANCE_OF_DPC).invoke(annotation);
+
+                    }
                 }
 
                 OptionalBoolean switchedToParentUser = (OptionalBoolean)
@@ -292,7 +302,7 @@ public final class DeviceState implements TestRule {
                 ensureHasProfile(
                         ensureHasProfileAnnotation.value(), installInstrumentedApp,
                         forUser, ensureHasProfileAnnotation.hasProfileOwner(),
-                        dpcIsPrimary, switchedToParentUser);
+                        dpcIsPrimary, useParentInstance, switchedToParentUser);
                 continue;
             }
 
@@ -359,6 +369,7 @@ public final class DeviceState implements TestRule {
                 requireRunOnProfile(requireRunOnProfileAnnotation.value(),
                         installInstrumentedAppInParent,
                         requireRunOnProfileAnnotation.hasProfileOwner(),
+                        /* useParentInstance= */ false,
                         dpcIsPrimary, switchedToParentUser, affiliationIds);
                 continue;
             }
@@ -418,6 +429,7 @@ public final class DeviceState implements TestRule {
                         (EnsureHasProfileOwner) annotation;
                 ensureHasProfileOwner(ensureHasProfileOwnerAnnotation.onUser(),
                         ensureHasProfileOwnerAnnotation.isPrimary(),
+                        ensureHasProfileOwnerAnnotation.useParentInstance(),
                         new HashSet<>(Arrays.asList(ensureHasProfileOwnerAnnotation.affiliationIds())));
                 continue;
             }
@@ -783,7 +795,7 @@ public final class DeviceState implements TestRule {
 
     private void requireRunOnProfile(String userType,
             OptionalBoolean installInstrumentedAppInParent,
-            boolean hasProfileOwner, boolean dpcIsPrimary,
+            boolean hasProfileOwner, boolean dpcIsPrimary, boolean useParentInstance,
             OptionalBoolean switchedToParentUser, Set<String> affiliationIds) {
         UserReference instrumentedUser = TestApis.users().instrumented();
 
@@ -805,7 +817,8 @@ public final class DeviceState implements TestRule {
         }
 
         if (hasProfileOwner) {
-            ensureHasProfileOwner(instrumentedUser, dpcIsPrimary, affiliationIds);
+            ensureHasProfileOwner(
+                    instrumentedUser, dpcIsPrimary, useParentInstance, affiliationIds);
         } else {
             ensureHasNoProfileOwner(instrumentedUser);
         }
@@ -1167,6 +1180,7 @@ public final class DeviceState implements TestRule {
             UserType forUser,
             boolean hasProfileOwner,
             boolean profileOwnerIsPrimary,
+            boolean useParentInstance,
             OptionalBoolean switchedToParentUser) {
         com.android.bedstead.nene.users.UserType resolvedUserType =
                 requireUserSupported(profileType, FailureMode.SKIP);
@@ -1199,7 +1213,8 @@ public final class DeviceState implements TestRule {
         mProfiles.get(resolvedUserType).put(forUserReference, profile);
 
         if (hasProfileOwner) {
-            ensureHasProfileOwner(profile, profileOwnerIsPrimary, /* affiliationIds= */ null);
+            ensureHasProfileOwner(
+                    profile, profileOwnerIsPrimary, useParentInstance, /* affiliationIds= */ null);
         }
 
         ensureSwitchedToUser(switchedToParentUser, forUserReference);
@@ -1628,14 +1643,16 @@ public final class DeviceState implements TestRule {
                 .setAffiliationIds(REMOTE_DPC_COMPONENT_NAME, affiliationIds);
     }
 
-    private void ensureHasProfileOwner(UserType onUser, boolean isPrimary, Set<String> affiliationIds) {
+    private void ensureHasProfileOwner(UserType onUser, boolean isPrimary,
+            boolean useParentInstance, Set<String> affiliationIds) {
         // TODO(scottjonathan): Should support non-remotedpc profile owner (default to remotedpc)
         UserReference user = resolveUserTypeToUser(onUser);
-        ensureHasProfileOwner(user, isPrimary, affiliationIds);
+        ensureHasProfileOwner(user, isPrimary, useParentInstance, affiliationIds);
     }
 
     private void ensureHasProfileOwner(
-            UserReference user, boolean isPrimary, Set<String> affiliationIds) {
+            UserReference user, boolean isPrimary, boolean useParentInstance,
+            Set<String> affiliationIds) {
         if (isPrimary && mPrimaryPolicyManager != null
                 && !user.equals(mPrimaryPolicyManager.user())) {
             throw new IllegalStateException("Only one DPC can be marked as primary per test");
@@ -1667,7 +1684,14 @@ public final class DeviceState implements TestRule {
         }
 
         if (isPrimary) {
-            mPrimaryPolicyManager = RemoteDpc.forDevicePolicyController(mProfileOwners.get(user));
+            if (useParentInstance) {
+                mPrimaryPolicyManager = new RemoteDpcUsingParentInstance(
+                        RemoteDpc.forDevicePolicyController(
+                                mProfileOwners.get(user)).devicePolicyController());
+            } else {
+                mPrimaryPolicyManager =
+                        RemoteDpc.forDevicePolicyController(mProfileOwners.get(user));
+            }
         }
 
         if (affiliationIds != null) {
