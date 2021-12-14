@@ -31,3 +31,13 @@ java_library {
         "repackaged.android.test.runner",
     ],
 }
+
+
+// The CtsHiddenApiBlocklistApiDynamicConfig file is intended to be used by
+// multiple CtsHiddenApiBlocklist...TestCases.
+filegroup {
+    name: "CtsHiddenApiBlocklistApiDynamicConfig",
+    srcs: [
+      "CtsHiddenApiBlocklistApiDynamicConfig.dynamic",
+    ],
+}
