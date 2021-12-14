@@ -421,6 +421,9 @@ public class TunerTest {
                     case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_PARTIAL_RECEPTION_FLAG:
                         status.getIsdbtPartialReceptionFlag();
                         break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_STREAM_ID_LIST:
+                        status.getStreamIdList();
+                        break;
                 }
             }
             tuner.close();
@@ -706,11 +709,19 @@ public class TunerTest {
         if (f == null) return;
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
 
-        DownloadSettings settings =
-                DownloadSettings
-                        .builder(Filter.TYPE_MMTP)
-                        .setDownloadId(2)
-                        .build();
+        DownloadSettings.Builder builder = DownloadSettings.builder(Filter.TYPE_MMTP);
+        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            builder.setUseDownloadId(true);
+        }
+        builder.setDownloadId(2);
+        DownloadSettings settings = builder.build();
+        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(settings.useDownloadId(), true);
+        } else {
+            assertEquals(settings.useDownloadId(), false);
+        }
+        assertEquals(settings.getDownloadId(), 2);
+
         MmtpFilterConfiguration config =
                 MmtpFilterConfiguration
                         .builder()
@@ -1845,6 +1856,7 @@ public class TunerTest {
 
     private void testDownloadEvent(Filter filter, DownloadEvent e) {
         e.getItemId();
+        e.getDownloadId();
         e.getMpuSequenceNumber();
         e.getItemFragmentIndex();
         e.getLastItemFragmentIndex();
@@ -1867,6 +1879,8 @@ public class TunerTest {
         e.getStreamId();
         e.isPtsPresent();
         e.getPts();
+        e.isDtsPresent();
+        e.getDts();
         e.getDataLength();
         e.getOffset();
         e.getLinearBlock();
@@ -1916,7 +1930,8 @@ public class TunerTest {
         e.getTableId();
         e.getVersion();
         e.getSectionNumber();
-        long length = e.getDataLength();
+        e.getDataLength();
+        long length = e.getDataLengthLong();
         if (length > 0) {
             byte[] buffer = new byte[(int) length];
             assertNotEquals(0, filter.read(buffer, 0, length));
