@@ -16,13 +16,19 @@
 
 package android.telecom.cts;
 
+import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Connection;
+import android.telecom.DisconnectCause;
+import android.telecom.PhoneAccount;
+import android.telecom.PhoneAccountHandle;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.UUID;
 
 public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
 
@@ -37,16 +43,47 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Tests a scenario where an emergency call could fail due to the presence of invalid
+     * {@link PhoneAccount} data.
+     * The seed and quantity for {@link #generateRandomPhoneAccounts(long, int)} is chosen to
+     * represent a set of phone accounts which is known in AOSP to cause a failure placing an
+     * emergency call.  {@code 52L} was chosen as a random seed and {@code 50} was chosen as the
+     * set size for {@link PhoneAccount}s as these were observed in repeated test invocations to
+     * induce the failure method.
+     *
+     * @throws Exception
+     */
+    public void testEmergencyCallFailureDueToInvalidPhoneAccounts() throws Exception {
+        ArrayList<PhoneAccount> accounts = generateRandomPhoneAccounts(52L, 50);
+        accounts.stream().forEach(a -> mTelecomManager.registerPhoneAccount(a));
+        try {
+            assertTrue(mTelecomManager.getSelfManagedPhoneAccounts().size() >= 50);
+
+            // The existing start emergency call test is impacted if there is a failure due to
+            // excess phone accounts being present.
+            testStartEmergencyCall();
+        } finally {
+            accounts.stream().forEach(d -> mTelecomManager.unregisterPhoneAccount(
+                    d.getAccountHandle()));
+        }
+    }
+
+    /**
      * Place an outgoing emergency call and ensure it is started successfully.
      */
     public void testStartEmergencyCall() throws Exception {
         if (!mShouldTestTelecom) return;
-        placeAndVerifyEmergencyCall(true /*supportsHold*/);
+        Connection conn = placeAndVerifyEmergencyCall(true /*supportsHold*/);
         Call eCall = getInCallService().getLastCall();
         assertCallState(eCall, Call.STATE_DIALING);
 
         assertIsInCall(true);
         assertIsInManagedCall(true);
+        conn.setActive();
+        conn.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+        conn.destroy();
+        assertConnectionState(conn, Connection.STATE_DISCONNECTED);
+        assertIsInCall(false);
     }
 
     /**
@@ -147,4 +184,44 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         // Notify as missed instead of rejected, since the user did not explicitly reject.
         verifyCallLogging(normalIncomingCallNumber, CallLog.Calls.MISSED_TYPE);
     }
+
+    /**
+     * Generates random phone accounts.
+     * @param seed random seed to use for random UUIDs; passed in for determinism.
+     * @param count How many phone accounts to use.
+     * @return Random phone accounts.
+     */
+    private ArrayList<PhoneAccount> generateRandomPhoneAccounts(long seed, int count) {
+        Random random = new Random(seed);
+        ArrayList<PhoneAccount> accounts = new ArrayList<>();
+        for (int ix = 0 ; ix < count; ix++) {
+            ArrayList<String> supportedSchemes = new ArrayList<>();
+            supportedSchemes.add("tel");
+            supportedSchemes.add("sip");
+            supportedSchemes.add("custom");
+            PhoneAccountHandle handle = new PhoneAccountHandle(new ComponentName(TestUtils.PACKAGE,
+                    TestUtils.COMPONENT), getRandomUuid(random).toString());
+            PhoneAccount acct = new PhoneAccount.Builder(handle, "TelecommTests")
+                    .setAddress(Uri.fromParts("tel", "555-1212", null))
+                    .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+                    .setHighlightColor(0)
+                    .setShortDescription("test_" + ix)
+                    .setSupportedUriSchemes(supportedSchemes)
+                    .build();
+            accounts.add(acct);
+        }
+        return accounts;
+    }
+
+    /**
+     * Returns a random UUID based on the passed in Random generator.
+     * @param random Random generator.
+     * @return The UUID.
+     */
+    private UUID getRandomUuid(Random random) {
+        byte[] array = new byte[16];
+        random.nextBytes(array);
+        return UUID.nameUUIDFromBytes(array);
+    }
+
 }
