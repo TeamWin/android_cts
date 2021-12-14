@@ -61,5 +61,41 @@ android_test_helper_app {
     defaults: ["CtsProcessTest_default"],
 
     manifest: "AndroidManifest_helper1.xml",
+    additional_manifests: [
+        "AndroidManifest_helper.xml",
+    ],
     package_name: "android.os.cts.process.helper1",
+}
+
+android_test_helper_app {
+    name: "CtsProcessTestHelper2",
+    defaults: ["CtsProcessTest_default"],
+
+    manifest: "AndroidManifest_helper2.xml",
+    additional_manifests: [
+        "AndroidManifest_helper.xml",
+    ],
+    package_name: "android.os.cts.process.helper2",
+}
+
+android_test_helper_app {
+    name: "CtsProcessTestHelper3",
+    defaults: ["CtsProcessTest_default"],
+
+    manifest: "AndroidManifest_helper3.xml",
+    additional_manifests: [
+        "AndroidManifest_helper.xml",
+    ],
+    package_name: "android.os.cts.process.helper3",
+}
+
+android_test_helper_app {
+    name: "CtsProcessTestHelper4",
+    defaults: ["CtsProcessTest_default"],
+
+    manifest: "AndroidManifest_helper4.xml",
+    additional_manifests: [
+        "AndroidManifest_helper.xml",
+    ],
+    package_name: "android.os.cts.process.helper4",
 }

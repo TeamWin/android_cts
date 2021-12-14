@@ -16,5 +16,5 @@
 
 package android.os.cts.process.helper;
 
-public class MyReceiver extends BaseReceiver {
+public class MyReceiver3 extends BaseReceiver {
 }

@@ -18,10 +18,25 @@
     package="android.os.cts.process.helper" >
 
     <application>
-        <processes>
-            <process /> <!-- For the main process -->
-            <process android:process=":sub1" android:name=".Application1" />
-            <process android:process=":sub2"/>
-        </processes>
+        <receiver android:name=".MyReceiver0"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="ACTION_SEND_BACK_START_TIME" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".MyReceiver1"
+            android:exported="true"
+            android:process=":sub1">
+            <intent-filter>
+                <action android:name="ACTION_SEND_BACK_START_TIME" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".MyReceiver2"
+            android:exported="true"
+            android:process=":sub2">
+            <intent-filter>
+                <action android:name="ACTION_SEND_BACK_START_TIME" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

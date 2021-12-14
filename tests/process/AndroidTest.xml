@@ -25,6 +25,9 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsProcessTest.apk" />
         <option name="test-file-name" value="CtsProcessTestHelper1.apk" />
+        <option name="test-file-name" value="CtsProcessTestHelper2.apk" />
+        <option name="test-file-name" value="CtsProcessTestHelper3.apk" />
+        <option name="test-file-name" value="CtsProcessTestHelper4.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="am wait-for-broadcast-idle" />

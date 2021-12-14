@@ -17,11 +17,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.os.cts.process.helper" >
 
-    <application>
+    <application android:name=".Application1" >
         <processes>
             <process /> <!-- For the main process -->
-            <process android:process=":sub1" android:name=".Application1" />
-            <process android:process=":sub2"/>
+            <process android:process=":sub1" android:name=".Application1b" />
+            <process android:process=":sub2" android:name=".Application2b" />
         </processes>
     </application>
 </manifest>
