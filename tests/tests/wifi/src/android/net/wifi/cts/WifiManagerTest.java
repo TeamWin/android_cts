@@ -63,6 +63,7 @@ import android.net.wifi.WifiManager.SubsystemRestartTrackingCallback;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConnectionStatistics;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.net.wifi.WifiScanner;
 import android.net.wifi.WifiSsid;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
@@ -1144,6 +1145,38 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         try {
             mWifiManager.removeNonCallerConfiguredNetworks();
             fail("Expected security exception for non DO app");
+        } catch (SecurityException e) {
+        }
+    }
+
+    /**
+     * Verify setting the scan schedule.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testSetScreenOnScanSchedule() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setScreenOnScanSchedule(new int[] {20, 40}, new int[] {
+                        WifiScanner.SCAN_TYPE_HIGH_ACCURACY, WifiScanner.SCAN_TYPE_LOW_LATENCY}));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setScreenOnScanSchedule(null, null));
+    }
+
+    /**
+     * Verify a normal app cannot set the scan schedule.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testSetScreenOnScanScheduleNoPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        try {
+            mWifiManager.setScreenOnScanSchedule(null, null);
+            fail("A normal app should not be able to call this API.");
         } catch (SecurityException e) {
         }
     }
