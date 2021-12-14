@@ -17,6 +17,8 @@
 package android.media.tv.cts;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -34,14 +36,18 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.media.tv.TvInputManager.Hardware;
 import android.media.tv.TvInputManager.HardwareCallback;
+import android.media.tv.TvInputManager.Session;
+import android.media.tv.TvInputManager.SessionCallback;
 import android.media.tv.TvInputService;
 import android.media.tv.TvStreamConfig;
 import android.media.tv.TvView;
+import android.media.tv.tunerresourcemanager.TunerResourceManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.test.ActivityInstrumentationTestCase2;
 import android.tv.cts.R;
 
@@ -64,6 +70,7 @@ import org.xmlpull.v1.XmlPullParserException;
 public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewStubActivity> {
     /** The maximum time to wait for an operation. */
     private static final long TIME_OUT_MS = 15000L;
+    private static final int PRIORITY_HINT_USE_CASE_TYPE_INVALID = 1000;
 
     private static final int DUMMY_DEVICE_ID = Integer.MAX_VALUE;
     private static final String[] VALID_TV_INPUT_SERVICES = {
@@ -599,6 +606,61 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         }
     }
 
+    public void testGetClientPriority() {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+
+        // Use the test api to get priorities in tunerResourceManagerUseCaseConfig.xml
+        TunerResourceManager trm = (TunerResourceManager) getActivity()
+            .getSystemService(Context.TV_TUNER_RESOURCE_MGR_SERVICE);
+        int fgLivePriority = trm.getConfigPriority(TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE,
+                true);
+        int bgLivePriority = trm.getConfigPriority(TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE,
+                false);
+        int fgDefaultPriority = trm.getConfigPriority(PRIORITY_HINT_USE_CASE_TYPE_INVALID, true);
+        int bgDefaultPriority = trm.getConfigPriority(PRIORITY_HINT_USE_CASE_TYPE_INVALID, false);
+        boolean isForeground = checkIsForeground(android.os.Process.myPid());
+
+        int priority = mManager.getClientPriority(TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE,
+                null);
+        assertTrue(priority == (isForeground ? fgLivePriority : bgLivePriority));
+
+        priority = mManager.getClientPriority(
+                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
+                null);
+        assertTrue(priority == (isForeground ? fgDefaultPriority : bgDefaultPriority));
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        final SessionCallback sessionCallback = new SessionCallback();
+        mManager.createSession(mStubId, sessionCallback, handler);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> sessionCallback.getSession() != null);
+        Session session = sessionCallback.getSession();
+        String sessionId = StubTvInputService2.getSessionId();
+        assertNotNull(sessionId);
+
+        priority = mManager.getClientPriority(
+                TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE, sessionId /* valid sessionId */);
+        assertTrue(priority == (isForeground ? fgLivePriority : bgLivePriority));
+
+        priority = mManager.getClientPriority(
+                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
+                sessionId /* valid sessionId */);
+        assertTrue(priority == (isForeground ? fgDefaultPriority : fgDefaultPriority));
+
+        session.release();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> StubTvInputService2.getSessionId() == null);
+
+        priority = mManager.getClientPriority(
+                TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE, sessionId /* invalid sessionId */);
+        assertTrue(priority == bgLivePriority);
+
+        priority = mManager.getClientPriority(
+                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
+                sessionId /* invalid sessionId */);
+        assertTrue(priority == bgDefaultPriority);
+    }
+
     private static class LoggingCallback extends TvInputManager.TvInputCallback {
         private final List<String> mAddedInputs = new ArrayList<>();
         private final List<String> mRemovedInputs = new ArrayList<>();
@@ -649,9 +711,27 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public static class StubTvInputService2 extends StubTvInputService {
+        static String sTvInputSessionId;
+
+        public static String getSessionId() {
+            return sTvInputSessionId;
+        }
+
         @Override
-        public Session onCreateSession(String inputId) {
-            return null;
+        public Session onCreateSession(String inputId, String tvInputSessionId) {
+            sTvInputSessionId = tvInputSessionId;
+            return new StubSessionImpl2(this);
+        }
+
+        public static class StubSessionImpl2 extends StubTvInputService.StubSessionImpl {
+            StubSessionImpl2(Context context) {
+                super(context);
+            }
+
+            @Override
+            public void onRelease() {
+                sTvInputSessionId = null;
+            }
         }
     }
 
@@ -728,5 +808,34 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         public void execute(Runnable r) {
             r.run();
         }
+    }
+
+    private class SessionCallback extends TvInputManager.SessionCallback {
+        private TvInputManager.Session mSession;
+
+        public TvInputManager.Session getSession() {
+            return mSession;
+        }
+
+        @Override
+        public void onSessionCreated(TvInputManager.Session session) {
+            mSession = session;
+        }
+    }
+
+    private boolean checkIsForeground(int pid) {
+        ActivityManager am = (ActivityManager) getActivity()
+            .getSystemService(Context.ACTIVITY_SERVICE);
+        List<RunningAppProcessInfo> appProcesses = am.getRunningAppProcesses();
+        if (appProcesses == null) {
+            return false;
+        }
+        for (RunningAppProcessInfo appProcess : appProcesses) {
+            if (appProcess.pid == pid
+                    && appProcess.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                return true;
+            }
+        }
+        return false;
     }
 }
