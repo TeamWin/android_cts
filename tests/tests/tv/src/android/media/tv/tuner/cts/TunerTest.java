@@ -1827,6 +1827,14 @@ public class TunerTest {
         f = null;
     }
 
+    @Test
+    public void testFilterDataSizeDelay() throws Exception {
+        Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
+        assertEquals(Tuner.RESULT_SUCCESS, f.delayCallbackUntilBufferFilled(5000));
+        f.close();
+    }
+
+
     public static Filter createTsSectionFilter(
             Tuner tuner, Executor e, FilterCallback cb) {
         Filter f = tuner.openFilter(Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, e, cb);
