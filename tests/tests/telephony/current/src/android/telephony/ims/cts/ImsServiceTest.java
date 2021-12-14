@@ -1266,6 +1266,7 @@ public class ImsServiceTest {
         } finally {
             automan.dropShellPermissionIdentity();
         }
+        publishStateQueue.clear();
 
         // ImsService triggers to notify framework publish updated.
         eventListener.onPublishUpdated(200, "", 0, "");
@@ -1387,6 +1388,7 @@ public class ImsServiceTest {
         // Verify that the publish is triggered and receive the publish state changed callback.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
         assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
@@ -1407,6 +1409,7 @@ public class ImsServiceTest {
         assertTrue("PIDF XML doesn't contain FT service-id",
                 containsFileTransferServiceId);
 
+        publishStateQueue.clear();
         // ImsService triggers to notify framework publish updated.
         eventListener.onPublishUpdated(400, "", 0, "");
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR,
@@ -1595,6 +1598,7 @@ public class ImsServiceTest {
         // Verify the ImsService receive the publish request from framework.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
         assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
@@ -1732,9 +1736,11 @@ public class ImsServiceTest {
         // Verify that ImsService received the first PUBLISH
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
         assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
+
         try {
             automation.adoptShellPermissionIdentity();
             int publishState = uceAdapter.getUcePublishState();
@@ -2011,6 +2017,10 @@ public class ImsServiceTest {
         eventListener.onRequestPublishCapabilities(
                 RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
 
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
         try {
             // Verify the publish state callback is received.
             assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
@@ -2095,14 +2105,22 @@ public class ImsServiceTest {
         // Notify framework to send the PUBLISH request to the ImsService.
         eventListener.onRequestPublishCapabilities(
                 RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
 
+        // Verify the publish state callback is received.
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
+                waitForIntResult(publishStateQueue));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
         try {
             // Verify the value of getting from the API is PUBLISH_STATE_RCS_PROVISION_ERROR
             automation.adoptShellPermissionIdentity();
             int publishState = uceAdapter.getUcePublishState();
             assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR, publishState);
         } finally {
-            publishStateQueue.clear();
             automation.dropShellPermissionIdentity();
         }
 
@@ -2176,7 +2194,6 @@ public class ImsServiceTest {
         } finally {
             automan.dropShellPermissionIdentity();
         }
-
         // Verify receiving the publish state callback immediately after registering the callback.
         assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
                 waitForIntResult(publishStateQueue));
@@ -2222,15 +2239,6 @@ public class ImsServiceTest {
         eventListener.onRequestPublishCapabilities(
                 RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
 
-        // Verify the value of getting from the API is NOT_PUBLISHED
-        try {
-            automan.adoptShellPermissionIdentity();
-            int publishState = uceAdapter.getUcePublishState();
-            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED, publishState);
-        } finally {
-            automan.dropShellPermissionIdentity();
-        }
-
         // Verify ImsService receive the publish request from framework.
         // Sending Publish means that notifyPendingPublicRequest() has been processed.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
@@ -2257,9 +2265,10 @@ public class ImsServiceTest {
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
 
-        if (publishStateQueue.poll() != null) {
-            fail("The publish callback should not be called because the state is not changed");
-        }
+        // Since framework compatibility is disabled, the newly added publishing state should
+        // not be set and should be set to PUBLISH_STATE_OK
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
         // Verify the value of getting from the API is PUBLISH_STATE_OK
         try {
             automan.adoptShellPermissionIdentity();
@@ -2275,6 +2284,15 @@ public class ImsServiceTest {
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR,
                 waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
+
+        // Verify the value of getting from the API is PUBLISH_STATE_OTHER_ERROR
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
 
         // ImsService triggers to notify framework publish device's capabilities.
         eventListener.onRequestPublishCapabilities(
