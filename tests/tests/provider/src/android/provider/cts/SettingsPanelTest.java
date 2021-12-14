@@ -99,6 +99,7 @@ public class SettingsPanelTest {
 
     @Test
     public void internetDialog_correctPackage() {
+        assumeTrue(mHasTouchScreen);
         launchInternetDialog();
 
         String currentPackage = mDevice.getCurrentPackageName();
