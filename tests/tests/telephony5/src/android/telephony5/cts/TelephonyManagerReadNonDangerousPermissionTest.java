@@ -59,11 +59,6 @@ public class TelephonyManagerReadNonDangerousPermissionTest {
         }
 
         try {
-            if (mTelephonyManager.getDataNetworkType() == TelephonyManager.NETWORK_TYPE_UNKNOWN
-                || mTelephonyManager.getVoiceNetworkType()
-                    == TelephonyManager.NETWORK_TYPE_UNKNOWN) {
-                fail("should not fail with READ_BASIC_PHONE_STATE");
-            }
             mTelephonyManager.isDataEnabled();
             mTelephonyManager.isDataRoamingEnabled();
             mTelephonyManager.isDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_POLICY);
