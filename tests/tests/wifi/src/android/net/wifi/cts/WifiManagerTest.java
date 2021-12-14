@@ -1215,6 +1215,36 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify {@link WifiManager#getPrivilegedConnectedNetwork()} returns the currently
+     * connected WifiConfiguration with randomized MAC address filtered out.
+     */
+    public void testGetPrivilegedConnectedNetworkSuccess() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        setWifiEnabled(true);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.startScan();
+            waitForConnection(); // ensures that there is at-least 1 saved network on the device.
+
+            WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+            int curNetworkId = wifiInfo.getNetworkId();
+            assertNotEquals("Should be connected to valid networkId", INVALID_NETWORK_ID,
+                    curNetworkId);
+            WifiConfiguration curConfig = mWifiManager.getPrivilegedConnectedNetwork();
+            assertEquals("NetworkId should match", curNetworkId, curConfig.networkId);
+            assertEquals("SSID should match", wifiInfo.getSSID(), curConfig.SSID);
+            assertEquals("Randomized MAC should be filtered out", WifiInfo.DEFAULT_MAC_ADDRESS,
+                    curConfig.getRandomizedMacAddress().toString());
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Verify {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} works properly when the
      * calling app has permissions.
      */
@@ -3999,6 +4029,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Now trigger scan and ensure that the device does not connect to any networks.
             mWifiManager.startScan();
             ensureNotConnected();
+
+            // verify null is returned when attempting to get current configured network.
+            WifiConfiguration config = mWifiManager.getPrivilegedConnectedNetwork();
+            assertNull("config should be null because wifi is not connected", config);
 
             // Now enable autojoin on all networks.
             mWifiManager.allowAutojoinGlobal(true);
