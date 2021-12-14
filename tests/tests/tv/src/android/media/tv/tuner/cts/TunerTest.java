@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
@@ -123,6 +124,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -167,6 +169,7 @@ public class TunerTest {
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             mBlockingQueue.offer(service);
         }
+
         @Override
         public void onServiceDisconnected(ComponentName componentName){}
 
@@ -174,6 +177,86 @@ public class TunerTest {
             final IBinder service =
                     mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC, TimeUnit.SECONDS);
             return ITunerResourceTestServer.Stub.asInterface(service);
+        }
+    }
+
+    private class TunerTestOnTuneEventListener implements OnTuneEventListener {
+        public static final int INVALID_TUNE_EVENT = -1;
+        private static final int SLEEP_TIME_MS = 100;
+        private static final int TIMEOUT_MS = 500;
+        private final ReentrantLock mLock = new ReentrantLock();
+        private final ConditionVariable mCV = new ConditionVariable();
+        private int mLastTuneEvent = INVALID_TUNE_EVENT;
+
+        @Override
+        public void onTuneEvent(int tuneEvent) {
+            synchronized (mLock) {
+                mLastTuneEvent = tuneEvent;
+                mCV.open();
+            }
+        }
+
+        public void resetLastTuneEvent() {
+            synchronized (mLock) {
+                mLastTuneEvent = INVALID_TUNE_EVENT;
+            }
+        }
+
+        public int getLastTuneEvent() {
+            try {
+                // yield to let the callback handling execute
+                Thread.sleep(SLEEP_TIME_MS);
+            } catch (Exception e) {
+                // ignore exception
+            }
+            synchronized (mLock) {
+                mCV.block(TIMEOUT_MS);
+                mCV.close();
+                return mLastTuneEvent;
+            }
+        }
+    }
+
+    private class TunerTestLnbCallback implements LnbCallback {
+        public static final int INVALID_LNB_EVENT = -1;
+        private static final int SLEEP_TIME_MS = 100;
+        private static final int TIMEOUT_MS = 500;
+        private final ReentrantLock mDMLock = new ReentrantLock();
+        private final ConditionVariable mDMCV = new ConditionVariable();
+        private boolean mOnDiseqcMessageCalled = false;
+
+        // will not test this as there is no good way to trigger this
+        @Override
+        public void onEvent(int lnbEventType) {}
+
+        // will test this instead
+        @Override
+        public void onDiseqcMessage(byte[] diseqcMessage) {
+            synchronized (mDMLock) {
+                mOnDiseqcMessageCalled = true;
+                mDMCV.open();
+            }
+        }
+
+        public void resetOnDiseqcMessageCalled() {
+            synchronized (mDMLock) {
+                mOnDiseqcMessageCalled = false;
+            }
+        }
+
+        public boolean getOnDiseqcMessageCalled() {
+            try {
+                // yield to let the callback handling execute
+                Thread.sleep(SLEEP_TIME_MS);
+            } catch (Exception e) {
+                // ignore exception
+            }
+
+            synchronized (mDMLock) {
+                mDMCV.block(TIMEOUT_MS);
+                mDMCV.close();
+                return mOnDiseqcMessageCalled;
+            }
         }
     }
 
@@ -438,6 +521,57 @@ public class TunerTest {
                 lnb.setSatellitePosition(Lnb.POSITION_A), Tuner.RESULT_SUCCESS);
         lnb.sendDiseqcMessage(new byte[] {1, 2});
         lnb.close();
+    }
+
+    @Test
+    public void testLnbAddAndRemoveCallback() throws Exception {
+        TunerTestLnbCallback lnbCB1 = new TunerTestLnbCallback();
+        Lnb lnb = mTuner.openLnb(getExecutor(), lnbCB1);
+        if (lnb == null) {
+            return;
+        }
+
+        assertEquals(lnb.setVoltage(Lnb.VOLTAGE_5V), Tuner.RESULT_SUCCESS);
+        assertEquals(lnb.setTone(Lnb.TONE_NONE), Tuner.RESULT_SUCCESS);
+        assertEquals(
+                lnb.setSatellitePosition(Lnb.POSITION_A), Tuner.RESULT_SUCCESS);
+        lnb.sendDiseqcMessage(new byte[] {1, 2});
+        assertTrue(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+        int res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // create sharee
+        Tuner sharee = new Tuner(mContext, null, 100);
+        sharee.shareFrontendFromTuner(mTuner);
+        TunerTestLnbCallback lnbCB2 = new TunerTestLnbCallback();
+
+        // add it as sharee
+        lnb.addCallback(lnbCB2, getExecutor());
+
+        // check callback
+        lnb.sendDiseqcMessage(new byte[] {1, 2});
+        assertTrue(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+        assertTrue(lnbCB2.getOnDiseqcMessageCalled());
+        lnbCB2.resetOnDiseqcMessageCalled();
+
+        // remove sharee the sharee (should succeed)
+        assertTrue(lnb.removeCallback(lnbCB2));
+
+        // check callback (only the original owner gets callback
+        lnb.sendDiseqcMessage(new byte[] {1, 2});
+        assertTrue(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+        assertFalse(lnbCB2.getOnDiseqcMessageCalled());
+        lnbCB2.resetOnDiseqcMessageCalled();
+
+        sharee.close();
     }
 
     @Test
@@ -1055,10 +1189,20 @@ public class TunerTest {
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
 
+        // setup onTuneCallback
+        TunerTestOnTuneEventListener cb100 = new TunerTestOnTuneEventListener();
+        TunerTestOnTuneEventListener cb200 = new TunerTestOnTuneEventListener();
+
         // tune again on the owner
         info = tuner200.getFrontendInfoById(ids.get(1));
+        tuner100.setOnTuneEventListener(getExecutor(), cb100);
+        tuner200.setOnTuneEventListener(getExecutor(), cb200);
         res = tuner200.tune(feSettings);
         assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertEquals(OnTuneEventListener.SIGNAL_LOCKED, cb100.getLastTuneEvent());
+        assertEquals(OnTuneEventListener.SIGNAL_LOCKED, cb200.getLastTuneEvent());
+        tuner100.clearOnTuneEventListener();
+        tuner200.clearOnTuneEventListener();
 
         // now let the higher priority tuner steal the resource
         Tuner tuner300 = new Tuner(mContext, null, 300);
@@ -1109,6 +1253,207 @@ public class TunerTest {
         tuner100.close();
         tuner200.close();
         tuner300.close();
+    }
+
+    private void testTransferFeOwnershipSingleTuner() {
+        List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) {
+            return;
+        }
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // SCENARIO 1 - transfer and close the previous owner
+
+        // First create a tuner and tune() to acquire frontend resource
+        Tuner tunerA = new Tuner(mContext, null, 100);
+        int res = tunerA.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // Create another tuner and share frontend from tunerA
+        Tuner tunerB = new Tuner(mContext, null, 500);
+        tunerB.shareFrontendFromTuner(tunerA);
+        DvrRecorder d = tunerB.openDvrRecorder(100, getExecutor(), getRecordListener());
+        assertNotNull(d);
+
+        // Call transferOwner in the wrong configurations and confirm it fails
+        assertEquals(Tuner.RESULT_INVALID_STATE, tunerB.transferOwner(tunerA));
+        Tuner nonSharee = new Tuner(mContext, null, 300);
+        assertEquals(Tuner.RESULT_INVALID_STATE, tunerA.transferOwner(nonSharee));
+        nonSharee.close();
+
+        // Now call it correctly to transfer ownership from tunerA to tunerB
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.transferOwner(tunerB));
+
+        // Close the original owner (tunerA)
+        tunerA.close();
+
+        // Confirm the new owner (tunerB) is still functional
+        assertNotNull(tunerB.getFrontendInfo());
+
+        // Close the new owner (tunerB)
+        d.close();
+        tunerB.close();
+
+        // SCENARIO 2 - transfer and closeFrontend and tune on the previous owner
+
+        // First create a tuner and tune() to acquire frontend resource
+        tunerA = new Tuner(mContext, null, 200);
+        res = tunerA.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // Create another tuner and share frontend from tunerA
+        tunerB = new Tuner(mContext, null, 100);
+        tunerB.shareFrontendFromTuner(tunerA);
+        assertNotNull(tunerB.getFrontendInfo());
+
+        // Transfer ownership from tunerA to tunerB
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.transferOwner(tunerB));
+
+        // Close frontend for the original owner (tunerA)
+        tunerA.closeFrontend();
+
+        // Confirm tune works without going through Tuner.close() even after transferOwner()
+        // The purpose isn't to get tunerB's frontend revoked, but doing so as singletuner
+        // based test has wider coverage
+        res = tunerA.tune(feSettings); // this should reclaim tunerB
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        // Confirm tuberB is revoked
+        assertNull(tunerB.getFrontendInfo());
+
+        // Close tunerA
+        tunerA.close();
+
+        // close TunerB just in case
+        tunerB.close();
+    }
+
+    private void testTransferFeAndCiCamOwnership() {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertNotNull(ids);
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // Create tuner and tune to get frontend resource
+        Tuner tunerA = new Tuner(mContext, null, 100);
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.tune(feSettings));
+
+        int ciCamId = 0;
+        boolean linkCiCamToFrontendSupported = false;
+
+        // connect CiCam to Frontend
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            // TODO: get real CiCam id from MediaCas
+            assertEquals(Tuner.RESULT_SUCCESS, tunerA.connectFrontendToCiCam(ciCamId));
+            linkCiCamToFrontendSupported = true;
+        } else {
+            assertEquals(Tuner.INVALID_LTS_ID, tunerA.connectFrontendToCiCam(ciCamId));
+        }
+
+        // connect CiCam to Demux
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.connectCiCam(ciCamId));
+
+        // start another tuner and connect the same CiCam to its own demux
+        Tuner tunerB = new Tuner(mContext, null, 400);
+        tunerB.shareFrontendFromTuner(tunerA);
+        assertNotNull(tunerB.getFrontendInfo());
+        assertEquals(Tuner.RESULT_SUCCESS, tunerB.connectCiCam(ciCamId));
+
+        // unlink CiCam to Demux in tunerA and transfer ownership
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.disconnectCiCam());
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.transferOwner(tunerB));
+
+        // close the original owner
+        tunerA.close();
+
+        // disconnect CiCam from demux
+        assertEquals(Tuner.RESULT_SUCCESS, tunerB.disconnectCiCam());
+
+        // let Tuner.close() handle the release of CiCam
+        tunerB.close();
+
+        // now that the CiCam is released, disconnectFrontendToCiCam() should fail
+        assertEquals(Tuner.RESULT_UNAVAILABLE, tunerB.disconnectFrontendToCiCam(ciCamId));
+
+        // see if tune still works just in case
+        tunerA = new Tuner(mContext, null, 100);
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.tune(feSettings));
+        tunerA.close();
+    }
+
+    private void testTransferFeAndLnbOwnership() {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertNotNull(ids);
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+
+        // Create tuner and tune to acquire frontend resource
+        Tuner tunerA = new Tuner(mContext, null, 100);
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.tune(feSettings));
+
+        // Open Lnb and check the callback
+        TunerTestLnbCallback lnbCB1 = new TunerTestLnbCallback();
+        Lnb lnbA = tunerA.openLnb(getExecutor(), lnbCB1);
+        assertNotNull(lnbA);
+        lnbA.setVoltage(Lnb.VOLTAGE_5V);
+        lnbA.setTone(Lnb.TONE_CONTINUOUS);
+        lnbA.sendDiseqcMessage(new byte[] {1, 2});
+        assertTrue(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+
+        // Create another tuner and share from tunerB
+        Tuner tunerB = new Tuner(mContext, null, 300);
+        tunerB.shareFrontendFromTuner(tunerA);
+
+        // add sharee and check the callback
+        TunerTestLnbCallback lnbCB2 = new TunerTestLnbCallback();
+        lnbA.addCallback(lnbCB2, getExecutor());
+        lnbA.sendDiseqcMessage(new byte[] {1, 2});
+        assertTrue(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+        assertTrue(lnbCB2.getOnDiseqcMessageCalled());
+        lnbCB2.resetOnDiseqcMessageCalled();
+
+        // transfer owner and check callback
+        assertEquals(Tuner.RESULT_SUCCESS, tunerA.transferOwner(tunerB));
+        lnbA.sendDiseqcMessage(new byte[] {1, 2});
+        assertTrue(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+        assertTrue(lnbCB2.getOnDiseqcMessageCalled());
+        lnbCB2.resetOnDiseqcMessageCalled();
+
+        // remove the owner callback (just for testing)
+        assertTrue(lnbA.removeCallback(lnbCB2));
+
+        // remove sharee and check callback
+        assertTrue(lnbA.removeCallback(lnbCB1));
+        lnbA.sendDiseqcMessage(new byte[] {1, 2});
+        assertFalse(lnbCB1.getOnDiseqcMessageCalled());
+        lnbCB1.resetOnDiseqcMessageCalled();
+        assertFalse(lnbCB2.getOnDiseqcMessageCalled());
+        lnbCB2.resetOnDiseqcMessageCalled();
+
+        // close the original owner
+        tunerA.close();
+
+        // confirm the new owner is still intact
+        int[] statusCapabilities = info.getStatusCapabilities();
+        assertNotNull(statusCapabilities);
+        FrontendStatus status = tunerB.getFrontendStatus(statusCapabilities);
+        assertNotNull(status);
+
+        tunerB.close();
+    }
+
+    @Test
+    public void testTransferOwner() throws Exception {
+        testTransferFeOwnershipSingleTuner();
+        testTransferFeAndCiCamOwnership();
+        testTransferFeAndLnbOwnership();
     }
 
     @Test
@@ -1168,6 +1513,73 @@ public class TunerTest {
         FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
         assertNotNull(status);
 
+    }
+
+    @Test
+    public void testCloseFrontend() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) {
+            return;
+        }
+
+        // SCENARIO 1 - without Lnb
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        FrontendSettings feSettings = createFrontendSettings(info);
+        int res = mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+
+        // now close frontend
+        mTuner.closeFrontend();
+
+        // confirm frontend is closed
+        int[] statusCapabilities = info.getStatusCapabilities();
+        boolean frontendClosed = false;
+        try {
+            mTuner.getFrontendStatus(statusCapabilities);
+
+        } catch (IllegalStateException e) {
+            frontendClosed = true;
+        }
+        assertTrue(frontendClosed);
+
+        // now tune to a different setting
+        info = mTuner.getFrontendInfoById(ids.get(1));
+        feSettings = createFrontendSettings(info);
+        mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+        FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
+        assertNotNull(status);
+
+        // SCENARIO 2 - with Lnb
+
+        TunerTestLnbCallback lnbCB1 = new TunerTestLnbCallback();
+        Lnb lnb = mTuner.openLnb(getExecutor(), lnbCB1);
+        if (lnb == null) {
+            return;
+        }
+
+        mTuner.closeFrontend();
+        // confirm frontend is closed
+        statusCapabilities = info.getStatusCapabilities();
+        frontendClosed = false;
+        try {
+            mTuner.getFrontendStatus(statusCapabilities);
+
+        } catch (IllegalStateException e) {
+            frontendClosed = true;
+        }
+        assertTrue(frontendClosed);
+
+        info = mTuner.getFrontendInfoById(ids.get(0));
+        feSettings = createFrontendSettings(info);
+        mTuner.tune(feSettings);
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(mTuner.getFrontendInfo());
+        status = mTuner.getFrontendStatus(statusCapabilities);
+        assertNotNull(status);
     }
 
     @Test
