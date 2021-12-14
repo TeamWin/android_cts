@@ -37,7 +37,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources.NotFoundException;
@@ -1081,7 +1080,7 @@ public class ContextTest extends AndroidTestCase {
     }
 
     public void testCreatePackageContext() throws PackageManager.NameNotFoundException {
-        Context actualContext = mContext.createPackageContext(getValidPackageName(),
+        Context actualContext = mContext.createPackageContext("com.android.shell",
                 Context.CONTEXT_IGNORE_SECURITY);
 
         assertNotNull(actualContext);
@@ -1093,7 +1092,7 @@ public class ContextTest extends AndroidTestCase {
                 UserHandle.ALL, UserHandle.CURRENT, UserHandle.SYSTEM
         }) {
             assertEquals(user, mContext
-                    .createPackageContextAsUser(getValidPackageName(), 0, user).getUser());
+                    .createPackageContextAsUser("com.android.shell", 0, user).getUser());
         }
     }
 
@@ -1104,16 +1103,6 @@ public class ContextTest extends AndroidTestCase {
         }) {
             assertEquals(user, mContext.createContextAsUser(user, 0).getUser());
         }
-    }
-
-    /**
-     * Helper method to retrieve a valid application package name to use for tests.
-     */
-    protected String getValidPackageName() {
-        List<PackageInfo> packages = mContext.getPackageManager().getInstalledPackages(
-                PackageManager.GET_ACTIVITIES);
-        assertTrue(packages.size() >= 1);
-        return packages.get(0).packageName;
     }
 
     public void testGetMainLooper() {
