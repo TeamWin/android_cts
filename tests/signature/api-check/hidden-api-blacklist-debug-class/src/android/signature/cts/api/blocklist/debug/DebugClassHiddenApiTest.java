@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package android.signature.cts.api;
+package android.signature.cts.api.blocklist.debug;
 
 import android.signature.cts.DexMemberChecker;
+import android.signature.cts.api.dynamic.DynamicConfigHiddenApiTest;
 
-public class DebugClassHiddenApiTest extends HiddenApiTest {
+public class DebugClassHiddenApiTest extends DynamicConfigHiddenApiTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
