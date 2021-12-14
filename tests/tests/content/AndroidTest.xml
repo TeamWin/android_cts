@@ -43,6 +43,7 @@
         <option name="push" value="CtsContentMaxSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentMaxSharedUserIdTestApp.apk" />
         <option name="push" value="CtsContentMockLauncherTestApp.apk->/data/local/tmp/cts/content/CtsContentMockLauncherTestApp.apk" />
         <option name="push" value="CtsContentLongLabelNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongLabelNameTestApp.apk" />
+        <option name="push" value="CtsSyncAccountAccessStubs.apk->/data/local/tmp/cts/content/CtsSyncAccountAccessStubs.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
