@@ -18,6 +18,7 @@ package android.location.cts.fine;
 
 import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.location.LocationManager.EXTRA_PROVIDER_ENABLED;
 import static android.location.LocationManager.EXTRA_PROVIDER_NAME;
 import static android.location.LocationManager.FUSED_PROVIDER;
@@ -264,8 +265,6 @@ public class LocationManagerFineTest {
 
     @Test
     public void testGetCurrentLocation_Timeout() throws Exception {
-        Location loc = createLocation(TEST_PROVIDER, mRandom);
-
         try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
             mManager.getCurrentLocation(
                     TEST_PROVIDER,
@@ -665,8 +664,9 @@ public class LocationManagerFineTest {
 
     @Test
     public void testRequestLocationUpdates_BatterySaver_GpsDisabledScreenOff() throws Exception {
-        // battery saver is unsupported on auto
+        // battery saver is unsupported on auto and tv
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEVISION));
 
         PowerManager powerManager = Objects.requireNonNull(
                 mContext.getSystemService(PowerManager.class));
@@ -725,8 +725,9 @@ public class LocationManagerFineTest {
 
     @Test
     public void testRequestLocationUpdates_BatterySaver_AllDisabledScreenOff() throws Exception {
-        // battery saver is unsupported on auto
+        // battery saver is unsupported on auto and tv
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEVISION));
 
         PowerManager powerManager = Objects.requireNonNull(
                 mContext.getSystemService(PowerManager.class));
@@ -766,8 +767,9 @@ public class LocationManagerFineTest {
 
     @Test
     public void testRequestLocationUpdates_BatterySaver_ThrottleScreenOff() throws Exception {
-        // battery saver is unsupported on auto
+        // battery saver is unsupported on auto and tv
         assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_TELEVISION));
 
         PowerManager powerManager = Objects.requireNonNull(
                 mContext.getSystemService(PowerManager.class));
@@ -1007,7 +1009,7 @@ public class LocationManagerFineTest {
 
     @Test
     public void testRequestFlush_Gnss() throws Exception {
-        assumeTrue(mManager.getAllProviders().contains(GPS_PROVIDER));
+        assumeTrue(mManager.hasProvider(GPS_PROVIDER));
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(GPS_PROVIDER, 0, 0,

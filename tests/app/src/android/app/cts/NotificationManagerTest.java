@@ -119,6 +119,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
@@ -4255,6 +4256,7 @@ public class NotificationManagerTest extends AndroidTestCase {
      * This method verifies that an app can't bypass background restrictions by retrieving their own
      * notification and triggering it.
      */
+    @AsbSecurityTest(cveBugId = 185388103)
     public void testActivityStartFromRetrievedNotification_isBlocked() throws Exception {
         deactivateGracePeriod();
         EventCallback callback = new EventCallback();

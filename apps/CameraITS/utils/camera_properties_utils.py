@@ -737,7 +737,7 @@ def post_raw_sensitivity_boost(props):
     Boolean. True if android.control.postRawSensitivityBoost is supported.
   """
   return (
-      'android.control.postRawSensitivityBoostRange' in props.keys() and
+      'android.control.postRawSensitivityBoostRange' in props['camera.characteristics.keys'] and
       props.get('android.control.postRawSensitivityBoostRange') != [100, 100])
 
 

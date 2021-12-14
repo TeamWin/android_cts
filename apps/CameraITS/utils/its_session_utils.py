@@ -1093,25 +1093,24 @@ class ItsSession(object):
                                       ' support')
     return data['strValue'] == 'true'
 
-  def is_performance_class_primary_camera(self):
+  def get_performance_class_level(self):
     """Query whether the camera device is an R or S performance class primary camera.
 
     A primary rear/front facing camera is a camera device with the lowest
     camera Id for that facing.
 
     Returns:
-      Boolean
+      Performance class level in integer. R: 11. S: 12.
     """
     cmd = {}
-    cmd['cmdName'] = 'isPerformanceClassPrimaryCamera'
+    cmd['cmdName'] = 'getPerformanceClassLevel'
     cmd['cameraId'] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
     data, _ = self.__read_response_from_socket()
-    if data['tag'] != 'performanceClassPrimaryCamera':
-      raise error_util.CameraItsError('Failed to query performance class '
-                                      'primary camera')
-    return data['strValue'] == 'true'
+    if data['tag'] != 'performanceClassLevel':
+      raise error_util.CameraItsError('Failed to query performance class level')
+    return int(data['strValue'])
 
   def measure_camera_launch_ms(self):
     """Measure camera launch latency in millisecond, from open to first frame.

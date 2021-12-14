@@ -601,15 +601,19 @@
         <activity android:name=".HideOverlayWindowsActivity" android:exported="true"/>
         <activity android:name=".BackgroundImageActivity"
              android:theme="@style/BackgroundImage"
+             android:colorMode="wideColorGamut"
              android:exported="true"/>
         <activity android:name=".BlurActivity"
              android:exported="true"
+             android:colorMode="wideColorGamut"
              android:theme="@style/TranslucentDialog"/>
         <activity android:name=".BlurAttributesActivity"
              android:exported="true"
+             android:colorMode="wideColorGamut"
              android:theme="@style/BlurryDialog"/>
         <activity android:name=".BadBlurActivity"
              android:exported="true"
+             android:colorMode="wideColorGamut"
              android:theme="@style/BadBlurryDialog"/>
 
         <!-- Splash Screen Test Activities -->

@@ -280,6 +280,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
     public void testSimpleBiometricAuth_nonConvenience() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
 
             Log.d(TAG, "testSimpleBiometricAuth, sensor: " + props.getSensorId());
 
@@ -389,6 +392,10 @@ public class BiometricSimpleTests extends BiometricTestBase {
     public void testBiometricCancellation() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties props : mSensorProperties) {
+            if (props.getSensorStrength() == SensorProperties.STRENGTH_CONVENIENCE) {
+                continue;
+            }
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(props.getSensorId())) {
                 enrollForSensor(session, props.getSensorId());

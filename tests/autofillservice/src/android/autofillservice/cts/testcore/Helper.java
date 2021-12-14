@@ -906,6 +906,11 @@ public final class Helper {
             Log.v(TAG, "isRotationSupported(): is PC");
             return false;
         }
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
+                || !packageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)) {
+            Log.v(TAG, "isRotationSupported(): no screen orientation feature");
+            return false;
+        }
         return true;
     }
 
