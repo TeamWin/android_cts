@@ -87,8 +87,6 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY =
             component(SupportsSizeChangesPortraitActivity.class);
 
-    // Fixed orientation min aspect ratio
-    private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
     // The min aspect ratio of NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY (as defined in the manifest).
     private static final float ACTIVITY_MIN_ASPECT_RATIO = 1.6f;
     // The min aspect ratio of NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY (as defined in the
@@ -110,8 +108,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
         mDisplayMetricsSession =
                 createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
-        createManagedLetterboxAspectRatioSession(DEFAULT_DISPLAY,
-                FIXED_ORIENTATION_MIN_ASPECT_RATIO);
+        createManagedIgnoreOrientationRequestSession(DEFAULT_DISPLAY, /* value=  */ true);
         createManagedConstrainDisplayApisFlagsSession();
     }
 
