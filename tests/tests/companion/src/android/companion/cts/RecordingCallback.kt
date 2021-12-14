@@ -23,6 +23,7 @@ import android.companion.cts.RecordingCallback.CallbackMethod.OnAssociationPendi
 import android.companion.cts.RecordingCallback.CallbackMethod.OnDeviceFound
 import android.companion.cts.RecordingCallback.CallbackMethod.OnFailure
 import android.content.IntentSender
+import android.util.Log
 
 class RecordingCallback : CompanionDeviceManager.Callback() {
     private val _invocations: MutableList<CallbackMethodInvocation<*>> = mutableListOf()
@@ -31,22 +32,20 @@ class RecordingCallback : CompanionDeviceManager.Callback() {
 
     override fun onDeviceFound(intentSender: IntentSender) {
         recordInvocation(OnDeviceFound, intentSender)
-        super.onDeviceFound(intentSender)
     }
 
     override fun onAssociationPending(intentSender: IntentSender) {
         recordInvocation(OnAssociationPending, intentSender)
-        super.onAssociationPending(intentSender)
     }
 
     override fun onAssociationCreated(associationInfo: AssociationInfo) {
         recordInvocation(OnAssociationCreated, associationInfo)
-        super.onAssociationCreated(associationInfo)
     }
 
     override fun onFailure(error: CharSequence?) = recordInvocation(OnFailure, error)
 
     private fun recordInvocation(method: CallbackMethod, param: Any? = null) {
+        Log.d(TAG, "Callback.$method(), param=$param")
         _invocations.add(CallbackMethodInvocation(method, param))
     }
 
