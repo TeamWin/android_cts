@@ -45,6 +45,7 @@ import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
 import android.os.Build;
+import android.os.ParcelUuid;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
@@ -92,6 +93,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     private static final int TEST_PRIORITY = 5;
     private static final int TEST_PRIORITY_GROUP = 1;
     private static final int TEST_SUB_ID = 1;
+    private static final ParcelUuid GROUP_UUID = ParcelUuid
+            .fromString("0000110B-0000-1000-8000-00805F9B34FB");
 
     private static boolean sWasVerboseLoggingEnabled;
     private static boolean sWasScanThrottleEnabled;
@@ -989,6 +992,20 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         assertEquals(enterpriseConfig.getEapMethod(),
                 suggestion.getEnterpriseConfig().getEapMethod());
         assertNull(suggestion.getPasspointConfig());
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class, with SubscriptionGroup
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
+    public void testBuilderWithSubscriptionGroup() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                new WifiNetworkSuggestion.Builder()
+                        .setSsid(TEST_SSID)
+                        .setSubscriptionGroup(GROUP_UUID)
+                        .build();
+        assertEquals(GROUP_UUID, suggestion.getSubscriptionGroup());
     }
 
     /**
