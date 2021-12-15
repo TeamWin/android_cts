@@ -17,8 +17,12 @@
 package com.android.cts.verifier.bluetooth;
 
 import android.bluetooth.BluetoothAdapter;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 import com.android.cts.verifier.ManifestTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
@@ -77,6 +81,11 @@ public class BluetoothTestActivity extends PassFailButtons.TestListActivity {
                   "com.android.cts.verifier.bluetooth.BleCocSecureServerTestListActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleCocInsecureServerTestListActivity");
+        }
+        if (this.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+            && PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.R){
+            disabledTestArray.add(
+                    "com.android.cts.verifier.bluetooth.BleSecureClientTestListActivity");
         }
         setTestListAdapter(new ManifestTestListAdapter(this, getClass().getName(),
                 disabledTestArray.toArray(new String[disabledTestArray.size()])));
