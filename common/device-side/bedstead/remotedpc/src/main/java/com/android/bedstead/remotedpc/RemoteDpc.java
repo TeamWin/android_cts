@@ -35,7 +35,7 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppProvider;
 
 /** Entry point to RemoteDPC. */
-public final class RemoteDpc extends RemotePolicyManager {
+public class RemoteDpc extends RemotePolicyManager {
 
     public static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
             "com.android.RemoteDPC",
@@ -231,7 +231,7 @@ public final class RemoteDpc extends RemotePolicyManager {
 
     private final DevicePolicyController mDevicePolicyController;
 
-    private RemoteDpc(DevicePolicyController devicePolicyController) {
+    RemoteDpc(DevicePolicyController devicePolicyController) {
         super(sTestApp, devicePolicyController == null ? null : devicePolicyController.user());
         mDevicePolicyController = devicePolicyController;
     }

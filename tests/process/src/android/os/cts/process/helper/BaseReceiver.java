@@ -18,8 +18,6 @@ package android.os.cts.process.helper;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Process;
-import android.os.SystemClock;
 import android.os.cts.process.common.Consts;
 import android.os.cts.process.common.Message;
 import android.util.Log;
@@ -37,18 +35,12 @@ public class BaseReceiver extends BroadcastReceiver {
         }
     }
 
-    private static void sendBackStartTime(Context context) {
+    private void sendBackStartTime(Context context) {
         Message m = new Message();
 
-        m.processName = Process.myProcessName();
+        m.fillInBasicInfo(context);
 
-        m.nowElapsedRealtime = SystemClock.elapsedRealtime();
-        m.nowUptimeMillis = SystemClock.uptimeMillis();
-
-        m.startElapsedRealtime = Process.getStartElapsedRealtime();
-        m.startUptimeMillis = Process.getStartUptimeMillis();
-        m.startRequestedElapsedRealtime = Process.getStartRequestedElapsedRealtime();
-        m.startRequestedUptimeMillis = Process.getStartRequestedUptimeMillis();
+        m.receiverClassName = this.getClass().getCanonicalName();
 
         BroadcastMessenger.send(context, Consts.TAG, m);
     }

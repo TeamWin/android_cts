@@ -969,9 +969,12 @@ public final class Processor extends AbstractProcessor {
             if (signatureReturnOverrides.containsKey(signature)) {
                 methodBuilder.returns(signatureReturnOverrides.get(signature));
                 methodBuilder.addStatement(
-                        "return new $TImpl($L.$L($L))",
+                        "$TImpl ret = new $TImpl($L.$L($L))",
+                        signatureReturnOverrides.get(signature),
                         signatureReturnOverrides.get(signature), frameworkClassName,
                         method.getSimpleName(), String.join(", ", paramNames));
+                // We assume all replacements are null-only
+                methodBuilder.addStatement("return null");
             } else if (method.getReturnType().getKind().equals(TypeKind.VOID)) {
                 methodBuilder.addStatement(
                         "$L.$L($L)",

@@ -813,6 +813,136 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
      }
 
+    /**
+     * Checks that one of the message from the {@code primaryMessages} is broadcasted from target
+     * device before sending any of the messages from the {@code secondaryMessages} on the
+     * cec-client communication channel within default time.
+     *
+     * @param primaryMessages   list of CEC messages out of which at least one is expected from the
+     *                          target device.
+     * @param secondaryMessages list of CEC messages that are not expected before primary messages
+     *                          to be sent from the target device.
+     * @return the first line that contains any of the primaryMessages.
+     * If none of the {@code primaryMessages} are found or if any of the {@code secondaryMessages}
+     * are found, exception is thrown.
+     */
+    public String checkMessagesInOrder(
+            List<CecOperand> primaryMessages,
+            List<String> secondaryMessages)
+            throws CecClientWrapperException {
+        return checkMessagesInOrder(LogicalAddress.BROADCAST, primaryMessages, secondaryMessages);
+    }
+
+    /**
+     * Checks that one of the message from the {@code primaryMessages} is sent from target
+     * device to destination before sending any of the messages from the {@code secondaryMessages}
+     * on the cec-client communication channel within default time.
+     *
+     * @param destination       logical address of the destination device.
+     * @param primaryMessages   list of CEC messages out of which at least one is expected from the
+     *                          target device.
+     * @param secondaryMessages list of CEC messages that are not expected before primary messages
+     *                          to be sent from the target device.
+     * @return the first line that contains any of the primaryMessages.
+     * If none of the {@code primaryMessages} are found or if any of the {@code secondaryMessages}
+     * are found, exception is thrown.
+     */
+    public String checkMessagesInOrder(
+            LogicalAddress destination,
+            List<CecOperand> primaryMessages,
+            List<String> secondaryMessages)
+            throws CecClientWrapperException {
+        return checkMessagesInOrder(
+                destination, primaryMessages, secondaryMessages, DEFAULT_TIMEOUT);
+    }
+
+    /**
+     * Checks that one of the message from the {@code primaryMessages} is sent from target
+     * device to destination before sending any of the messages from the {@code secondaryMessages}
+     * on the cec-client communication channel within give time.
+     *
+     * @param destination       logical address of the destination device.
+     * @param primaryMessages   list of CEC messages out of which at least one is expected from the
+     *                          target device.
+     * @param secondaryMessages list of CEC messages that are not expected before primary messages
+     *                          to be sent from the target device.
+     * @param timeoutMillis     timeout to monitor CEC messages from source device.
+     * @return the first line that contains any of the primaryMessages.
+     * If none of the {@code primaryMessages} are found or if any of the {@code secondaryMessages}
+     * are found, exception is thrown.
+     */
+    public String checkMessagesInOrder(
+            LogicalAddress destination,
+            List<CecOperand> primaryMessages,
+            List<String> secondaryMessages,
+            long timeoutMillis)
+            throws CecClientWrapperException {
+        return checkMessagesInOrder(
+                targetDevice, destination, primaryMessages, secondaryMessages, timeoutMillis);
+    }
+
+    /**
+     * Checks that one of the message from the {@code primaryMessages} is sent from source device to
+     * destination before sending any of the messages from the {@code secondaryMessages}
+     * on the cec-client communication channel within give time.
+     *
+     * @param source            logical address of the source device.
+     * @param destination       logical address of the destination device.
+     * @param primaryMessages   list of CEC messages out of which at least one is expected from the
+     *                          target device.
+     * @param secondaryMessages list of CEC messages that are not expected before primary messages
+     *                          to be sent from the target device.
+     * @param timeoutMillis     timeout to monitor CEC messages from source device.
+     * @return the first line that contains any of the primaryMessages.
+     * If none of the {@code primaryMessages} are found or if any of the {@code secondaryMessages}
+     * are found, exception is thrown.
+     */
+    public String checkMessagesInOrder(
+            LogicalAddress source,
+            LogicalAddress destination,
+            List<CecOperand> primaryMessages,
+            List<String> secondaryMessages,
+            long timeoutMillis)
+            throws CecClientWrapperException {
+        checkCecClient();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        Pattern pattern = Pattern.compile("(.*>>)(.*?)"
+                        + "(" + source + destination + "):"
+                        + "(.*)",
+                Pattern.CASE_INSENSITIVE);
+
+        while ((endTime - startTime <= timeoutMillis)) {
+            try {
+                if (mInputConsole.ready()) {
+                    String line = mInputConsole.readLine();
+                    if (pattern.matcher(line).matches()) {
+                        CecOperand operand = CecMessage.getOperand(line);
+                        String params = CecMessage.getParamsAsString(line);
+                        // Check for secondary messages. If found, throw an exception.
+                        for (String secondaryMessage : secondaryMessages) {
+                            if (line.contains(secondaryMessage)) {
+                                throw new CecClientWrapperException(ErrorCodes.CecMessageFound,
+                                        operand.name() + " to " + destination + " with params "
+                                                + CecMessage.getParamsAsString(line));
+                            }
+                        }
+                        // Check for the primary messages.
+                        if (primaryMessages.contains(operand)) {
+                            CLog.v("Found " + operand.name() + " in " + line);
+                            return line;
+                        }
+                    }
+                }
+            } catch (IOException ioe) {
+                throw new CecClientWrapperException(ErrorCodes.ReadConsole, ioe);
+            }
+            endTime = System.currentTimeMillis();
+        }
+        throw new CecClientWrapperException(
+                ErrorCodes.CecMessageNotFound, primaryMessages.toString());
+    }
+
     /** Returns the device type that the cec-client has started as. */
     public LogicalAddress getSelfDevice() {
         return selfDevice;

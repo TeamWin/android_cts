@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.server.wm.UiDeviceUtils.pressUnlockButton;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_BOUNDS;
@@ -32,12 +34,14 @@ import static org.junit.Assert.assertNull;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
 import android.view.Gravity;
 import android.view.SurfaceControl;
@@ -63,6 +67,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -97,10 +102,17 @@ public class DisplayHashManagerTest {
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        Context context = mInstrumentation.getContext();
+        final Context context = mInstrumentation.getContext();
+        final KeyguardManager km = context.getSystemService(KeyguardManager.class);
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClass(context, TestActivity.class);
         mActivity = mActivityRule.getActivity();
+
+        if (km != null && km.isKeyguardLocked() || !Objects.requireNonNull(
+                context.getSystemService(PowerManager.class)).isInteractive()) {
+            pressWakeupButton();
+            pressUnlockButton();
+        }
 
         mActivity.runOnUiThread(() -> {
             mMainView = new RelativeLayout(mActivity);

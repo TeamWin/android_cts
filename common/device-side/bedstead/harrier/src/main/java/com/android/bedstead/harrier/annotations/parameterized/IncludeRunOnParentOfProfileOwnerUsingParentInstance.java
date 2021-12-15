@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
+package com.android.bedstead.harrier.annotations.parameterized;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
 
-import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,25 +30,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should be run using GMS Instrumentation for certain versions.
- *
- * <p>This will apply {@link RequireSdkVersion} to ensure that on the given versions, this test
- * only runs when the instrumented package is `com.google.android.gms`. It will also skip the test
- * if it is run with gms instrumentation on a version which does not require it.
- *
- * <p>This allows for two test configurations to be set up, one which instruments GMS and one
- * which does not - and both pointed at the same test sources.
- *
- * <p>Your test configuration may be configured so that this test is only run on a device with the
- * given state. Otherwise, you can use {@link DeviceState} to ensure that the test is
- * not run when the sdk version is not correct.
+ * Parameterize a test so that it runs on the parent of a profile owner and .dpc() relates to the
+ * parent instance of the dpc in the profile.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireGmsInstrumentation {
-    int min() default 1;
-    int max() default Integer.MAX_VALUE;
-
+@ParameterizedAnnotation
+@RequireRunOnPrimaryUser
+@EnsureHasNoDeviceOwner
+@EnsureHasWorkProfile(dpcIsPrimary = true, useParentInstanceOfDpc = true)
+public @interface IncludeRunOnParentOfProfileOwnerUsingParentInstance {
     /**
      * Weight sets the order that annotations will be resolved.
      *
@@ -55,5 +50,5 @@ public @interface RequireGmsInstrumentation {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default EARLY;
+    int weight() default LATE;
 }

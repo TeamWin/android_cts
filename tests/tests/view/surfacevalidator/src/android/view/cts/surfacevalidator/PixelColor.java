@@ -24,8 +24,7 @@ public class PixelColor {
     public static final int MAGENTA = 0xFFFF00FF;
     public static final int WHITE = 0xFFFFFFFF;
 
-    public static final int TRANSPARENT_RED = 0x7F0000FF;
-    public static final int TRANSPARENT_BLUE = 0x7FFF0000;
+    public static final int TRANSLUCENT_RED = 0x7F0000FF;
     public static final int TRANSPARENT = 0x00000000;
 
     // Default to black

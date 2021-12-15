@@ -426,4 +426,9 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         checkDeviceAsleep();
         wakeUpDevice();
     }
+
+    public void sendOtp() throws Exception {
+        ITestDevice device = getDevice();
+        device.executeShellCommand("cmd hdmi_control onetouchplay");
+    }
 }

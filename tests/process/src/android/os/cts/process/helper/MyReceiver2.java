@@ -16,8 +16,5 @@
 
 package android.os.cts.process.helper;
 
-/**
- * Broadacst receiver that runs on a secondary process.
- */
 public class MyReceiver2 extends BaseReceiver {
 }

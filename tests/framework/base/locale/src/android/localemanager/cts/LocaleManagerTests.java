@@ -226,6 +226,52 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testSetApplicationLocales_resetToEmptyLocales_persistsAndSendsBroadcast()
+            throws Exception {
+        // First set the locales to non-empty
+        mLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+        assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
+        mCallingAppBroadcastReceiver.await();
+        assertReceivedBroadcastContains(mCallingAppBroadcastReceiver,
+                CALLING_PACKAGE, DEFAULT_APP_LOCALES);
+        mCallingAppBroadcastReceiver.reset();
+
+        mLocaleManager.setApplicationLocales(LocaleList.getEmptyLocaleList());
+
+        assertLocalesCorrectlySetForCallingApp(LocaleList.getEmptyLocaleList());
+        mCallingAppBroadcastReceiver.await();
+        assertReceivedBroadcastContains(mCallingAppBroadcastReceiver,
+                CALLING_PACKAGE, LocaleList.getEmptyLocaleList());
+    }
+
+    @Test
+    public void testSetApplicationLocales_sameLocalesEmpty_noBroadcastSent() throws Exception {
+        // At the start of the test, no app-specific locales are set, so just try to set it to
+        //   empty again
+        mLocaleManager.setApplicationLocales(LocaleList.getEmptyLocaleList());
+
+        assertLocalesCorrectlySetForCallingApp(LocaleList.getEmptyLocaleList());
+        mCallingAppBroadcastReceiver.assertNoBroadcastReceived();
+    }
+
+    @Test
+    public void testSetApplicationLocales_sameLocalesNonEmpty_noBroadcastSent() throws Exception {
+        // First set the locales to non-empty
+        mLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+        assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
+        mCallingAppBroadcastReceiver.await();
+        assertReceivedBroadcastContains(mCallingAppBroadcastReceiver,
+                CALLING_PACKAGE, DEFAULT_APP_LOCALES);
+        mCallingAppBroadcastReceiver.reset();
+
+        // Then reset to the same app-specific locales, and verify no broadcasts are sent
+        mLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+
+        assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
+        mCallingAppBroadcastReceiver.assertNoBroadcastReceived();
+    }
+
+    @Test
     public void testSetApplicationLocales_getDefaultLocaleList_returnsCorrectList()
             throws Exception {
         // Fetch the current system locales when there are no app-locales set.

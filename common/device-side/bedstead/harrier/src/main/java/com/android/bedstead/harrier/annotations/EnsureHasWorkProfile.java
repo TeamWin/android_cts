@@ -21,6 +21,9 @@ import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
@@ -59,6 +62,14 @@ public @interface EnsureHasWorkProfile {
      * <p>Only one device policy controller per test should be marked as primary.
      */
     boolean dpcIsPrimary() default false;
+
+    /**
+     * If true, uses the {@link DevicePolicyManager#getParentProfileInstance(ComponentName)}
+     * instance of the dpc when calling to .dpc()
+     *
+     * <p>Only used if {@link #dpcIsPrimary()} is true.
+     */
+    boolean useParentInstanceOfDpc() default false;
 
     /**
      * Should we ensure that we are switched to the parent of the profile.

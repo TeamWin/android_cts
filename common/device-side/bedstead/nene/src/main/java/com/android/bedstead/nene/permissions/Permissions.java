@@ -250,7 +250,7 @@ public final class Permissions {
 
         Set<String> adoptedShellPermissions = new HashSet<>();
         for (String permission : grantedPermissions) {
-            checkCanGrantOnAllSupportedVersions(permission, sUser);
+            checkCanGrantOnAllSupportedVersions(permission);
 
             Log.d(LOG_TAG, "Trying to grant " + permission);
             if (sInstrumentedPackage.hasPermission(sUser, permission)) {
@@ -269,7 +269,7 @@ public final class Permissions {
                 removePermissionContextsUntilCanApply();
 
                 throwPermissionException("PermissionContext requires granting "
-                        + permission + " but cannot.", permission, sUser);
+                        + permission + " but cannot.", permission);
             }
         }
 
@@ -284,7 +284,7 @@ public final class Permissions {
             } else { // We can't deny a permission to ourselves
                 removePermissionContextsUntilCanApply();
                 throwPermissionException("PermissionContext requires denying "
-                        + permission + " but cannot.", permission, sUser);
+                        + permission + " but cannot.", permission);
             }
         }
 
@@ -296,7 +296,7 @@ public final class Permissions {
     }
 
     private void checkCanGrantOnAllSupportedVersions(
-            String permission, UserReference user) {
+            String permission) {
         if (sCheckedGrantPermissions.contains(permission)) {
             return;
         }
@@ -310,7 +310,7 @@ public final class Permissions {
                             + "possible add it to"
                             + "com.android.bedstead.nene.permissions"
                             + ".Permissions#EXEMPT_SHELL_PERMISSIONS",
-                    permission, user);
+                    permission);
         }
 
         sCheckedGrantPermissions.add(permission);
@@ -325,8 +325,11 @@ public final class Permissions {
         sCheckedDenyPermissions.add(permission);
     }
 
-    private void throwPermissionException(
-            String message, String permission, UserReference user) {
+    /**
+     * Throw an exception including permission contextual information.
+     */
+    public void throwPermissionException(
+            String message, String permission) {
         String protectionLevel = "Permission not found";
         try {
             protectionLevel = Integer.toString(sPackageManager.getPermissionInfo(
@@ -335,7 +338,7 @@ public final class Permissions {
             Log.e(LOG_TAG, "Permission not found", e);
         }
 
-        throw new NeneException(message + "\n\nRunning On User: " + user
+        throw new NeneException(message + "\n\nRunning On User: " + sUser
                 + "\nPermission: " + permission
                 + "\nPermission protection level: " + protectionLevel
                 + "\nPermission state: " + sContext.checkSelfPermission(permission)
@@ -351,6 +354,13 @@ public final class Permissions {
     void clearPermissions() {
         mPermissionContexts.clear();
         applyPermissions();
+    }
+
+    /**
+     * Returns all of the permissions which can be adopted.
+     */
+    public Set<String> adoptablePermissions() {
+        return mShellPermissions;
     }
 
     /**
