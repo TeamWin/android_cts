@@ -35,7 +35,9 @@
             android:exported="true" />
 
         <!-- Dialer -->
-        <activity android:name=".DialerDialActivity">
+        <activity
+            android:name=".DialerDialActivity"
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL" />
                 <category android:name="android.intent.category.DEFAULT"/>
