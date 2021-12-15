@@ -62,7 +62,7 @@ public class ASurfaceControlTestActivity extends Activity {
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
     private static final int OFFSET_X = 100;
     private static final int OFFSET_Y = 100;
-    private static final long WAIT_TIMEOUT_S = 5;
+    public static final long WAIT_TIMEOUT_S = 5;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private volatile boolean mOnWatch;
@@ -118,6 +118,20 @@ public class ASurfaceControlTestActivity extends Activity {
 
     public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
             PixelChecker pixelChecker, TestName name) {
+        final CountDownLatch readyFence = new CountDownLatch(1);
+        SurfaceHolderCallback surfaceHolderCallbackWrapper = new SurfaceHolderCallback(
+                surfaceHolderCallback,
+                readyFence, mParent.getViewTreeObserver());
+        createSurface(surfaceHolderCallbackWrapper);
+        try {
+            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            Assert.fail("interrupted");
+        }
+        verifyScreenshot(pixelChecker, name);
+    }
+
+    public void createSurface(SurfaceHolderCallback surfaceHolderCallback) {
         try {
             mReadyToStart.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -133,18 +147,13 @@ public class ASurfaceControlTestActivity extends Activity {
             return;
         }
 
-        final CountDownLatch readyFence = new CountDownLatch(1);
         mHandler.post(() -> {
-            mSurfaceView.getHolder().addCallback(new SurfaceHolderCallback(surfaceHolderCallback,
-                    readyFence, mParent.getViewTreeObserver()));
+            mSurfaceView.getHolder().addCallback(surfaceHolderCallback);
             mParent.addView(mSurfaceView, mLayoutParams);
         });
-        try {
-            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            Assert.fail("interrupted");
-        }
+    }
 
+    public void verifyScreenshot(PixelChecker pixelChecker, TestName name) {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
         mHandler.post(() -> {
@@ -178,6 +187,10 @@ public class ASurfaceControlTestActivity extends Activity {
 
     public SurfaceView getSurfaceView() {
         return mSurfaceView;
+    }
+
+    public FrameLayout getParentFrameLayout() {
+        return mParent;
     }
 
     public abstract static class MultiRectChecker extends RectChecker {
@@ -283,12 +296,12 @@ public class ASurfaceControlTestActivity extends Activity {
         }
     }
 
-    private static class SurfaceHolderCallback implements SurfaceHolder.Callback {
+    public static class SurfaceHolderCallback implements SurfaceHolder.Callback {
         private final SurfaceHolder.Callback mTestCallback;
         private final CountDownLatch mSurfaceCreatedLatch;
         private final ViewTreeObserver mViewTreeObserver;
 
-        SurfaceHolderCallback(SurfaceHolder.Callback callback, CountDownLatch readyFence,
+        public SurfaceHolderCallback(SurfaceHolder.Callback callback, CountDownLatch readyFence,
                 ViewTreeObserver viewTreeObserver) {
             mTestCallback = callback;
             mSurfaceCreatedLatch = readyFence;
