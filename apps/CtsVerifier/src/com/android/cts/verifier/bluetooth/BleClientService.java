@@ -116,6 +116,8 @@ public class BleClientService extends Service {
             "com.android.cts.verifier.bluetooth.BLE_RELIABLE_WRITE_BAD_RESP_COMPLETED";
     public static final String BLE_READ_REMOTE_RSSI =
             "com.android.cts.verifier.bluetooth.BLE_READ_REMOTE_RSSI";
+    public static final String BLE_PHY_READ =
+            "com.android.cts.verifier.bluetooth.BLE_PHY_READ";
     public static final String BLE_ON_SERVICE_CHANGED =
             "com.android.cts.verifier.bluetooth.BLE_ON_SERVICE_CHANGED";
     public static final String BLE_CHARACTERISTIC_READ_NOPERMISSION =
@@ -174,6 +176,8 @@ public class BleClientService extends Service {
             "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_WRITE_DESCRIPTOR";
     public static final String BLE_CLIENT_ACTION_READ_RSSI =
             "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_READ_RSSI";
+    public static final String BLE_CLIENT_ACTION_READ_PHY =
+            "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_READ_PHY";
     public static final String BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED =
             "com.android.cts.verifier.bluetooth.BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED";
     public static final String BLE_CLIENT_ACTION_CLIENT_DISCONNECT =
@@ -201,6 +205,10 @@ public class BleClientService extends Service {
             "com.android.cts.verifier.bluetooth.EXTRA_DESCRIPTOR_VALUE";
     public static final String EXTRA_RSSI_VALUE =
             "com.android.cts.verifier.bluetooth.EXTRA_RSSI_VALUE";
+    public static final String EXTRA_TX_PHY_VALUE =
+            "com.android.cts.verifier.bluetooth.EXTRA_TX_PHY_VALUE";
+    public static final String EXTRA_RX_PHY_VALUE =
+            "com.android.cts.verifier.bluetooth.EXTRA_RX_PHY_VALUE";
     public static final String EXTRA_ERROR_MESSAGE =
             "com.android.cts.verifier.bluetooth.EXTRA_ERROR_MESSAGE";
 
@@ -479,6 +487,11 @@ public class BleClientService extends Service {
                     break;
                 case BLE_CLIENT_ACTION_WRITE_AUTHENTICATED_DESCRIPTOR:
                     writeDescriptor(CHARACTERISTIC_RESULT_UUID, DESCRIPTOR_NEED_ENCRYPTED_WRITE_UUID, WRITE_VALUE);
+                    break;
+                case BLE_CLIENT_ACTION_READ_PHY:
+                    if (mBluetoothGatt != null) {
+                        mBluetoothGatt.readPhy();
+                    }
                     break;
                 case BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED:
                     initializeServiceChangedEvent();
@@ -832,6 +845,14 @@ public class BleClientService extends Service {
         showMessage("Remote rssi read: " + rssi);
         Intent intent = new Intent(BLE_READ_REMOTE_RSSI);
         intent.putExtra(EXTRA_RSSI_VALUE, rssi);
+        sendBroadcast(intent);
+    }
+
+    private void notifyPhyRead(int txPhy, int rxPhy) {
+        showMessage("Phy read: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
+        Intent intent = new Intent(BLE_PHY_READ);
+        intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
+        intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
         sendBroadcast(intent);
     }
 
@@ -1280,6 +1301,19 @@ public class BleClientService extends Service {
                 notifyReadRemoteRssi(rssi);
             } else {
                 notifyError("Failed to read remote rssi");
+            }
+        }
+
+        @Override
+        public void onPhyRead(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+            super.onPhyRead(gatt, txPhy, rxPhy, status);
+            if (DEBUG) {
+                Log.d(TAG, "onPhyRead");
+            }
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                notifyPhyRead(txPhy, rxPhy);
+            } else {
+                notifyError("Failed to read phy");
             }
         }
 
