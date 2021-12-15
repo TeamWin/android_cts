@@ -50,23 +50,23 @@ public final class RemoteControlPassthrough {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_UP, false);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_UP, false);
         LogHelper.assertLog(device, CLASS, "Short press KEYCODE_DPAD_UP");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_DOWN, false);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_DOWN, false);
         LogHelper.assertLog(device, CLASS, "Short press KEYCODE_DPAD_DOWN");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_LEFT, false);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_LEFT, false);
         LogHelper.assertLog(device, CLASS, "Short press KEYCODE_DPAD_LEFT");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_RIGHT, false);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_RIGHT, false);
         LogHelper.assertLog(device, CLASS, "Short press KEYCODE_DPAD_RIGHT");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_SELECT, false);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_SELECT, false);
         LogHelper.assertLog(
                 device, CLASS, "Short press KEYCODE_DPAD_CENTER", "Short press KEYCODE_ENTER");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_BACK, false);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_BACK, false);
         LogHelper.assertLog(device, CLASS, "Short press KEYCODE_BACK");
     }
 
@@ -87,23 +87,23 @@ public final class RemoteControlPassthrough {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_UP, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_UP, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_UP");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_DOWN, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_DOWN, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_DOWN");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_LEFT, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_LEFT, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_LEFT");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_RIGHT, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_RIGHT, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_RIGHT");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_SELECT, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_SELECT, true);
         LogHelper.assertLog(
                 device, CLASS, "Long press KEYCODE_DPAD_CENTER", "Long press KEYCODE_ENTER");
         hdmiCecClient.sendUserControlPressAndRelease(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_BACK, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_BACK, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_BACK");
     }
 
@@ -124,22 +124,22 @@ public final class RemoteControlPassthrough {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
         hdmiCecClient.sendUserControlPress(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_UP, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_UP, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_UP");
         hdmiCecClient.sendUserControlPress(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_DOWN, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_DOWN, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_DOWN");
         hdmiCecClient.sendUserControlPress(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_LEFT, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_LEFT, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_LEFT");
         hdmiCecClient.sendUserControlPress(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_RIGHT, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_RIGHT, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_RIGHT");
         hdmiCecClient.sendUserControlPress(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_SELECT, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_SELECT, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_CENTER");
         hdmiCecClient.sendUserControlPress(
-                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_CONTROL_BACK, true);
+                sourceDevice, dutLogicalAddress, HdmiCecConstants.CEC_KEYCODE_BACK, true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_BACK");
     }
 
@@ -163,43 +163,43 @@ public final class RemoteControlPassthrough {
         hdmiCecClient.sendUserControlInterruptedPressAndHold(
                 sourceDevice,
                 dutLogicalAddress,
-                HdmiCecConstants.CEC_CONTROL_UP,
-                HdmiCecConstants.CEC_CONTROL_BACK,
+                HdmiCecConstants.CEC_KEYCODE_UP,
+                HdmiCecConstants.CEC_KEYCODE_BACK,
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_UP");
         hdmiCecClient.sendUserControlInterruptedPressAndHold(
                 sourceDevice,
                 dutLogicalAddress,
-                HdmiCecConstants.CEC_CONTROL_DOWN,
-                HdmiCecConstants.CEC_CONTROL_UP,
+                HdmiCecConstants.CEC_KEYCODE_DOWN,
+                HdmiCecConstants.CEC_KEYCODE_UP,
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_DOWN");
         hdmiCecClient.sendUserControlInterruptedPressAndHold(
                 sourceDevice,
                 dutLogicalAddress,
-                HdmiCecConstants.CEC_CONTROL_LEFT,
-                HdmiCecConstants.CEC_CONTROL_DOWN,
+                HdmiCecConstants.CEC_KEYCODE_LEFT,
+                HdmiCecConstants.CEC_KEYCODE_DOWN,
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_LEFT");
         hdmiCecClient.sendUserControlInterruptedPressAndHold(
                 sourceDevice,
                 dutLogicalAddress,
-                HdmiCecConstants.CEC_CONTROL_RIGHT,
-                HdmiCecConstants.CEC_CONTROL_LEFT,
+                HdmiCecConstants.CEC_KEYCODE_RIGHT,
+                HdmiCecConstants.CEC_KEYCODE_LEFT,
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_RIGHT");
         hdmiCecClient.sendUserControlInterruptedPressAndHold(
                 sourceDevice,
                 dutLogicalAddress,
-                HdmiCecConstants.CEC_CONTROL_SELECT,
-                HdmiCecConstants.CEC_CONTROL_RIGHT,
+                HdmiCecConstants.CEC_KEYCODE_SELECT,
+                HdmiCecConstants.CEC_KEYCODE_RIGHT,
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_DPAD_CENTER");
         hdmiCecClient.sendUserControlInterruptedPressAndHold(
                 sourceDevice,
                 dutLogicalAddress,
-                HdmiCecConstants.CEC_CONTROL_BACK,
-                HdmiCecConstants.CEC_CONTROL_SELECT,
+                HdmiCecConstants.CEC_KEYCODE_BACK,
+                HdmiCecConstants.CEC_KEYCODE_SELECT,
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_BACK");
     }

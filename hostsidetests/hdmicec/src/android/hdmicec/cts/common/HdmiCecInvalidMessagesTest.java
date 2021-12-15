@@ -180,7 +180,7 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
         hdmiCecClient.sendUserControlPressAndRelease(
-                source, LogicalAddress.BROADCAST, HdmiCecConstants.CEC_CONTROL_UP, false);
+                source, LogicalAddress.BROADCAST, HdmiCecConstants.CEC_KEYCODE_UP, false);
         LogHelper.assertLogDoesNotContain(getDevice(), CLASS, "Short press KEYCODE_DPAD_UP");
     }
 

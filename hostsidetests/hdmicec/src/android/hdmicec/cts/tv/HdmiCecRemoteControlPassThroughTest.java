@@ -151,10 +151,10 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     }
 
     private void mapRemoteControlKeys() {
-        remoteControlKeys.put("DPAD_UP", HdmiCecConstants.CEC_CONTROL_UP);
-        remoteControlKeys.put("DPAD_DOWN", HdmiCecConstants.CEC_CONTROL_DOWN);
-        remoteControlKeys.put("DPAD_LEFT", HdmiCecConstants.CEC_CONTROL_LEFT);
-        remoteControlKeys.put("DPAD_RIGHT", HdmiCecConstants.CEC_CONTROL_RIGHT);
+        remoteControlKeys.put("DPAD_UP", HdmiCecConstants.CEC_KEYCODE_UP);
+        remoteControlKeys.put("DPAD_DOWN", HdmiCecConstants.CEC_KEYCODE_DOWN);
+        remoteControlKeys.put("DPAD_LEFT", HdmiCecConstants.CEC_KEYCODE_LEFT);
+        remoteControlKeys.put("DPAD_RIGHT", HdmiCecConstants.CEC_KEYCODE_RIGHT);
     }
 
     private void validateKeyeventToUserControlPress(LogicalAddress toDevice) throws Exception {
