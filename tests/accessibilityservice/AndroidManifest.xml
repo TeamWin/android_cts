@@ -199,6 +199,17 @@
             <meta-data android:name="android.accessibilityservice"
                        android:resource="@xml/stub_focus_indicator_service"/>
         </service>
+
+        <service android:name=".StubInputMethod"
+            android:label="@string/ime_name"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im"
+                android:resource="@xml/stub_ime"/>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
