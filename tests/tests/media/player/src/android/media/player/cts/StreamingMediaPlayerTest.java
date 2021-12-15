@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.player.cts;
 
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
 import android.media.TimedMetaData;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.Preconditions;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
@@ -67,7 +70,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             "streaming_media_player_test_http_mpeg4_sp_aac_video1";
     private static final String HTTP_MPEG4_SP_AAC_VIDEO_2_KEY =
             "streaming_media_player_test_http_mpeg4_sp_aac_video2";
-    private static final String MODULE_NAME = "CtsMediaTestCases";
+    private static final String MODULE_NAME = "CtsMediaPlayerTestCases";
 
     private static final int LOCAL_HLS_BITS_PER_MS = 100 * 1000;
 
