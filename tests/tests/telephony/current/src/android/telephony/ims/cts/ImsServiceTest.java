@@ -42,6 +42,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.AsyncSmsMessageListener;
 import android.telephony.cts.SmsReceiverHelper;
+import android.telephony.cts.TelephonyUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -120,6 +121,8 @@ public class ImsServiceTest {
     private static final int TEST_CONFIG_KEY = 1000;
     private static final int TEST_CONFIG_VALUE_INT = 0xDEADBEEF;
     private static final String TEST_CONFIG_VALUE_STRING = "DEADBEEF";
+
+    private static final String SUPPORT_PUBLISHING_STATE_STRING = "SUPPORT_PUBLISHING_STATE";
 
     private static final String TEST_RCS_CONFIG_DEFAULT = "<?xml version=\"1.0\"?>\n"
             + "<wap-provisioningdoc version=\"1.1\">\n"
@@ -354,6 +357,9 @@ public class ImsServiceTest {
 
     @After
     public void afterTest() throws Exception {
+        TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1093,6 +1099,10 @@ public class ImsServiceTest {
 
     @Test
     public void testRcsDeviceCapabilitiesPublish() throws Exception {
+        TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
+
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1209,6 +1219,8 @@ public class ImsServiceTest {
         // Verify ImsService receive the publish request from framework.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
 
@@ -1228,6 +1240,10 @@ public class ImsServiceTest {
         // Verify ImsService receive the publish request from framework.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
 
         // ImsService triggers the unpublish notification
         eventListener.onUnpublish();
@@ -1250,6 +1266,12 @@ public class ImsServiceTest {
         } finally {
             automan.dropShellPermissionIdentity();
         }
+        publishStateQueue.clear();
+
+        // ImsService triggers to notify framework publish updated.
+        eventListener.onPublishUpdated(200, "", 0, "");
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
 
         // Trigger RcsFeature is unavailable
         sServiceConnector.getCarrierService().getRcsFeature()
@@ -1264,6 +1286,9 @@ public class ImsServiceTest {
 
     @Test
     public void testPublishImsReg() throws Exception {
+        TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1363,6 +1388,8 @@ public class ImsServiceTest {
         // Verify that the publish is triggered and receive the publish state changed callback.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
 
@@ -1381,6 +1408,13 @@ public class ImsServiceTest {
         assertTrue("PIDF XML doesn't contain chat service-id", containsChatServiceId);
         assertTrue("PIDF XML doesn't contain FT service-id",
                 containsFileTransferServiceId);
+
+        publishStateQueue.clear();
+        // ImsService triggers to notify framework publish updated.
+        eventListener.onPublishUpdated(400, "", 0, "");
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
 
         // Trigger RcsFeature is unavailable
         sServiceConnector.getCarrierService().getRcsFeature()
@@ -1489,6 +1523,9 @@ public class ImsServiceTest {
 
     @Test
     public void testRcsCapabilitiesPublishNetworkResponseWithReasonHeader() throws Exception {
+        TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1561,6 +1598,8 @@ public class ImsServiceTest {
         // Verify the ImsService receive the publish request from framework.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
 
@@ -1590,6 +1629,7 @@ public class ImsServiceTest {
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
 
         // Verify that receive the publish failed callback
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR,
                 waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
@@ -1605,6 +1645,9 @@ public class ImsServiceTest {
 
     @Test
     public void testRcsPublishThrottle() throws Exception {
+        TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1693,8 +1736,11 @@ public class ImsServiceTest {
         // Verify that ImsService received the first PUBLISH
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
+
         try {
             automation.adoptShellPermissionIdentity();
             int publishState = uceAdapter.getUcePublishState();
@@ -1728,6 +1774,9 @@ public class ImsServiceTest {
 
     @Test
     public void testRcsPublishWithSipOptions() throws Exception {
+        TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1849,6 +1898,8 @@ public class ImsServiceTest {
 
         // Verify that the publish state should be changed from NOT_PUBLISHED to OK
         try {
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
+                    waitForIntResult(publishStateQueue));
             assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
             automation.adoptShellPermissionIdentity();
             assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, uceAdapter.getUcePublishState());
@@ -1862,6 +1913,9 @@ public class ImsServiceTest {
 
     @Test
     public void testRcsPublishWithAuthorizedErrorResponse() throws Exception {
+        TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -1939,6 +1993,8 @@ public class ImsServiceTest {
 
         try {
             // Verify the publish state callback is received.
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
+                    waitForIntResult(publishStateQueue));
             assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
             // Verify the value of getting from the API is PUBLISH_STATE_OK
             automation.adoptShellPermissionIdentity();
@@ -1961,8 +2017,14 @@ public class ImsServiceTest {
         eventListener.onRequestPublishCapabilities(
                 RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
 
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
         try {
             // Verify the publish state callback is received.
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
+                    waitForIntResult(publishStateQueue));
             assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR,
                     waitForIntResult(publishStateQueue));
             // Verify the value of getting from the API is PUBLISH_STATE_RCS_PROVISION_ERROR
@@ -2043,14 +2105,22 @@ public class ImsServiceTest {
         // Notify framework to send the PUBLISH request to the ImsService.
         eventListener.onRequestPublishCapabilities(
                 RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
 
+        // Verify the publish state callback is received.
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
+                waitForIntResult(publishStateQueue));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
         try {
             // Verify the value of getting from the API is PUBLISH_STATE_RCS_PROVISION_ERROR
             automation.adoptShellPermissionIdentity();
             int publishState = uceAdapter.getUcePublishState();
             assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR, publishState);
         } finally {
-            publishStateQueue.clear();
             automation.dropShellPermissionIdentity();
         }
 
@@ -2074,6 +2144,178 @@ public class ImsServiceTest {
             fail("Cannot remove request disallowed status: " + e);
         }
 
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testRcsPublishWithDisableCompactCommand() throws Exception {
+        TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SUPPORT_PUBLISHING_STATE_STRING);
+
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        // Trigger carrier config changed
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to device ImsService with MmTel feature and RCS feature
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Register the callback to listen to the publish state changed
+        LinkedBlockingQueue<Integer> publishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener publishStateCallback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        publishStateQueue.offer(state);
+                    }
+                };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            // register publish state callback
+            uceAdapter.addOnPublishStateChangedListener(getContext().getMainExecutor(),
+                    publishStateCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+        // Verify receiving the publish state callback immediately after registering the callback.
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // Verify the value of getting from the API is NOT_PUBLISHED
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Setup the operation of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Framework should not trigger the device capabilities publish when the framework doesn't
+        // receive that the RcsUceAdapter.CAPABILITY_TYPE_PRESENCE_UCE is enabled.
+        if (publishStateQueue.poll() != null) {
+            fail("The publish callback should not be called because presence uce is not ready");
+        }
+
+        // Notify framework that the RCS capability status is changed and PRESENCE UCE is enabled.
+        RcsImsCapabilities capabilities =
+                new RcsImsCapabilities(RcsUceAdapter.CAPABILITY_TYPE_PRESENCE_UCE);
+        sServiceConnector.getCarrierService().getRcsFeature()
+                .notifyCapabilitiesStatusChanged(capabilities);
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        // Sending Publish means that notifyPendingPublicRequest() has been processed.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // Since framework compatibility is disabled, the newly added publishing state should
+        // not be set and should be set to PUBLISH_STATE_OK
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // Verify the value of getting from the API is PUBLISH_STATE_OK
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // Since framework compatibility is disabled, the newly added publishing state should
+        // not be set and should be set to PUBLISH_STATE_OK
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+        // Verify the value of getting from the API is PUBLISH_STATE_OK
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+        publishStateQueue.clear();
+
+        // ImsService triggers to notify framework publish updated.
+        eventListener.onPublishUpdated(400, "", 0, "");
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // Verify the value of getting from the API is PUBLISH_STATE_OTHER_ERROR
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        // Sending Publish means that notifyPendingPublicRequest() has been processed.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(publishStateQueue));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // Verify the value of getting from the API is PUBLISH_STATE_OK
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
         overrideCarrierConfig(null);
     }
 
