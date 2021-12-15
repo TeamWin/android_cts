@@ -61,7 +61,8 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
     private static final int PASS_FLAG_MTU_CHANGE_512BYTES = 0x10000;
     private static final int PASS_FLAG_RELIABLE_WRITE_BAD_RESP = 0x20000;
     private static final int PASS_FLAG_ON_SERVICE_CHANGED = 0x40000;
-    private static final int PASS_FLAG_ALL = 0x7FFFF;
+    private static final int PASS_FLAG_READ_PHY = 0x80000;
+    private static final int PASS_FLAG_ALL = 0xFFFFF;
 
     private final int BLE_CLIENT_CONNECT = 0;
     private final int BLE_BLE_DISCOVER_SERVICE = 1;
@@ -80,8 +81,9 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
     private final int BLE_READ_DESCRIPTOR_NO_PERMISSION = 13;   //14;
     private final int BLE_WRITE_DESCRIPTOR_NO_PERMISSION = 14;  //15;
     private final int BLE_READ_RSSI = 15;   //16;
-    private final int BLE_ON_SERVICE_CHANGED = 15; //16; //17;
-    private final int BLE_CLIENT_DISCONNECT = 16;  //17; //18;
+    private final int BLE_READ_PHY = 15;   //16; //17;
+    private final int BLE_ON_SERVICE_CHANGED = 16; //17; //18;
+    private final int BLE_CLIENT_DISCONNECT = 17;  //18; //19;
 
     private TestAdapter mTestAdapter;
     private long mPassed;
@@ -121,6 +123,7 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
         filter.addAction(BleClientService.BLE_RELIABLE_WRITE_COMPLETED);
         filter.addAction(BleClientService.BLE_RELIABLE_WRITE_BAD_RESP_COMPLETED);
         filter.addAction(BleClientService.BLE_READ_REMOTE_RSSI);
+        filter.addAction(BleClientService.BLE_PHY_READ);
         filter.addAction(BleClientService.BLE_ON_SERVICE_CHANGED);
         filter.addAction(BleClientService.BLE_CHARACTERISTIC_READ_NOPERMISSION);
         filter.addAction(BleClientService.BLE_CHARACTERISTIC_WRITE_NOPERMISSION);
@@ -186,6 +189,7 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
         testList.add(R.string.ble_write_descriptor_nopermission_name);
 // TODO: too flaky b/34951749
 //        testList.add(R.string.ble_read_rssi_name);
+        testList.add(R.string.ble_read_phy_name);
         testList.add(R.string.ble_on_service_changed);
         testList.add(R.string.ble_client_disconnect_name);
 
@@ -353,16 +357,20 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
 // TODO: too flaky b/34951749
                 // execute RSSI requesting test
                 // newAction = BleClientService.BLE_CLIENT_ACTION_READ_RSSI;
-                // execute disconnection test
                 mPassed |= PASS_FLAG_READ_RSSI;
                 Log.d(TAG, "Skip PASS_FLAG_READ_RSSI.");
-                newAction = BleClientService.BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED;
+                newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
                 break;
             case BleClientService.BLE_READ_REMOTE_RSSI:
                 actionName = getString(R.string.ble_read_rssi_name);
                 mTestAdapter.setTestPass(BLE_READ_RSSI);
                 mPassed |= PASS_FLAG_READ_RSSI;
-                // execute disconnection test
+                newAction = BleClientService.BLE_CLIENT_ACTION_READ_PHY;
+                break;
+            case BleClientService.BLE_PHY_READ:
+                actionName = getString(R.string.ble_read_phy_name);
+                mTestAdapter.setTestPass(BLE_READ_PHY);
+                mPassed |= PASS_FLAG_READ_PHY;
                 newAction = BleClientService.BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED;
                 break;
             case BleClientService.BLE_ON_SERVICE_CHANGED:
