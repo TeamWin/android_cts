@@ -96,4 +96,8 @@
     <!-- b/198226244 -->
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.CodecEncoderPerformanceTest#testPerformanceOfHardwareVideoEncoders" />
 
+    <!-- b/171175259: key attestation cannot be done with device IDs on GSI -->
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest#testEcAttestation_withDeviceProperties" />
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest#testRsaAttestation_withDeviceProperties" />
+
 </configuration>

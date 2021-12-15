@@ -152,7 +152,16 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     @RequiresDevice
-    public void testEcAttestation() throws Exception {
+    public void testEcAttestation_withDeviceProperties() throws Exception {
+        testEcAttestation(true);
+    }
+
+    @RequiresDevice
+    public void testEcAttestation_withoutDeviceProperties() throws Exception {
+        testEcAttestation(false);
+    }
+
+    private void testEcAttestation(boolean devicePropertiesAttestation) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -175,33 +184,30 @@ public class KeyAttestationTest extends AndroidTestCase {
         int[] purposes = {
                 KM_PURPOSE_SIGN, KM_PURPOSE_VERIFY, KM_PURPOSE_SIGN | KM_PURPOSE_VERIFY
         };
-        boolean[] devicePropertiesAttestationValues = {true, false};
         boolean[] includeValidityDatesValues = {true, false};
 
         for (int curveIndex = 0; curveIndex < curves.length; ++curveIndex) {
             for (int challengeIndex = 0; challengeIndex < challenges.length; ++challengeIndex) {
                 for (int purposeIndex = 0; purposeIndex < purposes.length; ++purposeIndex) {
                     for (boolean includeValidityDates : includeValidityDatesValues) {
-                        for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
-                            try {
-                                testEcAttestation(challenges[challengeIndex], includeValidityDates,
-                                        curves[curveIndex], keySizes[curveIndex],
-                                        purposes[purposeIndex], devicePropertiesAttestation);
-                            } catch (Throwable e) {
-                                if (devicePropertiesAttestation
-                                        && (e.getCause() instanceof KeyStoreException)
-                                        && KM_ERROR_CANNOT_ATTEST_IDS ==
-                                                ((KeyStoreException) e.getCause()).getErrorCode()) {
-                                    Log.i(TAG, "key attestation with device IDs not supported; "
-                                            + "test skipped");
-                                    continue;
-                                }
-                                throw new Exception("Failed on curve " + curveIndex +
-                                        " challenge " + challengeIndex + " purpose " +
-                                        purposeIndex + " includeValidityDates " +
-                                        includeValidityDates + " and devicePropertiesAttestation " +
-                                        devicePropertiesAttestation, e);
+                        try {
+                            testEcAttestation(challenges[challengeIndex], includeValidityDates,
+                                    curves[curveIndex], keySizes[curveIndex],
+                                    purposes[purposeIndex], devicePropertiesAttestation);
+                        } catch (Throwable e) {
+                            if (devicePropertiesAttestation
+                                    && (e.getCause() instanceof KeyStoreException)
+                                    && KM_ERROR_CANNOT_ATTEST_IDS ==
+                                            ((KeyStoreException) e.getCause()).getErrorCode()) {
+                                Log.i(TAG, "key attestation with device IDs not supported; "
+                                        + "test skipped");
+                                continue;
                             }
+                            throw new Exception("Failed on curve " + curveIndex +
+                                    " challenge " + challengeIndex + " purpose " +
+                                    purposeIndex + " includeValidityDates " +
+                                    includeValidityDates + " and devicePropertiesAttestation " +
+                                    devicePropertiesAttestation, e);
                         }
                     }
                 }
@@ -431,7 +437,16 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     @RequiresDevice
-    public void testRsaAttestation() throws Exception {
+    public void testRsaAttestation_withDeviceProperties() throws Exception {
+        testRsaAttestation(true);
+    }
+
+    @RequiresDevice
+    public void testRsaAttestation_withoutDeviceProperties() throws Exception {
+        testRsaAttestation(false);
+    }
+
+    private void testRsaAttestation(boolean devicePropertiesAttestation) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -478,19 +493,16 @@ public class KeyAttestationTest extends AndroidTestCase {
                         SIGNATURE_PADDING_RSA_PSS,
                 },
         };
-        boolean[] devicePropertiesAttestationValues = {true, false};
 
-        for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
-            for (int keySize : keySizes) {
-                for (byte[] challenge : challenges) {
-                    for (int purpose : purposes) {
-                        if (isEncryptionPurpose(purpose)) {
-                            testRsaAttestations(keySize, challenge, purpose, encryptionPaddingModes,
-                                    devicePropertiesAttestation);
-                        } else {
-                            testRsaAttestations(keySize, challenge, purpose, signaturePaddingModes,
-                                    devicePropertiesAttestation);
-                        }
+        for (int keySize : keySizes) {
+            for (byte[] challenge : challenges) {
+                for (int purpose : purposes) {
+                    if (isEncryptionPurpose(purpose)) {
+                        testRsaAttestations(keySize, challenge, purpose, encryptionPaddingModes,
+                                devicePropertiesAttestation);
+                    } else {
+                        testRsaAttestations(keySize, challenge, purpose, signaturePaddingModes,
+                                devicePropertiesAttestation);
                     }
                 }
             }
