@@ -105,6 +105,8 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 
+import junit.framework.AssertionFailedError;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -196,6 +198,8 @@ public class PackageManagerTest {
     private static final String MOCK_LAUNCHER_APK = SAMPLE_APK_BASE
             + "CtsContentMockLauncherTestApp.apk";
     private static final String NON_EXISTENT_PACKAGE_NAME = "android.content.cts.nonexistent.pkg";
+    private static final String STUB_PACKAGE_APK = SAMPLE_APK_BASE
+            + "CtsSyncAccountAccessStubs.apk";
 
     private static final int MAX_SAFE_LABEL_LENGTH = 1000;
 
@@ -1685,7 +1689,12 @@ public class PackageManagerTest {
     }
 
     private boolean installPackage(String apkPath) {
-        return SystemUtil.runShellCommand("pm install -t " + apkPath).equals("Success\n");
+        return installPackage(apkPath, false /* dontKill */);
+    }
+
+    private boolean installPackage(String apkPath, boolean dontKill) {
+        return SystemUtil.runShellCommand(
+                "pm install -t " + (dontKill ? "--dont-kill " : "") + apkPath).equals("Success\n");
     }
 
     private void uninstallPackage(String packageName) {
@@ -2040,5 +2049,49 @@ public class PackageManagerTest {
                 .filter(info -> !(new File(info.getPath()).exists())).collect(
                 Collectors.toList());
         assertThat(fileNotExistInfos).isEmpty();
+    }
+
+    @Test
+    public void testInstallUpdate_applicationIsKilled() throws Exception {
+        final Intent intent = new Intent();
+        intent.setComponent(STUB_SERVICE_COMPONENT);
+        final AtomicBoolean killed = new AtomicBoolean();
+        mServiceTestRule.bindService(intent, new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                killed.set(true);
+            }
+        }, Context.BIND_AUTO_CREATE);
+
+        installPackage(STUB_PACKAGE_APK);
+        // The application should be killed after updating.
+        TestUtils.waitUntil("Waiting for the process " + STUB_PACKAGE_NAME + " to die",
+                10 /* timeoutSecond */, () -> killed.get());
+    }
+
+    @Test
+    public void testInstallUpdate_dontKill_applicationIsNotKilled() throws Exception {
+        final Intent intent = new Intent();
+        intent.setComponent(STUB_SERVICE_COMPONENT);
+        final AtomicBoolean killed = new AtomicBoolean();
+        mServiceTestRule.bindService(intent, new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                killed.set(true);
+            }
+        }, Context.BIND_AUTO_CREATE);
+
+        installPackage(STUB_PACKAGE_APK, true /* dontKill */);
+        // The application shouldn't be killed after updating with --dont-kill.
+        assertThrows(AssertionFailedError.class,
+                () -> TestUtils.waitUntil(
+                        "Waiting for the process " + STUB_PACKAGE_NAME + " to die",
+                        10 /* timeoutSecond */, () -> killed.get()));
     }
 }
