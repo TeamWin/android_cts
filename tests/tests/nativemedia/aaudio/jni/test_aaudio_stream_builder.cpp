@@ -82,6 +82,7 @@ enum class Expect { FAIL, SUCCEED, NOT_CRASH };
 static void try_opening_audio_stream(AAudioStreamBuilder *aaudioBuilder, Expect expect) {
     // Create an AAudioStream using the Builder.
     AAudioStream *aaudioStream = nullptr;
+    int64_t beforeTimeNanos = getNanoseconds();
     aaudio_result_t result = AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream);
     if (expect == Expect::FAIL) {
         ASSERT_NE(AAUDIO_OK, result);
@@ -93,6 +94,10 @@ static void try_opening_audio_stream(AAudioStreamBuilder *aaudioBuilder, Expect 
         ASSERT_TRUE(((result < 0) && (aaudioStream == nullptr))
                 || ((result == AAUDIO_OK) && (aaudioStream != nullptr)));
     }
+
+    // The stream should be open within one second.
+    static const int64_t kNanosPerSecond = 1e9;
+    ASSERT_LT(getNanoseconds() - beforeTimeNanos, kNanosPerSecond);
 
     // Cleanup
     ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
@@ -624,3 +629,67 @@ INSTANTIATE_TEST_CASE_P(CMC, AAudioStreamBuilderChannelMaskAndCountTest,
                 std::make_pair(AAUDIO_DIRECTION_INPUT, AAUDIO_CHANNEL_5POINT1),
                 std::make_pair(AAUDIO_DIRECTION_INPUT, AAUDIO_UNSPECIFIED)),
         &AAudioStreamBuilderChannelMaskAndCountTest::getTestName);
+
+using CommonCombinationTestParams = std::tuple<aaudio_direction_t,
+                                               aaudio_sharing_mode_t,
+                                               aaudio_performance_mode_t,
+                                               int32_t /*sample rate*/,
+                                               aaudio_format_t,
+                                               aaudio_channel_mask_t>;
+enum {
+    PARAM_DIRECTION = 0,
+    PARAM_SHARING_MODE,
+    PARAM_PERFORMANCE_MODE,
+    PARAM_SAMPLE_RATE,
+    PARAM_FORMAT,
+    PARAM_CHANNEL_MASK
+};
+class AAudioStreamBuilderCommonCombinationTest :
+        public ::testing::TestWithParam<CommonCombinationTestParams> {
+  public:
+    static std::string getTestName(
+            const ::testing::TestParamInfo<CommonCombinationTestParams>& info) {
+        std::stringstream ss;
+        ss << (std::get<PARAM_DIRECTION>(info.param) == AAUDIO_DIRECTION_INPUT ? "INPUT_"
+                                                                               : "OUTPUT_")
+           << sharingModeToString(std::get<PARAM_SHARING_MODE>(info.param)) << "_"
+           << performanceModeToString(std::get<PARAM_PERFORMANCE_MODE>(info.param)) << "_"
+           << "sampleRate_" << std::get<PARAM_SAMPLE_RATE>(info.param) << "_"
+           << "format_0x" << std::hex << std::get<PARAM_FORMAT>(info.param) << "_"
+           << "channelMask_0x" << std::get<PARAM_CHANNEL_MASK>(info.param) << "";
+        return ss.str();
+    }
+};
+
+TEST_P(AAudioStreamBuilderCommonCombinationTest, openStream) {
+    if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
+    AAudioStreamBuilder *aaudioBuilder = nullptr;
+    create_stream_builder(&aaudioBuilder);
+    const auto param = GetParam();
+    AAudioStreamBuilder_setDirection(aaudioBuilder, std::get<PARAM_DIRECTION>(param));
+    AAudioStreamBuilder_setSharingMode(aaudioBuilder, std::get<PARAM_SHARING_MODE>(param));
+    AAudioStreamBuilder_setPerformanceMode(aaudioBuilder, std::get<PARAM_PERFORMANCE_MODE>(param));
+    AAudioStreamBuilder_setSampleRate(aaudioBuilder, std::get<PARAM_SAMPLE_RATE>(param));
+    AAudioStreamBuilder_setFormat(aaudioBuilder, std::get<PARAM_FORMAT>(param));
+    AAudioStreamBuilder_setChannelMask(aaudioBuilder, std::get<PARAM_CHANNEL_MASK>(param));
+    // All the test parameters all reasonable values with different combination. In that case,
+    // it is expected that the opening will be successful.
+    try_opening_audio_stream(aaudioBuilder, Expect::SUCCEED);
+}
+
+INSTANTIATE_TEST_CASE_P(CommonComb, AAudioStreamBuilderCommonCombinationTest,
+        ::testing::Combine(
+                ::testing::Values(AAUDIO_DIRECTION_OUTPUT, AAUDIO_DIRECTION_INPUT),
+                ::testing::Values(AAUDIO_SHARING_MODE_SHARED, AAUDIO_SHARING_MODE_EXCLUSIVE),
+                ::testing::Values(
+                        AAUDIO_PERFORMANCE_MODE_NONE,
+                        AAUDIO_PERFORMANCE_MODE_POWER_SAVING,
+                        AAUDIO_PERFORMANCE_MODE_LOW_LATENCY),
+                ::testing::Values(// Sample rate
+                        AAUDIO_UNSPECIFIED, 8000, 16000, 44100, 48000, 96000, 192000),
+                ::testing::Values(
+                        AAUDIO_UNSPECIFIED,
+                        AAUDIO_FORMAT_PCM_I16,
+                        AAUDIO_FORMAT_PCM_FLOAT),
+                ::testing::Values(AAUDIO_CHANNEL_MONO, AAUDIO_CHANNEL_STEREO)),
+        &AAudioStreamBuilderCommonCombinationTest::getTestName);
