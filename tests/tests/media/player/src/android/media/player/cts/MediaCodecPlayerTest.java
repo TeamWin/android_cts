@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.player.cts;
 
 import android.media.MediaFormat;
+import android.media.cts.MediaCodecPlayerTestBase;
+import android.media.cts.MediaStubActivity2;
+import android.media.cts.Utils;
 import android.net.Uri;
 import android.view.Surface;
 import java.util.Arrays;

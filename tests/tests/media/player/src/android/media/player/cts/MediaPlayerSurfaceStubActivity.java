@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.player.cts;
 
 import android.app.Activity;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
+import android.media.cts.Preconditions;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
