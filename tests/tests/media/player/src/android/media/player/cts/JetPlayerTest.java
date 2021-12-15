@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.player.cts;
 
-import android.media.cts.R;
-
+import android.media.player.cts.R;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.JetPlayer;
 import android.media.JetPlayer.OnJetEventListener;
+import android.media.cts.NonMediaMainlineTest;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;

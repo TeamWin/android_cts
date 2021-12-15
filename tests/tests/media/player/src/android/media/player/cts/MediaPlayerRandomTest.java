@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.player.cts;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
@@ -84,7 +84,7 @@ public class MediaPlayerRandomTest extends ActivityInstrumentationTestCase2<Medi
     }
 
     public MediaPlayerRandomTest() {
-        super("android.media.cts", MediaStubActivity.class);
+        super("android.media.player.cts", MediaStubActivity.class);
     }
 
     private void loadSource(final String res) throws Exception {
