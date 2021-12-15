@@ -18,9 +18,16 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.LOCK_DEVICE;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.os.Build.VERSION_CODES.N;
+import static android.os.Build.VERSION_CODES.O;
 
+import static com.android.bedstead.harrier.DeviceState.DEFAULT_PASSWORD;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.testng.Assert.assertThrows;
 
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
@@ -35,13 +42,13 @@ import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.policies.DeprecatedResetPassword;
 import com.android.bedstead.harrier.policies.LockNow;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
-
-import com.google.common.truth.Truth;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -89,7 +96,7 @@ public class LockTest {
             throws Exception {
         sLocalDevicePolicyManager.lockNow();
 
-        Truth.assertThat(TestApis.device().isScreenOn()).isTrue();
+        assertThat(TestApis.device().isScreenOn()).isTrue();
     }
 
     // TODO(191637162): When @PositivePolicyTest supports permissions, remove
@@ -149,7 +156,7 @@ public class LockTest {
     public void lockNow_automotive_noPasswordSet_doesNotTurnScreenOff() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
 
-        Truth.assertThat(TestApis.device().isScreenOn()).isTrue();
+        assertThat(TestApis.device().isScreenOn()).isTrue();
     }
 
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
@@ -165,5 +172,24 @@ public class LockTest {
                 .toBeEqualTo(true)
                 .errorOnFail()
                 .await();
+    }
+
+    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
+    @RequireTargetSdkVersion(max = N)
+    @Test
+    @PositivePolicyTest(policy = DeprecatedResetPassword.class)
+    public void resetPassword_targetBeforeN_returnsFalse() {
+        assertThat(sDeviceState.dpc()
+                .devicePolicyManager().resetPassword(DEFAULT_PASSWORD, /* flags= */ 0)).isFalse();
+    }
+
+    @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
+    @RequireTargetSdkVersion(min = O)
+    @Test
+    @PositivePolicyTest(policy = DeprecatedResetPassword.class)
+    public void resetPassword_targetAfterO_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .resetPassword(DEFAULT_PASSWORD, /* flags= */ 0));
     }
 }

@@ -60,6 +60,7 @@ import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
+import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
@@ -475,6 +476,18 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
+            if (annotation instanceof RequireTargetSdkVersion) {
+                RequireTargetSdkVersion requireTargetSdkVersionAnnotation =
+                        (RequireTargetSdkVersion) annotation;
+
+                requireTargetSdkVersion(
+                        requireTargetSdkVersionAnnotation.min(),
+                        requireTargetSdkVersionAnnotation.max(),
+                        requireTargetSdkVersionAnnotation.failureMode());
+
+                continue;
+            }
+
             if (annotation instanceof RequireSdkVersion) {
                 RequireSdkVersion requireSdkVersionAnnotation =
                         (RequireSdkVersion) annotation;
@@ -871,6 +884,19 @@ public final class DeviceState implements TestRule {
                         + " version of Android",
                 instrumentingPermissions,
                 FailureMode.SKIP
+        );
+    }
+
+    private void requireTargetSdkVersion(
+            int min, int max, FailureMode failureMode) {
+
+        int targetSdkVersion = TestApis.packages().instrumented().targetSdkVersion();
+
+        checkFailOrSkip(
+                "TargetSdkVersion must be between " + min + " and " + max
+                        + " (inclusive) (version is " + targetSdkVersion + ")",
+                min <= targetSdkVersion && max >= targetSdkVersion,
+                failureMode
         );
     }
 
