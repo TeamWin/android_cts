@@ -64,6 +64,7 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.app.Components;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -547,6 +548,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @Ignore("Unable to disable AOD for some devices")
     public void testTurnScreenOnAttrNoLockScreen_SplitScreen() {
         assumeTrue(supportsLockScreen());
         assumeTrue(supportsMultiWindow());
