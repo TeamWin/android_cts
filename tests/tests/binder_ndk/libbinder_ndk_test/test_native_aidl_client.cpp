@@ -1055,6 +1055,28 @@ TEST_P(NdkBinderTest_Aidl, ParcelableHolderTest) {
   EXPECT_EQ("mystr", myext3->b);
   AParcel_delete(parcel);
 }
+
+TEST_P(NdkBinderTest_Aidl, ParcelableHolderCopyTest) {
+  ndk::AParcelableHolder ph1{ndk::STABILITY_LOCAL};
+  MyExt myext1;
+  myext1.a = 42;
+  myext1.b = "mystr";
+  ph1.setParcelable(myext1);
+
+  ndk::AParcelableHolder ph2{ph1};
+  std::optional<MyExt> myext2;
+  ph2.getParcelable(&myext2);
+  EXPECT_TRUE(myext2);
+  EXPECT_EQ(42, myext2->a);
+  EXPECT_EQ("mystr", myext2->b);
+
+  std::optional<MyExt> myext3;
+  ph1.getParcelable(&myext3);
+  EXPECT_TRUE(myext3);
+  EXPECT_EQ(42, myext3->a);
+  EXPECT_EQ("mystr", myext3->b);
+}
+
 TEST_P(NdkBinderTest_Aidl, ParcelableHolderCommunicationTest) {
   ExtendableParcelable ep;
   ep.c = 42L;
