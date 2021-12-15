@@ -4226,7 +4226,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testTunneledAudioTimestampProgressWithUnderrunHevc() throws Exception {
-        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_HEVC,
+        testTunneledAudioTimestampProgressWithUnderrun(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
     }
 
@@ -4236,7 +4236,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testTunneledAudioTimestampProgressWithUnderrunAvc() throws Exception {
-        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_AVC,
+        testTunneledAudioTimestampProgressWithUnderrun(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
 
@@ -4246,7 +4246,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     @Test
     public void testTunneledAudioTimestampProgressWithUnderrunVp9() throws Exception {
-        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_VIDEO_VP9,
+        testTunneledAudioTimestampProgressWithUnderrun(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
