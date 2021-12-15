@@ -93,14 +93,19 @@ public class FlashlightTest extends Camera2AndroidTestCase {
         }
 
         for (String id: mFlashCameraIdList) {
-            CameraCharacteristics pc = mCameraManager.getCameraCharacteristics(id);
-            int defaultLevel = pc.get(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL);
-            int maxLevel = pc.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL);
+            int maxLevel = 0;
+            int defaultLevel = 0;
             int minLevel = 1;
-            assertTrue(minLevel <= defaultLevel);
-            assertTrue(defaultLevel <= maxLevel);
-
+            CameraCharacteristics pc = mCameraManager.getCameraCharacteristics(id);
+            if (pc.get(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL) != null) {
+                defaultLevel = pc.get(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL);
+            }
+            if (pc.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL) != null) {
+                maxLevel = pc.get(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL);
+            }
             if (maxLevel > 1) {
+                assertTrue(minLevel <= defaultLevel);
+                assertTrue(defaultLevel <= maxLevel);
                 int torchStrength = 0;
                 CameraManager.TorchCallback torchListener = mock(CameraManager.TorchCallback.class);
                 mCameraManager.registerTorchCallback(torchListener, mHandler);
