@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.player.cts;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.media.MediaPlayer;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.Preconditions;
 import android.media.cts.TestUtils.Monitor;
 import android.platform.test.annotations.AppModeFull;
 import android.webkit.cts.CtsTestServer;
@@ -54,7 +57,7 @@ import java.util.concurrent.FutureTask;
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
 public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
-    private static final String PKG = "android.media.cts";
+    private static final String PKG = "android.media.player.cts";
     static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private static final String[] TEST_VIDEOS = {
