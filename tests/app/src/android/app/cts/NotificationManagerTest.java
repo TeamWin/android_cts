@@ -4469,7 +4469,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         @Override
         public void handleMessage(Message message) {
-            mEvents.computeIfAbsent(message.what, e -> new CompletableFuture<>()).complete(
+            mEvents.computeIfAbsent(message.what, e -> new CompletableFuture<>()).obtrudeValue(
                     message.arg1);
         }
 
