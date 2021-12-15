@@ -248,6 +248,10 @@ public class Constants {
             PKG_BASE + "cts.action.PENDING_INTENT_GET_CREATOR_PACKAGE";
     public static final String ACTION_CHECK_PACKAGE =
             PKG_BASE + "cts.action.CHECK_PACKAGE";
+    public static final String ACTION_GRANT_URI_PERMISSION =
+            PKG_BASE + "cts.action.GRANT_URI_PERMISSION";
+    public static final String ACTION_REVOKE_URI_PERMISSION =
+            PKG_BASE + "cts.action.REVOKE_URI_PERMISSION";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
