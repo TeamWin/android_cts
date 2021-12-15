@@ -56,6 +56,19 @@ public class TelephonyRegistryManagerTest {
         }
     }
 
+    /**
+     * expect security exception as there is no carrier privilege permission.
+     */
+    @Test
+    public void testNotifyCarrierNetworkChangeWithSubscription() {
+        try {
+            mTelephonyRegistryMgr.notifyCarrierNetworkChange(
+                    SubscriptionManager.getDefaultSubscriptionId(), /*active=*/ true);
+            fail("Expected SecurityException for notifyCarrierNetworkChange with subscription");
+        } catch (SecurityException expected) {
+        }
+    }
+
     @Test
     public void testNotifyCallStateChangedForAllSubscriptions() throws Exception {
         Context context = InstrumentationRegistry.getContext();
