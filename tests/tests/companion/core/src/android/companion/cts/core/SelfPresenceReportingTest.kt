@@ -20,6 +20,7 @@ import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
 import android.companion.AssociationRequest
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
+import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.PrimaryCompanionService
 import android.companion.cts.common.RecordingCallback
 import android.companion.cts.common.RecordingCallback.OnAssociationCreated
@@ -39,6 +40,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.test.assertFailsWith
 
 /**
  * Tests CDM APIs for notifying the presence of status of the companion devices for self-managed
@@ -157,6 +159,29 @@ class SelfPresenceReportingTest : CoreTestBase() {
             waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
                 !PrimaryCompanionService.isBound && !SecondaryCompanionService.isBound
             }
+        }
+    }
+
+    @Test
+    fun test_notifyAppearAndDisappear_invalidId() {
+        assertFailsWith(IllegalArgumentException::class) { cdm.notifyDeviceAppeared(-1) }
+        assertFailsWith(IllegalArgumentException::class) { cdm.notifyDeviceAppeared(0) }
+        assertFailsWith(IllegalArgumentException::class) { cdm.notifyDeviceAppeared(1) }
+
+        assertFailsWith(IllegalArgumentException::class) { cdm.notifyDeviceDisappeared(-1) }
+        assertFailsWith(IllegalArgumentException::class) { cdm.notifyDeviceDisappeared(0) }
+        assertFailsWith(IllegalArgumentException::class) { cdm.notifyDeviceDisappeared(1) }
+    }
+
+    @Test
+    fun test_notifyAppears_requires_selfManagedAssociation() {
+        targetApp.associate(MAC_ADDRESS_A)
+
+        val id = cdm.myAssociations[0].id
+
+        // notifyDeviceAppeared can only be called for self-managed associations.
+        assertFailsWith(IllegalArgumentException::class) {
+            cdm.notifyDeviceAppeared(id)
         }
     }
 
