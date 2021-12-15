@@ -97,6 +97,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
             .fromString("0000110B-0000-1000-8000-00805F9B34FB");
     private static final int DURATION_NETWORK_DISCONNECT_MILLIS = 3_000;
     private static final int DURATION_NETWORK_LINGER_MILLIS = 30_000;
+    private static final int DURATION_NETWORK_UPDATE = 10_000;
 
     private static boolean sWasVerboseLoggingEnabled;
     private static boolean sWasScanThrottleEnabled;
@@ -1135,6 +1136,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 Set.of()/* restrictedNetworkCapability */, false/* restrictedNetwork */);
         TestHelper.TestNetworkCallback callback = (TestHelper.TestNetworkCallback)
                 sNsNetworkCallback;
+        while (callback.waitForAnyCallback(DURATION_NETWORK_UPDATE));
         sWifiManager.removeNetworkSuggestions(List.of(suggestion),
                 WifiManager.ACTION_REMOVE_SUGGESTION_DISCONNECT);
         callback.waitForAnyCallback(DURATION_NETWORK_DISCONNECT_MILLIS);
@@ -1158,6 +1160,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 Set.of()/* restrictedNetworkCapability */, false/* restrictedNetwork */);
         TestHelper.TestNetworkCallback callback = (TestHelper.TestNetworkCallback)
                 sNsNetworkCallback;
+        while (callback.waitForAnyCallback(DURATION_NETWORK_UPDATE));
         sWifiManager.removeNetworkSuggestions(List.of(suggestion),
                 WifiManager.ACTION_REMOVE_SUGGESTION_LINGER);
         callback.waitForAnyCallback(DURATION_NETWORK_DISCONNECT_MILLIS);
