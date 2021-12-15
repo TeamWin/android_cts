@@ -54,6 +54,8 @@ class RecordingCallback : CompanionDeviceManager.Callback() {
             throw AssertionError("Callback hasn't been invoked")
     }
 
+    fun clearRecordedInvocation() = _invocations.clear()
+
     enum class CallbackMethod {
         OnDeviceFound, OnAssociationPending, OnAssociationCreated, OnFailure
     }
