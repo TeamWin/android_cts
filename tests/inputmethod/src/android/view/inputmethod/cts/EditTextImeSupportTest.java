@@ -21,6 +21,8 @@ import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -30,6 +32,7 @@ import static org.junit.Assert.fail;
 
 import android.os.SystemClock;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -194,4 +197,20 @@ public class EditTextImeSupportTest extends EndToEndImeTestBase {
         assertEquals(expected.toString(), actual.toString());
     }
 
+    /**
+     * Regression test for Bug 209958658.
+     */
+    @Test
+    public void testEndBatchEditReturnValue() {
+        EditText editText = new EditText(InstrumentationRegistry.getInstrumentation().getContext());
+        EditorInfo editorInfo = new EditorInfo();
+        InputConnection editableInputConnection = editText.onCreateInputConnection(editorInfo);
+        assertThat(editableInputConnection.beginBatchEdit()).isTrue();
+        assertThat(editableInputConnection.beginBatchEdit()).isTrue();
+        assertThat(editableInputConnection.endBatchEdit()).isTrue();
+        assertThat(editableInputConnection.endBatchEdit()).isFalse();
+
+        // Extra invocations of endBatchEdit() continue to return false.
+        assertThat(editableInputConnection.endBatchEdit()).isFalse();
+    }
 }
