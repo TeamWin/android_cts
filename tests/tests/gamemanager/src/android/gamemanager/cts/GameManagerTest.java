@@ -21,7 +21,10 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
+import android.app.GameState;
+import android.app.Instrumentation;
 import android.content.Context;
+import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -35,15 +38,23 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @RunWith(AndroidJUnit4.class)
 public class GameManagerTest {
     private static final String TAG = "GameManagerTest";
     private static final String GAME_OVERLAY_FEATURE_NAME =
             "com.google.android.feature.GAME_OVERLAY";
+    private static final String POWER_DUMPSYS_CMD = "dumpsys android.hardware.power.IPower/default";
+    private static final Pattern GAME_LOADING_REGEX =
+            Pattern.compile("^GAME_LOADING\\t(\\d*)\\t\\d*$", Pattern.MULTILINE);
 
     private GameManagerCtsActivity mActivity;
     private Context mContext;
     private GameManager mGameManager;
+    private UiDevice mUiDevice;
 
     @Rule
     public ActivityScenarioRule<GameManagerCtsActivity> mActivityRule =
@@ -55,8 +66,10 @@ public class GameManagerTest {
             mActivity = activity;
         });
 
-        mContext = getInstrumentation().getContext();
+        final Instrumentation instrumentation = getInstrumentation();
+        mContext = instrumentation.getContext();
         mGameManager = mContext.getSystemService(GameManager.class);
+        mUiDevice = UiDevice.getInstance(instrumentation);
     }
 
     /**
@@ -133,5 +146,44 @@ public class GameManagerTest {
 
         Assert.assertEquals("Game Manager returned incorrect value.",
                 GameManager.GAME_MODE_BATTERY, gameMode);
+    }
+
+    private int getGameLoadingCount() throws IOException {
+        final Matcher matcher =
+                GAME_LOADING_REGEX.matcher(mUiDevice.executeShellCommand(POWER_DUMPSYS_CMD));
+        assumeTrue(matcher.find());
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    /**
+     * Test that GameManager::setGameContext() with an 'isLoading' context does not invokes the mode
+     * on the PowerHAL when performance mode is not invoked.
+     */
+    @Test
+    public void testSetGameContextStandardMode() throws IOException, InterruptedException {
+        final int gameLoadingCountBefore = getGameLoadingCount();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
+                GameManager.GAME_MODE_STANDARD));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
+                gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
+        Thread.sleep(500);  // Wait for change to take effect.
+        Assert.assertEquals(gameLoadingCountBefore, getGameLoadingCount());
+    }
+
+    /**
+     * Test that GameManager::setGameContext() with an 'isLoading' context actually invokes the mode
+     * on the PowerHAL when performance mode is invoked.
+     */
+    @Test
+    public void testSetGameContextPerformanceMode() throws IOException, InterruptedException {
+        final int gameLoadingCountBefore = getGameLoadingCount();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
+                GameManager.GAME_MODE_PERFORMANCE));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
+                gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
+        Thread.sleep(500);  // Wait for change to take effect.
+        Assert.assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
     }
 }
