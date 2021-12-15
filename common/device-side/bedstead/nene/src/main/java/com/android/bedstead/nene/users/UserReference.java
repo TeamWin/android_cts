@@ -437,6 +437,11 @@ public class UserReference implements AutoCloseable {
      * Clear the password for the user, using the password that was last set using Nene.
      */
     public void clearPassword() {
+        if (mPassword == null) {
+            throw new NeneException(
+                    "clearPassword() can only be called when setPassword was used to set the"
+                            + " password");
+        }
         clearPassword(mPassword);
     }
 
@@ -444,6 +449,7 @@ public class UserReference implements AutoCloseable {
      * Clear the password for the user.
      */
     public void clearPassword(String password) {
+
         try {
             ShellCommand.builder("cmd lock_settings")
                     .addOperand("clear")
