@@ -34,6 +34,7 @@ import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.app.appsearch.AppSearchSchema.StringPropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
+import android.app.appsearch.Features;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GetSchemaResponse;
@@ -2088,7 +2089,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 26, /*upper=*/ 33));
         assertThat(matchInfo.getSnippet()).isEqualTo("is foo.");
 
-        if (!mDb1.getCapabilities().isSubmatchSupported()) {
+        if (!mDb1.getFeatures().isFeatureSupported(Features.SEARCH_RESULT_MATCH_INFO_SUBMATCH)) {
             assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatchRange());
             assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatch());
         } else {
@@ -2235,7 +2236,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 44, /*upper=*/ 45));
         assertThat(matchInfo.getExactMatch()).isEqualTo("は");
 
-        if (!mDb1.getCapabilities().isSubmatchSupported()) {
+        if (!mDb1.getFeatures().isFeatureSupported(Features.SEARCH_RESULT_MATCH_INFO_SUBMATCH)) {
             assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatchRange());
             assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatch());
         } else {
