@@ -123,7 +123,11 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
                 locationManager.setLocationEnabledForUser(!enable,
                     android.os.Process.myUserHandle())
                 if (enable) {
-                    waitFindObjectOrNull(By.text("CLOSE"))?.click()
+                    try {
+                        waitFindObjectOrNull(By.text("CLOSE"))?.click()
+                    } catch (e: Exception) {
+                        // Do nothing, warning didn't show up so test can proceed
+                    }
                 }
             }
         } else {
