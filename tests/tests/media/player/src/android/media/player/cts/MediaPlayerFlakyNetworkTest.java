@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.player.cts;
 
 import android.media.MediaPlayer;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.Preconditions;
 import android.media.cts.TestUtils.Monitor;
 import android.os.Handler;
 import android.os.Looper;
@@ -49,7 +52,7 @@ import java.util.concurrent.FutureTask;
 @NonMediaMainlineTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerFlakyNetworkTest extends MediaPlayerTestBase {
-    private static final String PKG = "android.media.cts";
+    private static final String PKG = "android.media.player.cts";
     static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private static final String[] TEST_VIDEOS = {

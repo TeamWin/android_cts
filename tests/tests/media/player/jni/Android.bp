@@ -13,9 +13,6 @@
 // limitations under the License.
 //
 
-//------------------------------------------------------------------------------
-// Builds libctscodecutils_jni.so
-//
 package {
     // See: http://go/android-license-faq
     // A large-scale-change added 'default_applicable_licenses' to import
@@ -26,56 +23,31 @@ package {
     default_applicable_licenses: ["cts_license"],
 }
 
-cc_test_library {
-    name: "libctscodecutils_jni",
-    srcs: [
-        "codec-utils-jni.cpp",
-        "md5_utils.cpp",
-    ],
-    shared_libs: [
-        "libnativehelper_compat_libc++",
-        "liblog",
-    ],
-    header_libs: ["liblog_headers"],
-    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
-    // (revisit if/when we add features to this library that require newer sdk.
-    sdk_version: "29",
-    cflags: [
-        "-Werror",
-        "-Wall",
-        "-DEGL_EGLEXT_PROTOTYPES",
-    ],
-    stl: "libc++_static",
-    gtest: false,
-}
-
 //------------------------------------------------------------------------------
-// Builds libctsmediacodec_jni.so
+// Builds libctsmediadrm_jni.so
 //
 cc_test_library {
-    name: "libctsmediacodec_jni",
+    name: "libctsmediadrm_jni",
     srcs: [
-        "native-media-jni.cpp",
-        "native_media_utils.cpp",
-        "native_media_decoder_source.cpp",
+        "CtsMediaDrmJniOnLoad.cpp",
+        "native-mediadrm-jni.cpp",
     ],
+    include_dirs: ["system/core/include"],
     shared_libs: [
         "libandroid",
         "libnativehelper_compat_libc++",
         "liblog",
         "libmediandk",
-        "libEGL",
     ],
     header_libs: ["liblog_headers"],
-    stl: "libc++_static",
     cflags: [
         "-Werror",
         "-Wall",
         "-DEGL_EGLEXT_PROTOTYPES",
     ],
+    stl: "libc++_static",
     gtest: false,
     // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
     // (revisit if/when we add features to this library that require newer sdk.
     sdk_version: "29",
 }
-
