@@ -36,6 +36,7 @@ public class MockModemServiceTest {
         sServiceConnector =
                 new MockModemServiceConnector(InstrumentationRegistry.getInstrumentation());
         if (sServiceConnector != null) {
+            // TODO: if connect fail?
             sServiceConnector.connectMockModemService();
         }
     }

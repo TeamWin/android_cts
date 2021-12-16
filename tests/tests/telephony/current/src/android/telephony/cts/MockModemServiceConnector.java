@@ -39,6 +39,7 @@ class MockModemServiceConnector {
     private static final String SERVICE_NAME = TestMockModemService.class.getClass().getName();
 
     private static final int BIND_LOCAL_MOCKMODEM_SERVICE_TIMEOUT_MS = 5000;
+    private static final int BIND_RADIO_INTERFACE_READY_TIMEOUT_MS = 5000;
 
     private class MockModemServiceConnection implements ServiceConnection {
 
@@ -96,8 +97,7 @@ class MockModemServiceConnector {
     }
 
     /**
-     * Binds to the local implementation of TestMockModemService but does not trigger
-     * TestMockModemService bind from telephony to allow additional configuration steps if needed.
+     * Bind to the local implementation of TestMockModemService.
      *
      * @return true if this request succeeded, false otherwise.
      */
@@ -109,10 +109,23 @@ class MockModemServiceConnector {
         return true;
     }
 
+    /**
+     * Trigger the telephony framework to bind to the local TestMockModemService implementation.
+     *
+     * @return true if this request succeeded, false otherwise.
+     */
+    boolean switchFrameworkConnectionToMockModemService() {
+        // TODO: Switch Radio interface from phyical modem to mock modem
+
+        return mMockModemService.waitForLatchCountdown(
+                TestMockModemService.LATCH_RADIO_INTERFACES_READY,
+                BIND_RADIO_INTERFACE_READY_TIMEOUT_MS);
+    }
+
     boolean connectMockModemService() throws Exception {
         if (!connectMockModemServiceLocally()) return false;
 
-        return true;
+        return switchFrameworkConnectionToMockModemService();
     }
 
     boolean disconnectMockModemService() throws Exception {
