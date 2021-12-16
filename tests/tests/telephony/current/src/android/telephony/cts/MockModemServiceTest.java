@@ -15,6 +15,9 @@
  */
 package android.telephony.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -32,13 +35,12 @@ public class MockModemServiceTest {
 
         Log.d(TAG, "MockModemServiceTest#beforeAllTests()");
 
-        // Rebind all interfaces to TestMockModemService
+        // Override all interfaces to TestMockModemService
         sServiceConnector =
                 new MockModemServiceConnector(InstrumentationRegistry.getInstrumentation());
-        if (sServiceConnector != null) {
-            // TODO: if connect fail?
-            sServiceConnector.connectMockModemService();
-        }
+
+        assertNotNull(sServiceConnector);
+        assertTrue(sServiceConnector.connectMockModemService());
     }
 
     @AfterClass
@@ -46,9 +48,8 @@ public class MockModemServiceTest {
         Log.d(TAG, "MockModemServiceTest#afterAllTests()");
 
         // Rebind all interfaces which is binding to MockModemService to default.
-        if (sServiceConnector != null) {
-            sServiceConnector.disconnectMockModemService();
-        }
+        assertNotNull(sServiceConnector);
+        assertTrue(sServiceConnector.disconnectMockModemService());
         sServiceConnector = null;
     }
 }
