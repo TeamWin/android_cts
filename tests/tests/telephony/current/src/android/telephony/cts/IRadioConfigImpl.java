@@ -32,7 +32,8 @@ import android.util.Log;
 
 public class IRadioConfigImpl extends IRadioConfig.Stub {
     private static final String TAG = "MRCFG";
-    private final TestMockModemService mService;
+
+    private final MockModemService mService;
     private byte mNumOfLiveModems = 1;
     private IRadioConfigResponse mRadioConfigResponse;
     private IRadioConfigIndication mRadioConfigIndication;
@@ -40,7 +41,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     private int mSlotNum = 1;
     private boolean mSimStatePresent = false;
 
-    public IRadioConfigImpl(TestMockModemService service) {
+    public IRadioConfigImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
@@ -148,7 +149,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         Log.d(TAG, "setResponseFunctions");
         mRadioConfigResponse = radioConfigResponse;
         mRadioConfigIndication = radioConfigIndication;
-        mService.countDownLatch(TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
     }
 
     @Override

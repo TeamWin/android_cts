@@ -27,11 +27,12 @@ import android.util.Log;
 
 public class IRadioVoiceImpl extends IRadioVoice.Stub {
     private static final String TAG = "MRVOICE";
-    private final TestMockModemService mService;
+
+    private final MockModemService mService;
     private IRadioVoiceResponse mRadioVoiceResponse;
     private IRadioVoiceIndication mRadioVoiceIndication;
 
-    public IRadioVoiceImpl(TestMockModemService service) {
+    public IRadioVoiceImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
@@ -44,7 +45,7 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
         Log.d(TAG, "setResponseFunctions");
         mRadioVoiceResponse = radioVoiceResponse;
         mRadioVoiceIndication = radioVoiceIndication;
-        mService.countDownLatch(TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
     }
 
     @Override

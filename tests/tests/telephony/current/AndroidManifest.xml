@@ -158,7 +158,7 @@
             </intent-filter>
         </service>
 
-        <service android:name="android.telephony.cts.TestMockModemService"
+        <service android:name="android.telephony.cts.MockModemService"
              android:directBootAware="true"
              android:persistent="true"
              android:exported="true">

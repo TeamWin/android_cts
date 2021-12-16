@@ -28,13 +28,14 @@ import android.util.Log;
 
 public class IRadioSimImpl extends IRadioSim.Stub {
     private static final String TAG = "MRSIM";
-    private final TestMockModemService mService;
+
+    private final MockModemService mService;
     private IRadioSimResponse mRadioSimResponse;
     private IRadioSimIndication mRadioSimIndication;
     private CardStatus mCardStatus = null;
     private boolean mSimStatePresent = false;
 
-    public IRadioSimImpl(TestMockModemService service) {
+    public IRadioSimImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
@@ -48,7 +49,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         Log.d(TAG, "setResponseFunctions");
         mRadioSimResponse = radioSimResponse;
         mRadioSimIndication = radioSimIndication;
-        mService.countDownLatch(TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
     }
 
     @Override
@@ -193,7 +194,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
             Log.e(TAG, "Failed to getIccCardStatus from AIDL. Exception" + ex);
         }
 
-        mService.countDownLatch(TestMockModemService.LATCH_MOCK_MODEM_SIM_READY);
+        mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_SIM_READY);
     }
 
     @Override

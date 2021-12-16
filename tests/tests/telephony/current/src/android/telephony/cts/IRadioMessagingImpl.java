@@ -27,11 +27,12 @@ import android.util.Log;
 
 public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     private static final String TAG = "MRMSG";
-    private final TestMockModemService mService;
+
+    private final MockModemService mService;
     private IRadioMessagingResponse mRadioMessagingResponse;
     private IRadioMessagingIndication mRadioMessagingIndication;
 
-    public IRadioMessagingImpl(TestMockModemService service) {
+    public IRadioMessagingImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
@@ -45,7 +46,7 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
         Log.d(TAG, "setResponseFunctions");
         mRadioMessagingResponse = radioMessagingResponse;
         mRadioMessagingIndication = radioMessagingIndication;
-        mService.countDownLatch(TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
     }
 
     @Override
