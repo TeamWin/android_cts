@@ -32,6 +32,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     private IRadioSimResponse mRadioSimResponse;
     private IRadioSimIndication mRadioSimIndication;
     private CardStatus mCardStatus = null;
+    private boolean mSimStatePresent = false;
 
     public IRadioSimImpl(TestMockModemService service) {
         Log.d(TAG, "Instantiated");
@@ -182,12 +183,17 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     public void getIccCardStatus(int serial) {
         Log.d(TAG, "getIccCardStatus");
 
+        // TODO: use helper function to handle
+        if (mSimStatePresent) mCardStatus.cardState = CardStatus.STATE_PRESENT;
+
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioSimResponse.getIccCardStatusResponse(rsp, mCardStatus);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getIccCardStatus from AIDL. Exception" + ex);
         }
+
+        mService.countDownLatch(TestMockModemService.LATCH_MOCK_MODEM_SIM_READY);
     }
 
     @Override
@@ -728,5 +734,11 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         cardStatus.slotMap.portId = 0;
 
         return cardStatus;
+    }
+
+    // TODO: use helper function to handle
+    public void setSimPresent(int slotId) {
+        // TODO: check  slotId and Phone ID
+        mSimStatePresent = true;
     }
 }

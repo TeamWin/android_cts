@@ -51,7 +51,8 @@ public class TestMockModemService extends Service {
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
     public static final int LATCH_MOCK_MODEM_RADIO_POWR_OFF = 2;
-    public static final int LATCH_MAX = 3;
+    public static final int LATCH_MOCK_MODEM_SIM_READY = 3;
+    public static final int LATCH_MAX = 4;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
     private static final int IRADIO_INTERFACE_NUMBER = 2; // TODO: 6
@@ -189,7 +190,7 @@ public class TestMockModemService extends Service {
         return rspInfo;
     }
 
-    private boolean initialRadioState() {
+    private boolean initRadioState() {
         int waitLatch;
 
         boolean apm = TelephonyProperties.airplane_mode_on().orElse(false);
@@ -207,6 +208,12 @@ public class TestMockModemService extends Service {
         return waitForLatchCountdown(waitLatch);
     }
 
+    private boolean initSimSlotState() {
+
+        // SIM/Slot commands are expected.
+        return waitForLatchCountdown(LATCH_MOCK_MODEM_SIM_READY);
+    }
+
     public void initialization() {
         Log.d(TAG, "initialization");
 
@@ -214,12 +221,30 @@ public class TestMockModemService extends Service {
 
         sIRadioModemImpl.rilConnected();
 
-        status = initialRadioState();
+        status = initRadioState();
         if (!status) {
             Log.e(TAG, "radio state initialization fail");
             return;
         }
 
+        status = initSimSlotState();
+        if (!status) {
+            Log.e(TAG, "sim/slot state initialization fail");
+            return;
+        }
+
         countDownLatch(LATCH_MOCK_MODEM_INITIALIZATION_READY);
+    }
+
+    public void unsolSimSlotsStatusChanged() {
+        sIRadioConfigImpl.unsolSimSlotsStatusChanged();
+        sIRadioSimImpl.simStatusChanged();
+    }
+
+    public void setSimPresent(int slotId) {
+        Log.d(TAG, "setSimPresent");
+
+        sIRadioSimImpl.setSimPresent(slotId);
+        sIRadioConfigImpl.setSimPresent(slotId);
     }
 }
