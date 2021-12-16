@@ -111,10 +111,16 @@
         <option name="push-file" key="HelloWorldSdk2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk2.apk.idsig" />
         <option name="push-file" key="HelloWorldSdk2Updated.apk" value="/data/local/tmp/cts/content/HelloWorldSdk2Updated.apk" />
         <option name="push-file" key="HelloWorldSdk2Updated.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk2Updated.apk.idsig" />
+        <option name="push-file" key="HelloWorldSdk3UsingSdk1.apk" value="/data/local/tmp/cts/content/HelloWorldSdk3UsingSdk1.apk" />
+        <option name="push-file" key="HelloWorldSdk3UsingSdk1.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk3UsingSdk1.apk.idsig" />
+        <option name="push-file" key="HelloWorldSdk3UsingSdk1And2.apk" value="/data/local/tmp/cts/content/HelloWorldSdk3UsingSdk1And2.apk" />
+        <option name="push-file" key="HelloWorldSdk3UsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk3UsingSdk1And2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk1.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1.apk" />
         <option name="push-file" key="HelloWorldUsingSdk1.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk" />
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk.idsig" />
+        <option name="push-file" key="HelloWorldUsingSdk3.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk3.apk" />
+        <option name="push-file" key="HelloWorldUsingSdk3.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk3.apk.idsig" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

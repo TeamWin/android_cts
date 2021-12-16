@@ -118,10 +118,12 @@ public class PackageManagerShellCommandTest {
 
     private static final String TEST_SDK1_PACKAGE = "com.test.sdk1_1";
     private static final String TEST_SDK2_PACKAGE = "com.test.sdk2_2";
+    private static final String TEST_SDK3_PACKAGE = "com.test.sdk3_3";
     private static final String TEST_SDK_USER_PACKAGE = "com.test.sdk.user";
 
     private static final String TEST_SDK1_NAME = "com.test.sdk1";
     private static final String TEST_SDK2_NAME = "com.test.sdk2";
+    private static final String TEST_SDK3_NAME = "com.test.sdk3";
 
     private static final String TEST_SDK1 = "HelloWorldSdk1.apk";
     private static final String TEST_SDK1_UPDATED = "HelloWorldSdk1Updated.apk";
@@ -129,6 +131,10 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
     private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
     private static final String TEST_USING_SDK1_AND_SDK2 = "HelloWorldUsingSdk1And2.apk";
+
+    private static final String TEST_SDK3_USING_SDK1 = "HelloWorldSdk3UsingSdk1.apk";
+    private static final String TEST_SDK3_USING_SDK1_AND_SDK2 = "HelloWorldSdk3UsingSdk1And2.apk";
+    private static final String TEST_USING_SDK3 = "HelloWorldUsingSdk3.apk";
 
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
@@ -236,9 +242,10 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
 
-        uninstallPackageSilently(TEST_SDK1_PACKAGE);
-        uninstallPackageSilently(TEST_SDK2_PACKAGE);
         uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        uninstallPackageSilently(TEST_SDK3_PACKAGE);
+        uninstallPackageSilently(TEST_SDK2_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
 
         mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
         // Disable the package verifier for non-incremental installations to avoid the dialog
@@ -261,9 +268,10 @@ public class PackageManagerShellCommandTest {
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
 
-        uninstallPackageSilently(TEST_SDK1_PACKAGE);
-        uninstallPackageSilently(TEST_SDK2_PACKAGE);
         uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        uninstallPackageSilently(TEST_SDK3_PACKAGE);
+        uninstallPackageSilently(TEST_SDK2_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
 
         // Reset the global settings to their original values.
         executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
@@ -892,6 +900,159 @@ public class PackageManagerShellCommandTest {
         }
         assertFalse(isSdkInstalled(TEST_SDK1_NAME, 1));
         assertFalse(isSdkInstalled(TEST_SDK2_NAME, 2));
+    }
+
+    @Test
+    public void testAppUsingSdkUsingSdkInstallAndUpdate() throws Exception {
+        // Try to install without required SDK1.
+        installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
+
+        // Try to install SDK3 without required SDK1.
+        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
+
+        // Now install the required SDK1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
+                getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+        // Now install the required SDK3.
+        installPackage(TEST_SDK3_USING_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
+
+        // Install and uninstall.
+        installPackage(TEST_USING_SDK3);
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
+        // Update SDK1.
+        installPackage(TEST_SDK1_UPDATED);
+
+        // Install again.
+        installPackage(TEST_USING_SDK3);
+
+        // Check resolution API.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
+                    GET_SHARED_LIBRARY_FILES);
+            assertEquals(1, appInfo.sharedLibraryInfos.size());
+            SharedLibraryInfo libInfo = appInfo.sharedLibraryInfos.get(0);
+            assertEquals("com.test.sdk3", libInfo.getName());
+            assertEquals(3, libInfo.getLongVersion());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+
+        // Try to install updated SDK3 without required SDK2.
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+
+        // Now install the required SDK2.
+        installPackage(TEST_SDK2);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
+        assertTrue(isSdkInstalled(TEST_SDK3_NAME, 3));
+
+        // Install and uninstall.
+        installPackage(TEST_USING_SDK3);
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+
+        // Update both SDKs.
+        installPackage(TEST_SDK1_UPDATED);
+        installPackage(TEST_SDK2_UPDATED);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        // Install again.
+        installPackage(TEST_USING_SDK3);
+
+        // Check resolution API.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
+                    GET_SHARED_LIBRARY_FILES);
+            assertEquals(1, appInfo.sharedLibraryInfos.size());
+            assertEquals("com.test.sdk3", appInfo.sharedLibraryInfos.get(0).getName());
+            assertEquals(3, appInfo.sharedLibraryInfos.get(0).getLongVersion());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testSdkUsingSdkInstallAndUpdate() throws Exception {
+        // Try to install without required SDK1.
+        installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+        assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
+
+        // Now install the required SDK1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest",
+                getPackageCertDigest(TEST_SDK1_PACKAGE));
+
+        // Install and uninstall.
+        installPackage(TEST_SDK3_USING_SDK1);
+        uninstallPackageSilently(TEST_SDK3_PACKAGE);
+
+        // Update SDK1.
+        installPackage(TEST_SDK1_UPDATED);
+
+        // Install again.
+        installPackage(TEST_SDK3_USING_SDK1);
+
+        // Check resolution API.
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk3 = findLibrary(libs, "com.test.sdk3", 3);
+            assertNotNull(sdk3);
+            List<SharedLibraryInfo> deps = sdk3.getDependencies();
+            assertEquals(1, deps.size());
+            SharedLibraryInfo libInfo = deps.get(0);
+            assertEquals("com.test.sdk1", libInfo.getName());
+            assertEquals(1, libInfo.getLongVersion());
+        }
+
+        // Try to install without required SDK2.
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2,
+                "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
+
+        // Now install the required SDK2.
+        installPackage(TEST_SDK2);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        // Install and uninstall.
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
+        uninstallPackageSilently(TEST_SDK3_PACKAGE);
+
+        // Update both SDKs.
+        installPackage(TEST_SDK1_UPDATED);
+        installPackage(TEST_SDK2_UPDATED);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK2_NAME, 2));
+
+        // Install again.
+        installPackage(TEST_SDK3_USING_SDK1_AND_SDK2);
+
+        // Check resolution API.
+        {
+            List<SharedLibraryInfo> libs = getSharedLibraries();
+            SharedLibraryInfo sdk3 = findLibrary(libs, "com.test.sdk3", 3);
+            assertNotNull(sdk3);
+            List<SharedLibraryInfo> deps = sdk3.getDependencies();
+            assertEquals(2, deps.size());
+            assertEquals("com.test.sdk1", deps.get(0).getName());
+            assertEquals(1, deps.get(0).getLongVersion());
+            assertEquals("com.test.sdk2", deps.get(1).getName());
+            assertEquals(2, deps.get(1).getLongVersion());
+        }
     }
 
     private void runPackageVerifierTest(BiConsumer<Context, Intent> onBroadcast)
