@@ -18,6 +18,8 @@ package android.os.storage.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 
 import android.app.PendingIntent;
@@ -1009,6 +1011,32 @@ public class StorageManagerTest extends AndroidTestCase {
         if (expectedState == OnObbStateChangeListener.UNMOUNTED) {
             assertFalse("OBB should not be mounted", mStorageManager.isObbMounted(file.getPath()));
         }
+    }
+
+    public void testComputeStorageCacheBytesHint() throws Exception {
+        File mockFile = mock(File.class);
+
+        when(mockFile.getUsableSpace()).thenReturn(10000L);
+        when(mockFile.getTotalSpace()).thenReturn(15000L);
+        final long resultHigh = mStorageManager.computeStorageCacheBytes(mockFile);
+        assertTrue("" + resultHigh + " expected to be greater than equal to 0", resultHigh >= 0L);
+        assertTrue("" + resultHigh + " expected to be less than equal to total space",
+                resultHigh <= mockFile.getTotalSpace());
+
+        when(mockFile.getUsableSpace()).thenReturn(10000L);
+        when(mockFile.getTotalSpace()).thenReturn(250000L);
+        final long resultLow = mStorageManager.computeStorageCacheBytes(mockFile);
+        assertTrue("" + resultLow + " expected to be greater than equal to 0", resultLow >= 0L);
+        assertTrue("" + resultLow + " expected to be less than equal to total space",
+                resultLow <= mockFile.getTotalSpace());
+
+        when(mockFile.getUsableSpace()).thenReturn(10000L);
+        when(mockFile.getTotalSpace()).thenReturn(100000L);
+        final long resultModerate = mStorageManager.computeStorageCacheBytes(mockFile);
+        assertTrue("" + resultModerate + " expected to be greater than equal to 0",
+                resultModerate >= 0L);
+        assertTrue("" + resultModerate + " expected to be less than equal to total space",
+                resultModerate <= mockFile.getTotalSpace());
     }
 
     public static byte[] readFully(InputStream in) throws IOException {
