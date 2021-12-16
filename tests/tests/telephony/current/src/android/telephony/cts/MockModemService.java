@@ -32,7 +32,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class TestMockModemService extends Service {
+public class MockModemService extends Service {
     private static final String TAG = "MockModemService";
 
     public static final int TEST_TIMEOUT_MS = 30000;
@@ -81,8 +81,8 @@ public class TestMockModemService extends Service {
 
     // For local access of this Service.
     class LocalBinder extends Binder {
-        TestMockModemService getService() {
-            return TestMockModemService.this;
+        MockModemService getService() {
+            return MockModemService.this;
         }
     }
 
