@@ -16,6 +16,8 @@
 
 package android.app.usage.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -52,6 +54,7 @@ import android.os.Parcel;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.Settings;
@@ -173,6 +176,7 @@ public class UsageStatsTest {
                 Context.USAGE_STATS_SERVICE);
         mKeyguardManager = mContext.getSystemService(KeyguardManager.class);
         mTargetPackage = mContext.getPackageName();
+        PermissionUtils.grantPermission(mTargetPackage, POST_NOTIFICATIONS);
 
         mWMStateHelper = new WindowManagerStateHelper();
 
@@ -200,6 +204,7 @@ public class UsageStatsTest {
             removeUser(mOtherUser);
             mOtherUser = 0;
         }
+        PermissionUtils.revokePermission(mTargetPackage, POST_NOTIFICATIONS);
     }
 
     private static void assertLessThan(long left, long right) {
