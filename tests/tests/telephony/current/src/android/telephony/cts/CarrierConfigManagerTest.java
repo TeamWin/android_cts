@@ -174,6 +174,9 @@ public class CarrierConfigManagerTest {
             assertEquals("KEY_CARRIER_USSD_METHOD_INT doesn't match static default.",
                     config.getInt(CarrierConfigManager.KEY_CARRIER_USSD_METHOD_INT),
                             CarrierConfigManager.USSD_OVER_CS_PREFERRED);
+            assertEquals("KEY_USAGE_SETTING_INT doesn't match static default.",
+                    config.getInt(CarrierConfigManager.KEY_CELLULAR_USAGE_SETTING_INT),
+                            SubscriptionManager.USAGE_SETTING_UNKNOWN);
         }
 
         // These key should return default values if not customized.
