@@ -22,7 +22,6 @@ import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageInstaller;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -171,8 +170,7 @@ public class ApexShimValidationTest {
                      InstallUtils.openPackageInstallerSession(sessionId)) {
             LocalIntentSender sender = new LocalIntentSender();
             session.commit(sender.getIntentSender());
-            Intent result = sender.getResult();
-            InstallUtils.assertStatusSuccess(result);
+            sender.getResult();
             return sessionId;
         }
     }
