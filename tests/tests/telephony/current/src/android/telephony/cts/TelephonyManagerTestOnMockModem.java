@@ -36,10 +36,10 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /** Test MockModemService interfaces. */
-public class MockModemServiceTest {
-    private static final String TAG = "MockModemServiceTest";
+public class TelephonyManagerTestOnMockModem {
+    private static final String TAG = "TelephonyManagerTestOnMockModem";
     private static MockModemServiceConnector sServiceConnector;
-    private static TestMockModemService sMockModem = null;
+    private static MockModemService sMockModem = null;
 
     TelephonyManager mTelephonyManager =
             (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
@@ -47,9 +47,9 @@ public class MockModemServiceTest {
     @BeforeClass
     public static void beforeAllTests() throws Exception {
 
-        Log.d(TAG, "MockModemServiceTest#beforeAllTests()");
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#beforeAllTests()");
 
-        // Override all interfaces to TestMockModemService
+        // Override all interfaces to MockModemService
         sServiceConnector =
                 new MockModemServiceConnector(InstrumentationRegistry.getInstrumentation());
 
@@ -61,7 +61,7 @@ public class MockModemServiceTest {
 
     @AfterClass
     public static void afterAllTests() throws Exception {
-        Log.d(TAG, "MockModemServiceTest#afterAllTests()");
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#afterAllTests()");
 
         // Rebind all interfaces which is binding to MockModemService to default.
         assertNotNull(sServiceConnector);
@@ -76,7 +76,7 @@ public class MockModemServiceTest {
 
     @Test
     public void testSimStateChange() throws Throwable {
-        Log.d(TAG, "MockModemServiceTest#testSimStateChange");
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testSimStateChange");
 
         int simCardState = mTelephonyManager.getSimCardState();
         Log.d(TAG, "Current SIM card state: " + simCardState);
@@ -91,7 +91,7 @@ public class MockModemServiceTest {
 
         sMockModem.unsolSimSlotsStatusChanged();
         assertTrue(
-                sMockModem.waitForLatchCountdown(TestMockModemService.LATCH_MOCK_MODEM_SIM_READY));
+                sMockModem.waitForLatchCountdown(MockModemService.LATCH_MOCK_MODEM_SIM_READY));
 
         TimeUnit.SECONDS.sleep(1);
         simCardState = mTelephonyManager.getSimCardState();
@@ -101,7 +101,7 @@ public class MockModemServiceTest {
 
     @Test
     public void testRadioPower() throws Throwable {
-        Log.d(TAG, "MockModemServiceTest#testRadioPower");
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testRadioPower");
 
         boolean apm = TelephonyProperties.airplane_mode_on().orElse(false);
         Log.d(TAG, "APM setting: " + apm);
@@ -110,21 +110,21 @@ public class MockModemServiceTest {
         int waitLatch;
         if (!apm) {
             expectedState = TelephonyManager.RADIO_POWER_ON;
-            waitLatch = TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON;
+            waitLatch = MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON;
         } else {
             expectedState = TelephonyManager.RADIO_POWER_OFF;
-            waitLatch = TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF;
+            waitLatch = MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF;
         }
 
         assertEquals(mTelephonyManager.getRadioPowerState(), expectedState);
 
         boolean switchState;
         if (!apm) {
-            waitLatch = TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF;
+            waitLatch = MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF;
             switchState = false;
             expectedState = TelephonyManager.RADIO_POWER_OFF;
         } else {
-            waitLatch = TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON;
+            waitLatch = MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON;
             switchState = true;
             expectedState = TelephonyManager.RADIO_POWER_ON;
         }
@@ -150,11 +150,11 @@ public class MockModemServiceTest {
 
         // Recovery to APM setting
         if (apm) {
-            waitLatch = TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF;
+            waitLatch = MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF;
             switchState = false;
             expectedState = TelephonyManager.RADIO_POWER_OFF;
         } else {
-            waitLatch = TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON;
+            waitLatch = MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON;
             switchState = true;
             expectedState = TelephonyManager.RADIO_POWER_ON;
         }

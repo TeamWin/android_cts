@@ -35,11 +35,11 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     private static final String DEFAULT_ESN = "123456789";
     private static final String DEFAULT_MEID = "123456789012345";
 
-    private final TestMockModemService mService;
+    private final MockModemService mService;
     private IRadioModemResponse mRadioModemResponse;
     private IRadioModemIndication mRadioModemIndication;
 
-    public IRadioModemImpl(TestMockModemService service) {
+    public IRadioModemImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
@@ -52,7 +52,7 @@ public class IRadioModemImpl extends IRadioModem.Stub {
         Log.d(TAG, "setResponseFunctions");
         mRadioModemResponse = radioModemResponse;
         mRadioModemIndication = radioModemIndication;
-        mService.countDownLatch(TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
     }
 
     @Override
@@ -281,10 +281,10 @@ public class IRadioModemImpl extends IRadioModem.Stub {
         // TODO: The below should be handled by Helper function
         if (powerOn) {
             radioStateChanged(RadioState.ON);
-            mService.countDownLatch(TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
+            mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
         } else {
             radioStateChanged(RadioState.OFF);
-            mService.countDownLatch(TestMockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
+            mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
         }
     }
 

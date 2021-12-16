@@ -30,11 +30,11 @@ import android.util.Log;
 public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private static final String TAG = "MRNW";
 
-    private final TestMockModemService mService;
+    private final MockModemService mService;
     private IRadioNetworkResponse mRadioNetworkResponse;
     private IRadioNetworkIndication mRadioNetworkIndication;
 
-    public IRadioNetworkImpl(TestMockModemService service) {
+    public IRadioNetworkImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
@@ -395,7 +395,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         Log.d(TAG, "setResponseFunctions");
         mRadioNetworkResponse = radioNetworkResponse;
         mRadioNetworkIndication = radioNetworkIndication;
-        mService.countDownLatch(TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
     }
 
     @Override

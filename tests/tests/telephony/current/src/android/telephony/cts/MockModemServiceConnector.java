@@ -28,13 +28,13 @@ import android.util.Log;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/** Connects Telephony Framework to TestMockModemService. */
+/** Connects Telephony Framework to MockModemService. */
 class MockModemServiceConnector {
 
     private static final String TAG = "MockModemServiceConnector";
 
     private static final String DEFAULT_SERVICE_NAME =
-            TestMockModemService.class.getClass().getName();
+            MockModemService.class.getClass().getName();
     private static final String COMMAND_BASE = "cmd phone ";
     private static final String COMMAND_SET_MODEM_SERVICE = "radio set-modem-service ";
     private static final String COMMAND_GET_MODEM_SERVICE = "radio get-modem-service ";
@@ -56,7 +56,7 @@ class MockModemServiceConnector {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             String serviceName;
-            mMockModemService = ((TestMockModemService.LocalBinder) service).getService();
+            mMockModemService = ((MockModemService.LocalBinder) service).getService();
             serviceName = mMockModemService.getClass().getName();
             if (!isDefaultMockModemService(serviceName)) {
                 updateModemServiceName(serviceName);
@@ -74,7 +74,7 @@ class MockModemServiceConnector {
 
     private Instrumentation mInstrumentation;
 
-    private TestMockModemService mMockModemService;
+    private MockModemService mMockModemService;
     private MockModemServiceConnection mMockModemServiceConn;
     private boolean mIsServiceOverridden;
     private String mModemServiceName;
@@ -97,7 +97,7 @@ class MockModemServiceConnector {
         mInstrumentation
                 .getContext()
                 .bindService(
-                        new Intent(mInstrumentation.getContext(), TestMockModemService.class),
+                        new Intent(mInstrumentation.getContext(), MockModemService.class),
                         mMockModemServiceConn,
                         Context.BIND_AUTO_CREATE);
         try {
@@ -170,7 +170,7 @@ class MockModemServiceConnector {
     }
 
     /**
-     * Bind to the local implementation of TestMockModemService.
+     * Bind to the local implementation of MockModemService.
      *
      * @return true if this request succeeded, false otherwise.
      */
@@ -183,7 +183,7 @@ class MockModemServiceConnector {
     }
 
     /**
-     * Trigger the telephony framework to bind to the local TestMockModemService implementation.
+     * Trigger the telephony framework to bind to the local MockModemService implementation.
      *
      * @return true if this request succeeded, false otherwise.
      */
@@ -193,13 +193,13 @@ class MockModemServiceConnector {
         if (overrideModemService()) {
             isComplete =
                     mMockModemService.waitForLatchCountdown(
-                            TestMockModemService.LATCH_RADIO_INTERFACES_READY,
+                            MockModemService.LATCH_RADIO_INTERFACES_READY,
                             BIND_RADIO_INTERFACE_READY_TIMEOUT_MS);
 
             mMockModemService.initialization();
             isComplete =
                     mMockModemService.waitForLatchCountdown(
-                            TestMockModemService.LATCH_MOCK_MODEM_INITIALIZATION_READY);
+                            MockModemService.LATCH_MOCK_MODEM_INITIALIZATION_READY);
         }
 
         return isComplete;
@@ -260,7 +260,7 @@ class MockModemServiceConnector {
         return isComplete;
     }
 
-    TestMockModemService getMockModemService() {
+    MockModemService getMockModemService() {
         return mMockModemService;
     }
 }
