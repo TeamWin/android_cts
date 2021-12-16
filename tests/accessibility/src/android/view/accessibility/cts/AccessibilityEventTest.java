@@ -457,30 +457,12 @@ public class AccessibilityEventTest {
         parcel.recycle();
     }
 
-    /** Tests if {@link AccessibilityEvent} are properly reused. */
-    @SmallTest
-    @Test
-    public void testReuse() {
-        AccessibilityEvent firstEvent = AccessibilityEvent.obtain();
-        firstEvent.recycle();
-        AccessibilityEvent secondEvent = AccessibilityEvent.obtain();
-        assertSame("AccessibilityEvent not properly reused", firstEvent, secondEvent);
-    }
-
-    /** Tests if {@link AccessibilityEvent} are properly recycled. */
+    /** Tests if {@link AccessibilityEvent} can be acquired through obtain(). */
     @SmallTest
     @Test
     public void testRecycle() {
-        // obtain and populate an event
-        AccessibilityEvent populatedEvent = AccessibilityEvent.obtain();
-        fullyPopulateAccessibilityEvent(populatedEvent);
-
-        // recycle and obtain the same recycled instance
-        populatedEvent.recycle();
-        AccessibilityEvent recycledEvent = AccessibilityEvent.obtain();
-
-        // check expectations
-        assertAccessibilityEventCleared(recycledEvent);
+        // evaluate that recycle() can be called on an event acquired by obtain()
+        AccessibilityEvent.obtain().recycle();
     }
 
     /** Tests whether the event types are correctly converted to strings. */
