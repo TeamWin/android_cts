@@ -40,10 +40,13 @@ public class TestMockModemService extends Service {
             "android.telephony.cts.iradioconfig.mockmodem.service";
     public static final String IRADIOMODEM_MOCKMODEM_SERVICE_INTERFACE =
             "android.telephony.cts.iradiomodem.mockmodem.service";
+    public static final String IRADIOSIM_MOCKMODEM_SERVICE_INTERFACE =
+            "android.telephony.cts.iradiosim.mockmodem.service";
 
     private static Context sContext;
     private static IRadioConfigImpl sIRadioConfigImpl;
     private static IRadioModemImpl sIRadioModemImpl;
+    private static IRadioSimImpl sIRadioSimImpl;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
@@ -51,7 +54,7 @@ public class TestMockModemService extends Service {
     public static final int LATCH_MAX = 3;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
-    private static final int IRADIO_INTERFACE_NUMBER = 1; // TODO: 6
+    private static final int IRADIO_INTERFACE_NUMBER = 2; // TODO: 6
     public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
     public static final int LATCH_MOCK_MODEM_INITIALIZATION_READY =
             LATCH_RADIO_INTERFACES_READY + 1;
@@ -91,6 +94,7 @@ public class TestMockModemService extends Service {
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
         sIRadioConfigImpl = new IRadioConfigImpl(this);
         sIRadioModemImpl = new IRadioModemImpl(this);
+        sIRadioSimImpl = new IRadioSimImpl(this);
 
         mBinder = new LocalBinder();
     }
@@ -103,6 +107,9 @@ public class TestMockModemService extends Service {
         } else if (IRADIOMODEM_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
             Log.i(TAG, "onBind-IRadioModem");
             return sIRadioModemImpl;
+        } else if (IRADIOSIM_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioSim");
+            return sIRadioSimImpl;
         }
 
         countDownLatch(LATCH_MOCK_MODEM_SERVICE_READY);
