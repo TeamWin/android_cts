@@ -308,7 +308,7 @@ public final class DevicePolicyManagerTest {
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder()
                             .setAccountToMigrate(TEST_ACCOUNT)
-                            .setKeepAccountMigrated(true)
+                            .setKeepingAccountOnMigration(true)
                             .build();
             profile = provisionManagedProfile(params);
 
@@ -539,7 +539,7 @@ public final class DevicePolicyManagerTest {
 
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder()
-                            .setDeviceOwnerCanGrantSensorsPermissions(false)
+                            .setCanDeviceOwnerGrantSensorsPermissions(false)
                             .build();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
