@@ -37,15 +37,18 @@ public class TestMockModemService extends Service {
     public static final int TEST_TIMEOUT_MS = 30000;
     public static final String IRADIOCONFIG_MOCKMODEM_SERVICE_INTERFACE =
             "android.telephony.cts.iradioconfig.mockmodem.service";
+    public static final String IRADIOMODEM_MOCKMODEM_SERVICE_INTERFACE =
+            "android.telephony.cts.iradiomodem.mockmodem.service";
 
     private static Context sContext;
-    private static IRadioConfigImpl sIRadioConfigInterfaces;
+    private static IRadioConfigImpl sIRadioConfigImpl;
+    private static IRadioModemImpl sIRadioModemImpl;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
     public static final int LATCH_MAX = 1;
     public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
-    private static final int IRADIO_INTERFACE_NUMBER = 0; // TODO: 6
+    private static final int IRADIO_INTERFACE_NUMBER = 1; // TODO: 6
 
     private int mSimNumber;
 
@@ -78,7 +81,8 @@ public class TestMockModemService extends Service {
         sLatches[LATCH_RADIO_INTERFACES_READY] = new CountDownLatch(radioInterfaceNumber);
 
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
-        sIRadioConfigInterfaces = new IRadioConfigImpl(this);
+        sIRadioConfigImpl = new IRadioConfigImpl(this);
+        sIRadioModemImpl = new IRadioModemImpl(this);
 
         mBinder = new LocalBinder();
     }
@@ -87,7 +91,10 @@ public class TestMockModemService extends Service {
     public IBinder onBind(Intent intent) {
         if (IRADIOCONFIG_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
             Log.i(TAG, "onBind-IRadioConfig");
-            return sIRadioConfigInterfaces;
+            return sIRadioConfigImpl;
+        } else if (IRADIOMODEM_MOCKMODEM_SERVICE_INTERFACE.equals(intent.getAction())) {
+            Log.i(TAG, "onBind-IRadioModem");
+            return sIRadioModemImpl;
         }
 
         countDownLatch(LATCH_MOCK_MODEM_SERVICE_READY);
@@ -112,7 +119,6 @@ public class TestMockModemService extends Service {
             }
             complete = latch.await(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            // complete == false
         }
         synchronized (mLock) {
             sLatches[latchIndex] = new CountDownLatch(1);
@@ -129,7 +135,6 @@ public class TestMockModemService extends Service {
             }
             complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            // complete == false
         }
         synchronized (mLock) {
             sLatches[latchIndex] = new CountDownLatch(1);
