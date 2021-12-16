@@ -16,6 +16,7 @@
 
 package android.companion.cts
 
+import android.annotation.CallSuper
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.companion.AssociationInfo
@@ -25,11 +26,14 @@ import android.content.pm.PackageManager
 import android.net.MacAddress
 import android.os.SystemClock.sleep
 import android.os.SystemClock.uptimeMillis
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Before
+import java.io.IOException
 import java.util.concurrent.Executor
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -92,7 +96,10 @@ abstract class TestBase {
         withShellPermissionIdentity { cdm.disassociateAll() }
     }
 
+    @CallSuper
     protected open fun setUp() {}
+
+    @CallSuper
     protected open fun tearDown() {}
 
     protected fun <T> withShellPermissionIdentity(
@@ -156,3 +163,32 @@ fun waitFor(
     }
     return true
 }
+
+fun <R> waitForResult(
+    timeout: Long = 10_000,
+    interval: Long = 1_000,
+    block: () -> R
+): R? {
+    val startTime = uptimeMillis()
+    while (true) {
+        val result: R = block()
+        if (result != null) return result
+        sleep(interval)
+        if (uptimeMillis() - startTime > timeout) return null
+    }
+}
+
+fun Instrumentation.runShellCommand(cmd: String): String {
+    Log.i(TAG, "Running shell command: '$cmd'")
+    try {
+        val out = SystemUtil.runShellCommand(this, cmd)
+        Log.i(TAG, "Out:\n$out")
+        return out
+    } catch (e: IOException) {
+        Log.e(TAG, "Error running shell command: $cmd")
+        throw e
+    }
+}
+
+fun Instrumentation.setSystemProp(name: String, value: String) =
+        runShellCommand("setprop $name $value")

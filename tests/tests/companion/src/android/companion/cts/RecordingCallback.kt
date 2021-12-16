@@ -49,12 +49,12 @@ class RecordingCallback : CompanionDeviceManager.Callback() {
         _invocations.add(CallbackMethodInvocation(method, param))
     }
 
-    fun waitForInvocation() {
-        if (!waitFor(timeout = 1000, interval = 100) { invocations.isNotEmpty() })
+    fun waitForInvocation(timeout: Long = 1_000) {
+        if (!waitFor(timeout = timeout, interval = 100) { invocations.isNotEmpty() })
             throw AssertionError("Callback hasn't been invoked")
     }
 
-    fun clearRecordedInvocation() = _invocations.clear()
+    fun clearRecordedInvocations() = _invocations.clear()
 
     enum class CallbackMethod {
         OnDeviceFound, OnAssociationPending, OnAssociationCreated, OnFailure

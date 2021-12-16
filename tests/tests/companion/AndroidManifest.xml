@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,18 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.companion.cts">
+
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="android.companion.cts"
+        android:label="CTS tests of android.companion">
+
+        <meta-data
+            android:name="listener"
+            android:value="com.android.cts.runner.CtsTestRunListener" />
+    </instrumentation>
+
+    <uses-feature android:name="android.software.companion_device_setup" />
 
     <application>
         <uses-library android:name="android.test.runner" />
@@ -44,16 +56,14 @@
                 <action android:name="android.companion.CompanionDeviceService" />
             </intent-filter>
         </service>
+
+        <activity
+            android:name=".CompanionActivity"
+            android:exported="false"
+            android:label="Companion Activity"
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"/>
     </application>
-
-    <uses-feature android:name="android.software.companion_device_setup" />
-
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.companion.cts"
-                     android:label="CTS tests of android.companion">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
 
 </manifest>
 

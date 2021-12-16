@@ -30,6 +30,7 @@ android_test {
 
     static_libs: [
         "androidx.test.ext.junit",
+        "androidx.test.uiautomator",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "junit",

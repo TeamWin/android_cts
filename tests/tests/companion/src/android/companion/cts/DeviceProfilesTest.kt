@@ -43,7 +43,7 @@ class DeviceProfilesTest : TestBase() {
     fun test_supportedProfiles() {
         val callback = RecordingCallback()
         SUPPORTED_PROFILES.forEach { (profile, permission) ->
-            callback.clearRecordedInvocation()
+            callback.clearRecordedInvocations()
             val request = buildRequest(deviceProfile = profile)
 
             // Should fail if called without the required permissions.
