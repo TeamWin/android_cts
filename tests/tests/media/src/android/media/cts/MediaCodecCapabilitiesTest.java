@@ -17,7 +17,6 @@ package android.media.cts;
 
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.AudioCapabilities;
@@ -31,29 +30,40 @@ import static android.media.MediaFormat.MIMETYPE_VIDEO_AVC;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_H263;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_HEVC;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_MPEG4;
-import static android.media.MediaFormat.MIMETYPE_VIDEO_VP8;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_VP9;
-import android.media.MediaPlayer;
-import android.os.Build;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
 
+import androidx.annotation.CallSuper;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Arrays;
 import java.util.Vector;
 
 /**
  * Basic validation test of data returned by MediaCodeCapabilities.
  */
 @AppModeFull(reason = "Dynamic config disabled.")
+@RunWith(AndroidJUnit4.class)
 public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
 
     private static final String TAG = "MediaCodecCapabilitiesTest";
@@ -75,15 +85,23 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     private static final String MODULE_NAME = "CtsMediaTestCases";
     private DynamicConfigDeviceSide dynamicConfig;
 
+    @Before
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Throwable {
         super.setUp();
         dynamicConfig = new DynamicConfigDeviceSide(MODULE_NAME);
+    }
+
+    @After
+    @Override
+    public void tearDown() {
+        super.tearDown();
     }
 
     // Android device implementations with H.264 encoders, MUST support Baseline Profile Level 3.
     // SHOULD support Main Profile/ Level 4, if supported the device must also support Main
     // Profile/Level 4 decoding.
+    @Test
     public void testH264EncoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkEncoder(MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -102,6 +120,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
 
     // Android device implementations with H.264 decoders, MUST support Baseline Profile Level 3.
     // Android Television Devices MUST support High Profile Level 4.2.
+    @Test
     public void testH264DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -119,6 +138,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // Android device implementations with H.263 encoders, MUST support Level 45.
+    @Test
     public void testH263EncoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkEncoder(MIMETYPE_VIDEO_H263)) {
             return; // skip
@@ -130,6 +150,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // Android device implementations with H.263 decoders, MUST support Level 30.
+    @Test
     public void testH263DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_H263)) {
             return; // skip
@@ -141,6 +162,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // Android device implementations with MPEG-4 decoders, MUST support Simple Profile Level 3.
+    @Test
     public void testMpeg4DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_MPEG4)) {
             return; // skip
@@ -156,6 +178,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     // Android Television Devices MUST support the Main Profile Level 4.1 Main tier.
     // When the UHD video decoding profile is supported, it MUST support Main10 Level 5 Main
     // Tier profile.
+    @Test
     public void testH265DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_HEVC)) {
             return; // skip
@@ -178,6 +201,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testVp9DecoderCapabilitiesOnTv() throws Exception {
         if (isTv() && MediaUtils.hasHardwareCodec(MIMETYPE_VIDEO_VP9, /* encode = */ false)) {
             // CDD [5.3.7.4/T-1-1]
@@ -191,6 +215,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testAvcBaseline1() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileBaseline, AVCLevel1)) {
             return; // skip
@@ -200,6 +225,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testAvcBaseline12() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileBaseline, AVCLevel12)) {
             return; // skip
@@ -211,6 +237,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testAvcBaseline30() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileBaseline, AVCLevel3)) {
             return; // skip
@@ -222,6 +249,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testAvcHigh31() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel31)) {
             return; // skip
@@ -233,6 +261,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testAvcHigh40() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_AVC, AVCProfileHigh, AVCLevel4)) {
             return; // skip
@@ -248,6 +277,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testHevcMain1() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel1)) {
             return; // skip
@@ -257,6 +287,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain2() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel2)) {
             return; // skip
@@ -266,6 +297,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain21() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel21)) {
             return; // skip
@@ -275,6 +307,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain3() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel3)) {
             return; // skip
@@ -284,6 +317,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain31() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel31)) {
             return; // skip
@@ -293,6 +327,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain4() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel4)) {
             return; // skip
@@ -302,6 +337,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain41() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel41)) {
             return; // skip
@@ -311,6 +347,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain5() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel5)) {
             return; // skip
@@ -320,6 +357,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         MediaUtils.skipTest(TAG, "no test stream");
     }
 
+    @Test
     public void testHevcMain51() throws Exception {
         if (!checkDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain, HEVCMainTierLevel51)) {
             return; // skip
@@ -406,6 +444,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         return adaptiveFormats;
     }
 
+    @Test
     public void testHaveAdaptiveVideoDecoderForAllSupportedFormats() {
         Set<String> supportedFormats = new HashSet<String>();
         boolean skipped = true;
@@ -440,6 +479,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testAllVideoDecodersAreAdaptive() {
         Set<String> adaptiveFormats = requiredAdaptiveFormats();
         boolean skipped = true;
@@ -486,6 +526,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         return format;
     }
 
+    @Test
     public void testSecureCodecsAdvertiseSecurePlayback() throws IOException {
         boolean skipped = true;
         for (MediaCodecInfo info : mAllInfos) {
@@ -555,6 +596,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         return format;
     }
 
+    @Test
     public void testAllAdvertisedVideoEncoderBitrateModes() throws IOException {
         boolean skipped = true;
         final int[] modes = {
@@ -604,6 +646,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testAllNonTunneledVideoCodecsSupportFlexibleYUV() throws IOException {
         boolean skipped = true;
         for (MediaCodecInfo info : mAllInfos) {
@@ -777,6 +820,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_VP9      ));
     }
 
+    @Test
     public void testGetMaxSupportedInstances() {
         StringBuilder xmlOverrides = new StringBuilder();
         MediaCodecList allCodecs = new MediaCodecList(MediaCodecList.ALL_CODECS);
@@ -869,6 +913,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testGetSupportedFrameRates() throws IOException {
         // Chose MediaFormat.MIMETYPE_VIDEO_H263 randomly
         CodecCapabilities codecCap = CodecCapabilities.createFromProfileLevel(
@@ -883,6 +928,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         assertTrue("Invalid framerate range", Range.create(1, 15).equals(supportedFrameRates));
     }
 
+    @Test
     public void testIsSampleRateSupported() throws IOException {
         if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_AUDIO_AAC)) {
             return; // skip
@@ -907,6 +953,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // API test coverage for MediaCodecInfo.EncoderCapabilities.getComplexityRange()
+    @Test
     public void testGetComplexityRange() throws IOException {
         boolean skipTest = true;
         if (MediaUtils.hasEncoder(MediaFormat.MIMETYPE_AUDIO_AAC)) {
@@ -940,6 +987,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @Test
     public void testLowLatencyFeatureIsSupportedOnly() throws IOException {
         MediaCodecList list = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo info : list.getCodecInfos()) {
