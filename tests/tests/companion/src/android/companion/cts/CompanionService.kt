@@ -63,6 +63,9 @@ sealed class CompanionService<T : CompanionService<T>>(
     override fun onDeviceDisappeared(associationInfo: AssociationInfo) {
         Log.d(TAG, "$this.onDevice_Disappeared(), association=$associationInfo")
         _connectedDevices.remove(associationInfo.id)
+                ?: error("onDeviceAppeared() has not been called for association with id " +
+                        "${associationInfo.id}")
+
         super.onDeviceDisappeared(associationInfo)
     }
 
