@@ -106,6 +106,8 @@ static const uint8_t kKeyRequestData[] = {
     0x72, 0x79, 0x22, 0x7d
 };
 
+static const char kDefaultUrl[] = "https://default.url";
+
 static const size_t kKeyRequestSize = sizeof(kKeyRequestData);
 
 // base 64 encoded JSON response string, must not contain padding character '='
@@ -973,6 +975,87 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testFin
     return JNI_TRUE;
 }
 
+extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetKeyRequestNative(
+    JNIEnv* env, jclass /*clazz*/, jbyteArray uuid, jobject playbackParams) {
+
+    if (NULL == uuid || NULL == playbackParams) {
+        jniThrowException(env, "java/lang/NullPointerException",
+                "null uuid or null playback parameters");
+        return JNI_FALSE;
+    }
+
+    Uuid juuid = jbyteArrayToUuid(env, uuid);
+    if (!isUuidSizeValid(juuid)) {
+        jniThrowExceptionFmt(env, "java/lang/IllegalArgumentException",
+                "invalid UUID size, expected %u bytes", kUuidSize);
+        return JNI_FALSE;
+    }
+
+    PlaybackParams params;
+    initPlaybackParams(env, playbackParams, params);
+
+    AMediaObjects aMediaObjects;
+    media_status_t status = AMEDIA_OK;
+    aMediaObjects.setDrm(AMediaDrm_createByUUID(&juuid[0]));
+    if (NULL == aMediaObjects.getDrm()) {
+        jniThrowException(env, "java/lang/RuntimeException", "null MediaDrm");
+        return JNI_FALSE;
+    }
+
+    AMediaDrmSessionId sessionId;
+    status = AMediaDrm_openSession(aMediaObjects.getDrm(), &sessionId);
+    if (status != AMEDIA_OK) {
+        jniThrowException(env, "java/lang/RuntimeException",
+                "openSession failed");
+        return JNI_FALSE;
+    }
+
+    // Pointer to keyRequest memory, which remains until the next
+    // AMediaDrm_getKeyRequest call or until the drm object is released.
+    const uint8_t* keyRequest;
+    size_t keyRequestSize = 0;
+    std::string errorMessage;
+
+    const char *defaultUrl;
+    AMediaDrmKeyRequestType keyRequestType;
+
+    // The server recognizes "video/mp4" but not "video/avc".
+    status = AMediaDrm_getKeyRequestWithDefaultUrlAndType(aMediaObjects.getDrm(),
+            &sessionId, kClearkeyPssh, sizeof(kClearkeyPssh),
+            "video/mp4" /*mimeType*/, KEY_TYPE_STREAMING,
+            NULL, 0, &keyRequest, &keyRequestSize, &defaultUrl, &keyRequestType);
+
+    if(status != AMEDIA_OK) return JNI_FALSE;
+
+    switch(keyRequestType) {
+        case KEY_REQUEST_TYPE_INITIAL:
+        case KEY_REQUEST_TYPE_RENEWAL:
+        case KEY_REQUEST_TYPE_RELEASE:
+        case KEY_REQUEST_TYPE_NONE:
+        case KEY_REQUEST_TYPE_UPDATE:
+            break;
+        default:
+            errorMessage.assign("keyRequestType returned is [%d], error = %d");
+            AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+            jniThrowExceptionFmt(env, "java/lang/RuntimeException", errorMessage.c_str(), keyRequestType, status);
+            return JNI_FALSE;
+    }
+
+    ALOGD("kDefaultUrl [%s], length %d, defaultUrl [%s], length %d",
+        kDefaultUrl,
+        (int)strlen(kDefaultUrl),
+        defaultUrl,
+        (int)strlen(defaultUrl));
+
+    if (strlen(kDefaultUrl) != strlen(defaultUrl) || strcmp(kDefaultUrl, defaultUrl) != 0) {
+        AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+        jniThrowExceptionFmt(env, "java/lang/RuntimeException", "Default Url is not correct [%s], error = %d", defaultUrl, status);
+        return JNI_FALSE;
+    }
+
+    return JNI_TRUE;
+}
+
 static JNINativeMethod gMethods[] = {
     { "isCryptoSchemeSupportedNative", "([B)Z",
             (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_isCryptoSchemeSupportedNative },
@@ -997,6 +1080,10 @@ static JNINativeMethod gMethods[] = {
 
     { "testFindSessionIdNative", "([B)Z",
             (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testFindSessionIdNative },
+
+    { "testGetKeyRequestWithDefaultUrlAndTypeNative",
+            "([BLandroid/media/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
+            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetKeyRequestNative},
 };
 
 int register_android_mediadrm_cts_NativeMediaDrmClearkeyTest(JNIEnv* env) {
