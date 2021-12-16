@@ -24,6 +24,7 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.RadioResponseType;
 import android.os.Binder;
 import android.os.IBinder;
+import android.sysprop.TelephonyProperties;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -45,10 +46,16 @@ public class TestMockModemService extends Service {
     private static IRadioModemImpl sIRadioModemImpl;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
-    public static final int LATCH_MAX = 1;
-    public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
+    public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
+    public static final int LATCH_MOCK_MODEM_RADIO_POWR_OFF = 2;
+    public static final int LATCH_MAX = 3;
+
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
     private static final int IRADIO_INTERFACE_NUMBER = 1; // TODO: 6
+    public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
+    public static final int LATCH_MOCK_MODEM_INITIALIZATION_READY =
+            LATCH_RADIO_INTERFACES_READY + 1;
+    public static final int TOTAL_LATCH_NUMBER = LATCH_MAX + 2;
 
     private int mSimNumber;
 
@@ -71,7 +78,7 @@ public class TestMockModemService extends Service {
 
         mLock = new Object();
 
-        sLatches = new CountDownLatch[LATCH_MAX + 1];
+        sLatches = new CountDownLatch[TOTAL_LATCH_NUMBER];
         for (int i = 0; i < LATCH_MAX; i++) {
             sLatches[i] = new CountDownLatch(1);
         }
@@ -79,6 +86,7 @@ public class TestMockModemService extends Service {
         int radioInterfaceNumber =
                 IRADIO_CONFIG_INTERFACE_NUMBER + mSimNumber * IRADIO_INTERFACE_NUMBER;
         sLatches[LATCH_RADIO_INTERFACES_READY] = new CountDownLatch(radioInterfaceNumber);
+        sLatches[LATCH_MOCK_MODEM_INITIALIZATION_READY] = new CountDownLatch(1);
 
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
         sIRadioConfigImpl = new IRadioConfigImpl(this);
@@ -172,5 +180,39 @@ public class TestMockModemService extends Service {
         rspInfo.error = error;
 
         return rspInfo;
+    }
+
+    private boolean initialRadioState() {
+        int waitLatch;
+
+        boolean apm = TelephonyProperties.airplane_mode_on().orElse(false);
+        Log.d(TAG, "APM setting: " + apm);
+
+        if (!apm) {
+            waitLatch = LATCH_MOCK_MODEM_RADIO_POWR_ON;
+        } else {
+            waitLatch = LATCH_MOCK_MODEM_RADIO_POWR_OFF;
+        }
+
+        sIRadioModemImpl.radioStateChanged(android.hardware.radio.modem.RadioState.OFF);
+
+        // Radio Power command is expected.
+        return waitForLatchCountdown(waitLatch);
+    }
+
+    public void initialization() {
+        Log.d(TAG, "initialization");
+
+        boolean status = false;
+
+        sIRadioModemImpl.rilConnected();
+
+        status = initialRadioState();
+        if (!status) {
+            Log.e(TAG, "radio state initialization fail");
+            return;
+        }
+
+        countDownLatch(LATCH_MOCK_MODEM_INITIALIZATION_READY);
     }
 }
