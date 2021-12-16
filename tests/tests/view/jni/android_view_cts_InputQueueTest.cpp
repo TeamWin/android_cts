@@ -24,10 +24,10 @@
 
 #define LOG_TAG "InputQueueTest"
 
-bool waitForEvent(JNIEnv /* *env */, jclass /* clazz */, jobject inputQueue) {
+bool waitForEvent(JNIEnv *env, jclass /* clazz */, jobject inputQueue) {
     constexpr size_t NUM_TRIES = 5;
     for (size_t i = 0; i < NUM_TRIES; i++) {
-        AInputQueue *nativeQueue = AInputQueue_fromJava(inputQueue);
+        AInputQueue *nativeQueue = AInputQueue_fromJava(env, inputQueue);
         if (nativeQueue != nullptr) {
             int32_t numEvents = AInputQueue_hasEvents(nativeQueue);
             if (numEvents > 0) {
@@ -40,7 +40,7 @@ bool waitForEvent(JNIEnv /* *env */, jclass /* clazz */, jobject inputQueue) {
 }
 
 void inputQueueTest(JNIEnv *env, jclass /* clazz */, jobject inputQueue) {
-    AInputQueue *nativeQueue = AInputQueue_fromJava(inputQueue);
+    AInputQueue *nativeQueue = AInputQueue_fromJava(env, inputQueue);
     ASSERT(nativeQueue != nullptr, "Native input queue not returned");
     AInputEvent *event = nullptr;
     ASSERT(AInputQueue_getEvent(nativeQueue, &event) >= 0, "getEvent did not succeed");
