@@ -26,6 +26,7 @@ import android.hardware.radio.config.PhoneCapability;
 import android.hardware.radio.config.SimPortInfo;
 import android.hardware.radio.config.SimSlotStatus;
 import android.hardware.radio.config.SlotPortMapping;
+import android.hardware.radio.sim.CardStatus;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -37,6 +38,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     private IRadioConfigIndication mRadioConfigIndication;
 
     private int mSlotNum = 1;
+    private boolean mSimStatePresent = false;
 
     public IRadioConfigImpl(TestMockModemService service) {
         Log.d(TAG, "Instantiated");
@@ -194,7 +196,11 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         int portInfoListLen = 1;
 
         if (mSlotNum >= 1) {
-            slotStatus[0].cardState = 0;
+            if (mSimStatePresent) {
+                slotStatus[0].cardState = CardStatus.STATE_PRESENT;
+            } else {
+                slotStatus[0].cardState = CardStatus.STATE_ABSENT;
+            }
             slotStatus[0].atr = "";
             slotStatus[0].eid = "";
             SimPortInfo[] portInfoList0 = new SimPortInfo[portInfoListLen];
@@ -206,7 +212,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         }
 
         if (mSlotNum >= 2) {
-            slotStatus[1].cardState = 1;
+            slotStatus[1].cardState = CardStatus.STATE_PRESENT;
             slotStatus[1].atr = "3B9F97C00A3FC6828031E073FE211F65D002341512810F51";
             slotStatus[1].eid = "89033023426200000000005430099507";
             SimPortInfo[] portInfoList1 = new SimPortInfo[portInfoListLen];
@@ -218,7 +224,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         }
 
         if (mSlotNum >= 3) {
-            slotStatus[2].cardState = 0;
+            slotStatus[2].cardState = CardStatus.STATE_ABSENT;
             slotStatus[2].atr = "";
             slotStatus[2].eid = "";
             SimPortInfo[] portInfoList2 = new SimPortInfo[portInfoListLen];
@@ -237,5 +243,11 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         phoneCapability.isInternetLingeringSupported = false;
         phoneCapability.logicalModemIds[0] = 0;
         phoneCapability.logicalModemIds[1] = 1;
+    }
+
+    // TODO: use helper function to handle
+    public void setSimPresent(int slotId) {
+        // TODO: check  slotId and Phone ID
+        mSimStatePresent = true;
     }
 }
