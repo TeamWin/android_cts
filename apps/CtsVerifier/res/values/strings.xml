@@ -4380,6 +4380,27 @@ You should be prompted to select credentials; choose the ones you just installed
         15) Issue the following command on the host:\n
             adb shell rm /sdcard/NotificationBot.apk
     </string>
+    <string name="enterprise_privacy_enterprise_installed_apps_info_headless_system_user">
+        Please do the following:\n
+        1) You should have received NotificationBot.apk together with the CTS verifier. If you built the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on the host:\n
+        \tmake NotificationBot\n
+        2) Install the NotificationBot for <b>user 0 only</b>. For example:\n
+        \tadb install --user 0 $ANDROID_PRODUCT_OUT/testcases/NotificationBot/*/NotificationBot.apk\n
+        3) Make sure the app is <b>not</b> installed for the current user:\n
+        \tadb shell pm list packages --user cur |grep com.android.cts.robot || echo \'Not installed\'\n
+        4) Press the Open Settings button.\n
+        5) In the screen that opens, verify that you are not told that your administrator installed any apps (other than CtsVerifier itself).\n
+        6) Use the Back button to return to this page.\n
+        7) Press the Install button.\n
+        8) Press the Open Settings button.\n
+        9) In the screen that opens, verify that you are told now that your administrator installed at least one app.\n
+        10) Tap on that information. Verify that a list of apps installed shows.\n
+        11) Verify that the list contains the CTS Robot app.\n
+        12) Use the Back button to return to this page.\n
+        13) Press the Uninstall button.\n
+        14) Issue the following command on the host:\n
+        \tadb uninstall --user all com.android.cts.robot\n
+    </string>
     <string name="enterprise_privacy_install">Install</string>
     <string name="enterprise_privacy_uninstall">Uninstall</string>
     <string name="enterprise_privacy_admin_granted_location_access">Location access permission</string>
