@@ -19,7 +19,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.LocaleList;
-import android.util.Log;
 
 import org.junit.Assert;
 
@@ -50,8 +49,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
         if (intent.hasExtra(Intent.EXTRA_LOCALE_LIST)) {
             mLocales = intent.getParcelableExtra(Intent.EXTRA_LOCALE_LIST);
         }
-        mLatch.countDown();
         mCalls += 1;
+        mLatch.countDown();
     }
 
     public String getPackageName() {
@@ -69,13 +68,14 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
     public void reset() {
         mLatch = new CountDownLatch(1);
         mCalls = 0;
+        mPackageName = null;
+        mLocales = null;
     }
 
     /**
      * Waits for a while and checks no broadcasts are received.
      */
     public void assertNoBroadcastReceived() throws Exception {
-        Log.d("BlockingBroadcastReceiver", "** assertNoBroadcastReceived called **");
         await();
         Assert.assertEquals(0, mCalls);
     }

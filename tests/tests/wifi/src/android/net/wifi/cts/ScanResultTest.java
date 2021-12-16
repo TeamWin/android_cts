@@ -28,6 +28,7 @@ import android.net.wifi.ScanResult.InformationElement;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.net.wifi.WifiSsid;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -282,6 +283,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
 
         ScanResult scanResult = new ScanResult();
         scanResult.SSID = TEST_SSID;
+        scanResult.setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID));
         scanResult.BSSID = TEST_BSSID;
         scanResult.capabilities = TEST_CAPS;
         scanResult.level = TEST_LEVEL;
@@ -290,6 +292,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
 
         ScanResult scanResult2 = new ScanResult(scanResult);
         assertThat(scanResult2.SSID).isEqualTo(TEST_SSID);
+        assertThat(scanResult2.getWifiSsid()).isEqualTo(scanResult.getWifiSsid());
         assertThat(scanResult2.BSSID).isEqualTo(TEST_BSSID);
         assertThat(scanResult2.capabilities).isEqualTo(TEST_CAPS);
         assertThat(scanResult2.level).isEqualTo(TEST_LEVEL);

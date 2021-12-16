@@ -73,9 +73,18 @@ public class AccessibilityNodeInfo_CollectionItemInfoTest {
 
         c = new CollectionItemInfo(4, 5, 6, 7, true, true);
         verifyCollectionItemInfo(c, null, 4, 5, null, 6, 7, true, true);
+    }
 
-        c = new CollectionItemInfo("RowTitle", 8, 9, "ColumnTitle", 10, 11, true, true);
-        verifyCollectionItemInfo(c, "RowTitle", 8, 9, "ColumnTitle", 10, 11, true, true);
+    @SmallTest
+    @Test
+    public void testBuilder() {
+        CollectionItemInfo.Builder builder = new CollectionItemInfo.Builder();
+
+        CollectionItemInfo collectionItemInfo = builder.setRowTitle("RowTitle").setRowIndex(
+                0).setRowSpan(1).setColumnTitle("ColumnTitle").setColumnIndex(2).setColumnSpan(
+                        3).setHeading(true).setSelected(true).build();
+        verifyCollectionItemInfo(collectionItemInfo, "RowTitle", 0, 1, "ColumnTitle", 2,
+                3, true, true);
     }
 
     /**

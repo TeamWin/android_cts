@@ -25,11 +25,14 @@ import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.NewUserRequest;
 import android.os.NewUserResponse;
 import android.os.PersistableBundle;
@@ -132,6 +135,35 @@ public final class UserManagerTest {
         }
     }
 
+    @Test
+    @SystemUserOnly(reason = "Restricted users are only supported on system user.")
+    public void testRestrictedUser() throws Exception {
+        UserHandle user = null;
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            // Check that the SYSTEM user is not restricted.
+            assertThat(mUserManager.isRestrictedProfile()).isFalse();
+            assertThat(mUserManager.isRestrictedProfile(UserHandle.SYSTEM)).isFalse();
+            assertThat(mUserManager.getRestrictedProfileParent()).isNull();
+
+            final UserInfo info = mUserManager.createRestrictedProfile("Restricted user");
+
+            // If the device supports Restricted users, it must report it correctly.
+            assumeTrue("Couldn't create a restricted profile", info != null);
+
+            user = UserHandle.of(info.id);
+            assertThat(mUserManager.isRestrictedProfile(user)).isTrue();
+
+            final Context userContext = mContext.createPackageContextAsUser("system", 0, user);
+            final UserManager userUm = userContext.getSystemService(UserManager.class);
+            // TODO(183239043): Remove the if{} clause after v33 Sdk bump.
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
+                assertThat(userUm.isRestrictedProfile()).isTrue();
+            }
+            assertThat(userUm.getRestrictedProfileParent().isSystem()).isTrue();
+        } finally {
+            removeUser(user);
+        }
+    }
 
     private NewUserRequest newUserRequest() {
         final PersistableBundle accountOptions = new PersistableBundle();

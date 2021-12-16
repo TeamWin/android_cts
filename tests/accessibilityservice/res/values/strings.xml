@@ -199,4 +199,7 @@
     <string name="accessibility_drag_and_drop_test_activity">Drag and drop</string>
     <string name="drag_and_drop_text">Dragged text</string>
 
+    <!-- String label of the input method -->
+    <string name="ime_name">InputMethod</string>
+
 </resources>

@@ -332,9 +332,19 @@ public class GenericDocumentCtsTest {
     public void testDocument_setEmptyValues() {
         GenericDocument document =
                 new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
-                        .setPropertyBoolean("testKey")
+                        .setPropertyBoolean("booleanKey")
+                        .setPropertyString("stringKey")
+                        .setPropertyBytes("byteKey")
+                        .setPropertyDouble("doubleKey")
+                        .setPropertyDocument("documentKey")
+                        .setPropertyLong("longKey")
                         .build();
-        assertThat(document.getPropertyBooleanArray("testKey")).isEmpty();
+        assertThat(document.getPropertyBooleanArray("booleanKey")).isEmpty();
+        assertThat(document.getPropertyStringArray("stringKey")).isEmpty();
+        assertThat(document.getPropertyBytesArray("byteKey")).isEmpty();
+        assertThat(document.getPropertyDoubleArray("doubleKey")).isEmpty();
+        assertThat(document.getPropertyDocumentArray("documentKey")).isEmpty();
+        assertThat(document.getPropertyLongArray("longKey")).isEmpty();
     }
 
     @Test

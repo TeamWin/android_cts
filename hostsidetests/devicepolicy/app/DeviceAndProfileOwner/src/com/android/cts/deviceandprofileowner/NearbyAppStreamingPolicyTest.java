@@ -22,9 +22,9 @@ import android.app.admin.DevicePolicyManager;
 
 public class NearbyAppStreamingPolicyTest extends BaseDeviceAdminTest {
 
-    public void testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault() {
+    public void testGetNearbyAppStreamingPolicy_defaultToSameManagedAccountOnly() {
         assertThat(mDevicePolicyManager.getNearbyAppStreamingPolicy())
-                .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
+                .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_SAME_MANAGED_ACCOUNT_ONLY);
     }
 
     public void testSetNearbyAppStreamingPolicy_changesPolicy() {

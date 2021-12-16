@@ -79,35 +79,3 @@ cc_test_library {
     sdk_version: "29",
 }
 
-//------------------------------------------------------------------------------
-// Builds libctsmediadrm_jni.so
-//
-cc_test_library {
-    name: "libctsmediadrm_jni",
-    srcs: [
-        "CtsMediaDrmJniOnLoad.cpp",
-        "codec-utils-jni.cpp",
-        "md5_utils.cpp",
-        "native-mediadrm-jni.cpp",
-    ],
-    include_dirs: ["system/core/include"],
-    shared_libs: [
-        "libandroid",
-        "libnativehelper_compat_libc++",
-        "liblog",
-        "libmediandk",
-        "libdl",
-        "libEGL",
-    ],
-    header_libs: ["liblog_headers"],
-    cflags: [
-        "-Werror",
-        "-Wall",
-        "-DEGL_EGLEXT_PROTOTYPES",
-    ],
-    stl: "libc++_static",
-    gtest: false,
-    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
-    // (revisit if/when we add features to this library that require newer sdk.
-    sdk_version: "29",
-}

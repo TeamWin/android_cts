@@ -32,6 +32,7 @@ import android.platform.test.annotations.AppModeFull
 import android.util.Size
 import android.util.SizeF
 import android.util.SparseArray
+import android.widget.ListView
 import android.widget.TextView
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
@@ -77,6 +78,7 @@ class CompanionDeviceManagerTest {
         const val SHELL_PACKAGE_NAME = "com.android.shell"
         const val TEST_APP_PACKAGE_NAME = "android.os.cts.companiontestapp"
         const val TEST_APP_APK_LOCATION = "/data/local/tmp/cts/os/CtsCompanionTestApp.apk"
+        const val CDM_UI_PACKAGE_NAME = "com.android.companiondevicemanager"
     }
 
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -172,16 +174,15 @@ class CompanionDeviceManagerTest {
         uiDevice.waitForIdle()
 
         click("Watch")
-        val device = getEventually({
-            click("Associate")
-            waitFindNode(hasIdThat(containsString("device_list")),
-                    failMsg = "Test requires a discoverable bluetooth device nearby",
-                    timeoutMs = 9_000)
-                    .children
-                    .find { it.className == TextView::class.java.name }
-                    .assertNotNull { "Empty device list" }
-        }, 90_000)
-        device!!.click()
+        click("Associate")
+
+        val deviceListSelector = By.pkg(CDM_UI_PACKAGE_NAME)
+                .clazz(ListView::class.java.name)
+                .hasChild(By.clazz(TextView::class.java.name))
+        uiDevice.wait(Until.findObject(deviceListSelector), 20_000)
+                ?.findObject(By.clazz(TextView::class.java.name))
+                ?.click()
+                ?: throw AssertionError("Empty device list")
 
         eventually {
             assertThat(getAssociatedDevices(TEST_APP_PACKAGE_NAME), not(empty()))

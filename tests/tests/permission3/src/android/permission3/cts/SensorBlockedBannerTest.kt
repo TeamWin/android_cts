@@ -56,17 +56,14 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
             LOCATION to "blocked_location_title")
 
     @Before
-    fun install() {
+    fun setup() {
+        Assume.assumeFalse(isTv)
         installPackage(APP_APK_PATH_31)
-    }
-
-    @Before
-    fun enableWarningBanner() {
         runWithShellPermissionIdentity {
             originalEnabledValue = DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
-                    WARNING_BANNER_ENABLED, false.toString())
+                WARNING_BANNER_ENABLED, false.toString())
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    WARNING_BANNER_ENABLED, true.toString(), false)
+                WARNING_BANNER_ENABLED, true.toString(), false)
         }
     }
 
@@ -102,6 +99,7 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
             setSensor(sensor, false)
         }
     }
+
     @Test
     fun testCameraCardDisplayed() {
         Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(CAMERA))
@@ -123,20 +121,19 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
         if (sensor == LOCATION) {
             runWithShellPermissionIdentity {
                 locationManager.setLocationEnabledForUser(!enable,
-                        android.os.Process.myUserHandle())
-            }
-            if (!enable) {
-                try {
-                    waitFindObject(By.text("CLOSE"))
-                    click(By.text("CLOSE"))
-                } catch (e: Exception) {
-                    // Do nothing, warning didn't show up so test can proceed
+                    android.os.Process.myUserHandle())
+                if (enable) {
+                    try {
+                        waitFindObjectOrNull(By.text("CLOSE"))?.click()
+                    } catch (e: Exception) {
+                        // Do nothing, warning didn't show up so test can proceed
+                    }
                 }
             }
         } else {
             runWithShellPermissionIdentity {
                 sensorPrivacyManager.setSensorPrivacy(SensorPrivacyManager.Sources.OTHER,
-                        sensor, enable)
+                    sensor, enable)
             }
         }
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.player.cts;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -42,7 +42,12 @@ import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.Preconditions;
+import android.media.cts.TestMediaDataSource;
 import android.media.cts.TestUtils.Monitor;
+import android.media.cts.Utils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;

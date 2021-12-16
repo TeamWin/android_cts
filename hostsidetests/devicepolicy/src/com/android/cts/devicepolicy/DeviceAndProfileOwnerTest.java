@@ -1037,14 +1037,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
-    /** Test for resetPassword for all devices. */
-    @Test
-    public void testResetPasswordDeprecated() throws Exception {
-        assumeHasSecureLockScreenFeature();
-
-        executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
-    }
-
     @Test
     public void testPasswordSufficientInitially() throws Exception {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
@@ -1646,11 +1638,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
     @Test
-    public void testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault()
+    public void testGetNearbyAppStreamingPolicy_defaultToSameManagedAccountOnly()
             throws Exception {
         executeDeviceTestMethod(
                 ".NearbyAppStreamingPolicyTest",
-                "testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault");
+                "testGetNearbyAppStreamingPolicy_defaultToSameManagedAccountOnly");
     }
 
     // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.

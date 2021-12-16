@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.player.cts;
 
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -33,12 +33,12 @@ import androidx.test.filters.SmallTest;
 public class MediaPlayerSurfaceTest extends ActivityInstrumentationTestCase2<MediaPlayerSurfaceStubActivity> {
 
     public MediaPlayerSurfaceTest() {
-        super("android.media.cts", MediaPlayerSurfaceStubActivity.class);
+        super("android.media.player.cts", MediaPlayerSurfaceStubActivity.class);
     }
 
     public void testSetSurface() throws Exception {
         Bundle extras = new Bundle();
-        MediaPlayerSurfaceStubActivity activity = launchActivity("android.media.cts",
+        MediaPlayerSurfaceStubActivity activity = launchActivity("android.media.player.cts",
                 MediaPlayerSurfaceStubActivity.class, extras);
         activity.playVideo();
         activity.finish();

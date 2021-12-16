@@ -783,6 +783,12 @@ public final class Package {
         return Packages.parseDumpsys().mPackages.containsKey(mPackageName);
     }
 
+    /** Get the targetSdkVersion for the package. */
+    @Experimental
+    public int targetSdkVersion() {
+        return applicationInfoFromAnyUserOrError(/* flags= */ 0).targetSdkVersion;
+    }
+
     /**
      * {@code true} if the package is installed in the device's system image.
      */
