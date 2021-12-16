@@ -22,9 +22,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.Log;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,9 +33,14 @@ class MockModemServiceConnector {
 
     private static final String TAG = "MockModemServiceConnector";
 
-    private static final String PACKAGE_NAME =
-            InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName();
-    private static final String SERVICE_NAME = TestMockModemService.class.getClass().getName();
+    private static final String DEFAULT_SERVICE_NAME =
+            TestMockModemService.class.getClass().getName();
+    private static final String COMMAND_BASE = "cmd phone ";
+    private static final String COMMAND_SET_MODEM_SERVICE = "radio set-modem-service ";
+    private static final String COMMAND_GET_MODEM_SERVICE = "radio get-modem-service ";
+    private static final String COMMAND_SERVICE_IDENTIFIER = "-s ";
+    private static final String COMMAND_MODEM_SERVICE_UNKNOWN = "unknown";
+    private static final String COMMAND_MODEM_SERVICE_DEFAULT = "default";
 
     private static final int BIND_LOCAL_MOCKMODEM_SERVICE_TIMEOUT_MS = 5000;
     private static final int BIND_RADIO_INTERFACE_READY_TIMEOUT_MS = 5000;
@@ -51,9 +55,14 @@ class MockModemServiceConnector {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            String serviceName;
             mMockModemService = ((TestMockModemService.LocalBinder) service).getService();
+            serviceName = mMockModemService.getClass().getName();
+            if (!isDefaultMockModemService(serviceName)) {
+                updateModemServiceName(serviceName);
+            }
             mLatch.countDown();
-            Log.d(TAG, "MockModemServiceConnection - onServiceConnected");
+            Log.d(TAG, "MockModemServiceConnection - " + serviceName + " onServiceConnected");
         }
 
         @Override
@@ -67,6 +76,8 @@ class MockModemServiceConnector {
 
     private TestMockModemService mMockModemService;
     private MockModemServiceConnection mMockModemServiceConn;
+    private boolean mIsServiceOverridden;
+    private String mModemServiceName;
 
     MockModemServiceConnector(Instrumentation instrumentation) {
         mInstrumentation = instrumentation;
@@ -96,6 +107,68 @@ class MockModemServiceConnector {
         }
     }
 
+    private String constructSetModemServiceOverrideCommand() {
+        return COMMAND_BASE
+                + COMMAND_SET_MODEM_SERVICE
+                + COMMAND_SERVICE_IDENTIFIER
+                + mModemServiceName;
+    }
+
+    private String constructGetModemServiceCommand() {
+        return COMMAND_BASE + COMMAND_GET_MODEM_SERVICE;
+    }
+
+    private String constructClearModemServiceOverrideCommand() {
+        return COMMAND_BASE + COMMAND_SET_MODEM_SERVICE;
+    }
+
+    private boolean setModemService() throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(
+                        mInstrumentation, constructSetModemServiceOverrideCommand());
+        Log.d(TAG, "setModemService result: " + result);
+        return "true".equals(result);
+    }
+
+    private String getModemService() throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(
+                        mInstrumentation, constructGetModemServiceCommand());
+        Log.d(TAG, "getModemService result: " + result);
+        return result;
+    }
+
+    private boolean clearModemServiceOverride() throws Exception {
+        String result =
+                TelephonyUtils.executeShellCommand(
+                        mInstrumentation, constructClearModemServiceOverrideCommand());
+        Log.d(TAG, "clearModemServiceOverride result: " + result);
+        return "true".equals(result);
+    }
+
+    private boolean isServiceTheSame(String serviceA, String serviceB) {
+        if (TextUtils.isEmpty(serviceA) && TextUtils.isEmpty(serviceB)) {
+            return true;
+        }
+        return TextUtils.equals(serviceA, serviceB);
+    }
+
+    private void updateModemServiceName(String serviceName) {
+        mModemServiceName = serviceName;
+    }
+
+    private boolean overrideModemService() throws Exception {
+        boolean result = setModemService();
+
+        if (result) mIsServiceOverridden = true;
+
+        return result;
+    }
+
+    private boolean isDefaultMockModemService(String serviceName) {
+        return TextUtils.equals(DEFAULT_SERVICE_NAME, serviceName);
+    }
+
     /**
      * Bind to the local implementation of TestMockModemService.
      *
@@ -114,21 +187,63 @@ class MockModemServiceConnector {
      *
      * @return true if this request succeeded, false otherwise.
      */
-    boolean switchFrameworkConnectionToMockModemService() {
-        // TODO: Switch Radio interface from phyical modem to mock modem
+    boolean switchFrameworkConnectionToMockModemService() throws Exception {
+        boolean isComplete = false;
 
-        return mMockModemService.waitForLatchCountdown(
-                TestMockModemService.LATCH_RADIO_INTERFACES_READY,
-                BIND_RADIO_INTERFACE_READY_TIMEOUT_MS);
+        if (overrideModemService()) {
+            isComplete =
+                    mMockModemService.waitForLatchCountdown(
+                            TestMockModemService.LATCH_RADIO_INTERFACES_READY);
+        }
+
+        return isComplete;
+    }
+
+    boolean checkDefaultModemServiceConnected(String serviceName) throws Exception {
+        return isServiceTheSame(COMMAND_MODEM_SERVICE_DEFAULT, serviceName);
+    }
+
+    boolean checkModemServiceOverridden(String serviceName) throws Exception {
+        return isServiceTheSame(mModemServiceName, serviceName);
     }
 
     boolean connectMockModemService() throws Exception {
+        boolean result = false;
         if (!connectMockModemServiceLocally()) return false;
 
-        return switchFrameworkConnectionToMockModemService();
+        result = checkModemServiceOverridden(getModemService());
+        if (result) mIsServiceOverridden = true;
+        else result = switchFrameworkConnectionToMockModemService();
+
+        return result;
+    }
+
+    boolean triggerFrameworkDisconnectionFromMockModemService() throws Exception {
+        boolean result = false;
+        if (!mIsServiceOverridden) {
+            Log.d(TAG, "Service didn't override.");
+            return true;
+        }
+
+        result = clearModemServiceOverride();
+        if (result) mIsServiceOverridden = false;
+
+        return result;
     }
 
     boolean disconnectMockModemService() throws Exception {
+        boolean isComplete;
+        isComplete = triggerFrameworkDisconnectionFromMockModemService();
+
+        if (isComplete) {
+            // waiting for binding to default modem service
+            TimeUnit.SECONDS.sleep(5);
+            String serviceName = getModemService();
+            isComplete =
+                    (!checkModemServiceOverridden(serviceName)
+                            && checkDefaultModemServiceConnected(serviceName));
+        }
+
         // Remove local connection
         Log.d(TAG, "disconnectMockModemService");
         if (mMockModemServiceConn != null) {
@@ -136,6 +251,6 @@ class MockModemServiceConnector {
             mMockModemService = null;
         }
 
-        return true;
+        return isComplete;
     }
 }
