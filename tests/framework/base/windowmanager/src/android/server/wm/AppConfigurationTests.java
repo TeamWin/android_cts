@@ -252,6 +252,17 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Move to docked stack.
         separateTestJournal();
         setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        if (TEST_ACTIVITY.equals(activityName)) {
+            assertActivityLifecycle(activityName, true /* relaunch */);
+            // In R, onMultiWindowModeChanged can be called during relaunch and the callback
+            // accidentally reports the incorrect new size before the relaunch has been completed.
+            // Wait for the activity to be focused completely to avoid this.
+            waitForActivityFocused(5000, TEST_ACTIVITY);
+        } else {
+            // The lifecycle callbacks contain the initial launch event so only wait for
+            // multi-window mode changed.
+            waitForOnMultiWindowModeChanged(activityName);
+        }
         final SizeInfo dockedSizes = getActivityDisplaySize(activityName);
         assertSizesAreSane(initialFullscreenSizes, dockedSizes);
 
