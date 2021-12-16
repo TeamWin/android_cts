@@ -2791,6 +2791,21 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testIccOpenLogicalChannelBySlotAndPort() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccOpenLogicalChannelByPort(0, 0, null, 0));
+        } catch (SecurityException e) {
+            // IllegalArgumentException is okay, just not SecurityException
+            fail("iccCloseLogicalChannelByPort: SecurityException not expected");
+        }
+    }
+
+    @Test
     public void testIccCloseLogicalChannelBySlot() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -2803,13 +2818,41 @@ public class TelephonyManagerTest {
             // IllegalArgumentException is okay, just not SecurityException
         }
     }
+    @Test
+    public void testIccCloseLogicalChannelBySlotAndPort() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(0, 0, 0));
+        } catch (SecurityException e) {
+            // IllegalArgumentException is okay, just not SecurityException
+            fail("iccCloseLogicalChannelByPort: SecurityException not expected");
+        }
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(0, -1, 0));
+            fail("Expected IllegalArgumentException, invalid PortIndex");
+        } catch (IllegalArgumentException e) {
+            // IllegalArgumentException is expected
+        }
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(0, 0, -1));
+            fail("Expected IllegalArgumentException, invalid channel");
+        } catch (IllegalArgumentException e) {
+            // IllegalArgumentException is expected
+        }
+    }
 
     @Test
     public void testIccTransmitApduLogicalChannelBySlot() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        int slotIndex = getValidSlotIndex();
+        int slotIndex = getValidSlotIndexAndPort().getKey();
         String result = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.iccTransmitApduLogicalChannelBySlot(
                         slotIndex,
@@ -2824,12 +2867,37 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testIccTransmitApduLogicalChannelBySlotAndPort() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        int slotIndex = getValidSlotIndexAndPort().getKey();
+        int portIndex = getValidSlotIndexAndPort().getValue();
+        try {
+            String result = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccTransmitApduLogicalChannelByPort(
+                            slotIndex,
+                            portIndex /* portIndex */,
+                            0 /* channel */,
+                            0 /* cla */,
+                            0 /* instruction */,
+                            0 /* p1 */,
+                            0 /* p2 */,
+                            0 /* p3 */,
+                            null /* data */));
+            assertTrue(TextUtils.isEmpty(result));
+        } catch (SecurityException e) {
+            // IllegalArgumentException is okay, just not SecurityException
+            fail("iccTransmitApduLogicalChannelByPort: SecurityException not expected");
+        }
+    }
+    @Test
     public void testIccTransmitApduBasicChannelBySlot() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
         // just verify no crash
-        int slotIndex = getValidSlotIndex();
+        int slotIndex = getValidSlotIndexAndPort().getKey();
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> tm.iccTransmitApduBasicChannelBySlot(
@@ -2842,6 +2910,31 @@ public class TelephonyManagerTest {
                             null /* data */));
         } catch (IllegalArgumentException e ) {
             // IllegalArgumentException is okay, just not SecurityException
+        }
+    }
+
+    @Test
+    public void testIccTransmitApduBasicChannelBySlotAndPort() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // just verify no crash
+        int slotIndex = getValidSlotIndexAndPort().getKey();
+        int portIndex = getValidSlotIndexAndPort().getValue();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.iccTransmitApduBasicChannelByPort(
+                            slotIndex,
+                            portIndex /*portIndex */,
+                            0 /* cla */,
+                            0 /* instruction */,
+                            0 /* p1 */,
+                            0 /* p2 */,
+                            0 /* p3 */,
+                            null /* data */));
+        } catch (SecurityException e) {
+            // IllegalArgumentException is okay, just not SecurityException
+            fail("iccTransmitApduBasicChannelByPort: SecurityException not expected");
         }
     }
 
@@ -4498,9 +4591,10 @@ public class TelephonyManagerTest {
         return (c >= '0' && c <= '9') || c == '*' || c == '#' || c == '+' || c == 'N';
     }
 
-    private int getValidSlotIndex() {
+    private Map.Entry<Integer, Integer> getValidSlotIndexAndPort() {
         return ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> {
+
                     List<UiccCardInfo> cardInfos = mTelephonyManager.getUiccCardsInfo();
                     Set<String> presentCards = Arrays.stream(mTelephonyManager.getUiccSlotsInfo())
                             .filter(Objects::nonNull)
@@ -4512,11 +4606,15 @@ public class TelephonyManagerTest {
                             .map(s -> s.endsWith("F") ? s.substring(0, s.length() - 1) : s)
                             .collect(Collectors.toSet());
                     int slotIndex = -1;
+                    int portIndex = -1;
                     for (UiccCardInfo cardInfo : cardInfos) {
                         for (UiccPortInfo portInfo : cardInfo.getPorts()) {
                             if (presentCards.contains(portInfo.getIccId())
                                     || presentCards.contains(cardInfo.getEid())) {
                                 slotIndex = cardInfo.getPhysicalSlotIndex();
+                                portIndex = portInfo.getPortIndex();
+                                Log.d(TAG, "SlotIndex : " + slotIndex + " and portIndex :"
+                                        + portIndex);
                                 break;
                             }
                         }
@@ -4525,7 +4623,7 @@ public class TelephonyManagerTest {
                         fail("Test must be run with SIM card inserted, presentCards = "
                                 + presentCards + "cardinfos = " + cardInfos);
                     }
-                    return slotIndex;
+                    return Map.entry(slotIndex, portIndex);
                 });
     }
 
