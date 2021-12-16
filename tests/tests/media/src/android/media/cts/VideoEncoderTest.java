@@ -16,7 +16,12 @@
 
 package android.media.cts;
 
-import android.media.cts.CodecUtils;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -40,11 +45,16 @@ import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
-import java.io.File;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -60,6 +70,7 @@ import java.util.Set;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
+@RunWith(AndroidJUnit4.class)
 public class VideoEncoderTest extends MediaPlayerTestBase {
     private static final int MAX_SAMPLE_SIZE = 256 * 1024;
     private static final String TAG = "VideoEncoderTest";
@@ -72,6 +83,18 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
             mInpPrefix + "video_480x360_mp4_h264_871kbps_30fps.mp4";
 
     private final boolean DEBUG = false;
+
+    @Before
+    @Override
+    public void setUp() throws Throwable {
+        super.setUp();
+    }
+
+    @After
+    @Override
+    public void tearDown() {
+        super.tearDown();
+    }
 
     class VideoStorage {
         private LinkedList<Pair<ByteBuffer, BufferInfo>> mStream;
@@ -1254,592 +1277,927 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         return result.toArray(new Encoder[result.size()]);
     }
 
+    @Test
     public void testGoogH265FlexMinMin()   { minmin(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfMinMin()   { minmin(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexMinMin()   { minmin(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfMinMin()   { minmin(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexMinMin()   { minmin(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfMinMin()   { minmin(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexMinMin()  { minmin(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfMinMin()  { minmin(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexMinMin()    { minmin(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfMinMin()    { minmin(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexMinMin()    { minmin(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfMinMin()    { minmin(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexMinMin()  { minmin(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfMinMin()  { minmin(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexMinMin()  { minmin(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfMinMin()  { minmin(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexMinMin()  { minmin(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfMinMin()  { minmin(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexMinMin() { minmin(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfMinMin() { minmin(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexMinMin()   { minmin(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfMinMin()   { minmin(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexMinMin()   { minmin(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfMinMin()   { minmin(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexMinMax()   { minmax(googH265(),   true /* flex */); }
-    public void testGoogH265SurfMinMax()   { minmax(googH265(),   false /* flex */); }
+    @Test public void testGoogH265SurfMinMax()   { minmax(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexMinMax()   { minmax(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfMinMax()   { minmax(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexMinMax()   { minmax(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfMinMax()   { minmax(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexMinMax()  { minmax(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfMinMax()  { minmax(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexMinMax()    { minmax(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfMinMax()    { minmax(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexMinMax()    { minmax(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfMinMax()    { minmax(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexMinMax()  { minmax(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfMinMax()  { minmax(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexMinMax()  { minmax(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfMinMax()  { minmax(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexMinMax()  { minmax(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfMinMax()  { minmax(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexMinMax() { minmax(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfMinMax() { minmax(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexMinMax()   { minmax(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfMinMax()   { minmax(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexMinMax()   { minmax(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfMinMax()   { minmax(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexMaxMin()   { maxmin(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfMaxMin()   { maxmin(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexMaxMin()   { maxmin(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfMaxMin()   { maxmin(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexMaxMin()   { maxmin(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfMaxMin()   { maxmin(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexMaxMin()  { maxmin(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfMaxMin()  { maxmin(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexMaxMin()    { maxmin(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfMaxMin()    { maxmin(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexMaxMin()    { maxmin(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfMaxMin()    { maxmin(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexMaxMin()  { maxmin(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfMaxMin()  { maxmin(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexMaxMin()  { maxmin(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfMaxMin()  { maxmin(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
-    public void testOtherH263FlexMaxMin()  { maxmin(otherH263(),  true /* flex */); }
+    @Test public void testOtherH263FlexMaxMin()  { maxmin(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfMaxMin()  { maxmin(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexMaxMin() { maxmin(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfMaxMin() { maxmin(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexMaxMin()   { maxmin(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfMaxMin()   { maxmin(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexMaxMin()   { maxmin(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfMaxMin()   { maxmin(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexMaxMax()   { maxmax(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfMaxMax()   { maxmax(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexMaxMax()   { maxmax(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfMaxMax()   { maxmax(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexMaxMax()   { maxmax(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfMaxMax()   { maxmax(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexMaxMax()  { maxmax(googMpeg4(),  true /* flex */); }
-    public void testGoogMpeg4SurfMaxMax()  { maxmax(googMpeg4(),  false /* flex */); }
+    @Test public void testGoogMpeg4SurfMaxMax()  { maxmax(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexMaxMax()    { maxmax(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfMaxMax()    { maxmax(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexMaxMax()    { maxmax(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfMaxMax()    { maxmax(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexMaxMax()  { maxmax(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfMaxMax()  { maxmax(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexMaxMax()  { maxmax(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfMaxMax()  { maxmax(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexMaxMax()  { maxmax(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfMaxMax()  { maxmax(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexMaxMax() { maxmax(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfMaxMax() { maxmax(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexMaxMax()   { maxmax(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfMaxMax()   { maxmax(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexMaxMax()   { maxmax(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfMaxMax()   { maxmax(otherVP9(),   false /* flex */); }
 
-    public void testGoogH265FlexNearMinMin()   { nearminmin(googH265(),   true /* flex */); }
+    @Test public void testGoogH265FlexNearMinMin()   { nearminmin(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfNearMinMin()   { nearminmin(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexNearMinMin()   { nearminmin(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfNearMinMin()   { nearminmin(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexNearMinMin()   { nearminmin(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfNearMinMin()   { nearminmin(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexNearMinMin()  { nearminmin(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfNearMinMin()  { nearminmin(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexNearMinMin()    { nearminmin(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfNearMinMin()    { nearminmin(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexNearMinMin()    { nearminmin(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfNearMinMin()    { nearminmin(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexNearMinMin()  { nearminmin(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfNearMinMin()  { nearminmin(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexNearMinMin()  { nearminmin(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfNearMinMin()  { nearminmin(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexNearMinMin()  { nearminmin(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfNearMinMin()  { nearminmin(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexNearMinMin() { nearminmin(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfNearMinMin() { nearminmin(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexNearMinMin()   { nearminmin(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfNearMinMin()   { nearminmin(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexNearMinMin()   { nearminmin(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfNearMinMin()   { nearminmin(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexNearMinMax()   { nearminmax(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfNearMinMax()   { nearminmax(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexNearMinMax()   { nearminmax(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfNearMinMax()   { nearminmax(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexNearMinMax()   { nearminmax(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfNearMinMax()   { nearminmax(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexNearMinMax()  { nearminmax(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfNearMinMax()  { nearminmax(googMpeg4(),  false /* flex */); }
-    public void testGoogVP8FlexNearMinMax()    { nearminmax(googVP8(),    true /* flex */); }
+    @Test public void testGoogVP8FlexNearMinMax()    { nearminmax(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfNearMinMax()    { nearminmax(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexNearMinMax()    { nearminmax(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfNearMinMax()    { nearminmax(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexNearMinMax()  { nearminmax(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfNearMinMax()  { nearminmax(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexNearMinMax()  { nearminmax(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfNearMinMax()  { nearminmax(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexNearMinMax()  { nearminmax(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfNearMinMax()  { nearminmax(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexNearMinMax() { nearminmax(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfNearMinMax() { nearminmax(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexNearMinMax()   { nearminmax(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfNearMinMax()   { nearminmax(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexNearMinMax()   { nearminmax(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
-    public void testOtherVP9SurfNearMinMax()   { nearminmax(otherVP9(),   false /* flex */); }
+    @Test public void testOtherVP9SurfNearMinMax()   { nearminmax(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexNearMaxMin()   { nearmaxmin(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfNearMaxMin()   { nearmaxmin(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexNearMaxMin()   { nearmaxmin(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfNearMaxMin()   { nearmaxmin(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexNearMaxMin()   { nearmaxmin(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfNearMaxMin()   { nearmaxmin(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexNearMaxMin()  { nearmaxmin(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfNearMaxMin()  { nearmaxmin(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexNearMaxMin()    { nearmaxmin(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfNearMaxMin()    { nearmaxmin(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexNearMaxMin()    { nearmaxmin(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfNearMaxMin()    { nearmaxmin(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexNearMaxMin()  { nearmaxmin(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfNearMaxMin()  { nearmaxmin(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexNearMaxMin()  { nearmaxmin(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfNearMaxMin()  { nearmaxmin(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexNearMaxMin()  { nearmaxmin(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfNearMaxMin()  { nearmaxmin(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexNearMaxMin() { nearmaxmin(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfNearMaxMin() { nearmaxmin(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexNearMaxMin()   { nearmaxmin(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfNearMaxMin()   { nearmaxmin(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexNearMaxMin()   { nearmaxmin(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfNearMaxMin()   { nearmaxmin(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexNearMaxMax()   { nearmaxmax(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfNearMaxMax()   { nearmaxmax(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexNearMaxMax()   { nearmaxmax(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfNearMaxMax()   { nearmaxmax(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexNearMaxMax()   { nearmaxmax(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfNearMaxMax()   { nearmaxmax(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexNearMaxMax()  { nearmaxmax(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfNearMaxMax()  { nearmaxmax(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexNearMaxMax()    { nearmaxmax(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfNearMaxMax()    { nearmaxmax(googVP8(),    false /* flex */); }
-    public void testGoogVP9FlexNearMaxMax()    { nearmaxmax(googVP9(),    true /* flex */); }
+    @Test public void testGoogVP9FlexNearMaxMax()    { nearmaxmax(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfNearMaxMax()    { nearmaxmax(googVP9(),    false /* flex */); }
-
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexNearMaxMax()  { nearmaxmax(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfNearMaxMax()  { nearmaxmax(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexNearMaxMax()  { nearmaxmax(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfNearMaxMax()  { nearmaxmax(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexNearMaxMax()  { nearmaxmax(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfNearMaxMax()  { nearmaxmax(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexNearMaxMax() { nearmaxmax(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfNearMaxMax() { nearmaxmax(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexNearMaxMax()   { nearmaxmax(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfNearMaxMax()   { nearmaxmax(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexNearMaxMax()   { nearmaxmax(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfNearMaxMax()   { nearmaxmax(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexArbitraryW()   { arbitraryw(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfArbitraryW()   { arbitraryw(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexArbitraryW()   { arbitraryw(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfArbitraryW()   { arbitraryw(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexArbitraryW()   { arbitraryw(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfArbitraryW()   { arbitraryw(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexArbitraryW()  { arbitraryw(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfArbitraryW()  { arbitraryw(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexArbitraryW()    { arbitraryw(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfArbitraryW()    { arbitraryw(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexArbitraryW()    { arbitraryw(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfArbitraryW()    { arbitraryw(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexArbitraryW()  { arbitraryw(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfArbitraryW()  { arbitraryw(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexArbitraryW()  { arbitraryw(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfArbitraryW()  { arbitraryw(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexArbitraryW()  { arbitraryw(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfArbitraryW()  { arbitraryw(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexArbitraryW() { arbitraryw(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfArbitraryW() { arbitraryw(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexArbitraryW()   { arbitraryw(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfArbitraryW()   { arbitraryw(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexArbitraryW()   { arbitraryw(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfArbitraryW()   { arbitraryw(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexArbitraryH()   { arbitraryh(googH265(),   true /* flex */); }
+    @Test
     public void testGoogH265SurfArbitraryH()   { arbitraryh(googH265(),   false /* flex */); }
+    @Test
     public void testGoogH264FlexArbitraryH()   { arbitraryh(googH264(),   true /* flex */); }
+    @Test
     public void testGoogH264SurfArbitraryH()   { arbitraryh(googH264(),   false /* flex */); }
+    @Test
     public void testGoogH263FlexArbitraryH()   { arbitraryh(googH263(),   true /* flex */); }
+    @Test
     public void testGoogH263SurfArbitraryH()   { arbitraryh(googH263(),   false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexArbitraryH()  { arbitraryh(googMpeg4(),  true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfArbitraryH()  { arbitraryh(googMpeg4(),  false /* flex */); }
+    @Test
     public void testGoogVP8FlexArbitraryH()    { arbitraryh(googVP8(),    true /* flex */); }
+    @Test
     public void testGoogVP8SurfArbitraryH()    { arbitraryh(googVP8(),    false /* flex */); }
+    @Test
     public void testGoogVP9FlexArbitraryH()    { arbitraryh(googVP9(),    true /* flex */); }
+    @Test
     public void testGoogVP9SurfArbitraryH()    { arbitraryh(googVP9(),    false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexArbitraryH()  { arbitraryh(otherH265(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfArbitraryH()  { arbitraryh(otherH265(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264FlexArbitraryH()  { arbitraryh(otherH264(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264SurfArbitraryH()  { arbitraryh(otherH264(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexArbitraryH()  { arbitraryh(otherH263(),  true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfArbitraryH()  { arbitraryh(otherH263(),  false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexArbitraryH() { arbitraryh(otherMpeg4(), true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfArbitraryH() { arbitraryh(otherMpeg4(), false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexArbitraryH()   { arbitraryh(otherVP8(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfArbitraryH()   { arbitraryh(otherVP8(),   false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexArbitraryH()   { arbitraryh(otherVP9(),   true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfArbitraryH()   { arbitraryh(otherVP9(),   false /* flex */); }
 
+    @Test
     public void testGoogH265FlexQCIF()   { specific(googH265(),   176, 144, true /* flex */); }
+    @Test
     public void testGoogH265SurfQCIF()   { specific(googH265(),   176, 144, false /* flex */); }
     @Presubmit
     @SmallTest
+    @Test
     public void testGoogH264FlexQCIF()   { specific(googH264(),   176, 144, true /* flex */); }
     @Presubmit
     @SmallTest
+    @Test
     public void testGoogH264SurfQCIF()   { specific(googH264(),   176, 144, false /* flex */); }
+    @Test
     public void testGoogH263FlexQCIF()   { specific(googH263(),   176, 144, true /* flex */); }
+    @Test
     public void testGoogH263SurfQCIF()   { specific(googH263(),   176, 144, false /* flex */); }
+    @Test
     public void testGoogMpeg4FlexQCIF()  { specific(googMpeg4(),  176, 144, true /* flex */); }
+    @Test
     public void testGoogMpeg4SurfQCIF()  { specific(googMpeg4(),  176, 144, false /* flex */); }
+    @Test
     public void testGoogVP8FlexQCIF()    { specific(googVP8(),    176, 144, true /* flex */); }
+    @Test
     public void testGoogVP8SurfQCIF()    { specific(googVP8(),    176, 144, false /* flex */); }
+    @Test
     public void testGoogVP9FlexQCIF()    { specific(googVP9(),    176, 144, true /* flex */); }
+    @Test
     public void testGoogVP9SurfQCIF()    { specific(googVP9(),    176, 144, false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265FlexQCIF()  { specific(otherH265(),  176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265SurfQCIF()  { specific(otherH265(),  176, 144, false /* flex */); }
     @NonMediaMainlineTest
     @RequiresDevice
     @Presubmit
     @SmallTest
+    @Test
     public void testOtherH264FlexQCIF()  { specific(otherH264(),  176, 144, true /* flex */); }
     @NonMediaMainlineTest
     @RequiresDevice
     @Presubmit
     @SmallTest
+    @Test
     public void testOtherH264SurfQCIF()  { specific(otherH264(),  176, 144, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexQCIF()  { specific(otherH263(),  176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263SurfQCIF()  { specific(otherH263(),  176, 144, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4FlexQCIF() { specific(otherMpeg4(), 176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4SurfQCIF() { specific(otherMpeg4(), 176, 144, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8FlexQCIF()   { specific(otherVP8(),   176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8SurfQCIF()   { specific(otherVP8(),   176, 144, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9FlexQCIF()   { specific(otherVP9(),   176, 144, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9SurfQCIF()   { specific(otherVP9(),   176, 144, false /* flex */); }
 
+    @Test
     public void testGoogH265Flex480p()   { specific(googH265(),   720, 480, true /* flex */); }
+    @Test
     public void testGoogH265Surf480p()   { specific(googH265(),   720, 480, false /* flex */); }
+    @Test
     public void testGoogH264Flex480p()   { specific(googH264(),   720, 480, true /* flex */); }
+    @Test
     public void testGoogH264Surf480p()   { specific(googH264(),   720, 480, false /* flex */); }
+    @Test
     public void testGoogH263Flex480p()   { specific(googH263(),   720, 480, true /* flex */); }
+    @Test
     public void testGoogH263Surf480p()   { specific(googH263(),   720, 480, false /* flex */); }
+    @Test
     public void testGoogMpeg4Flex480p()  { specific(googMpeg4(),  720, 480, true /* flex */); }
+    @Test
     public void testGoogMpeg4Surf480p()  { specific(googMpeg4(),  720, 480, false /* flex */); }
+    @Test
     public void testGoogVP8Flex480p()    { specific(googVP8(),    720, 480, true /* flex */); }
+    @Test
     public void testGoogVP8Surf480p()    { specific(googVP8(),    720, 480, false /* flex */); }
-    public void testGoogVP9Flex480p()    { specific(googVP9(),    720, 480, true /* flex */); }
-    public void testGoogVP9Surf480p()    { specific(googVP9(),    720, 480, false /* flex */); }
+    @Test public void testGoogVP9Flex480p()    { specific(googVP9(),    720, 480, true /* flex */); }
+    @Test public void testGoogVP9Surf480p()    { specific(googVP9(),    720, 480, false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Flex480p()  { specific(otherH265(),  720, 480, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Surf480p()  { specific(otherH265(),  720, 480, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Flex480p()  { specific(otherH264(),  720, 480, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Surf480p()  { specific(otherH264(),  720, 480, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263Flex480p()  { specific(otherH263(),  720, 480, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263Surf480p()  { specific(otherH263(),  720, 480, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Flex480p() { specific(otherMpeg4(), 720, 480, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Surf480p() { specific(otherMpeg4(), 720, 480, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Flex480p()   { specific(otherVP8(),   720, 480, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Surf480p()   { specific(otherVP8(),   720, 480, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9Flex480p()   { specific(otherVP9(),   720, 480, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9Surf480p()   { specific(otherVP9(),   720, 480, false /* flex */); }
 
     // even though H.263 and MPEG-4 are not defined for 720p or 1080p
     // test for it, in case device claims support for it.
 
+    @Test
     public void testGoogH265Flex720p()   { specific(googH265(),   1280, 720, true /* flex */); }
+    @Test
     public void testGoogH265Surf720p()   { specific(googH265(),   1280, 720, false /* flex */); }
+    @Test
     public void testGoogH264Flex720p()   { specific(googH264(),   1280, 720, true /* flex */); }
+    @Test
     public void testGoogH264Surf720p()   { specific(googH264(),   1280, 720, false /* flex */); }
+    @Test
     public void testGoogH263Flex720p()   { specific(googH263(),   1280, 720, true /* flex */); }
+    @Test
     public void testGoogH263Surf720p()   { specific(googH263(),   1280, 720, false /* flex */); }
+    @Test
     public void testGoogMpeg4Flex720p()  { specific(googMpeg4(),  1280, 720, true /* flex */); }
+    @Test
     public void testGoogMpeg4Surf720p()  { specific(googMpeg4(),  1280, 720, false /* flex */); }
+    @Test
     public void testGoogVP8Flex720p()    { specific(googVP8(),    1280, 720, true /* flex */); }
+    @Test
     public void testGoogVP8Surf720p()    { specific(googVP8(),    1280, 720, false /* flex */); }
+    @Test
     public void testGoogVP9Flex720p()    { specific(googVP9(),    1280, 720, true /* flex */); }
+    @Test
     public void testGoogVP9Surf720p()    { specific(googVP9(),    1280, 720, false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Flex720p()  { specific(otherH265(),  1280, 720, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Surf720p()  { specific(otherH265(),  1280, 720, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Flex720p()  { specific(otherH264(),  1280, 720, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Surf720p()  { specific(otherH264(),  1280, 720, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263Flex720p()  { specific(otherH263(),  1280, 720, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263Surf720p()  { specific(otherH263(),  1280, 720, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Flex720p() { specific(otherMpeg4(), 1280, 720, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Surf720p() { specific(otherMpeg4(), 1280, 720, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Flex720p()   { specific(otherVP8(),   1280, 720, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Surf720p()   { specific(otherVP8(),   1280, 720, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9Flex720p()   { specific(otherVP9(),   1280, 720, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9Surf720p()   { specific(otherVP9(),   1280, 720, false /* flex */); }
 
-    public void testGoogH265Flex1080p()   { specific(googH265(),   1920, 1080, true /* flex */); }
+    @Test public void testGoogH265Flex1080p()   { specific(googH265(),   1920, 1080, true /* flex */); }
+    @Test
     public void testGoogH265Surf1080p()   { specific(googH265(),   1920, 1080, false /* flex */); }
+    @Test
     public void testGoogH264Flex1080p()   { specific(googH264(),   1920, 1080, true /* flex */); }
+    @Test
     public void testGoogH264Surf1080p()   { specific(googH264(),   1920, 1080, false /* flex */); }
+    @Test
     public void testGoogH263Flex1080p()   { specific(googH263(),   1920, 1080, true /* flex */); }
+    @Test
     public void testGoogH263Surf1080p()   { specific(googH263(),   1920, 1080, false /* flex */); }
+    @Test
     public void testGoogMpeg4Flex1080p()  { specific(googMpeg4(),  1920, 1080, true /* flex */); }
+    @Test
     public void testGoogMpeg4Surf1080p()  { specific(googMpeg4(),  1920, 1080, false /* flex */); }
+    @Test
     public void testGoogVP8Flex1080p()    { specific(googVP8(),    1920, 1080, true /* flex */); }
+    @Test
     public void testGoogVP8Surf1080p()    { specific(googVP8(),    1920, 1080, false /* flex */); }
+    @Test
     public void testGoogVP9Flex1080p()    { specific(googVP9(),    1920, 1080, true /* flex */); }
+    @Test
     public void testGoogVP9Surf1080p()    { specific(googVP9(),    1920, 1080, false /* flex */); }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Flex1080p()  { specific(otherH265(),  1920, 1080, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Surf1080p()  { specific(otherH265(),  1920, 1080, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Flex1080p()  { specific(otherH264(),  1920, 1080, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Surf1080p()  { specific(otherH264(),  1920, 1080, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263Flex1080p()  { specific(otherH263(),  1920, 1080, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263Surf1080p()  { specific(otherH263(),  1920, 1080, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Flex1080p() { specific(otherMpeg4(), 1920, 1080, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Surf1080p() { specific(otherMpeg4(), 1920, 1080, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Flex1080p()   { specific(otherVP8(),   1920, 1080, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Surf1080p()   { specific(otherVP8(),   1920, 1080, false /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9Flex1080p()   { specific(otherVP9(),   1920, 1080, true /* flex */); }
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP9Surf1080p()   { specific(otherVP9(),   1920, 1080, false /* flex */); }
 
+    @Test
     public void testGoogH265Flex360pWithIntraRefresh() {
         intraRefresh(googH265(), 480, 360);
     }
 
+    @Test
     public void testGoogH264Flex360pWithIntraRefresh() {
         intraRefresh(googH264(), 480, 360);
     }
 
+    @Test
     public void testGoogH263Flex360pWithIntraRefresh() {
         intraRefresh(googH263(), 480, 360);
     }
 
+    @Test
     public void testGoogMpeg4Flex360pWithIntraRefresh() {
         intraRefresh(googMpeg4(), 480, 360);
     }
 
+    @Test
     public void testGoogVP8Flex360pWithIntraRefresh() {
         intraRefresh(googVP8(), 480, 360);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH265Flex360pWithIntraRefresh() {
         intraRefresh(otherH265(), 480, 360);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH264Flex360pWithIntraRefresh() {
         intraRefresh(otherH264(), 480, 360);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherH263FlexQCIFWithIntraRefresh() {
         intraRefresh(otherH263(), 176, 120);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherMpeg4Flex360pWithIntraRefresh() {
         intraRefresh(otherMpeg4(), 480, 360);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testOtherVP8Flex360pWithIntraRefresh() {
         intraRefresh(otherVP8(), 480, 360);
     }
@@ -1847,102 +2205,122 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
     // Tests encoder profiles required by CDD.
     // H264
     @NonMediaMainlineTest
+    @Test
     public void testH264LowQualitySDSupport()   {
         support(h264(), 320, 240, 20, 384 * 1000);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264HighQualitySDSupport()   {
         support(h264(), 720, 480, 30, 2 * 1000000);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264FlexQVGA20fps384kbps()   {
         detailed(h264(), 320, 240, 20, 384 * 1000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264SurfQVGA20fps384kbps()   {
         detailed(h264(), 320, 240, 20, 384 * 1000, false /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264Flex480p30fps2Mbps()   {
         detailed(h264(), 720, 480, 30, 2 * 1000000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264Surf480p30fps2Mbps()   {
         detailed(h264(), 720, 480, 30, 2 * 1000000, false /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264Flex720p30fps4Mbps()   {
         detailed(h264(), 1280, 720, 30, 4 * 1000000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264Surf720p30fps4Mbps()   {
         detailed(h264(), 1280, 720, 30, 4 * 1000000, false /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264Flex1080p30fps10Mbps()   {
         detailed(h264(), 1920, 1080, 30, 10 * 1000000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testH264Surf1080p30fps10Mbps()   {
         detailed(h264(), 1920, 1080, 30, 10 * 1000000, false /* flex */);
     }
 
     // VP8
     @NonMediaMainlineTest
+    @Test
     public void testVP8LowQualitySDSupport()   {
         support(vp8(), 320, 180, 30, 800 * 1000);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8HighQualitySDSupport()   {
         support(vp8(), 640, 360, 30, 2 * 1000000);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Flex180p30fps800kbps()   {
         detailed(vp8(), 320, 180, 30, 800 * 1000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Surf180p30fps800kbps()   {
         detailed(vp8(), 320, 180, 30, 800 * 1000, false /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Flex360p30fps2Mbps()   {
         detailed(vp8(), 640, 360, 30, 2 * 1000000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Surf360p30fps2Mbps()   {
         detailed(vp8(), 640, 360, 30, 2 * 1000000, false /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Flex720p30fps4Mbps()   {
         detailed(vp8(), 1280, 720, 30, 4 * 1000000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Surf720p30fps4Mbps()   {
         detailed(vp8(), 1280, 720, 30, 4 * 1000000, false /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Flex1080p30fps10Mbps()   {
         detailed(vp8(), 1920, 1080, 30, 10 * 1000000, true /* flex */);
     }
 
     @NonMediaMainlineTest
+    @Test
     public void testVP8Surf1080p30fps10Mbps()   {
         detailed(vp8(), 1920, 1080, 30, 10 * 1000000, false /* flex */);
     }
