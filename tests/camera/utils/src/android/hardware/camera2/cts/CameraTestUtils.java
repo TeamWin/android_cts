@@ -16,7 +16,6 @@
 
 package android.hardware.camera2.cts;
 
-import androidx.annotation.NonNull;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -25,45 +24,46 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.MultiResolutionImageReader;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.params.InputConfiguration;
-import android.hardware.camera2.TotalCaptureResult;
-import android.hardware.cts.helpers.CameraUtils;
-import android.hardware.camera2.params.MeteringRectangle;
-import android.hardware.camera2.params.MandatoryStreamCombination;
 import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
+import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.MultiResolutionStreamConfigurationMap;
 import android.hardware.camera2.params.MultiResolutionStreamInfo;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.cts.helpers.CameraUtils;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.ExifInterface;
 import android.media.Image;
+import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageWriter;
-import android.media.Image.Plane;
 import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
-import android.util.Size;
 import android.util.Range;
-import android.view.Display;
+import android.util.Size;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
+
+import androidx.annotation.NonNull;
 
 import com.android.ex.camera2.blocking.BlockingCameraManager;
 import com.android.ex.camera2.blocking.BlockingCameraManager.BlockingOpenException;
@@ -79,6 +79,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -89,13 +91,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A package private utility class for wrapping up the camera2 cts test common utility functions
@@ -3426,21 +3426,23 @@ public class CameraTestUtils extends Assert {
     }
 
     public static Size getPreviewSizeBound(WindowManager windowManager, Size bound) {
-        Display display = windowManager.getDefaultDisplay();
+        WindowMetrics windowMetrics = windowManager.getCurrentWindowMetrics();
+        Rect windowBounds = windowMetrics.getBounds();
 
-        int width = display.getWidth();
-        int height = display.getHeight();
+        int windowHeight = windowBounds.height();
+        int windowWidth = windowBounds.width();
 
-        if (height > width) {
-            height = width;
-            width = display.getHeight();
+        if (windowHeight > windowWidth) {
+            windowHeight = windowWidth;
+            windowWidth = windowBounds.height();
         }
 
-        if (bound.getWidth() <= width &&
-            bound.getHeight() <= height)
+        if (bound.getWidth() <= windowWidth
+                && bound.getHeight() <= windowHeight) {
             return bound;
-        else
-            return new Size(width, height);
+        } else {
+            return new Size(windowWidth, windowHeight);
+        }
     }
 
     /**
