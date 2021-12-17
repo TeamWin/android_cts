@@ -438,4 +438,30 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         setSettingsValue(POWER_CONTROL_MODE, valToSet);
         return val;
     }
+
+    public boolean isDeviceActiveSource(ITestDevice device) throws DumpsysParseException {
+        final String activeSource = "activeSource";
+        final String pattern =
+                "(.*?)"
+                        + "(isActiveSource\\(\\): )"
+                        + "(?<"
+                        + activeSource
+                        + ">\\btrue\\b|\\bfalse\\b)"
+                        + "(.*?)";
+        try {
+            Pattern p = Pattern.compile(pattern);
+            String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
+            BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = p.matcher(line);
+                if (matcher.matches()) {
+                    return matcher.group(activeSource).equals("true");
+                }
+            }
+        } catch (IOException | DeviceNotAvailableException e) {
+            throw new DumpsysParseException("Could not fetch 'dumpsys hdmi_control' output.", e);
+        }
+        throw new DumpsysParseException("Could not parse isActiveSource() from dumpsys.");
+    }
 }
