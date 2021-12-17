@@ -22,6 +22,7 @@ import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayCont
 import static android.hardware.camera2.cts.helpers.AssertHelpers.assertCollectionContainsAnyOf;
 import static android.hardware.cts.helpers.CameraUtils.matchParametersToCharacteristics;
 
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -56,7 +58,6 @@ import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
 import android.util.ArraySet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Patterns;
@@ -66,9 +67,13 @@ import android.util.Size;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
+
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CddTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -151,6 +156,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME;
     private static final int HIGH_SPEED_FPS_LOWER_MIN = 30;
     private static final int HIGH_SPEED_FPS_UPPER_MIN = 120;
+
+    @Rule
+    public final ActivityTestRule<EmptyActivity> mActivityRule = new ActivityTestRule<>(
+            EmptyActivity.class, false, false);
 
     @Override
     public void setUp() throws Exception {
@@ -2577,7 +2586,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check camera orientation against device orientation
      */
-    @CddTest(requirement="7.5.5/C-1-1")
+    @CddTest(requirement = "7.5.5/C-1-1")
     @Test
     public void testCameraOrientationAlignedWithDevice() {
         if (CameraUtils.isDeviceFoldable(mContext)) {
@@ -2589,25 +2598,32 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             return;
         }
 
-        WindowManager windowManager =
-                (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        Display display = windowManager.getDefaultDisplay();
-        DisplayMetrics metrics = new DisplayMetrics();
-        display.getMetrics(metrics);
+        // Start the empty activty to check the display we're testing.
+        mActivityRule.launchActivity(new Intent());
+        Context foregroundActivity = mActivityRule.getActivity();
+
+        WindowManager windowManager = foregroundActivity.getSystemService(WindowManager.class);
+        assertNotNull("Could not get window manager for test activity.", windowManager);
+
+        WindowMetrics metrics = windowManager.getMaximumWindowMetrics();
+        Rect displayBounds = metrics.getBounds();
+        int widthPixels = displayBounds.width();
+        int heightPixels = displayBounds.height();
 
         // For square screen, test is guaranteed to pass
-        if (metrics.widthPixels == metrics.heightPixels) {
+        if (widthPixels == heightPixels) {
             return;
         }
 
         // Handle display rotation
+        Display display = foregroundActivity.getDisplay();
         int displayRotation = display.getRotation();
         if (displayRotation == Surface.ROTATION_90 || displayRotation == Surface.ROTATION_270) {
-            int tmp = metrics.widthPixels;
-            metrics.widthPixels = metrics.heightPixels;
-            metrics.heightPixels = tmp;
+            int tmp = widthPixels;
+            widthPixels = heightPixels;
+            heightPixels = tmp;
         }
-        boolean isDevicePortrait = metrics.widthPixels < metrics.heightPixels;
+        boolean isDevicePortrait = widthPixels < heightPixels;
 
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -2632,8 +2648,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             boolean isCameraPortrait =
                     adjustedSensorSize.getWidth() < adjustedSensorSize.getHeight();
-            assertFalse("Camera " + mAllCameraIds[i] + "'s long dimension must "
-                    + "align with screen's long dimension", isDevicePortrait^isCameraPortrait);
+
+            // device and camera orientation should either be both portrait, or both landscape
+            assertEquals("Camera " + mAllCameraIds[i] + "'s long dimension must "
+                    + "align with screen's long dimension", isDevicePortrait, isCameraPortrait);
         }
     }
 

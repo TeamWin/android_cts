@@ -16,28 +16,59 @@
 
 package android.hardware.camera2.cts;
 
-import static android.hardware.camera2.cts.CameraTestUtils.*;
-import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.*;
+import static android.hardware.camera2.cts.CameraTestUtils.PREVIEW_SIZE_BOUND;
+import static android.hardware.camera2.cts.CameraTestUtils.SessionConfigSupport;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
+import static android.hardware.camera2.cts.CameraTestUtils.SizeComparator;
+import static android.hardware.camera2.cts.CameraTestUtils.StreamCombinationTargets;
+import static android.hardware.camera2.cts.CameraTestUtils.assertEquals;
+import static android.hardware.camera2.cts.CameraTestUtils.assertNotNull;
+import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationSupported;
+import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationWithSurfaces;
+import static android.hardware.camera2.cts.CameraTestUtils.configureReprocessableCameraSession;
+import static android.hardware.camera2.cts.CameraTestUtils.fail;
+import static android.hardware.camera2.cts.CameraTestUtils.getAscendingOrderSizes;
+import static android.hardware.camera2.cts.CameraTestUtils.isSessionConfigSupported;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.JPEG;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.MAXIMUM;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.PREVIEW;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.PRIV;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.RAW;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.RECORD;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.VGA;
+import static android.hardware.camera2.cts.RobustnessTest.MaxStreamSizes.YUV;
+
+import static junit.framework.Assert.assertTrue;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
-import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.InputConfiguration;
-import android.hardware.camera2.params.OisSample;
-import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.MandatoryStreamCombination;
 import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
+import android.hardware.camera2.params.OisSample;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
@@ -47,27 +78,24 @@ import android.media.ImageWriter;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
-import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
-import java.util.Arrays;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
-import org.junit.Test;
-
-import static junit.framework.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Tests exercising edge cases in camera setup, configuration, and usage.
@@ -2693,32 +2721,34 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     private static Size getMaxPreviewSize(Context context, String cameraId) {
         try {
-            WindowManager windowManager =
-                (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            Display display = windowManager.getDefaultDisplay();
+            WindowManager windowManager = context.getSystemService(WindowManager.class);
+            assertNotNull("Could not find WindowManager service.", windowManager);
 
-            int width = display.getWidth();
-            int height = display.getHeight();
+            WindowMetrics windowMetrics = windowManager.getCurrentWindowMetrics();
+            Rect windowBounds = windowMetrics.getBounds();
+
+            int width = windowBounds.width();
+            int height = windowBounds.height();
 
             if (height > width) {
                 height = width;
-                width = display.getHeight();
+                width = windowBounds.height();
             }
 
-            CameraManager camMgr =
-                (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+            CameraManager camMgr = context.getSystemService(CameraManager.class);
             List<Size> orderedPreviewSizes = CameraTestUtils.getSupportedPreviewSizes(
-                cameraId, camMgr, PREVIEW_SIZE_BOUND);
+                    cameraId, camMgr, PREVIEW_SIZE_BOUND);
 
             if (orderedPreviewSizes != null) {
                 for (Size size : orderedPreviewSizes) {
                     if (width >= size.getWidth() &&
-                        height >= size.getHeight())
+                            height >= size.getHeight()) {
                         return size;
+                    }
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "getMaxPreviewSize Failed. "+e.toString());
+            Log.e(TAG, "getMaxPreviewSize Failed. " + e);
         }
         return PREVIEW_SIZE_BOUND;
     }

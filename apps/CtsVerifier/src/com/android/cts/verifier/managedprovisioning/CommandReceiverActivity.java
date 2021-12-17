@@ -602,6 +602,14 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void installHelperPackage() throws Exception {
+        if (UserManager.isHeadlessSystemUserMode()) {
+            // App was already installed on user 0 (as instructed), so we just install it for the
+            // current user - installing directly to current user would be harder as it would
+            // require a custom ContentProvider to push the APK into a secondary user using adb
+            Log.i(TAG, "installing existing helper app (" + HELPER_APP_PKG + ") using " + mDpm);
+            mDpm.installExistingPackage(mAdmin, HELPER_APP_PKG);
+            return;
+        }
         LogAndSelfUnregisterBroadcastReceiver.register(this, ACTION_INSTALL_COMPLETE);
         final PackageInstaller packageInstaller = getPackageManager().getPackageInstaller();
         final PackageInstaller.Session session = packageInstaller.openSession(

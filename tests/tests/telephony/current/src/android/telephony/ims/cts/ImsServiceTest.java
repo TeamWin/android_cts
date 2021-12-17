@@ -389,6 +389,24 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testCarrierImsServiceBindRcsFeatureForExecutor() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        sServiceConnector.setExecutorTestType(true);
+        // Connect to the ImsService with the RCS feature.
+        assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .build()));
+        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_CREATE_RCS);
+        assertNotNull("ImsService created, but ImsService#createRcsFeature was not called!",
+                sServiceConnector.getCarrierService().getRcsFeature());
+    }
+
+    @Test
     public void testCarrierImsServiceBindMmTelFeature() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;

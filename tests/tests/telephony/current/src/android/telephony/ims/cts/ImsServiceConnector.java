@@ -81,6 +81,12 @@ class ImsServiceConnector {
     private static final String COMMAND_SET_TEST_MODE_ENABLED = "src set-test-enabled ";
     private static final String COMMAND_SET_D2D_ENABLED = "d2d set-device-support ";
 
+    private boolean mIsTestTypeExecutor = false;
+
+    public void setExecutorTestType(boolean type) {
+        mIsTestTypeExecutor = type;
+    }
+
     private class TestCarrierServiceConnection implements ServiceConnection {
 
         private final CountDownLatch mLatch;
@@ -480,6 +486,11 @@ class ImsServiceConnector {
             return false;
         }
         mCarrierService.resetState();
+        if (mIsTestTypeExecutor) {
+            mCarrierService.setExecutorTestType(mIsTestTypeExecutor);
+            // reset the mIsTestTypeExecutor value
+            mIsTestTypeExecutor = false;
+        }
         return true;
     }
 
