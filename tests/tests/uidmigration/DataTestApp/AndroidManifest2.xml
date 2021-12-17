@@ -16,10 +16,22 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="android.uidmigration.cts.DataTestApp" >
+
+    <queries>
+        <package android:name="android.uidmigration.cts" />
+    </queries>
+
     <application>
         <provider
             android:name="android.uidmigration.cts.DataProvider"
             android:authorities="android.uidmigration.cts.DataTestApp.provider"
             android:exported="true" />
+        <receiver
+            android:name="android.uidmigration.cts.UpdateReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
