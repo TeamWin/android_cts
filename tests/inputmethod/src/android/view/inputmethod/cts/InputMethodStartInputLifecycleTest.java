@@ -82,6 +82,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 @MediumTest
@@ -276,27 +277,118 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
         }
     }
 
-    /**
-     * {@link InputMethodManager#invalidateInput(View)} is a lightweight version of
-     * {@link InputMethodManager#restartInput(View)} that reuses existing {@link InputConnection}
-     * by using {@link InputConnection#takeSnapshot()}.
-     */
-    @Test
-    public void testInterruptInputWithTakeSnapshotSupport() throws Exception {
-        testInterruptInputMain(true /* supportTakeSnapshot */);
+    private abstract static class TestInputConnection extends BaseInputConnection {
+        @NonNull
+        private final Editable mEditable;
+
+        TestInputConnection(@NonNull View view, @NonNull Editable editable) {
+            super(view, true /* fullEditor */);
+            mEditable = editable;
+        }
+
+        @NonNull
+        @Override
+        public final Editable getEditable() {
+            return mEditable;
+        }
     }
 
-    /**
-     * {@link InputMethodManager#invalidateInput(View)} falls back into
-     * {@link InputMethodManager#restartInput(View)} when {@link InputConnection#takeSnapshot()}
-     * returns {@code null}.
-     */
     @Test
-    public void testInterruptInputWithoutTakeSnapshotSupport() throws Exception {
-        testInterruptInputMain(false /* supportTakeSnapshot */);
+    public void testInvalidateInput() throws Exception {
+        // If IC#takeSnapshot() returns true, it should work, even if IC#{begin,end}BatchEdit()
+        // always return false.
+        expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
+            @Override
+            public boolean beginBatchEdit() {
+                return false;
+            }
+            @Override
+            public boolean endBatchEdit() {
+                return false;
+            }
+        });
+
+        // Of course IMM#invalidateInput() should just work for ICs that support
+        // {begin,end}BatchEdit().
+        expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
+            private int mBatchEditCount = 0;
+            @Override
+            public boolean beginBatchEdit() {
+                ++mBatchEditCount;
+                return true;
+            }
+            @Override
+            public boolean endBatchEdit() {
+                if (mBatchEditCount <= 0) {
+                    return false;
+                }
+                --mBatchEditCount;
+                return mBatchEditCount > 0;
+            }
+        });
+
+        // If IC#takeSnapshot() returns false, then fall back to IMM#restartInput()
+        expectFallbackInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
+            @Override
+            public boolean beginBatchEdit() {
+                return false;
+            }
+            @Override
+            public boolean endBatchEdit() {
+                return false;
+            }
+            @Override
+            public TextSnapshot takeSnapshot() {
+                return null;
+            }
+        });
+
+        // Bug 209958658 should not prevent the system from using the native invalidateInput().
+        expectNativeInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
+            private int mBatchEditCount = 0;
+
+            @Override
+            public boolean beginBatchEdit() {
+                ++mBatchEditCount;
+                return true;
+            }
+            @Override
+            public boolean endBatchEdit() {
+                if (mBatchEditCount <= 0) {
+                    return false;
+                }
+                --mBatchEditCount;
+                // This violates the spec. See Bug 209958658 for instance.
+                return true;
+            }
+        });
+
+        // Even if IC#endBatchEdit() never returns false, the system should be able to fall back
+        // to IMM#restartInput().  This is a regression test for Bug 208941904.
+        expectFallbackInvalidateInput((view, editable) -> new TestInputConnection(view, editable) {
+            @Override
+            public boolean beginBatchEdit() {
+                return true;
+            }
+            @Override
+            public boolean endBatchEdit() {
+                return true;
+            }
+        });
     }
 
-    private void testInterruptInputMain(boolean supportTakeSnapshot) throws Exception {
+    private void expectNativeInvalidateInput(
+            BiFunction<View, Editable, InputConnection> inputConnectionProvider) throws Exception {
+        testInvalidateInputMain(true, inputConnectionProvider);
+    }
+
+    private void expectFallbackInvalidateInput(
+            BiFunction<View, Editable, InputConnection> inputConnectionProvider) throws Exception {
+        testInvalidateInputMain(false, inputConnectionProvider);
+    }
+
+    private void testInvalidateInputMain(boolean expectNativeInvalidateInput,
+            BiFunction<View, Editable, InputConnection> inputConnectionProvider) throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (MockImeSession imeSession = MockImeSession.create(
                 instrumentation.getContext(),
@@ -333,17 +425,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                     outAttrs.initialCapsMode = initialCapsMode;
                     outAttrs.privateImeOptions = marker;
                     outAttrs.setInitialSurroundingText(mEditable);
-                    return new BaseInputConnection(this, true) {
-                        @Override
-                        public Editable getEditable() {
-                            return mEditable;
-                        }
-
-                        @Override
-                        public TextSnapshot takeSnapshot() {
-                            return supportTakeSnapshot ? super.takeSnapshot() : null;
-                        }
-                    };
+                    return inputConnectionProvider.apply(this, mEditable);
                 }
             }
 
@@ -408,15 +490,15 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 assertThat(editorInfo.getInitialSelectedText(0).toString()).isEqualTo("12");
             }
 
-            if (supportTakeSnapshot) {
-                // Make sure that InputMethodManager#interruptInput() does not trigger
-                // View#onCreateInputConnection() if InputConnection#takeSnapshot() is supported.
+            if (expectNativeInvalidateInput) {
+                // If InputMethodManager#interruptInput() is expected to be natively supported,
+                // additional View#onCreateInputConnection() must not happen.
                 assertThat(onCreateConnectionCount.get()).isEqualTo(
                         prevOnCreateInputConnectionCount);
             } else {
-                // Make sure that InputMethodManager#interruptInput() does trigger
-                // View#onCreateInputConnection() if InputConnection#takeSnapshot() is not
-                // supported.
+                // InputMethodManager#interruptInput() is expected to be falling back into
+                // InputMethodManager#restartInput(), which triggers View#onCreateInputConnection()
+                // as a consequence.
                 assertThat(onCreateConnectionCount.get()).isGreaterThan(
                         prevOnCreateInputConnectionCount);
             }
