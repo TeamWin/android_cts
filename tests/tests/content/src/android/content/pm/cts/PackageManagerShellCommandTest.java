@@ -1062,6 +1062,19 @@ public class PackageManagerShellCommandTest {
 
     private void runPackageVerifierTest(String expectedResultStartsWith,
             BiConsumer<Context, Intent> onBroadcast) throws Exception {
+        AtomicReference<Thread> onBroadcastThread = new AtomicReference<>();
+
+        runPackageVerifierTestSync(expectedResultStartsWith, (context, intent) -> {
+            Thread thread = new Thread(() -> onBroadcast.accept(context, intent));
+            thread.start();
+            onBroadcastThread.set(thread);
+        });
+
+        onBroadcastThread.get().join();
+    }
+
+    private void runPackageVerifierTestSync(String expectedResultStartsWith,
+            BiConsumer<Context, Intent> onBroadcast) throws Exception {
         // Install a package.
         installPackage(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
@@ -1069,16 +1082,12 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity(
                 android.Manifest.permission.PACKAGE_VERIFICATION_AGENT);
 
-        AtomicReference<Thread> onBroadcastThread = new AtomicReference<>();
-
         // Create a single-use broadcast receiver
         BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 context.unregisterReceiver(this);
-                Thread thread = new Thread(() -> onBroadcast.accept(context, intent));
-                thread.start();
-                onBroadcastThread.set(thread);
+                onBroadcast.accept(context, intent);
             }
         };
         // Create an intent-filter and register the receiver
@@ -1094,8 +1103,6 @@ public class PackageManagerShellCommandTest {
 
         // Update the package, should trigger verifier override.
         installPackage(TEST_HW7, expectedResultStartsWith);
-
-        onBroadcastThread.get().join();
     }
 
     @Test
@@ -1131,6 +1138,40 @@ public class PackageManagerShellCommandTest {
 
                     getPackageManager().verifyPendingInstall(verificationId, VERIFICATION_REJECT);
                 });
+
+        assertEquals(mDataLoaderType, dataLoaderType.get());
+    }
+
+    @Test
+    public void testPackageVerifierRejectAfterTimeout() throws Exception {
+        AtomicInteger dataLoaderType = new AtomicInteger(-1);
+
+        runPackageVerifierTestSync("Success", (context, intent) -> {
+            int verificationId = intent.getIntExtra(EXTRA_VERIFICATION_ID, -1);
+            assertNotEquals(-1, verificationId);
+
+            dataLoaderType.set(intent.getIntExtra(EXTRA_DATA_LOADER_TYPE, -1));
+            int sessionId = intent.getIntExtra(EXTRA_SESSION_ID, -1);
+            assertNotEquals(-1, sessionId);
+
+            try {
+                if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL) {
+                    // For streaming installations, the timeout is fixed at 3secs and always
+                    // allow the install. Try to extend the timeout and then reject after
+                    // much shorter time.
+                    getPackageManager().extendVerificationTimeout(verificationId,
+                            VERIFICATION_REJECT, mStreamingVerificationTimeoutMs * 3);
+                    Thread.sleep(mStreamingVerificationTimeoutMs * 2);
+                    getPackageManager().verifyPendingInstall(verificationId,
+                            VERIFICATION_REJECT);
+                } else {
+                    getPackageManager().verifyPendingInstall(verificationId,
+                            VERIFICATION_ALLOW);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         assertEquals(mDataLoaderType, dataLoaderType.get());
     }

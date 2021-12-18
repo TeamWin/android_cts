@@ -33,6 +33,10 @@ import static org.junit.Assert.fail;
 
 import android.annotation.Nullable;
 import android.app.UiAutomation;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
@@ -64,6 +68,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestThread;
 import com.android.internal.util.ArrayUtils;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -107,6 +112,51 @@ public class SubscriptionManagerTest {
     private int mDefaultVoiceSubId;
     private String mPackageName;
     private SubscriptionManager mSm;
+    private SubscriptionManagerTest.CarrierConfigReceiver mReceiver;
+
+    private static class CarrierConfigReceiver extends BroadcastReceiver {
+        private CountDownLatch mLatch = new CountDownLatch(1);
+        private final int mSubId;
+
+        CarrierConfigReceiver(int subId) {
+            mSubId = subId;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED.equals(intent.getAction())) {
+                int subId = intent.getIntExtra(CarrierConfigManager.EXTRA_SUBSCRIPTION_INDEX,
+                        SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+                if (mSubId == subId) {
+                    mLatch.countDown();
+                }
+            }
+        }
+
+        void clearQueue() {
+            mLatch = new CountDownLatch(1);
+        }
+
+        void waitForCarrierConfigChanged() throws Exception {
+            mLatch.await(5000, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void overrideCarrierConfig(PersistableBundle bundle, int subId) throws Exception {
+        mReceiver = new CarrierConfigReceiver(subId);
+        IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
+        // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
+        InstrumentationRegistry.getContext().registerReceiver(mReceiver, filter);
+        mReceiver.waitForCarrierConfigChanged();
+        mReceiver.clearQueue();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                InstrumentationRegistry.getContext().getSystemService(CarrierConfigManager.class),
+                (cm) -> cm.overrideConfig(subId, bundle));
+        mReceiver.waitForCarrierConfigChanged();
+        InstrumentationRegistry.getContext().unregisterReceiver(mReceiver);
+        mReceiver = null;
+    }
 
     /**
      * Callback used in testRegisterNetworkCallback that allows caller to block on
@@ -161,6 +211,15 @@ public class SubscriptionManagerTest {
         mSubId = SubscriptionManager.getDefaultDataSubscriptionId();
         mDefaultVoiceSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         mPackageName = InstrumentationRegistry.getContext().getPackageName();
+
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (mReceiver != null) {
+            InstrumentationRegistry.getContext().unregisterReceiver(mReceiver);
+            mReceiver = null;
+        }
     }
 
     /**
@@ -1205,6 +1264,48 @@ public class SubscriptionManagerTest {
         }
     }
 
+    @Test
+    public void testCellularUsageSetting() throws Exception {
+        if (!isSupported()) return;
+
+        boolean isUsageSettingSupported = true;
+        int defaultUsageSetting = SubscriptionManager.USAGE_SETTING_DEFAULT;
+        int[] supportedUsageSettings;
+        final Context context = InstrumentationRegistry.getContext();
+
+        //  Load the resources to provide the device capability
+        try {
+            defaultUsageSetting = context.getResources().getInteger(
+                com.android.internal.R.integer.config_default_cellular_usage_setting);
+            supportedUsageSettings = context.getResources().getIntArray(
+                com.android.internal.R.array.config_supported_cellular_usage_settings);
+            // If usage settings are not supported, return the default setting, which is UNKNOWN.
+            if (supportedUsageSettings.length < 1) {
+                isUsageSettingSupported = false;
+                fail("Usage Setting resources empty");
+            }
+        } catch (Resources.NotFoundException nfe) {
+            fail("Usage Setting resources not found");
+            isUsageSettingSupported = false;
+        }
+
+        int[] settingsToTest = new int[] {
+                SubscriptionManager.USAGE_SETTING_DEFAULT,
+                defaultUsageSetting};
+
+        for (int setting : settingsToTest) {
+            PersistableBundle bundle = new PersistableBundle();
+            bundle.putInt(CarrierConfigManager.KEY_CELLULAR_USAGE_SETTING_INT, setting);
+            overrideCarrierConfig(bundle, mSubId);
+            SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                    (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+            assertEquals(
+                    isUsageSettingSupported ? setting :
+                            SubscriptionManager.USAGE_SETTING_UNKNOWN,
+                    info.getUsageSetting());
+        }
+    }
+
     @Nullable
     private PersistableBundle getBundleFromBackupData(byte[] data) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(data)) {
@@ -1212,13 +1313,6 @@ public class SubscriptionManagerTest {
         } catch (IOException e) {
             return null;
         }
-    }
-
-    private void overrideCarrierConfig(PersistableBundle bundle, int subId) throws Exception {
-        CarrierConfigManager carrierConfigManager = InstrumentationRegistry.getContext()
-                .getSystemService(CarrierConfigManager.class);
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(carrierConfigManager,
-                (m) -> m.overrideConfig(subId, bundle));
     }
 
     private void setPreferredDataSubId(int subId) {
