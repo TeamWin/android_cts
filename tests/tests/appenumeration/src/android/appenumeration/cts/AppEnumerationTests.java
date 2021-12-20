@@ -39,6 +39,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_SHAREDLIBRARY_DEPE
 import static android.appenumeration.cts.Constants.ACTION_GET_STAGED_SESSIONS;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
+import static android.appenumeration.cts.Constants.ACTION_GRANT_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_GET_SUSPENDED_PACKAGE_LAUNCHER_EXTRAS;
@@ -54,6 +55,7 @@ import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
 import static android.appenumeration.cts.Constants.ACTION_REQUEST_SYNC_AND_AWAIT_STATUS;
+import static android.appenumeration.cts.Constants.ACTION_REVOKE_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTION_SET_INSTALLER_PACKAGE_NAME;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
@@ -1893,6 +1895,38 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesPackageHasProvider_grantUriPermission_canSeeNoApi() throws Exception {
+        try {
+            grantUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_NO_API);
+            assertThat(InstrumentationRegistry.getInstrumentation().getContext()
+                    .checkUriPermission(
+                            Uri.parse("content://" + QUERIES_PACKAGE_PROVIDER),
+                            0 /* pid */,
+                            sPm.getPackageUid(TARGET_NO_API, 0 /* flags */),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                    is(PackageManager.PERMISSION_GRANTED));
+        } finally {
+            revokeUriPermission(QUERIES_PACKAGE_PROVIDER);
+        }
+    }
+
+    @Test
+    public void queriesPackageHasProvider_grantUriPermission_cannotSeeFilters() throws Exception {
+        try {
+            grantUriPermission(QUERIES_PACKAGE_PROVIDER, TARGET_FILTERS);
+            assertThat(InstrumentationRegistry.getInstrumentation().getContext()
+                            .checkUriPermission(
+                                    Uri.parse("content://" + QUERIES_PACKAGE_PROVIDER),
+                                    0 /* pid */,
+                                    sPm.getPackageUid(TARGET_FILTERS, 0 /* flags */),
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                    is(PackageManager.PERMISSION_DENIED));
+        } finally {
+            revokeUriPermission(QUERIES_PACKAGE_PROVIDER);
+        }
+    }
+
+    @Test
     public void canPackageQuery_queriesActivityAction_canSeeFilters() throws Exception {
         assertThat(sPm.canPackageQuery(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS),
                 is(true));
@@ -2354,6 +2388,21 @@ public class AppEnumerationTests {
                 extraData, ACTION_CHECK_URI_PERMISSION, /* waitForReady */ false);
         final Bundle response = result.await();
         return response.getInt(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private void grantUriPermission(String providerPackageName, String targetPackageName)
+            throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, providerPackageName);
+        sendCommandBlocking(providerPackageName, targetPackageName, extraData,
+                ACTION_GRANT_URI_PERMISSION);
+    }
+
+    private void revokeUriPermission(String providerPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, providerPackageName);
+        sendCommandBlocking(providerPackageName, null /* targetPackageName */, extraData,
+                ACTION_REVOKE_URI_PERMISSION);
     }
 
     private boolean canPackageQuery(String callerPackageName, String sourcePackageName,

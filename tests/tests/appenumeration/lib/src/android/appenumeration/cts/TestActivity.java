@@ -343,6 +343,15 @@ public class TestActivity extends Activity {
                 final int uid = intent.getIntExtra(EXTRA_UID, ROOT_UID);
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendCheckPackageResult(remoteCallback, packageName, uid);
+            } else if (Constants.ACTION_GRANT_URI_PERMISSION.equals(action)) {
+                final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                sendGrantUriPermission(remoteCallback, sourceAuthority, targetPackageName);
+            } else if (Constants.ACTION_REVOKE_URI_PERMISSION.equals(action)) {
+                final String sourceAuthority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                sendRevokeUriPermission(remoteCallback, sourceAuthority);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -775,6 +784,21 @@ public class TestActivity extends Activity {
         final Bundle result = new Bundle();
         result.putInt(EXTRA_RETURN_RESULT, permissionResult);
         remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendGrantUriPermission(RemoteCallback remoteCallback, String sourceAuthority,
+            String targetPackageName) {
+        final Uri uri = Uri.parse("content://" + sourceAuthority);
+        grantUriPermission(targetPackageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        remoteCallback.sendResult(null);
+        finish();
+    }
+
+    private void sendRevokeUriPermission(RemoteCallback remoteCallback, String sourceAuthority) {
+        final Uri uri = Uri.parse("content://" + sourceAuthority);
+        revokeUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        remoteCallback.sendResult(null);
         finish();
     }
 
