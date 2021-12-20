@@ -52,14 +52,7 @@ public class SettingsMultiPaneDeepLinkTest {
 
     @Before
     public void setUp() throws Exception {
-        // runOnMainSync or SplitController#isSplitSupported will return wrong value for large
-        // screen devices.
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mIsSplitSupported = SplitController.getInstance().isSplitSupported();
-            }
-        });
+        mIsSplitSupported = SplitController.getInstance().isSplitSupported();
         mDeepLinkIntentResolveInfo = InstrumentationRegistry.getInstrumentation().getContext()
                 .getPackageManager().resolveActivity(
                 new Intent(Settings.ACTION_SETTINGS_EMBED_DEEP_LINK_ACTIVITY),
