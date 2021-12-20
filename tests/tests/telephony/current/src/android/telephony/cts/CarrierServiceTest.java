@@ -45,23 +45,27 @@ public class CarrierServiceTest extends ServiceTestCase<CarrierServiceTest.TestC
         }
     }
 
+    @Override
+    protected void runTest() throws Throwable {
+        if (!hasCellular()) {
+            return;
+        }
+        super.runTest();
+    }
+
     private static boolean hasCellular() {
         PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
         TelephonyManager telephonyManager =
                 getInstrumentation().getContext().getSystemService(TelephonyManager.class);
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION)
                 && telephonyManager.getPhoneCount() > 0;
     }
 
     public void testNotifyCarrierNetworkChange_true() {
-        if (!mHasCellular) return;
-
         notifyCarrierNetworkChange(true);
     }
 
     public void testNotifyCarrierNetworkChange_false() {
-        if (!mHasCellular) return;
-
         notifyCarrierNetworkChange(false);
     }
 
