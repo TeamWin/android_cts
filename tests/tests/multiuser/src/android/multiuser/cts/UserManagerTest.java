@@ -17,6 +17,8 @@
 package android.multiuser.cts;
 
 import static android.Manifest.permission.CREATE_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
@@ -42,31 +44,43 @@ import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.users.UserType;
+
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class UserManagerTest {
 
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final Context sContext = TestApis.context().instrumentedContext();
+
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
-    private final Context mContext = mInstrumentation.getContext();
     private UserManager mUserManager;
 
     private final String mAccountName = "test_account_name";
     private final String mAccountType = "test_account_type";
 
-
     @Before
-    public void setTestFixtures() {
-        mUserManager = mContext.getSystemService(UserManager.class);
-
+    public void setUp() {
+        mUserManager = sContext.getSystemService(UserManager.class);
         assertWithMessage("UserManager service").that(mUserManager).isNotNull();
     }
 
@@ -117,7 +131,7 @@ public final class UserManagerTest {
                     "Clone user", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
             assertThat(userHandle).isNotNull();
 
-            final Context userContext = mContext.createPackageContextAsUser("system", 0,
+            final Context userContext = sContext.createPackageContextAsUser("system", 0,
                     userHandle);
             final UserManager cloneUserManager = userContext.getSystemService(UserManager.class);
             assertThat(cloneUserManager.isMediaSharedWithParent()).isTrue();
@@ -153,7 +167,7 @@ public final class UserManagerTest {
             user = UserHandle.of(info.id);
             assertThat(mUserManager.isRestrictedProfile(user)).isTrue();
 
-            final Context userContext = mContext.createPackageContextAsUser("system", 0, user);
+            final Context userContext = sContext.createPackageContextAsUser("system", 0, user);
             final UserManager userUm = userContext.getSystemService(UserManager.class);
             // TODO(183239043): Remove the if{} clause after v33 Sdk bump.
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
@@ -216,7 +230,7 @@ public final class UserManagerTest {
             assertThat(response.isSuccessful()).isTrue();
             assertThat(user).isNotNull();
 
-            UserManager userManagerOfNewUser = mContext
+            UserManager userManagerOfNewUser = sContext
                     .createPackageContextAsUser("android", 0, user)
                     .getSystemService(UserManager.class);
 
@@ -255,5 +269,25 @@ public final class UserManagerTest {
             removeUser(user1);
             removeUser(user2);
         }
+    }
+
+    @Test
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void getProfileParent_withNewlyCreatedProfile() {
+        final UserReference parent = TestApis.users().instrumented();
+        try (UserReference profile = TestApis.users().createUser()
+                .parent(parent)
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart()) {
+            assertThat(mUserManager.getProfileParent(profile.userHandle()))
+                    .isEqualTo(parent.userHandle());
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void getProfileParent_returnsNullForNonProfile() {
+        assertThat(mUserManager.getProfileParent(TestApis.users().system().userHandle())).isNull();
     }
 }
