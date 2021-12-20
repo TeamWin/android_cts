@@ -25,11 +25,13 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.ConnectivityManager.NetworkCallback;
+import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pGroupList;
@@ -37,9 +39,12 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.util.Log;
+
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -89,6 +94,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     private MySync mMySync = new MySync();
     private MyResponse mMyResponse = new MyResponse();
     private boolean mWasVerboseLoggingEnabled;
+    private WifiP2pConfig mTestWifiP2pPeerConfig;
 
     private static final String TAG = "ConcurrencyTest";
     private static final int TIMEOUT_MSEC = 6000;
@@ -190,6 +196,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mMySync.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
         mMySync.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
         mMySync.expectedNetworkInfo = null;
+
+        // for general connect command
+        mTestWifiP2pPeerConfig = new WifiP2pConfig();
+        mTestWifiP2pPeerConfig.deviceAddress = "aa:bb:cc:dd:ee:ff";
     }
 
     @Override
@@ -767,6 +777,40 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         resetResponse(mMyResponse);
         mWifiP2pManager.clearLocalServices(mWifiP2pChannel,
                 mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(mMyResponse.success);
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testRemoveClient() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(mMyResponse.success);
+
+        // The first network state might be IDLE due to
+        // lazy initialization, but not CONNECTED.
+        for (int i = 0; i < 2; i++) {
+            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+            assertNotNull(mMySync.expectedNetworkInfo);
+            if (NetworkInfo.DetailedState.CONNECTED
+                    == mMySync.expectedNetworkInfo.getDetailedState()) {
+                break;
+            }
+            assertEquals(NetworkInfo.DetailedState.IDLE,
+                    mMySync.expectedNetworkInfo.getDetailedState());
+        }
+        assertEquals(NetworkInfo.DetailedState.CONNECTED,
+                mMySync.expectedNetworkInfo.getDetailedState());
+
+        resetResponse(mMyResponse);
+        MacAddress peerMacAddress = MacAddress.fromString(mTestWifiP2pPeerConfig.deviceAddress);
+        mWifiP2pManager.removeClient(
+                mWifiP2pChannel, peerMacAddress, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
     }
