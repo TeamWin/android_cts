@@ -110,6 +110,15 @@ public final class TestAppSystemServiceFactory {
                 /* forDeviceOwner= */ true);
     }
 
+    /**
+     * Gets the proper {@link GenericManager} instance to be used by the test.
+     */
+    public static GenericManager getGenericManager(Context context,
+            Class<? extends BroadcastReceiver> receiverClass) {
+        return getSystemService(context, GenericManager.class, receiverClass,
+                /* forDeviceOwner= */ true);
+    }
+
     private static void assertHasRequiredReceiver(Context context) {
         if (!UserManager.isHeadlessSystemUserMode()) return;
 
@@ -165,6 +174,9 @@ public final class TestAppSystemServiceFactory {
         ServiceManagerWrapper<T> wrapper = null;
         Class<?> wrappedClass;
 
+        @SuppressWarnings("unchecked")
+        T manager = null;
+
         if (serviceClass.equals(DevicePolicyManager.class)) {
             wrappedClass = DevicePolicyManager.class;
             @SuppressWarnings("unchecked")
@@ -189,12 +201,25 @@ public final class TestAppSystemServiceFactory {
                     (ServiceManagerWrapper<T>) new UserManagerWrapper();
             wrapper = safeCastWrapper;
             wrappedClass = UserManager.class;
+        } else if (serviceClass.equals(GenericManager.class)) {
+            @SuppressWarnings("unchecked")
+            ServiceManagerWrapper<T> safeCastWrapper =
+                    (ServiceManagerWrapper<T>) new GenericManagerWrapper();
+            @SuppressWarnings("unchecked")
+            T safeCastManager = (T) new GenericManagerImpl(context);
+            wrapper = safeCastWrapper;
+            wrappedClass = GenericManager.class;
+            manager = safeCastManager;
         } else {
             throw new IllegalArgumentException("invalid service class: " + serviceClass);
         }
+        if (manager == null) {
+            manager = (T) context.getSystemService(wrappedClass);
+        }
 
-        @SuppressWarnings("unchecked")
-        T manager = (T) context.getSystemService(wrappedClass);
+        if (manager == null) {
+            fail("Could not get a manager of type " + serviceClass);
+        }
 
         if (!forDeviceOwner) return manager;
 
