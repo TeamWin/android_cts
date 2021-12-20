@@ -937,16 +937,14 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     /**
      * Ensure WiFi is enabled, and block until we've verified that we are in fact connected.
      */
-    private void connectToWifi()
-            throws InterruptedException {
+    private void connectToWifi() throws Exception {
         setWifiState(true, mCm, mWifiManager);
     }
 
     /**
      * Ensure WiFi is disabled, and block until we've verified that we are in fact disconnected.
      */
-    private void disconnectFromWifi()
-            throws InterruptedException {
+    private void disconnectFromWifi() throws Exception {
         setWifiState(false, mCm, mWifiManager);
     }
 
@@ -964,7 +962,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * Taken from {@link android.net.http.cts.ApacheHttpClientTest}.
      */
     static void setWifiState(final boolean enable,
-            final ConnectivityManager cm, final WifiManager wm) throws InterruptedException {
+            final ConnectivityManager cm, final WifiManager wm) throws Exception {
         if (enable != isWiFiConnected(cm, wm)) {
             NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
             NetworkCapabilities nc = new NetworkCapabilities.Builder()
@@ -975,6 +973,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
             if (enable) {
                 SystemUtil.runShellCommand("svc wifi enable");
+                waitUntil("Failed to enable Wifi", 30 /* seconds */, () -> wm.isWifiEnabled());
                 //noinspection deprecation
                 SystemUtil.runWithShellPermissionIdentity(wm::reconnect,
                         android.Manifest.permission.NETWORK_SETTINGS);
