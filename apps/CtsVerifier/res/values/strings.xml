@@ -4919,24 +4919,36 @@ You should be prompted to select credentials; choose the ones you just installed
     <!--- AudioInputRoutingNotificationsActivity -->
     <string name="audio_input_routingnotifications_test">Audio Input Routing Notifications Test</string>
     <string name="audio_input_routingnotification_instructions">
-          Click on the "Record" button in the AudioRecord Routing Notifications section below to
-          start recording. Insert a wired headset or microphone. Observe a message acknowledging the
-          rerouting event below. Remove the wired headset and observe the new routing message.
-          Click on the "Stop" button to stop recording.\n
+        Test whether appropriate routing notifications are sent when audio input peripherals are
+        connected to the device.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Record\" button.
+        \n3. Connect a wired input peripheral. A connect routing message should appear.
+        \n4. Press the \"Stop\" button.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired input peripherals, or
+        the routing notifications are received.
     </string>
 
     <!--- AudioOutputRoutingNotificationsActivity -->
     <string name="audio_output_routingnotifications_test">Audio Output Routing Notifications Test</string>
     <string name="audio_output_routingnotification_instructions">
-          Click on the "Play" button in the AudioTrack Routing Notifications section below to
-          start (silent) playback. Insert a wired headset. Observe a message acknowledging the
-          rerouting event below. Remove the wired headset and observe the new routing message.
-          Click on the "Stop" button to stop playback.\n
+        Test whether appropriate output routing notifications are sent when audio output peripherals are
+        connected to the device.
+        \n\nTest Setup:
+        \nDisconnect any wired audio peripherals.
+        \n\nTest Process:
+        \n1. Verify that the DUT supports USB or Analog audio peripherals.
+        \n2. Press the \"Play\" button.
+        \n3. Connect a wired output peripheral. A connect routing message should appear.
+        \n4. Press the \"Stop\" button.
+        \n\nTest Criteria:
+        \nThe test passes if either the device DOES NOT support wired output peripherals, or
+        the routing notifications are received.
     </string>
-    <string name="audio_routingnotification_playBtn">Play</string>
-    <string name="audio_routingnotification_playStopBtn">Stop</string>
-    <string name="audio_routingnotification_recBtn">Record</string>
-    <string name="audio_routingnotification_recStopBtn">Stop</string>
     <string name="audio_routingnotification_playHeader">AudioTrack Routing Notifications</string>
     <string name="audio_routingnotification_recHeader">AudioRecord Routing Notifications</string>
     <string name="audio_routingnotification_trackRoutingMsg">AudioTrack rerouting</string>

@@ -16,9 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
-
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -35,6 +32,10 @@ import android.view.View.OnClickListener;
 
 import android.widget.Button;
 
+import com.android.cts.verifier.CtsVerifierReportLog;
+import com.android.cts.verifier.PassFailButtons;
+import com.android.cts.verifier.R;
+
 abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     private static final String TAG = AudioWiredDeviceBaseActivity.class.getSimpleName();
 
@@ -44,27 +45,21 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
     private Button mDoesntSupportBtn;
 
     protected boolean mSupportsWiredPeripheral;
+    protected String mConnectedPeripheralName;
 
     abstract protected void enableTestButtons(boolean enabled);
     abstract protected void calculatePass();
 
     // ReportLog schema
     private static final String KEY_WIRED_PORT_SUPPORTED = "wired_port_supported";
-
-    private void recordWiredPortFound() {
-        getReportLog().addValue(
-                KEY_WIRED_PORT_SUPPORTED,
-                mSupportsWiredPeripheral ? 1 : 0,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-    }
+    protected static final String KEY_SUPPORTS_PERIPHERALS = "supports_wired_peripherals";
+    protected static final String KEY_ROUTING_RECEIVED = "routing_received";
+    protected static final String KEY_CONNECTED_PERIPHERAL = "routing_connected_peripheral";
 
     protected void setup() {
         // The "Honor" system buttons
         (mSupportsBtn = (Button)findViewById(R.id.audio_wired_no)).setOnClickListener(mBtnClickListener);
         (mDoesntSupportBtn = (Button)findViewById(R.id.audio_wired_yes)).setOnClickListener(mBtnClickListener);
-
-        enableTestButtons(false);
     }
 
     private class OnBtnClickListener implements OnClickListener {
@@ -84,9 +79,23 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
             }
             Log.i(TAG, "Wired Device Support:" + mSupportsWiredPeripheral);
             enableTestButtons(mSupportsWiredPeripheral);
-            recordWiredPortFound();
             calculatePass();
         }
+    }
+
+    protected void storeTestResults() {
+        CtsVerifierReportLog reportLog = getReportLog();
+        reportLog.addValue(
+                KEY_WIRED_PORT_SUPPORTED,
+                mSupportsWiredPeripheral ? 1 : 0,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                KEY_CONNECTED_PERIPHERAL,
+                mConnectedPeripheralName,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
     }
 
     //
@@ -97,6 +106,8 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
+        storeTestResults();
+
         getReportLog().submit();
     }
 }
