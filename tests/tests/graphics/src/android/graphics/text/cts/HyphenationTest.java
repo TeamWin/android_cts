@@ -56,6 +56,55 @@ public class HyphenationTest {
     }
 
     @Test
+    public void testAfrikaansPattern() {
+        final String locale = "af";
+        final String text = "zastavila zastavila zastavila zastavila";
+        final float textSize = 10.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | zastavila zas- |
+        // | tavila zasta-  |
+        // | vila zastavila |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(3, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+    }
+
+    @Test
+    public void testAlbanianPattern() {
+        final String locale = "sq";
+        final String text = "vazhduar vazhduar vazhduar vazhduar";
+        final float textSize = 15.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | vazhdu-     |
+        // | ar vazhdu-  |
+        // | ar vazhdu-  |
+        // | ar vazhduar |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(4, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(3));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(3));
+    }
+
+    @Test
     public void testAmharicPattern() {
         final String locale = "am";
         final String text = "መጋበዛቸውን መጋበዛቸውን መጋበዛቸውን መጋበዛቸውን መጋበዛቸውን";
@@ -67,6 +116,58 @@ public class HyphenationTest {
         // | መጋበዛቸውን መጋበዛቸ-  |
         // | ውን መጋበዛቸውን መ-  |
         // | ጋበዛቸውን መጋበዛቸውን  |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(3, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+    }
+
+    @Test
+    public void testCzechPattern() {
+        final String locale = "cs";
+        final String text = "epidemiologická epidemiologická epidemiologická";
+        final float textSize = 15.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | epidemiolo-  |
+        // | gická epi-   |
+        // | demiolo-     |
+        // | gická epide- |
+        // | miologická   |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(5, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(3));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(3));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(4));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(4));
+    }
+
+    @Test
+    public void testDutchPattern() {
+        final String locale = "nl";
+        final String text = "beschuldigt beschuldigt beschuldigt beschuldigt";
+        final float textSize = 10.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | beschuldigt be-    |
+        // | schuldigt beschul- |
+        // | digt beschuldigt   |
         final LineBreaker.Result r = computeLineBreaks(text);
 
         assertEquals(3, r.getLineCount());
@@ -122,6 +223,53 @@ public class HyphenationTest {
     }
 
     @Test
+    public void testGeorgianPattern() {
+        final String locale = "ka";
+        final String text = "ინფორმაციით ინფორმაციით ინფორმაციით ინფორმაციით";
+        final float textSize = 10.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | ინფორმაცი-     |
+        // | ით ინფორმაცი-  |
+        // | ით ინფორმაცი-  |
+        // | ით ინფორმაციით |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(3, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+    }
+
+    @Test
+    public void testGreekPattern() {
+        final String locale = "el";
+        final String text = "εργαζόμενους εργαζόμενους εργαζόμενους";
+        final float textSize = 10.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | εργαζόμενους ερ- |
+        // | γαζόμενους ερ-   |
+        // | γαζόμενους       |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(3, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+    }
+
+    @Test
     public void testItalianPattern() {
         final String locale = "it";
         final String text = "Assicurati Assicurati Assicurati Assicurati";
@@ -133,6 +281,29 @@ public class HyphenationTest {
         // | Assicurati Assi- |
         // | curati Assicu-   |
         // | rati Assicurati  |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(3, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+    }
+
+    @Test
+    public void testLatvianPattern() {
+        final String locale = "lv";
+        final String text = "verifikāciju verifikāciju verifikāciju verifikāciju";
+        final float textSize = 10.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | verifikāciju veri- |
+        // | fikāciju verifikā- |
+        // | ciju verifikāciju  |
         final LineBreaker.Result r = computeLineBreaks(text);
 
         assertEquals(3, r.getLineCount());
@@ -168,6 +339,35 @@ public class HyphenationTest {
         assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(2));
         assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(3));
         assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(3));
+    }
+
+    @Test
+    public void testSlovakPattern() {
+        final String locale = "sk";
+        final String text = "epidemiologická epidemiologická epidemiologická";
+        final float textSize = 15.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | epidemiolo-  |
+        // | gická epi-   |
+        // | demiolo-     |
+        // | gická epide- |
+        // | miologická   |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(5, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(3));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(3));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(4));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(4));
     }
 
     @Test
