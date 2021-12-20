@@ -22,9 +22,7 @@ import android.graphics.BlendMode
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorSpace
-import android.graphics.ComposeShader
 import android.graphics.Paint
-import android.graphics.Picture
 import android.graphics.Rect
 import android.graphics.RuntimeShader
 import android.graphics.Shader
@@ -279,65 +277,6 @@ class RuntimeShaderTests : ActivityTestBase() {
         createTest().addCanvasClient(CanvasClient
                 { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
                 true).runWithVerifier(RectVerifier(Color.WHITE, Color.BLUE, rect))
-    }
-
-    @Test
-    fun testDrawThroughPicture() {
-        val rect = Rect(10, 10, 80, 80)
-        val picture = Picture()
-        run {
-            val paint = Paint()
-            paint.shader = RuntimeShader(simpleRedShader)
-
-            val canvas = picture.beginRecording(TEST_WIDTH, TEST_HEIGHT)
-            canvas.clipRect(rect)
-            canvas.drawPaint(paint)
-            picture.endRecording()
-        }
-        Assert.assertTrue(picture.requiresHardwareAcceleration())
-
-        createTest().addCanvasClient(CanvasClient
-        { canvas: Canvas, width: Int, height: Int -> canvas.drawPicture(picture) },
-                true).runWithVerifier(RectVerifier(Color.WHITE, Color.RED, rect))
-    }
-
-    @Test
-    fun testDrawThroughPictureWithComposeShader() {
-        val rect = Rect(10, 10, 80, 80)
-        val picture = Picture()
-        run {
-            val paint = Paint()
-            val runtimeShader = RuntimeShader(simpleRedShader)
-            paint.shader = ComposeShader(runtimeShader, bitmapShader, BlendMode.DST)
-
-            val canvas = picture.beginRecording(TEST_WIDTH, TEST_HEIGHT)
-            canvas.clipRect(rect)
-            canvas.drawPaint(paint)
-            picture.endRecording()
-        }
-        Assert.assertTrue(picture.requiresHardwareAcceleration())
-
-        createTest().addCanvasClient(CanvasClient
-        { canvas: Canvas, width: Int, height: Int -> canvas.drawPicture(picture) },
-                true).runWithVerifier(RectVerifier(Color.WHITE, Color.RED, rect))
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun testDrawIntoSoftwareCanvas() {
-        val paint = Paint()
-        paint.shader = RuntimeShader(simpleRedShader)
-
-        val canvas = Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
-        canvas.drawRect(0f, 0f, 10f, 10f, paint)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun testDrawIntoSoftwareCanvasWithComposeShader() {
-        val paint = Paint()
-        paint.shader = ComposeShader(RuntimeShader(simpleRedShader), bitmapShader, BlendMode.SRC)
-
-        val canvas = Canvas(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
-        canvas.drawRect(0f, 0f, 10f, 10f, paint)
     }
 
     val mSemiTransparentBlueShader = """
