@@ -39,10 +39,6 @@ import java.util.concurrent.TimeUnit;
 public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
-    private static final String POWER_CONTROL_MODE =
-            "power_control_mode";
-    private static final String POWER_CONTROL_MODE_NONE =
-            "none";
 
     public HdmiCecRoutingControlTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
@@ -56,12 +52,6 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                             CecRules.requiresDeviceType(
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
-
-    private String setPowerControlMode(String valToSet) throws Exception {
-        String val = getSettingsValue(POWER_CONTROL_MODE);
-        setSettingsValue(POWER_CONTROL_MODE, valToSet);
-        return val;
-    }
 
     /**
      * Test 11.1.2-2, HF4-7-2
@@ -143,7 +133,8 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
         ITestDevice device = getDevice();
-        String previousPowerControlMode = setPowerControlMode(POWER_CONTROL_MODE_NONE);
+        String previousPowerControlMode =
+                setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_NONE);
         try {
             int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
             hdmiCecClient.sendCecMessage(

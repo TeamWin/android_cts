@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public static final String PROPERTY_LOCALE = "persist.sys.locale";
+    private static final String POWER_CONTROL_MODE = "power_control_mode";
 
     /** Enum contains the list of possible address types. */
     private enum AddressType {
@@ -430,5 +431,11 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     public void sendOtp() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("cmd hdmi_control onetouchplay");
+    }
+
+    public String setPowerControlMode(String valToSet) throws Exception {
+        String val = getSettingsValue(POWER_CONTROL_MODE);
+        setSettingsValue(POWER_CONTROL_MODE, valToSet);
+        return val;
     }
 }

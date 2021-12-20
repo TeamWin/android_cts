@@ -44,9 +44,6 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     private static final String TV_SEND_STANDBY_ON_SLEEP_ENABLED = "1";
     private static final String TV_SEND_STANDBY_ON_SLEEP_DISABLED = "0";
 
-    private static final String POWER_CONTROL_MODE = "power_control_mode";
-    private static final String POWER_CONTROL_MODE_NONE = "none";
-
     public List<LogicalAddress> mLogicalAddresses = new ArrayList<>();
     public boolean previousDeviceAutoOff;
     public String previousPowerControlMode;
@@ -61,7 +58,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     public void initialTestSetup() throws Exception {
         defineLogicalAddressList();
         previousDeviceAutoOff = setHdmiControlDeviceAutoOff(false);
-        previousPowerControlMode = setPowerControlMode(POWER_CONTROL_MODE_NONE);
+        previousPowerControlMode = setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_NONE);
     }
 
     @After
@@ -146,11 +143,5 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         setSettingsValue(TV_SEND_STANDBY_ON_SLEEP, turnOn ? TV_SEND_STANDBY_ON_SLEEP_ENABLED
                                                           : TV_SEND_STANDBY_ON_SLEEP_DISABLED);
         return val == TV_SEND_STANDBY_ON_SLEEP_ENABLED;
-    }
-
-    private String setPowerControlMode(String valToSet) throws Exception {
-        String val = getSettingsValue(POWER_CONTROL_MODE);
-        setSettingsValue(POWER_CONTROL_MODE, valToSet);
-        return val;
     }
 }
