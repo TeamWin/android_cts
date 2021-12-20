@@ -21,6 +21,7 @@ import android.companion.AssociationRequest
 import android.os.SystemClock.sleep
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertContentEquals
@@ -85,6 +86,7 @@ class SelfPresenceReportingTest : TestBase() {
     }
 
     @Test
+    @Ignore("b/211398735")
     fun test_multipleDevices_sameApplication() {
         val idA = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A)
         val idB = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_B)
