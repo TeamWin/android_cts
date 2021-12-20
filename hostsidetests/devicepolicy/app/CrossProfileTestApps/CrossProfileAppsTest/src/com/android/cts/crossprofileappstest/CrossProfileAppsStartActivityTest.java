@@ -18,6 +18,7 @@ package com.android.cts.crossprofileappstest;
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.START_CROSS_PROFILE_ACTIVITIES;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -128,6 +129,19 @@ public class CrossProfileAppsStartActivityTest {
         assertNotNull("Failed to start main activity in target user", textView);
         assertEquals("Main Activity is started in wrong user",
                 String.valueOf(mUserSerialNumber), textView.getText());
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testCannotStartActivityByIntentWithStartCrossProfileActivitiesPermission() {
+        Intent intent = new Intent();
+        intent.setComponent(MainActivity.getComponentName(mContext));
+        ShellIdentityUtils.dropShellPermissionIdentity();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mCrossProfileApps,
+                crossProfileApps -> crossProfileApps.startActivity(
+                        intent, mTargetUser, /* callingActivity= */ null),
+                START_CROSS_PROFILE_ACTIVITIES);
     }
 
     @Test
@@ -329,11 +343,49 @@ public class CrossProfileAppsStartActivityTest {
     }
 
     @Test
+    public void testCanStartMainActivityByComponentWithStartCrossProfileActivitiesPermission() {
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
+                    crossProfileApps -> mCrossProfileApps.startActivity(
+                            MainActivity.getComponentName(mContext), mTargetUser),
+                    START_CROSS_PROFILE_ACTIVITIES);
+
+            // Look for the text view to verify that MainActivity is started.
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW)),
+                    TIMEOUT_WAIT_UI);
+            assertNotNull("Failed to start main activity in target user", textView);
+            assertEquals("Main Activity is started in wrong user",
+                    String.valueOf(mUserSerialNumber), textView.getText());
+        } catch (Exception e) {
+            fail("unable to start main activity via CrossProfileApps#startActivity: " + e);
+        }
+    }
+
+    @Test
     public void testCanStartNonMainActivityByComponent() {
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
                     crossProfileApps -> mCrossProfileApps.startActivity(
                             NonMainActivity.getComponentName(mContext), mTargetUser));
+
+            // Look for the text view to verify that NonMainActivity is started.
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW_NONMAIN)),
+                    TIMEOUT_WAIT_UI);
+            assertNotNull("Failed to start non-main activity in target user", textView);
+            assertEquals("Non-Main Activity is started in wrong user",
+                    String.valueOf(mUserSerialNumber), textView.getText());
+        } catch (Exception e) {
+            fail("unable to start non-main activity via CrossProfileApps#startActivity: " + e);
+        }
+    }
+
+    @Test
+    public void testCanStartNonMainActivityByComponentWithStartCrossProfileActivitiesPermission() {
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mCrossProfileApps,
+                    crossProfileApps -> mCrossProfileApps.startActivity(
+                            NonMainActivity.getComponentName(mContext), mTargetUser),
+                    START_CROSS_PROFILE_ACTIVITIES);
 
             // Look for the text view to verify that NonMainActivity is started.
             UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW_NONMAIN)),
