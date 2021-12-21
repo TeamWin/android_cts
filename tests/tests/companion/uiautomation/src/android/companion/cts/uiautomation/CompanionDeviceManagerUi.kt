@@ -17,6 +17,7 @@
 package android.companion.cts.uiautomation
 
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.SearchCondition
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
@@ -41,9 +42,13 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
             Until.findObject(DEVICE_LIST_WITH_ITEMS), "Device List not found or empty")
                     .children[0].click()
 
-    fun clickNegativeButton() = ui.waitShortAndFind(
-            Until.findObject(NEGATIVE_BUTTON), "Negative button is not found")
-                    .click()
+    fun clickPositiveButton() = click(POSITIVE_BUTTON, "Positive button")
+
+    fun clickNegativeButton() = click(NEGATIVE_BUTTON, "Negative button")
+
+    private fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
+            Until.findObject(selector), "$description  is not found")
+            .click()
 
     companion object {
         private const val PACKAGE_NAME = "com.android.companiondevicemanager"

@@ -18,33 +18,20 @@ package android.companion.cts.uiautomation
 
 import android.app.Activity
 import android.companion.AssociationInfo
-import android.companion.AssociationRequest
 import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
-import android.companion.BluetoothDeviceFilter
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.CompanionActivity
-import android.companion.cts.common.DEVICE_PROFILES
-import android.companion.cts.common.DEVICE_PROFILE_TO_NAME
-import android.companion.cts.common.DEVICE_PROFILE_TO_PERMISSION
-import android.companion.cts.common.RecordingCallback
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
-import android.companion.cts.common.SIMPLE_EXECUTOR
-import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertEmpty
-import android.companion.cts.common.setSystemProp
 import android.content.Intent
 import android.net.MacAddress
 import android.platform.test.annotations.AppModeFull
-import androidx.test.uiautomator.UiDevice
 import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.util.regex.Pattern
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -57,13 +44,10 @@ import kotlin.test.assertNotNull
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(Parameterized::class)
 class AssociationEndToEndTest(
-    private val profile: String?,
-    private val profilePermission: String?,
+    profile: String?,
+    profilePermission: String?,
     profileName: String // Used only by the Parameterized test runner for tagging.
-) : TestBase() {
-    private val uiDevice by lazy { UiDevice.getInstance(instrumentation) }
-    private val confirmationUi by lazy { CompanionDeviceManagerUi(uiDevice) }
-    private val callback by lazy { RecordingCallback() }
+) : UiAutomationTestBase(profile, profilePermission) {
 
     override fun setUp() {
         super.setUp()
@@ -72,59 +56,13 @@ class AssociationEndToEndTest(
         // confirmation UI (the "multiple devices" flow variant).
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
         assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
-
-        assumeFalse(confirmationUi.isVisible)
-        assumeTrue(CompanionActivity.waitUntilGone())
-        uiDevice.waitForIdle()
-
-        callback.clearRecordedInvocations()
-    }
-
-    override fun tearDown() {
-        super.tearDown()
-
-        CompanionActivity.safeFinish()
-        confirmationUi.dismiss()
-
-        restoreDiscoveryTimeout()
     }
 
     @Test
-    fun test_userRejected() = test_cancelled {
-        // User "rejects" the request.
-        confirmationUi.clickNegativeButton()
-    }
+    fun test_userRejected() = super.test_userRejected(selfManaged = false, displayName = null)
 
     @Test
-    fun test_userDismissed() = test_cancelled {
-        // User "dismisses" the request.
-        uiDevice.pressBack()
-    }
-
-    private fun test_cancelled(action: () -> Unit) {
-        sendRequestAndLaunchConfirmation()
-
-        action()
-
-        callback.waitForInvocation()
-        // Check callback invocations: there should have been exactly 1 invocation of the
-        // onFailure() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnFailure)
-            assertEquals(actual = it[0].error, expected = "Cancelled.")
-        }
-
-        // Wait until the Confirmation UI goes away.
-        confirmationUi.waitUntilGone()
-
-        // Check the result code delivered via onActivityResult()
-        val (resultCode: Int, _) = CompanionActivity.waitForActivityResult()
-        assertEquals(actual = resultCode, expected = Activity.RESULT_CANCELED)
-
-        // Make sure no Associations were created.
-        assertEmpty(cdm.myAssociations)
-    }
+    fun test_userDismissed() = super.test_userDismissed(selfManaged = false, displayName = null)
 
     @Test
     fun test_userConfirmed() {
@@ -174,9 +112,7 @@ class AssociationEndToEndTest(
         // Set discovery timeout to 1 sec.
         setDiscoveryTimeout(1_000)
         // Make sure no device will match the request
-        sendRequestAndLaunchConfirmation {
-            addDeviceFilter(UNMATCHABLE_BT_FILTER)
-        }
+        sendRequestAndLaunchConfirmation(deviceFilter = UNMATCHABLE_BT_FILTER)
 
         // The discovery timeout is 1 sec, but let's give it 2.
         callback.waitForInvocation(2_000)
@@ -200,50 +136,6 @@ class AssociationEndToEndTest(
         assertEmpty(cdm.myAssociations)
     }
 
-    private fun sendRequestAndLaunchConfirmation(
-        block: (AssociationRequest.Builder.() -> Unit)? = null
-    ) {
-        val request = AssociationRequest.Builder()
-                .apply {
-                    // Set profile if it's not null.
-                    profile?.let { setDeviceProfile(it) }
-                    // Invoke provided block if it's not null.
-                    block?.invoke(this)
-                }
-                .build()
-        callback.clearRecordedInvocations()
-
-        // If the "profile permission" is not null: with that permission as the Shell; else:
-        // simply call associate.
-        profilePermission?.let {
-            withShellPermissionIdentity(it) { cdm.associate(request, SIMPLE_EXECUTOR, callback) }
-        } ?: cdm.associate(request, SIMPLE_EXECUTOR, callback)
-
-        callback.waitForInvocation()
-        // Check callback invocations: there should have been exactly 1 invocation of the
-        // onAssociationPending() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnAssociationPending)
-            assertNotNull(it[0].intentSender)
-        }
-
-        // Get intent sender and clear callback invocations.
-        val pendingConfirmation = callback.invocations[0].intentSender
-        callback.clearRecordedInvocations()
-
-        // Launch CompanionActivity, and then launch confirmation UI from it.
-        CompanionActivity.launchAndWait(context)
-        CompanionActivity.startIntentSender(pendingConfirmation)
-
-        confirmationUi.waitUntilVisible()
-    }
-
-    private fun setDiscoveryTimeout(timeout: Int) =
-            instrumentation.setSystemProp(SYS_PROP_DEBUG_TIMEOUT, timeout.toString())
-
-    private fun restoreDiscoveryTimeout() = setDiscoveryTimeout(0)
-
     companion object {
         /**
          * List of (profile, permission, name) tuples that represent all supported profiles and
@@ -252,24 +144,6 @@ class AssociationEndToEndTest(
          */
         @Parameterized.Parameters(name = "profile={2}")
         @JvmStatic
-        fun supportedProfilesAndNull() = mutableListOf<Array<String?>>().apply {
-            add(arrayOf(null, null, "null"))
-            addAll(supportedProfiles())
-        }
-
-        /** List of (profile, permission, name) tuples that represent all supported profiles. */
-        private fun supportedProfiles(): Collection<Array<String?>> = DEVICE_PROFILES.map {
-            profile ->
-            arrayOf(profile,
-                    DEVICE_PROFILE_TO_PERMISSION[profile]!!,
-                    DEVICE_PROFILE_TO_NAME[profile]!!)
-        }
-
-        private const val SYS_PROP_DEBUG_TIMEOUT = "debug.cdm.discovery_timeout"
-
-        private val UNMATCHABLE_BT_FILTER = BluetoothDeviceFilter.Builder()
-                .setAddress("FF:FF:FF:FF:FF:FF")
-                .setNamePattern(Pattern.compile("This Device Does Not Exist"))
-                .build()
+        fun parameters() = supportedProfilesAndNull()
     }
 }
