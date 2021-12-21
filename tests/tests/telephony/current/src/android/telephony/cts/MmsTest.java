@@ -20,6 +20,7 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -94,7 +95,6 @@ public class MmsTest {
     private Random mRandom;
     private SentReceiver mSentReceiver;
     private TelephonyManager mTelephonyManager;
-    private PackageManager mPackageManager;
 
     private static class SentReceiver extends BroadcastReceiver {
         private final Object mLock;
@@ -174,7 +174,8 @@ public class MmsTest {
         mRandom = new Random();
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        mPackageManager = getContext().getPackageManager();
+        assumeTrue(getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_MESSAGING));
     }
 
     @Test
@@ -196,8 +197,7 @@ public class MmsTest {
 
     private void sendMmsMessage(long messageId, int expectedErrorResultCode,
             SmsManager smsManager) {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
-             || !doesSupportMMS()) {
+        if (!doesSupportMMS()) {
             Log.i(TAG, "testSendMmsMessage skipped: no telephony available or MMS not supported");
             return;
         }
@@ -360,8 +360,7 @@ public class MmsTest {
     }
 
     private void downloadMultimediaMessage(long messageId) {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
-                || !doesSupportMMS()) {
+        if (!doesSupportMMS()) {
             Log.i(TAG, "testSendMmsMessage skipped: no telephony available or MMS not supported");
             return;
         }

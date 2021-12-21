@@ -335,7 +335,7 @@ public class TestUtils {
         }
         final PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
-                pm.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE);
+                pm.hasSystemFeature(PackageManager.FEATURE_TELECOM);
     }
 
     public static String setCallDiagnosticService(Instrumentation instrumentation,
