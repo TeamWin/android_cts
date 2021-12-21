@@ -421,8 +421,8 @@ public class TunerTest {
                     case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_PARTIAL_RECEPTION_FLAG:
                         status.getIsdbtPartialReceptionFlag();
                         break;
-                    case FrontendStatus.FRONTEND_STATUS_TYPE_STREAM_ID_LIST:
-                        status.getStreamIdList();
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_STREAM_IDS:
+                        status.getStreamIds();
                         break;
                 }
             }
