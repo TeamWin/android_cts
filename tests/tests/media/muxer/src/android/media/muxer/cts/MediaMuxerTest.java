@@ -49,7 +49,7 @@ import java.util.stream.IntStream;
 public class MediaMuxerTest extends AndroidTestCase {
     private static final String TAG = "MediaMuxerTest";
     private static final boolean VERBOSE = false;
-    private static final int MAX_SAMPLE_SIZE = 256 * 1024;
+    private static final int MAX_SAMPLE_SIZE = 1024 * 1024;
     private static final float LATITUDE = 0.0000f;
     private static final float LONGITUDE  = -180.0f;
     private static final float BAD_LATITUDE = 91.0f;
@@ -80,6 +80,43 @@ public class MediaMuxerTest extends AndroidTestCase {
         String outputFilePath = File.createTempFile("testWebmOutput", ".webm")
                 .getAbsolutePath();
         cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
+    }
+
+    /**
+     * Test: make sure the muxer handles dovi profile 8.4 video track only file correctly.
+     */
+    public void testDolbyVisionVideoOnlyP8() throws Exception {
+        final String source = "video_dovi_1920x1080_60fps_dvhe_08_04.mp4";
+        String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP8videoOnly", ".mp4")
+                .getAbsolutePath();
+        try {
+            cloneAndVerify(source, outputFilePath, 2 /* expectedTrackCount */, 180 /* degrees */,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    MediaMuxerTest::filterOutNonDolbyVisionFormat);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    /**
+     * Test: make sure the muxer handles dovi profile 9.2 video track only file correctly.
+     */
+    public void testDolbyVisionVideoOnlyP9() throws Exception {
+        final String source = "video_dovi_1920x1080_60fps_dvav_09_02.mp4";
+        String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP9videoOnly", ".mp4")
+                .getAbsolutePath();
+        try {
+            cloneAndVerify(source, outputFilePath, 2 /* expectedTrackCount */, 180 /* degrees */,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    MediaMuxerTest::filterOutNonDolbyVisionFormat);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    private static MediaFormat filterOutNonDolbyVisionFormat(MediaFormat format) {
+        String mime = format.getString(MediaFormat.KEY_MIME);
+        return mime.equals(MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION) ? format : null;
     }
 
     /**
@@ -433,6 +470,19 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     private void cloneAndVerify(final String srcMedia, String outputMediaFile,
             int expectedTrackCount, int degrees, int fmt) throws IOException {
+        cloneAndVerify(srcMedia, outputMediaFile, expectedTrackCount, degrees, fmt,
+                Function.identity());
+    }
+
+    /**
+     * Clones a given file using MediaMuxer and verifies the output matches the input.
+     *
+     * <p>See {@link #cloneMediaUsingMuxer} for information about the parameters.
+     */
+    private void cloneAndVerify(final String srcMedia, String outputMediaFile,
+            int expectedTrackCount, int degrees, int fmt,
+            Function<MediaFormat, MediaFormat> muxerInputTrackFormatTransformer)
+            throws IOException {
         try {
             cloneMediaUsingMuxer(
                     srcMedia,
@@ -440,7 +490,7 @@ public class MediaMuxerTest extends AndroidTestCase {
                     expectedTrackCount,
                     degrees,
                     fmt,
-                    Function.identity());
+                    muxerInputTrackFormatTransformer);
             if (fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 ||
                     fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
                 verifyAttributesMatch(srcMedia, outputMediaFile, degrees);
@@ -454,7 +504,21 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
     }
 
-    /** Using the MediaMuxer to clone a media file. */
+
+    /**
+     * Clones a given file using MediaMuxer.
+     *
+     * @param srcMedia Input file path passed to extractor
+     * @param dstMediaPath Output file path passed to muxer
+     * @param expectedTrackCount Expected number of tracks in the input file
+     * @param degrees orientation hint in degrees
+     * @param fmt one of the values defined in {@link MediaMuxer.OutputFormat}.
+     * @param muxerInputTrackFormatTransformer Function applied on the MediaMuxer input formats.
+     *                                         If the function returns null for a given MediaFormat,
+     *                                         the corresponding track is discarded and not passed
+     *                                         to MediaMuxer.
+     * @throws IOException if muxer failed to open output file for write.
+     */
     private void cloneMediaUsingMuxer(
             final String srcMedia,
             String dstMediaPath,
@@ -479,10 +543,13 @@ public class MediaMuxerTest extends AndroidTestCase {
         // Set up the tracks.
         HashMap<Integer, Integer> indexMap = new HashMap<Integer, Integer>(trackCount);
         for (int i = 0; i < trackCount; i++) {
-            extractor.selectTrack(i);
             MediaFormat format = extractor.getTrackFormat(i);
-            int dstIndex = muxer.addTrack(muxerInputTrackFormatTransformer.apply(format));
-            indexMap.put(i, dstIndex);
+            MediaFormat muxedFormat = muxerInputTrackFormatTransformer.apply(format);
+            if (muxedFormat != null) {
+                extractor.selectTrack(i);
+                int dstIndex = muxer.addTrack(muxedFormat);
+                indexMap.put(i, dstIndex);
+            }
         }
 
         // Copy the samples from MediaExtractor to MediaMuxer.
