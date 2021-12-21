@@ -429,15 +429,15 @@ public class AccessibilityWindowReportingTest {
             intent.setAction(NotTouchableWindowTestActivity.ADD_WINDOW);
 
             try {
-                sendIntentAndWaitForEvent(intent,
-                        filterWindowsChangeTypesAndWindowTitle(sUiAutomation, WINDOWS_CHANGE_ADDED,
-                                NotTouchableWindowTestActivity.NON_TOUCHABLE_WINDOW_TITLE.toString())
-                );
-
-                List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
-                assertNotNull(windows);
-                assertEquals(0, windows.stream().filter(
-                        w -> NotTouchableWindowTestActivity.TITLE.equals(w.getTitle())).count());
+                // Waits for the not-touchable activity is covered by the untrusted window.
+                sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                        () -> sInstrumentation.getContext().sendBroadcast(intent)),
+                        (event) -> {
+                            final AccessibilityWindowInfo notTouchableWindow =
+                                    findWindowByTitle(sUiAutomation,
+                                            NotTouchableWindowTestActivity.TITLE);
+                            return notTouchableWindow == null;
+                        }, TIMEOUT_ASYNC_PROCESSING);
             } finally {
                 intent.setAction(NotTouchableWindowTestActivity.REMOVE_WINDOW);
                 sendIntentAndWaitForEvent(intent,
