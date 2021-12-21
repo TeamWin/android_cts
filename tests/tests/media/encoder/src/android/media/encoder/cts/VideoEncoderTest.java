@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.encoder.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -35,6 +35,13 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.media.cts.CodecUtils;
+import android.media.cts.InputSurface;
+import android.media.cts.MediaHeavyPresubmitTest;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.OutputSurface;
+import android.media.cts.Preconditions;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
