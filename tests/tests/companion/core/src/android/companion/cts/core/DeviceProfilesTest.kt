@@ -1,6 +1,5 @@
 package android.companion.cts.core
 
-import android.Manifest
 import android.app.role.RoleManager.ROLE_ASSISTANT
 import android.app.role.RoleManager.ROLE_BROWSER
 import android.app.role.RoleManager.ROLE_CALL_REDIRECTION
@@ -12,9 +11,7 @@ import android.app.role.RoleManager.ROLE_SMS
 import android.app.role.RoleManager.ROLE_SYSTEM_SUPERVISION
 import android.app.role.RoleManager.ROLE_SYSTEM_WELLBEING
 import android.companion.AssociationRequest
-import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
-import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
-import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
+import android.companion.cts.common.DEVICE_PROFILE_TO_PERMISSION
 import android.companion.cts.common.RecordingCallback
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
 import android.companion.cts.common.SIMPLE_EXECUTOR
@@ -44,7 +41,7 @@ class DeviceProfilesTest : CoreTestBase() {
     @Test
     fun test_supportedProfiles() {
         val callback = RecordingCallback()
-        SUPPORTED_PROFILES.forEach { (profile, permission) ->
+        DEVICE_PROFILE_TO_PERMISSION.forEach { (profile, permission) ->
             callback.clearRecordedInvocations()
             val request = buildRequest(deviceProfile = profile)
 
@@ -56,6 +53,7 @@ class DeviceProfilesTest : CoreTestBase() {
             assertEmpty(callback.invocations)
 
             // Should succeed when called with the required permission.
+            assertNotNull(permission, "Profile should require a permission")
             withShellPermissionIdentity(permission) {
                 cdm.associate(request, SIMPLE_EXECUTOR, callback)
             }
@@ -108,14 +106,6 @@ class DeviceProfilesTest : CoreTestBase() {
             .build()
 
     companion object {
-        val SUPPORTED_PROFILES = mapOf(
-                DEVICE_PROFILE_WATCH to Manifest.permission.REQUEST_COMPANION_PROFILE_WATCH,
-                DEVICE_PROFILE_APP_STREAMING to
-                        Manifest.permission.REQUEST_COMPANION_PROFILE_APP_STREAMING,
-                DEVICE_PROFILE_AUTOMOTIVE_PROJECTION to
-                        Manifest.permission.REQUEST_COMPANION_PROFILE_AUTOMOTIVE_PROJECTION
-        )
-
         val UNSUPPORTED_PROFILES = setOf(
                 // Each supported device profile is backed by a role. However, other roles should
                 // not be treated as device profiles.

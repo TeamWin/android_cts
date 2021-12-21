@@ -19,9 +19,14 @@ package android.companion.cts.uiautomation
 import android.app.Activity
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest
+import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
+import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
 import android.companion.BluetoothDeviceFilter
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.CompanionActivity
+import android.companion.cts.common.DEVICE_PROFILES
+import android.companion.cts.common.DEVICE_PROFILE_TO_NAME
+import android.companion.cts.common.DEVICE_PROFILE_TO_PERMISSION
 import android.companion.cts.common.RecordingCallback
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
@@ -33,12 +38,12 @@ import android.companion.cts.common.setSystemProp
 import android.content.Intent
 import android.net.MacAddress
 import android.platform.test.annotations.AppModeFull
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.UiDevice
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.util.regex.Pattern
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -50,14 +55,23 @@ import kotlin.test.assertNotNull
  * Build/Install/Run: atest CtsCompanionDeviceManagerUiAutomationTestCases:AssociationEndToEndTest
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
-@RunWith(AndroidJUnit4::class)
-class AssociationEndToEndTest : TestBase() {
+@RunWith(Parameterized::class)
+class AssociationEndToEndTest(
+    private val profile: String?,
+    private val profilePermission: String?,
+    profileName: String // Used only by the Parameterized test runner for tagging.
+) : TestBase() {
     private val uiDevice by lazy { UiDevice.getInstance(instrumentation) }
     private val confirmationUi by lazy { CompanionDeviceManagerUi(uiDevice) }
     private val callback by lazy { RecordingCallback() }
 
     override fun setUp() {
         super.setUp()
+
+        // TODO(b/211590680): Add support for APP_STREAMING and AUTOMOTIVE_PROJECTION in the
+        // confirmation UI (the "multiple devices" flow variant).
+        assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
+        assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
 
         assumeFalse(confirmationUi.isVisible)
         assumeTrue(CompanionActivity.waitUntilGone())
@@ -190,11 +204,21 @@ class AssociationEndToEndTest : TestBase() {
         block: (AssociationRequest.Builder.() -> Unit)? = null
     ) {
         val request = AssociationRequest.Builder()
-                .apply { block?.invoke(this) }
+                .apply {
+                    // Set profile if it's not null.
+                    profile?.let { setDeviceProfile(it) }
+                    // Invoke provided block if it's not null.
+                    block?.invoke(this)
+                }
                 .build()
         callback.clearRecordedInvocations()
 
-        cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        // If the "profile permission" is not null: with that permission as the Shell; else:
+        // simply call associate.
+        profilePermission?.let {
+            withShellPermissionIdentity(it) { cdm.associate(request, SIMPLE_EXECUTOR, callback) }
+        } ?: cdm.associate(request, SIMPLE_EXECUTOR, callback)
+
         callback.waitForInvocation()
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationPending() method.
@@ -221,6 +245,26 @@ class AssociationEndToEndTest : TestBase() {
     private fun restoreDiscoveryTimeout() = setDiscoveryTimeout(0)
 
     companion object {
+        /**
+         * List of (profile, permission, name) tuples that represent all supported profiles and
+         * null.
+         * Each test will be suffixed with "[profile=<NAME>]", e.g.: "[profile=WATCH]".
+         */
+        @Parameterized.Parameters(name = "profile={2}")
+        @JvmStatic
+        fun supportedProfilesAndNull() = mutableListOf<Array<String?>>().apply {
+            add(arrayOf(null, null, "null"))
+            addAll(supportedProfiles())
+        }
+
+        /** List of (profile, permission, name) tuples that represent all supported profiles. */
+        private fun supportedProfiles(): Collection<Array<String?>> = DEVICE_PROFILES.map {
+            profile ->
+            arrayOf(profile,
+                    DEVICE_PROFILE_TO_PERMISSION[profile]!!,
+                    DEVICE_PROFILE_TO_NAME[profile]!!)
+        }
+
         private const val SYS_PROP_DEBUG_TIMEOUT = "debug.cdm.discovery_timeout"
 
         private val UNMATCHABLE_BT_FILTER = BluetoothDeviceFilter.Builder()
