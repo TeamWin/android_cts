@@ -43,8 +43,6 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     );
 
     private static final Set<String> OVERRIDABLE_CHANGES = ImmutableSet.of(
-            "ALLOW_COMMUNAL_MODE_BY_DEFAULT",
-            "ALLOW_COMMUNAL_MODE_WITH_USER_CONSENT",
             "ALWAYS_SANDBOX_DISPLAY_APIS",
             "CTS_SYSTEM_API_OVERRIDABLE_CHANGEID",
             "DOWNSCALED",
