@@ -22,7 +22,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_SAFETY_CENTER
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.res.Resources
 import android.os.Build.VERSION_CODES.TIRAMISU
+import android.provider.DeviceConfig
 import android.safetycenter.SafetyCenterManager
 import android.safetycenter.SafetySourceData
 import android.safetycenter.SafetySourceIssue
@@ -37,6 +39,7 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = TIRAMISU, codeName = "Tiramisu")
@@ -105,5 +108,107 @@ class SafetyCenterManagerTest {
         }
 
         assertThat(lastSafetyCenterUpdate).isEqualTo(secondSafetyCenterUpdate)
+    }
+
+    @Test
+    fun isSafetyCenterEnabled_whenConfigEnabled_andFlagEnabled_returnsTrue() {
+        if (!deviceSupportsSafetyCenter()) {
+            return
+        }
+
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_SAFETY_CENTER_ENABLED,
+                    /* value = */ true.toString(),
+                    /* makeDefault = */ false)
+        }
+
+        val isSafetyCenterEnabled = callWithShellPermissionIdentity {
+            safetyCenterManager.isSafetyCenterEnabled
+        }
+
+        assertThat(isSafetyCenterEnabled).isTrue()
+    }
+
+    @Test
+    fun isSafetyCenterEnabled_whenConfigEnabled_andFlagDisabled_returnsFalse() {
+        if (!deviceSupportsSafetyCenter()) {
+            return
+        }
+
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_SAFETY_CENTER_ENABLED,
+                    /* value = */ false.toString(),
+                    /* makeDefault = */ false)
+        }
+
+        val isSafetyCenterEnabled = callWithShellPermissionIdentity {
+            safetyCenterManager.isSafetyCenterEnabled
+        }
+
+        assertThat(isSafetyCenterEnabled).isFalse()
+    }
+
+    @Test
+    fun isSafetyCenterEnabled_whenConfigDisabled_andFlagEnabled_returnsFalse() {
+        if (deviceSupportsSafetyCenter()) {
+            return
+        }
+
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_SAFETY_CENTER_ENABLED,
+                    /* value = */ true.toString(),
+                    /* makeDefault = */ false)
+        }
+
+        val isSafetyCenterEnabled = callWithShellPermissionIdentity {
+            safetyCenterManager.isSafetyCenterEnabled
+        }
+
+        assertThat(isSafetyCenterEnabled).isFalse()
+    }
+
+    @Test
+    fun isSafetyCenterEnabled_whenConfigDisabled_andFlagDisabled_returnsFalse() {
+        if (deviceSupportsSafetyCenter()) {
+            return
+        }
+
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_SAFETY_CENTER_ENABLED,
+                    /* value = */ false.toString(),
+                    /* makeDefault = */ false)
+        }
+
+        val isSafetyCenterEnabled = callWithShellPermissionIdentity {
+            safetyCenterManager.isSafetyCenterEnabled
+        }
+
+        assertThat(isSafetyCenterEnabled).isFalse()
+    }
+
+    @Test
+    fun isSafetyCenterEnabled_whenAppDoesntHoldPermission_methodThrows() {
+        assertFailsWith(SecurityException::class) {
+            safetyCenterManager.isSafetyCenterEnabled
+        }
+    }
+
+    private fun deviceSupportsSafetyCenter() =
+            context.resources.getBoolean(Resources.getSystem().getIdentifier(
+                    "config_enableSafetyCenter",
+                    "bool",
+                    "android"))
+
+    companion object {
+        /** Name of the flag that determines whether SafetyCenter is enabled. */
+        const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
     }
 }
