@@ -16,10 +16,10 @@
 
 package android.devicepolicy.cts;
 
-import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
-import static com.android.bedstead.harrier.DeviceState.UserType.WORK_PROFILE;
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;

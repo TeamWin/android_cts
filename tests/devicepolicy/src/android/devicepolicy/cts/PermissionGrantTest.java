@@ -114,7 +114,7 @@ public final class PermissionGrantTest {
             BODY_SENSORS
     })
     @Retention(RetentionPolicy.RUNTIME)
-    private @interface DenyablePermissionTestParameter {
+    private @interface DeniablePermissionTestParameter {
     }
 
     private static final String NON_EXISTING_PACKAGE_NAME = "non.existing.package";
@@ -205,7 +205,7 @@ public final class PermissionGrantTest {
 
     @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
-    public void denyPermission_setsGrantState(@DenyablePermissionTestParameter String permission) {
+    public void denyPermission_setsGrantState(@DeniablePermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
@@ -260,7 +260,7 @@ public final class PermissionGrantTest {
     @Test
     @PositivePolicyTest(policy = SetPermissionGrantState.class)
     public void denyPermission_permissionIsDenied(
-            @DenyablePermissionTestParameter String permission) {
+            @DeniablePermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
@@ -309,7 +309,7 @@ public final class PermissionGrantTest {
     @Test
     @NegativePolicyTest(policy = SetPermissionGrantState.class)
     public void denyPermission_doesNotApply_permissionIsNotDenied(
-            @DenyablePermissionTestParameter String permission) {
+            @DeniablePermissionTestParameter String permission) {
         try {
             sTestApp.pkg().grantPermission(TestApis.users().instrumented(), permission);
 
@@ -327,7 +327,7 @@ public final class PermissionGrantTest {
     @Test
     @NegativePolicyTest(policy = SetPermissionGrantState.class)
     public void grantPermission_doesNotApply_permissionIsNotGranted(
-            @DenyablePermissionTestParameter String permission) {
+            @DeniablePermissionTestParameter String permission) {
         try {
             sTestApp.pkg().denyPermission(TestApis.users().instrumented(), permission);
 
