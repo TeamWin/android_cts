@@ -383,8 +383,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.computeState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY);
         mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
         if (expectResult) {
-            assertHandleExit(TestJournalProvider.TestJournalContainer
-                    .get(HANDLE_SPLASH_SCREEN_EXIT));
+            assertHandleExit(HANDLE_SPLASH_SCREEN_EXIT, true /* containsIcon */,
+                    true /* containsBranding */, false /* iconAnimatable */);
         }
     }
 
@@ -449,7 +449,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.computeState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
         mWmState.assertVisibility(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, true);
 
-        assertReplaceIcon(TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT));
+        assertHandleExit(REPLACE_ICON_EXIT, true /* containsIcon */, false /* containsBranding */,
+                true /* iconAnimatable */);
     }
 
     @Test
@@ -518,7 +519,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testLaunchFromLauncherWithEmptyIconOptions() {
+    public void testLaunchFromLauncherWithEmptyIconOptions() throws Exception {
         assumeFalse(isLeanBack());
         final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         TestJournalProvider.TestJournalContainer.start();
@@ -529,9 +530,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
-        final TestJournalProvider.TestJournal journal =
-                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
-        assertFalse(journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+        assertHandleExit(REPLACE_ICON_EXIT, false /* containsIcon */, false /* containsBranding */,
+                false /* iconAnimatable */);
     }
 
     @Test
@@ -548,7 +548,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.waitForActivityState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
-        assertHandleExit(TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT));
+        assertHandleExit(HANDLE_SPLASH_SCREEN_EXIT, true /* containsIcon */,
+                true /* containsBranding */, false /* iconAnimatable */);
     }
 
     private void launchActivitiesFromLauncherWithOptions(Intent[] intents,
@@ -575,11 +576,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         };
         launchActivitiesFromLauncherWithOptions(intents, options,
                 SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
-        assertReplaceIcon(TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT));
+        assertHandleExit(REPLACE_ICON_EXIT, true /* containsIcon */, false /* containsBranding */,
+                true /* iconAnimatable */);
     }
 
     @Test
-    public void testLaunchActivitiesWithEmptyOptions() {
+    public void testLaunchActivitiesWithEmptyOptions() throws Exception {
         final ActivityOptions options = ActivityOptions.makeBasic()
                 .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
 
@@ -592,34 +594,36 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         };
         launchActivitiesFromLauncherWithOptions(intents, options,
                 SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
-        final TestJournalProvider.TestJournal journal =
-                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
-        assertFalse(journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+        assertHandleExit(REPLACE_ICON_EXIT, false /* containsIcon */, false /* containsBranding */,
+                false /* iconAnimatable */);
     }
 
-    private void assertReplaceIcon(TestJournalProvider.TestJournal journal) throws Exception {
-        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
-                () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
-        assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
-        final long iconAnimationStart = journal.extras.getLong(ICON_ANIMATION_START);
-        final long iconAnimationDuration = journal.extras.getLong(ICON_ANIMATION_DURATION);
-        assertTrue(iconAnimationStart != 0);
-        assertEquals(iconAnimationDuration, 500);
-        assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
-        assertTrue(journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
-    }
-
-    private void assertHandleExit(TestJournalProvider.TestJournal journal) throws Exception {
+    private void assertHandleExit(String journalOwner,
+            boolean containsIcon, boolean containsBranding, boolean iconAnimatable)
+            throws Exception {
+        final TestJournalProvider.TestJournal journal = TestJournalProvider.TestJournalContainer
+                .get(journalOwner);
         TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
                 () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertTrue("No entry for CONTAINS_CENTER_VIEW",
                 journal.extras.containsKey(CONTAINS_CENTER_VIEW));
         assertTrue("No entry for CONTAINS_BRANDING_VIEW",
                 journal.extras.containsKey(CONTAINS_BRANDING_VIEW));
-        assertTrue("Center View shouldn't be null",
-                journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
-        assertTrue(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
-        assertEquals(Color.BLUE, journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.YELLOW));
+
+        final long iconAnimationStart = journal.extras.getLong(ICON_ANIMATION_START);
+        final long iconAnimationDuration = journal.extras.getLong(ICON_ANIMATION_DURATION);
+        assertEquals(containsIcon, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+        assertEquals(iconAnimatable, journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
+        assertEquals(iconAnimatable, (iconAnimationStart != 0));
+        assertEquals(iconAnimatable ? 500 : 0, iconAnimationDuration);
+        assertEquals(containsBranding, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+
+        if (containsIcon && !iconAnimatable) {
+            assertEquals(Color.BLUE, journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.YELLOW));
+        } else {
+            assertEquals(Color.TRANSPARENT,
+                    journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.TRANSPARENT));
+        }
     }
 
     @Test
