@@ -1396,8 +1396,13 @@ public class DecoderTest extends MediaPlayerTestBase {
                                     Arrays.equals(loadByteArrayFromString(INVALID_HDR_STATIC_INFO),
                                                   staticInfo.array()));
                         }
-                        assertFalse("Buffer should not have dynamic HDR metadata present",
-                                bufferFormat.containsKey(MediaFormat.KEY_HDR10_PLUS_INFO));
+                        ByteBuffer hdr10PlusInfo = bufferFormat.getByteBuffer(
+                                MediaFormat.KEY_HDR10_PLUS_INFO, null);
+                        if (hdr10PlusInfo != null) {
+                            assertEquals(
+                                    "Buffer should not have a valid dynamic HDR metadata present",
+                                    0, hdr10PlusInfo.remaining());
+                        }
 
                         if (!dynamic) {
                             codec.releaseOutputBuffer(index,  true);
