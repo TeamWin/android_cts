@@ -24,6 +24,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.media.AudioDeviceInfo;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.tv.cts.TvViewTest.MockCallback;
 import android.media.tv.TunedInfo;
@@ -538,6 +540,59 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         // Clean up
         if (hardwareDeviceAdded) {
             mManager.removeHardwareDevice(deviceId);
+        }
+    }
+
+    public void testTvInputHardwareOverrideAudioSink() {
+        if (mManager == null) {
+            return;
+        }
+        // Update hardware device list
+        int deviceId = 0;
+        boolean hardwareDeviceAdded = false;
+        List<TvInputHardwareInfo> hardwareList = mManager.getHardwareList();
+        if (hardwareList == null || hardwareList.isEmpty()) {
+            // Use the test api to add an HDMI hardware device
+            mManager.addHardwareDevice(deviceId);
+            hardwareDeviceAdded = true;
+        } else {
+            deviceId = hardwareList.get(0).getDeviceId();
+        }
+
+        // Acquire Hardware with a record client
+        HardwareCallback callback = new HardwareCallback() {
+            @Override
+            public void onReleased() {
+            }
+
+            @Override
+            public void onStreamConfigChanged(TvStreamConfig[] configs) {
+            }
+        };
+        CallbackExecutor executor = new CallbackExecutor();
+        Hardware hardware = mManager.acquireTvInputHardware(
+                deviceId, mStubTvInputInfo, null /*tvInputSessionId*/,
+                TvInputService.PRIORITY_HINT_USE_CASE_TYPE_PLAYBACK,
+                executor, callback);
+        assertNotNull(hardware);
+
+        // Override audio sink
+        try {
+            AudioManager am = mActivity.getSystemService(AudioManager.class);
+            AudioDeviceInfo[] deviceInfos = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+            if (deviceInfos.length > 0) {
+                // test available overrideAudioSink APIs
+                hardware.overrideAudioSink(deviceInfos[0], 0,
+                        AudioFormat.CHANNEL_OUT_DEFAULT, AudioFormat.ENCODING_DEFAULT);
+                hardware.overrideAudioSink(deviceInfos[0].getType(), deviceInfos[0].getAddress(), 0,
+                        AudioFormat.CHANNEL_OUT_DEFAULT, AudioFormat.ENCODING_DEFAULT);
+            }
+        } catch (Exception e) {
+            fail();
+        } finally {
+            if (hardwareDeviceAdded) {
+                mManager.removeHardwareDevice(deviceId);
+            }
         }
     }
 
