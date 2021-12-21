@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.decoder.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 
@@ -34,6 +34,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.CodecUtils;
+import android.media.cts.Preconditions;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;

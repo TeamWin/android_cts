@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.decoder.cts;
 
-import android.media.cts.R;
+import android.media.decoder.cts.R;
 
 import android.app.Activity;
 import android.os.Bundle;

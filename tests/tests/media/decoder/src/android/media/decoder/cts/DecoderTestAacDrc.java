@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.decoder.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -24,11 +24,11 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
+import android.media.decoder.cts.DecoderTest.AudioParameter;
+import android.media.decoder.cts.R;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.DecoderTest.AudioParameter;
-import android.media.cts.R;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
