@@ -32,6 +32,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -137,10 +138,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @FlakyTest(bugId = 149246840)
     @Test
     public void testOnStartInputCalledOnceIme() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
@@ -168,10 +166,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testSoftInputStateAlwaysVisibleWithoutFocusedEditorView() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
@@ -212,10 +207,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testNoEditorNoStartInput() throws Exception {
         Assume.assumeTrue(isPreventImeStartup());
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
@@ -244,10 +236,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testDelayedAddEditorStartsInput() throws Exception {
         Assume.assumeTrue(isPreventImeStartup());
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final AtomicReference<LinearLayout> layoutRef = new AtomicReference<>();
@@ -278,10 +267,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testEditorStartsInput() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
@@ -304,10 +290,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @Test
     public void testSoftInputStateAlwaysVisibleFocusedEditorView() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             TestActivity.startSync(activity -> {
@@ -345,15 +328,12 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testFocusableWindowDoesNotInvalidateExistingInputConnection() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (MockImeSession imeSession = MockImeSession.create(
-                instrumentation.getContext(),
-                instrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
             final EditText editText = launchTestActivity(marker);
-            instrumentation.runOnMainSync(() -> editText.requestFocus());
+            instrumentation.runOnMainSync(editText::requestFocus);
 
             // Wait until the MockIme gets bound to the TestActivity.
             expectBindInput(stream, Process.myPid(), TIMEOUT);
@@ -427,7 +407,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             instrumentation.waitForIdleSync();
 
             // Make sure that the EditText now has window-focus again.
-            TestUtils.waitOnMainUntil(() -> editText.hasWindowFocus(), TIMEOUT);
+            TestUtils.waitOnMainUntil(editText::hasWindowFocus, TIMEOUT);
 
             // Make sure that InputConnection#commitText() works.
             final ImeCommand commit4 = imeSession.callCommitText("Done!", 1);
@@ -447,10 +427,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testNonFocusablePopupWindowDoesNotAffectImeVisibility() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (MockImeSession imeSession = MockImeSession.create(
-                instrumentation.getContext(),
-                instrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
@@ -508,15 +485,12 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testRestartInputWhileOtherProcessHasWindowFocus() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (MockImeSession imeSession = MockImeSession.create(
-                instrumentation.getContext(),
-                instrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
             final EditText editText = launchTestActivity(marker);
-            instrumentation.runOnMainSync(() -> editText.requestFocus());
+            instrumentation.runOnMainSync(editText::requestFocus);
 
             // Wait until the MockIme gets bound to the TestActivity.
             expectBindInput(stream, Process.myPid(), TIMEOUT);
@@ -525,7 +499,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Get app window token
             final IBinder appWindowToken = TestUtils.getOnMainSync(
-                    () -> editText.getApplicationWindowToken());
+                    editText::getApplicationWindowToken);
 
             try (WindowFocusStealer focusStealer =
                          WindowFocusStealer.connect(instrumentation.getTargetContext(), TIMEOUT)) {
@@ -544,7 +518,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             }
 
             // Wait until the edit text gains window focus again.
-            TestUtils.waitOnMainUntil(() -> editText.hasWindowFocus(), TIMEOUT);
+            TestUtils.waitOnMainUntil(editText::hasWindowFocus, TIMEOUT);
 
             // Make sure that InputConnection#commitText() still works.
             final ImeCommand command = imeSession.callCommitText("test commit", 1);
@@ -560,10 +534,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
      */
     @Test
     public void testSetShowInputOnFocus() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final String marker = getTestMarker();
@@ -588,9 +559,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation.getContext()));
-             MockImeSession imeSession = MockImeSession.create(
-                     instrumentation.getContext(), instrumentation.getUiAutomation(),
-                     new ImeSettings.Builder())) {
+             MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
             final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
             final AtomicBoolean popupTextHasViewFocus = new AtomicBoolean(false);
@@ -605,7 +574,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Emulate tap event
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
-            TestUtils.waitOnMainUntil(() -> editTextHasWindowFocus.get(), TIMEOUT);
+            TestUtils.waitOnMainUntil(editTextHasWindowFocus::get, TIMEOUT);
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
@@ -614,8 +583,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             final ServiceSession serviceSession = (ServiceSession) session.mAutoCloseable;
             final EditText popupTextView = serviceSession.getService().getPopupTextView(
                     popupTextHasWindowFocus);
-            assertTrue(popupTextView.getHandler().getLooper()
-                    != serviceSession.getService().getMainLooper());
+            assertNotSame(popupTextView.getHandler().getLooper(),
+                    serviceSession.getService().getMainLooper());
 
             // Verify popupTextView will also receive window focus change and soft keyboard shown
             // after tapping the view.
@@ -624,7 +593,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 popupTextView.setPrivateImeOptions(marker1);
                 popupTextHasViewFocus.set(popupTextView.requestFocus());
             });
-            TestUtils.waitOnMainUntil(() -> popupTextHasViewFocus.get(), TIMEOUT);
+            TestUtils.waitOnMainUntil(popupTextHasViewFocus::get, TIMEOUT);
 
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, popupTextView);
             TestUtils.waitOnMainUntil(() -> popupTextHasWindowFocus.get()
@@ -643,7 +612,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // Remove the popTextView window and back to test activity, and then verify if
             // commitText is still workable.
             session.close();
-            TestUtils.waitOnMainUntil(() -> editText.hasWindowFocus(), TIMEOUT);
+            TestUtils.waitOnMainUntil(editText::hasWindowFocus, TIMEOUT);
             final ImeCommand commit = imeSession.callCommitText("test commit", 1);
             expectCommand(stream, commit, TIMEOUT);
             TestUtils.waitOnMainUntil(
@@ -654,9 +623,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testKeyboardStateAfterImeFocusableFlagChanged() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (MockImeSession imeSession = MockImeSession.create(
-                     instrumentation.getContext(), instrumentation.getUiAutomation(),
-                     new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
             final AtomicReference<EditText> editTextRef = new AtomicReference<>();
             final String marker = getTestMarker();
@@ -734,10 +701,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testRequestFocusOnWindowFocusChanged() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (MockImeSession imeSession = MockImeSession.create(
-                instrumentation.getContext(),
-                instrumentation.getUiAutomation(),
-                new ImeSettings.Builder())) {
+        try (MockImeSession imeSession = createTestImeSession()) {
             final ImeEventStream stream = imeSession.openEventStream();
             final String marker = getTestMarker();
             final AtomicReference<EditText> editTextRef = new AtomicReference<>();
@@ -777,6 +741,15 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),
                     NOT_EXPECT_TIMEOUT);
         }
+    }
+
+    @NonNull
+    private static MockImeSession createTestImeSession() throws Exception {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        return MockImeSession.create(
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder());
     }
 
     private static class ServiceSession implements ServiceConnection, AutoCloseable {
