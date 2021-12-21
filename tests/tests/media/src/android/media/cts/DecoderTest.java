@@ -3993,6 +3993,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test default tunneled video peek with HEVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledVideoPeekDefaultHevc() throws Exception {
         testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
@@ -4001,6 +4003,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test default tunneled video peek with AVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledVideoPeekDefaultAvc() throws Exception {
         testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
@@ -4009,6 +4013,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test default tunneled video peek with VP9 if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledVideoPeekDefaultVp9() throws Exception {
         testTunneledVideoPeekDefault(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
@@ -4069,6 +4075,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test tunneled video peek can be turned off then on with HEVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledVideoPeekOffHevc() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
@@ -4077,6 +4085,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test tunneled video peek can be turned off then on with AVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledVideoPeekOffAvc() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
@@ -4085,6 +4095,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test tunneled video peek can be turned off then on with VP9 if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledVideoPeekOffVp9() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
@@ -4151,6 +4163,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test accurate video rendering after a video MediaCodec flush with HEVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledAccurateVideoFlushHevc() throws Exception {
         testTunneledAccurateVideoFlush(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
@@ -4159,6 +4173,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test accurate video rendering after a video MediaCodec flush with AVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledAccurateVideoFlushAvc() throws Exception {
         testTunneledAccurateVideoFlush(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
@@ -4167,6 +4183,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test accurate video rendering after a video MediaCodec flush with VP9 if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledAccurateVideoFlushVp9() throws Exception {
         testTunneledAccurateVideoFlush(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
@@ -4175,6 +4193,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test tunneled audioTimestamp progress with HEVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledAudioTimestampProgressHevc() throws Exception {
         testTunneledAudioTimestampProgress(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
@@ -4183,6 +4203,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test tunneled audioTimestamp progress with AVC if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledAudioTimestampProgressAvc() throws Exception {
         testTunneledAudioTimestampProgress(MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
@@ -4191,6 +4213,8 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Test tunneled audioTimestamp progress with VP9 if supported
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @Test
     public void testTunneledAudioTimestampProgressVp9() throws Exception {
         testTunneledAudioTimestampProgress(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
