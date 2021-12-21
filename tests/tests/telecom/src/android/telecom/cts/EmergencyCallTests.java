@@ -54,6 +54,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
      * @throws Exception
      */
     public void testEmergencyCallFailureDueToInvalidPhoneAccounts() throws Exception {
+        if (!mShouldTestTelecom) return;
+
         ArrayList<PhoneAccount> accounts = generateRandomPhoneAccounts(52L, 50);
         accounts.stream().forEach(a -> mTelecomManager.registerPhoneAccount(a));
         try {
