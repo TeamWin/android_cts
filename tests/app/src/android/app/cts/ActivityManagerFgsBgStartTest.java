@@ -79,10 +79,10 @@ import org.junit.runner.RunWith;
 public class ActivityManagerFgsBgStartTest {
     private static final String TAG = ActivityManagerFgsBgStartTest.class.getName();
 
-    private static final String STUB_PACKAGE_NAME = "android.app.stubs";
-    private static final String PACKAGE_NAME_APP1 = "com.android.app1";
-    private static final String PACKAGE_NAME_APP2 = "com.android.app2";
-    private static final String PACKAGE_NAME_APP3 = "com.android.app3";
+    static final String STUB_PACKAGE_NAME = "android.app.stubs";
+    static final String PACKAGE_NAME_APP1 = "com.android.app1";
+    static final String PACKAGE_NAME_APP2 = "com.android.app2";
+    static final String PACKAGE_NAME_APP3 = "com.android.app3";
 
     private static final String KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED =
             "default_fgs_starts_restriction_enabled";
@@ -100,7 +100,7 @@ public class ActivityManagerFgsBgStartTest {
             | PROCESS_CAPABILITY_FOREGROUND_MICROPHONE
             | PROCESS_CAPABILITY_NETWORK);
 
-    private static final int WAITFOR_MSEC = 10000;
+    static final int WAITFOR_MSEC = 10000;
 
     private static final int TEMP_ALLOWLIST_DURATION_MS = 2000;
 
