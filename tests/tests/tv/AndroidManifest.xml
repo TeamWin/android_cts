@@ -18,6 +18,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.tv.cts">
 
+    <permission android:name="android.media.tv.cts.TvInputManagerTest.PERMISSION_GRANTED"/>
+    <permission android:name="android.media.tv.cts.TvInputManagerTest.PERMISSION_UNGRANTED"/>
+    <uses-permission android:name="android.media.tv.cts.TvInputManagerTest.PERMISSION_GRANTED"/>
+
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.INJECT_EVENTS"/>
 
@@ -80,6 +84,17 @@
             </intent-filter>
             <meta-data android:name="android.media.tv.input"
                  android:resource="@xml/stub_tv_input_service"/>
+        </service>
+
+        <service android:name="android.media.tv.cts.TvInputManagerTest$StubHardwareTvInputService"
+             android:enabled="false"
+             android:permission="android.permission.BIND_TV_INPUT"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.tv.TvInputService" />
+            </intent-filter>
+            <meta-data android:name="android.media.tv.input"
+                       android:resource="@xml/stub_tv_input_service" />
         </service>
 
         <service android:name="android.media.tv.cts.TvInputServiceTest$CountingTvInputService"
