@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Verify camera startup is < 500ms for both front and back primary cameras.
+"""Verify camera startup is < 600ms for both front and back primary cameras.
 """
 
 import logging
@@ -22,15 +22,14 @@ import camera_properties_utils
 import its_base_test
 import its_session_utils
 
-CAMERA_LAUNCH_R_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
-CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 500  # ms
+CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD = 600  # ms
 
 
 class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
   """Test camera launch latency for S performance class as specified in CDD.
 
   [7.5/H-1-7] MUST have camera2 startup latency (open camera to first preview
-  frame) < 500ms as measured by the CTS camera PerformanceTest under ITS
+  frame) < 600ms as measured by the CTS camera PerformanceTest under ITS
   lighting conditions (3000K) for both primary cameras.
   """
 
@@ -41,8 +40,8 @@ class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
         device_id=self.dut.serial,
         camera_id=self.camera_id) as cam:
 
-      perf_class_level = cam.get_performance_class_level()
-      camera_properties_utils.skip_unless(perf_class_level >= 11)
+      camera_properties_utils.skip_unless(
+          cam.is_performance_class_primary_camera())
 
       # Load chart for scene.
       props = cam.get_camera_properties()
@@ -56,14 +55,9 @@ class CameraLaunchSPerfClassTest(its_base_test.ItsBaseTest):
         camera_id=self.camera_id)
 
     launch_ms = cam.measure_camera_launch_ms()
-    if perf_class_level >= 12:
-      perf_class_threshold = CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD
-    else:
-      perf_class_threshold = CAMERA_LAUNCH_R_PERFORMANCE_CLASS_THRESHOLD
-
-    if launch_ms >= perf_class_threshold:
+    if launch_ms >= CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD:
       raise AssertionError(f'camera launch time: {launch_ms} ms, THRESH: '
-                           f'{perf_class_threshold} ms')
+                           f'{CAMERA_LAUNCH_S_PERFORMANCE_CLASS_THRESHOLD} ms')
     else:
       logging.debug('camera launch time: %.1f ms', launch_ms)
 
