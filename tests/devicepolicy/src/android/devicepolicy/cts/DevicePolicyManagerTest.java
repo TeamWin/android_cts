@@ -24,6 +24,8 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.AppOpsManager;
@@ -49,6 +51,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -631,5 +634,12 @@ public final class DevicePolicyManagerTest {
                 .map(applicationInfo -> applicationInfo.packageName)
                 .filter(packageName -> !systemApps.contains(packageName))
                 .collect(Collectors.toSet());
+    }
+
+    @EnsureHasDeviceOwner
+    @Test
+    public void getCameraDisabled_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.getCameraDisabled(
+                sDeviceState.deviceOwner().componentName()));
     }
 }
