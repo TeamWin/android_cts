@@ -40,12 +40,12 @@ class AssociationEndToEndSelfManagedTest(
     }
 
     @Test
-    fun test_userRejected() =
-            super.test_userRejected(selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
+    fun test_userRejected() = super.test_userRejected(
+            singleDevice = false, selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
 
     @Test
-    fun test_userDismissed() =
-            super.test_userDismissed(selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
+    fun test_userDismissed() = super.test_userDismissed(
+            singleDevice = false, selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
 
     @Test
     fun test_userConfirmed() {

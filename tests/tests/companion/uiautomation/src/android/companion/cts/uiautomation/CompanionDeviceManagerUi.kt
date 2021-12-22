@@ -42,6 +42,10 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
             Until.findObject(DEVICE_LIST_WITH_ITEMS), "Device List not found or empty")
                     .children[0].click()
 
+    fun waitUntilPositiveButtonIsEnabledAndClick() = ui.waitLongAndFind(
+        Until.findObject(POSITIVE_BUTTON), "Positive button not found or not clickable")
+            .click()
+
     fun clickPositiveButton() = click(POSITIVE_BUTTON, "Positive button")
 
     fun clickNegativeButton() = click(NEGATIVE_BUTTON, "Negative button")
@@ -56,9 +60,10 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private val CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "activity_confirmation")
 
-        private val BUTTON = By.pkg(PACKAGE_NAME).clazz(".Button")
-        private val POSITIVE_BUTTON = By.copy(BUTTON).res(PACKAGE_NAME, "btn_positive")
-        private val NEGATIVE_BUTTON = By.copy(BUTTON).res(PACKAGE_NAME, "btn_negative")
+        private val CLICKABLE_BUTTON =
+                By.pkg(PACKAGE_NAME).clazz(".Button").clickable(true)
+        private val POSITIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_positive")
+        private val NEGATIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_negative")
 
         private val DEVICE_LIST = By.pkg(PACKAGE_NAME).clazz(".ListView")
                 .res(PACKAGE_NAME, "device_list")
