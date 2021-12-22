@@ -74,4 +74,25 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
         RemoteControlPassthrough.checkUserControlPressAndHold(
                 hdmiCecClient, getDevice(), LogicalAddress.TV, dutLogicalAddress);
     }
+
+    /**
+     * HF 4-8-4
+     *
+     * <p>Verify that the device that support cec version 2.0 accepts {@code <USER_CONTROL_PRESSED>}
+     * messages and maps to appropriate internal action.
+     *
+     * No Android keycode defined for {@code <CEC_KEYCODE_FAVORITE_MENU>},
+     * {@code <CEC_KEYCODE_STOP_RECORD>} and {@code <CEC_KEYCODE_PAUSE_RECORD>}
+     *
+     * The UI commands Audio Description, internet and 3D mode are introduced in CEC 2.0 devices but
+     * they haven't been implemented yet.
+     * TODO: Add these UI commands once they are implemented.
+     */
+    @Test
+    public void cect_4_8_4_UserControlPressAndRelease_20() throws Exception {
+        setCec20();
+        LogicalAddress dutLogicalAddress = getTargetLogicalAddress(getDevice(), DUT_DEVICE_TYPE);
+        RemoteControlPassthrough.checkUserControlPressAndRelease_20(
+                hdmiCecClient, getDevice(), LogicalAddress.TV, dutLogicalAddress);
+    }
 }
