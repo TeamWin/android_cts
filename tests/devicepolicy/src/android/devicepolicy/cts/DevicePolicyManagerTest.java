@@ -46,6 +46,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -649,5 +650,21 @@ public final class DevicePolicyManagerTest {
         assertThrows(SecurityException.class,
                 () -> sDevicePolicyManager.getKeyguardDisabledFeatures(
                         sDeviceState.deviceOwner().componentName()));
+    }
+
+    @EnsureHasDeviceOwner
+    @EnsureDoesNotHavePermission(MANAGE_DEVICE_ADMINS)
+    @Test
+    public void removeActiveAdmin_adminPassedDoesNotBelongToCaller_throwsException() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.removeActiveAdmin(
+                sDeviceState.deviceOwner().componentName()));
+    }
+
+    @EnsureHasDeviceOwner
+    @EnsureHasPermission(MANAGE_DEVICE_ADMINS)
+    @Test
+    public void removeActiveAdmin_adminPassedDoesNotBelongToCaller_manageDeviceAdminsPermission_noException() {
+        sDevicePolicyManager.removeActiveAdmin(
+                sDeviceState.deviceOwner().componentName());
     }
 }
