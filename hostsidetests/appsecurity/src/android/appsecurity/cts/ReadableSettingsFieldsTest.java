@@ -17,19 +17,16 @@
 package android.appsecurity.cts;
 
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 
 /**
@@ -143,5 +140,66 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
         new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
         runDeviceTests(TEST_PACKAGE, TEST_CLASS,
                 "testGlobalHiddenSettingsKeysReadableWithoutAnnotation");
+    }
+
+    @Test
+    public void testSettingsKeysNotReadableForAfterR()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TARGET_S).run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysNotReadableForAfterR");
+    }
+
+    @Test
+    public void testSettingsKeysReadableForRMinus()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TARGET_R).run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysReadableForRMinus");
+        new InstallMultiple().addFile(TEST_APK_TARGET_Q).run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSettingsKeysReadableForRMinus");
+    }
+
+    @Test
+    public void testQueryGlobalSettingsNoHiddenKeysWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testQueryGlobalSettingsNoHiddenKeysWithoutAnnotation");
+    }
+
+    @Test
+    public void testQuerySystemSettingsNoHiddenKeysWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testQuerySystemSettingsNoHiddenKeysWithoutAnnotation");
+    }
+
+    @Test
+    public void testQuerySecureSettingsNoHiddenKeysWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testQuerySecureSettingsNoHiddenKeysWithoutAnnotation");
+    }
+
+    @Test
+    public void testListGlobalSettingsNoHiddenKeysWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testListGlobalSettingsNoHiddenKeysWithoutAnnotation");
+    }
+
+    @Test
+    public void testListSystemSettingsNoHiddenKeysWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testListSystemSettingsNoHiddenKeysWithoutAnnotation");
+    }
+
+    @Test
+    public void testListSecureSettingsNoHiddenKeysWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testListSecureSettingsNoHiddenKeysWithoutAnnotation");
     }
 }
