@@ -20,6 +20,7 @@ import android.app.Activity
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
+import android.companion.BluetoothDeviceFilterUtils
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.CompanionActivity
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
@@ -27,6 +28,7 @@ import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
 import android.companion.cts.common.assertEmpty
 import android.content.Intent
 import android.net.MacAddress
+import android.os.Parcelable
 import android.platform.test.annotations.AppModeFull
 import org.junit.Assume.assumeFalse
 import org.junit.Test
@@ -95,12 +97,16 @@ class AssociationEndToEndTest(
         // delivered via onActivityResult().
         assertEquals(associationFromCallback, associationFromActivityResult)
 
-        // Make sure the MAC address of the device was included in onActivityResult()'s data (for
-        // backwards compatibility), and it matches the MAC address from AssociationInfo.
-        val macAddressFromActivityResult = data.getStringExtra(CompanionDeviceManager.EXTRA_DEVICE)
-        assertNotNull(macAddressFromActivityResult)
-        assertEquals(associationFromCallback.deviceMacAddress,
-                MacAddress.fromString(macAddressFromActivityResult))
+        // Make sure "device data" was included (for backwards compatibility), and that the
+        // MAC address extracted from this data matches the MAC address from AssociationInfo.
+        val deviceFromActivityResult: Parcelable? =
+                data.getParcelableExtra(CompanionDeviceManager.EXTRA_DEVICE)
+        assertNotNull(deviceFromActivityResult)
+
+        val deviceMacAddress =
+                BluetoothDeviceFilterUtils.getDeviceMacAddress(deviceFromActivityResult)
+        assertEquals(actual = MacAddress.fromString(deviceMacAddress),
+                expected = associationFromCallback.deviceMacAddress)
 
         // Make sure getMyAssociations() returns the same association we received via the callback
         // as well as in onActivityResult()
