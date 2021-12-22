@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
+import android.companion.cts.common.MAC_ADDRESS_A
+import android.companion.cts.common.MAC_ADDRESS_B
+import android.companion.cts.common.MAC_ADDRESS_C
+import android.companion.cts.common.assertAssociations
+import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -27,14 +32,14 @@ import kotlin.test.assertNotNull
 /**
  * Test CDM APIs for retrieving the list of existing associations.
  *
- * Run: atest CtsCompanionDevicesTestCases:RetrieveAssociationsTest
+ * Run: atest CtsCompanionDeviceManagerCoreTestCases:RetrieveAssociationsTest
  *
  * @see android.companion.CompanionDeviceManager.getAllAssociations
  * @see android.companion.CompanionDeviceManager.getMyAssociations
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
-class RetrieveAssociationsTest : TestBase() {
+class RetrieveAssociationsTest : CoreTestBase() {
 
     @Test
     fun test_getMyAssociations_singleAssociation() = with(targetApp) {

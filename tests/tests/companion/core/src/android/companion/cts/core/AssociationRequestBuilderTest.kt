@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.companion.AssociationRequest
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.BluetoothDeviceFilter
+import android.companion.cts.common.assertEmpty
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,7 +34,7 @@ import kotlin.test.assertTrue
 /**
  * Test [android.companion.AssociationRequest.Builder].
  *
- * Run: atest CtsCompanionDevicesTestCases:AssociationRequestBuilderTest
+ * Run: atest CtsCompanionDeviceManagerCoreTestCases:AssociationRequestBuilderTest
  */
 @RunWith(AndroidJUnit4::class)
 class AssociationRequestBuilderTest {

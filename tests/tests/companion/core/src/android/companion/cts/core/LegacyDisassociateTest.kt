@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
+import android.companion.cts.common.MAC_ADDRESS_A
+import android.companion.cts.common.MAC_ADDRESS_B
+import android.companion.cts.common.MAC_ADDRESS_C
+import android.companion.cts.common.assertAssociations
+import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -26,13 +31,13 @@ import kotlin.test.assertFailsWith
 /**
  * Test legacy CDM APIs for removing existing associations (via MAC address)
  *
- * Run: atest CtsCompanionDevicesTestCases:DisassociateTest
+ * Run: atest CtsCompanionDeviceManagerCoreTestCases:DisassociateTest
  *
  * @see android.companion.CompanionDeviceManager.disassociate
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
-class LegacyDisassociateTest : TestBase() {
+class LegacyDisassociateTest : CoreTestBase() {
     @Test
     fun test_legacy_disassociate_sameApp() = with(targetApp) {
         associate(MAC_ADDRESS_A)

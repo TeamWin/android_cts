@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.common
 
 import android.app.Instrumentation
 import android.net.MacAddress
-import android.util.Log
-import com.android.compatibility.common.util.SystemUtil
-import java.io.IOException
 import java.lang.UnsupportedOperationException
 
 /** Utility class for interacting with applications via Shell */
@@ -61,15 +58,5 @@ class AppHelper(
         }
     }
 
-    private fun runShellCommand(cmd: String): String {
-        Log.i(TAG, "Running shell command: '$cmd'")
-        try {
-            val out = SystemUtil.runShellCommand(instrumentation, cmd)
-            Log.i(TAG, "Out:\n$out")
-            return out
-        } catch (e: IOException) {
-            Log.e(TAG, "Error running shell command: $cmd")
-            throw e
-        }
-    }
+    private fun runShellCommand(cmd: String) = instrumentation.runShellCommand(cmd)
 }

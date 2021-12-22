@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.common
 
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceService

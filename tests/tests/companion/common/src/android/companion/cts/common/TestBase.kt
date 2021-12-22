@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.common
 
+import android.annotation.CallSuper
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.companion.AssociationInfo
@@ -25,12 +26,14 @@ import android.content.pm.PackageManager
 import android.net.MacAddress
 import android.os.SystemClock.sleep
 import android.os.SystemClock.uptimeMillis
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.Before
-import java.util.concurrent.Executor
+import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -43,12 +46,10 @@ abstract class TestBase {
     protected val uiAutomation: UiAutomation = instrumentation.uiAutomation
 
     protected val context: Context = instrumentation.context
-    private val userId = context.userId
+    protected val userId = context.userId
     private val targetPackageName = instrumentation.targetContext.packageName
 
     protected val targetApp = AppHelper(instrumentation, userId, targetPackageName)
-    protected val testApp = AppHelper(
-            instrumentation, userId, TEST_APP_PACKAGE_NAME, TEST_APP_APK_PATH)
 
     protected val pm: PackageManager by lazy { context.packageManager!! }
     private val hasCompanionDeviceSetupFeature by lazy {
@@ -69,12 +70,6 @@ abstract class TestBase {
             cdm.allAssociations
         })
 
-        // Make sure test app is installed.
-        with(testApp) {
-            if (!isInstalled()) install()
-            assertTrue("Test app $packageName is not installed") { isInstalled() }
-        }
-
         // Make sure CompanionDeviceServices are not bound.
         assertFalse(PrimaryCompanionService.isBound)
         assertFalse(SecondaryCompanionService.isBound)
@@ -92,7 +87,10 @@ abstract class TestBase {
         withShellPermissionIdentity { cdm.disassociateAll() }
     }
 
+    @CallSuper
     protected open fun setUp() {}
+
+    @CallSuper
     protected open fun tearDown() {}
 
     protected fun <T> withShellPermissionIdentity(
@@ -112,22 +110,11 @@ abstract class TestBase {
         }
     }
 
-    companion object {
-        val MAC_ADDRESS_A = MacAddress.fromString("00:00:00:00:00:AA")
-        val MAC_ADDRESS_B = MacAddress.fromString("00:00:00:00:00:BB")
-        val MAC_ADDRESS_C = MacAddress.fromString("00:00:00:00:00:CC")
-        val DEVICE_DISPLAY_NAME_A = "Device A"
-        val DEVICE_DISPLAY_NAME_B = "Device B"
-        val SIMPLE_EXECUTOR: Executor = Executor { it.run() }
-    }
-
     private fun CompanionDeviceManager.disassociateAll() =
             allAssociations.forEach { disassociate(it.id) }
 }
 
-const val TAG = "CtsCompanionDevicesTestCases"
-private const val TEST_APP_PACKAGE_NAME = "android.os.cts.companiontestapp"
-private const val TEST_APP_APK_PATH = "/data/local/tmp/cts/companion/CtsCompanionTestApp.apk"
+const val TAG = "CtsCompanionDeviceManagerTestCases"
 
 fun <T> assumeThat(message: String, obj: T, assumption: (T) -> Boolean) {
     if (!assumption(obj)) throw AssumptionViolatedException(message)
@@ -156,3 +143,32 @@ fun waitFor(
     }
     return true
 }
+
+fun <R> waitForResult(
+    timeout: Long = 10_000,
+    interval: Long = 1_000,
+    block: () -> R
+): R? {
+    val startTime = uptimeMillis()
+    while (true) {
+        val result: R = block()
+        if (result != null) return result
+        sleep(interval)
+        if (uptimeMillis() - startTime > timeout) return null
+    }
+}
+
+fun Instrumentation.runShellCommand(cmd: String): String {
+    Log.i(TAG, "Running shell command: '$cmd'")
+    try {
+        val out = SystemUtil.runShellCommand(this, cmd)
+        Log.i(TAG, "Out:\n$out")
+        return out
+    } catch (e: IOException) {
+        Log.e(TAG, "Error running shell command: $cmd")
+        throw e
+    }
+}
+
+fun Instrumentation.setSystemProp(name: String, value: String) =
+        runShellCommand("setprop $name $value")

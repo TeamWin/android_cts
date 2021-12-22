@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.companion.CompanionDeviceManager
+import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -27,7 +28,7 @@ import kotlin.test.assertFailsWith
 /**
  * Test CDM APIs for listening for changes to [android.companion.AssociationInfo].
  *
- * Run: atest CtsCompanionDevicesTestCases:AssociationsChangedListenerTest
+ * Run: atest CtsCompanionDeviceManagerCoreTestCases:AssociationsChangedListenerTest
  *
  * @see android.companion.CompanionDeviceManager.OnAssociationsChangedListener
  * @see android.companion.CompanionDeviceManager.addOnAssociationsChangedListener
@@ -35,7 +36,7 @@ import kotlin.test.assertFailsWith
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
-class AssociationsChangedListenerTest : TestBase() {
+class AssociationsChangedListenerTest : CoreTestBase() {
 
     @Test
     fun test_addOnAssociationsChangedListener_requiresPermission() {

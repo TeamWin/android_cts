@@ -16,44 +16,44 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.companion.cts">
+    package="android.companion.cts.common">
+
+    <uses-feature android:name="android.software.companion_device_setup" />
 
     <application>
         <uses-library android:name="android.test.runner" />
 
         <service
-            android:name=".PrimaryCompanionService"
-            android:exported="true"
-            android:label="Primary Companion Service"
-            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
+                android:name=".PrimaryCompanionService"
+                android:exported="true"
+                android:label="Primary Companion Service"
+                android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
             <intent-filter>
                 <action android:name="android.companion.CompanionDeviceService" />
             </intent-filter>
 
             <meta-data
-                android:name="primary"
-                android:value="true" />
+                    android:name="primary"
+                    android:value="true" />
         </service>
 
         <service
-            android:name=".SecondaryCompanionService"
-            android:exported="true"
-            android:label="Secondary Companion Service"
-            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
+                android:name=".SecondaryCompanionService"
+                android:exported="true"
+                android:label="Secondary Companion Service"
+                android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
             <intent-filter>
                 <action android:name="android.companion.CompanionDeviceService" />
             </intent-filter>
         </service>
+
+        <activity
+                android:name=".CompanionActivity"
+                android:exported="false"
+                android:label="Companion Activity"
+                android:launchMode="singleInstance"
+                android:excludeFromRecents="true"/>
     </application>
-
-    <uses-feature android:name="android.software.companion_device_setup" />
-
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.companion.cts"
-                     android:label="CTS tests of android.companion">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
 
 </manifest>
 

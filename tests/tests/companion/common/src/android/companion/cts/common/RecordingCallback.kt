@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.common
 
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
-import android.companion.cts.RecordingCallback.CallbackMethod.OnAssociationCreated
-import android.companion.cts.RecordingCallback.CallbackMethod.OnAssociationPending
-import android.companion.cts.RecordingCallback.CallbackMethod.OnDeviceFound
-import android.companion.cts.RecordingCallback.CallbackMethod.OnFailure
+import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
+import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
+import android.companion.cts.common.RecordingCallback.CallbackMethod.OnDeviceFound
+import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
 import android.content.IntentSender
 import android.util.Log
 
@@ -49,12 +49,12 @@ class RecordingCallback : CompanionDeviceManager.Callback() {
         _invocations.add(CallbackMethodInvocation(method, param))
     }
 
-    fun waitForInvocation() {
-        if (!waitFor(timeout = 1000, interval = 100) { invocations.isNotEmpty() })
+    fun waitForInvocation(timeout: Long = 1_000) {
+        if (!waitFor(timeout = timeout, interval = 100) { invocations.isNotEmpty() })
             throw AssertionError("Callback hasn't been invoked")
     }
 
-    fun clearRecordedInvocation() = _invocations.clear()
+    fun clearRecordedInvocations() = _invocations.clear()
 
     enum class CallbackMethod {
         OnDeviceFound, OnAssociationPending, OnAssociationCreated, OnFailure

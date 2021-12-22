@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
 import android.companion.AssociationRequest
+import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
+import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
+import android.companion.cts.common.PrimaryCompanionService
+import android.companion.cts.common.RecordingCallback
+import android.companion.cts.common.SIMPLE_EXECUTOR
+import android.companion.cts.common.SecondaryCompanionService
+import android.companion.cts.common.assertEmpty
+import android.companion.cts.common.waitFor
 import android.os.SystemClock.sleep
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -32,7 +40,7 @@ import kotlin.test.assertTrue
  * Tests CDM APIs for notifying the presence of status of the companion devices for self-managed
  * associations.
  *
- * Build/Install/Run: atest CtsCompanionDevicesTestCases:SelfPresenceReportingTest
+ * Build/Install/Run: atest CtsCompanionDeviceManagerCoreTestCases:SelfPresenceReportingTest
  *
  * @see android.companion.CompanionDeviceManager.notifyDeviceAppeared
  * @see android.companion.CompanionDeviceManager.notifyDeviceDisappeared
@@ -41,7 +49,7 @@ import kotlin.test.assertTrue
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
-class SelfPresenceReportingTest : TestBase() {
+class SelfPresenceReportingTest : CoreTestBase() {
 
     @Test
     fun test_primaryService_isBound() =

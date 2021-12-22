@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.annotation.UserIdInt
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
+import android.companion.cts.common.AppHelper
+import android.companion.cts.common.MAC_ADDRESS_A
+import android.companion.cts.common.MAC_ADDRESS_B
+import android.companion.cts.common.MAC_ADDRESS_C
+import android.companion.cts.common.assertAssociations
+import android.companion.cts.common.waitFor
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -28,11 +34,11 @@ import org.junit.runner.RunWith
  * Tests if associations that belong to a package are removed when the package is uninstalled or its
  * data is cleared.
  *
- * Build/Install/Run: atest CtsCompanionDevicesTestCases:AssociationsCleanUpTest
+ * Build/Install/Run: atest CtsCompanionDeviceManagerCoreTestCases:AssociationsCleanUpTest
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
-class AssociationsCleanUpTest : TestBase() {
+class AssociationsCleanUpTest : CoreTestBase() {
 
     @Test
     fun test_associationsRemoved_onPackageDataCleared() {

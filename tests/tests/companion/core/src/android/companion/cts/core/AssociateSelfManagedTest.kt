@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package android.companion.cts
+package android.companion.cts.core
 
 import android.Manifest.permission.REQUEST_COMPANION_PROFILE_WATCH
 import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
 import android.companion.AssociationRequest
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
-import android.companion.cts.RecordingCallback.CallbackMethod.OnAssociationCreated
+import android.companion.cts.common.RecordingCallback
+import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
+import android.companion.cts.common.SIMPLE_EXECUTOR
+import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
@@ -33,13 +36,13 @@ import kotlin.test.assertNull
 /**
  * Test CDM APIs for requesting establishing new associations.
  *
- * Run: atest CtsCompanionDevicesTestCases:AssociateSelfManagedTest
+ * Run: atest CtsCompanionDeviceManagerCoreTestCases:AssociateSelfManagedTest
  *
  * @see android.companion.CompanionDeviceManager.associate
  */
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
-class AssociateSelfManagedTest : TestBase() {
+class AssociateSelfManagedTest : CoreTestBase() {
 
     @Test
     fun test_associate_selfManaged_requiresPermission() {
