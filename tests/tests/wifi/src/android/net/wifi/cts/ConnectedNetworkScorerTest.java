@@ -802,7 +802,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      *
      * Verifies that these APIs can be invoked successfully with permissions.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testAddAndRemoveCustomDhcpOptions() throws Exception {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -824,7 +824,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      *
      * Verifies that SecurityException is thrown when permissions are missing.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testAddCustomDhcpOptionsOnMissingPermissions() throws Exception {
         try {
