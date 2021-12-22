@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import os.path
+import re
 import subprocess
 import sys
 import tempfile
@@ -41,6 +42,7 @@ RESULT_PASS = 'PASS'
 RESULT_FAIL = 'FAIL'
 RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
 RESULT_KEY = 'result'
+METRICS_KEY = 'mpc_metrics'
 SUMMARY_KEY = 'summary'
 RESULT_VALUES = {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}
 ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
@@ -450,6 +452,7 @@ def main():
     for s in per_camera_scenes:
       test_params_content['scene'] = s
       results[s]['TEST_STATUS'] = []
+      results[s][METRICS_KEY] = []
 
       # unit is millisecond for execution time record in CtsVerifier
       scene_start_time = int(round(time.time() * 1000))
@@ -525,14 +528,28 @@ def main():
             test_failed = False
             test_skipped = False
             test_not_yet_mandated = False
-            line = file.read()
-            if 'Test skipped' in line:
+            test_mpc_req = ""
+            content = file.read()
+
+            # Find media performance class logging
+            lines = content.splitlines()
+            for one_line in lines:
+              # regular expression pattern must match
+              # MPC12_CAMERA_LAUNCH_PATTERN or MPC12_JPEG_CAPTURE_PATTERN in
+              # ItsTestActivity.java.
+              mpc_string_match = re.search(
+                  '^(1080p_jpeg_capture_time_ms:|camera_launch_time_ms:)', one_line)
+              if mpc_string_match:
+                test_mpc_req = one_line
+                break
+
+            if 'Test skipped' in content:
               return_string = 'SKIP '
               num_skip += 1
               test_skipped = True
               break
 
-            if 'Not yet mandated test' in line:
+            if 'Not yet mandated test' in content:
               return_string = 'FAIL*'
               num_not_mandated_fail += 1
               test_not_yet_mandated = True
@@ -545,7 +562,7 @@ def main():
 
             if test_code == 1 and not test_not_yet_mandated:
               return_string = 'FAIL '
-              if 'Problem with socket' in line and num_try != NUM_TRIES-1:
+              if 'Problem with socket' in content and num_try != NUM_TRIES-1:
                 logging.info('Retry %s/%s', s, test)
               else:
                 num_fail += 1
@@ -555,6 +572,8 @@ def main():
         logging.info('%s %s/%s', return_string, s, test)
         test_name = test.split('/')[-1].split('.')[0]
         results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
+        if test_mpc_req:
+          results[s][METRICS_KEY].append(test_mpc_req)
         msg_short = '%s %s' % (return_string, test)
         scene_test_summary += msg_short + '\n'
 
