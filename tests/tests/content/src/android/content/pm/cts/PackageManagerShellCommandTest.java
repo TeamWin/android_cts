@@ -58,6 +58,7 @@ import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
 
@@ -158,6 +159,7 @@ public class PackageManagerShellCommandTest {
     private String mPackageVerifier = null;
     private String mUnusedStaticSharedLibsMinCachePeriod = null;
     private long mStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT;
+    private int mSecondUser = -1;
 
     private static PackageInstaller getPackageInstaller() {
         return getPackageManager().getPackageInstaller();
@@ -282,6 +284,11 @@ public class PackageManagerShellCommandTest {
         setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid");
         setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "invalid");
         setSystemProperty("debug.pm.adb_verifier_override_package", "invalid");
+
+        if (mSecondUser != -1) {
+            stopUser(mSecondUser);
+            removeUser(mSecondUser);
+        }
     }
 
     private boolean checkIncrementalDeliveryFeature() {
@@ -1253,6 +1260,89 @@ public class PackageManagerShellCommandTest {
         }
     }
 
+    @Test
+    public void testGetFirstInstallTime() throws Exception {
+        final int currentUser = getContext().getUserId();
+        final long startTimeMillisForCurrentUser = System.currentTimeMillis();
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, currentUser));
+        final long origFirstInstallTimeForCurrentUser = getFirstInstallTimeAsUser(
+                TEST_APP_PACKAGE, currentUser);
+        // Validate the timestamp
+        assertTrue(origFirstInstallTimeForCurrentUser > 0);
+        assertTrue(startTimeMillisForCurrentUser < origFirstInstallTimeForCurrentUser);
+        assertTrue(System.currentTimeMillis() > origFirstInstallTimeForCurrentUser);
+
+        // Install again with replace and the firstInstallTime should remain the same
+        installPackage(TEST_HW5);
+        long firstInstallTimeForCurrentUser = getFirstInstallTimeAsUser(
+                TEST_APP_PACKAGE, currentUser);
+        assertEquals(origFirstInstallTimeForCurrentUser, firstInstallTimeForCurrentUser);
+
+        // Start another user and install this test itself for that user
+        mSecondUser = createUser("Another User");
+        assertTrue(startUser(mSecondUser));
+        long startTimeMillisForSecondUser = System.currentTimeMillis();
+        installExistingPackageAsUser(getContext().getPackageName(), mSecondUser);
+        assertTrue(isAppInstalledForUser(getContext().getPackageName(), mSecondUser));
+        // Install test package with replace
+        installPackageAsUser(TEST_HW5, mSecondUser);
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, mSecondUser));
+        firstInstallTimeForCurrentUser = getFirstInstallTimeAsUser(
+                TEST_APP_PACKAGE, currentUser);
+        // firstInstallTime should remain unchanged for the current user
+        assertEquals(origFirstInstallTimeForCurrentUser, firstInstallTimeForCurrentUser);
+
+        long firstInstallTimeForSecondUser = getFirstInstallTimeAsUser(
+                TEST_APP_PACKAGE, mSecondUser);
+        // firstInstallTime for the other user should be different
+        assertNotEquals(firstInstallTimeForCurrentUser, firstInstallTimeForSecondUser);
+        assertTrue(startTimeMillisForSecondUser < firstInstallTimeForSecondUser);
+        assertTrue(System.currentTimeMillis() > firstInstallTimeForSecondUser);
+
+        // Uninstall for the other user
+        uninstallPackageAsUser(TEST_APP_PACKAGE, mSecondUser);
+        assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, mSecondUser));
+        // Install test package as an existing package
+        startTimeMillisForSecondUser = System.currentTimeMillis();
+        installExistingPackageAsUser(TEST_APP_PACKAGE, mSecondUser);
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, mSecondUser));
+
+        firstInstallTimeForCurrentUser = getFirstInstallTimeAsUser(
+                TEST_APP_PACKAGE, currentUser);
+        // firstInstallTime still remains unchanged for the current user
+        assertEquals(origFirstInstallTimeForCurrentUser, firstInstallTimeForCurrentUser);
+        firstInstallTimeForSecondUser = getFirstInstallTimeAsUser(TEST_APP_PACKAGE, mSecondUser);
+        // firstInstallTime for the other user should be different
+        assertNotEquals(firstInstallTimeForCurrentUser, firstInstallTimeForSecondUser);
+        assertTrue(startTimeMillisForSecondUser < firstInstallTimeForSecondUser);
+        assertTrue(System.currentTimeMillis() > firstInstallTimeForSecondUser);
+
+        // Uninstall for all users
+        uninstallPackageSilently(TEST_APP_PACKAGE);
+        assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, currentUser));
+        assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, mSecondUser));
+        // Reinstall for all users
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, currentUser));
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, mSecondUser));
+        firstInstallTimeForCurrentUser = getFirstInstallTimeAsUser(TEST_APP_PACKAGE, currentUser);
+        // First install time is now different because the package was fully uninstalled
+        assertNotEquals(origFirstInstallTimeForCurrentUser, firstInstallTimeForCurrentUser);
+        firstInstallTimeForSecondUser = getFirstInstallTimeAsUser(TEST_APP_PACKAGE, mSecondUser);
+        // Same firstInstallTime because package was installed for both users at the same time
+        assertEquals(firstInstallTimeForCurrentUser, firstInstallTimeForSecondUser);
+    }
+
+    private long getFirstInstallTimeAsUser(String packageName, int userId)
+            throws PackageManager.NameNotFoundException {
+        final Context contextAsUser = getContext().createContextAsUser(UserHandle.of(userId), 0);
+        final PackageManager packageManager = contextAsUser.getPackageManager();
+        final PackageInfo packageInfo = packageManager.getPackageInfo(packageName,
+                PackageManager.PackageInfoFlags.of(0));
+        return packageInfo.firstInstallTime;
+    }
+
     private List<SharedLibraryInfo> getSharedLibraries() {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
@@ -1328,6 +1418,14 @@ public class PackageManagerShellCommandTest {
                 .anyMatch(line -> line.substring(prefixLength).equals(packageName));
     }
 
+    private boolean isAppInstalledForUser(String packageName, int userId) throws IOException {
+        final String commandResult = executeShellCommand(
+                String.format("pm list packages --user %d %s", userId, packageName)
+        );
+        return Arrays.stream(commandResult.split("\\r?\\n"))
+                .anyMatch(line -> line.equals("package:" + packageName));
+    }
+
     private boolean isSdkInstalled(String name, int versionMajor) throws IOException {
         final String sdkString = name + ":" + versionMajor;
         final String commandResult = executeShellCommand("pm list sdks");
@@ -1369,6 +1467,7 @@ public class PackageManagerShellCommandTest {
         return TEST_APK_PATH + baseName;
     }
 
+    /* Install for all the users */
     private void installPackage(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n", executeShellCommand(
@@ -1380,6 +1479,20 @@ public class PackageManagerShellCommandTest {
         File file = new File(createApkPath(baseName));
         String result = executeShellCommand("pm " + mInstall + " -t -g " + file.getPath());
         assertTrue(result, result.startsWith(expectedResultStartsWith));
+    }
+
+    /* Install a package for a new user; this would replace the old package */
+    private void installPackageAsUser(String baseName, int userId) throws IOException {
+        File file = new File(createApkPath(baseName));
+        assertEquals("Success\n", executeShellCommand(
+                "pm " + mInstall + " -t -g --user " + userId + " " + file.getPath()));
+    }
+
+    /* Install an existing package for a new user */
+    private void installExistingPackageAsUser(String packageName, int userId) throws IOException {
+        String result = executeShellCommand(
+                String.format("pm install-existing --user %d %s", userId, packageName));
+        assertEquals("Package " + packageName + " installed for user: " + userId + "\n", result);
     }
 
     private void updatePackage(String packageName, String baseName) throws IOException {
@@ -1468,6 +1581,11 @@ public class PackageManagerShellCommandTest {
         return executeShellCommand("pm uninstall " + packageName);
     }
 
+    /* Uninstall for one user */
+    private void uninstallPackageAsUser(String packageName, int userId) throws IOException {
+        executeShellCommand(String.format("pm uninstall --user %d %s", userId, packageName));
+    }
+
     private void uninstallSplits(String packageName, String[] splitNames) throws IOException {
         for (String splitName : splitNames) {
             assertEquals("Success\n",
@@ -1482,6 +1600,32 @@ public class PackageManagerShellCommandTest {
 
     private void setSystemProperty(String name, String value) throws Exception {
         assertEquals("", executeShellCommand("setprop " + name + " " + value));
+    }
+
+    private int createUser(String name) throws IOException {
+        final String output = executeShellCommand("pm create-user " + name);
+        if (output.startsWith("Success")) {
+            return Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+        }
+        throw new IllegalStateException(String.format("Failed to create user: %s", output));
+    }
+
+    private void removeUser(int userId) throws IOException {
+        executeShellCommand("pm remove-user " + userId);
+    }
+
+    private boolean startUser(int userId) throws IOException {
+        String cmd = "am start-user -w " + userId;
+        final String output = executeShellCommand(cmd);
+        if (output.startsWith("Error")) {
+            return false;
+        }
+        String state = executeShellCommand("am get-started-user-state " + userId);
+        return state.contains("RUNNING_UNLOCKED");
+    }
+
+    private void stopUser(int userId) throws IOException {
+        executeShellCommand("am stop-user -w -f " + userId);
     }
 }
 
