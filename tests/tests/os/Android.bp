@@ -61,7 +61,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
+        "mts-permission",
         "sts",
     ],
     sdk_version: "test_current",
