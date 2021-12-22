@@ -35,6 +35,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Process
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.AsbSecurityTest
 import android.provider.Settings
 import android.provider.Settings.Global.APP_OPS_CONSTANTS
 import android.support.test.uiautomator.UiDevice
@@ -365,6 +366,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = [208662370])
     fun activeNotChangedAfterMultipleStartsUidModeChangeAndOneStop() {
         val finishCallback = CompletableFuture<Unit>()
         val startCallback = CompletableFuture<Unit>()
