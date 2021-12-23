@@ -43,6 +43,59 @@ public final class HdmiCecGeneralProtocolTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     /**
+     * Test HF4-2-2
+     *
+     * <p> Verify that device ignores applicable messages sent from logical address F to DUT. (one
+     * by one, with a 3 sec spacing).
+     */
+    @Test
+    public void cect_4_2_2_ignoreMessagesFromAddressF() throws Exception {
+        setCec20();
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GIVE_TUNER_DEVICE_STATUS, "01");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.RECORD_ON);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.RECORD_OFF);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.RECORD_TV_SCREEN);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GIVE_DECK_STATUS, "01");
+        sendMessageAndVerifyNoMessageSentFromDevice(
+                CecOperand.CLEAR_ANALOG_TIMER, "02:02:02:02:02:02:00:00:00:02:00");
+        sendMessageAndVerifyNoMessageSentFromDevice(
+                CecOperand.SET_ANALOG_TIMER, "02:02:02:02:02:02:00:00:00:02:00");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.PLAY, "05");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.DECK_CONTROL, "01");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GIVE_OSD_NAME);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GIVE_AUDIO_STATUS);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.VENDOR_COMMAND, "00:01");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.MENU_REQUEST, "00");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GIVE_POWER_STATUS);
+        sendMessageAndVerifyNoMessageSentFromDevice(
+                CecOperand.SET_DIGITAL_TIMER, "02:02:02:02:02:02:00:00:00:02:00");
+        sendMessageAndVerifyNoMessageSentFromDevice(
+                CecOperand.CLEAR_DIGITAL_TIMER, "02:02:02:02:02:02:00:00:00:02:00");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.GET_CEC_VERSION);
+        sendMessageAndVerifyNoMessageSentFromDevice(
+                CecOperand.CLEAR_EXTERNAL_TIMER, "02:02:02:02:02:02:00:10:02");
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.REQUEST_SHORT_AUDIO_DESCRIPTOR);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.INITIATE_ARC);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.REQUEST_ARC_INITIATION);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.REQUEST_ARC_TERMINATION);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.TERMINATE_ARC);
+        sendMessageAndVerifyNoMessageSentFromDevice(CecOperand.ABORT);
+    }
+
+    public void sendMessageAndVerifyNoMessageSentFromDevice(CecOperand message, String params)
+            throws Exception {
+        hdmiCecClient.sendCecMessage(message, params);
+        // Default timeout for the incoming command to arrive in response to a request is 2 secs
+        // Thus test ensures no messages are sent from DUT for a spacing of 3 secs
+        hdmiCecClient.checkNoMessagesSentFromDevice(3000);
+    }
+
+    public void sendMessageAndVerifyNoMessageSentFromDevice(CecOperand message) throws Exception {
+        sendMessageAndVerifyNoMessageSentFromDevice(message, "");
+    }
+
+    /**
      * Test HF4-2-5, HF4-2-6 (CEC 2.0)
      *
      * <p>Tests that the device ignores any additional trailing parameters in an otherwise correct
