@@ -18,16 +18,18 @@ package android.media.audio.cts;
 
 import android.Manifest;
 import android.annotation.Nullable;
+import android.annotation.RawRes;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
+import android.media.audio.cts.R;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.TestUtils;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -35,8 +37,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
-
-import java.io.File;
 
 @NonMediaMainlineTest
 public class AudioFocusTest extends CtsAndroidTestCase {
@@ -272,9 +272,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         final String simFocusClientId = "fakeClientId";
         try {
             // set up the test conditions: a focus owner is playing media on a MediaPlayer
-            mp = createPreparedMediaPlayer(
-                    Uri.fromFile(new File(WorkDir.getMediaDirString() + "sine1khzs40dblong.mp3")),
-                    mediaAttributes);
+            mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, mediaAttributes);
             int res = am.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
             assertEquals("real focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
@@ -408,9 +406,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         final String simFocusClientId = "fakeClientId";
         try {
             // set up the test conditions: a focus owner is playing media on a MediaPlayer
-            mp = createPreparedMediaPlayer(
-                    Uri.fromFile(new File(WorkDir.getMediaDirString() + "sine1khzs40dblong.mp3")),
-                    playerAttributes);
+            mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, playerAttributes);
             int res = am.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
             assertEquals("real focus request failed",
                     AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
@@ -555,12 +551,17 @@ public class AudioFocusTest extends CtsAndroidTestCase {
     }
 
     private @Nullable MediaPlayer createPreparedMediaPlayer(
-            Uri uri, AudioAttributes aa) throws Exception {
+            @RawRes int resID, AudioAttributes aa) throws Exception {
         final TestUtils.Monitor onPreparedCalled = new TestUtils.Monitor();
 
         MediaPlayer mp = new MediaPlayer();
         mp.setAudioAttributes(aa);
-        mp.setDataSource(getContext(), uri);
+        AssetFileDescriptor afd = getContext().getResources().openRawResourceFd(resID);
+        try {
+            mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        } finally {
+            afd.close();
+        }
         mp.setOnPreparedListener(mp1 -> onPreparedCalled.signal());
         mp.prepare();
         onPreparedCalled.waitForSignal(MEDIAPLAYER_PREPARE_TIMEOUT_MS);
