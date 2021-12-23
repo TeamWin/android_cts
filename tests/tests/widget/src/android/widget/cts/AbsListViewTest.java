@@ -1223,15 +1223,20 @@ public class AbsListViewTest {
             mActivityRule.getActivity().setContentView(listView);
             listView.setAdapter(mCountriesAdapter);
         });
-
         View row = listView.getChildAt(0);
-        Rect r = new Rect();
-        r.set(0, listView.getHeight() - (row.getHeight() >> 1),
-                row.getWidth(), listView.getHeight() + (row.getHeight() >> 1));
 
+        // Initialize the test scrolled down by half the height of the first child.
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, listView, () -> {
+            listView.scrollListBy(row.getHeight() / 2);
+        });
         listView.resetIsOnScrollChangedCalled();
         assertFalse(listView.isOnScrollChangedCalled());
+
+        // Scroll the first child back completely into view (back to the top of the AbsListView).
+        Rect r = new Rect();
+        r.set(0, 0, row.getWidth(), row.getHeight());
         mActivityRule.runOnUiThread(() -> listView.requestChildRectangleOnScreen(row, r, true));
+
         assertTrue(listView.isOnScrollChangedCalled());
     }
 
