@@ -424,6 +424,9 @@ public class TunerTest {
                     case FrontendStatus.FRONTEND_STATUS_TYPE_STREAM_IDS:
                         status.getStreamIds();
                         break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_DVBT_CELL_IDS:
+                        status.getDvbtCellIds();
+                        break;
                 }
             }
             tuner.close();
@@ -2271,6 +2274,11 @@ public class TunerTest {
             @Override
             public void onDvbcAnnexReported(int dvbcAnnext) {
                 ScanCallback.super.onDvbcAnnexReported(dvbcAnnext);
+            }
+
+            @Override
+            public void onDvbtCellIdsReported(int[] dvbtCellIds) {
+                ScanCallback.super.onDvbtCellIdsReported(dvbtCellIds);
             }
         };
     }

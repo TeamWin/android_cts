@@ -53,6 +53,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_29 = "$APK_DIRECTORY/CtsUsePermissionApp29.apk"
         const val APP_APK_PATH_30 = "$APK_DIRECTORY/CtsUsePermissionApp30.apk"
         const val APP_APK_PATH_31 = "$APK_DIRECTORY/CtsUsePermissionApp31.apk"
+        const val APP_APK_PATH_32 = "$APK_DIRECTORY/CtsUsePermissionApp32.apk"
 
         const val APP_APK_PATH_30_WITH_BACKGROUND =
                 "$APK_DIRECTORY/CtsUsePermissionApp30WithBackground.apk"
@@ -153,6 +154,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.CAMERA to "@android:string/permgrouplab_camera",
             // Body sensors
             android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors",
+            android.Manifest.permission.BODY_SENSORS_BACKGROUND
+                    to "@android:string/permgrouplab_sensors",
             // Bluetooth
             android.Manifest.permission.BLUETOOTH_CONNECT to
                     "@android:string/permgrouplab_nearby_devices",

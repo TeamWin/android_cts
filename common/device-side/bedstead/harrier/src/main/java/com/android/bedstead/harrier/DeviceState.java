@@ -20,6 +20,7 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
 
+import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -104,7 +105,6 @@ import com.google.common.base.Objects;
 import junit.framework.AssertionFailedError;
 
 import org.junit.AssumptionViolatedException;
-import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -138,7 +138,7 @@ import java.util.function.Function;
  *
  * {@code assumeTrue} will be used, so tests which do not meet preconditions will be skipped.
  */
-public final class DeviceState implements TestRule {
+public final class DeviceState extends HarrierRule {
 
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -177,13 +177,6 @@ public final class DeviceState implements TestRule {
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
-    /**
-     * The password to be used in tests.
-     *
-     * The infrastructure will use this password when a password exists and is required.
-     */
-    public static final String DEFAULT_PASSWORD = "1234";
-
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
         mSkipTestTeardown = Boolean.parseBoolean(
@@ -202,10 +195,12 @@ public final class DeviceState implements TestRule {
         }
     }
 
+    @Override
     void setSkipTestTeardown(boolean skipTestTeardown) {
         mSkipTestTeardown = skipTestTeardown;
     }
 
+    @Override
     void setUsingBedsteadJUnit4(boolean usingBedsteadJUnit4) {
         mUsingBedsteadJUnit4 = usingBedsteadJUnit4;
     }
@@ -948,17 +943,6 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    public enum UserType {
-        /** Only to be used with annotations. */
-        ANY,
-        SYSTEM_USER,
-        CURRENT_USER,
-        PRIMARY_USER,
-        SECONDARY_USER,
-        WORK_PROFILE,
-        TV_PROFILE,
-    }
-
     private static final String LOG_TAG = "DeviceState";
 
     private static final Context sContext = TestApis.context().instrumentedContext();
@@ -1410,7 +1394,9 @@ public final class DeviceState implements TestRule {
                     mDeviceOwner.remove();
                 }
             } else if (!mOriginalDeviceOwner.equals(mDeviceOwner)) {
-                mDeviceOwner.remove();
+                if (mDeviceOwner != null) {
+                    mDeviceOwner.remove();
+                }
                 TestApis.devicePolicy().setDeviceOwner(
                         mOriginalDeviceOwner.componentName());
             }
@@ -2042,7 +2028,8 @@ public final class DeviceState implements TestRule {
 
         try {
             user.clearPassword(DEFAULT_PASSWORD);
-        } catch (NeneException e) {
+        } catch (NeneException e
+        ) {
             throw new AssertionError(
                     "Test requires user " + user + " does not have a password. "
                             + "Password is set and is not DEFAULT_PASSWORD.");

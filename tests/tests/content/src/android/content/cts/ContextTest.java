@@ -1809,6 +1809,31 @@ public class ContextTest extends AndroidTestCase {
     }
 
     /**
+     * Verifies a receiver registered with {@link Context#RECEIVER_EXPORTED_UNAUDITED} can receive
+     * a broadcast from an external app.
+     *
+     * <p>{@code Context#RECEIVER_EXPORTED_UNAUDITED} is only intended to be applied to receivers
+     * that have not yet been audited to determine their intended exported state; this test ensures
+     * this flag maintains the existing behavior of exporting the receiver until it can be
+     * evaluated.
+     */
+    public void testRegisterReceiver_exportedUnaudited_broadcastReceived() throws Exception {
+        final ResultReceiver receiver = new ResultReceiver();
+        registerBroadcastReceiver(receiver, new IntentFilter(ResultReceiver.MOCK_ACTION),
+                Context.RECEIVER_EXPORTED_UNAUDITED);
+
+        SystemUtil.runShellCommand(EXTERNAL_APP_BROADCAST_COMMAND);
+
+        new PollingCheck(BROADCAST_TIMEOUT, "The broadcast to the exported receiver"
+                + " was not received within the timeout window") {
+            @Override
+            protected boolean check() {
+                return receiver.hasReceivedBroadCast();
+            }
+        }.run();
+    }
+
+    /**
      * Verifies a receiver registered with {@link Context#RECEIVER_NOT_EXPORTED} does not receive
      * a broadcast from an external app.
      */

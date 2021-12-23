@@ -16,18 +16,14 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsCompanionDevicesTestCases",
-
-    defaults: ["cts_defaults"],
+android_library {
+    name: "cts-companion-common",
+    srcs: [
+        "common/src/**/*.kt",
+    ],
+    manifest: "common/AndroidManifest.xml",
 
     platform_apis: true,
-
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
-
     static_libs: [
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
@@ -35,12 +31,81 @@ android_test {
         "junit",
         "kotlin-test",
     ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
 
-    srcs: ["src/**/*.kt"],
+    // TODO(b/211264986) Change both SDK versions to T (33) once it's formally defined.
+    min_sdk_version: "current",
+    target_sdk_version: "current",
+}
 
+android_test {
+    name: "CtsCompanionDeviceManagerCoreTestCases",
+    srcs: [
+        "core/src/**/*.kt",
+    ],
+    manifest: "core/AndroidManifest.xml",
+    test_config: "core/AndroidTest.xml",
+
+    platform_apis: true,
+    static_libs: [
+        "androidx.test.ext.junit",
+        "compatibility-device-util-axt",
+        "cts-companion-common",
+        "ctstestrunner-axt",
+        "junit",
+        "kotlin-test",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+
+    defaults: ["cts_defaults"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
+
+    // TODO(b/211264986) Change both SDK versions to T (33) once it's formally defined.
+    min_sdk_version: "current",
+    target_sdk_version: "current",
+}
+
+android_test {
+    name: "CtsCompanionDeviceManagerUiAutomationTestCases",
+    srcs: [
+        "uiautomation/src/**/*.kt",
+    ],
+    manifest: "uiautomation/AndroidManifest.xml",
+    test_config: "uiautomation/AndroidTest.xml",
+
+    platform_apis: true,
+    static_libs: [
+        "androidx.test.ext.junit",
+        "androidx.test.uiautomator",
+        "compatibility-device-util-axt",
+        "cts-companion-common",
+        "ctstestrunner-axt",
+        "junit",
+        "kotlin-test",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+
+    defaults: ["cts_defaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+
+    // TODO(b/211264986) Change both SDK versions to T (33) once it's formally defined.
+    min_sdk_version: "current",
+    target_sdk_version: "current",
 }

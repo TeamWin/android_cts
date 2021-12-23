@@ -21,7 +21,7 @@ import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.os.Build.VERSION_CODES.N;
 import static android.os.Build.VERSION_CODES.O;
 
-import static com.android.bedstead.harrier.DeviceState.DEFAULT_PASSWORD;
+import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
