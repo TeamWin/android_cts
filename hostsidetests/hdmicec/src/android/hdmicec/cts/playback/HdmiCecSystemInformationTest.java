@@ -154,4 +154,19 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             setSystemLocale(locale);
         }
     }
+
+    /**
+     * Test HF4-11-4 (CEC 2.0)
+     *
+     * <p>Tests that the DUT responds to {@code <Give Features>} with "Sink supports ARC Tx" bit not
+     * set.
+     */
+    @Test
+    public void cect_hf_4_11_4_SinkArcTxBitReset() throws Exception {
+        setCec20();
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_FEATURES);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+        int params = CecMessage.getParams(message, 6, 8);
+        assertThat(params & HdmiCecConstants.FEATURES_SINK_SUPPORTS_ARC_TX_BIT).isEqualTo(0);
+    }
 }
