@@ -1151,7 +1151,7 @@ public class StagefrightTest {
     }
 
     @Test
-    @AsbSecurityTest(cveBugId = 110435401)
+    @AsbSecurityTest(cveBugId = 68664359)
     public void testStagefright_bug_110435401() throws Exception {
         doStagefrightTest(R.raw.bug_110435401, 60000);
     }
