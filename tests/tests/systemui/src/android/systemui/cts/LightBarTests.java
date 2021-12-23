@@ -16,7 +16,6 @@
 
 package android.systemui.cts;
 
-import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.server.wm.BarTestUtils.assumeHasColoredNavigationBar;
 import static android.server.wm.BarTestUtils.assumeHasColoredStatusBar;
 import static android.server.wm.BarTestUtils.assumeStatusBarContainsCutout;
@@ -35,7 +34,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.os.SystemClock;
-import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Gravity;
 import android.view.InputDevice;
@@ -49,8 +47,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ThrowingRunnable;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -89,18 +85,6 @@ public class LightBarTests extends LightBarTestBase {
             LightBarActivity.class);
     @Rule
     public TestName mTestName = new TestName();
-
-    @Before
-    public void setUp() throws Exception {
-        PermissionUtils.grantPermission(
-                mActivityRule.getActivity().getPackageName(), POST_NOTIFICATIONS);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        PermissionUtils.revokePermission(
-                mActivityRule.getActivity().getPackageName(), POST_NOTIFICATIONS);
-    }
 
     @Test
     @AppModeFull // Instant apps cannot create notifications
