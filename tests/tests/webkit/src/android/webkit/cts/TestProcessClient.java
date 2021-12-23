@@ -20,11 +20,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.DeadObjectException;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
-import android.os.Messenger;
 import android.os.RemoteException;
 
 import com.android.internal.annotations.GuardedBy;
@@ -32,7 +32,6 @@ import com.android.internal.annotations.GuardedBy;
 import com.google.common.util.concurrent.SettableFuture;
 
 import junit.framework.Assert;
-import junit.framework.AssertionFailedError;
 
 /**
  * IPC interface to run tests in a freshly spawned service process.
@@ -48,19 +47,15 @@ import junit.framework.AssertionFailedError;
 class TestProcessClient extends Assert implements AutoCloseable, ServiceConnection {
     private Context mContext;
 
-    static final long REMOTE_TIMEOUT_MS = 5000;
-
     private static final long CONNECT_TIMEOUT_MS = 5000;
 
     private Object mLock = new Object();
-    @GuardedBy("mLock")
-    private Messenger mService;
-    @GuardedBy("mLock")
-    private Integer mLastResult;
-    @GuardedBy("mLock")
-    private Throwable mLastException;
 
-    private final Messenger mReplyHandler = new Messenger(new ReplyHandler(Looper.getMainLooper()));
+    @GuardedBy("mLock")
+    private ITestProcessService mService;
+
+    @GuardedBy("mLock")
+    private boolean mIsConnectionClosed = false;
 
     public static TestProcessClient createProcessA(Context context) throws Throwable {
         return new TestProcessClient(context, TestProcessServiceA.class);
@@ -70,22 +65,18 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
         return new TestProcessClient(context, TestProcessServiceB.class);
     }
 
-    /**
-     * Subclass this to implement test code to run on the service side.
-     */
-    static abstract class TestRunnable extends Assert {
+    /** Subclass this to implement test code to run on the service side. */
+    abstract static class TestRunnable extends Assert {
         public abstract void run(Context ctx) throws Throwable;
     }
 
-    /**
-     * Subclass this to implement test code that runs on the main looper on the service side.
-     */
-    static abstract class UiThreadTestRunnable extends TestRunnable {
+    /** Subclass this to implement test code that runs on the main looper on the service side. */
+    abstract static class UiThreadTestRunnable extends TestRunnable {
         // A handler for the main thread.
         private static final Handler sMainThreadHandler = new Handler(Looper.getMainLooper());
 
         @Override
-        final public void run(Context ctx) throws Throwable {
+        public final void run(Context ctx) throws Throwable {
             final SettableFuture<Void> exceptionPropagatingFuture = SettableFuture.create();
             sMainThreadHandler.post(new Runnable() {
                 @Override
@@ -106,6 +97,7 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
 
     static class ProcessFreshChecker extends TestRunnable {
         private static Object sFreshLock = new Object();
+
         @GuardedBy("sFreshLock")
         private static boolean sFreshProcess = true;
 
@@ -118,7 +110,6 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
                 sFreshProcess = false;
             }
         }
-
     }
 
     private TestProcessClient(Context context, Class service) throws Throwable {
@@ -135,48 +126,35 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
         }
 
         // Check that we're using an actual fresh process.
-        // 1000ms timeout is plenty since the service is already running.
-        run(ProcessFreshChecker.class, 1000);
+        run(ProcessFreshChecker.class);
     }
 
     public void run(Class runnableClass) throws Throwable {
-        run(runnableClass, REMOTE_TIMEOUT_MS);
-    }
-
-    public void run(Class runnableClass, long timeoutMs) throws Throwable {
-        Message m = Message.obtain(null, TestProcessService.MSG_RUN_TEST);
-        m.replyTo = mReplyHandler;
-        m.getData().putString(TestProcessService.TEST_CLASS_KEY, runnableClass.getName());
-        int result;
-        Throwable exception;
+        Bundle result;
         synchronized (mLock) {
-            mService.send(m);
-            if (mLastResult == null) {
-                mLock.wait(timeoutMs);
-                if (mLastResult == null) {
-                    fail("Timeout waiting for result");
-                }
-            }
-            result = mLastResult;
-            mLastResult = null;
-            exception = mLastException;
-            mLastException = null;
+            result = mService.run(runnableClass.getName());
         }
-        if (result == TestProcessService.REPLY_EXCEPTION) {
+        Throwable exception =
+                (Throwable) result.getSerializable(TestProcessService.REPLY_EXCEPTION_KEY);
+        if (exception != null) {
             throw exception;
-        } else if (result != TestProcessService.REPLY_OK) {
-            fail("Unknown result from service: " + result);
         }
     }
 
     public void close() {
         synchronized (mLock) {
-            if (mService != null) {
-                try {
-                    mService.send(Message.obtain(null, TestProcessService.MSG_EXIT_PROCESS));
-                } catch (RemoteException e) {}
-                mService = null;
-                mContext.unbindService(this);
+            if (mIsConnectionClosed) {
+                return;
+            }
+            mIsConnectionClosed = true;
+            try {
+                if (mService != null) {
+                    mService.exit();
+                    fail("This should result in a DeadObjectException");
+                }
+            } catch (DeadObjectException e) {
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
             }
         }
     }
@@ -184,7 +162,7 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
     @Override
     public void onServiceConnected(ComponentName className, IBinder service) {
         synchronized (mLock) {
-            mService = new Messenger(service);
+            mService = ITestProcessService.Stub.asInterface(service);
             mLock.notify();
         }
     }
@@ -194,27 +172,10 @@ class TestProcessClient extends Assert implements AutoCloseable, ServiceConnecti
         synchronized (mLock) {
             mService = null;
             mContext.unbindService(this);
-            mLastResult = TestProcessService.REPLY_EXCEPTION;
-            mLastException = new AssertionFailedError(
-                    "Service disconnected unexpectedly: " + className);
             mLock.notify();
-        }
-    }
-
-    private class ReplyHandler extends Handler {
-        ReplyHandler(Looper looper) {
-            super(looper);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            synchronized (mLock) {
-                mLastResult = msg.what;
-                if (msg.what == TestProcessService.REPLY_EXCEPTION) {
-                    mLastException = (Throwable) msg.getData().getSerializable(
-                            TestProcessService.REPLY_EXCEPTION_KEY);
-                }
-                mLock.notify();
+            // Service wasn't explicitly disconnected in the close() method.
+            if (!mIsConnectionClosed) {
+                fail("Service disconnected unexpectedly");
             }
         }
     }
