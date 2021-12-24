@@ -121,6 +121,8 @@
         <option name="push-file" key="HelloWorldUsingSdk1And2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk1And2.apk.idsig" />
         <option name="push-file" key="HelloWorldUsingSdk3.apk" value="/data/local/tmp/cts/content/HelloWorldUsingSdk3.apk" />
         <option name="push-file" key="HelloWorldUsingSdk3.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldUsingSdk3.apk.idsig" />
+        <option name="push-file" key="HelloWorldNoAppStorage.apk" value="/data/local/tmp/cts/content/HelloWorldNoAppStorage.apk" />
+        <option name="push-file" key="HelloWorldNoAppStorage.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldNoAppStorage.apk.idsig" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

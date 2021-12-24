@@ -137,6 +137,8 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_SDK3_USING_SDK1_AND_SDK2 = "HelloWorldSdk3UsingSdk1And2.apk";
     private static final String TEST_USING_SDK3 = "HelloWorldUsingSdk3.apk";
 
+    private static final String TEST_HW_NO_APP_STORAGE = "HelloWorldNoAppStorage.apk";
+
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
     private static final long DEFAULT_STREAMING_VERIFICATION_TIMEOUT = 3 * 1000;
@@ -1341,6 +1343,47 @@ public class PackageManagerShellCommandTest {
         final PackageInfo packageInfo = packageManager.getPackageInfo(packageName,
                 PackageManager.PackageInfoFlags.of(0));
         return packageInfo.firstInstallTime;
+    }
+
+    @Test
+    public void testAppWithNoAppStorageUpdateSuccess() throws Exception {
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        // Updates that don't change value of NO_APP_DATA_STORAGE property are allowed.
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testAppUpdateAddsNoAppDataStorageProperty() throws Exception {
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        installPackage(
+                TEST_HW_NO_APP_STORAGE,
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Update "
+                        + "attempted to change value of "
+                        + "android.internal.PROPERTY_NO_APP_DATA_STORAGE");
+    }
+
+    @Test
+    public void testAppUpdateRemovesNoAppDataStorageProperty() throws Exception {
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        installPackage(
+                TEST_HW5,
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Update "
+                        + "attempted to change value of "
+                        + "android.internal.PROPERTY_NO_APP_DATA_STORAGE");
+    }
+
+    @Test
+    public void testNoAppDataStoragePropertyCanChangeAfterUninstall() throws Exception {
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        uninstallPackageSilently(TEST_APP_PACKAGE);
+        // After app is uninstalled new install can change the value of the property.
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
     private List<SharedLibraryInfo> getSharedLibraries() {

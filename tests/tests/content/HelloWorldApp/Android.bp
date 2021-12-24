@@ -275,3 +275,19 @@ android_test {
     ],
     v4_signature: true,
 }
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorldNoAppStorage",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src5/**/*.java"],
+    manifest: "AndroidManifestNoAppStorage.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
