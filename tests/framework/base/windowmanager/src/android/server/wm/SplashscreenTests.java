@@ -152,18 +152,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.WHITE);
     }
 
-    @Test
-    public void testSplashscreenContent_FreeformWindow() {
-        // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
-        // applied insets by system bars in AAOS.
-        assumeFalse(isCar());
-        assumeTrue(supportsFreeform());
-
-        launchActivityNoWait(SPLASHSCREEN_ACTIVITY, WINDOWING_MODE_FREEFORM);
-        // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
-        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.WHITE);
-    }
-
     private void testSplashScreenColor(ComponentName name, int primaryColor, int secondaryColor) {
         // Activity may not be launched yet even if app transition is in idle state.
         mWmState.waitForActivityState(name, STATE_RESUMED);
@@ -406,18 +394,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isCar());
 
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                extraBool(DELAY_RESUME, true));
-        testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.WHITE);
-    }
-
-    @Test
-    public void testSetBackgroundColorActivity_FreeformWindow() {
-        // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
-        // applied insets by system bars in AAOS.
-        assumeFalse(isCar());
-        assumeTrue(supportsFreeform());
-
-        launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, WINDOWING_MODE_FREEFORM,
                 extraBool(DELAY_RESUME, true));
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.WHITE);
     }
