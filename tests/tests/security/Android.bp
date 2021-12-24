@@ -72,6 +72,9 @@ android_test {
         "sts",
     ],
     certificate: ":security_cts_test_certificate",
+    data: [
+        ":RolePermissionOverrideTestApp",
+    ],
 }
 
 android_test_helper_app {
@@ -83,4 +86,9 @@ android_test_helper_app {
 android_app_certificate {
     name: "security_cts_test_certificate",
     certificate: "security_cts_test_cert",
+}
+
+android_test_helper_app {
+    name: "RolePermissionOverrideTestApp",
+    manifest: "testdata/rolepermissionoverridetestapp.xml",
 }
