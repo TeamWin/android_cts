@@ -20,7 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -211,6 +213,38 @@ public class TunerTest {
         int version = TunerVersionChecker.getTunerVersion();
         assertTrue(version >= TunerVersionChecker.TUNER_VERSION_1_0);
         assertTrue(version <= TunerVersionChecker.TUNER_VERSION_2_0);
+    }
+
+    @Test
+    public void testFrontendHardwareInfo() throws Exception {
+        String hwInfo = null;
+        try {
+            hwInfo = mTuner.getCurrentFrontendHardwardInfo();
+            if (TunerVersionChecker.isHigherOrEqualVersionTo(
+                    TunerVersionChecker.TUNER_VERSION_2_0)) {
+                fail("Get Frontend hardware info should throw IllegalStateException.");
+            } else {
+                assertNull(hwInfo);
+            }
+        } catch (IllegalStateException e) {
+            // pass
+        }
+
+        List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null) return;
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        hwInfo = mTuner.getCurrentFrontendHardwardInfo();
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertNotNull(hwInfo);
+            assertFalse(hwInfo.isEmpty());
+        } else {
+            assertNull(hwInfo);
+        }
+        res = mTuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
     }
 
     @Test
@@ -1892,6 +1926,7 @@ public class TunerTest {
         e.getAudioHandle();
         e.getMpuSequenceNumber();
         e.isPrivateData();
+        e.getScIndexMask();
         AudioDescriptor ad = e.getExtraMetaData();
         if (ad != null) {
             ad.getAdFade();
@@ -2205,6 +2240,13 @@ public class TunerTest {
         return new ScanCallback() {
             @Override
             public void onLocked() {
+                if (mLockLatch != null) {
+                    mLockLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onUnLocked() {
                 if (mLockLatch != null) {
                     mLockLatch.countDown();
                 }

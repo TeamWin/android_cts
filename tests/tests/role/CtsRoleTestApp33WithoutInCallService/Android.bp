@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,33 +16,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsRoleTestCases",
-    defaults: ["mts-target-sdk-version-current"],
-    sdk_version: "test_current",
+android_test_helper_app {
+    name: "CtsRoleTestApp33WithoutInCallService",
     min_sdk_version: "30",
-
-    srcs: [
-        "src/**/*.java",
-        "src/**/*.kt",
-    ],
-
-    static_libs: [
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "truth-prebuilt",
-    ],
-
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-permission",
-    ],
-
-    data: [
-        ":CtsRoleTestApp",
-        ":CtsRoleTestApp28",
-        ":CtsRoleTestApp33WithoutInCallService",
-    ],
+    target_sdk_version: "33",
 }

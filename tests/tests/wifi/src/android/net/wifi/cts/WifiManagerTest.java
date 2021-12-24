@@ -2158,6 +2158,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     testSoftApConfig.isBridgedModeOpportunisticShutdownEnabled());
             assertEquals(currentConfig.isIeee80211axEnabled(),
                     testSoftApConfig.isIeee80211axEnabled());
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                assertEquals(currentConfig.getBridgedModeOpportunisticShutdownTimeoutMillis(),
+                        testSoftApConfig.getBridgedModeOpportunisticShutdownTimeoutMillis());
+            }
         }
     }
 
@@ -2381,6 +2385,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     .setBand(getAvailableBandAndChannelForTesting(
                             callback.getCurrentSoftApCapability()).keyAt(0))
                     .setHiddenSsid(false);
+
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                softApConfigBuilder.setBridgedModeOpportunisticShutdownTimeoutMillis(30_000);
+            }
 
             // Test SoftApConfiguration set and get
             verifySetGetSoftApConfig(softApConfigBuilder.build());
