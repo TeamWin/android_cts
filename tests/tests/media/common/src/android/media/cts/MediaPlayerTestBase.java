@@ -54,8 +54,6 @@ import java.util.Set;
 public class MediaPlayerTestBase {
     private static final Logger LOG = Logger.getLogger(MediaPlayerTestBase.class.getName());
 
-    static final String mInpPrefix = WorkDir.getMediaDirString();
-
     protected static final int SLEEP_TIME = 1000;
     protected static final int LONG_SLEEP_TIME = 6000;
     protected static final int STREAM_RETRIES = 20;
@@ -131,49 +129,6 @@ public class MediaPlayerTestBase {
         }
     }
 
-    protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
-            throws FileNotFoundException {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        File inpFile = new File(mInpPrefix + res);
-        ParcelFileDescriptor parcelFD =
-                ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
-        return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
-    }
-
-    // returns true on success
-    protected boolean loadResource(final String res) throws Exception {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
-            return false;
-        }
-
-        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(res)) {
-            mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                    afd.getLength());
-
-            // Although it is only meant for video playback, it should not
-            // cause issues for audio-only playback.
-            int videoScalingMode = sUseScaleToFitMode ?
-                    MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                    : MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
-
-            mMediaPlayer.setVideoScalingMode(videoScalingMode);
-        }
-        sUseScaleToFitMode = !sUseScaleToFitMode;  // Alternate the scaling mode
-        return true;
-    }
-
-    protected boolean checkLoadResource(String res) throws Exception {
-        return MediaUtils.check(loadResource(res), "no decoder found");
-    }
-
-    protected void loadSubtitleSource(String res) throws Exception {
-        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(res)) {
-            mMediaPlayer.addTimedTextSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                    afd.getLength(), MediaPlayer.MEDIA_MIMETYPE_TEXT_SUBRIP);
-        }
-    }
-
     protected void playLiveVideoTest(String path, int playTime) throws Exception {
         playVideoWithRetries(path, null, null, playTime);
     }
@@ -202,14 +157,6 @@ public class MediaPlayerTestBase {
           }
         }
         assertTrue("Stream did not play successfully after all attempts", playedSuccessfully);
-    }
-
-    protected void playLoadedVideoTest(final String res, int width, int height) throws Exception {
-        if (!checkLoadResource(res)) {
-            return; // skip
-        }
-
-        playLoadedVideo(width, height, 0);
     }
 
     protected void playLiveVideoTest(
