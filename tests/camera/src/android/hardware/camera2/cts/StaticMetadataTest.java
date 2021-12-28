@@ -434,6 +434,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
             case REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA:
             case REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME:
             case REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT:
+            case REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE:
                 // Tested in ExtendedCameraCharacteristicsTest
                 return;
             case REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA:
