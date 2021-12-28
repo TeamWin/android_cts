@@ -146,7 +146,7 @@ public class TestHelper {
                 wifiManager.unregisterScanResultsCallback(scanResultsCallback);
             }
             List<ScanResult> scanResults = wifiManager.getScanResults();
-            if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
+            if (scanResults == null || scanResults.isEmpty()) continue;
             for (ScanResult scanResult : scanResults) {
                 WifiConfiguration matchingNetwork = savedNetworks.stream()
                         .filter(network -> TextUtils.equals(
