@@ -42,10 +42,12 @@ public class DataProfileTest {
     private static final int APN_BITMASK = ApnSetting.TYPE_DEFAULT;
     private static final int ROAMING_PROTOCOL_TYPE = ApnSetting.PROTOCOL_IP;
     private static final int BEARER_BITMASK = (int) TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
+    private static final long LINGERING_BEARER_BITMASK = TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
     private static final int MTU_V4 = 1440;
     private static final int MTU_V6 = 1400;
     private static final boolean IS_PREFERRED = true;
     private static final boolean IS_PERSISTENT = true;
+    private static final boolean IS_ALWAYS_ON = true;
 
     @Test
     public void testConstructorAndGetters() {
@@ -210,6 +212,8 @@ public class DataProfileTest {
                 .setCarrierEnabled(IS_ENABLED)
                 .setProfileId(PROFILE_ID)
                 .setAuthType(AUTH_TYPE)
+                .setLingeringNetworkTypeBitmask(LINGERING_BEARER_BITMASK)
+                .setAlwaysOn(IS_ALWAYS_ON)
                 .build();
 
         byte[] osAppId = {1, 2, 3, 4};
@@ -250,6 +254,8 @@ public class DataProfileTest {
                 .setCarrierEnabled(IS_ENABLED)
                 .setProfileId(PROFILE_ID)
                 .setAuthType(AUTH_TYPE)
+                .setLingeringNetworkTypeBitmask(LINGERING_BEARER_BITMASK)
+                .setAlwaysOn(IS_ALWAYS_ON)
                 .build();
 
         DataProfile profile = new DataProfile.Builder()
