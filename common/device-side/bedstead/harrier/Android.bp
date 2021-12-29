@@ -51,6 +51,7 @@ android_test {
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "platform-test-annotations",
         "truth-prebuilt",
         "testng" // for assertThrows
     ],
