@@ -109,6 +109,7 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
                             for (int i = 0; i < mSlotNum; i++) {
                                 Log.i(TAG, "Sim slot status: " + mSimSlotStatus[i]);
                             }
+                            unsolSimSlotsStatusChanged();
                         } else {
                             Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
                         }
