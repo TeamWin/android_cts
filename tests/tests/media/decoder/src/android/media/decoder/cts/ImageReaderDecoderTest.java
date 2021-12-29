@@ -27,7 +27,6 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities;
-import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.CodecUtils;
@@ -41,7 +40,6 @@ import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 import android.view.Surface;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -51,18 +49,23 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Basic test for ImageReader APIs.
@@ -78,6 +81,7 @@ import static org.junit.Assert.fail;
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
+@RunWith(Parameterized.class)
 public class ImageReaderDecoderTest {
     private static final String TAG = "ImageReaderDecoderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -101,6 +105,50 @@ public class ImageReaderDecoderTest {
     private Handler mHandler;
     private ImageListener mImageListener;
 
+    public String mMime;
+    public String mCodecName;
+    public MediaAsset mMediaAsset;
+    public int mMode;
+
+    public ImageReaderDecoderTest(String mime, String codecName, MediaAsset asset, int mode,
+                                  String testId) {
+        mMime = mime;
+        mCodecName = codecName;
+        mMediaAsset = asset;
+        mMode = mode;
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
+    public static Collection<Object[]> input() {
+        final List<Object[]> argsList = new ArrayList<>();
+        for (MediaAssets assets : ASSETS) {
+            String mime = assets.getMime();
+            String[] decoders = MediaUtils.getDecoderNamesForMime(mime);
+            for (String decoder: decoders) {
+                for (MediaAsset asset : assets.getAssets()) {
+                    String id = asset.getWidth() + "x" + asset.getHeight();
+                    if (asset.getIsSwirl()) {
+                        id += "_swirl";
+                        argsList.add(new Object[]{mime, decoder, asset, MODE_IMAGE, id + "_image"});
+                    }
+                    argsList.add(new Object[]{mime, decoder, asset, MODE_IMAGEREADER,
+                            id + "_imagereader"});
+                }
+            }
+        }
+        return argsList;
+    }
+
+    @Test
+    public void decodeTest()   {
+        Decoder decoder = new Decoder(mMime, mCodecName, mMediaAsset);
+        try {
+            decoder.videoDecode(mMode);
+        } finally {
+            closeImageReader();
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         mHandlerThread = new HandlerThread(TAG);
@@ -116,10 +164,15 @@ public class ImageReaderDecoderTest {
     }
 
     static class MediaAsset {
-        public MediaAsset(String resource, int width, int height) {
+        public MediaAsset(String resource, int width, int height, boolean isSwirl) {
             mResource = resource;
             mWidth = width;
             mHeight = height;
+            mIsSwirl = isSwirl;
+        }
+
+        public MediaAsset(String resource, int width, int height) {
+            this(resource, width, height, true);
         }
 
         public int getWidth() {
@@ -130,6 +183,10 @@ public class ImageReaderDecoderTest {
             return mHeight;
         }
 
+        public boolean getIsSwirl() {
+            return mIsSwirl;
+        }
+
         public String getResource() {
             return mResource;
         }
@@ -137,6 +194,7 @@ public class ImageReaderDecoderTest {
         private final String mResource;
         private final int mWidth;
         private final int mHeight;
+        private final boolean mIsSwirl;
     }
 
     static class MediaAssets {
@@ -179,7 +237,9 @@ public class ImageReaderDecoderTest {
             new MediaAsset("swirl_144x136_h264.mp4", 144, 136),
             new MediaAsset("swirl_136x144_h264.mp4", 136, 144),
             new MediaAsset("swirl_132x130_h264.mp4", 132, 130),
-            new MediaAsset("swirl_130x132_h264.mp4", 130, 132));
+            new MediaAsset("swirl_130x132_h264.mp4", 130, 132),
+            new MediaAsset("video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
+                    480, 360, false));
 
     private static MediaAssets H265_ASSETS = new MediaAssets(
             MediaFormat.MIMETYPE_VIDEO_HEVC,
@@ -207,52 +267,35 @@ public class ImageReaderDecoderTest {
 
     static final float SWIRL_FPS = 12.f;
 
+    private static MediaAssets[] ASSETS = {H263_ASSETS, MPEG4_ASSETS, H264_ASSETS, H265_ASSETS,
+            VP8_ASSETS, VP9_ASSETS};
+
     class Decoder {
         final private String mName;
         final private String mMime;
-        final private VideoCapabilities mCaps;
-        final private ArrayList<MediaAsset> mAssets;
+        final private MediaAsset mAsset;
 
-        boolean isFlexibleFormatSupported(CodecCapabilities caps) {
+        boolean isColorFormatSupported(CodecCapabilities caps, int colorFormat) {
             for (int c : caps.colorFormats) {
-                if (c == COLOR_FormatYUV420Flexible) {
+                if (c == colorFormat) {
                     return true;
                 }
             }
             return false;
         }
 
-        Decoder(String name, MediaAssets assets, CodecCapabilities caps) {
+        Decoder(String mime, String name, MediaAsset asset) {
+            mMime = mime;
             mName = name;
-            mMime = assets.getMime();
-            mCaps = caps.getVideoCapabilities();
-            mAssets = new ArrayList<MediaAsset>();
-
-            for (MediaAsset asset : assets.getAssets()) {
-                if (mCaps.areSizeAndRateSupported(asset.getWidth(), asset.getHeight(), SWIRL_FPS)
-                        && isFlexibleFormatSupported(caps)) {
-                    mAssets.add(asset);
-                }
-            }
+            mAsset = asset;
         }
 
-        public boolean videoDecode(int mode, boolean checkSwirl) {
-            boolean skipped = true;
-            for (MediaAsset asset: mAssets) {
-                // TODO: loop over all supported image formats
-                int imageFormat = ImageFormat.YUV_420_888;
-                int colorFormat = COLOR_FormatYUV420Flexible;
-                videoDecode(asset, imageFormat, colorFormat, mode, checkSwirl);
-                skipped = false;
-            }
-            return skipped;
-        }
-
-        private void videoDecode(
-                MediaAsset asset, int imageFormat, int colorFormat, int mode, boolean checkSwirl) {
-            String video = asset.getResource();
-            int width = asset.getWidth();
-            int height = asset.getHeight();
+        private void videoDecode(int mode) {
+            int imageFormat = ImageFormat.YUV_420_888;
+            int colorFormat = COLOR_FormatYUV420Flexible;
+            String video = mMediaAsset.getResource();
+            int width = mMediaAsset.getWidth();
+            int height = mMediaAsset.getHeight();
 
             if (DEBUG) Log.d(TAG, "videoDecode " + mName + " " + width + "x" + height);
 
@@ -271,10 +314,20 @@ public class ImageReaderDecoderTest {
                 // Create decoder
                 decoder = MediaCodec.createByCodecName(mName);
                 assertNotNull("couldn't create decoder" + mName, decoder);
+                MediaCodecInfo info = decoder.getCodecInfo();
+                CodecCapabilities caps = info.getCapabilitiesForType(mMime);
+                VideoCapabilities videoCaps = caps.getVideoCapabilities();
+
+                assumeTrue(mMediaAsset.getWidth() + "x" + mMediaAsset.getHeight() + " @ " +
+                        SWIRL_FPS + " fps is not supported by " + mName,
+                        videoCaps.areSizeAndRateSupported(mMediaAsset.getWidth(),
+                        mMediaAsset.getHeight(), SWIRL_FPS));
+                assumeTrue("Color format " + colorFormat + " is not supported by " + mName,
+                        isColorFormatSupported(caps, colorFormat));
 
                 decodeFramesToImage(
                         decoder, extractor, mediaFormat,
-                        width, height, imageFormat, mode, checkSwirl);
+                        width, height, imageFormat, mode, mMediaAsset.getIsSwirl());
 
                 decoder.stop();
             } catch (Throwable e) {
@@ -288,154 +341,6 @@ public class ImageReaderDecoderTest {
                     extractor.release();
                 }
             }
-        }
-    }
-
-    private Decoder[] decoders(MediaAssets assets, boolean goog) {
-        String mime = assets.getMime();
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        ArrayList<Decoder> result = new ArrayList<Decoder>();
-
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder() || info.isAlias() || !info.isVendor() != goog) {
-                continue;
-            }
-            CodecCapabilities caps = null;
-            try {
-                caps = info.getCapabilitiesForType(mime);
-            } catch (IllegalArgumentException e) { // mime is not supported
-                continue;
-            }
-            assertNotNull(info.getName() + " capabilties for " + mime + " returned null", caps);
-            result.add(new Decoder(info.getName(), assets, caps));
-        }
-        return result.toArray(new Decoder[result.size()]);
-    }
-
-    private Decoder[] goog(MediaAssets assets) {
-        return decoders(assets, true /* goog */);
-    }
-
-    private Decoder[] other(MediaAssets assets) {
-        return decoders(assets, false /* goog */);
-    }
-
-    private Decoder[] googH265()  { return goog(H265_ASSETS); }
-    private Decoder[] googH264()  { return goog(H264_ASSETS); }
-    private Decoder[] googH263()  { return goog(H263_ASSETS); }
-    private Decoder[] googMpeg4() { return goog(MPEG4_ASSETS); }
-    private Decoder[] googVP8()   { return goog(VP8_ASSETS); }
-    private Decoder[] googVP9()   { return goog(VP9_ASSETS); }
-
-    private Decoder[] otherH265()  { return other(H265_ASSETS); }
-    private Decoder[] otherH264()  { return other(H264_ASSETS); }
-    private Decoder[] otherH263()  { return other(H263_ASSETS); }
-    private Decoder[] otherMpeg4() { return other(MPEG4_ASSETS); }
-    private Decoder[] otherVP8()   { return other(VP8_ASSETS); }
-    private Decoder[] otherVP9()   { return other(VP9_ASSETS); }
-
-    @Test
-    public void testGoogH265Image()   { swirlTest(googH265(),   MODE_IMAGE); }
-    @Test
-    public void testGoogH264Image()   { swirlTest(googH264(),   MODE_IMAGE); }
-    @Test
-    public void testGoogH263Image()   { swirlTest(googH263(),   MODE_IMAGE); }
-    @Test
-    public void testGoogMpeg4Image()  { swirlTest(googMpeg4(),  MODE_IMAGE); }
-    @Test
-    public void testGoogVP8Image()    { swirlTest(googVP8(),    MODE_IMAGE); }
-    @Test
-    public void testGoogVP9Image()    { swirlTest(googVP9(),    MODE_IMAGE); }
-
-    @Test
-    public void testOtherH265Image()  { swirlTest(otherH265(),  MODE_IMAGE); }
-    @Test
-    public void testOtherH264Image()  { swirlTest(otherH264(),  MODE_IMAGE); }
-    @Test
-    public void testOtherH263Image()  { swirlTest(otherH263(),  MODE_IMAGE); }
-    @Test
-    public void testOtherMpeg4Image() { swirlTest(otherMpeg4(), MODE_IMAGE); }
-    @Test
-    public void testOtherVP8Image()   { swirlTest(otherVP8(),   MODE_IMAGE); }
-    @Test
-    public void testOtherVP9Image()   { swirlTest(otherVP9(),   MODE_IMAGE); }
-
-    @Test
-    public void testGoogH265ImageReader()   { swirlTest(googH265(),   MODE_IMAGEREADER); }
-    @Test
-    public void testGoogH264ImageReader()   { swirlTest(googH264(),   MODE_IMAGEREADER); }
-    @Test
-    public void testGoogH263ImageReader()   { swirlTest(googH263(),   MODE_IMAGEREADER); }
-    @Test
-    public void testGoogMpeg4ImageReader()  { swirlTest(googMpeg4(),  MODE_IMAGEREADER); }
-    @Test
-    public void testGoogVP8ImageReader()    { swirlTest(googVP8(),    MODE_IMAGEREADER); }
-    @Test
-    public void testGoogVP9ImageReader()    { swirlTest(googVP9(),    MODE_IMAGEREADER); }
-
-    // TODO: b/186001256
-    @FlakyTest
-    @Test
-    public void testOtherH265ImageReader()  { swirlTest(otherH265(),  MODE_IMAGEREADER); }
-    @FlakyTest
-    @Test
-    public void testOtherH264ImageReader()  { swirlTest(otherH264(),  MODE_IMAGEREADER); }
-    @Test
-    public void testOtherH263ImageReader()  { swirlTest(otherH263(),  MODE_IMAGEREADER); }
-    @Test
-    public void testOtherMpeg4ImageReader() { swirlTest(otherMpeg4(), MODE_IMAGEREADER); }
-    @FlakyTest
-    @Test
-    public void testOtherVP8ImageReader()   { swirlTest(otherVP8(),   MODE_IMAGEREADER); }
-    @FlakyTest
-    @Test
-    public void testOtherVP9ImageReader()   { swirlTest(otherVP9(),   MODE_IMAGEREADER); }
-
-    /**
-     * Test ImageReader with 480x360 non-google AVC decoding for flexible yuv format
-     */
-    @Test
-    public void testHwAVCDecode360pForFlexibleYuv() throws Exception {
-        Decoder[] decoders = other(new MediaAssets(
-                MediaFormat.MIMETYPE_VIDEO_AVC,
-                new MediaAsset(
-                        "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
-                        480 /* width */, 360 /* height */)));
-
-        decodeTest(decoders, MODE_IMAGEREADER, false /* checkSwirl */);
-    }
-
-    /**
-     * Test ImageReader with 480x360 google (SW) AVC decoding for flexible yuv format
-     */
-    @Test
-    public void testSwAVCDecode360pForFlexibleYuv() throws Exception {
-        Decoder[] decoders = goog(new MediaAssets(
-                MediaFormat.MIMETYPE_VIDEO_AVC,
-                new MediaAsset(
-                        "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
-                        480 /* width */, 360 /* height */)));
-
-        decodeTest(decoders, MODE_IMAGEREADER, false /* checkSwirl */);
-    }
-
-    private void swirlTest(Decoder[] decoders, int mode) {
-        decodeTest(decoders, mode, true /* checkSwirl */);
-    }
-
-    private void decodeTest(Decoder[] decoders, int mode, boolean checkSwirl) {
-        try {
-            boolean skipped = true;
-            for (Decoder codec : decoders) {
-                if (codec.videoDecode(mode, checkSwirl)) {
-                    skipped = false;
-                }
-            }
-            if (skipped) {
-                MediaUtils.skipTest("decoder does not any of the input files");
-            }
-        } finally {
-            closeImageReader();
         }
     }
 
