@@ -302,7 +302,7 @@ public class DeviceAtomTestCase extends AtomTestCase {
         // Wait for 2 mins.
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120_000));
         assertTrue("Stats service failed to start", waitForStatsServiceStart(60_000));
-        Thread.sleep(2_000);
+        Thread.sleep(20_000);
     }
 
     protected boolean waitForStatsServiceStart(final long waitTime) throws Exception {
