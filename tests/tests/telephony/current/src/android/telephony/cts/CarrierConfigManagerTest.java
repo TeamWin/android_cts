@@ -177,11 +177,6 @@ public class CarrierConfigManagerTest {
             assertEquals("KEY_USAGE_SETTING_INT doesn't match static default.",
                     config.getInt(CarrierConfigManager.KEY_CELLULAR_USAGE_SETTING_INT),
                             SubscriptionManager.USAGE_SETTING_UNKNOWN);
-            assertEquals("KEY_ENABLE_BACKUP_CALL_ON_OPPORTUNISTIC_DATA_BOOL"
-                    + " doesn't match static default.",
-                    config.getBoolean(
-                        CarrierConfigManager.KEY_ENABLE_BACKUP_CALL_ON_OPPORTUNISTIC_DATA_BOOL),
-                        false);
         }
 
         // These key should return default values if not customized.
