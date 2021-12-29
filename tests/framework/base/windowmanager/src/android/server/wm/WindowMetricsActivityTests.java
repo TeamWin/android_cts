@@ -46,6 +46,7 @@ import android.view.WindowMetrics;
 import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
+import java.util.function.Supplier;
 
 /**
  * Tests that verify the behavior of {@link WindowMetrics} APIs on {@link Activity activities}.
@@ -202,7 +203,6 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         // Resize the freeform activity.
         resizeActivityTask(activity.getComponentName(), WINDOW_BOUNDS.left, WINDOW_BOUNDS.top,
                 WINDOW_BOUNDS.right, WINDOW_BOUNDS.bottom);
-        mWmState.computeState(activity.getComponentName());
 
         assertMetricsMatchesLayout(activity);
 
@@ -210,7 +210,6 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         resizeActivityTask(activity.getComponentName(), RESIZED_WINDOW_BOUNDS.left,
                 RESIZED_WINDOW_BOUNDS.top, RESIZED_WINDOW_BOUNDS.right,
                 RESIZED_WINDOW_BOUNDS.bottom);
-        mWmState.computeState(activity.getComponentName());
 
         assertMetricsMatchesLayout(activity);
 
@@ -218,7 +217,6 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         resizeActivityTask(activity.getComponentName(), MOVE_OFFSET + RESIZED_WINDOW_BOUNDS.left,
                 MOVE_OFFSET + RESIZED_WINDOW_BOUNDS.top, MOVE_OFFSET + RESIZED_WINDOW_BOUNDS.right,
                 MOVE_OFFSET + RESIZED_WINDOW_BOUNDS.bottom);
-        mWmState.computeState(activity.getComponentName());
 
         assertMetricsMatchesLayout(activity);
     }
@@ -260,19 +258,21 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
         final OnLayoutChangeListener listener = activity.mListener;
         listener.waitForLayout();
 
-        final WindowMetrics currentMetrics = activity.getWindowManager().getCurrentWindowMetrics();
-        final WindowMetrics maxMetrics = activity.getWindowManager().getMaximumWindowMetrics();
+        final Supplier<WindowMetrics> currentMetrics =
+                () -> activity.getWindowManager().getCurrentWindowMetrics();
+        final Supplier<WindowMetrics> maxMetrics =
+                () -> activity.getWindowManager().getMaximumWindowMetrics();
 
         Condition.waitFor(new Condition<>("WindowMetrics must match layout metrics",
-                () -> currentMetrics.getBounds().equals(listener.getLayoutBounds()))
+                () -> currentMetrics.get().getBounds().equals(listener.getLayoutBounds()))
                 .setRetryIntervalMs(500).setRetryLimit(10)
                 .setOnFailure(unused -> fail("WindowMetrics must match layout metrics. Layout"
                         + "bounds is" + listener.getLayoutBounds() + ", while current window"
-                        + "metrics is " + currentMetrics.getBounds())));
+                        + "metrics is " + currentMetrics.get().getBounds())));
 
         final boolean isFreeForm = activity.getResources().getConfiguration().windowConfiguration
                 .getWindowingMode() == WINDOWING_MODE_FREEFORM;
-        WindowMetricsTestHelper.assertMetricsMatchesLayout(currentMetrics, maxMetrics,
+        WindowMetricsTestHelper.assertMetricsMatchesLayout(currentMetrics.get(), maxMetrics.get(),
                 listener.getLayoutBounds(), listener.getLayoutInsets(), isFreeForm);
     }
 
