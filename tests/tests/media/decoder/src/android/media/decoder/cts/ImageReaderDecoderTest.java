@@ -18,7 +18,6 @@ package android.media.decoder.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 
-import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.media.Image;
@@ -38,7 +37,7 @@ import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.AndroidTestCase;
+
 import android.util.Log;
 import android.view.Surface;
 
@@ -55,6 +54,16 @@ import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * Basic test for ImageReader APIs.
  * <p>
@@ -69,7 +78,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")
-public class ImageReaderDecoderTest extends AndroidTestCase {
+public class ImageReaderDecoderTest {
     private static final String TAG = "ImageReaderDecoderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
@@ -92,22 +101,16 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
     private Handler mHandler;
     private ImageListener mImageListener;
 
-    @Override
-    public void setContext(Context context) {
-        super.setContext(context);
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mHandlerThread = new HandlerThread(TAG);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
         mImageListener = new ImageListener();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         mHandlerThread.quitSafely();
         mHandler = null;
     }
@@ -261,6 +264,7 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
                 extractor = new MediaExtractor();
                 Preconditions.assertTestFileExists(mInpPrefix + video);
                 extractor.setDataSource(mInpPrefix + video);
+
                 mediaFormat = extractor.getTrackFormat(0);
                 mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);
 
@@ -330,42 +334,67 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
     private Decoder[] otherVP8()   { return other(VP8_ASSETS); }
     private Decoder[] otherVP9()   { return other(VP9_ASSETS); }
 
+    @Test
     public void testGoogH265Image()   { swirlTest(googH265(),   MODE_IMAGE); }
+    @Test
     public void testGoogH264Image()   { swirlTest(googH264(),   MODE_IMAGE); }
+    @Test
     public void testGoogH263Image()   { swirlTest(googH263(),   MODE_IMAGE); }
+    @Test
     public void testGoogMpeg4Image()  { swirlTest(googMpeg4(),  MODE_IMAGE); }
+    @Test
     public void testGoogVP8Image()    { swirlTest(googVP8(),    MODE_IMAGE); }
+    @Test
     public void testGoogVP9Image()    { swirlTest(googVP9(),    MODE_IMAGE); }
 
+    @Test
     public void testOtherH265Image()  { swirlTest(otherH265(),  MODE_IMAGE); }
+    @Test
     public void testOtherH264Image()  { swirlTest(otherH264(),  MODE_IMAGE); }
+    @Test
     public void testOtherH263Image()  { swirlTest(otherH263(),  MODE_IMAGE); }
+    @Test
     public void testOtherMpeg4Image() { swirlTest(otherMpeg4(), MODE_IMAGE); }
+    @Test
     public void testOtherVP8Image()   { swirlTest(otherVP8(),   MODE_IMAGE); }
+    @Test
     public void testOtherVP9Image()   { swirlTest(otherVP9(),   MODE_IMAGE); }
 
+    @Test
     public void testGoogH265ImageReader()   { swirlTest(googH265(),   MODE_IMAGEREADER); }
+    @Test
     public void testGoogH264ImageReader()   { swirlTest(googH264(),   MODE_IMAGEREADER); }
+    @Test
     public void testGoogH263ImageReader()   { swirlTest(googH263(),   MODE_IMAGEREADER); }
+    @Test
     public void testGoogMpeg4ImageReader()  { swirlTest(googMpeg4(),  MODE_IMAGEREADER); }
+    @Test
     public void testGoogVP8ImageReader()    { swirlTest(googVP8(),    MODE_IMAGEREADER); }
+    @Test
     public void testGoogVP9ImageReader()    { swirlTest(googVP9(),    MODE_IMAGEREADER); }
 
     // TODO: b/186001256
     @FlakyTest
+    @Test
     public void testOtherH265ImageReader()  { swirlTest(otherH265(),  MODE_IMAGEREADER); }
     @FlakyTest
+    @Test
     public void testOtherH264ImageReader()  { swirlTest(otherH264(),  MODE_IMAGEREADER); }
+    @Test
     public void testOtherH263ImageReader()  { swirlTest(otherH263(),  MODE_IMAGEREADER); }
+    @Test
     public void testOtherMpeg4ImageReader() { swirlTest(otherMpeg4(), MODE_IMAGEREADER); }
     @FlakyTest
+    @Test
     public void testOtherVP8ImageReader()   { swirlTest(otherVP8(),   MODE_IMAGEREADER); }
     @FlakyTest
+    @Test
     public void testOtherVP9ImageReader()   { swirlTest(otherVP9(),   MODE_IMAGEREADER); }
 
     /**
      * Test ImageReader with 480x360 non-google AVC decoding for flexible yuv format
      */
+    @Test
     public void testHwAVCDecode360pForFlexibleYuv() throws Exception {
         Decoder[] decoders = other(new MediaAssets(
                 MediaFormat.MIMETYPE_VIDEO_AVC,
@@ -379,6 +408,7 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
     /**
      * Test ImageReader with 480x360 google (SW) AVC decoding for flexible yuv format
      */
+    @Test
     public void testSwAVCDecode360pForFlexibleYuv() throws Exception {
         Decoder[] decoders = goog(new MediaAssets(
                 MediaFormat.MIMETYPE_VIDEO_AVC,
