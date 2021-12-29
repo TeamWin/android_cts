@@ -77,6 +77,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
                         if (ar != null && ar.exception == null) {
                             mCardStatus = (CardStatus) ar.result;
                             Log.i(TAG, "Sim card status: " + mCardStatus);
+                            simStatusChanged();
                         } else {
                             Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
                         }
@@ -239,8 +240,6 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getIccCardStatus from AIDL. Exception" + ex);
         }
-
-        mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_SIM_READY);
     }
 
     @Override
