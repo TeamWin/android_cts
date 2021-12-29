@@ -24,6 +24,8 @@ import static android.Manifest.permission.BLUETOOTH;
 import static android.Manifest.permission.BLUETOOTH_ADMIN;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_SCAN;
+import static android.Manifest.permission.BODY_SENSORS;
+import static android.Manifest.permission.BODY_SENSORS_BACKGROUND;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -125,10 +127,13 @@ public class SplitPermissionsSystemTest {
                     // STOPSHIP(b/184180558): replace with "S" once SDK is finalized
                     assertSplit(split, Build.VERSION_CODES.R + 1, BLUETOOTH, BLUETOOTH_ADMIN);
                     break;
+                case BODY_SENSORS:
+                    // STOPSHIP(b/212583342): replace with "T" once SDK is finalized
+                    assertSplit(split, Build.VERSION_CODES.S_V2 + 1, BODY_SENSORS_BACKGROUND);
             }
         }
 
-        assertEquals(13, seenSplits.size());
+        assertEquals(14, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, int targetSdk, String... permission) {
