@@ -52,7 +52,8 @@ public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
         final int APP_OP_RECORD_AUDIO = 27;
         final int APP_OP_RECORD_AUDIO_HOTWORD = 102;
 
-        TRANSFORMED_FROM_OP.put(APP_OP_RECORD_AUDIO, APP_OP_RECORD_AUDIO_HOTWORD);
+        // Temporarily commented out until the Trusted Hotword requirement is enforced again.
+//        TRANSFORMED_FROM_OP.put(APP_OP_RECORD_AUDIO, APP_OP_RECORD_AUDIO_HOTWORD);
     }
 
     private IBuildInfo mCtsBuild;
