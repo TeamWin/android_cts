@@ -30,6 +30,9 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiSsid;
 import android.platform.test.annotations.AppModeFull;
+import android.support.test.uiautomator.UiDevice;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -46,6 +49,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
 
     private WifiManager mWifiManager;
     private WifiLock mWifiLock;
+    private TestHelper mTestHelper;
     private static MySync mMySync;
     private boolean mWasVerboseLoggingEnabled;
     private boolean mWasScanThrottleEnabled;
@@ -66,6 +70,9 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     private static final int SCAN_FIND_BSSID_MAX_RETRY_COUNT = 5;
     private static final long SCAN_FIND_BSSID_WAIT_MSEC = 5_000L;
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
+
+    // Note: defined in ScanRequestProxy.java
+    public static final int SCAN_REQUEST_THROTTLE_MAX_IN_TIME_WINDOW_FG_APPS = 4;
 
     private static final String TEST_SSID = "TEST_SSID";
     public static final String TEST_BSSID = "04:ac:fe:45:34:10";
@@ -118,6 +125,9 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         mContext.registerReceiver(mReceiver, mIntentFilter);
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         assertThat(mWifiManager).isNotNull();
+
+        mTestHelper = new TestHelper(InstrumentationRegistry.getInstrumentation().getContext(),
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()));
 
         // turn on verbose logging for tests
         mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
@@ -342,5 +352,33 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         assertThat(currentNetwork.frequency).isEqualTo(wifiInfo.getFrequency());
         assertThat(currentNetwork.getSecurityTypes())
                 .asList().contains(wifiInfo.getCurrentSecurityType());
+    }
+
+    /**
+     * Verify that scan throttling is enforced.
+     */
+    public void testScanThrottling() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // re-enable scan throttling
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setScanThrottleEnabled(true));
+        mTestHelper.turnScreenOn();
+
+        synchronized (mMySync) {
+            for (int i = 0; i < SCAN_REQUEST_THROTTLE_MAX_IN_TIME_WINDOW_FG_APPS; ++i) {
+                mWifiManager.startScan();
+                mMySync.wait(SCAN_WAIT_MSEC);
+                assertEquals("Iteration #" + i, STATE_SCAN_RESULTS_AVAILABLE,
+                        mMySync.expectedState);
+            }
+
+            mWifiManager.startScan();
+            mMySync.wait(SCAN_WAIT_MSEC);
+            assertEquals("Should be throttled", STATE_SCAN_FAILURE, mMySync.expectedState);
+        }
     }
 }
