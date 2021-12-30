@@ -278,7 +278,7 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
-    public void testMagnificationServiceShutsDownWhileMagnifying_shouldReturnTo1x() {
+    public void testMagnificationServiceShutsDownWhileMagnifying_fullscreen_shouldReturnTo1x() {
         final MagnificationController controller = mService.getMagnificationController();
         mService.runOnServiceSync(() -> controller.setScale(2.0f, false));
 
@@ -289,6 +289,36 @@ public class AccessibilityMagnificationTest {
         final MagnificationController controller2 = service.getMagnificationController();
         assertEquals("Magnification must reset when a service dies",
                 1.0f, controller2.getScale(), 0f);
+    }
+
+    @Test
+    public void testMagnificationServiceShutsDownWhileMagnifying_windowMode_shouldReturnTo1x()
+            throws Exception {
+        final MagnificationController controller = mService.getMagnificationController();
+        final WindowManager windowManager = (WindowManager) mInstrumentation.getContext()
+                .getSystemService(Context.WINDOW_SERVICE);
+        final float scale = 2.0f;
+        final float x = windowManager.getCurrentWindowMetrics().getBounds().centerX();
+        final float y = windowManager.getCurrentWindowMetrics().getBounds().centerX();
+
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_WINDOW)
+                .setScale(scale)
+                .setCenterX(x)
+                .setCenterY(y).build();
+
+        mService.runOnServiceSync(() -> {
+            controller.setMagnificationConfig(config, false);
+        });
+        waitUntilMagnificationConfig(controller, x, y);
+
+        mService.runOnServiceSync(() -> mService.disableSelf());
+        mService = null;
+        InstrumentedAccessibilityService service =
+                mInstrumentedAccessibilityServiceRule.enableService();
+        final MagnificationController controller2 = service.getMagnificationController();
+        assertEquals("Magnification must reset when a service dies",
+                1.0f, controller2.getMagnificationConfig().getScale(), 0f);
     }
 
     @Test

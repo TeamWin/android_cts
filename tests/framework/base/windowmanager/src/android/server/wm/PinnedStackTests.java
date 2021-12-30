@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
@@ -148,11 +150,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int ROTATION_180 = 2;
     private static final int ROTATION_270 = 3;
 
-    // Corresponds to ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-    private static final int ORIENTATION_LANDSCAPE = 0;
-    // Corresponds to ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    private static final int ORIENTATION_PORTRAIT = 1;
-
     private static final float FLOAT_COMPARE_EPSILON = 0.005f;
 
     // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio
@@ -249,10 +246,10 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testEnterPipToOtherOrientation() {
         // Launch a portrait only app on the fullscreen stack
         launchActivity(TEST_ACTIVITY,
-                extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT)));
+                extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)));
         // Launch the PiP activity fixed as landscape
         launchActivity(PIP_ACTIVITY,
-                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_LANDSCAPE)));
+                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_LANDSCAPE)));
         // Enter PiP, and assert that the PiP is within bounds now that the device is back in
         // portrait
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
@@ -1083,22 +1080,21 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // Launch the PiP activity fixed as portrait, and enter picture-in-picture
         launchActivity(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT)),
+                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)),
                 extraString(EXTRA_ENTER_PIP, "true"));
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Request that the orientation is set to landscape
-        mBroadcastActionTrigger.requestOrientationForPip(ORIENTATION_LANDSCAPE);
+        mBroadcastActionTrigger.requestOrientationForPip(SCREEN_ORIENTATION_LANDSCAPE);
 
         // Launch the activity back into fullscreen and ensure that it is now in landscape
         launchActivity(PIP_ACTIVITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
-        mWmState.waitForActivityOrientation(PIP_ACTIVITY, ORIENTATION_LANDSCAPE);
-
-        final Task pipActivityTask = mWmState.getTaskByActivity(PIP_ACTIVITY);
-        assertEquals(ORIENTATION_LANDSCAPE, pipActivityTask.mOverrideConfiguration.orientation);
+        assertTrue("The PiP activity in fullscreen must be landscape",
+                mWmState.waitForActivityOrientation(
+                        PIP_ACTIVITY, Configuration.ORIENTATION_LANDSCAPE));
     }
 
     @Test
