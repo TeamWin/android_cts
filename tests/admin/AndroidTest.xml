@@ -42,13 +42,6 @@
         <option name="teardown-command" value="dpm remove-active-admin --user cur android.admin.app/.CtsDeviceAdminReceiver3" />
     </target_preparer>
 
-    <!-- TODO(b/205178429): Must set otherwise it would fail on headless system user as it tests
-    some APIs that can only be called by system user -->
-    <!--   -->
-    <target_preparer class="com.android.tradefed.targetprep.SwitchUserTargetPreparer">
-        <option name="user-type" value="system" />
-    </target_preparer>
-
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.admin.cts" />
         <option name="runtime-hint" value="17m" />
