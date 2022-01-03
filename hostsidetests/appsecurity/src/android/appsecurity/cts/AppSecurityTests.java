@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import com.android.ddmlib.Log;
@@ -41,6 +42,7 @@ import java.util.Map;
  * Set of tests that verify various security checks involving multiple apps are
  * properly enforced.
  */
+@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class AppSecurityTests extends BaseAppSecurityTest {
 

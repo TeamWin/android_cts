@@ -22,6 +22,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.Presubmit;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.role.RoleProto;
@@ -51,6 +53,7 @@ import java.util.List;
 /**
  * Set of tests that verify behavior of external storage devices.
  */
+@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String TAG = "ExternalStorageHostTest";
