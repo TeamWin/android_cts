@@ -3,6 +3,7 @@ package android.companion.cts.uiautomation
 import android.Manifest
 import android.annotation.CallSuper
 import android.app.Activity
+import android.app.role.RoleManager
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest
 import android.companion.BluetoothDeviceFilter
@@ -28,6 +29,7 @@ import androidx.test.uiautomator.UiDevice
 import org.junit.Assume
 import org.junit.Assume.assumeFalse
 import java.util.regex.Pattern
+import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -36,19 +38,13 @@ open class UiAutomationTestBase(
     protected val profile: String?,
     private val profilePermission: String?
 ) : TestBase() {
+    private val roleManager: RoleManager by lazy {
+        context.getSystemService(RoleManager::class.java)!!
+    }
+
     private val uiDevice: UiDevice by lazy { UiDevice.getInstance(instrumentation) }
     protected val confirmationUi by lazy { CompanionDeviceManagerUi(uiDevice) }
     protected val callback by lazy { RecordingCallback() }
-
-    @CallSuper
-    override fun tearDown() {
-        super.tearDown()
-
-        CompanionActivity.safeFinish()
-        confirmationUi.dismiss()
-
-        restoreDiscoveryTimeout()
-    }
 
     @CallSuper
     override fun setUp() {
@@ -59,6 +55,28 @@ open class UiAutomationTestBase(
         uiDevice.waitForIdle()
 
         callback.clearRecordedInvocations()
+
+        // Make RoleManager bypass role qualification, which would allow this self-instrumenting
+        // test package to hold "systemOnly"" CDM roles (e.g. COMPANION_DEVICE_APP_STREAMING and
+        // SYSTEM_AUTOMOTIVE_PROJECTION)
+        withShellPermissionIdentity { roleManager.isBypassingRoleQualification = true }
+    }
+
+    @CallSuper
+    override fun tearDown() {
+        // If the profile (role) is not null: remove the app from the role holders.
+        // Do it via Shell (using the targetApp) because RoleManager takes way too many arguments.
+        profile?.let { roleName -> targetApp.removeFromHoldersOfRole(roleName) }
+
+        // Restore disallowing role qualifications.
+        withShellPermissionIdentity { roleManager.isBypassingRoleQualification = false }
+
+        CompanionActivity.safeFinish()
+        confirmationUi.dismiss()
+
+        restoreDiscoveryTimeout()
+
+        super.tearDown()
     }
 
     protected fun test_userRejected(
@@ -184,6 +202,9 @@ open class UiAutomationTestBase(
         // Make sure getMyAssociations() returns the same association we received via the callback
         // as well as in onActivityResult()
         assertContentEquals(actual = cdm.myAssociations, expected = listOf(associationFromCallback))
+
+        // Make sure that the role (for the current CDM device profile) was granted.
+        assertIsProfileRoleHolder()
     }
 
     protected fun sendRequestAndLaunchConfirmation(
@@ -243,6 +264,17 @@ open class UiAutomationTestBase(
         CompanionActivity.startIntentSender(pendingConfirmation)
 
         confirmationUi.waitUntilVisible()
+    }
+
+    /**
+     * If the current CDM Device [profile] is not null, check that the application was "granted"
+     * the corresponding role (all CDM device profiles are "backed up" by roles).
+     */
+    protected fun assertIsProfileRoleHolder() = profile?.let { roleName ->
+        val roleHolders = withShellPermissionIdentity(Manifest.permission.MANAGE_ROLE_HOLDERS) {
+            roleManager.getRoleHolders(roleName)
+        }
+        assertContains(roleHolders, targetPackageName, "Not a holder of $roleName")
     }
 
     private fun getRequiredPermissions(selfManaged: Boolean): List<String> =

@@ -82,6 +82,9 @@ class AssociationEndToEndSelfManagedTest(
         // Make sure getMyAssociations() returns the same association we received via the callback
         // as well as in onActivityResult()
         assertContentEquals(actual = cdm.myAssociations, expected = listOf(associationFromCallback))
+
+        // Make sure that the role (for the current CDM device profile) was granted.
+        assertIsProfileRoleHolder()
     }
 
     companion object {
