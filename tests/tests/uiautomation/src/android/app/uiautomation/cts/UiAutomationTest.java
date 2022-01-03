@@ -39,6 +39,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.FrameStats;
 import android.view.KeyEvent;
 import android.view.WindowAnimationFrameStats;
@@ -189,7 +190,7 @@ public class UiAutomationTest {
             getInstrumentation().waitForIdleSync();
 
             // Find the application window.
-            final int windowId = findAppWindowId(uiAutomation.getWindows());
+            final int windowId = findAppWindowId(uiAutomation.getWindows(), activity);
             assertTrue(windowId >= 0);
 
             // Clear stats to be with a clean slate.
@@ -251,7 +252,7 @@ public class UiAutomationTest {
             getInstrumentation().waitForIdleSync();
 
             // Find the application window.
-            final int windowId = findAppWindowId(uiAutomation.getWindows());
+            final int windowId = findAppWindowId(uiAutomation.getWindows(), activity);
             assertTrue(windowId >= 0);
 
             // Clear stats to be with a clean slate.
@@ -755,11 +756,13 @@ public class UiAutomationTest {
         waitForAccessibilityServiceToStart();
     }
 
-    private int findAppWindowId(List<AccessibilityWindowInfo> windows) {
+    private int findAppWindowId(List<AccessibilityWindowInfo> windows, Activity activity) {
+        final CharSequence activityTitle = getActivityTitle(getInstrumentation(), activity);
         final int windowCount = windows.size();
         for (int i = 0; i < windowCount; i++) {
             AccessibilityWindowInfo window = windows.get(i);
-            if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION) {
+            if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION
+                    && TextUtils.equals(window.getTitle(), activityTitle)) {
                 return window.getId();
             }
         }
@@ -768,5 +771,12 @@ public class UiAutomationTest {
 
     private Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
+    }
+
+    private static CharSequence getActivityTitle(
+            Instrumentation instrumentation, Activity activity) {
+        final StringBuilder titleBuilder = new StringBuilder();
+        instrumentation.runOnMainSync(() -> titleBuilder.append(activity.getTitle()));
+        return titleBuilder;
     }
 }
