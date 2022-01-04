@@ -541,6 +541,7 @@ public class JobThrottlingTest {
 
         // Make sure job can be stopped and started again when charging + idle
         sendScheduleJobBroadcast(false);
+        runJob();
         assertTrue("Job didn't restart in RESTRICTED bucket when charging + idle",
                 mTestAppInterface.awaitJobStart(3_000));
     }
