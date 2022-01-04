@@ -197,6 +197,29 @@ public class DisplayCutoutTests {
     }
 
     @Test
+    public void testBuilder() {
+        final Insets safeInsets = Insets.of(1, 2, 1, 0);
+        final Insets waterfallInsets = Insets.of(1, 0, 1, 0);
+        final Rect boundingRectTop = new Rect(10, 0, 20, 2);
+        final Path cutoutPath = new Path();
+
+        final DisplayCutout displayCutout = new DisplayCutout.Builder()
+                .setSafeInsets(safeInsets)
+                .setWaterfallInsets(waterfallInsets)
+                .setBoundingRectTop(boundingRectTop)
+                .setCutoutPath(cutoutPath)
+                .build();
+
+        assertEquals(safeInsets.left, displayCutout.getSafeInsetLeft());
+        assertEquals(safeInsets.top, displayCutout.getSafeInsetTop());
+        assertEquals(safeInsets.right, displayCutout.getSafeInsetRight());
+        assertEquals(safeInsets.bottom, displayCutout.getSafeInsetBottom());
+        assertEquals(waterfallInsets, displayCutout.getWaterfallInsets());
+        assertEquals(boundingRectTop, displayCutout.getBoundingRectTop());
+        assertEquals(cutoutPath, displayCutout.getCutoutPath());
+    }
+
+    @Test
     public void testDisplayCutout_default() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT,
                 (activity, insets, displayCutout, which) -> {
