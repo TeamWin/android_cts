@@ -234,11 +234,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Thread.sleep(WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = getEventMetricDataList();
-
+        List<Integer> atomStates = data.stream().map(
+                eventMetricData -> eventMetricData.getAtom().getAudioStateChanged()
+                        .getState().getNumber())
+                .collect(Collectors.toList());
         // Because the timestamp is truncated, we skip checking time differences between state
         // changes.
-        assertStatesOccurred(stateSet, data, 0,
-                atom -> atom.getAudioStateChanged().getState().getNumber());
+        assertThat(data.size()).isEqualTo(2);
+        assertThat(new ArrayList<>(Arrays.asList(AudioStateChanged.State.ON_VALUE,
+                AudioStateChanged.State.OFF_VALUE))).containsExactlyElementsIn(atomStates);
 
         // Check that timestamp is truncated
         for (EventMetricData metric : data) {
