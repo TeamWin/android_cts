@@ -2768,24 +2768,31 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+        int slotIndex = getValidSlotIndexAndPort().getKey();
+        int portIndex = getValidSlotIndexAndPort().getValue();
         // just verify no crash
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(0, 0, 0));
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(
+                            slotIndex, portIndex, 0));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // IllegalArgumentException and IllegalStateException is okay, just not
+            // SecurityException
         } catch (SecurityException e) {
             // IllegalArgumentException is okay, just not SecurityException
             fail("iccCloseLogicalChannelByPort: SecurityException not expected");
         }
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(0, -1, 0));
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(slotIndex, -1, 0));
             fail("Expected IllegalArgumentException, invalid PortIndex");
         } catch (IllegalArgumentException e) {
             // IllegalArgumentException is expected
         }
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(0, 0, -1));
+                    mTelephonyManager, (tm) -> tm.iccCloseLogicalChannelByPort(
+                            slotIndex, portIndex, -1));
             fail("Expected IllegalArgumentException, invalid channel");
         } catch (IllegalArgumentException e) {
             // IllegalArgumentException is expected
