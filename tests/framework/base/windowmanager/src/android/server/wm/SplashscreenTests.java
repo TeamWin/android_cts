@@ -33,6 +33,7 @@ import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
+import static android.server.wm.app.Components.SPLASH_SCREEN_STYLE_THEME_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITIES;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
@@ -56,6 +57,7 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_IC
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_RESUME;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_SET_NIGHT_MODE_ON_CREATE;
+import static android.server.wm.app.Components.TestStartingWindowKeys.STYLE_THEME_COMPONENT;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowInsets.Type.systemBars;
@@ -500,22 +502,14 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     private void waitAndAssertOverrideThemeColor(int expectedColor) {
-        final ComponentName activity = SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
-        final Bundle resultExtras = Condition.waitForResult(
-                new Condition<Bundle>("splash screen theme color of " + activity)
-                        .setResultSupplier(() -> TestJournalProvider.TestJournalContainer.get(
-                                OVERRIDE_THEME_COMPONENT).extras)
-                        .setResultValidator(extras -> extras.containsKey(OVERRIDE_THEME_COLOR)));
-        if (resultExtras == null) {
-            fail("No reported override theme color from " + activity);
-        }
-        if (expectedColor > 0) {
-            assertEquals("Override theme color must match",
-                    Integer.toHexString(expectedColor),
-                    Integer.toHexString(resultExtras.getInt(OVERRIDE_THEME_COLOR)));
-        }
-        mWmState.waitForActivityRemoved(activity);
-        separateTestJournal();
+        waitAndAssertForSelfFinishActivity(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                OVERRIDE_THEME_COMPONENT, OVERRIDE_THEME_COLOR, result -> {
+                if (expectedColor > 0) {
+                    assertEquals("Override theme color must match",
+                            Integer.toHexString(expectedColor),
+                            Integer.toHexString(result.getInt(OVERRIDE_THEME_COLOR)));
+                }
+            });
     }
 
     @Test
@@ -652,5 +646,50 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
                 intent -> {});
         waitAndAssertOverrideThemeColor(Color.BLUE);
+    }
+
+    private void waitAndAssertForSelfFinishActivity(ComponentName activity, String component,
+            String validateKey, Consumer<Bundle> assertConsumer) {
+        final Bundle resultExtras = Condition.waitForResult(
+                new Condition<Bundle>("splash screen of " + activity)
+                        .setResultSupplier(() -> TestJournalProvider.TestJournalContainer.get(
+                                component).extras)
+                        .setResultValidator(extras -> extras.containsKey(validateKey)));
+        if (resultExtras == null) {
+            fail("No reported validate key from " + activity);
+        }
+        assertConsumer.accept(resultExtras);
+        mWmState.waitForActivityRemoved(activity);
+        separateTestJournal();
+    }
+
+    private void waitAndAssertStyleThemeIcon(boolean expectContainIcon) {
+        waitAndAssertForSelfFinishActivity(SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
+                STYLE_THEME_COMPONENT, CONTAINS_CENTER_VIEW,
+                result -> assertEquals("Splash screen style must match",
+                        expectContainIcon, result.getBoolean(CONTAINS_CENTER_VIEW)));
+    }
+
+    @Test
+    public void testDefineSplashScreenStyleFromTheme() {
+        assumeFalse(isLeanBack());
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
+
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
+                intent -> {}, noIconOptions);
+        waitAndAssertStyleThemeIcon(false);
+
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
+                intent -> {});
+        waitAndAssertStyleThemeIcon(true);
+
+        // launch from app
+        final Intent intent = new Intent(Intent.ACTION_VIEW)
+                .setComponent(SPLASH_SCREEN_STYLE_THEME_ACTIVITY)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        waitAndAssertStyleThemeIcon(true);
     }
 }
