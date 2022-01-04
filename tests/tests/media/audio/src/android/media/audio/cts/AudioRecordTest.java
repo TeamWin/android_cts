@@ -180,7 +180,7 @@ public class AudioRecordTest {
             return;
         }
         final int SLEEP_TIME = 10;
-        final int RECORD_TIME = 10000;
+        final int RECORD_TIME = 5000;
         assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
 
         int markerInFrames = mAudioRecord.getSampleRate() / 2;
