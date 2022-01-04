@@ -245,4 +245,7 @@
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionState" />
     <option name="compatibility:exclude-filter" value="CtsStatsdAtomHostTestCases android.cts.statsd.atom.UidAtomTests#testDangerousPermissionStateSampled" />
 
+    <!-- b/204721335 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerJetpackTestCases android.server.wm.jetpack.SidecarTest#testSidecarInterface_onWindowLayoutChangeListener" />
+
 </configuration>
