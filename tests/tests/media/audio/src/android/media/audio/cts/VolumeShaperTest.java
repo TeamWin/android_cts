@@ -1036,9 +1036,26 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // runTestStepRampPlayer
 
-    @LargeTest
-    public void testPlayerTwoShapers() throws Exception {
-        final String TEST_NAME = "testPlayerTwoShapers";
+    public void testTwoShapersAudioTrack() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestTwoShapersPlayer("testTwoShapersAudioTrack", player);
+        }
+    }
+
+    public void testTwoShapersMediaPlayerNonOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestTwoShapersPlayer("testTwoShapersMediaPlayerNonOffloaded", player);
+        }
+    }
+
+    public void testTwoShapersMediaPlayerOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestTwoShapersPlayer("testTwoShapersMediaPlayerOffloaded", player);
+        }
+    }
+
+    private void runTestTwoShapersPlayer(String testName, Player player) throws Exception {
+
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
@@ -1058,69 +1075,65 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                     .reflectTimes()
                     .build();
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaperRamp = player.createVolumeShaper(LONG_RAMP);
-                    VolumeShaper volumeShaperDuck = player.createVolumeShaper(LONG_DUCK);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
+        try (
+                VolumeShaper volumeShaperRamp = player.createVolumeShaper(LONG_RAMP);
+                VolumeShaper volumeShaperDuck = player.createVolumeShaper(LONG_DUCK);
+                ) {
+            final float firstVolumeRamp = volumeShaperRamp.getVolume();
+            final float firstVolumeDuck = volumeShaperDuck.getVolume();
+            assertEquals(testName
+                    + " first ramp value should be 0.f, but is " + firstVolumeRamp,
+                    0.f, firstVolumeRamp, VOLUME_TOLERANCE);
+            assertEquals(testName
+                    + " first duck value should be 1.f, but is " + firstVolumeDuck,
+                    1.f, firstVolumeDuck, VOLUME_TOLERANCE);
+            player.start();
 
-                final float firstVolumeRamp = volumeShaperRamp.getVolume();
-                final float firstVolumeDuck = volumeShaperDuck.getVolume();
-                assertEquals(testName
-                        + " first ramp value should be 0.f, but is " + firstVolumeRamp,
-                        0.f, firstVolumeRamp, VOLUME_TOLERANCE);
-                assertEquals(testName
-                        + " first duck value should be 1.f, but is " + firstVolumeDuck,
-                        1.f, firstVolumeDuck, VOLUME_TOLERANCE);
-                player.start();
+            Thread.sleep(1000);
 
-                Thread.sleep(1000);
+            final float lastVolumeRamp = volumeShaperRamp.getVolume();
+            final float lastVolumeDuck = volumeShaperDuck.getVolume();
+            assertEquals(testName
+                    + " no-play ramp value should be 0.f, but is " + lastVolumeRamp,
+                    0.f, lastVolumeRamp, VOLUME_TOLERANCE);
+            assertEquals(testName
+                    + " no-play duck value should be 1.f, but is " + lastVolumeDuck,
+                    1.f, lastVolumeDuck, VOLUME_TOLERANCE);
 
-                final float lastVolumeRamp = volumeShaperRamp.getVolume();
-                final float lastVolumeDuck = volumeShaperDuck.getVolume();
-                assertEquals(testName
-                        + " no-play ramp value should be 0.f, but is " + lastVolumeRamp,
-                        0.f, lastVolumeRamp, VOLUME_TOLERANCE);
-                assertEquals(testName
-                        + " no-play duck value should be 1.f, but is " + lastVolumeDuck,
-                        1.f, lastVolumeDuck, VOLUME_TOLERANCE);
+            Log.d(TAG, testName + " volume should be silent and start increasing now");
 
-                Log.d(TAG, testName + " volume should be silent and start increasing now");
+            // we actually start now!
+            volumeShaperRamp.apply(VolumeShaper.Operation.PLAY);
+            volumeShaperDuck.apply(VolumeShaper.Operation.PLAY);
+            Thread.sleep(durationMs / 2);
 
-                // we actually start now!
-                volumeShaperRamp.apply(VolumeShaper.Operation.PLAY);
-                volumeShaperDuck.apply(VolumeShaper.Operation.PLAY);
-                Thread.sleep(durationMs / 2);
+            Log.d(TAG, testName + " volume should be > 0 and about maximum here");
+            final float lastVolumeRamp2 = volumeShaperRamp.getVolume();
+            final float lastVolumeDuck2 = volumeShaperDuck.getVolume();
+            assertTrue(testName
+                    + " last ramp value should be > 0.f " + lastVolumeRamp2,
+                    lastVolumeRamp2 > 0.f);
+            assertTrue(testName
+                    + " last duck value should be < 1.f " + lastVolumeDuck2,
+                    lastVolumeDuck2 < 1.f);
 
-                Log.d(TAG, testName + " volume should be > 0 and about maximum here");
-                final float lastVolumeRamp2 = volumeShaperRamp.getVolume();
-                final float lastVolumeDuck2 = volumeShaperDuck.getVolume();
-                assertTrue(testName
-                        + " last ramp value should be > 0.f " + lastVolumeRamp2,
-                        lastVolumeRamp2 > 0.f);
-                assertTrue(testName
-                        + " last duck value should be < 1.f " + lastVolumeDuck2,
-                        lastVolumeDuck2 < 1.f);
+            Log.d(TAG, testName + " volume should start decreasing shortly");
+            Thread.sleep(durationMs / 2 + 1000);
 
-                Log.d(TAG, testName + " volume should start decreasing shortly");
-                Thread.sleep(durationMs / 2 + 1000);
+            Log.d(TAG, testName + " volume should be silent now");
+            final float lastVolumeRamp3 = volumeShaperRamp.getVolume();
+            final float lastVolumeDuck3 = volumeShaperDuck.getVolume();
+            assertEquals(testName
+                    + " last ramp value should be 1.f, but is " + lastVolumeRamp3,
+                    1.f, lastVolumeRamp3, VOLUME_TOLERANCE);
+            assertEquals(testName
+                    + " last duck value should be 0.f, but is " + lastVolumeDuck3,
+                    0.f, lastVolumeDuck3, VOLUME_TOLERANCE);
 
-                Log.d(TAG, testName + " volume should be silent now");
-                final float lastVolumeRamp3 = volumeShaperRamp.getVolume();
-                final float lastVolumeDuck3 = volumeShaperDuck.getVolume();
-                assertEquals(testName
-                        + " last ramp value should be 1.f, but is " + lastVolumeRamp3,
-                        1.f, lastVolumeRamp3, VOLUME_TOLERANCE);
-                assertEquals(testName
-                        + " last duck value should be 0.f, but is " + lastVolumeDuck3,
-                        0.f, lastVolumeDuck3, VOLUME_TOLERANCE);
-
-                runCloseTest(testName, volumeShaperRamp);
-                runCloseTest(testName, volumeShaperDuck);
-            }
+            runCloseTest(testName, volumeShaperRamp);
+            runCloseTest(testName, volumeShaperDuck);
         }
-    } // testPlayerTwoShapers
+    } // runTestTwoShapersPlayer
 
     // tests that shaper advances in the presence of pause and stop (time based after start).
     @LargeTest
