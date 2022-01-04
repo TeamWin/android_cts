@@ -1834,6 +1834,45 @@ public class TunerTest {
         f.close();
     }
 
+    @Test
+    public void testMaxNumberOfFrontends() throws Exception {
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        for (int i = 0; i < ids.size(); i++) {
+            int type = mTuner.getFrontendInfoById(ids.get(i)).getType();
+            if (TunerVersionChecker.isHigherOrEqualVersionTo(
+                        TunerVersionChecker.TUNER_VERSION_2_0)) {
+                int defaultMax = -1;
+                int status;
+                // Check default value
+                defaultMax = mTuner.getMaxNumberOfFrontends(type);
+                assertTrue(defaultMax > 0);
+                // Set to -1
+                status = mTuner.setMaxNumberOfFrontends(type, -1);
+                assertEquals(Tuner.RESULT_INVALID_ARGUMENT, status);
+                // Set to defaultMax + 1
+                status = mTuner.setMaxNumberOfFrontends(type, defaultMax + 1);
+                assertEquals(Tuner.RESULT_INVALID_ARGUMENT, status);
+                // Set to 0
+                status = mTuner.setMaxNumberOfFrontends(type, 0);
+                assertEquals(Tuner.RESULT_SUCCESS, status);
+                // Check after set
+                int currentMax = -1;
+                currentMax = mTuner.getMaxNumberOfFrontends(type);
+                assertEquals(currentMax, 0);
+                // Reset to default
+                status = mTuner.setMaxNumberOfFrontends(type, defaultMax);
+                assertEquals(Tuner.RESULT_SUCCESS, status);
+                currentMax = mTuner.getMaxNumberOfFrontends(type);
+                assertEquals(defaultMax, currentMax);
+            } else {
+                int defaultMax = mTuner.getMaxNumberOfFrontends(type);
+                assertEquals(defaultMax, -1);
+                int status = mTuner.setMaxNumberOfFrontends(type, 0);
+                assertEquals(Tuner.RESULT_UNAVAILABLE, status);
+            }
+        }
+    }
 
     public static Filter createTsSectionFilter(
             Tuner tuner, Executor e, FilterCallback cb) {
