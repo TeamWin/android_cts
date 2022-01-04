@@ -16,6 +16,9 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
@@ -34,14 +37,17 @@ import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
-import com.android.compatibility.common.util.CtsAndroidTestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.lang.AutoCloseable;
 import java.util.Arrays;
+
+import junitparams.JUnitParamsRunner;
 
 /**
  * VolumeShaperTest is automated using VolumeShaper.getVolume() to verify that a ramp
@@ -53,7 +59,8 @@ import java.util.Arrays;
  * adb logcat | grep VolumeShaperTest
  */
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class VolumeShaperTest extends CtsAndroidTestCase {
+@RunWith(JUnitParamsRunner.class)
+public class VolumeShaperTest {
     private static final String TAG = "VolumeShaperTest";
 
     // ramp or duck time (duration) used in tests.
@@ -343,6 +350,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testVolumeShaperConfigurationBuilder() throws Exception {
         final String TEST_NAME = "testVolumeShaperConfigurationBuilder";
 
@@ -500,6 +508,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testVolumeShaperConfigurationBuilder
 
     @SmallTest
+    @Test
     public void testVolumeShaperConfigurationParcelable() throws Exception {
         final String TEST_NAME = "testVolumeShaperConfigurationParcelable";
 
@@ -525,6 +534,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testVolumeShaperConfigurationParcelable
 
     @SmallTest
+    @Test
     public void testVolumeShaperOperationParcelable() throws Exception {
         final String TEST_NAME = "testVolumeShaperOperationParcelable";
 
@@ -553,6 +563,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     // to crash due to memory or performance issues.  Typically around 16 app based
     // shapers are allowed by the audio server.
     @SmallTest
+    @Test
     public void testMaximumShapers() {
         final String TEST_NAME = "testMaximumShapers";
         if (!hasAudioOutput()) {
@@ -582,18 +593,21 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // testMaximumShapers
 
+    @Test
     public void testDuckAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestDuckPlayer("testDuckAudioTrack", player);
         }
     }
 
+    @Test
     public void testDuckMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestDuckPlayer("testDuckMediaPlayerNonOffloaded", player);
         }
     }
 
+    @Test
     public void testDuckMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestDuckPlayer("testDuckMediaPlayerOffloaded", player);
@@ -618,6 +632,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @LargeTest
+    @Test
     public void testPlayerRamp() throws Exception {
         final String TEST_NAME = "testPlayerRamp";
         if (!hasAudioOutput()) {
@@ -643,6 +658,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testPlayerRamp
 
     @FlakyTest
+    @Test
     public void testCornerCaseAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestCornerCasePlayer("testCornerCaseAudioTrack", player);
@@ -650,6 +666,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @FlakyTest
+    @Test
     public void testCornerCaseMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestCornerCasePlayer("testCornerCaseMediaPlayerNonOffloaded", player);
@@ -657,6 +674,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @FlakyTest
+    @Test
     public void testCornerCaseMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestCornerCasePlayer("testCornerCaseMediaPlayerOffloaded", player);
@@ -704,6 +722,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
     @FlakyTest
     @LargeTest
+    @Test
     public void testPlayerCornerCase2() throws Exception {
         final String TEST_NAME = "testPlayerCornerCase2";
         if (!hasAudioOutput()) {
@@ -747,6 +766,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
     @FlakyTest
     @LargeTest
+    @Test
     public void testPlayerJoin() throws Exception {
         final String TEST_NAME = "testPlayerJoin";
         if (!hasAudioOutput()) {
@@ -784,6 +804,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testPlayerJoin
 
     @LargeTest
+    @Test
     public void testPlayerCubicMonotonic() throws Exception {
         final String TEST_NAME = "testPlayerCubicMonotonic";
         if (!hasAudioOutput()) {
@@ -907,18 +928,21 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // testPlayerCubicMonotonic
 
+    @Test
     public void testStepRampAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestStepRampPlayer("testStepRampAudioTrack", player);
         }
     }
 
+    @Test
     public void testStepRampMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestStepRampPlayer("testStepRampMediaPlayerNonOffloaded", player);
         }
     }
 
+    @Test
     public void testStepRampMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestStepRampPlayer("testStepRampMediaPlayerOffloaded", player);
@@ -1045,18 +1069,21 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // runTestStepRampPlayer
 
+    @Test
     public void testTwoShapersAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestTwoShapersPlayer("testTwoShapersAudioTrack", player);
         }
     }
 
+    @Test
     public void testTwoShapersMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestTwoShapersPlayer("testTwoShapersMediaPlayerNonOffloaded", player);
         }
     }
 
+    @Test
     public void testTwoShapersMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestTwoShapersPlayer("testTwoShapersMediaPlayerOffloaded", player);
@@ -1146,6 +1173,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
     // tests that shaper advances in the presence of pause and stop (time based after start).
     @LargeTest
+    @Test
     public void testPlayerRunDuringPauseStop() throws Exception {
         final String TEST_NAME = "testPlayerRunDuringPauseStop";
         if (!hasAudioOutput()) {
@@ -1436,4 +1464,8 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         assertTrue(testName + " volume should be greater than 0.f",
                 volumeShaper.getVolume() > 0.f);
     } // runStartSyncTest
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
 }
