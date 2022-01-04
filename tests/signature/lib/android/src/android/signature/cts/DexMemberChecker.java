@@ -17,7 +17,7 @@
 package android.signature.cts;
 
 import android.util.Log;
-import java.lang.reflect.Constructor;
+
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -97,8 +97,7 @@ public class DexMemberChecker {
             if (jni) {
                 try {
                     observer.fieldAccessibleViaJni(hasMatchingField_JNI(klass, field), field);
-                } catch (ClassNotFoundException | ExceptionInInitializerError | UnsatisfiedLinkError
-                        | NoClassDefFoundError e) {
+                } catch (ClassNotFoundException | Error e) {
                     if ((e instanceof NoClassDefFoundError)
                             && !(e.getCause() instanceof ExceptionInInitializerError)
                             && !(e.getCause() instanceof UnsatisfiedLinkError)) {
@@ -122,11 +121,8 @@ public class DexMemberChecker {
             if (jni) {
                 try {
                     observer.methodAccessibleViaJni(hasMatchingMethod_JNI(klass, method), method);
-                } catch (ExceptionInInitializerError | UnsatisfiedLinkError
-                        | NoClassDefFoundError e) {
-                    if ((e instanceof NoClassDefFoundError)
-                            && !(e.getCause() instanceof ExceptionInInitializerError)
-                            && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                } catch (Error e) {
+                    if ((e instanceof NoClassDefFoundError) && !(e.getCause() instanceof Error)) {
                         throw e;
                     }
 
