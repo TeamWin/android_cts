@@ -367,21 +367,16 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     @Test
-    public void testImeVisibilityWhenDismisingDialogWithImeFocused() throws Exception {
+    public void testImeVisibilityWhenDismissingDialogWithImeFocused() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        final InputMethodManager imm = instrumentation.getTargetContext().getSystemService(
-                InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getInstrumentation().getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             // Launch a simple test activity
-            final TestActivity testActivity = TestActivity.startSync(activity -> {
-                final LinearLayout layout = new LinearLayout(activity);
-                return layout;
-            });
+            final TestActivity testActivity = TestActivity.startSync(LinearLayout::new);
 
             // Launch a dialog
             final String marker = getTestMarker();
@@ -436,11 +431,14 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectImeInvisible(TIMEOUT);
 
             // Expect fallback input connection started and keyboard invisible after activity
-            // focused.
-            final ImeEvent onStart = expectEvent(stream,
-                    event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
-            assertTrue(onStart.getEnterState().hasFallbackInputConnection());
-            TestUtils.waitOnMainUntil(() -> testActivity.hasWindowFocus(), TIMEOUT);
+            // focused unless avoidable keyboard startup is desired,
+            // in which case, no fallback will be started.
+            if (!isPreventImeStartup()) {
+                final ImeEvent onStart = expectEvent(stream,
+                        event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+                assertTrue(onStart.getEnterState().hasFallbackInputConnection());
+            }
+            TestUtils.waitOnMainUntil(testActivity::hasWindowFocus, TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.GONE, TIMEOUT);
             expectImeInvisible(TIMEOUT);
