@@ -533,7 +533,7 @@ public class AudioHelper {
                                 .setBufferSizeInBytes(bufferOutSize)
                                 .build();
                 Assert.assertEquals(AudioTrack.STATE_INITIALIZED, mTrack.getState());
-                mPosition = 0;
+                mTrackPosition = 0;
                 mFinishAtMs = 0;
             }
         }
@@ -545,8 +545,9 @@ public class AudioHelper {
                     AudioFormat.ENCODING_PCM_8BIT, getAudioFormat());
             int samples = super.read(audioData, offsetInBytes, sizeInBytes);
             if (mTrack != null) {
-                Assert.assertEquals(samples, mTrack.write(audioData, offsetInBytes, samples));
-                mPosition += samples / mTrack.getChannelCount();
+                final int result = mTrack.write(audioData, offsetInBytes, samples,
+                        AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / mTrack.getChannelCount();
             }
             return samples;
         }
@@ -558,9 +559,9 @@ public class AudioHelper {
                     AudioFormat.ENCODING_PCM_8BIT, getAudioFormat());
             int samples = super.read(audioData, offsetInBytes, sizeInBytes, readMode);
             if (mTrack != null) {
-                Assert.assertEquals(samples, mTrack.write(audioData, offsetInBytes, samples,
-                        AudioTrack.WRITE_BLOCKING));
-                mPosition += samples / mTrack.getChannelCount();
+                final int result = mTrack.write(audioData, offsetInBytes, samples,
+                        AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / mTrack.getChannelCount();
             }
             return samples;
         }
@@ -572,8 +573,9 @@ public class AudioHelper {
                     AudioFormat.ENCODING_PCM_16BIT, getAudioFormat());
             int samples = super.read(audioData, offsetInShorts, sizeInShorts);
             if (mTrack != null) {
-                Assert.assertEquals(samples, mTrack.write(audioData, offsetInShorts, samples));
-                mPosition += samples / mTrack.getChannelCount();
+                final int result = mTrack.write(audioData, offsetInShorts, samples,
+                        AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / mTrack.getChannelCount();
             }
             return samples;
         }
@@ -585,9 +587,9 @@ public class AudioHelper {
                     AudioFormat.ENCODING_PCM_16BIT, getAudioFormat());
             int samples = super.read(audioData, offsetInShorts, sizeInShorts, readMode);
             if (mTrack != null) {
-                Assert.assertEquals(samples, mTrack.write(audioData, offsetInShorts, samples,
-                        AudioTrack.WRITE_BLOCKING));
-                mPosition += samples / mTrack.getChannelCount();
+                final int result = mTrack.write(audioData, offsetInShorts, samples,
+                        AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / mTrack.getChannelCount();
             }
             return samples;
         }
@@ -599,9 +601,9 @@ public class AudioHelper {
                     AudioFormat.ENCODING_PCM_FLOAT, getAudioFormat());
             int samples = super.read(audioData, offsetInFloats, sizeInFloats, readMode);
             if (mTrack != null) {
-                Assert.assertEquals(samples, mTrack.write(audioData, offsetInFloats, samples,
-                        AudioTrack.WRITE_BLOCKING));
-                mPosition += samples / mTrack.getChannelCount();
+                final int result = mTrack.write(audioData, offsetInFloats, samples,
+                        AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / mTrack.getChannelCount();
             }
             return samples;
         }
@@ -615,10 +617,9 @@ public class AudioHelper {
                 // which does check position and limit.
                 ByteBuffer copy = audioBuffer.duplicate();
                 copy.position(0).limit(bytes);  // read places data at the start of the buffer.
-                Assert.assertEquals(bytes, mTrack.write(copy, bytes, AudioTrack.WRITE_BLOCKING));
-                mPosition += bytes /
-                        (mTrack.getChannelCount()
-                                * AudioFormat.getBytesPerSample(mTrack.getAudioFormat()));
+                final int result =  mTrack.write(copy, bytes, AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / (mTrack.getChannelCount()
+                        * AudioFormat.getBytesPerSample(mTrack.getAudioFormat()));
             }
             return bytes;
         }
@@ -632,10 +633,9 @@ public class AudioHelper {
                 // which does check position and limit.
                 ByteBuffer copy = audioBuffer.duplicate();
                 copy.position(0).limit(bytes);  // read places data at the start of the buffer.
-                Assert.assertEquals(bytes, mTrack.write(copy, bytes, AudioTrack.WRITE_BLOCKING));
-                mPosition += bytes /
-                        (mTrack.getChannelCount()
-                                * AudioFormat.getBytesPerSample(mTrack.getAudioFormat()));
+                final int result = mTrack.write(copy, bytes, AudioTrack.WRITE_NON_BLOCKING);
+                mTrackPosition += result / (mTrack.getChannelCount()
+                        * AudioFormat.getBytesPerSample(mTrack.getAudioFormat()));
             }
             return bytes;
         }
@@ -652,11 +652,11 @@ public class AudioHelper {
         public void stop() {
             super.stop();
             if (mTrack != null) {
-                if (mPosition > 0) { // stop may be called multiple times.
-                    final int remainingFrames = mPosition - mTrack.getPlaybackHeadPosition();
+                if (mTrackPosition > 0) { // stop may be called multiple times.
+                    final int remainingFrames = mTrackPosition - mTrack.getPlaybackHeadPosition();
                     mFinishAtMs = System.currentTimeMillis()
                             + remainingFrames * 1000 / mTrack.getSampleRate();
-                    mPosition = 0;
+                    mTrackPosition = 0;
                 }
                 mTrack.stop(); // allows remaining data to play out
             }
@@ -681,7 +681,7 @@ public class AudioHelper {
 
         public AudioTrack mTrack;
         private final static String TAG = "AudioRecordAudit";
-        private int mPosition;
+        private int mTrackPosition;
         private long mFinishAtMs;
     }
 

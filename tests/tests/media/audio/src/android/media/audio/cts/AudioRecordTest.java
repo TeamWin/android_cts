@@ -1009,7 +1009,7 @@ public class AudioRecordTest {
             boolean useByteBuffer, boolean blocking,
             final boolean auditRecording, final boolean isChannelIndex,
             final int TEST_SR, final int TEST_CONF, final int TEST_FORMAT) throws Exception {
-        final int TEST_TIME_MS = auditRecording ? 60000 : 2000;
+        final int TEST_TIME_MS = auditRecording ? 10000 : 2000;
         doTest(reportName, localRecord, customHandler, periodsPerSecond, markerPeriodsPerSecond,
                 useByteBuffer, blocking, auditRecording, isChannelIndex,
                 TEST_SR, TEST_CONF, TEST_FORMAT, TEST_TIME_MS);
