@@ -1016,6 +1016,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     private void testStreamMuting(int stream) {
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.QUERY_AUDIO_STATE);
+
+        final int streamVolume = mAudioManager.getLastAudibleStreamVolume(stream);
+
         // Voice call requires MODIFY_PHONE_STATE, so we should not be able to mute
         if (stream == STREAM_VOICE_CALL) {
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
@@ -1026,21 +1031,31 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertTrue("Muting stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
 
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
             assertFalse("Unmuting stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
+
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
 
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
             assertTrue("Toggling mute on stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
 
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
             assertFalse("Toggling mute on stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
 
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
             mAudioManager.setStreamMute(stream, true);
             assertTrue("Muting stream " + stream + " using setStreamMute failed",
                     mAudioManager.isStreamMute(stream));
+
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
 
             // mute it three more times to verify the ref counting is gone.
             mAudioManager.setStreamMute(stream, true);
@@ -1051,6 +1066,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertFalse("Unmuting stream " + stream + " using setStreamMute failed.",
                     mAudioManager.isStreamMute(stream));
         }
+        assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     public void testSetInvalidRingerMode() {
