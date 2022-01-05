@@ -34,4 +34,8 @@
     <style name="window_activity_transitions" parent="@android:style/Theme.DeviceDefault">
         <item name="android:windowActivityTransitions">true</item>
     </style>
+
+    <style name="Theme_NoSwipeDismiss">
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
 </resources>
