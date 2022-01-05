@@ -483,5 +483,28 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         }
     }
 
-    // Implementation of IRadioNetworkIndication functions
+    @Override
+    public void setUsageSetting(int serial, int usageSetting) {
+        Log.d(TAG, "setUsageSetting");
+        int remainingRetries = 0;
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.setUsageSettingResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to setUsageSetting from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
+    public void getUsageSetting(int serial) {
+        Log.d(TAG, "getUsageSetting");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioNetworkResponse.getUsageSettingResponse(rsp, -1 /* Invalid value */);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to getUsageSetting from AIDL. Exception" + ex);
+        }
+    }
 }
