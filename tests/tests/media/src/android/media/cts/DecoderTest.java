@@ -16,32 +16,50 @@
 
 package android.media.cts;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel31;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel32;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel4;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel42;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileHigh;
+import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel31;
+import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel41;
+import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.ImageFormat;
 import android.hardware.display.DisplayManager;
-import android.media.AudioTimestamp;
-import android.media.Image;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioTimestamp;
+import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
-import android.media.MediaCodecList;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.ParcelFileDescriptor;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
-import android.net.Uri;
-import android.os.Bundle;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
@@ -51,8 +69,10 @@ import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SdkSuppress;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -66,25 +86,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-import java.util.zip.CRC32;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static android.media.MediaCodecInfo.CodecProfileLevel.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.zip.CRC32;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
@@ -4105,6 +4112,59 @@ public class DecoderTest extends MediaPlayerTestBase {
     public void testTunneledVideoPeekOffVp9() throws Exception {
         testTunneledVideoPeekOff(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+    }
+
+    /**
+     * Test tunneled audio PTS gaps with PCM audio.
+     * If there exist PTS Gaps in AudioTrack playback, the framePosition returned by
+     * AudioTrack#getTimestamp must not advance for any silent frames rendered to fill the gap.
+     */
+    @Test
+    public void testTunneledAudioPtsGapsPcm() throws Exception {
+        testTunneledAudioPtsGaps(MediaFormat.MIMETYPE_AUDIO_OPUS,
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+    }
+
+    private void testTunneledAudioPtsGaps(String mimeType, String fileName) throws Exception {
+        AudioManager am = mContext.getSystemService(AudioManager.class);
+
+        mMediaCodecPlayer = new MediaCodecTunneledPlayer(mContext,
+                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+
+        final Uri mediaUri = Uri.fromFile(new File(mInpPrefix, fileName));
+        mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
+
+        assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
+        assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
+
+        mMediaCodecPlayer.startThread();
+
+        // Stop writing to the AudioTrack after 200 ms.
+        Thread.sleep(200);
+        mMediaCodecPlayer.stopWritingToAudioTrack(true);
+
+        // Resume writing to the audioTrack after 1 sec. Write only for 200 ms.
+        Thread.sleep(1000);
+        mMediaCodecPlayer.stopWritingToAudioTrack(false);
+        Thread.sleep(200);
+        mMediaCodecPlayer.stopWritingToAudioTrack(true);
+
+        // Sleep till framePosition stabilizes, i.e. playback is complete or till max 3 seconds.
+        long framePosCurrent = 0;
+        int totalSleepMs = 0;
+        while (totalSleepMs < 3000
+                && framePosCurrent != mMediaCodecPlayer.getTimestamp().framePosition) {
+            framePosCurrent = mMediaCodecPlayer.getTimestamp().framePosition;
+            Thread.sleep(500);
+            totalSleepMs += 500;
+        }
+
+        // Verify if number of frames written and played are same. This ensures the
+        // framePosition returned by AudioTrack#getTimestamp did not advance for any silent frames
+        // rendered to fill PTS gaps.
+        assertEquals("Number of frames written != Number of frames played",
+                mMediaCodecPlayer.getFramesWritten(),
+                mMediaCodecPlayer.getTimestamp().framePosition);
     }
 
     /**

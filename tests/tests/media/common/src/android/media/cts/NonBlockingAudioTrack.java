@@ -15,15 +15,15 @@
  */
 package android.media.cts;
 
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
-import android.media.AudioAttributes;
-import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class for playing audio by using audio track.
@@ -43,8 +43,11 @@ public class NonBlockingAudioTrack {
     private AudioTrack mAudioTrack;
     private int mSampleRate;
     private int mNumBytesQueued = 0;
+    private AtomicInteger mTotalBytesWritten = new AtomicInteger(0);
     private LinkedList<QueueElement> mQueue = new LinkedList<QueueElement>();
     private boolean mStopped;
+    private boolean mShouldStopWriting = false;
+    private int mBufferSizeInBytes;
 
     public NonBlockingAudioTrack(int sampleRate, int channelCount, boolean hwAvSync,
                     int audioSessionId) {
@@ -69,7 +72,7 @@ public class NonBlockingAudioTrack {
                     channelConfig,
                     AudioFormat.ENCODING_PCM_16BIT);
 
-        int bufferSize = 2 * minBufferSize;
+        mBufferSizeInBytes = 2 * minBufferSize;
 
         if (!hwAvSync) {
             mAudioTrack = new AudioTrack(
@@ -77,7 +80,7 @@ public class NonBlockingAudioTrack {
                     sampleRate,
                     channelConfig,
                     AudioFormat.ENCODING_PCM_16BIT,
-                    bufferSize,
+                    mBufferSizeInBytes,
                     AudioTrack.MODE_STREAM);
         }
         else {
@@ -91,7 +94,7 @@ public class NonBlockingAudioTrack {
                             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                             .setSampleRate(sampleRate)
                             .build();
-             mAudioTrack = new AudioTrack(audioAttributes, audioFormat, bufferSize,
+            mAudioTrack = new AudioTrack(audioAttributes, audioFormat, mBufferSizeInBytes,
                                     AudioTrack.MODE_STREAM, audioSessionId);
         }
 
@@ -151,7 +154,7 @@ public class NonBlockingAudioTrack {
     }
 
     public void process() {
-        while (!mQueue.isEmpty()) {
+        while (!mQueue.isEmpty() && !mShouldStopWriting) {
             QueueElement element = mQueue.peekFirst();
             int written = mAudioTrack.write(element.data, element.size,
                                             AudioTrack.WRITE_NON_BLOCKING, element.pts);
@@ -159,6 +162,7 @@ public class NonBlockingAudioTrack {
                 throw new RuntimeException("Audiotrack.write() failed.");
             }
 
+            mTotalBytesWritten.addAndGet(written);
             mNumBytesQueued -= written;
             element.size -= written;
             if (element.size != 0) {
@@ -171,6 +175,17 @@ public class NonBlockingAudioTrack {
             mNumBytesQueued = 0;
             mStopped = false;
         }
+    }
+
+    public int getFramesWritten() {
+        if (mAudioTrack == null) {
+            return -1;
+        }
+        return mTotalBytesWritten.get() / mAudioTrack.getFormat().getFrameSizeInBytes();
+    }
+
+    public void stopWriting(boolean shouldStopWriting) {
+        mShouldStopWriting = shouldStopWriting;
     }
 
     public int getPlayState() {
