@@ -82,6 +82,9 @@
         <activity android:label="@string/accessibility_drag_and_drop_test_activity"
                   android:name=".activities.AccessibilityDragAndDropActivity"
                   android:screenOrientation="locked"/>
+        <activity android:label="@string/accessibility_cache_activity"
+                  android:name=".activities.AccessibilityCacheActivity"
+                  android:screenOrientation="locked"/>
 
         <service android:name=".StubSystemActionsAccessibilityService"
              android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
