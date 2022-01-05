@@ -43,7 +43,6 @@ import android.text.style.ImageSpan;
 import android.text.style.ReplacementSpan;
 import android.util.ArrayMap;
 import android.view.View;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
@@ -114,33 +113,13 @@ public class AccessibilityNodeInfoTest {
     }
 
     /**
-     * Tests if {@link AccessibilityNodeInfo}s are properly reused.
-     */
-    @SmallTest
-    @Test
-    public void testReuse() {
-        AccessibilityEvent firstInfo = AccessibilityEvent.obtain();
-        firstInfo.recycle();
-        AccessibilityEvent secondInfo = AccessibilityEvent.obtain();
-        assertSame("AccessibilityNodeInfo not properly reused", firstInfo, secondInfo);
-    }
-
-    /**
-     * Tests if {@link AccessibilityNodeInfo} are properly recycled.
+     * Tests if {@link AccessibilityNodeInfo} can be acquired through obtain(),
+     * and that recycle() can be called on the returned object.
      */
     @SmallTest
     @Test
     public void testRecycle() {
-        // obtain and populate an node info
-        AccessibilityNodeInfo populatedInfo = AccessibilityNodeInfo.obtain();
-        fullyPopulateAccessibilityNodeInfo(populatedInfo);
-
-        // recycle and obtain the same recycled instance
-        populatedInfo.recycle();
-        AccessibilityNodeInfo recycledInfo = AccessibilityNodeInfo.obtain();
-
-        // check expectations
-        assertAccessibilityNodeInfoCleared(recycledInfo);
+        AccessibilityNodeInfo.obtain().recycle();
     }
 
     /**

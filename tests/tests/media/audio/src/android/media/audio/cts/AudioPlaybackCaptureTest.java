@@ -274,6 +274,7 @@ public class AudioPlaybackCaptureTest {
     private static final boolean EXPECT_DATA = true;
     private static final boolean EXPECT_SILENCE = false;
 
+    // We have explicit tests per usage testCaptureMatchingAllowedUsage*
     private static final @AttributeUsage int[] ALLOWED_USAGES = new int[]{
             AudioAttributes.USAGE_UNKNOWN,
             AudioAttributes.USAGE_MEDIA,
@@ -322,17 +323,30 @@ public class AudioPlaybackCaptureTest {
         testPlaybackCapture(OPT_IN, AudioAttributes.USAGE_UNKNOWN, EXPECT_SILENCE);
     }
 
+    // Allowed usage tests done individually to isolate failure and keep test duration < 30s.
     @Test
-    public void testCaptureMatchingAllowedUsage() throws Exception {
-        for (int usage : ALLOWED_USAGES) {
-            mAPCTestConfig.matchingUsages = new int[]{ usage };
-            testPlaybackCapture(OPT_IN, usage, EXPECT_DATA);
-            testPlaybackCapture(OPT_OUT, usage, EXPECT_SILENCE);
+    public void testCaptureMatchingAllowedUsageUnknown() throws Exception {
+        doTestCaptureMatchingAllowedUsage(AudioAttributes.USAGE_UNKNOWN);
+    }
 
-            mAPCTestConfig.matchingUsages = ALLOWED_USAGES;
-            testPlaybackCapture(OPT_IN, usage, EXPECT_DATA);
-            testPlaybackCapture(OPT_OUT, usage, EXPECT_SILENCE);
-        }
+    @Test
+    public void testCaptureMatchingAllowedUsageMedia() throws Exception {
+        doTestCaptureMatchingAllowedUsage(AudioAttributes.USAGE_MEDIA);
+    }
+
+    @Test
+    public void testCaptureMatchingAllowedUsageGame() throws Exception {
+        doTestCaptureMatchingAllowedUsage(AudioAttributes.USAGE_GAME);
+    }
+
+    private void doTestCaptureMatchingAllowedUsage(int usage) throws Exception {
+        mAPCTestConfig.matchingUsages = new int[]{ usage };
+        testPlaybackCapture(OPT_IN, usage, EXPECT_DATA);
+        testPlaybackCapture(OPT_OUT, usage, EXPECT_SILENCE);
+
+        mAPCTestConfig.matchingUsages = ALLOWED_USAGES;
+        testPlaybackCapture(OPT_IN, usage, EXPECT_DATA);
+        testPlaybackCapture(OPT_OUT, usage, EXPECT_SILENCE);
     }
 
     @Test

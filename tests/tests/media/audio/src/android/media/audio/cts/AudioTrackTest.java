@@ -1580,19 +1580,27 @@ public class AudioTrackTest {
     }
 
     @Test
-    public void testPlayStaticData() throws Exception {
+    public void testPlayStaticByteArray() throws Exception {
+        doTestPlayStaticData("testPlayStaticByteArray", AudioFormat.ENCODING_PCM_8BIT);
+    }
+
+    @Test
+    public void testPlayStaticShortArray() throws Exception {
+        doTestPlayStaticData("testPlayStaticShortArray", AudioFormat.ENCODING_PCM_16BIT);
+    }
+
+    @Test
+    public void testPlayStaticFloatArray() throws Exception {
+        doTestPlayStaticData("testPlayStaticFloatArray", AudioFormat.ENCODING_PCM_FLOAT);
+    }
+
+    private void doTestPlayStaticData(String testName, int testFormat) throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG,"AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
         // constants for test
-        final String TEST_NAME = "testPlayStaticData";
-        final int TEST_FORMAT_ARRAY[] = {  // 6 chirps repeated (TEST_LOOPS+1) times, 3 times
-                AudioFormat.ENCODING_PCM_8BIT,
-                AudioFormat.ENCODING_PCM_16BIT,
-                AudioFormat.ENCODING_PCM_FLOAT,
-        };
         final int TEST_SR_ARRAY[] = {
                 12055, // Note multichannel tracks will sound very short at low sample rates
                 48000,
@@ -1613,16 +1621,15 @@ public class AudioTrackTest {
         // 200 ms less for low latency devices.
         final long WAIT_TIME_MS = isLowLatencyDevice() ? WAIT_MSEC : 500;
 
-        for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
-            double frequency = 400; // frequency changes for each test
-            for (int TEST_SR : TEST_SR_ARRAY) {
-                for (int TEST_CONF : TEST_CONF_ARRAY) {
-                    playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
-                            TEST_LOOPS, TEST_FORMAT, frequency, TEST_SR, TEST_CONF, WAIT_TIME_MS,
-                            TEST_LOOP_DURATION, TEST_ADDITIONAL_DRAIN_MS);
+        double frequency = 400; // frequency changes for each test
+        for (int testSampleRate : TEST_SR_ARRAY) {
+            for (int testChannelConfiguration : TEST_CONF_ARRAY) {
+                playOnceStaticData(testName, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                        TEST_LOOPS, testFormat, frequency, testSampleRate,
+                        testChannelConfiguration, WAIT_TIME_MS,
+                        TEST_LOOP_DURATION, TEST_ADDITIONAL_DRAIN_MS);
 
-                    frequency += 70; // increment test tone frequency
-                }
+                frequency += 70; // increment test tone frequency
             }
         }
     }
@@ -1726,14 +1733,22 @@ public class AudioTrackTest {
     }
 
     @Test
-    public void testPlayStreamData() throws Exception {
+    public void testPlayStreamByteArray() throws Exception {
+        doTestPlayStreamData("testPlayStreamByteArray", AudioFormat.ENCODING_PCM_8BIT);
+    }
+
+    @Test
+    public void testPlayStreamShortArray() throws Exception {
+        doTestPlayStreamData("testPlayStreamShortArray", AudioFormat.ENCODING_PCM_16BIT);
+    }
+
+    @Test
+    public void testPlayStreamFloatArray() throws Exception {
+        doTestPlayStreamData("testPlayStreamFloatArray", AudioFormat.ENCODING_PCM_FLOAT);
+    }
+
+    private void doTestPlayStreamData(String testName, int testFormat) throws Exception {
         // constants for test
-        final String TEST_NAME = "testPlayStreamData";
-        final int TEST_FORMAT_ARRAY[] = {  // should hear 40 increasing frequency tones, 3 times
-                AudioFormat.ENCODING_PCM_8BIT,
-                AudioFormat.ENCODING_PCM_16BIT,
-                AudioFormat.ENCODING_PCM_FLOAT,
-        };
         // due to downmixer algorithmic latency, source channels greater than 2 may
         // sound shorter in duration at 4kHz sampling rate.
         final int TEST_SR_ARRAY[] = {
@@ -1758,15 +1773,14 @@ public class AudioTrackTest {
         final float TEST_SWEEP = 0; // sine wave only
         final boolean TEST_IS_LOW_RAM_DEVICE = isLowRamDevice();
 
-        for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
-            double frequency = 400; // frequency changes for each test
-            for (int TEST_SR : TEST_SR_ARRAY) {
-                for (int TEST_CONF : TEST_CONF_ARRAY) {
-                    playOnceStreamData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
-                            TEST_IS_LOW_RAM_DEVICE, TEST_FORMAT, frequency, TEST_SR, TEST_CONF,
-                            WAIT_MSEC, 0 /* mask */);
-                    frequency += 50; // increment test tone frequency
-                }
+        double frequency = 400; // frequency changes for each test
+        for (int testSampleRate : TEST_SR_ARRAY) {
+            for (int testChannelConfiguration : TEST_CONF_ARRAY) {
+                playOnceStreamData(testName, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
+                        TEST_IS_LOW_RAM_DEVICE, testFormat, frequency,
+                        testSampleRate, testChannelConfiguration,
+                        100 /* waitMsec */, 0 /* mask */);
+                frequency += 50; // increment test tone frequency
             }
         }
     }
@@ -1794,7 +1808,7 @@ public class AudioTrackTest {
         assertEquals(testName, channelCount, format.getChannelCount());
         assertEquals(testName, testFormat, format.getEncoding());
         // duration of test tones
-        final int frames = AudioHelper.frameCountFromMsec(500 /* ms */, format);
+        final int frames = AudioHelper.frameCountFromMsec(400 /* ms */, format);
         final int sourceSamples = channelCount * frames;
         final double frequency = testFrequency / channelCount;
 

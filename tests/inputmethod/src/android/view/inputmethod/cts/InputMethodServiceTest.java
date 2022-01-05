@@ -512,6 +512,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         try (MockImeSession imeSession = MockImeSession.create(
                 mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
                 new ImeSettings.Builder().setVerifyUiContextApisInOnCreate(true))) {
+            ensureImeRunning();
             final ImeEventStream stream = imeSession.openEventStream();
 
             // Verify if getDisplay doesn't throw exception before InputMethodService's
@@ -709,6 +710,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         try (MockImeSession imeSession = MockImeSession.create(
                 mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
                 new ImeSettings.Builder().setVerifyUiContextApisInOnCreate(true))) {
+            ensureImeRunning();
             final ImeEventStream stream = imeSession.openEventStream();
 
             // Verify if InputMethodService#isUiContext returns true in #onCreate
@@ -755,6 +757,13 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             }
             // Verify no crash and onCreate / onDestroy keeps paired from MockIme event stream
             expectNoImeCrash(imeSession, TIMEOUT);
+        }
+    }
+
+    /** Explicitly start-up the IME process if it would have been prevented. */
+    protected void ensureImeRunning() {
+        if (isPreventImeStartup()) {
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 
