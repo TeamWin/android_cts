@@ -49,14 +49,10 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     // The bitrates are configured to large values. The content has zero motion, so in-time the
     // qp of the encoded clips shall drop down to < 10. Further the color bands are aligned to 2,
     // so from downsampling rgb24 to yuv420p, even if bilinear filters are used as opposed to
-    // skipping samples, we may not see large color loss. Hence allowable tolerance is kept to 8.
-    // until QP stabilizes, the tolerance is set at 10.
-
-    // TODO (b/193192195) Initial delta values used in the tests were 7 and 5, but were increased
-    // to 10 and 8, as tests on emulator showed a higher delta. So the allowed delta values are
-    // increased for now
-    private final int TRANSIENT_STATE_COLOR_DELTA = 10;
-    private final int STEADY_STATE_COLOR_DELTA = 8;
+    // skipping samples, we may not see large color loss. Hence allowable tolerance is kept to 5.
+    // until QP stabilizes, the tolerance is set at 7.
+    private final int TRANSIENT_STATE_COLOR_DELTA = 7;
+    private final int STEADY_STATE_COLOR_DELTA = 5;
     private final int[][] mColorBars = new int[][]{
             {66, 133, 244},
             {219, 68, 55},
