@@ -97,12 +97,17 @@ static void try_opening_audio_stream(AAudioStreamBuilder *aaudioBuilder, Expect 
 
     // The stream should be open within one second.
     static const int64_t kNanosPerSecond = 1e9;
-    ASSERT_LT(getNanoseconds() - beforeTimeNanos, kNanosPerSecond);
+    ASSERT_LT(getNanoseconds() - beforeTimeNanos, kNanosPerSecond)
+            << "It took more than one second to open stream";
 
     // Cleanup
     ASSERT_EQ(AAUDIO_OK, AAudioStreamBuilder_delete(aaudioBuilder));
     if (aaudioStream != nullptr) {
+        beforeTimeNanos = getNanoseconds();
         ASSERT_EQ(AAUDIO_OK, AAudioStream_close(aaudioStream));
+        // The stream should be closed within one second.
+        ASSERT_LT(getNanoseconds() - beforeTimeNanos, kNanosPerSecond)
+                << "It took more than one second to close stream";
     }
 }
 
