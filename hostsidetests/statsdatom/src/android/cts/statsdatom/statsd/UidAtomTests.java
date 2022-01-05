@@ -309,6 +309,10 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
     }
 
     public void testDeviceCalculatedPowerUse() throws Exception {
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_TV)) {
+            // Skip TVs because they do not have batteries.
+            return;
+        }
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LEANBACK_ONLY)) return;
 
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
