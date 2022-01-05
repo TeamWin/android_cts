@@ -1333,6 +1333,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPasswordMethodsLogged() throws Exception {
+        if (isAutomotive()) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_COMPLEXITY_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setInt(0x50000)
+                    .setBoolean(false)
+                    .build());
+            return;
+        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_QUALITY_VALUE)

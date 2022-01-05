@@ -491,12 +491,22 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         return findEvent(description, events, e -> e.getTag() == tag);
     }
 
+    private List<SecurityEvent> findEvents(List<SecurityEvent> events,
+            Predicate<SecurityEvent> predicate) {
+        return events.stream().filter(predicate).collect(Collectors.toList());
+    }
+
     private SecurityEvent findEvent(String description, List<SecurityEvent> events,
             Predicate<SecurityEvent> predicate) {
-        final List<SecurityEvent> matches =
-                events.stream().filter(predicate).collect(Collectors.toList());
+        final List<SecurityEvent> matches = findEvents(events, predicate);
         assertEquals("Invalid number of matching events: " + description, 1, matches.size());
         return matches.get(0);
+    }
+
+    private void assertNumberEvents(String description, List<SecurityEvent> events,
+            Predicate<SecurityEvent> predicate, int expectedSize) {
+        assertEquals("Invalid number of matching events: " + description, expectedSize,
+                findEvents(events, predicate).size());
     }
 
     private static Object getDatum(SecurityEvent event, int index) {
@@ -679,21 +689,21 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         // The order should be consistent with the order in generatePasswordComplexityEvents(), so
         // that the expected values change in the same sequence as when setting password policies.
         expectedPayload[PWD_QUALITY_INDEX] = PASSWORD_QUALITY_COMPLEX;
-        findPasswordComplexityEvent("set pwd quality", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd quality", events, expectedPayload);
         expectedPayload[PWD_LEN_INDEX] = TEST_PWD_LENGTH;
-        findPasswordComplexityEvent("set pwd length", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd length", events, expectedPayload);
         expectedPayload[LETTERS_INDEX] = TEST_PWD_CHARS;
-        findPasswordComplexityEvent("set pwd min letters", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd min letters", events, expectedPayload);
         expectedPayload[NON_LETTERS_INDEX] = TEST_PWD_CHARS;
-        findPasswordComplexityEvent("set pwd min non-letters", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd min non-letters", events, expectedPayload);
         expectedPayload[UPPERCASE_INDEX] = TEST_PWD_CHARS;
-        findPasswordComplexityEvent("set pwd min uppercase", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd min uppercase", events, expectedPayload);
         expectedPayload[LOWERCASE_INDEX] = TEST_PWD_CHARS;
-        findPasswordComplexityEvent("set pwd min lowercase", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd min lowercase", events, expectedPayload);
         expectedPayload[NUMERIC_INDEX] = TEST_PWD_CHARS;
-        findPasswordComplexityEvent("set pwd min numeric", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd min numeric", events, expectedPayload);
         expectedPayload[SYMBOLS_INDEX] = TEST_PWD_CHARS;
-        findPasswordComplexityEvent("set pwd min symbols", events, expectedPayload);
+        assertPasswordComplexityEvent("set pwd min symbols", events, expectedPayload);
     }
 
     private void verifyNewStylePasswordComplexityEventPresent(List<SecurityEvent> events) {
@@ -769,10 +779,11 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                         getInt(e, ADMIN_USER_INDEX) == userId);
     }
 
-    private void findPasswordComplexityEvent(
+    private void assertPasswordComplexityEvent(
             String description, List<SecurityEvent> events, Object[] expectedPayload) {
-        findEvent(description, events,
-                byTagAndPayload(TAG_PASSWORD_COMPLEXITY_SET, expectedPayload));
+        int expectedSize = mIsAutomotive ? 0 : 1;
+        assertNumberEvents(description, events,
+                byTagAndPayload(TAG_PASSWORD_COMPLEXITY_SET, expectedPayload), expectedSize);
     }
 
     private void findNewStylePasswordComplexityEvent(
