@@ -1285,9 +1285,7 @@ public class AudioRecordTest {
             // resource needed for other tests.
             record.release();
         }
-        if (auditRecording) { // don't check timing if auditing (messes up timing)
-            return;
-        }
+
         final int markerPeriods = markerPeriodsPerSecond * TEST_TIME_MS / 1000;
         final int updatePeriods = periodsPerSecond * TEST_TIME_MS / 1000;
         final int markerPeriodsMax =
