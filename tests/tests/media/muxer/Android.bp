@@ -50,8 +50,9 @@ android_test {
     // include both the 32 and 64 bit versions
     compile_multilib: "both",
     static_libs: [
-        "ctstestrunner-axt",
         "cts-media-common",
+        "ctstestrunner-axt",
+        "exoplayer2-metadataretriever-mediamuxer",
     ],
     jni_libs: [
         "libctsmediamuxertest_jni",
