@@ -40,11 +40,11 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
 
 
 /**
@@ -69,6 +69,11 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
         assumeTrue("true\n".equals(getDevice().executeShellCommand(
                 "pm has-feature android.software.incremental_delivery")));
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
+        // Before the test app is installed, launch a helper app to register a LauncherApps callback
+        // This ensures the loading progress listener is activated when the test app is installed
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
+                "registerFirstLauncherAppsCallback"));
+
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File base_apk = buildHelper.getTestFile(TEST_APK);
         assertNotNull(base_apk);
