@@ -40,6 +40,7 @@ import android.os.NewUserResponse;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -272,6 +273,7 @@ public final class UserManagerTest {
     }
 
     @Test
+    @AppModeFull
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void getProfileParent_withNewlyCreatedProfile() {
@@ -286,6 +288,7 @@ public final class UserManagerTest {
     }
 
     @Test
+    @AppModeFull
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void getProfileParent_returnsNullForNonProfile() {
         assertThat(mUserManager.getProfileParent(TestApis.users().system().userHandle())).isNull();
