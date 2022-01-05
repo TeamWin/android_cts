@@ -51,7 +51,7 @@ android_test {
     ],
     instrumentation_for: "CtsAppTestStubs",
     sdk_version: "test_current",
-    min_sdk_version: "14",
+    min_sdk_version: "20",
     // Disable coverage since it pushes us over the dex limit and we don't
     // actually need to measure the tests themselves.
     jacoco: { exclude_filter: ["**"] }
@@ -86,7 +86,7 @@ android_test {
         "general-tests",
     ],
     sdk_version: "test_current",
-    min_sdk_version: "14",
+    min_sdk_version: "20",
     manifest: "DownloadManagerApi28Test/AndroidManifest.xml",
     test_config: "DownloadManagerApi28Test/AndroidTest.xml",
     lint: {
@@ -123,7 +123,7 @@ android_test {
         "general-tests",
     ],
     sdk_version: "test_current",
-    min_sdk_version: "14",
+    min_sdk_version: "20",
     manifest: "DownloadManagerInstallerTest/AndroidManifest.xml",
     test_config: "DownloadManagerInstallerTest/AndroidTest.xml",
     lint: {
