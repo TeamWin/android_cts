@@ -582,30 +582,40 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // testMaximumShapers
 
-    @LargeTest
-    public void testPlayerDuck() throws Exception {
-        final String TEST_NAME = "testPlayerDuck";
+    public void testDuckAudioTrack() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestDuckPlayer("testDuckAudioTrack", player);
+        }
+    }
+
+    public void testDuckMediaPlayerNonOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestDuckPlayer("testDuckMediaPlayerNonOffloaded", player);
+        }
+    }
+
+    public void testDuckMediaPlayerOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestDuckPlayer("testDuckMediaPlayerOffloaded", player);
+        }
+    }
+
+    private void runTestDuckPlayer(String testName, Player player) throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
+        try (VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE)) {
+            Log.d(TAG, testName + " starting");
+            player.start();
+            Thread.sleep(WARMUP_TIME_MS);
 
-                Log.d(TAG, testName + " starting");
-                player.start();
-                Thread.sleep(WARMUP_TIME_MS);
-
-                runDuckTest(testName, volumeShaper);
-                runCloseTest(testName, volumeShaper);
-            }
+            runDuckTest(testName, volumeShaper);
+            runCloseTest(testName, volumeShaper);
         }
-    } // testPlayerDuck
+    }
 
     @LargeTest
     public void testPlayerRamp() throws Exception {
