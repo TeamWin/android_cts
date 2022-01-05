@@ -633,9 +633,27 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testPlayerRamp
 
     @FlakyTest
-    @LargeTest
-    public void testPlayerCornerCase() throws Exception {
-        final String TEST_NAME = "testPlayerCornerCase";
+    public void testCornerCaseAudioTrack() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestCornerCasePlayer("testCornerCaseAudioTrack", player);
+        }
+    }
+
+    @FlakyTest
+    public void testCornerCaseMediaPlayerNonOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestCornerCasePlayer("testCornerCaseMediaPlayerNonOffloaded", player);
+        }
+    }
+
+    @FlakyTest
+    public void testCornerCaseMediaPlayerOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestCornerCasePlayer("testCornerCaseMediaPlayerOffloaded", player);
+        }
+    }
+
+    private void runTestCornerCasePlayer(String testName, Player player) throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
@@ -643,45 +661,36 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
 
         final VolumeShaper.Configuration config = LINEAR_RAMP;
+        VolumeShaper volumeShaper = null;
+        try {
+            volumeShaper = player.createVolumeShaper(config);
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            Player player = null;
-            VolumeShaper volumeShaper = null;
-            try {
-                player = createPlayer(p);
-                volumeShaper = player.createVolumeShaper(config);
-                final String testName = TEST_NAME + " " + player.name();
+            runStartIdleTest(testName, volumeShaper, player);
+            runRampCornerCaseTest(testName, volumeShaper, config);
+            runCloseTest(testName, volumeShaper);
 
-                runStartIdleTest(testName, volumeShaper, player);
-                runRampCornerCaseTest(testName, volumeShaper, config);
-                runCloseTest(testName, volumeShaper);
+            Log.d(TAG, testName + " recreating VolumeShaper and repeating with pause");
+            volumeShaper = player.createVolumeShaper(config);
+            player.pause();
+            Thread.sleep(100 /* millis */);
+            runStartIdleTest(testName, volumeShaper, player);
 
-                Log.d(TAG, testName + " recreating VolumeShaper and repeating with pause");
-                volumeShaper = player.createVolumeShaper(config);
-                player.pause();
-                Thread.sleep(100 /* millis */);
-                runStartIdleTest(testName, volumeShaper, player);
+            // volumeShaper not explicitly closed, will close upon finalize or player close.
+            Log.d(TAG, testName + " recreating VolumeShaper and repeating with stop");
+            volumeShaper = player.createVolumeShaper(config);
+            player.stop();
+            Thread.sleep(100 /* millis */);
+            runStartIdleTest(testName, volumeShaper, player);
 
-                // volumeShaper not explicitly closed, will close upon finalize or player close.
-                Log.d(TAG, testName + " recreating VolumeShaper and repeating with stop");
-                volumeShaper = player.createVolumeShaper(config);
-                player.stop();
-                Thread.sleep(100 /* millis */);
-                runStartIdleTest(testName, volumeShaper, player);
-
-                Log.d(TAG, testName + " closing Player before VolumeShaper");
-                player.close();
-                runCloseTest2(testName, volumeShaper);
-            } finally {
-                if (volumeShaper != null) {
-                    volumeShaper.close();
-                }
-                if (player != null) {
-                    player.close();
-                }
+            Log.d(TAG, testName + " closing Player before VolumeShaper");
+            player.close();
+            runCloseTest2(testName, volumeShaper);
+        } finally {
+            if (volumeShaper != null) {
+                volumeShaper.close();
             }
         }
-    } // testPlayerCornerCase
+    } // runTestCornerCasePlayer
 
     @FlakyTest
     @LargeTest
