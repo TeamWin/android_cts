@@ -1152,7 +1152,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Verify setting the scan schedule.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testSetScreenOnScanSchedule() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -1168,7 +1168,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Verify a normal app cannot set the scan schedule.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testSetScreenOnScanScheduleNoPermission() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported

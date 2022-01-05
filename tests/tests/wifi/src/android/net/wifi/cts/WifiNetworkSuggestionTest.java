@@ -1000,7 +1000,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class, with SubscriptionGroup
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
     public void testBuilderWithSubscriptionGroup() throws Exception {
         WifiNetworkSuggestion suggestion =
