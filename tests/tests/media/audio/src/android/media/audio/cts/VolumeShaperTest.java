@@ -898,9 +898,25 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // testPlayerCubicMonotonic
 
-    @LargeTest
-    public void testPlayerStepRamp() throws Exception {
-        final String TEST_NAME = "testPlayerStepRamp";
+    public void testStepRampAudioTrack() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestStepRampPlayer("testStepRampAudioTrack", player);
+        }
+    }
+
+    public void testStepRampMediaPlayerNonOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestStepRampPlayer("testStepRampMediaPlayerNonOffloaded", player);
+        }
+    }
+
+    public void testStepRampMediaPlayerOffloaded() throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestStepRampPlayer("testStepRampMediaPlayerOffloaded", player);
+        }
+    }
+
+    private void runTestStepRampPlayer(String testName, Player player) throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
@@ -912,117 +928,113 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         // It should suddenly jump to full volume at 1.f (full duration).
         // Note: invertVolumes() and reflectTimes() are not symmetric for STEP interpolation;
         // however, VolumeShaper.Operation.REVERSE will behave symmetrically.
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
-                volumeShaper.apply(VolumeShaper.Operation.PLAY);
-                player.start();
-                Thread.sleep(WARMUP_TIME_MS);
 
-                final VolumeShaper.Configuration configuration = STEP_RAMP;
-                Log.d(TAG, testName + " starting test (sudden jump to full after "
-                        + RAMP_TIME_MS + " milliseconds)");
+        try (VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE)) {
+            volumeShaper.apply(VolumeShaper.Operation.PLAY);
+            player.start();
+            Thread.sleep(WARMUP_TIME_MS);
 
-                volumeShaper.replace(configuration,
-                        VolumeShaper.Operation.PLAY, true /* join */);
+            final VolumeShaper.Configuration configuration = STEP_RAMP;
+            Log.d(TAG, testName + " starting test (sudden jump to full after "
+                    + RAMP_TIME_MS + " milliseconds)");
 
-                Thread.sleep(RAMP_TIME_MS / 2);
-                float lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " middle value should be 0.f, but is " + lastVolume,
-                        0.f, lastVolume, VOLUME_TOLERANCE);
+            volumeShaper.replace(configuration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
 
-                Thread.sleep(RAMP_TIME_MS / 2 + 1000);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " final value should be 1.f, but is " + lastVolume,
-                        1.f, lastVolume, VOLUME_TOLERANCE);
+            Thread.sleep(RAMP_TIME_MS / 2);
+            float lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " middle value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
 
-                Log.d(TAG, "invert (sudden jump to silence after "
-                        + RAMP_TIME_MS + " milliseconds)");
-                // invert
-                VolumeShaper.Configuration newConfiguration =
-                        new VolumeShaper.Configuration.Builder(configuration)
-                            .invertVolumes()
-                            .build();
-                volumeShaper.replace(newConfiguration,
-                        VolumeShaper.Operation.PLAY, true /* join */);
+            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
 
-                Thread.sleep(RAMP_TIME_MS / 2);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " middle value should be 1.f, but is " + lastVolume,
-                        1.f, lastVolume, VOLUME_TOLERANCE);
+            Log.d(TAG, "invert (sudden jump to silence after "
+                    + RAMP_TIME_MS + " milliseconds)");
+            // invert
+            VolumeShaper.Configuration newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+                        .invertVolumes()
+                        .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
 
-                Thread.sleep(RAMP_TIME_MS / 2 + 1000);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " final value should be 0.f, but is " + lastVolume,
-                        0.f, lastVolume, VOLUME_TOLERANCE);
+            Thread.sleep(RAMP_TIME_MS / 2);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " middle value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
 
-                // invert + reflect
-                Log.d(TAG, "invert and reflect (sudden jump to full after "
-                        + RAMP_TIME_MS + " milliseconds)");
-                newConfiguration =
-                        new VolumeShaper.Configuration.Builder(configuration)
-                            .invertVolumes()
-                            .reflectTimes()
-                            .build();
-                volumeShaper.replace(newConfiguration,
-                        VolumeShaper.Operation.PLAY, true /* join */);
+            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
 
-                Thread.sleep(RAMP_TIME_MS / 2);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " middle value should be 0.f, but is " + lastVolume,
-                        0.f, lastVolume, VOLUME_TOLERANCE);
+            // invert + reflect
+            Log.d(TAG, "invert and reflect (sudden jump to full after "
+                    + RAMP_TIME_MS + " milliseconds)");
+            newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+                        .invertVolumes()
+                        .reflectTimes()
+                        .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
 
-                Thread.sleep(RAMP_TIME_MS / 2 + 1000);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " final value should be 1.f, but is " + lastVolume,
-                        1.f, lastVolume, VOLUME_TOLERANCE);
+            Thread.sleep(RAMP_TIME_MS / 2);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " middle value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
 
-                // reflect
-                Log.d(TAG, "reflect (sudden jump to silence after "
-                        + RAMP_TIME_MS + " milliseconds)");
-                newConfiguration =
-                        new VolumeShaper.Configuration.Builder(configuration)
-                            .reflectTimes()
-                            .build();
-                volumeShaper.replace(newConfiguration,
-                        VolumeShaper.Operation.PLAY, true /* join */);
+            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
 
-                Thread.sleep(RAMP_TIME_MS / 2);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " middle value should be 1.f, but is " + lastVolume,
-                        1.f, lastVolume, VOLUME_TOLERANCE);
+            // reflect
+            Log.d(TAG, "reflect (sudden jump to silence after "
+                    + RAMP_TIME_MS + " milliseconds)");
+            newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+                        .reflectTimes()
+                        .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
 
-                Thread.sleep(RAMP_TIME_MS / 2 + 1000);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " final value should be 0.f, but is " + lastVolume,
-                        0.f, lastVolume, VOLUME_TOLERANCE);
+            Thread.sleep(RAMP_TIME_MS / 2);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " middle value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
 
-                Log.d(TAG, "reverse (immediate jump to full)");
-                volumeShaper.apply(VolumeShaper.Operation.REVERSE);
-                Thread.sleep(RAMP_TIME_MS / 2);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " middle value should be 1.f, but is " + lastVolume,
-                        1.f, lastVolume, VOLUME_TOLERANCE);
+            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
 
-                Thread.sleep(RAMP_TIME_MS / 2 + 1000);
-                lastVolume = volumeShaper.getVolume();
-                assertEquals(testName
-                        + " final value should be 1.f, but is " + lastVolume,
-                        1.f, lastVolume, VOLUME_TOLERANCE);
-            }
+            Log.d(TAG, "reverse (immediate jump to full)");
+            volumeShaper.apply(VolumeShaper.Operation.REVERSE);
+            Thread.sleep(RAMP_TIME_MS / 2);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " middle value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
+
+            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
         }
-    } // testPlayerStepRamp
+    } // runTestStepRampPlayer
 
     @LargeTest
     public void testPlayerTwoShapers() throws Exception {
