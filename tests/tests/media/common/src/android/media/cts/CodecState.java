@@ -27,10 +27,10 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.test.filters.SdkSuppress;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
-
-import androidx.test.filters.SdkSuppress;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -508,6 +508,13 @@ public class CodecState {
         }
     }
 
+    public int getFramesWritten() {
+        if (mAudioTrack != null) {
+            return mAudioTrack.getFramesWritten();
+        }
+        return 0;
+    }
+
     public AudioTimestamp getTimestamp() {
         if (mAudioTrack == null) {
             return null;
@@ -515,7 +522,6 @@ public class CodecState {
 
         return mAudioTrack.getTimestamp();
     }
-
 
     /** Stop the attached {@link AudioTrack}, if any. */
     public void stopAudioTrack() {
@@ -550,5 +556,11 @@ public class CodecState {
     /** In tunnel mode, queries whether the first video frame is ready for video peek. */
     public boolean isFirstTunnelFrameReady() {
         return mFirstTunnelFrameReady;
+    }
+
+    public void stopWritingToAudioTrack(boolean stopWriting) {
+        if (mAudioTrack != null) {
+            mAudioTrack.stopWriting(stopWriting);
+        }
     }
 }
