@@ -1135,6 +1135,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertThat("Attestation version must be >= 1",
                 attestation.getAttestationVersion(), greaterThanOrEqualTo(1));
 
+        int firstApiLevel = SystemProperties.getInt("ro.product.first_api_level", 0);
         int attestationSecurityLevel = attestation.getAttestationSecurityLevel();
         switch (attestationSecurityLevel) {
             case KM_SECURITY_LEVEL_STRONG_BOX:
@@ -1145,15 +1146,16 @@ public class KeyAttestationTest extends AndroidTestCase {
 
                 // Devices launched in Android 10.0 (API level 29) and after should run CTS
                 // in LOCKED state.
-                boolean requireLocked = (
-                        SystemProperties.getInt("ro.product.first_api_level", 0) >= 29);
+                boolean requireLocked = firstApiLevel >= 29;
                 checkRootOfTrust(attestation, requireLocked);
                 break;
 
             case KM_SECURITY_LEVEL_SOFTWARE:
             default:
-                // TEE attestation has been mandatory since Android 8.0.
-                if (SystemProperties.getInt("ro.product.first_api_level", 0) >= 26) {
+                // TEE attestation has been mandatory since Android 8.0 for non-TV devices
+                // and since Android 10.0 for TVs.
+                int apiTeeRequired = isTVDevice() ? 29 : 26;
+                if (firstApiLevel >= apiTeeRequired) {
                     fail("Unexpected attestation security level: " +
                          attestation.securityLevelToString(attestationSecurityLevel));
                 }
