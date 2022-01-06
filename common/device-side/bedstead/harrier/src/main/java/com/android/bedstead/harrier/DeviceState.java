@@ -1914,6 +1914,15 @@ public final class DeviceState extends HarrierRule {
                 return;
             }
 
+            if (TestApis.packages().instrumented().isInstantApp()) {
+                // Instant Apps aren't able to know the permissions of shell so we can't know if we
+                // can adopt it - we'll assume we can adopt and log
+                Log.i(LOG_TAG,
+                        "Assuming we can get permission " + permission
+                                + " as running on instant app");
+                return;
+            }
+
             TestApis.permissions().throwPermissionException(
                     "Can not get required permission", permission);
         }
