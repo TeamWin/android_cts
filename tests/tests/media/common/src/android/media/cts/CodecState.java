@@ -43,6 +43,8 @@ import java.util.LinkedList;
 public class CodecState {
     private static final String TAG = CodecState.class.getSimpleName();
 
+    public static final int UNINITIALIZED_TIMESTAMP = Integer.MIN_VALUE;
+
     private boolean mSawInputEOS;
     private volatile boolean mSawOutputEOS;
     private boolean mLimitQueueDepth;
@@ -107,7 +109,7 @@ public class CodecState {
         mAvailableOutputBufferInfos = new LinkedList<MediaCodec.BufferInfo>();
         mRenderedVideoFrameTimestampList = new ArrayList<Long>();
 
-        mPresentationTimeUs = 0;
+        mPresentationTimeUs = UNINITIALIZED_TIMESTAMP;
 
         mFirstTunnelFrameReady = false;
 
@@ -182,7 +184,7 @@ public class CodecState {
         }
 
         mCodec.flush();
-        mPresentationTimeUs = 0;
+        mPresentationTimeUs = UNINITIALIZED_TIMESTAMP;
         mRenderedVideoFrameTimestampList = new ArrayList<Long>();
         mFirstTunnelFrameReady = false;
     }
