@@ -1779,7 +1779,7 @@ public class AudioTrackTest {
                 playOnceStreamData(testName, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
                         TEST_IS_LOW_RAM_DEVICE, testFormat, frequency,
                         testSampleRate, testChannelConfiguration,
-                        100 /* waitMsec */, 0 /* mask */);
+                        WAIT_MSEC, 0 /* mask */);
                 frequency += 50; // increment test tone frequency
             }
         }
@@ -1808,7 +1808,7 @@ public class AudioTrackTest {
         assertEquals(testName, channelCount, format.getChannelCount());
         assertEquals(testName, testFormat, format.getEncoding());
         // duration of test tones
-        final int frames = AudioHelper.frameCountFromMsec(400 /* ms */, format);
+        final int frames = AudioHelper.frameCountFromMsec(300 /* ms */, format);
         final int sourceSamples = channelCount * frames;
         final double frequency = testFrequency / channelCount;
 
