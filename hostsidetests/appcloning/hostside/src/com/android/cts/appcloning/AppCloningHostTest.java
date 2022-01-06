@@ -18,6 +18,8 @@ package com.android.cts.appcloning;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.contentprovider.ContentProviderHandler;
@@ -154,5 +156,14 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
         runDeviceTestAsUserInPkgA(
                 "testMediaStoreManager_verifyCrossUserImagesInSharedStorage",
                 Integer.valueOf(mCloneUserId), args);
+    }
+
+    @Test
+    public void testGetStorageVolumesIncludingSharedProfiles() throws Exception {
+        assumeTrue(isAtLeastT());
+        Map<String, String> args = new HashMap<>();
+        args.put(CLONE_USER_ID, mCloneUserId);
+        runDeviceTestAsUserInPkgA("testStorageManager_verifyInclusionOfSharedProfileVolumes",
+                getCurrentUserId(), args);
     }
 }

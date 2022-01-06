@@ -25,6 +25,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -45,15 +47,18 @@ public class AppCloningDeviceTest {
     private static final String TAG = "AppCloningDeviceTest";
 
     private Context mContext;
+    private StorageManager mStorageManager;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        mStorageManager = mContext.getSystemService(StorageManager.class);
 
         // Adopts common permission to read and write to shared storage
         InstallUtils.adoptShellPermissionIdentity(
                 Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.MANAGE_EXTERNAL_STORAGE);
     }
 
     @After
@@ -63,16 +68,9 @@ public class AppCloningDeviceTest {
     }
 
     private String getTestArgumentValueForGivenKey(String testArgumentKey) {
-        String testArgumentValue = EMPTY_STRING;
         final Bundle testArguments = InstrumentationRegistry.getArguments();
-        if (testArguments.containsKey(testArgumentKey)) {
-            try {
-                testArgumentValue = testArguments.getString(testArgumentKey);
-            } catch (NumberFormatException ignore) {
-                Log.d(TAG, "Test argument with " + testArgumentKey
-                        + " as argument key is ignored - " + ignore.getMessage());
-            }
-        }
+        String testArgumentValue = testArguments.getString(testArgumentKey, EMPTY_STRING);
+
         return testArgumentValue;
     }
 
@@ -161,4 +159,28 @@ public class AppCloningDeviceTest {
         return bitmap;
     }
 
+    @Test
+    public void testStorageManager_verifyInclusionOfSharedProfileVolumes() throws Exception {
+        int cloneUserId = -1;
+        try {
+            cloneUserId = Integer.valueOf(getCloneUserId());
+        } catch (NumberFormatException exception) {
+            Log.d(TAG, "Failed to get clone user ID - " + exception.getMessage());
+        }
+        assertThat(cloneUserId).isNotEqualTo(-1);
+        List<StorageVolume> volumeList = mStorageManager.getStorageVolumes();
+        List<StorageVolume> volumeListIncludingShared =
+                mStorageManager.getStorageVolumesIncludingSharedProfiles();
+
+        // should contain all volumes of volumeList
+        assertThat(volumeListIncludingShared.containsAll(volumeList)).isTrue();
+
+        // remove volumes that belong to owner profile
+        volumeListIncludingShared.removeAll(volumeList);
+
+        // remaining volumes should belong to the clone user.
+        for (StorageVolume vol : volumeListIncludingShared) {
+            assertThat(vol.getOwner().getIdentifier()).isEqualTo(cloneUserId);
+        }
+    }
 }
