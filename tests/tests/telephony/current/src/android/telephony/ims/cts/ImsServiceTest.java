@@ -42,6 +42,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.AsyncSmsMessageListener;
 import android.telephony.cts.SmsReceiverHelper;
+import android.telephony.cts.CarrierCapability;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -88,6 +89,8 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import android.util.Log;
 
 /**
  * CTS tests for ImsService API.
@@ -1405,6 +1408,12 @@ public class ImsServiceTest {
             fail("Cannot find IMS service");
         }
 
+        TelephonyManager tm = (TelephonyManager) getContext()
+                .getSystemService(Context.TELEPHONY_SERVICE);
+
+        String mccmnc = tm.getSimOperator();
+        boolean mTelUriSupported = CarrierCapability.SUPPORT_TEL_URI_PUBLISH.contains(mccmnc);
+
         ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
         RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
 
@@ -1424,7 +1433,13 @@ public class ImsServiceTest {
             receivedPidfXml.add(pidfXml);
         });
 
-        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_SIP, "test", null);
+        Uri imsUri;
+        if (mTelUriSupported) {
+            imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, "0001112222", null);
+        } else {
+            imsUri = Uri.fromParts(PhoneAccount.SCHEME_SIP, "test", null);
+        }
+
         StringBuilder expectedUriBuilder = new StringBuilder();
         expectedUriBuilder.append("<contact>").append(imsUri.toString()).append("</contact>");
 
