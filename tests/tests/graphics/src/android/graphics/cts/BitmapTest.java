@@ -2260,7 +2260,7 @@ public class BitmapTest {
         Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
         int fdCount = -1;
         // Do a warmup to reach steady-state memory usage
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 100; i++) {
             test.run();
         }
         runGcAndFinalizersSync();
