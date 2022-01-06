@@ -103,7 +103,6 @@
         </activity>
 
         <activity android:name="android.app.stubs.InstrumentationTestActivity"
-                  android:theme="@style/Theme_NoSwipeDismiss"
              android:label="InstrumentationTestActivity"
              android:exported="true">
             <intent-filter>
@@ -328,7 +327,6 @@
         </activity>
 
         <activity android:name="android.app.stubs.DialogStubActivity"
-                  android:theme="@style/Theme_NoSwipeDismiss"
              android:label="DialogStubActivity"
              android:exported="true">
             <intent-filter>

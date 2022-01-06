@@ -35,8 +35,6 @@
 
     <application android:label="CtsWindowManagerDeviceTestCases"
          android:requestLegacyExternalStorage="true">
-                 android:theme="@style/Theme_NoSwipeDismiss">
-
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
