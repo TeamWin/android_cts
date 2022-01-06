@@ -49,6 +49,7 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.util.CarrierPrivilegeUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -89,6 +90,8 @@ import java.util.stream.Collectors;
 public class SubscriptionManagerTest {
     private static final String TAG = "SubscriptionManagerTest";
     private static final String MODIFY_PHONE_STATE = "android.permission.MODIFY_PHONE_STATE";
+    private static final String READ_PRIVILEGED_PHONE_STATE =
+            "android.permission.READ_PRIVILEGED_PHONE_STATE";
     private static final List<Uri> CONTACTS = new ArrayList<>();
     static {
         CONTACTS.add(Uri.fromParts("tel", "+16505551212", null));
@@ -1113,6 +1116,93 @@ public class SubscriptionManagerTest {
         assertEquals(CONTACTS, mSm.getDeviceToDeviceStatusSharingContacts(mSubId));
         mSm.setDeviceToDeviceStatusSharingContacts(mSubId, originalD2DSharingContacts);
         uiAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void tetsSetAndGetPhoneNumber() throws Exception {
+        if (!isSupported()) return;
+
+        // The phone number may be anything depends on the state of SIM and device.
+        // Simply call the getter and make sure no exception.
+
+        // Getters accessiable with READ_PRIVILEGED_PHONE_STATE
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(READ_PRIVILEGED_PHONE_STATE);
+
+            mSm.getPhoneNumber(mSubId);
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_UICC);
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_CARRIER);
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_IMS);
+
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
+        // Getters accessiable with READ_PHONE_NUMBERS
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_NUMBERS);
+
+            mSm.getPhoneNumber(mSubId);
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_UICC);
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_CARRIER);
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_IMS);
+
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
+        // Getters and the setter accessiable with carrier privilege
+        final String carrierNumber = "1234567890";
+        CarrierPrivilegeUtils.withCarrierPrivileges(
+                InstrumentationRegistry.getContext(),
+                mSubId,
+                () -> {
+                    mSm.getPhoneNumber(mSubId);
+                    mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_UICC);
+                    mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_IMS);
+
+                    mSm.setCarrierPhoneNumber(mSubId, carrierNumber);
+                    assertEquals(
+                            carrierNumber,
+                            mSm.getPhoneNumber(
+                                    mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_CARRIER));
+                });
+
+        // Otherwise, getter and setter will hit SecurityException
+        try {
+            mSm.getPhoneNumber(mSubId);
+            fail("Expect SecurityException from getPhoneNumber()");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_UICC);
+            fail("Expect SecurityException from getPhoneNumber()");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_IMS);
+            fail("Expect SecurityException from getPhoneNumber()");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            mSm.getPhoneNumber(mSubId, SubscriptionManager.PHONE_NUMBER_SOURCE_CARRIER);
+            fail("Expect SecurityException from getPhoneNumber()");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            mSm.setCarrierPhoneNumber(mSubId, "987");
+            fail("Expect SecurityException from setCarrierPhoneNumber()");
+        } catch (SecurityException e) {
+            // expected
+        }
     }
 
     @Nullable
