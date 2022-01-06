@@ -180,7 +180,7 @@ public class AudioRecordTest {
             return;
         }
         final int SLEEP_TIME = 10;
-        final int RECORD_TIME = 10000;
+        final int RECORD_TIME = 5000;
         assertEquals(AudioRecord.STATE_INITIALIZED, mAudioRecord.getState());
 
         int markerInFrames = mAudioRecord.getSampleRate() / 2;
@@ -1285,9 +1285,7 @@ public class AudioRecordTest {
             // resource needed for other tests.
             record.release();
         }
-        if (auditRecording) { // don't check timing if auditing (messes up timing)
-            return;
-        }
+
         final int markerPeriods = markerPeriodsPerSecond * TEST_TIME_MS / 1000;
         final int updatePeriods = periodsPerSecond * TEST_TIME_MS / 1000;
         final int markerPeriodsMax =

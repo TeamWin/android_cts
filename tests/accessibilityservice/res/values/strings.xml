@@ -202,4 +202,5 @@
     <!-- String label of the input method -->
     <string name="ime_name">InputMethod</string>
 
+    <string name="accessibility_cache_activity">Cache activity</string>
 </resources>

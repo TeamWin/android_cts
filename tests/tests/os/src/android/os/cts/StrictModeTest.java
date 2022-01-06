@@ -86,6 +86,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -156,6 +157,63 @@ public class StrictModeTest {
                     assertThat(info.getViolationDetails()).isNull();
                     assertThat(info.getStackTrace()).contains("DiskReadViolation");
                 });
+    }
+
+    @Test
+    public void testThreadBuilder_detectUnbufferedIo() throws Exception {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+            .penaltyLog()
+            .detectUnbufferedIo()
+            .build();
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder(policy).build());
+
+        final File test = File.createTempFile("foo", "bar");
+        inspectViolation(
+            () -> {
+                writeUnbuffered(test);
+            },
+            info -> {
+                assertThat(info.getViolationDetails()).isNull();
+                assertThat(info.getStackTrace()).contains("UnbufferedIoViolation");
+            });
+    }
+
+    @Test
+    public void testThreadBuilder_permitUnbufferedIo() throws Exception {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+            .penaltyLog()
+            .permitUnbufferedIo()
+            .build();
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder(policy).build());
+
+        final File test = File.createTempFile("foo", "bar");
+        inspectViolation(
+            () -> {
+                writeUnbuffered(test);
+            },
+            info -> {
+                assertThat(info).isNull();
+            });
+    }
+
+    private void writeUnbuffered(File file) throws Exception {
+        if (file.exists()) {
+            file.delete();
+        }
+
+        try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file))) {
+            for (int i = 0; i < 11; i++) {
+                out.write(1);
+                out.write(2);
+                out.write(3);
+                out.write(4);
+                out.flush();
+            }
+        } finally {
+            if (file.exists()) {
+                file.delete();
+            }
+        }
     }
 
     @Test

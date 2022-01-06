@@ -66,7 +66,7 @@ TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
   ASSERT_TRUE(ReadDefaultFstab(&fstab)) << "Failed to read default fstab";
 
   for (const auto& entry : fstab) {
-    if (!entry.fs_mgr_flags.verify && !entry.fs_mgr_flags.avb) {
+    if (!entry.fs_mgr_flags.avb) {
       continue;
     }
 
