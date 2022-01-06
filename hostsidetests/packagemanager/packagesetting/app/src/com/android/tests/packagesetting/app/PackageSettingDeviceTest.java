@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.tests.codepath.app;
+package com.android.tests.packagesetting.app;
 
+import android.content.Context;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.UserHandle;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -26,7 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
-public class CodePathDeviceTest {
+public class PackageSettingDeviceTest {
     @Test
     public void testCodePathMatchesExpected() throws Exception {
         String expectedCodePath =
@@ -37,5 +40,21 @@ public class CodePathDeviceTest {
                 .getPackageManager().getPackageInfo(packageName, 0);
         String apkPath = pi.applicationInfo.sourceDir;
         Assert.assertTrue(apkPath.startsWith(expectedCodePath));
+    }
+
+    @Test
+    public void testFirstInstallTimeMatchesExpected() throws Exception {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        String packageName =
+                InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
+        String userIdStr = InstrumentationRegistry.getArguments().getString("userId");
+        String expectedFirstInstallTimeStr = InstrumentationRegistry.getArguments().getString(
+                "expectedFirstInstallTime");
+        final int userId = Integer.parseInt(userIdStr);
+        final long expectedFirstInstallTime = Long.parseLong(expectedFirstInstallTimeStr);
+        final Context contextAsUser = context.createContextAsUser(UserHandle.of(userId), 0);
+        PackageInfo pi = contextAsUser.getPackageManager().getPackageInfo(packageName,
+                PackageManager.PackageInfoFlags.of(0));
+        Assert.assertTrue(Math.abs(expectedFirstInstallTime - pi.firstInstallTime) < 1000 /* ms */);
     }
 }

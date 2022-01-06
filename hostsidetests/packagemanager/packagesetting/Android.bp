@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CodePathTestApp",
+java_test_host {
+    name: "CtsPackageSettingHostTestCases",
     defaults: ["cts_defaults"],
-    sdk_version: "current",
-    srcs: ["src/**/*.java",],
+    srcs: ["src/**/*.java"],
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    static_libs: ["androidx.test.rules"],
-    compile_multilib: "both",
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+        "compatibility-host-util",
+    ],
 }

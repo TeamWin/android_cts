@@ -16,18 +16,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsCodePathHostTestCases",
+android_test_helper_app {
+    name: "PackageSettingTestApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
-    ],
+    static_libs: ["androidx.test.rules"],
+    compile_multilib: "both",
+    platform_apis: true,
 }
