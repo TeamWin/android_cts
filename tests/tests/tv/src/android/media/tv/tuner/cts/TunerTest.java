@@ -221,7 +221,7 @@ public class TunerTest {
     public void testFrontendHardwareInfo() throws Exception {
         String hwInfo = null;
         try {
-            hwInfo = mTuner.getCurrentFrontendHardwardInfo();
+            hwInfo = mTuner.getCurrentFrontendHardwareInfo();
             if (TunerVersionChecker.isHigherOrEqualVersionTo(
                     TunerVersionChecker.TUNER_VERSION_2_0)) {
                 fail("Get Frontend hardware info should throw IllegalStateException.");
@@ -238,7 +238,7 @@ public class TunerTest {
 
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
-        hwInfo = mTuner.getCurrentFrontendHardwardInfo();
+        hwInfo = mTuner.getCurrentFrontendHardwareInfo();
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
             assertNotNull(hwInfo);
             assertFalse(hwInfo.isEmpty());
@@ -2322,7 +2322,7 @@ public class TunerTest {
             }
 
             @Override
-            public void onUnLocked() {
+            public void onUnlocked() {
                 if (mLockLatch != null) {
                     mLockLatch.countDown();
                 }
