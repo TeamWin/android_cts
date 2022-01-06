@@ -54,11 +54,12 @@ class DeviceProfilesTest : CoreTestBase() {
 
             // Should succeed when called with the required permission.
             assertNotNull(permission, "Profile should require a permission")
-            withShellPermissionIdentity(permission) {
-                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            // Associate and wait for callback.
+            callback.assertInvokedByActions {
+                withShellPermissionIdentity(permission) {
+                    cdm.associate(request, SIMPLE_EXECUTOR, callback)
+                }
             }
-            // Wait for callback.
-            callback.waitForInvocation()
             // Make sure it's the right callback.
             assertEquals(actual = callback.invocations.size, expected = 1)
             callback.invocations[0].apply {
@@ -89,10 +90,10 @@ class DeviceProfilesTest : CoreTestBase() {
         val callback = RecordingCallback()
         val request = buildRequest(deviceProfile = null)
 
-        // Should not require a permission.
-        cdm.associate(request, SIMPLE_EXECUTOR, callback)
-        // Wait for callback.
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            // Should not require a permission.
+            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        }
         // Make sure it's the right callback.
         assertEquals(actual = callback.invocations.size, expected = 1)
         callback.invocations[0].apply {

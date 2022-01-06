@@ -24,13 +24,10 @@ import android.companion.cts.common.RecordingCallback.CallbackMethod.OnDeviceFou
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
 import android.content.IntentSender
 import android.util.Log
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
-class RecordingCallback : CompanionDeviceManager.Callback() {
+class RecordingCallback : CompanionDeviceManager.Callback(), InvocationTracker {
     private val _invocations: MutableList<CallbackMethodInvocation<*>> = mutableListOf()
-    val invocations: List<CallbackMethodInvocation<*>>
+    override val invocations: List<CallbackMethodInvocation<*>>
         get() = _invocations
 
     override fun onDeviceFound(intentSender: IntentSender) {
@@ -50,11 +47,6 @@ class RecordingCallback : CompanionDeviceManager.Callback() {
     private fun recordInvocation(method: CallbackMethod, param: Any? = null) {
         Log.d(TAG, "Callback.$method(), param=$param")
         _invocations.add(CallbackMethodInvocation(method, param))
-    }
-
-    fun waitForInvocation(timeout: Duration = 1.seconds) {
-        if (!waitFor(timeout, interval = 100.milliseconds) { invocations.isNotEmpty() })
-            throw AssertionError("Callback hasn't been invoked")
     }
 
     fun clearRecordedInvocations() = _invocations.clear()

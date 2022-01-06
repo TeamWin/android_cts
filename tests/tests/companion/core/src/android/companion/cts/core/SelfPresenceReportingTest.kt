@@ -164,10 +164,11 @@ class SelfPresenceReportingTest : CoreTestBase() {
             .setSelfManaged(true)
             .setDisplayName(displayName)
             .build()
-        withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        callback.assertInvokedByActions {
+            withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            }
         }
-        callback.waitForInvocation()
         return callback.invocations[0].associationInfo.id
     }
 }

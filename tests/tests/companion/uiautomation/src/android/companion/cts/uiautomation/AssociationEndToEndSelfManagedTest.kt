@@ -51,10 +51,10 @@ class AssociationEndToEndSelfManagedTest(
     fun test_userConfirmed() {
         sendRequestAndLaunchConfirmation(selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
 
-        // User "approves" the request.
-        confirmationUi.clickPositiveButton()
-
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            // User "approves" the request.
+            confirmationUi.clickPositiveButton()
+        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // OnAssociationCreated() method.
         callback.invocations.let {

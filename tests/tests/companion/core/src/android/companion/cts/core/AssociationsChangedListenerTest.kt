@@ -69,9 +69,9 @@ class AssociationsChangedListenerTest : CoreTestBase() {
             cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, callback)
         }
 
-        testApp.associate(MAC_ADDRESS_A)
-
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            testApp.associate(MAC_ADDRESS_A)
+        }
 
         callback.invocations[0].let { associations ->
             assertEquals(actual = associations.size, expected = 1)

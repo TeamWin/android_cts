@@ -73,10 +73,11 @@ class AssociateSelfManagedTest : CoreTestBase() {
                 .build()
         val callback = RecordingCallback()
 
-        withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        callback.assertInvokedByActions {
+            withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            }
         }
-        callback.waitForInvocation()
 
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationCreated() method.
@@ -108,11 +109,14 @@ class AssociateSelfManagedTest : CoreTestBase() {
                         .build()
                 val callback = RecordingCallback()
 
-                withShellPermissionIdentity(
-                        REQUEST_COMPANION_SELF_MANAGED, REQUEST_COMPANION_PROFILE_WATCH) {
-                    cdm.associate(request, SIMPLE_EXECUTOR, callback)
+                callback.assertInvokedByActions {
+                    withShellPermissionIdentity(
+                        REQUEST_COMPANION_SELF_MANAGED,
+                        REQUEST_COMPANION_PROFILE_WATCH
+                    ) {
+                        cdm.associate(request, SIMPLE_EXECUTOR, callback)
+                    }
                 }
-                callback.waitForInvocation()
 
                 // Check callback invocations: there should have been exactly 1 invocation of the
                 // onAssociationCreated().

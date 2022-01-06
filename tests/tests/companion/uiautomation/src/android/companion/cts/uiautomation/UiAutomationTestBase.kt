@@ -90,9 +90,9 @@ open class UiAutomationTestBase(
     ) {
         sendRequestAndLaunchConfirmation(singleDevice, selfManaged, displayName)
 
-        cancelAction()
-
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            cancelAction()
+        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onFailure() method.
         callback.invocations.let {
@@ -114,12 +114,15 @@ open class UiAutomationTestBase(
 
     protected fun test_timeout(singleDevice: Boolean = false) {
         setDiscoveryTimeout(1.seconds)
-        // Make sure no device will match the request
-        sendRequestAndLaunchConfirmation(
-                singleDevice = singleDevice, deviceFilter = UNMATCHABLE_BT_FILTER)
 
         // The discovery timeout is 1 sec, but let's give it 2.
-        callback.waitForInvocation(2.seconds)
+        callback.assertInvokedByActions(2.seconds) {
+            // Make sure no device will match the request
+            sendRequestAndLaunchConfirmation(
+                singleDevice = singleDevice,
+                deviceFilter = UNMATCHABLE_BT_FILTER
+            )
+        }
 
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onFailure() method.
@@ -146,9 +149,9 @@ open class UiAutomationTestBase(
     ) {
         sendRequestAndLaunchConfirmation(singleDevice = singleDevice)
 
-        confirmationAction()
-
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            confirmationAction()
+        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // OnAssociationCreated() method.
         callback.invocations.let {
@@ -214,20 +217,20 @@ open class UiAutomationTestBase(
                 .build()
         callback.clearRecordedInvocations()
 
-        // If the REQUEST_COMPANION_SELF_MANAGED and/or the profile permission is required:
-        // run with these permissions as the Shell;
-        // otherwise: just call associate().
-        with(getRequiredPermissions(selfManaged)) {
-            if (isNotEmpty()) {
-                withShellPermissionIdentity(*toTypedArray()) {
+        callback.assertInvokedByActions {
+            // If the REQUEST_COMPANION_SELF_MANAGED and/or the profile permission is required:
+            // run with these permissions as the Shell;
+            // otherwise: just call associate().
+            with(getRequiredPermissions(selfManaged)) {
+                if (isNotEmpty()) {
+                    withShellPermissionIdentity(*toTypedArray()) {
+                        cdm.associate(request, SIMPLE_EXECUTOR, callback)
+                    }
+                } else {
                     cdm.associate(request, SIMPLE_EXECUTOR, callback)
                 }
-            } else {
-                cdm.associate(request, SIMPLE_EXECUTOR, callback)
             }
         }
-
-        callback.waitForInvocation()
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationPending() method.
         callback.invocations.let {

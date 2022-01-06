@@ -44,8 +44,9 @@ class AssociateTest : CoreTestBase() {
                 .build()
         val callback = RecordingCallback()
 
-        cdm.associate(request, SIMPLE_EXECUTOR, callback)
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationPending() method.
         assertEquals(actual = callback.invocations.size, expected = 1)
