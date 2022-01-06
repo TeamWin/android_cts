@@ -512,7 +512,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("Please enable location for this test - since Marshmallow WiFi scan results are"
                     + " empty when location is disabled!");
         }
-        runWithScanningEnabled(() -> {
+        runWithScanning(() -> {
             setWifiEnabled(false);
             Thread.sleep(TEST_WAIT_DURATION_MS);
             startScan();
@@ -527,7 +527,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             final String TAG = "Test";
             assertNotNull(mWifiManager.createWifiLock(TAG));
             assertNotNull(mWifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, TAG));
-        });
+        }, true /* run with enabled*/);
     }
 
     /**
@@ -2010,19 +2010,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-    private void runWithScanningEnabled(ThrowingRunnable r) throws Exception {
-        boolean wasScanEnabledForTest = false;
-        if (!mWifiManager.isScanAlwaysAvailable()) {
+    private void runWithScanning(ThrowingRunnable r, boolean isEnabled) throws Exception {
+        boolean scanModeChangedForTest = false;
+        if (mWifiManager.isScanAlwaysAvailable() != isEnabled) {
             ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.setScanAlwaysAvailable(true));
-            wasScanEnabledForTest = true;
+                    () -> mWifiManager.setScanAlwaysAvailable(isEnabled));
+            scanModeChangedForTest = true;
         }
         try {
             r.run();
         } finally {
-            if (wasScanEnabledForTest) {
+            if (scanModeChangedForTest) {
                 ShellIdentityUtils.invokeWithShellPermissions(
-                        () -> mWifiManager.setScanAlwaysAvailable(false));
+                        () -> mWifiManager.setScanAlwaysAvailable(!isEnabled));
             }
         }
     }
@@ -2050,7 +2050,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("Please enable location for this test - since Marshmallow WiFi scan results are"
                     + " empty when location is disabled!");
         }
-        runWithScanningEnabled(() -> {
+        runWithScanning(() -> {
             setWifiEnabled(false);
             turnScreenOn();
             assertWifiScanningIsOn();
@@ -2059,7 +2059,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertWifiScanningIsOn();
             turnScreenOn();
             assertWifiScanningIsOn();
-        });
+        }, true /* run with enabled*/);
     }
 
     /**
@@ -2084,7 +2084,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("Please enable location for this test - since Marshmallow WiFi scan results are"
                     + " empty when location is disabled!");
         }
-        runWithScanningEnabled(() -> {
+        runWithScanning(() -> {
             setWifiEnabled(true);
             turnScreenOn();
             assertWifiScanningIsOn();
@@ -2093,7 +2093,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertWifiScanningIsOn();
             turnScreenOn();
             assertWifiScanningIsOn();
-        });
+        }, true /* run with enabled*/);
     }
 
     /**
@@ -2199,7 +2199,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             PollingCheck.check(
                 "SoftAp turn off failed!", 2_000,
                 () -> mWifiManager.isWifiApEnabled() == false);
-            mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
         }
     }
 
@@ -3399,6 +3398,110 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mWifiManager.stopRestrictingAutoJoinToSubscriptionId());
         startScan();
         waitForConnection();
+    }
+
+    private class TestActiveCountryCodeChangedCallback implements
+            WifiManager.ActiveCountryCodeChangedCallback  {
+        private String mCurrentCountryCode;
+        private boolean mIsOnActiveCountryCodeChangedCalled = false;
+        private boolean mIsOnCountryCodeInactiveCalled = false;
+
+        public boolean isOnActiveCountryCodeChangedCalled() {
+            return mIsOnActiveCountryCodeChangedCalled;
+        }
+
+        public boolean isOnCountryCodeInactiveCalled() {
+            return mIsOnCountryCodeInactiveCalled;
+        }
+        public void resetCallbackCallededHistory() {
+            mIsOnActiveCountryCodeChangedCalled = false;
+            mIsOnCountryCodeInactiveCalled = false;
+        }
+
+        public String getCurrentDriverCountryCode() {
+            return mCurrentCountryCode;
+        }
+
+        @Override
+        public void onActiveCountryCodeChanged(String country) {
+            Log.d(TAG, "Receive DriverCountryCodeChanged to " + country);
+            mCurrentCountryCode = country;
+            mIsOnActiveCountryCodeChangedCalled = true;
+        }
+
+        @Override
+        public void onCountryCodeInactive() {
+            mCurrentCountryCode = null;
+            mIsOnCountryCodeInactiveCalled = true;
+        }
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testActiveCountryCodeChangedCallback() throws Exception {
+        TestActiveCountryCodeChangedCallback testCountryCodeChangedCallback =
+                new TestActiveCountryCodeChangedCallback();
+        TestExecutor executor = new TestExecutor();
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            turnOffWifiAndTetheredHotspotIfEnabled();
+            // Run with scanning disable to make sure there is no active mode.
+            runWithScanning(() -> {
+                mWifiManager.registerActiveCountryCodeChangedCallback(
+                        executor, testCountryCodeChangedCallback);
+
+
+                PollingCheck.check(
+                        "DriverCountryCode is non-null when wifi off",
+                        5000,
+                        () -> {
+                            executor.runAll();
+                            return testCountryCodeChangedCallback
+                                        .isOnActiveCountryCodeChangedCalled()
+                                    && testCountryCodeChangedCallback.getCurrentDriverCountryCode()
+                                            == null;
+                        });
+                // Enable wifi to make sure country code has been updated.
+                setWifiEnabled(true);
+                PollingCheck.check(
+                        "DriverCountryCode is null when wifi on",
+                        5000,
+                        () -> {
+                            executor.runAll();
+                            return testCountryCodeChangedCallback
+                                        .isOnActiveCountryCodeChangedCalled()
+                                    && testCountryCodeChangedCallback.getCurrentDriverCountryCode()
+                                            != null;
+                        });
+                // Disable wifi to trigger country code change
+                setWifiEnabled(false);
+                PollingCheck.check(
+                        "DriverCountryCode should be null when wifi off",
+                        5000,
+                        () -> {
+                            executor.runAll();
+                            return testCountryCodeChangedCallback.isOnCountryCodeInactiveCalled()
+                                    && testCountryCodeChangedCallback
+                                            .getCurrentDriverCountryCode() == null;
+                        });
+                mWifiManager.unregisterActiveCountryCodeChangedCallback(
+                            testCountryCodeChangedCallback);
+                testCountryCodeChangedCallback.resetCallbackCallededHistory();
+                setWifiEnabled(true);
+                // Check there is no callback has been called.
+                PollingCheck.check(
+                        "Callback is called after unregister",
+                        5000,
+                        () -> {
+                            executor.runAll();
+                            return !testCountryCodeChangedCallback.isOnCountryCodeInactiveCalled()
+                                    && !testCountryCodeChangedCallback
+                                            .isOnActiveCountryCodeChangedCalled();
+                        });
+            }, false /* Run with disabled */);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
