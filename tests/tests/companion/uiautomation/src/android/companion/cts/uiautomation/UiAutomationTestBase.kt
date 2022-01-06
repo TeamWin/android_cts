@@ -31,6 +31,9 @@ import java.util.regex.Pattern
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.seconds
 
 open class UiAutomationTestBase(
     protected val profile: String?,
@@ -110,14 +113,13 @@ open class UiAutomationTestBase(
     }
 
     protected fun test_timeout(singleDevice: Boolean = false) {
-        // Set discovery timeout to 1 sec.
-        setDiscoveryTimeout(1_000)
+        setDiscoveryTimeout(1.seconds)
         // Make sure no device will match the request
         sendRequestAndLaunchConfirmation(
                 singleDevice = singleDevice, deviceFilter = UNMATCHABLE_BT_FILTER)
 
         // The discovery timeout is 1 sec, but let's give it 2.
-        callback.waitForInvocation(2_000)
+        callback.waitForInvocation(2.seconds)
 
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onFailure() method.
@@ -251,10 +253,13 @@ open class UiAutomationTestBase(
                 if (profilePermission != null) it += profilePermission
             }
 
-    private fun setDiscoveryTimeout(timeout: Int) =
-            instrumentation.setSystemProp(SYS_PROP_DEBUG_TIMEOUT, timeout.toString())
+    private fun setDiscoveryTimeout(timeout: Duration) =
+        instrumentation.setSystemProp(
+            SYS_PROP_DEBUG_TIMEOUT,
+            timeout.inWholeMilliseconds.toString()
+        )
 
-    private fun restoreDiscoveryTimeout() = setDiscoveryTimeout(0)
+    private fun restoreDiscoveryTimeout() = setDiscoveryTimeout(ZERO)
 
     companion object {
         /**

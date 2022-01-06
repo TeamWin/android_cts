@@ -37,6 +37,8 @@ import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * A base class for CompanionDeviceManager [Tests][org.junit.Test] to extend.
@@ -132,14 +134,14 @@ fun assertAssociations(
  * @return whether the condition was met before time ran out.
  */
 fun waitFor(
-    timeout: Long = 10_000,
-    interval: Long = 1_000,
+    timeout: Duration = 10.seconds,
+    interval: Duration = 1.seconds,
     condition: () -> Boolean
 ): Boolean {
     val startTime = uptimeMillis()
     while (!condition()) {
-        if (uptimeMillis() - startTime > timeout) return false
-        sleep(interval)
+        if (uptimeMillis() - startTime > timeout.inWholeMilliseconds) return false
+        sleep(interval.inWholeMilliseconds)
     }
     return true
 }
