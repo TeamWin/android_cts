@@ -32,6 +32,8 @@ import androidx.test.filters.SdkSuppress;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
+import com.google.common.collect.ImmutableList;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -43,10 +45,12 @@ import java.util.LinkedList;
 public class CodecState {
     private static final String TAG = CodecState.class.getSimpleName();
 
+    public static final int UNINITIALIZED_TIMESTAMP = Integer.MIN_VALUE;
+
     private boolean mSawInputEOS;
     private volatile boolean mSawOutputEOS;
     private boolean mLimitQueueDepth;
-    private boolean mTunneled;
+    private boolean mIsTunneled;
     private boolean mIsAudio;
     private int mAudioSessionId;
     private ByteBuffer[] mCodecInputBuffers;
@@ -55,7 +59,14 @@ public class CodecState {
     private int mAvailableInputBufferIndex;
     private LinkedList<Integer> mAvailableOutputBufferIndices;
     private LinkedList<MediaCodec.BufferInfo> mAvailableOutputBufferInfos;
-    private volatile long mPresentationTimeUs;
+    /**
+     * The media timestamp of the latest frame decoded by this codec.
+     *
+     * Note: in tunnel mode, this coincides with the latest rendered frame.
+     */
+    private volatile long mDecodedFramePresentationTimeUs;
+    private volatile long mRenderedVideoFramePresentationTimeUs;
+    private volatile long mRenderedVideoFrameSystemTimeNano;
     private long mFirstSampleTimeUs;
     private long mPlaybackStartTimeUs;
     private long mLastPresentTimeUs;
@@ -68,8 +79,17 @@ public class CodecState {
     private volatile OnFrameRenderedListener mOnFrameRenderedListener;
     /** A list of reported rendered video frames' timestamps. */
     private ArrayList<Long> mRenderedVideoFrameTimestampList;
-    private boolean mFirstTunnelFrameReady;
+    private ArrayList<Long> mRenderedVideoFrameSystemTimeList;
+    private boolean mIsFirstTunnelFrameReady;
     private volatile OnFirstTunnelFrameReadyListener mOnFirstTunnelFrameReadyListener;
+    /** If true, starves the underlying {@link MediaCodec} to simulate an underrun. */
+    private boolean mShouldSimulateUnderrun;
+    /**
+     * An offset (in nanoseconds) to add to presentation timestamps fed to the {@link AudioTrack}.
+     *
+     * This is used to simulate desynchronization between tracks.
+     */
+    private long mAudioOffsetNs;
 
     private static boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
@@ -94,7 +114,7 @@ public class CodecState {
         mFormat = format;
         mSawInputEOS = mSawOutputEOS = false;
         mLimitQueueDepth = limitQueueDepth;
-        mTunneled = tunneled;
+        mIsTunneled = tunneled;
         mAudioSessionId = audioSessionId;
         mFirstSampleTimeUs = -1;
         mPlaybackStartTimeUs = 0;
@@ -106,18 +126,22 @@ public class CodecState {
         mAvailableOutputBufferIndices = new LinkedList<Integer>();
         mAvailableOutputBufferInfos = new LinkedList<MediaCodec.BufferInfo>();
         mRenderedVideoFrameTimestampList = new ArrayList<Long>();
+        mRenderedVideoFrameSystemTimeList = new ArrayList<Long>();
 
-        mPresentationTimeUs = 0;
+        mDecodedFramePresentationTimeUs = UNINITIALIZED_TIMESTAMP;
+        mRenderedVideoFramePresentationTimeUs = UNINITIALIZED_TIMESTAMP;
+        mRenderedVideoFrameSystemTimeNano = UNINITIALIZED_TIMESTAMP;
 
-        mFirstTunnelFrameReady = false;
+        mIsFirstTunnelFrameReady = false;
+        mShouldSimulateUnderrun = false;
+
+        mAudioOffsetNs = 0;
 
         String mime = mFormat.getString(MediaFormat.KEY_MIME);
         Log.d(TAG, "CodecState::CodecState " + mime);
         mIsAudio = mime.startsWith("audio/");
 
-        if (mTunneled && !mIsAudio) {
-            setFrameListeners(mCodec);
-        }
+        setFrameListeners(mCodec);
     }
 
     public void release() {
@@ -147,7 +171,7 @@ public class CodecState {
     public void start() {
         mCodec.start();
         mCodecInputBuffers = mCodec.getInputBuffers();
-        if (!mTunneled || mIsAudio) {
+        if (!mIsTunneled || mIsAudio) {
             mCodecOutputBuffers = mCodec.getOutputBuffers();
         }
 
@@ -162,12 +186,28 @@ public class CodecState {
         }
     }
 
+    /**
+     * Returns the media timestamp of the latest decoded sample/frame.
+     *
+     * TODO(b/202710709): Disambiguate getCurrentPosition's meaning
+     */
     public long getCurrentPositionUs() {
-        return mPresentationTimeUs;
+        // Use decoded frame time when available, otherwise default to render time (typically, in
+        // tunnel mode).
+        if (mDecodedFramePresentationTimeUs > 0) {
+            return mDecodedFramePresentationTimeUs;
+        } else {
+            return mRenderedVideoFramePresentationTimeUs;
+        }
+    }
+
+    /** Returns the system time of the latest rendered video frame. */
+    public long getRenderedVideoSystemTimeNano() {
+        return mRenderedVideoFrameSystemTimeNano;
     }
 
     public void flush() {
-        if (!mTunneled || mIsAudio) {
+        if (!mIsTunneled || mIsAudio) {
             mAvailableOutputBufferIndices.clear();
             mAvailableOutputBufferInfos.clear();
         }
@@ -182,9 +222,12 @@ public class CodecState {
         }
 
         mCodec.flush();
-        mPresentationTimeUs = 0;
+        mDecodedFramePresentationTimeUs = UNINITIALIZED_TIMESTAMP;
+        mRenderedVideoFramePresentationTimeUs = UNINITIALIZED_TIMESTAMP;
+        mRenderedVideoFrameSystemTimeNano = UNINITIALIZED_TIMESTAMP;
         mRenderedVideoFrameTimestampList = new ArrayList<Long>();
-        mFirstTunnelFrameReady = false;
+        mRenderedVideoFrameSystemTimeList = new ArrayList<Long>();
+        mIsFirstTunnelFrameReady = false;
     }
 
     public boolean isEnded() {
@@ -223,7 +266,7 @@ public class CodecState {
         }
 
         // Queue output data, if relevant
-        if (mIsAudio || !mTunneled) {
+        if (mIsAudio || !mIsTunneled) {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             int indexOutput = mCodec.dequeueOutputBuffer(info, 0 /* timeoutUs */);
 
@@ -250,12 +293,18 @@ public class CodecState {
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     private void setFrameListeners(MediaCodec codec) {
-        mOnFrameRenderedListener = new OnFrameRenderedListener();
-        codec.setOnFrameRenderedListener(mOnFrameRenderedListener,
-                new Handler(Looper.getMainLooper()));
-        mOnFirstTunnelFrameReadyListener = new OnFirstTunnelFrameReadyListener();
-        codec.setOnFirstTunnelFrameReadyListener(new Handler(Looper.getMainLooper()),
-                mOnFirstTunnelFrameReadyListener);
+        if (!mIsAudio) {
+            // Setup frame rendered callback for video codecs
+            mOnFrameRenderedListener = new OnFrameRenderedListener();
+            codec.setOnFrameRenderedListener(mOnFrameRenderedListener,
+                    new Handler(Looper.getMainLooper()));
+
+            if (mIsTunneled) {
+                mOnFirstTunnelFrameReadyListener = new OnFirstTunnelFrameReadyListener();
+                codec.setOnFirstTunnelFrameReadyListener(new Handler(Looper.getMainLooper()),
+                        mOnFirstTunnelFrameReadyListener);
+            }
+        }
     }
 
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
@@ -308,7 +357,7 @@ public class CodecState {
                 return null;
             }
 
-            if (mTunneled && !mIsAudio) {
+            if (mIsTunneled && !mIsAudio) {
                 if (mFirstSampleTimeUs == -1) {
                     mFirstSampleTimeUs = sampleTime;
                 }
@@ -374,7 +423,7 @@ public class CodecState {
                 return;
             }
             mAudioTrack = new NonBlockingAudioTrack(sampleRate, channelCount,
-                                    mTunneled, mAudioSessionId);
+                                    mIsTunneled, mAudioSessionId);
             mAudioTrack.play();
         }
 
@@ -388,7 +437,7 @@ public class CodecState {
 
     /** Returns true if more output data could be drained. */
     private boolean drainOutputBuffer() {
-        if (mSawOutputEOS || mAvailableOutputBufferIndices.isEmpty()) {
+        if (mSawOutputEOS || mAvailableOutputBufferIndices.isEmpty() || mShouldSimulateUnderrun) {
             return false;
         }
 
@@ -407,13 +456,6 @@ public class CodecState {
             return false;
         }
 
-        long realTimeUs =
-            mMediaTimeProvider.getRealTimeUsForMediaTime(info.presentationTimeUs);
-
-        long nowUs = mMediaTimeProvider.getNowUs();
-
-        long lateUs = nowUs - realTimeUs;
-
         if (mAudioTrack != null) {
             ByteBuffer buffer = mCodecOutputBuffers[index];
             byte[] audioArray = new byte[info.size];
@@ -421,11 +463,11 @@ public class CodecState {
             buffer.clear();
 
             mAudioTrack.write(ByteBuffer.wrap(audioArray), info.size,
-                    info.presentationTimeUs*1000);
+                    info.presentationTimeUs * 1000 + mAudioOffsetNs);
 
             mCodec.releaseOutputBuffer(index, false /* render */);
 
-            mPresentationTimeUs = info.presentationTimeUs;
+            mDecodedFramePresentationTimeUs = info.presentationTimeUs;
 
             mAvailableOutputBufferIndices.removeFirst();
             mAvailableOutputBufferInfos.removeFirst();
@@ -433,6 +475,12 @@ public class CodecState {
         } else {
             // video
             boolean render;
+            long realTimeUs =
+                    mMediaTimeProvider.getRealTimeUsForMediaTime(info.presentationTimeUs);
+
+            long nowUs = mMediaTimeProvider.getNowUs();
+
+            long lateUs = nowUs - realTimeUs;
 
             if (lateUs < -45000) {
                 // too early;
@@ -442,7 +490,7 @@ public class CodecState {
                 render = false;
             } else {
                 render = true;
-                mPresentationTimeUs = info.presentationTimeUs;
+                mDecodedFramePresentationTimeUs = info.presentationTimeUs;
             }
 
             mCodec.releaseOutputBuffer(index, render);
@@ -453,7 +501,10 @@ public class CodecState {
         }
     }
 
-    /** Callback called by the renderer in tunneling mode. */
+    /**
+     * Callback called by {@link MediaCodec} when it is notified that a decoded video frame has been
+     * rendered on the attached {@link Surface}.
+    */
     private class OnFrameRenderedListener implements MediaCodec.OnFrameRenderedListener {
         private static final long TUNNELING_EOS_PRESENTATION_TIME_US = Long.MAX_VALUE;
 
@@ -465,9 +516,11 @@ public class CodecState {
             if (presentationTimeUs == TUNNELING_EOS_PRESENTATION_TIME_US) {
                  mSawOutputEOS = true;
             } else {
-                 mPresentationTimeUs = presentationTimeUs;
+                mRenderedVideoFramePresentationTimeUs = presentationTimeUs;
             }
+            mRenderedVideoFrameSystemTimeNano = nanoTime;
             mRenderedVideoFrameTimestampList.add(presentationTimeUs);
+            mRenderedVideoFrameSystemTimeList.add(mRenderedVideoFrameSystemTimeNano);
         }
     }
 
@@ -477,6 +530,11 @@ public class CodecState {
         }
 
         return mAudioTrack.getAudioTimeUs();
+    }
+
+    /** Returns the presentation timestamp of the last rendered video frame. */
+    public long getVideoTimeUs() {
+        return mRenderedVideoFramePresentationTimeUs;
     }
 
     /** Callback called in tunnel mode when video peek is ready */
@@ -489,17 +547,26 @@ public class CodecState {
             if (this != mOnFirstTunnelFrameReadyListener) {
                 return; // stale event
             }
-            mFirstTunnelFrameReady = true;
+            mIsFirstTunnelFrameReady = true;
         }
     }
 
     /**
-     * If a video codec, returns the list of rendered frames' timestamps.
-     * Otherwise, returns an empty list.
+     * If a video codec, returns the list of rendered frames' timestamps. Otherwise, returns an
+     * empty list.
      */
-    public ArrayList<Long> getRenderedVideoFrameTimestampList() {
-        return new ArrayList<Long>(mRenderedVideoFrameTimestampList);
+    public ImmutableList<Long> getRenderedVideoFrameTimestampList() {
+        return ImmutableList.<Long>copyOf(mRenderedVideoFrameTimestampList);
     }
+
+    /**
+     * If a video codec, returns the list system times when frames were rendered. Otherwise, returns
+     * an empty list.
+     */
+    public ImmutableList<Long> getRenderedVideoFrameSystemTimeList() {
+        return ImmutableList.<Long>copyOf(mRenderedVideoFrameSystemTimeList);
+    }
+
 
     /** Process the attached {@link AudioTrack}, if any. */
     public void processAudioTrack() {
@@ -555,12 +622,37 @@ public class CodecState {
 
     /** In tunnel mode, queries whether the first video frame is ready for video peek. */
     public boolean isFirstTunnelFrameReady() {
-        return mFirstTunnelFrameReady;
+        return mIsFirstTunnelFrameReady;
+    }
+
+    /**
+     * Option to simulate underrun by pausing the release of the underlying codec's output buffers
+     * (in non-tunnel mode).
+     * Note: This might starve the underlying buffer queue.
+     */
+    public void simulateUnderrun(boolean enable) {
+        mShouldSimulateUnderrun = enable;
+    }
+
+    /**
+     * Option to introduce an offset (positive or negative, in ms) to content queued to the
+     * {@link AudioTrack}.
+     */
+    public void setAudioOffsetMs(int audioOffsetMs) {
+        mAudioOffsetNs = audioOffsetMs * 1000000;
     }
 
     public void stopWritingToAudioTrack(boolean stopWriting) {
         if (mAudioTrack != null) {
             mAudioTrack.stopWriting(stopWriting);
         }
+    }
+
+    /** Returns the underlying {@code AudioTrack}, if any. */
+    public AudioTrack getAudioTrack() {
+        if (mAudioTrack != null) {
+            return mAudioTrack.getAudioTrack();
+        }
+        return null;
     }
 }

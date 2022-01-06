@@ -17,6 +17,7 @@ package android.media.cts;
 
 import android.content.Context;
 import android.media.AudioTimestamp;
+import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -26,8 +27,9 @@ import android.net.Uri;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,7 +64,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     private Thread mThread;
     private Uri mAudioUri;
     private Uri mVideoUri;
-    private boolean mTunneled;
+    private boolean mIsTunneled;
     private int mAudioSessionId;
     private Context mContext;
 
@@ -72,7 +74,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     public MediaCodecTunneledPlayer(Context context, SurfaceHolder holder, boolean tunneled, int AudioSessionId) {
         mContext = context;
         mSurfaceHolder = holder;
-        mTunneled = tunneled;
+        mIsTunneled = tunneled;
         mAudioTrackState = null;
         mState = STATE_IDLE;
         mAudioSessionId = AudioSessionId;
@@ -244,7 +246,7 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         MediaCodec codec;
 
         // setup tunneled video codec if needed
-        if (isVideo && mTunneled) {
+        if (isVideo && mIsTunneled) {
             format.setFeatureEnabled(MediaCodecInfo.CodecCapabilities.FEATURE_TunneledPlayback,
                         true);
             MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
@@ -281,11 +283,11 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         CodecState state;
         if (isVideo) {
             state = new CodecState((MediaTimeProvider)this, mVideoExtractor,
-                            trackIndex, format, codec, true, mTunneled, mAudioSessionId);
+                            trackIndex, format, codec, true, mIsTunneled, mAudioSessionId);
             mVideoCodecStates.put(Integer.valueOf(trackIndex), state);
         } else {
             state = new CodecState((MediaTimeProvider)this, mAudioExtractor,
-                            trackIndex, format, codec, true, mTunneled, mAudioSessionId);
+                            trackIndex, format, codec, true, mIsTunneled, mAudioSessionId);
             mAudioCodecStates.put(Integer.valueOf(trackIndex), state);
         }
 
@@ -527,21 +529,50 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         return (int)((mDurationUs + 500) / 1000);
     }
 
+    /**
+     * Retrieve the presentation timestamp of the latest queued output sample.
+     * In tunnel mode, retrieves the presentation timestamp of the latest rendered video frame.
+     * @return presentation timestamp in microseconds, or {@code CodecState.UNINITIALIZED_TIMESTAMP}
+     * if playback has not started.
+    */
     public int getCurrentPosition() {
         if (mVideoCodecStates == null) {
-                return 0;
+            return CodecState.UNINITIALIZED_TIMESTAMP;
         }
 
-        long positionUs = 0;
+        long positionUs = CodecState.UNINITIALIZED_TIMESTAMP;
 
         for (CodecState state : mVideoCodecStates.values()) {
             long trackPositionUs = state.getCurrentPositionUs();
-
             if (trackPositionUs > positionUs) {
                 positionUs = trackPositionUs;
             }
         }
-        return (int)((positionUs + 500) / 1000);
+
+        if (positionUs == CodecState.UNINITIALIZED_TIMESTAMP) {
+            return CodecState.UNINITIALIZED_TIMESTAMP;
+        }
+        return (int) (positionUs + 500) / 1000;
+    }
+
+    /**
+     * Returns the system time of the latest rendered frame in any of the video codecs.
+     */
+    public long getCurrentRenderedSystemTimeNano() {
+        if (mVideoCodecStates == null) {
+            return 0;
+        }
+
+        long position = 0;
+
+        for (CodecState state : mVideoCodecStates.values()) {
+            long trackPosition = state.getRenderedVideoSystemTimeNano();
+
+            if (trackPosition > position) {
+                position = trackPosition;
+            }
+        }
+        return position;
     }
 
     /**
@@ -555,22 +586,39 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     }
 
     /**
+     * Returns the presentation timestamp of the last rendered video frame.
+     *
+     * Note: This assumes there is exactly one video codec running in the player.
+     */
+    public long getVideoTimeUs() {
+        return mVideoCodecStates.get(0).getVideoTimeUs();
+    }
+
+    /**
      * Returns the ordered list of video frame timestamps rendered in tunnel mode.
+     *
+     * Note: This assumes there is exactly one video codec running in the player.
+     */
+    public ImmutableList<Long> getRenderedVideoFrameTimestampList() {
+        return mVideoCodecStates.get(0).getRenderedVideoFrameTimestampList();
+    }
+
+    /**
+     * Returns the ordered list of system times of rendered video frames in tunnel-mode.
      *
      * Note: This assumes there is at most one tunneled mode video codec running in the player.
      */
-    public ArrayList<Long> getRenderedVideoFrameTimestampList() {
+    public ImmutableList<Long> getRenderedVideoFrameSystemTimeList() {
         if (mVideoCodecStates == null) {
-            return new ArrayList<Long>();
+            return ImmutableList.<Long>of();
         }
 
-        ArrayList<Long> timestamps = null;
         for (CodecState state : mVideoCodecStates.values()) {
-            timestamps = state.getRenderedVideoFrameTimestampList();
+            ImmutableList<Long> timestamps = state.getRenderedVideoFrameSystemTimeList();
             if (!timestamps.isEmpty())
-                break;
-            }
-        return timestamps;
+                return timestamps;
+        }
+        return ImmutableList.<Long>of();
     }
 
     /**
@@ -654,7 +702,8 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         return false;
     }
 
-    public int getFramesWritten() {
+    /** Returns the number of frames that have been sent down to the HAL. */
+    public int getAudioFramesWritten() {
         if (mAudioCodecStates == null) {
             return -1;
         }
@@ -665,5 +714,27 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         for (CodecState state : mAudioCodecStates.values()) {
             state.stopWritingToAudioTrack(stopWriting);
         }
+    }
+
+    /** Configure underrun simulation on audio codecs. */
+    public void simulateAudioUnderrun(boolean enabled) {
+        for (CodecState state: mAudioCodecStates.values()) {
+            state.simulateUnderrun(enabled);
+        }
+    }
+
+    /** Configure an offset (in ms) to audio content to simulate track desynchronization. */
+    public void setAudioTrackOffsetMs(int audioOffsetMs) {
+        if (mAudioTrackState != null) {
+            mAudioTrackState.setAudioOffsetMs(audioOffsetMs);
+        }
+    }
+
+    /** Returns the underlying {@code AudioTrack}, if any. */
+    public AudioTrack getAudioTrack() {
+        if (mAudioTrackState != null) {
+            return mAudioTrackState.getAudioTrack();
+        }
+        return null;
     }
 }
