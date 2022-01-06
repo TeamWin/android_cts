@@ -35,6 +35,7 @@ import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVI
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.COMMAND_START_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_INTENT;
+import static android.server.wm.app.Components.TestActivity.EXTRA_OPTION;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CENTER_VIEW_IS_SURFACE_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
@@ -67,6 +68,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityOptions;
 import android.app.UiModeManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -82,6 +84,7 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+import android.window.SplashScreen;
 
 import androidx.core.graphics.ColorUtils;
 
@@ -131,6 +134,11 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     private void startActivityFromTestLauncher(CommandSession.ActivitySession homeActivity,
             ComponentName componentName, Consumer<Intent> fillExtra) {
+        startActivityFromTestLauncher(homeActivity, componentName, fillExtra, null /* options */);
+    }
+
+    private void startActivityFromTestLauncher(CommandSession.ActivitySession homeActivity,
+            ComponentName componentName, Consumer<Intent> fillExtra, ActivityOptions options) {
 
         final Bundle data = new Bundle();
         final Intent startIntent = new Intent();
@@ -138,9 +146,11 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         fillExtra.accept(startIntent);
         data.putParcelable(EXTRA_INTENT, startIntent);
+        if (options != null) {
+            data.putParcelable(EXTRA_OPTION, options.toBundle());
+        }
         homeActivity.sendCommand(COMMAND_START_ACTIVITY, data);
     }
-
     @Test
     public void testSplashscreenContent() {
         // TODO(b/192431448): Allow Automotive to skip this test until Splash Screen is properly
@@ -358,18 +368,9 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
         mWmState.computeState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY);
         mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
-        final TestJournalProvider.TestJournal journal =
-                TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT);
         if (expectResult) {
-            TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
-                    () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
-            assertTrue("No entry for CONTAINS_CENTER_VIEW",
-                    journal.extras.containsKey(CONTAINS_CENTER_VIEW));
-            assertTrue("No entry for CONTAINS_BRANDING_VIEW",
-                    journal.extras.containsKey(CONTAINS_BRANDING_VIEW));
-            assertTrue("Center View shouldn't be null", journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
-            assertTrue(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
-            assertEquals(Color.BLUE, journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.YELLOW));
+            assertHandleExit(TestJournalProvider.TestJournalContainer
+                    .get(HANDLE_SPLASH_SCREEN_EXIT));
         }
     }
 
@@ -509,6 +510,53 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         }
         mWmState.waitForActivityRemoved(activity);
         separateTestJournal();
+    }
+
+    @Test
+    public void testLaunchFromLauncherWithEmptyIconOptions() {
+        assumeFalse(isLeanBack());
+        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        TestJournalProvider.TestJournalContainer.start();
+        final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
+        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent ->
+                intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true), noIconOptions);
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
+        assertFalse(journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+    }
+
+    @Test
+    public void testLaunchAppWithIconOptions() throws Exception {
+        final Bundle bundle = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_ICON).toBundle();
+        TestJournalProvider.TestJournalContainer.start();
+        final Intent intent = new Intent(Intent.ACTION_VIEW)
+                .setComponent(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true);
+        mContext.startActivity(intent, bundle);
+
+        mWmState.waitForActivityState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+
+        assertHandleExit(TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT));
+    }
+
+    private void assertHandleExit(TestJournalProvider.TestJournal journal) throws Exception {
+        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
+                () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+        assertTrue("No entry for CONTAINS_CENTER_VIEW",
+                journal.extras.containsKey(CONTAINS_CENTER_VIEW));
+        assertTrue("No entry for CONTAINS_BRANDING_VIEW",
+                journal.extras.containsKey(CONTAINS_BRANDING_VIEW));
+        assertTrue("Center View shouldn't be null",
+                journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+        assertTrue(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+        assertEquals(Color.BLUE, journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.YELLOW));
     }
 
     @Test
