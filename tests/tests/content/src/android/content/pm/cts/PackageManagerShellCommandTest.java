@@ -118,6 +118,7 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
 
     private static final String TEST_SDK1_PACKAGE = "com.test.sdk1_1";
+    private static final String TEST_SDK1_MAJOR_VERSION2_PACKAGE = "com.test.sdk1_2";
     private static final String TEST_SDK2_PACKAGE = "com.test.sdk2_2";
     private static final String TEST_SDK3_PACKAGE = "com.test.sdk3_3";
     private static final String TEST_SDK_USER_PACKAGE = "com.test.sdk.user";
@@ -127,6 +128,7 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_SDK3_NAME = "com.test.sdk3";
 
     private static final String TEST_SDK1 = "HelloWorldSdk1.apk";
+    private static final String TEST_SDK1_MAJOR_VERSION2 = "HelloWorldSdk1MajorVersion2.apk";
     private static final String TEST_SDK1_UPDATED = "HelloWorldSdk1Updated.apk";
     private static final String TEST_SDK2 = "HelloWorldSdk2.apk";
     private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
@@ -250,6 +252,7 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_SDK3_PACKAGE);
         uninstallPackageSilently(TEST_SDK2_PACKAGE);
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_MAJOR_VERSION2_PACKAGE);
 
         mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
         // Disable the package verifier for non-incremental installations to avoid the dialog
@@ -276,6 +279,7 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_SDK3_PACKAGE);
         uninstallPackageSilently(TEST_SDK2_PACKAGE);
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_MAJOR_VERSION2_PACKAGE);
 
         // Reset the global settings to their original values.
         executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
@@ -698,6 +702,21 @@ public class PackageManagerShellCommandTest {
         installPackage(TEST_SDK1);
 
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+    }
+
+    @Test
+    public void testSdkInstallMultipleMajorVersions() throws Exception {
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Major version 1.
+        installPackage(TEST_SDK1);
+
+        // Major version 2.
+        installPackage(TEST_SDK1_MAJOR_VERSION2);
+
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 2));
     }
 
     @Test
