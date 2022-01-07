@@ -31,22 +31,34 @@ import android.media.cts.Preconditions;
 import android.media.cts.TestMediaDataSource;
 import android.media.cts.StreamUtils;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Display;
 import android.view.Display.HdrCapabilities;
 import android.webkit.cts.CtsTestServer;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -54,7 +66,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StreamTokenizer;
@@ -65,29 +76,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.UUID;
 
 @AppModeFull(reason = "Instant apps cannot access the SD card")
-public class MediaExtractorTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaExtractorTest {
     private static final String TAG = "MediaExtractorTest";
     private static final boolean IS_AT_LEAST_S = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
     protected MediaExtractor mExtractor;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mExtractor = new MediaExtractor();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         mExtractor.release();
     }
 
-    protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
+    private Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         File inpFile = new File(mInpPrefix + res);
         Preconditions.assertTestFileExists(mInpPrefix + res);
@@ -96,17 +109,19 @@ public class MediaExtractorTest extends AndroidTestCase {
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
     }
 
-    protected TestMediaDataSource getDataSourceFor(final String res) throws Exception {
+    private TestMediaDataSource getDataSourceFor(final String res) throws Exception {
         AssetFileDescriptor afd = getAssetFileDescriptorFor(res);
         return TestMediaDataSource.fromAssetFd(afd);
     }
 
-    protected TestMediaDataSource setDataSource(final String res) throws Exception {
+    private TestMediaDataSource setDataSource(final String res) throws Exception {
         TestMediaDataSource ds = getDataSourceFor(res);
         mExtractor.setDataSource(ds);
         return ds;
     }
 
+    @Ignore
+    @Test
     public void SKIP_testNullMediaDataSourceIsRejected() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
         // #testIfNullMediaDataSourceIsRejectedBySetDataSource
@@ -118,6 +133,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
+    @Ignore
+    @Test
     public void SKIP_testMediaDataSourceIsClosedOnRelease() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testMediaDataSource
         TestMediaDataSource dataSource = setDataSource("testvideo.3gp");
@@ -125,6 +142,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         assertTrue(dataSource.isClosed());
     }
 
+    @Ignore
+    @Test
     public void SKIP_testExtractorFailsIfMediaDataSourceThrows() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
         // #testIfInvalidDataSourceIsRejectedBySetDataSource
@@ -138,6 +157,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testExtractorFailsIfMediaDataSourceReturnsAnError() throws Exception {
         TestMediaDataSource dataSource = getDataSourceFor("testvideo.3gp");
         dataSource.returnFromReadAt(-2);
@@ -150,6 +170,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // Smoke test MediaExtractor reading from a DataSource.
+    @Ignore
+    @Test
     public void SKIP_testExtractFromAMediaDataSource() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testMediaDataSource and
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testMetrics
@@ -158,6 +180,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // Smoke test MediaExtractor reading from an AssetFileDescriptor.
+    @Ignore
+    @Test
     public void SKIP_testExtractFromAssetFileDescriptor() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testAssetFD and
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testMetrics
@@ -174,8 +198,7 @@ public class MediaExtractorTest extends AndroidTestCase {
             return true;
         }
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        DisplayManager displayManager = context.getSystemService(DisplayManager.class);
+        DisplayManager displayManager = getContext().getSystemService(DisplayManager.class);
         Display defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
         HdrCapabilities cap = defaultDisplay.getHdrCapabilities();
         for (int type : cap.getSupportedHdrTypes()) {
@@ -188,6 +211,7 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     // DolbyVisionMediaExtractor for profile-level (DvheDtr/Fhd30).
     @CddTest(requirement="5.3.8")
+    @Test
     public void testDolbyVisionMediaExtractorProfileDvheDtr() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_30fps_dvhe_04.mp4");
 
@@ -236,6 +260,8 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     // DolbyVisionMediaExtractor for profile-level (DvheStn/Fhd60).
     @CddTest(requirement="5.3.8")
+    @Ignore
+    @Test
     public void SKIP_testDolbyVisionMediaExtractorProfileDvheStn() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$ValidateKeyValuePairs[video/dolby-vision]
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvhe_05.mp4");
@@ -260,6 +286,7 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     // DolbyVisionMediaExtractor for profile-level (DvheSt/Fhd60).
     @CddTest(requirement="5.3.8")
+    @Test
     public void testDolbyVisionMediaExtractorProfileDvheSt() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvhe_08.mp4");
 
@@ -308,6 +335,7 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     // DolbyVisionMediaExtractor for profile-level (DvavSe/Fhd60).
     @CddTest(requirement="5.3.8")
+    @Test
     public void testDolbyVisionMediaExtractorProfileDvavSe() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvav_09.mp4");
 
@@ -357,6 +385,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     // DolbyVisionMediaExtractor for profile-level (Dvav1 10.0/Uhd30)
     @SmallTest
     @CddTest(requirement="5.3.8")
+    @Test
     public void testDolbyVisionMediaExtractorProfileDvav1() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_3840x2160_30fps_dav1_10.mp4");
 
@@ -382,6 +411,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     // DolbyVisionMediaExtractor for profile-level (Dvav1 10.1/Uhd30)
     @SmallTest
     @CddTest(requirement="5.3.8")
+    @Test
     public void testDolbyVisionMediaExtractorProfileDvav1_2() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_3840x2160_30fps_dav1_10_2.mp4");
 
@@ -429,6 +459,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     //MPEG-H 3D Audio single stream (mha1)
+    @Test
     public void testMpegh3dAudioMediaExtractorMha1() throws Exception {
         // TODO(b/186267251) move file to cloud storage.
         AssetFileDescriptor afd = getContext().getResources()
@@ -451,6 +482,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     //MPEG-H 3D Audio single stream encapsulated in MHAS (mhm1)
+    @Test
     public void testMpegh3dAudioMediaExtractorMhm1() throws Exception {
         // TODO(b/186267251) move file to cloud storage.
         AssetFileDescriptor afd = getContext().getResources()
@@ -526,6 +558,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         return true;
     }
 
+    @Test
     public void testGetAudioPresentations() throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix +
                         "MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps_Audio_Only.ts");
@@ -626,6 +659,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot bind sockets.")
+    @Ignore
+    @Test
     public void SKIP_testExtractorGetCachedDuration() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testUrlDataSource
         CtsTestServer foo = new CtsTestServer(getContext());
@@ -636,6 +671,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         foo.shutdown();
     }
 
+    @Ignore
+    @Test
     public void SKIP_testExtractorHasCacheReachedEndOfStream() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testUrlDataSource
         // Using file source to get deterministic result.
@@ -649,6 +686,8 @@ public class MediaExtractorTest extends AndroidTestCase {
      * Makes sure if PTS(order) of a video file with BFrames matches the expected values in
      * the corresponding text file with just PTS values.
      */
+    @Ignore
+    @Test
     public void SKIP_testVideoPresentationTimeStampsMatch() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$ExtractorTimeStampTest
         setDataSource("binary_counter_320x240_30fps_600frames.mp4");
@@ -835,6 +874,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     @SmallTest
+    @Ignore
+    @Test
     public void SKIP_testFlacIdentity() throws Exception {
         // duplicate of CtsMediaV2TestCases:CodecEncoderTest$testLosslessEncodeDecode[audio/flac]
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FusedExtractorDecoderTest[audio/flac]
@@ -878,6 +919,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
+    @Ignore
+    @Test
     public void SKIP_testFlacMovExtraction() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FusedExtractorDecoderTest[audio/flac]
         AssetFileDescriptor testFd = getAssetFileDescriptorFor("sinesweepalac.mov");
@@ -902,6 +945,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         assertTrue("could not read alac mov", totalSize > 0);
     }
 
+    @Test
     public void testProgramStreamExtraction() throws Exception {
         AssetFileDescriptor testFd = getAssetFileDescriptorFor("programstream.mpeg");
 
@@ -1026,6 +1070,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         extractor.release();
     }
 
+    @Ignore
+    @Test
     public void SKIP_testAdvance() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest and
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract[*]
@@ -1064,56 +1110,71 @@ public class MediaExtractorTest extends AndroidTestCase {
         } while (mExtractor.advance());
     }
 
+    @Ignore
+    @Test
     public void SKIP_testAC3inMP4() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac3]
         setDataSource("testac3mp4.mp4");
         readAllData();
     }
 
+    @Ignore
+    @Test
     public void SKIP_testEAC3inMP4() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/eac3]
         setDataSource("testeac3mp4.mp4");
         readAllData();
     }
 
+    @Ignore
+    @Test
     public void SKIP_testAC3inTS() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac3]
         setDataSource("testac3ts.ts");
         readAllData();
     }
 
+    @Ignore
+    @Test
     public void SKIP_testEAC3inTS() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/eac3]
         setDataSource("testeac3ts.ts");
         readAllData();
     }
 
+    @Ignore
+    @Test
     public void SKIP_testAC4inMP4() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac4]
         setDataSource("multi0.mp4");
         readAllData();
     }
 
+    @Test
     public void testAV1InMP4() throws Exception {
         setDataSource("video_dovi_3840x2160_30fps_dav1_10_2.mp4");
         readAllData();
     }
 
+    @Test
     public void testDolbyVisionInMP4() throws Exception {
         setDataSource("video_dovi_3840x2160_30fps_dav1_10.mp4");
         readAllData();
     }
 
+    @Test
     public void testPcmLeInMov() throws Exception {
         setDataSource("sinesweeppcmlemov.mov");
         readAllData();
     }
 
+    @Test
     public void testPcmBeInMov() throws Exception {
         setDataSource("sinesweeppcmbemov.mov");
         readAllData();
     }
 
+    @Test
     public void testFragmentedRead() throws Exception {
         Preconditions.assertTestFileExists(mInpPrefix + "psshtest.mp4");
         setDataSource("psshtest.mp4");
@@ -1121,6 +1182,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot bind sockets.")
+    @Test
     public void testFragmentedHttpRead() throws Exception {
         CtsTestServer server = new CtsTestServer(getContext());
         Preconditions.assertTestFileExists(mInpPrefix + "psshtest.mp4");
