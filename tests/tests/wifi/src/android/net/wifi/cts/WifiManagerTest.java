@@ -990,18 +990,18 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         TestExecutor executor = new TestExecutor();
-        TestSoftApCallback capabilityCallback = new TestSoftApCallback(mLock);
+        TestSoftApCallback lohsSoftApCallback = new TestSoftApCallback(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         List<Integer> supportedSoftApBands = new ArrayList<>();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            verifyRegisterSoftApCallback(executor, capabilityCallback);
+            verifyLohsRegisterSoftApCallback(executor, lohsSoftApCallback);
             supportedSoftApBands = getSupportedSoftApBand(
-                    capabilityCallback.getCurrentSoftApCapability());
+                    lohsSoftApCallback.getCurrentSoftApCapability());
         } catch (Exception ex) {
         } finally {
             // clean up
-            mWifiManager.unregisterSoftApCallback(capabilityCallback);
+            mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
             uiAutomation.dropShellPermissionIdentity();
         }
         TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
@@ -1548,6 +1548,58 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    public void testStartLocalOnlyHotspotWithSupportedBand() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // check that softap mode is supported by the device
+        if (!mWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
+
+        TestExecutor executor = new TestExecutor();
+        TestSoftApCallback lohsSoftApCallback = new TestSoftApCallback(mLock);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        boolean wifiEnabled = mWifiManager.isWifiEnabled();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            verifyLohsRegisterSoftApCallback(executor, lohsSoftApCallback);
+            SoftApConfiguration.Builder customConfigBuilder =
+                    generateSoftApConfigBuilderWithSsid(TEST_SSID_UNQUOTED)
+                    .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
+
+            SparseIntArray testBandsAndChannels = getAvailableBandAndChannelForTesting(
+                    lohsSoftApCallback.getCurrentSoftApCapability());
+
+            for (int i = 0; i < testBandsAndChannels.size(); i++) {
+                TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
+                int testBand = testBandsAndChannels.keyAt(i);
+                customConfigBuilder.setBand(testBand);
+                mWifiManager.startLocalOnlyHotspot(customConfigBuilder.build(), executor, callback);
+                // now wait for callback
+                Thread.sleep(TEST_WAIT_DURATION_MS);
+
+                // Verify callback is run on the supplied executor
+                assertFalse(callback.onStartedCalled);
+                executor.runAll();
+                assertTrue(callback.onStartedCalled);
+                assertNotNull(callback.reservation);
+                SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
+                assertEquals(TEST_SSID_UNQUOTED, softApConfig.getWifiSsid().getUtf8Text());
+                assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
+                assertEquals(testBand, softApConfig.getBand());
+                assertTrue(lohsSoftApCallback.getCurrentSoftApInfo().getFrequency() > 0);
+                stopLocalOnlyHotspot(callback, wifiEnabled);
+            }
+        } finally {
+            // clean up
+            mWifiManager.unregisterSoftApCallback(lohsSoftApCallback);
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
     public void testStartLocalOnlyHotspotWithConfigBssid() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -1560,17 +1612,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         TestExecutor executor = new TestExecutor();
         TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
-        TestSoftApCallback capabilityCallback = new TestSoftApCallback(mLock);
+        TestSoftApCallback lohsSoftApCallback = new TestSoftApCallback(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         boolean wifiEnabled = mWifiManager.isWifiEnabled();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            verifyRegisterSoftApCallback(executor, capabilityCallback);
+            verifyLohsRegisterSoftApCallback(executor, lohsSoftApCallback);
             SoftApConfiguration.Builder customConfigBuilder =
                     generateSoftApConfigBuilderWithSsid(TEST_SSID_UNQUOTED)
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
 
-            boolean isSupportCustomizedMac = capabilityCallback.getCurrentSoftApCapability()
+            boolean isSupportCustomizedMac = lohsSoftApCallback.getCurrentSoftApCapability()
                         .areFeaturesSupported(
                         SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
                     && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
@@ -1599,7 +1651,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         } finally {
             // clean up
             stopLocalOnlyHotspot(callback, wifiEnabled);
-            mWifiManager.unregisterSoftApCallback(capabilityCallback);
+            mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -2113,6 +2165,22 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             throws Exception {
         // Register callback to get SoftApCapability
         mWifiManager.registerSoftApCallback(executor, callback);
+        PollingCheck.check(
+                "SoftAp register failed!", 5_000,
+                () -> {
+                    executor.runAll();
+                    // Verify callback is run on the supplied executor and called
+                    return callback.getOnStateChangedCalled()
+                            && callback.getOnSoftapInfoChangedCalledCount() > 0
+                            && callback.getOnSoftApCapabilityChangedCalled()
+                            && callback.getOnConnectedClientCalled();
+                });
+    }
+
+    private void verifyLohsRegisterSoftApCallback(TestExecutor executor,
+            TestSoftApCallback callback) throws Exception {
+        // Register callback to get SoftApCapability
+        mWifiManager.registerLocalOnlyHotspotSoftApCallback(executor, callback);
         PollingCheck.check(
                 "SoftAp register failed!", 5_000,
                 () -> {
