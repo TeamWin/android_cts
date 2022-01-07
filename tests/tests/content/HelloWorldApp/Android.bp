@@ -166,6 +166,22 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorldSdk1MajorVersion2",
+    defaults: ["hello_world_defaults"],
+    srcs: ["sdk1/**/*.java"],
+    manifest: "AndroidManifestSdk1MajorVersion2.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "mts",
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloWorldSdk2",
     defaults: ["hello_world_defaults"],
     srcs: ["sdk2/**/*.java"],

@@ -105,6 +105,8 @@
         <option name="push-file" key="test-cert.x509.pem" value="/data/local/tmp/cts/content/test-cert.x509.pem" />
         <option name="push-file" key="HelloWorldSdk1.apk" value="/data/local/tmp/cts/content/HelloWorldSdk1.apk" />
         <option name="push-file" key="HelloWorldSdk1.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk1.apk.idsig" />
+        <option name="push-file" key="HelloWorldSdk1MajorVersion2.apk" value="/data/local/tmp/cts/content/HelloWorldSdk1MajorVersion2.apk" />
+        <option name="push-file" key="HelloWorldSdk1MajorVersion2.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk1MajorVersion2.apk.idsig" />
         <option name="push-file" key="HelloWorldSdk1Updated.apk" value="/data/local/tmp/cts/content/HelloWorldSdk1Updated.apk" />
         <option name="push-file" key="HelloWorldSdk1Updated.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldSdk1Updated.apk.idsig" />
         <option name="push-file" key="HelloWorldSdk2.apk" value="/data/local/tmp/cts/content/HelloWorldSdk2.apk" />
