@@ -1460,7 +1460,8 @@ public class TestUtils {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(actionName);
         intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
-        getContext().registerReceiver(broadcastReceiver, intentFilter);
+        getContext().registerReceiver(broadcastReceiver, intentFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Launch the test app.
         intent.setPackage(testApp.getPackageName());
