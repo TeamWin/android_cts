@@ -63,31 +63,31 @@ class AssociationsChangedListenerTest : CoreTestBase() {
 
     @Test
     fun test_addOnAssociationsChangedListener() {
-        val callback = RecordingOnAssociationsChangedListener()
+        val listener = RecordingOnAssociationsChangedListener()
 
         withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, callback)
+            cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, listener)
         }
 
-        callback.assertInvokedByActions {
+        listener.assertInvokedByActions {
             testApp.associate(MAC_ADDRESS_A)
         }
 
-        callback.invocations[0].let { associations ->
+        listener.invocations[0].let { associations ->
             assertEquals(actual = associations.size, expected = 1)
             assertEquals(actual = associations[0].deviceMacAddress, expected = MAC_ADDRESS_A)
             assertEquals(actual = associations[0].packageName, expected = TEST_APP_PACKAGE_NAME)
         }
 
-        callback.clearRecordedInvocations()
+        listener.clearRecordedInvocations()
 
         withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.removeOnAssociationsChangedListener(callback)
+            cdm.removeOnAssociationsChangedListener(listener)
         }
 
         testApp.disassociate(MAC_ADDRESS_A)
-        // The callback shouldn't get involved after removed the onAssociationsChangedListener.
-        assertEmpty(callback.invocations)
+        // The listener shouldn't get involved after removed the onAssociationsChangedListener.
+        assertEmpty(listener.invocations)
     }
 
     companion object {
