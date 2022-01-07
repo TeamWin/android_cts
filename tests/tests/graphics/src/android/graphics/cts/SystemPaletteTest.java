@@ -91,7 +91,7 @@ public class SystemPaletteTest {
                 // 110 to 128 at tone 95, when mapped to sRGB for display, all end up being measured
                 // as hue 114.
                 final float tone = tones[i];
-                if (tone < 10.0 || tone > 90.0) {
+                if (tone <= 10.0 || tone > 90.0) {
                     continue;
                 }
                 final Cam cam = Cam.fromInt(palette[i]);
@@ -105,7 +105,7 @@ public class SystemPaletteTest {
                 final float tone = tones[i];
                 // Skip testing hue of extreme tones, due to overlap due to quantization that occurs
                 // when converting from HCT to sRGB for display.
-                if (tone < 10.0 || tone > 90.0) {
+                if (tone <= 10.0 || tone > 90.0) {
                     continue;
                 }
                 final Cam cam = Cam.fromInt(palette[i]);
