@@ -18,14 +18,14 @@ package android.companion.cts.core
 
 import android.companion.AssociationRequest
 import android.companion.cts.common.RecordingCallback
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
+import android.companion.cts.common.RecordingCallback.OnAssociationPending
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.test.assertIs
 
 /**
  * Test CDM APIs for requesting establishing new associations.
@@ -49,10 +49,7 @@ class AssociateTest : CoreTestBase() {
         }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationPending() method.
-        assertEquals(actual = callback.invocations.size, expected = 1)
-        callback.invocations[0].apply {
-            assertEquals(actual = method, expected = OnAssociationPending)
-            assertNotNull(intentSender)
-        }
+        assertEquals(1, callback.invocations.size)
+        assertIs<OnAssociationPending>(callback.invocations.first())
     }
 }

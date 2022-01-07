@@ -13,7 +13,7 @@ import android.app.role.RoleManager.ROLE_SYSTEM_WELLBEING
 import android.companion.AssociationRequest
 import android.companion.cts.common.DEVICE_PROFILE_TO_PERMISSION
 import android.companion.cts.common.RecordingCallback
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
+import android.companion.cts.common.RecordingCallback.OnAssociationPending
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
@@ -22,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 
 /**
@@ -61,11 +62,8 @@ class DeviceProfilesTest : CoreTestBase() {
                 }
             }
             // Make sure it's the right callback.
-            assertEquals(actual = callback.invocations.size, expected = 1)
-            callback.invocations[0].apply {
-                assertEquals(actual = method, expected = OnAssociationPending)
-                assertNotNull(intentSender)
-            }
+            assertEquals(1, callback.invocations.size)
+            assertIs<OnAssociationPending>(callback.invocations.first())
         }
     }
 
@@ -95,11 +93,8 @@ class DeviceProfilesTest : CoreTestBase() {
             cdm.associate(request, SIMPLE_EXECUTOR, callback)
         }
         // Make sure it's the right callback.
-        assertEquals(actual = callback.invocations.size, expected = 1)
-        callback.invocations[0].apply {
-            assertEquals(actual = method, expected = OnAssociationPending)
-            assertNotNull(intentSender)
-        }
+        assertEquals(1, callback.invocations.size)
+        assertIs<OnAssociationPending>(callback.invocations.first())
     }
 
     private fun buildRequest(deviceProfile: String?) = AssociationRequest.Builder()

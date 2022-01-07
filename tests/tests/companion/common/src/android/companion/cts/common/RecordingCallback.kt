@@ -18,60 +18,38 @@ package android.companion.cts.common
 
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnDeviceFound
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
 import android.content.IntentSender
 import android.util.Log
 
 class RecordingCallback
-private constructor(container: InvocationContainer<CallbackMethodInvocation<*>>) :
+private constructor(container: InvocationContainer<CallbackInvocation>) :
     CompanionDeviceManager.Callback(),
-    InvocationTracker<RecordingCallback.CallbackMethodInvocation<*>> by container {
+    InvocationTracker<RecordingCallback.CallbackInvocation> by container {
 
     constructor() : this(InvocationContainer())
 
     override fun onDeviceFound(intentSender: IntentSender) {
-        recordInvocation(OnDeviceFound, intentSender)
+        logAndRecordInvocation(OnDeviceFound(intentSender))
     }
 
     override fun onAssociationPending(intentSender: IntentSender) {
-        recordInvocation(OnAssociationPending, intentSender)
+        logAndRecordInvocation(OnAssociationPending(intentSender))
     }
 
     override fun onAssociationCreated(associationInfo: AssociationInfo) {
-        recordInvocation(OnAssociationCreated, associationInfo)
+        logAndRecordInvocation(OnAssociationCreated(associationInfo))
     }
 
-    override fun onFailure(error: CharSequence?) = recordInvocation(OnFailure, error)
+    override fun onFailure(error: CharSequence?) = logAndRecordInvocation(OnFailure(error))
 
-    private fun recordInvocation(method: CallbackMethod, param: Any? = null) {
-        Log.d(TAG, "Callback.$method(), param=$param")
-        recordInvocation(CallbackMethodInvocation(method, param))
+    private fun logAndRecordInvocation(invocation: CallbackInvocation) {
+        Log.d(TAG, "Callback: $invocation")
+        recordInvocation(invocation)
     }
 
-    enum class CallbackMethod {
-        OnDeviceFound, OnAssociationPending, OnAssociationCreated, OnFailure
-    }
-
-    data class CallbackMethodInvocation<T>(val method: CallbackMethod, val arg: T) {
-        val intentSender: IntentSender
-            get() = when (method) {
-                OnDeviceFound, OnAssociationPending -> arg as IntentSender
-                else -> error("Method does not have \"intentSender\" argument.")
-            }
-
-        val associationInfo: AssociationInfo
-            get() = when (method) {
-                OnAssociationCreated -> arg as AssociationInfo
-                else -> error("Method does not have \"associationInfo\" argument.")
-            }
-
-        val error: CharSequence?
-            get() = when (method) {
-                OnFailure -> arg as CharSequence?
-                else -> error("Method does not have \"error\" argument.")
-            }
-    }
+    sealed interface CallbackInvocation
+    data class OnDeviceFound(val intentSender: IntentSender) : CallbackInvocation
+    data class OnAssociationPending(val intentSender: IntentSender) : CallbackInvocation
+    data class OnAssociationCreated(val associationInfo: AssociationInfo) : CallbackInvocation
+    data class OnFailure(val error: CharSequence?) : CallbackInvocation
 }

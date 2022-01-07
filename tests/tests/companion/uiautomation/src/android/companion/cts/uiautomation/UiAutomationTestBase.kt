@@ -14,9 +14,9 @@ import android.companion.cts.common.DEVICE_PROFILES
 import android.companion.cts.common.DEVICE_PROFILE_TO_NAME
 import android.companion.cts.common.DEVICE_PROFILE_TO_PERMISSION
 import android.companion.cts.common.RecordingCallback
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationPending
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
+import android.companion.cts.common.RecordingCallback.OnAssociationCreated
+import android.companion.cts.common.RecordingCallback.OnAssociationPending
+import android.companion.cts.common.RecordingCallback.OnFailure
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertEmpty
@@ -30,6 +30,7 @@ import org.junit.Assume.assumeFalse
 import java.util.regex.Pattern
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.ZERO
@@ -95,11 +96,10 @@ open class UiAutomationTestBase(
         }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onFailure() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnFailure)
-            assertEquals(actual = it[0].error, expected = "Cancelled.")
-        }
+        assertContentEquals(
+            actual = callback.invocations,
+            expected = listOf(OnFailure("Cancelled."))
+        )
 
         // Wait until the Confirmation UI goes away.
         confirmationUi.waitUntilGone()
@@ -126,11 +126,10 @@ open class UiAutomationTestBase(
 
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onFailure() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnFailure)
-            assertEquals(actual = it[0].error, expected = "Timeout.")
-        }
+        assertContentEquals(
+            actual = callback.invocations,
+            expected = listOf(OnFailure("Timeout."))
+        )
 
         // Wait until the Confirmation UI goes away.
         confirmationUi.waitUntilGone()
@@ -154,12 +153,10 @@ open class UiAutomationTestBase(
         }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // OnAssociationCreated() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnAssociationCreated)
-            assertNotNull(it[0].associationInfo)
-        }
-        val associationFromCallback = callback.invocations[0].associationInfo
+        assertEquals(1, callback.invocations.size)
+        val associationInvocation = callback.invocations.first()
+        assertIs<OnAssociationCreated>(associationInvocation)
+        val associationFromCallback = associationInvocation.associationInfo
 
         // Wait until the Confirmation UI goes away.
         confirmationUi.waitUntilGone()
@@ -233,14 +230,13 @@ open class UiAutomationTestBase(
         }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationPending() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnAssociationPending)
-            assertNotNull(it[0].intentSender)
-        }
+
+        assertEquals(1, callback.invocations.size)
+        val associationInvocation = callback.invocations.first()
+        assertIs<OnAssociationPending>(associationInvocation)
 
         // Get intent sender and clear callback invocations.
-        val pendingConfirmation = callback.invocations[0].intentSender
+        val pendingConfirmation = associationInvocation.intentSender
         callback.clearRecordedInvocations()
 
         // Launch CompanionActivity, and then launch confirmation UI from it.
