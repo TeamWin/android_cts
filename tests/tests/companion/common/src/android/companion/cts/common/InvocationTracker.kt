@@ -20,8 +20,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-interface InvocationTracker {
-    val invocations: List<*>
+interface InvocationTracker<T> {
+    val invocations: List<T>
 
     /**
      * Await invocations of this callback by the given [actions].
@@ -45,4 +45,18 @@ interface InvocationTracker {
             )
         }
     }
+
+    fun clearRecordedInvocations()
+
+    fun recordInvocation(invocation: T): Boolean
+}
+
+internal class InvocationContainer<T> : InvocationTracker<T> {
+    private val _invocations: MutableList<T> = mutableListOf()
+    override val invocations: List<T>
+        get() = _invocations
+
+    override fun clearRecordedInvocations() = _invocations.clear()
+
+    override fun recordInvocation(invocation: T) = _invocations.add(invocation)
 }

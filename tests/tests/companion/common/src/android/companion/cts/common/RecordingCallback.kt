@@ -25,10 +25,12 @@ import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
 import android.content.IntentSender
 import android.util.Log
 
-class RecordingCallback : CompanionDeviceManager.Callback(), InvocationTracker {
-    private val _invocations: MutableList<CallbackMethodInvocation<*>> = mutableListOf()
-    override val invocations: List<CallbackMethodInvocation<*>>
-        get() = _invocations
+class RecordingCallback
+private constructor(container: InvocationContainer<CallbackMethodInvocation<*>>) :
+    CompanionDeviceManager.Callback(),
+    InvocationTracker<RecordingCallback.CallbackMethodInvocation<*>> by container {
+
+    constructor() : this(InvocationContainer())
 
     override fun onDeviceFound(intentSender: IntentSender) {
         recordInvocation(OnDeviceFound, intentSender)
@@ -46,10 +48,8 @@ class RecordingCallback : CompanionDeviceManager.Callback(), InvocationTracker {
 
     private fun recordInvocation(method: CallbackMethod, param: Any? = null) {
         Log.d(TAG, "Callback.$method(), param=$param")
-        _invocations.add(CallbackMethodInvocation(method, param))
+        recordInvocation(CallbackMethodInvocation(method, param))
     }
-
-    fun clearRecordedInvocations() = _invocations.clear()
 
     enum class CallbackMethod {
         OnDeviceFound, OnAssociationPending, OnAssociationCreated, OnFailure

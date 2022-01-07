@@ -19,14 +19,13 @@ import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 
 class RecordingOnAssociationsChangedListener
-    : CompanionDeviceManager.OnAssociationsChangedListener, InvocationTracker {
-    private val _invocations: MutableList<List<AssociationInfo>> = mutableListOf()
-    override val invocations: List<List<AssociationInfo>>
-        get() = _invocations
+private constructor(container: InvocationContainer<List<AssociationInfo>>) :
+    CompanionDeviceManager.OnAssociationsChangedListener,
+    InvocationTracker<List<AssociationInfo>> by container {
+
+    constructor() : this(InvocationContainer())
 
     override fun onAssociationsChanged(associations: List<AssociationInfo>) {
-        _invocations.add(associations)
+        recordInvocation(associations)
     }
-
-    fun clearRecordedInvocations() = _invocations.clear()
 }
