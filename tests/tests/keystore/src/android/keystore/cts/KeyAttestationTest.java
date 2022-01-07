@@ -1203,4 +1203,8 @@ public class KeyAttestationTest extends AndroidTestCase {
             }
         }
     }
+
+    private boolean isTVDevice() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
 }
