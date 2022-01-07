@@ -505,6 +505,96 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
+    public void testGetCurrentMagnificationRegion_fullscreen_exactRegionCenter() throws Exception {
+        final MagnificationController controller = mService.getMagnificationController();
+        final Region region = controller.getMagnificationRegion();
+        final Rect bounds = region.getBounds();
+        final float scale = 2.0f;
+        final float x = bounds.left + (bounds.width() / 4.0f);
+        final float y = bounds.top + (bounds.height() / 4.0f);
+
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_FULLSCREEN)
+                .setScale(scale)
+                .setCenterX(x)
+                .setCenterY(y).build();
+        try {
+            mService.runOnServiceSync(() -> {
+                controller.setMagnificationConfig(config, false);
+            });
+            waitUntilMagnificationConfig(controller, x, y);
+
+            final Region magnificationRegion = controller.getCurrentMagnificationRegion();
+            assertFalse(magnificationRegion.isEmpty());
+        } finally {
+            mService.runOnServiceSync(() -> {
+                controller.resetCurrentMagnification(false);
+            });
+        }
+    }
+
+    @Test
+    public void testGetCurrentMagnificationRegion_windowMode_exactRegionCenter() throws Exception {
+        final MagnificationController controller = mService.getMagnificationController();
+        final WindowManager windowManager = mInstrumentation.getContext().getSystemService(
+                WindowManager.class);
+        final float scale = 2.0f;
+        final float x = windowManager.getCurrentWindowMetrics().getBounds().centerX();
+        final float y = windowManager.getCurrentWindowMetrics().getBounds().centerY();
+
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_WINDOW)
+                .setScale(scale)
+                .setCenterX(x)
+                .setCenterY(y).build();
+        try {
+            mService.runOnServiceSync(() -> {
+                controller.setMagnificationConfig(config, false);
+            });
+            waitUntilMagnificationConfig(controller, x, y);
+
+            final Region magnificationRegion = controller.getCurrentMagnificationRegion();
+            final Rect magnificationBounds = magnificationRegion.getBounds();
+            assertEquals(magnificationBounds.exactCenterX(), x, 0);
+            assertEquals(magnificationBounds.exactCenterY(), y, 0);
+        } finally {
+            mService.runOnServiceSync(() -> {
+                controller.resetCurrentMagnification(false);
+            });
+        }
+    }
+
+    @Test
+    public void testResetCurrentMagnificationRegion_resetWindowMode() throws Exception {
+        final MagnificationController controller = mService.getMagnificationController();
+        final WindowManager windowManager = mInstrumentation.getContext().getSystemService(
+                WindowManager.class);
+        final float scale = 2.0f;
+        final float x = windowManager.getCurrentWindowMetrics().getBounds().centerX();
+        final float y = windowManager.getCurrentWindowMetrics().getBounds().centerY();
+
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_WINDOW)
+                .setScale(scale)
+                .setCenterX(x)
+                .setCenterY(y).build();
+
+        mService.runOnServiceSync(() -> {
+            controller.setMagnificationConfig(config, false);
+        });
+        waitUntilMagnificationConfig(controller, x, y);
+
+        assertEquals(scale, controller.getMagnificationConfig().getScale(), 0);
+
+        mService.runOnServiceSync(() -> {
+            controller.resetCurrentMagnification(false);
+        });
+
+        assertEquals(1.0f, controller.getMagnificationConfig().getScale(), 0);
+        assertTrue(controller.getCurrentMagnificationRegion().isEmpty());
+    }
+
+    @Test
     public void testAnimatingMagnification() throws InterruptedException {
         final MagnificationController controller = mService.getMagnificationController();
         final int timeBetweenAnimationChanges = 100;
