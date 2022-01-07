@@ -129,8 +129,9 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_SDK3_NAME = "com.test.sdk3";
 
     private static final String TEST_SDK1 = "HelloWorldSdk1.apk";
-    private static final String TEST_SDK1_MAJOR_VERSION2 = "HelloWorldSdk1MajorVersion2.apk";
     private static final String TEST_SDK1_UPDATED = "HelloWorldSdk1Updated.apk";
+    private static final String TEST_SDK1_MAJOR_VERSION2 = "HelloWorldSdk1MajorVersion2.apk";
+    private static final String TEST_SDK1_DIFFERENT_SIGNER = "HelloWorldSdk1DifferentSigner.apk";
     private static final String TEST_SDK2 = "HelloWorldSdk2.apk";
     private static final String TEST_SDK2_UPDATED = "HelloWorldSdk2Updated.apk";
     private static final String TEST_USING_SDK1 = "HelloWorldUsingSdk1.apk";
@@ -707,17 +708,42 @@ public class PackageManagerShellCommandTest {
 
     @Test
     public void testSdkInstallMultipleMajorVersions() throws Exception {
-        installPackage(TEST_SDK1);
-        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
-
         // Major version 1.
         installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
         // Major version 2.
         installPackage(TEST_SDK1_MAJOR_VERSION2);
 
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 2));
+    }
+
+    @Test
+    public void testSdkInstallMultipleMinorVersionsWrongSignature() throws Exception {
+        // Major version 1.
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Major version 1, different signer.
+        installPackage(TEST_SDK1_DIFFERENT_SIGNER,
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package com.test.sdk1_1 signatures "
+                        + "do not match previously installed version");
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+    }
+
+    @Test
+    public void testSdkInstallMultipleMajorVersionsWrongSignature() throws Exception {
+        // Major version 1.
+        installPackage(TEST_SDK1_DIFFERENT_SIGNER);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // Major version 2.
+        installPackage(TEST_SDK1_MAJOR_VERSION2,
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package com.test.sdk1_1 signatures "
+                        + "do not match previously installed version");
+
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
     }
 
     @Test
