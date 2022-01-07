@@ -522,7 +522,7 @@ public class AccessibilityMagnificationTest {
             mService.runOnServiceSync(() -> {
                 controller.setMagnificationConfig(config, false);
             });
-            waitUntilMagnificationConfig(controller, x, y);
+            waitUntilMagnificationConfig(controller, MAGNIFICATION_MODE_FULLSCREEN, x, y);
 
             final Region magnificationRegion = controller.getCurrentMagnificationRegion();
             assertFalse(magnificationRegion.isEmpty());
@@ -551,7 +551,7 @@ public class AccessibilityMagnificationTest {
             mService.runOnServiceSync(() -> {
                 controller.setMagnificationConfig(config, false);
             });
-            waitUntilMagnificationConfig(controller, x, y);
+            waitUntilMagnificationConfig(controller, MAGNIFICATION_MODE_WINDOW, x, y);
 
             final Region magnificationRegion = controller.getCurrentMagnificationRegion();
             final Rect magnificationBounds = magnificationRegion.getBounds();
@@ -582,7 +582,7 @@ public class AccessibilityMagnificationTest {
         mService.runOnServiceSync(() -> {
             controller.setMagnificationConfig(config, false);
         });
-        waitUntilMagnificationConfig(controller, x, y);
+        waitUntilMagnificationConfig(controller, MAGNIFICATION_MODE_WINDOW, x, y);
 
         assertEquals(scale, controller.getMagnificationConfig().getScale(), 0);
 
