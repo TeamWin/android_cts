@@ -17,17 +17,25 @@
 package android.companion.cts.core
 
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
+import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
+import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager
-import android.companion.cts.common.SIMPLE_EXECUTOR
-import android.companion.cts.common.RecordingOnAssociationsChangedListener
+import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.MAC_ADDRESS_A
+import android.companion.cts.common.RecordingCallback.OnAssociationCreated
+import android.companion.cts.common.RecordingCdmEventObserver
+import android.companion.cts.common.RecordingCdmEventObserver.AssociationChange
+import android.companion.cts.common.RecordingCdmEventObserver.CdmCallback
+import android.companion.cts.common.RecordingOnAssociationsChangedListener
+import android.companion.cts.common.SIMPLE_EXECUTOR
+import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
-import kotlin.test.assertEquals
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import android.companion.cts.common.assertEmpty
+import kotlin.test.assertIs
 
 /**
  * Test CDM APIs for listening for changes to [android.companion.AssociationInfo].
@@ -88,6 +96,57 @@ class AssociationsChangedListenerTest : CoreTestBase() {
         testApp.disassociate(MAC_ADDRESS_A)
         // The listener shouldn't get involved after removed the onAssociationsChangedListener.
         assertEmpty(listener.invocations)
+    }
+
+    @Test
+    fun test_associationChangeListener_notifiedBefore_cdmCallback() {
+        val request: AssociationRequest = AssociationRequest.Builder()
+            .setSelfManaged(true)
+            .setDisplayName(DEVICE_DISPLAY_NAME_A)
+            .build()
+
+        val observer = RecordingCdmEventObserver()
+
+        // preparation: register the observer as an association change listener
+        withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, observer)
+        }
+
+        repeat(10) {
+            // test scenario: carry out an association and assert that
+            // the association listener is notified BEFORE the CDM observer
+            observer.assertInvokedByActions(minOccurrences = 2) {
+                withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                    cdm.associate(request, SIMPLE_EXECUTOR, observer)
+                }
+            }
+
+            // we should have observed exactly two events
+            assertEquals(2, observer.invocations.size)
+            val (event1, event2) = observer.invocations
+
+            // the event we observed first should be an association change
+            assertIs<AssociationChange>(event1)
+            // there should be exactly one association
+            assertEquals(1, event1.associations.size)
+            val associationInfoFromListener = event1.associations.first()
+            assertEquals(
+                actual = associationInfoFromListener.displayName,
+                expected = DEVICE_DISPLAY_NAME_A
+            )
+
+            // the second event should be the callback invocation
+            assertIs<CdmCallback>(event2)
+            val callbackInvocation = event2.invocation
+            assertIs<OnAssociationCreated>(callbackInvocation)
+
+            val associationInfoFromCallback = callbackInvocation.associationInfo
+            assertEquals(associationInfoFromListener, associationInfoFromCallback)
+
+            // cleanup for the next repetition
+            cdm.disassociate(associationInfoFromListener.id)
+            observer.clearRecordedInvocations()
+        }
     }
 
     companion object {
