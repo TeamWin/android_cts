@@ -154,13 +154,55 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         testIfMediaServerDied("heap_oob_flac.mp3");
     }
 
-    protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
+    private static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
         Preconditions.assertTestFileExists(mInpPrefix + res);
         File inpFile = new File(mInpPrefix + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
+    }
+
+    private void loadSubtitleSource(String res) throws Exception {
+        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(res)) {
+            mMediaPlayer.addTimedTextSource(afd.getFileDescriptor(), afd.getStartOffset(),
+                    afd.getLength(), MediaPlayer.MEDIA_MIMETYPE_TEXT_SUBRIP);
+        }
+    }
+
+    // returns true on success
+    private boolean loadResource(final String res) throws Exception {
+        Preconditions.assertTestFileExists(mInpPrefix + res);
+        if (!MediaUtils.hasCodecsForResource(mInpPrefix + res)) {
+            return false;
+        }
+
+        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(res)) {
+            mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
+                    afd.getLength());
+
+            // Although it is only meant for video playback, it should not
+            // cause issues for audio-only playback.
+            int videoScalingMode = sUseScaleToFitMode ?
+                    MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                    : MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
+
+            mMediaPlayer.setVideoScalingMode(videoScalingMode);
+        }
+        sUseScaleToFitMode = !sUseScaleToFitMode;  // Alternate the scaling mode
+        return true;
+    }
+
+    private boolean checkLoadResource(String res) throws Exception {
+        return MediaUtils.check(loadResource(res), "no decoder found");
+    }
+
+    private void playLoadedVideoTest(final String res, int width, int height) throws Exception {
+        if (!checkLoadResource(res)) {
+            return; // skip
+        }
+
+        playLoadedVideo(width, height, 0);
     }
 
     private void testIfMediaServerDied(final String res) throws Exception {

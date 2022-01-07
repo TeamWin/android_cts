@@ -492,9 +492,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     private void runSizeCompatTest(ComponentName activity, int windowingMode,
             boolean inSizeCompatModeAfterResize) {
+        mWmState.computeState();
+        WindowManagerState.DisplayContent originalDC = mWmState.getDisplay(DEFAULT_DISPLAY);
+
         runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 0.5,
                 inSizeCompatModeAfterResize);
-        restoreDisplay(activity);
+        waitForRestoreDisplay(originalDC);
         runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 2,
                 inSizeCompatModeAfterResize);
     }
@@ -557,11 +560,15 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private void runSizeCompatModeSandboxTest(ComponentName activity, boolean isSandboxed,
             boolean inSizeCompatModeAfterResize) {
         assertThat(getInitialDisplayAspectRatio()).isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
+
+        mWmState.computeState();
+        WindowManagerState.DisplayContent originalDC = mWmState.getDisplay(DEFAULT_DISPLAY);
+
         runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio= */ 0.5,
                 inSizeCompatModeAfterResize);
         assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
-        restoreDisplay(activity);
-        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio= */ 2,
+        waitForRestoreDisplay(originalDC);
+        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio=*/ 2,
                 inSizeCompatModeAfterResize);
         assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
     }
@@ -709,6 +716,18 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         // Ensure configuration changes are complete after resizing the display.
         waitForActivityBoundsChanged(activity, originalBounds);
     }
+
+    /**
+     * Wait for the display to be restored to the original display content.
+     */
+    private void waitForRestoreDisplay(WindowManagerState.DisplayContent originalDisplayContent) {
+        mWmState.waitForWithAmState(wmState -> {
+            mDisplayMetricsSession.restoreDisplayMetrics();
+            WindowManagerState.DisplayContent dc = mWmState.getDisplay(DEFAULT_DISPLAY);
+            return dc.equals(originalDisplayContent);
+        }, "waiting for display to be restored");
+    }
+
 
     /**
      * Resize the display and ensure configuration changes are complete.

@@ -290,9 +290,9 @@ def get_device_serial_number(device, config_file_contents):
       for device_dict in android_device_contents.get('AndroidDevice'):
         for _, label in device_dict.items():
           if label == 'tablet':
-            tablet_device_id = device_dict.get('serial')
+            tablet_device_id = str(device_dict.get('serial'))
           if label == 'dut':
-            dut_device_id = device_dict.get('serial')
+            dut_device_id = str(device_dict.get('serial'))
   if device == 'tablet':
     return tablet_device_id
   else:

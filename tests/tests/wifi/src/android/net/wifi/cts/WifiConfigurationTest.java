@@ -16,6 +16,10 @@
 
 package android.net.wifi.cts;
 
+import static android.net.wifi.WifiConfiguration.RANDOMIZATION_AUTO;
+import static android.net.wifi.WifiConfiguration.RANDOMIZATION_NONE;
+import static android.net.wifi.WifiConfiguration.RANDOMIZATION_NON_PERSISTENT;
+import static android.net.wifi.WifiConfiguration.RANDOMIZATION_PERSISTENT;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP_SUITE_B;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE;
@@ -139,5 +143,21 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         }
         configuration.setDeletionPriority(1);
         assertEquals(1, configuration.getDeletionPriority());
+    }
+
+    public void testSetGetMacRandomizationSetting() throws Exception {
+        WifiConfiguration configuration = new WifiConfiguration();
+
+        configuration.setMacRandomizationSetting(RANDOMIZATION_NONE);
+        assertEquals(RANDOMIZATION_NONE, configuration.getMacRandomizationSetting());
+
+        configuration.setMacRandomizationSetting(RANDOMIZATION_PERSISTENT);
+        assertEquals(RANDOMIZATION_PERSISTENT, configuration.getMacRandomizationSetting());
+
+        configuration.setMacRandomizationSetting(RANDOMIZATION_NON_PERSISTENT);
+        assertEquals(RANDOMIZATION_NON_PERSISTENT, configuration.getMacRandomizationSetting());
+
+        configuration.setMacRandomizationSetting(RANDOMIZATION_AUTO);
+        assertEquals(RANDOMIZATION_AUTO, configuration.getMacRandomizationSetting());
     }
 }

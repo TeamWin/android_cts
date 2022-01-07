@@ -335,6 +335,7 @@ public class Components extends ComponentsBase {
         public static final String COMMAND_NAVIGATE_UP_TO = "navigate_up_to";
         public static final String COMMAND_START_ACTIVITY = "start_activity";
         public static final String COMMAND_START_ACTIVITIES = "start_activities";
+        public static final String EXTRA_OPTION = "option";
     }
 
     /**

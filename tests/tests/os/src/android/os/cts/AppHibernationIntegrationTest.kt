@@ -26,6 +26,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.permission.PermissionControllerManager
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
@@ -43,6 +44,7 @@ import com.android.compatibility.common.util.FreezeRotationRule
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matchers
@@ -55,6 +57,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Integration test for app hibernation.
@@ -74,6 +78,7 @@ class AppHibernationIntegrationTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 
     private lateinit var packageManager: PackageManager
+    private lateinit var permissionControllerManager: PermissionControllerManager
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
@@ -84,6 +89,8 @@ class AppHibernationIntegrationTest {
     @Before
     fun setup() {
         packageManager = context.packageManager
+        permissionControllerManager =
+            context.getSystemService(PermissionControllerManager::class.java)!!
 
         // Collapse notifications
         assertThat(
@@ -156,6 +163,40 @@ class AppHibernationIntegrationTest {
                     packageManager.getApplicationInfo(APK_PACKAGE_NAME_R_APP, 0 /* flags */)
                 val stopped = ((ai.flags and ApplicationInfo.FLAG_STOPPED) != 0)
                 assertFalse(stopped)
+            }
+        }
+    }
+
+    @Test
+    fun testUnusedAppCount() {
+        withUnusedThresholdMs(TEST_UNUSED_THRESHOLD) {
+            withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
+                // Use app
+                startApp(APK_PACKAGE_NAME_S_APP)
+                leaveApp(APK_PACKAGE_NAME_S_APP)
+                killApp(APK_PACKAGE_NAME_S_APP)
+
+                // Wait for the unused threshold time to pass
+                Thread.sleep(TEST_UNUSED_THRESHOLD)
+
+                // Run job
+                runAppHibernationJob(context, LOG_TAG)
+
+                // Verify unused app count pulled correctly
+                val countDownLatch = CountDownLatch(1)
+                var unusedAppCount = -1
+                runWithShellPermissionIdentity {
+                    permissionControllerManager.getUnusedAppCount({ r -> r.run() },
+                        { res ->
+                            countDownLatch.countDown()
+                            unusedAppCount = res
+                        })
+
+                    assertTrue("Timed out waiting for unused app count",
+                        countDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS))
+                    assertTrue("Expected non-zero unused app count but is $unusedAppCount",
+                        unusedAppCount > 0)
+                }
             }
         }
     }

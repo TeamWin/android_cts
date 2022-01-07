@@ -30,6 +30,7 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
+import android.provider.ContactsContract.RawContacts;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestContact;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestRawContact;
 import android.provider.cts.contacts.account.StaticAccountAuthenticator;
@@ -141,8 +142,8 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         DatabaseAsserts.ContactIdPair ids = assertContactCreateDelete();
 
         String[] projection = new String[] {
-                ContactsContract.RawContacts.DIRTY,
-                ContactsContract.RawContacts.DELETED
+                RawContacts.DIRTY,
+                RawContacts.DELETED
         };
         List<String[]> records = RawContactUtil.queryByContactId(mResolver, ids.mContactId,
                 projection);
@@ -228,8 +229,8 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
 
         // Assert that the non-local raw contact was marked DELETED=1
         String[] projection = new String[]{
-                ContactsContract.RawContacts.DIRTY,
-                ContactsContract.RawContacts.DELETED
+                RawContacts.DIRTY,
+                RawContacts.DELETED
         };
         List<String[]> records = RawContactUtil.queryByContactId(mResolver, ids2.mContactId,
                 projection);
@@ -340,9 +341,11 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         final TestRawContact localRawContact = mBuilder.newRawContact().insert().load();
         final TestContact contact = localRawContact.getContact().load();
 
-        assertNull(localRawContact.getString(ContactsContract.RawContacts.ACCOUNT_NAME));
-        assertNull(localRawContact.getString(ContactsContract.RawContacts.ACCOUNT_TYPE));
-        assertNull(localRawContact.getString(ContactsContract.RawContacts.DATA_SET));
+        assertEquals(RawContacts.getLocalAccountName(mContext),
+                localRawContact.getString(RawContacts.ACCOUNT_NAME));
+        assertEquals(RawContacts.getLocalAccountType(mContext),
+                localRawContact.getString(RawContacts.ACCOUNT_TYPE));
+        assertNull(localRawContact.getString(RawContacts.DATA_SET));
         assertEquals(1, contact.getLong(Contacts.IN_VISIBLE_GROUP));
     }
 
