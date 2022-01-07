@@ -19,6 +19,8 @@ package android.permission3.cts
 import android.Manifest
 import android.content.Intent
 import android.os.Build
+import android.provider.DeviceConfig
+import android.provider.DeviceConfig.NAMESPACE_PRIVACY
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil
@@ -37,12 +39,18 @@ private const val PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX = "com.android.permiss
 private const val HISTORY_PREFERENCE_ICON = "permission_history_icon"
 private const val HISTORY_PREFERENCE_TIME = "permission_history_time"
 private const val SHOW_SYSTEM = "Show system"
+private const val SHOW_7_DAYS = "Show 7 days"
+private const val SHOW_24_HOURS = "Show 24 hours"
 private const val MORE_OPTIONS = "More options"
+private const val TIMELINE_7_DAYS_DESCRIPTION = "in the past 7 days"
+private const val DASHBOARD_7_DAYS_DESCRIPTION = "7 days"
+private const val PRIV_DASH_7_DAY_ENABLED = "privacy_dashboard_7_day_toggle"
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 class PermissionHistoryTest : BasePermissionHubTest() {
     private val micLabel = packageManager.getPermissionGroupInfo(
         Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
+    private var was7DayToggleEnabled = false
 
     // Permission history is not available on TV devices.
     @Before
@@ -66,6 +74,24 @@ class PermissionHistoryTest : BasePermissionHubTest() {
     fun uninstallApps() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
         uninstallPackage(APP2_PACKAGE_NAME, requireSuccess = false)
+    }
+
+    @Before
+    fun setUpTest() {
+        SystemUtil.runWithShellPermissionIdentity {
+            was7DayToggleEnabled = DeviceConfig.getBoolean(NAMESPACE_PRIVACY,
+                    PRIV_DASH_7_DAY_ENABLED, false)
+            DeviceConfig.setProperty(NAMESPACE_PRIVACY,
+                    PRIV_DASH_7_DAY_ENABLED, true.toString(), false)
+        }
+    }
+
+    @After
+    fun tearDownTest() {
+        SystemUtil.runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(NAMESPACE_PRIVACY,
+                    PRIV_DASH_7_DAY_ENABLED, was7DayToggleEnabled.toString(), false)
+        }
     }
 
     @Test
@@ -96,6 +122,55 @@ class PermissionHistoryTest : BasePermissionHubTest() {
 
         waitFindObject(By.text(SHOW_SYSTEM))
         pressBack()
+        pressBack()
+    }
+
+    @Test
+    fun testToggleFrom24HoursTo7Days() {
+        openMicrophoneApp(INTENT_ACTION_1)
+        waitFindObject(By.textContains(APP_LABEL_1))
+
+        openPermissionDashboard()
+        waitFindObject(By.descContains(MORE_OPTIONS)).click()
+        try {
+            waitFindObject(By.text(SHOW_7_DAYS)).click()
+        } catch (exception: RuntimeException) {
+            // If privacy dashboard was set to 7d instead of 24h,
+            // it will not be able to find the "Show 7 days" option.
+            // This block is to toggle it back to 24h if that happens.
+            waitFindObject(By.text(SHOW_24_HOURS)).click()
+            waitFindObject(By.descContains(MORE_OPTIONS)).click()
+            waitFindObject(By.text(SHOW_7_DAYS)).click()
+        }
+
+        waitFindObject(By.res("android:id/title").textContains("Microphone"))
+        waitFindObject(By.textContains(DASHBOARD_7_DAYS_DESCRIPTION))
+
+        pressBack()
+    }
+
+    @Test
+    fun testToggleFrom24HoursTo7DaysInTimeline() {
+        openMicrophoneApp(INTENT_ACTION_1)
+        waitFindObject(By.textContains(APP_LABEL_1))
+
+        openMicrophoneTimeline()
+        waitFindObject(By.descContains(MORE_OPTIONS)).click()
+        try {
+            waitFindObject(By.text(SHOW_7_DAYS)).click()
+        } catch (exception: RuntimeException) {
+            // If privacy dashboard was set to 7d instead of 24h,
+            // it will not be able to find the "Show 7 days" option.
+            // This block is to toggle it back to 24h if that happens.
+            waitFindObject(By.text(SHOW_24_HOURS)).click()
+            waitFindObject(By.descContains(MORE_OPTIONS)).click()
+            waitFindObject(By.text(SHOW_7_DAYS)).click()
+        }
+
+        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(APP_LABEL_1))
+        waitFindObject(By.textContains(TIMELINE_7_DAYS_DESCRIPTION))
+
         pressBack()
     }
 
