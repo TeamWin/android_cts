@@ -47,7 +47,7 @@ import java.util.List;
 public class SystemPaletteTest {
 
     // Hue goes from 0 to 360
-    private static final int MAX_HUE_DISTANCE = 12;
+    private static final int MAX_HUE_DISTANCE = 15;
 
     @Test
     public void testShades0and1000() {
