@@ -41,14 +41,17 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
+import android.R;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -64,6 +67,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
@@ -99,6 +103,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testHide() {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -117,6 +123,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testShow() {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -164,6 +172,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testTopAppHidesStatusBarByMethod() {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -173,6 +183,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testTopAppHidesStatusBarByWindowFlag() {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -182,6 +194,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testTopAppHidesStatusBarBySystemUiFlag() {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -216,6 +230,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     @Test
     @FlakyTest(detail = "~1% flaky")
     public void testSetSystemBarsBehavior_showBarsByTouch() throws InterruptedException {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -234,6 +250,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemBarsBehavior_showBarsBySwipe() throws InterruptedException {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -256,6 +274,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemBarsBehavior_showTransientBarsBySwipe() throws InterruptedException {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -279,6 +299,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSystemUiVisibilityCallbackCausedByInsets() {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View controlTarget = activity.getWindow().getDecorView();
         final int[] targetSysUiVis = new int[1];
@@ -303,6 +325,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private void testSysUiVisCallbackCausedByInsets(int insetsType, int sysUiFlag, View target,
             int[] targetSysUiVis, int[] nonTargetSysUiVis) {
+        assumeFalse(usesRemoteInsetsController());
+
         if (target.getRootWindowInsets().isVisible(insetsType)) {
 
             // Controlled by methods
@@ -346,6 +370,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemUiVisibilityAfterCleared_showBarsByTouch() throws Exception {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -386,6 +412,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemUiVisibilityAfterCleared_showBarsBySwipe() throws Exception {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -435,6 +463,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testSetSystemUiVisibilityAfterCleared_showBarsByApp() throws Exception {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -475,6 +505,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testHideOnCreate() throws Exception {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
@@ -500,6 +532,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testInsetsDispatch() throws Exception {
+        assumeFalse(usesRemoteInsetsController());
+
         // Start an activity which hides system bars.
         final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
@@ -532,6 +566,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testWindowInsetsController_availableAfterAddView() throws Exception {
+        assumeFalse(usesRemoteInsetsController());
+
         final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
@@ -688,6 +724,18 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().show(ime());
+        }
+    }
+
+    public static boolean usesRemoteInsetsController() {
+        try {
+            return InstrumentationRegistry.getInstrumentation().getTargetContext().getResources()
+                    .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
+        } catch (Resources.NotFoundException e) {
+            // TestApi config_remoteInsetsControllerControlsSystemBars was only added in R QPR1
+            // and might not be present on all devices running R, in that case the default behavior
+            // should be assumed.
+            return false;
         }
     }
 }

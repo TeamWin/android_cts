@@ -20,6 +20,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static android.server.wm.WindowInsetsControllerTests.usesRemoteInsetsController;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
@@ -183,6 +184,8 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
 
     @Test
     public void testImmersiveFullscreenHidesSystemBars() throws Throwable {
+        assumeFalse(usesRemoteInsetsController());
+
         // Run the test twice, because the issue that shows system bars even in the immersive mode,
         // happens at the 2nd try.
         for (int i = 1; i <= 2; ++i) {
