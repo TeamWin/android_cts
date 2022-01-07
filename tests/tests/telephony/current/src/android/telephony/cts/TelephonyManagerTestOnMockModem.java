@@ -15,7 +15,11 @@
  */
 package android.telephony.cts;
 
+import static com.android.internal.telephony.RILConstants.INTERNAL_ERR;
+import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -226,5 +230,58 @@ public class TelephonyManagerTestOnMockModem {
         assertEquals(mTelephonyManager.getRadioPowerState(), expectedState);
 
         Log.d(TAG, "Test Done ");
+    }
+
+    @Test
+    public void testRadioPowerWithFailureResults() throws Throwable {
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testRadioPowerWithFailureResults");
+
+        int radioState = mTelephonyManager.getRadioPowerState();
+        Log.d(TAG, "Radio state: " + radioState);
+
+        int toggleRadioState =
+                radioState == TelephonyManager.RADIO_POWER_ON
+                        ? TelephonyManager.RADIO_POWER_OFF
+                        : TelephonyManager.RADIO_POWER_ON;
+
+        // Force the returned response of RIL_REQUEST_RADIO_POWER as INTERNAL_ERR
+        sMockModem.forceErrorResponse(RIL_REQUEST_RADIO_POWER, INTERNAL_ERR);
+
+        boolean result = false;
+        try {
+            boolean state = (toggleRadioState == TelephonyManager.RADIO_POWER_ON) ? true : false;
+            result =
+                    ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                            mTelephonyManager,
+                            (tm) -> tm.setRadioPower(state),
+                            SecurityException.class,
+                            "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            Log.d(TAG, "TelephonyManager#setRadioPower should require " + e);
+        }
+
+        TimeUnit.SECONDS.sleep(1);
+        assertTrue(result);
+        assertNotEquals(mTelephonyManager.getRadioPowerState(), toggleRadioState);
+
+        // Reset the modified error response of RIL_REQUEST_RADIO_POWER to the original behavior
+        // and -1 means to disable the modifed mechanism in mock modem
+        sMockModem.forceErrorResponse(RIL_REQUEST_RADIO_POWER, -1);
+
+        // Recovery the power state back to original radio state
+        try {
+            boolean state = (radioState == TelephonyManager.RADIO_POWER_ON) ? true : false;
+            result =
+                    ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                            mTelephonyManager,
+                            (tm) -> tm.setRadioPower(state),
+                            SecurityException.class,
+                            "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            Log.d(TAG, "TelephonyManager#setRadioPower should require " + e);
+        }
+        TimeUnit.SECONDS.sleep(1);
+        assertTrue(result);
+        assertEquals(mTelephonyManager.getRadioPowerState(), radioState);
     }
 }
