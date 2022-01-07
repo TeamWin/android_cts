@@ -52,6 +52,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Insets;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -235,6 +236,13 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
+        // Based on the logic in DisplayPolicy.updateHideNavInputEventReceiver, if status bar
+        // does not exist, then INPUT_CONSUMER_NAVIGATION will not be created, which means nav bar
+        // can not be shown by touch. So this test requires both status and nav bars.
+        assumeTrue("Test requires both navBar and statusBar to show nav bar by touch.",
+                hasWindowInsets(rootView, statusBars())
+                        && hasWindowInsets(rootView, navigationBars()));
+
         // The show-by-touch behavior will only be applied while navigation bars get hidden.
         final int types = navigationBars();
         assumeTrue(rootView.getRootWindowInsets().isVisible(types));
@@ -374,6 +382,13 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
+
+        // Based on the logic in DisplayPolicy.updateHideNavInputEventReceiver, if status bar
+        // does not exist, then INPUT_CONSUMER_NAVIGATION will not be created, which means nav bar
+        // can not be shown by touch. So this test requires both status and nav bars.
+        assumeTrue("Test requires both navBar and statusBar to show nav bar by touch.",
+                hasWindowInsets(rootView, statusBars())
+                        && hasWindowInsets(rootView, navigationBars()));
 
         // The show-by-touch behavior will only be applied while navigation bars get hidden.
         final int types = navigationBars();
@@ -586,6 +601,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             activity.getWindowManager().removeView(childWindow);
         });
 
+    }
+
+    private static boolean hasWindowInsets(View rootView, int types) {
+        return Insets.NONE != rootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
     }
 
     private static void broadcastCloseSystemDialogs() {
