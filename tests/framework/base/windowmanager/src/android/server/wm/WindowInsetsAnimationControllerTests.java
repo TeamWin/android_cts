@@ -21,6 +21,7 @@ import static android.server.wm.WindowInsetsAnimationControllerTests.ControlList
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.FINISHED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.READY;
 import static android.server.wm.WindowInsetsAnimationUtils.INSETS_EVALUATOR;
+import static android.server.wm.WindowInsetsControllerTests.usesRemoteInsetsController;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -246,6 +247,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_andCancel() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             runOnUiThread(() -> {
                 setupAnimationListener();
@@ -283,6 +286,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_immediately_show() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, false);
 
@@ -306,6 +311,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_immediately_hide() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, true);
 
@@ -329,6 +336,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_show() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, false);
 
@@ -350,6 +359,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_hide() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             setVisibilityAndWait(mType, true);
 
@@ -371,6 +382,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_show_interpolator() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new DecelerateInterpolator();
             setVisibilityAndWait(mType, false);
@@ -393,6 +406,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Presubmit
     @Test
     public void testControl_transition_hide_interpolator() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+
         retryIfCancelled(() -> {
             mInterpolator = new AccelerateInterpolator();
             setVisibilityAndWait(mType, true);
@@ -414,6 +429,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Test
     public void testControl_andLoseControl() throws Throwable {
+        assumeFalse(usesRemoteInsetsController() && mType != ime());
+        
         retryIfCancelled(() -> {
             mInterpolator = new AccelerateInterpolator();
             setVisibilityAndWait(mType, true);
