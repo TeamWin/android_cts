@@ -22,6 +22,7 @@ import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
 import android.companion.cts.common.PrimaryCompanionService
 import android.companion.cts.common.RecordingCallback
+import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.SecondaryCompanionService
 import android.companion.cts.common.assertEmpty
@@ -34,6 +35,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -164,10 +166,14 @@ class SelfPresenceReportingTest : CoreTestBase() {
             .setSelfManaged(true)
             .setDisplayName(displayName)
             .build()
-        withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        callback.assertInvokedByActions {
+            withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            }
         }
-        callback.waitForInvocation()
-        return callback.invocations[0].associationInfo.id
+
+        val callbackInvocation = callback.invocations.first()
+        assertIs<OnAssociationCreated>(callbackInvocation)
+        return callbackInvocation.associationInfo.id
     }
 }

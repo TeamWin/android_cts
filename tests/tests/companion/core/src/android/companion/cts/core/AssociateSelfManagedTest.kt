@@ -21,16 +21,17 @@ import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
 import android.companion.AssociationRequest
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.cts.common.RecordingCallback
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
+import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 
 /**
@@ -73,29 +74,28 @@ class AssociateSelfManagedTest : CoreTestBase() {
                 .build()
         val callback = RecordingCallback()
 
-        withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        callback.assertInvokedByActions {
+            withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            }
         }
-        callback.waitForInvocation()
 
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onAssociationCreated() method.
-        assertEquals(actual = callback.invocations.size, expected = 1)
-        callback.invocations[0].apply {
-            assertEquals(actual = method, expected = OnAssociationCreated)
-            assertNotNull(associationInfo)
-            assertEquals(actual = associationInfo.displayName, expected = DEVICE_DISPLAY_NAME)
-            assertNull(associationInfo.deviceProfile)
+        assertEquals(1, callback.invocations.size)
+        val associationInvocation = callback.invocations.first()
+        assertIs<OnAssociationCreated>(associationInvocation)
+        with(associationInvocation.associationInfo) {
+            assertEquals(actual = displayName, expected = DEVICE_DISPLAY_NAME)
+            assertNull(deviceProfile)
         }
 
-        // Check that the newly created included in CompanionDeviceManager.getMyAssociations()
-        cdm.myAssociations.let { associations ->
-            assertEquals(actual = associations.size, expected = 1)
-            assertEquals(
-                    actual = associations[0],
-                    expected = callback.invocations[0].associationInfo
-            )
-        }
+        // Check that the newly created association is included in
+        // CompanionDeviceManager.getMyAssociations()
+        assertContentEquals(
+            actual = cdm.myAssociations,
+            expected = listOf(associationInvocation.associationInfo)
+        )
     }
 
     @Test
@@ -108,34 +108,31 @@ class AssociateSelfManagedTest : CoreTestBase() {
                         .build()
                 val callback = RecordingCallback()
 
-                withShellPermissionIdentity(
-                        REQUEST_COMPANION_SELF_MANAGED, REQUEST_COMPANION_PROFILE_WATCH) {
-                    cdm.associate(request, SIMPLE_EXECUTOR, callback)
+                callback.assertInvokedByActions {
+                    withShellPermissionIdentity(
+                        REQUEST_COMPANION_SELF_MANAGED,
+                        REQUEST_COMPANION_PROFILE_WATCH
+                    ) {
+                        cdm.associate(request, SIMPLE_EXECUTOR, callback)
+                    }
                 }
-                callback.waitForInvocation()
 
                 // Check callback invocations: there should have been exactly 1 invocation of the
                 // onAssociationCreated().
-                assertEquals(actual = callback.invocations.size, expected = 1)
-                callback.invocations[0].apply {
-                    assertEquals(actual = method, expected = OnAssociationCreated)
-                    assertNotNull(associationInfo)
-                    assertEquals(
-                            actual = associationInfo.displayName,
-                            expected = DEVICE_DISPLAY_NAME
-                    )
-                    assertEquals(actual = associationInfo.deviceProfile, expected = ROLE_WATCH)
+                assertEquals(1, callback.invocations.size)
+                val associationInvocation = callback.invocations.first()
+                assertIs<OnAssociationCreated>(associationInvocation)
+                with(associationInvocation.associationInfo) {
+                    assertEquals(actual = displayName, expected = DEVICE_DISPLAY_NAME)
+                    assertEquals(actual = deviceProfile, expected = ROLE_WATCH)
                 }
 
-                // Check that the newly created association included in
+                // Check that the newly created association is included in
                 // CompanionDeviceManager.getMyAssociations()
-                cdm.myAssociations.let { associations ->
-                    assertEquals(actual = associations.size, expected = 1)
-                    assertEquals(
-                            actual = associations[0],
-                            expected = callback.invocations[0].associationInfo
-                    )
-                }
+                assertContentEquals(
+                    actual = cdm.myAssociations,
+                    expected = listOf(associationInvocation.associationInfo)
+                )
             }
 
     override fun tearDown() {

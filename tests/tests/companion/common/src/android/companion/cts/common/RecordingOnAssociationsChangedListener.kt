@@ -17,24 +17,15 @@ package android.companion.cts.common
 
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 class RecordingOnAssociationsChangedListener
-    : CompanionDeviceManager.OnAssociationsChangedListener {
-    private val _invocations: MutableList<List<AssociationInfo>> = mutableListOf()
-    val invocations: List<List<AssociationInfo>>
-        get() = _invocations
+private constructor(container: InvocationContainer<List<AssociationInfo>>) :
+    CompanionDeviceManager.OnAssociationsChangedListener,
+    InvocationTracker<List<AssociationInfo>> by container {
+
+    constructor() : this(InvocationContainer())
 
     override fun onAssociationsChanged(associations: List<AssociationInfo>) {
-        _invocations.add(associations)
+        recordInvocation(associations)
     }
-
-    fun waitForInvocation(timeout: Duration = 1.seconds) {
-        if (!waitFor(timeout, interval = 100.milliseconds) { invocations.isNotEmpty() })
-            throw AssertionError("Callback hasn't been invoked")
-    }
-
-    fun clearRecordedInvocations() = _invocations.clear()
 }

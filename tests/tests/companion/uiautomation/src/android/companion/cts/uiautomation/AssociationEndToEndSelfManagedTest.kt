@@ -5,7 +5,7 @@ import android.companion.AssociationInfo
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.CompanionActivity
-import android.companion.cts.common.RecordingCallback.CallbackMethod.OnAssociationCreated
+import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
 import org.junit.Assume.assumeFalse
@@ -14,6 +14,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 
 /**
@@ -51,18 +52,16 @@ class AssociationEndToEndSelfManagedTest(
     fun test_userConfirmed() {
         sendRequestAndLaunchConfirmation(selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
 
-        // User "approves" the request.
-        confirmationUi.clickPositiveButton()
-
-        callback.waitForInvocation()
+        callback.assertInvokedByActions {
+            // User "approves" the request.
+            confirmationUi.clickPositiveButton()
+        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // OnAssociationCreated() method.
-        callback.invocations.let {
-            assertEquals(actual = it.size, expected = 1)
-            assertEquals(actual = it[0].method, expected = OnAssociationCreated)
-            assertNotNull(it[0].associationInfo)
-        }
-        val associationFromCallback = callback.invocations[0].associationInfo
+        assertEquals(1, callback.invocations.size)
+        val associationInvocation = callback.invocations.first()
+        assertIs<OnAssociationCreated>(associationInvocation)
+        val associationFromCallback = associationInvocation.associationInfo
         assertEquals(actual = associationFromCallback.displayName, expected = DEVICE_DISPLAY_NAME)
 
         // Wait until the Confirmation UI goes away.
