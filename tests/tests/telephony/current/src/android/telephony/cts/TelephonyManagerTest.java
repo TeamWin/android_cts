@@ -52,6 +52,7 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SystemProperties;
@@ -2342,8 +2343,52 @@ public class TelephonyManagerTest {
         assertEquals(false, cq.isRtpInactivityDetected());
         assertEquals(false, cq.isIncomingSilenceDetectedAtCallSetup());
         assertEquals(false, cq.isOutgoingSilenceDetectedAtCallSetup());
+        assertEquals(0, cq.getNumVoiceFrames());
+        assertEquals(0, cq.getNumNoDataFrames());
+        assertEquals(0, cq.getNumDroppedRtpPackets());
+        assertEquals(0, cq.getMinPlayoutDelayMillis());
+        assertEquals(0, cq.getMaxPlayoutDelayMillis());
+        assertEquals(0, cq.getNumRtpSidPacketsRx());
+        assertEquals(0, cq.getNumRtpDuplicatePackets());
     }
 
+    /**
+     * Validate CallQuality Parcel
+     */
+    @Test
+    public void testCallQualityParcel() {
+        CallQuality cq = new CallQuality.Builder()
+                .setDownlinkCallQualityLevel(CallQuality.CALL_QUALITY_NOT_AVAILABLE)
+                .setUplinkCallQualityLevel(CallQuality.CALL_QUALITY_NOT_AVAILABLE)
+                .setCallDuration(20000)
+                .setNumRtpPacketsTransmitted(550)
+                .setNumRtpPacketsReceived(450)
+                .setNumRtpPacketsTransmittedLost(4)
+                .setNumRtpPacketsNotReceived(6)
+                .setAverageRelativeJitter(20)
+                .setMaxRelativeJitter(30)
+                .setAverageRoundTripTime(150)
+                .setCodecType(0)
+                .setRtpInactivityDetected(false)
+                .setIncomingSilenceDetectedAtCallSetup(false)
+                .setOutgoingSilenceDetectedAtCallSetup(false)
+                .setNumVoiceFrames(300)
+                .setNumNoDataFrames(300)
+                .setNumDroppedRtpPackets(5)
+                .setMinPlayoutDelayMillis(500)
+                .setMaxPlayoutDelayMillis(1000)
+                .setNumRtpSidPacketsRx(300)
+                .setNumRtpDuplicatePackets(0)
+                .build();
+
+        Parcel stateParcel = Parcel.obtain();
+        cq.writeToParcel(stateParcel, 0);
+        stateParcel.setDataPosition(0);
+
+        CallQuality parcelCq = CallQuality.CREATOR.createFromParcel(stateParcel);
+        assertThat(cq).isEqualTo(parcelCq);
+
+    }
 
     // Reference: packages/services/Telephony/ecc/input/eccdata.txt
     private static final Map<String, String> EMERGENCY_NUMBERS_FOR_COUNTRIES =
