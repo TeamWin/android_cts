@@ -22,6 +22,8 @@ import android.content.Intent
 import android.os.Handler
 import android.util.Log
 import java.util.Collections.synchronizedMap
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 sealed class CompanionService<T : CompanionService<T>>(
     private val instanceHolder: InstanceHolder<T>
@@ -102,28 +104,28 @@ sealed class InstanceHolder<T : CompanionService<T>> {
     val associationIdsForConnectedDevices: Collection<Int>
         get() = instance?.associationIdsForConnectedDevices ?: emptySet()
 
-    fun waitForBind(timeout: Long = 1000) {
-        if (!waitFor(timeout = timeout) { isBound })
+    fun waitForBind(timeout: Duration = 1.seconds) {
+        if (!waitFor(timeout) { isBound })
             throw AssertionError("Service hasn't been bound")
     }
 
-    fun waitForUnbind(timeout: Long) {
-        if (!waitFor(timeout = timeout) { !isBound })
+    fun waitForUnbind(timeout: Duration) {
+        if (!waitFor(timeout) { !isBound })
             throw AssertionError("Service hasn't been unbound")
     }
 
-    fun waitAssociationToAppear(associationId: Int, timeout: Long = 1000) {
-        val appeared = waitFor(timeout = timeout) {
+    fun waitAssociationToAppear(associationId: Int, timeout: Duration = 1.seconds) {
+        val appeared = waitFor(timeout) {
             associationIdsForConnectedDevices.contains(associationId)
         }
-        if (!appeared) throw AssertionError("Association with $associationId hasn't \"appeared\" ")
+        if (!appeared) throw AssertionError("""Association with $associationId hasn't "appeared"""")
     }
 
-    fun waitAssociationToDisappear(associationId: Int, timeout: Long = 1000) {
-        val gone = waitFor(timeout = timeout) {
+    fun waitAssociationToDisappear(associationId: Int, timeout: Duration = 1.seconds) {
+        val gone = waitFor(timeout) {
             !associationIdsForConnectedDevices.contains(associationId)
         }
-        if (!gone) throw AssertionError("Association with $associationId hasn't \"disappeared\" ")
+        if (!gone) throw AssertionError("""Association with $associationId hasn't "disappeared"""")
     }
 }
 

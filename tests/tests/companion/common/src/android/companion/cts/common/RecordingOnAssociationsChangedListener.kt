@@ -17,6 +17,9 @@ package android.companion.cts.common
 
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RecordingOnAssociationsChangedListener
     : CompanionDeviceManager.OnAssociationsChangedListener {
@@ -28,8 +31,8 @@ class RecordingOnAssociationsChangedListener
         _invocations.add(associations)
     }
 
-    fun waitForInvocation(timeout: Long = 1_000) {
-        if (!waitFor(timeout = timeout, interval = 100) { invocations.isNotEmpty() })
+    fun waitForInvocation(timeout: Duration = 1.seconds) {
+        if (!waitFor(timeout, interval = 100.milliseconds) { invocations.isNotEmpty() })
             throw AssertionError("Callback hasn't been invoked")
     }
 

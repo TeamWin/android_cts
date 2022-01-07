@@ -24,6 +24,9 @@ import android.companion.cts.common.RecordingCallback.CallbackMethod.OnDeviceFou
 import android.companion.cts.common.RecordingCallback.CallbackMethod.OnFailure
 import android.content.IntentSender
 import android.util.Log
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RecordingCallback : CompanionDeviceManager.Callback() {
     private val _invocations: MutableList<CallbackMethodInvocation<*>> = mutableListOf()
@@ -49,8 +52,8 @@ class RecordingCallback : CompanionDeviceManager.Callback() {
         _invocations.add(CallbackMethodInvocation(method, param))
     }
 
-    fun waitForInvocation(timeout: Long = 1_000) {
-        if (!waitFor(timeout = timeout, interval = 100) { invocations.isNotEmpty() })
+    fun waitForInvocation(timeout: Duration = 1.seconds) {
+        if (!waitFor(timeout, interval = 100.milliseconds) { invocations.isNotEmpty() })
             throw AssertionError("Callback hasn't been invoked")
     }
 
