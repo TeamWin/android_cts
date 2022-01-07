@@ -290,6 +290,10 @@ public class UserRestrictions {
                 return (hasSettingsActivity(context, Settings.ACTION_DISPLAY_SETTINGS)
                     && !pm.hasSystemFeature(PackageManager.FEATURE_WATCH));
             case UserManager.DISALLOW_CONFIG_CELL_BROADCASTS:
+                if (context.getResources().getBoolean(context.getResources()
+                        .getIdentifier("config_disable_all_cb_messages", "bool", "android"))) {
+                    return false;
+                }
                 final TelephonyManager tm =
                     context.getSystemService(TelephonyManager.class);
                 if (!tm.isSmsCapable()) {

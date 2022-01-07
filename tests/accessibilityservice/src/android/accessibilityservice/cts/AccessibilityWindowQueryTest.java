@@ -866,15 +866,16 @@ public class AccessibilityWindowQueryTest {
             classNameAndTextList.add("android.widget.LinearLayout");
             classNameAndTextList.add("android.widget.LinearLayout");
             classNameAndTextList.add("android.widget.LinearLayout");
-            classNameAndTextList.add("android.widget.ButtonB1");
-            classNameAndTextList.add("android.widget.ButtonB2");
-            classNameAndTextList.add("android.widget.ButtonB3");
-            classNameAndTextList.add("android.widget.ButtonB4");
-            classNameAndTextList.add("android.widget.ButtonB5");
-            classNameAndTextList.add("android.widget.ButtonB6");
-            classNameAndTextList.add("android.widget.ButtonB7");
-            classNameAndTextList.add("android.widget.ButtonB8");
-            classNameAndTextList.add("android.widget.ButtonB9");
+            final String btnClass = "android.widget.Button";
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button1)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button2)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button3)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button4)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button5)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button6)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button7)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button8)));
+            classNameAndTextList.add(btnClass.concat(mActivity.getString(R.string.button9)));
 
             boolean verifyContent = false;
 
