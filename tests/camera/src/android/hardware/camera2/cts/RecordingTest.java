@@ -287,9 +287,15 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
             try {
                 Log.i(TAG, "Testing supported video size recording for camera " + mCameraIdsUnderTest[i]);
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(mCameraIdsUnderTest[i]);
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
+                    continue;
+                }
+                if (staticInfo.isExternalCamera()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support CamcorderProfile, skipping");
                     continue;
                 }
                 // Re-use the MediaRecorder object for the same camera device.
@@ -572,6 +578,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                 if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
+                    continue;
+                }
+                if (staticInfo.isExternalCamera()) {
+                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                            " does not support CamcorderProfile, skipping");
                     continue;
                 }
                 // Re-use the MediaRecorder object for the same camera device.
