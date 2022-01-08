@@ -123,6 +123,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
             add(AudioDescriptor.STANDARD_NONE);
             add(AudioDescriptor.STANDARD_EDID);
     }};
+    private static final HashMap<Integer, Integer> DIRECT_OFFLOAD_MAP = new HashMap<>() {{
+            put(AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED,
+                    AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED);
+            put(AudioManager.PLAYBACK_OFFLOAD_SUPPORTED,
+                    AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED);
+            put(AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED,
+                    AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
+        }};
+    private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
     private NotificationManager mNm;
     private boolean mHasVibrator;
@@ -1949,12 +1958,20 @@ public class AudioManagerTest extends InstrumentationTestCase {
                                         != AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED);
                         if (directPlaybackSupport == AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED) {
                             assertEquals(
-                                    AudioManager.getPlaybackOffloadSupport(format, attr),
+                                    DIRECT_OFFLOAD_MAP.getOrDefault(
+                                            AudioManager.getPlaybackOffloadSupport(format, attr),
+                                            INVALID_DIRECT_PLAYBACK_MODE).intValue(),
                                     directPlaybackSupport);
-                        } else {
+                        } else if ((directPlaybackSupport
+                                & AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED)
+                                != AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED) {
+                            // AudioManager.getPlaybackOffloadSupport can only query offload
+                            // support but not other direct support like passthrough.
                             assertNotEquals(
                                     AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
-                                    AudioManager.getPlaybackOffloadSupport(format, attr)
+                                    DIRECT_OFFLOAD_MAP.getOrDefault(
+                                            AudioManager.getPlaybackOffloadSupport(format, attr),
+                                            AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED)
                                             & directPlaybackSupport);
                         }
                     }

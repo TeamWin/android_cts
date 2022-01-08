@@ -16,6 +16,9 @@
 
 package android.media.audio.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
@@ -34,14 +37,18 @@ import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
-import com.android.compatibility.common.util.CtsAndroidTestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.lang.AutoCloseable;
 import java.util.Arrays;
+
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 /**
  * VolumeShaperTest is automated using VolumeShaper.getVolume() to verify that a ramp
@@ -53,7 +60,8 @@ import java.util.Arrays;
  * adb logcat | grep VolumeShaperTest
  */
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class VolumeShaperTest extends CtsAndroidTestCase {
+@RunWith(JUnitParamsRunner.class)
+public class VolumeShaperTest {
     private static final String TAG = "VolumeShaperTest";
 
     // ramp or duck time (duration) used in tests.
@@ -149,6 +157,13 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
             new VolumeShaper.Configuration.Builder(MONOTONIC_TEST)
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_CUBIC)
                 .build();
+
+    private static final VolumeShaper.Configuration[] MONOTONIC_RAMPS = {
+            MONOTONIC_TEST,
+            CUBIC_RAMP,
+            SCURVE_RAMP,
+            SINE_RAMP,
+    };
 
     private static final VolumeShaper.Operation[] ALL_STANDARD_OPERATIONS = {
         VolumeShaper.Operation.PLAY,
@@ -343,6 +358,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @SmallTest
+    @Test
     public void testVolumeShaperConfigurationBuilder() throws Exception {
         final String TEST_NAME = "testVolumeShaperConfigurationBuilder";
 
@@ -500,6 +516,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testVolumeShaperConfigurationBuilder
 
     @SmallTest
+    @Test
     public void testVolumeShaperConfigurationParcelable() throws Exception {
         final String TEST_NAME = "testVolumeShaperConfigurationParcelable";
 
@@ -525,6 +542,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testVolumeShaperConfigurationParcelable
 
     @SmallTest
+    @Test
     public void testVolumeShaperOperationParcelable() throws Exception {
         final String TEST_NAME = "testVolumeShaperOperationParcelable";
 
@@ -553,6 +571,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     // to crash due to memory or performance issues.  Typically around 16 app based
     // shapers are allowed by the audio server.
     @SmallTest
+    @Test
     public void testMaximumShapers() {
         final String TEST_NAME = "testMaximumShapers";
         if (!hasAudioOutput()) {
@@ -582,18 +601,21 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // testMaximumShapers
 
+    @Test
     public void testDuckAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestDuckPlayer("testDuckAudioTrack", player);
         }
     }
 
+    @Test
     public void testDuckMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestDuckPlayer("testDuckMediaPlayerNonOffloaded", player);
         }
     }
 
+    @Test
     public void testDuckMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestDuckPlayer("testDuckMediaPlayerOffloaded", player);
@@ -617,32 +639,61 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     }
 
-    @LargeTest
-    public void testPlayerRamp() throws Exception {
-        final String TEST_NAME = "testPlayerRamp";
+    private VolumeShaper.Configuration[] getAllStandardRamps() {
+        return ALL_STANDARD_RAMPS;
+    }
+
+    // Parameters are indices to ALL_STANDARD_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getAllStandardRamps")
+    public void testRampAudioTrack(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestRampPlayer("testRampAudioTrack", player, configuration);
+        }
+    }
+
+    // Parameters are indices to ALL_STANDARD_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getAllStandardRamps")
+    public void testRampMediaPlayerNonOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestRampPlayer("testRampMediaPlayerNonOffloaded", player, configuration);
+        }
+    }
+
+    // Parameters are indices to ALL_STANDARD_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getAllStandardRamps")
+    public void testRampMediaPlayerOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestRampPlayer("testRampMediaPlayerOffloaded", player, configuration);
+        }
+    }
+
+    private void runTestRampPlayer(
+            String testName, Player player, VolumeShaper.Configuration configuration)
+            throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
+        try (VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE)) {
+            Log.d(TAG, testName + " starting");
+            player.start();
+            Thread.sleep(WARMUP_TIME_MS);
 
-                Log.d(TAG, testName + " starting");
-                player.start();
-                Thread.sleep(WARMUP_TIME_MS);
-
-                runRampTest(testName, volumeShaper);
-                runCloseTest(testName, volumeShaper);
-            }
+            runRampTest(testName, volumeShaper, configuration);
+            runCloseTest(testName, volumeShaper);
         }
-    } // testPlayerRamp
+    }
 
     @FlakyTest
+    @Test
     public void testCornerCaseAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestCornerCasePlayer("testCornerCaseAudioTrack", player);
@@ -650,6 +701,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @FlakyTest
+    @Test
     public void testCornerCaseMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestCornerCasePlayer("testCornerCaseMediaPlayerNonOffloaded", player);
@@ -657,6 +709,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     }
 
     @FlakyTest
+    @Test
     public void testCornerCaseMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestCornerCasePlayer("testCornerCaseMediaPlayerOffloaded", player);
@@ -704,6 +757,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
     @FlakyTest
     @LargeTest
+    @Test
     public void testPlayerCornerCase2() throws Exception {
         final String TEST_NAME = "testPlayerCornerCase2";
         if (!hasAudioOutput()) {
@@ -747,6 +801,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
     @FlakyTest
     @LargeTest
+    @Test
     public void testPlayerJoin() throws Exception {
         final String TEST_NAME = "testPlayerJoin";
         if (!hasAudioOutput()) {
@@ -783,142 +838,167 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // testPlayerJoin
 
-    @LargeTest
-    public void testPlayerCubicMonotonic() throws Exception {
-        final String TEST_NAME = "testPlayerCubicMonotonic";
+    private VolumeShaper.Configuration[] getMonotonicRamps() {
+        return MONOTONIC_RAMPS;
+    }
+
+    // Parameters are indices to MONOTONIC_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getMonotonicRamps")
+    public void testCubicMonotonicAudioTrack(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestCubicMonotonicPlayer(
+                    "testCubicMonotonicAudioTrack", player, configuration);
+        }
+    }
+
+    // Parameters are indices to MONOTONIC_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getMonotonicRamps")
+    public void testCubicMonotonicMediaPlayerNonOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestCubicMonotonicPlayer(
+                    "testCubicMonotonicMediaPlayerNonOffloaded", player, configuration);
+        }
+    }
+
+    // Parameters are indices to MONOTONIC_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getMonotonicRamps")
+    public void testCubicMonotonicMediaPlayerOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestCubicMonotonicPlayer(
+                    "testCubicMonotonicMediaPlayerOffloaded", player, configuration);
+        }
+    }
+
+    private void runTestCubicMonotonicPlayer(
+            String testName, Player player, VolumeShaper.Configuration configuration)
+            throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
 
-        final VolumeShaper.Configuration configurations[] =
-                new VolumeShaper.Configuration[] {
-                MONOTONIC_TEST,
-                CUBIC_RAMP,
-                SCURVE_RAMP,
-                SINE_RAMP,
-        };
+        try (VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE)) {
+            volumeShaper.apply(VolumeShaper.Operation.PLAY);
+            player.start();
+            Thread.sleep(WARMUP_TIME_MS);
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
-                volumeShaper.apply(VolumeShaper.Operation.PLAY);
-                player.start();
-                Thread.sleep(WARMUP_TIME_MS);
+            // test configurations known monotonic
+            Log.d(TAG, testName + " starting test");
 
-                for (VolumeShaper.Configuration configuration : configurations) {
-                    // test configurations known monotonic
-                    Log.d(TAG, testName + " starting test");
+            float lastVolume = 0;
+            final long incrementMs = 100;
 
-                    float lastVolume = 0;
-                    final long incrementMs = 100;
-
-                    volumeShaper.replace(configuration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should increase "
-                                + volume + " >= " + lastVolume,
-                                (volume >= lastVolume));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 1.f, but is " + lastVolume,
-                            1.f, lastVolume, VOLUME_TOLERANCE);
-
-                    Log.d(TAG, "invert");
-                    // invert
-                    VolumeShaper.Configuration newConfiguration =
-                            new VolumeShaper.Configuration.Builder(configuration)
-                    .invertVolumes()
-                    .build();
-                    volumeShaper.replace(newConfiguration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should decrease "
-                                + volume + " <= " + lastVolume,
-                                (volume <= lastVolume));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 0.f, but is " + lastVolume,
-                            0.f, lastVolume, VOLUME_TOLERANCE);
-
-                    // invert + reflect
-                    Log.d(TAG, "invert and reflect");
-                    newConfiguration =
-                            new VolumeShaper.Configuration.Builder(configuration)
-                    .invertVolumes()
-                    .reflectTimes()
-                    .build();
-                    volumeShaper.replace(newConfiguration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should increase "
-                                + volume + " >= " + lastVolume,
-                                (volume >= lastVolume - VOLUME_TOLERANCE));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 1.f, but is " + lastVolume,
-                            1.f, lastVolume, VOLUME_TOLERANCE);
-
-                    // reflect
-                    Log.d(TAG, "reflect");
-                    newConfiguration =
-                            new VolumeShaper.Configuration.Builder(configuration)
-                    .reflectTimes()
-                    .build();
-                    volumeShaper.replace(newConfiguration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should decrease "
-                                + volume + " <= " + lastVolume,
-                                (volume <= lastVolume));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 0.f, but is " + lastVolume,
-                            0.f, lastVolume, VOLUME_TOLERANCE);
-                }
+            volumeShaper.replace(configuration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should increase "
+                        + volume + " >= " + lastVolume,
+                        (volume >= lastVolume));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
             }
-        }
-    } // testPlayerCubicMonotonic
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
 
+            Log.d(TAG, "invert");
+            // invert
+            VolumeShaper.Configuration newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+                    .invertVolumes()
+                    .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should decrease "
+                        + volume + " <= " + lastVolume,
+                        (volume <= lastVolume));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
+            }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
+
+            // invert + reflect
+            Log.d(TAG, "invert and reflect");
+            newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+            .invertVolumes()
+            .reflectTimes()
+            .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should increase "
+                        + volume + " >= " + lastVolume,
+                        (volume >= lastVolume - VOLUME_TOLERANCE));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
+            }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
+
+            // reflect
+            Log.d(TAG, "reflect");
+            newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+            .reflectTimes()
+            .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should decrease "
+                        + volume + " <= " + lastVolume,
+                        (volume <= lastVolume));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
+            }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
+        }
+    } // runTestCubicMonotonicPlayer
+
+    @Test
     public void testStepRampAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestStepRampPlayer("testStepRampAudioTrack", player);
         }
     }
 
+    @Test
     public void testStepRampMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestStepRampPlayer("testStepRampMediaPlayerNonOffloaded", player);
         }
     }
 
+    @Test
     public void testStepRampMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestStepRampPlayer("testStepRampMediaPlayerOffloaded", player);
@@ -1045,18 +1125,21 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         }
     } // runTestStepRampPlayer
 
+    @Test
     public void testTwoShapersAudioTrack() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
             runTestTwoShapersPlayer("testTwoShapersAudioTrack", player);
         }
     }
 
+    @Test
     public void testTwoShapersMediaPlayerNonOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
             runTestTwoShapersPlayer("testTwoShapersMediaPlayerNonOffloaded", player);
         }
     }
 
+    @Test
     public void testTwoShapersMediaPlayerOffloaded() throws Exception {
         try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
             runTestTwoShapersPlayer("testTwoShapersMediaPlayerOffloaded", player);
@@ -1146,6 +1229,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
     // tests that shaper advances in the presence of pause and stop (time based after start).
     @LargeTest
+    @Test
     public void testPlayerRunDuringPauseStop() throws Exception {
         final String TEST_NAME = "testPlayerRunDuringPauseStop";
         if (!hasAudioOutput()) {
@@ -1200,55 +1284,55 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
     } // testPlayerRunDuringPauseStop
 
     // Player should be started before calling (as it is not an argument to method).
-    private void runRampTest(String testName, VolumeShaper volumeShaper) throws Exception {
-        for (VolumeShaper.Configuration config : ALL_STANDARD_RAMPS) {
-            // This replaces with play.
-            Log.d(TAG, testName + " Replace + Play (volume should increase)");
-            volumeShaper.replace(config, VolumeShaper.Operation.PLAY, false /* join */);
-            Thread.sleep(RAMP_TIME_MS / 2);
+    private void runRampTest(
+            String testName, VolumeShaper volumeShaper, VolumeShaper.Configuration config)
+            throws Exception {
+        // This replaces with play.
+        Log.d(TAG, testName + " Replace + Play (volume should increase)");
+        volumeShaper.replace(config, VolumeShaper.Operation.PLAY, false /* join */);
+        Thread.sleep(RAMP_TIME_MS / 2);
 
-            // Reverse the direction of the volume shaper curve
-            Log.d(TAG, testName + " Reverse (volume should decrease)");
-            volumeShaper.apply(VolumeShaper.Operation.REVERSE);
-            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+        // Reverse the direction of the volume shaper curve
+        Log.d(TAG, testName + " Reverse (volume should decrease)");
+        volumeShaper.apply(VolumeShaper.Operation.REVERSE);
+        Thread.sleep(RAMP_TIME_MS / 2 + 1000);
 
-            Log.d(TAG, testName + " Check Volume (silent)");
-            assertEquals(testName + " volume should be 0.f",
-                    0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (silent)");
+        assertEquals(testName + " volume should be 0.f",
+                0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            // Forwards
-            Log.d(TAG, testName + " Play (volume should increase)");
-            volumeShaper.apply(VolumeShaper.Operation.PLAY);
-            Thread.sleep(RAMP_TIME_MS + 1000);
+        // Forwards
+        Log.d(TAG, testName + " Play (volume should increase)");
+        volumeShaper.apply(VolumeShaper.Operation.PLAY);
+        Thread.sleep(RAMP_TIME_MS + 1000);
 
-            Log.d(TAG, testName + " Check Volume (volume at max)");
-            assertEquals(testName + " volume should be 1.f",
-                    1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (volume at max)");
+        assertEquals(testName + " volume should be 1.f",
+                1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            // Reverse
-            Log.d(TAG, testName + " Reverse (volume should decrease)");
-            volumeShaper.apply(VolumeShaper.Operation.REVERSE);
-            Thread.sleep(RAMP_TIME_MS + 1000);
+        // Reverse
+        Log.d(TAG, testName + " Reverse (volume should decrease)");
+        volumeShaper.apply(VolumeShaper.Operation.REVERSE);
+        Thread.sleep(RAMP_TIME_MS + 1000);
 
-            Log.d(TAG, testName + " Check Volume (volume should be silent)");
-            assertEquals(testName + " volume should be 0.f",
-                    0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (volume should be silent)");
+        assertEquals(testName + " volume should be 0.f",
+                0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            // Forwards
-            Log.d(TAG, testName + " Play (volume should increase)");
-            volumeShaper.apply(VolumeShaper.Operation.PLAY);
-            Thread.sleep(RAMP_TIME_MS + 1000);
+        // Forwards
+        Log.d(TAG, testName + " Play (volume should increase)");
+        volumeShaper.apply(VolumeShaper.Operation.PLAY);
+        Thread.sleep(RAMP_TIME_MS + 1000);
 
-            // Comment out for headset plug/unplug test
-            // Log.d(TAG, testName + " headset check"); Thread.sleep(10000 /* millis */);
-            //
+        // Comment out for headset plug/unplug test
+        // Log.d(TAG, testName + " headset check"); Thread.sleep(10000 /* millis */);
+        //
 
-            Log.d(TAG, testName + " Check Volume (volume at max)");
-            assertEquals(testName + " volume should be 1.f",
-                    1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (volume at max)");
+        assertEquals(testName + " volume should be 1.f",
+                1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            Log.d(TAG, testName + " done");
-        }
+        Log.d(TAG, testName + " done");
     } // runRampTest
 
     // Player should be started before calling (as it is not an argument to method).
@@ -1436,4 +1520,8 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
         assertTrue(testName + " volume should be greater than 0.f",
                 volumeShaper.getVolume() > 0.f);
     } // runStartSyncTest
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
 }

@@ -335,7 +335,7 @@ public class SystemMediaRouter2Test {
 
     @Test
     public void testRouteCallbackOnRoutesChanged_whenLocalVolumeChanged() throws Exception {
-        if (mAudioManager.isVolumeFixed()) {
+        if (mAudioManager.isVolumeFixed() || mAudioManager.isFullVolumeDevice()) {
             return;
         }
 

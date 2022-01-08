@@ -22,6 +22,7 @@ import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_B
 import android.companion.cts.common.PrimaryCompanionService
 import android.companion.cts.common.RecordingCallback
+import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.SecondaryCompanionService
 import android.companion.cts.common.assertEmpty
@@ -34,7 +35,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests CDM APIs for notifying the presence of status of the companion devices for self-managed
@@ -59,7 +63,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
         cdm.notifyDeviceAppeared(associationId)
 
         assertTrue("Both Services - Primary and Secondary - should be bound now") {
-            waitFor(timeout = 1000, interval = 100) {
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
                 PrimaryCompanionService.isBound && SecondaryCompanionService.isBound
             }
         }
@@ -75,7 +79,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
         assertEmpty(SecondaryCompanionService.connectedDevices)
 
         assertFalse("Both Services - Primary and Secondary - should stay bound") {
-            waitFor(timeout = 3000, interval = 1000) {
+            waitFor(timeout = 3.seconds, interval = 1.seconds) {
                 !PrimaryCompanionService.isBound || !SecondaryCompanionService.isBound
             }
         }
@@ -87,7 +91,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
         assertEmpty(PrimaryCompanionService.connectedDevices)
 
         assertTrue("Both Services - Primary and Secondary - should be unbound now") {
-            waitFor(timeout = 1000, interval = 100) {
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
                 !PrimaryCompanionService.isBound && !SecondaryCompanionService.isBound
             }
         }
@@ -102,7 +106,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
         cdm.notifyDeviceAppeared(idA)
 
         assertTrue("Both Services - Primary and Secondary - should be bound now") {
-            waitFor(timeout = 1000, interval = 100) {
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
                 PrimaryCompanionService.isBound && SecondaryCompanionService.isBound
             }
         }
@@ -128,7 +132,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
 
         // Make sure both services stay bound.
         assertFalse("Both Services - Primary and Secondary - should stay bound") {
-            waitFor(timeout = 3000, interval = 1000) {
+            waitFor(timeout = 3.seconds, interval = 1.seconds) {
                 !PrimaryCompanionService.isBound || !SecondaryCompanionService.isBound
             }
         }
@@ -140,7 +144,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
         // Both services should stay bound for as long as there is at least
         // one connected device (B).
         assertFalse("Both Services - Primary and Secondary - should stay bound") {
-            waitFor(timeout = 3000, interval = 1000) {
+            waitFor(timeout = 3.seconds, interval = 1.seconds) {
                 !PrimaryCompanionService.isBound || !SecondaryCompanionService.isBound
             }
         }
@@ -150,7 +154,7 @@ class SelfPresenceReportingTest : CoreTestBase() {
 
         PrimaryCompanionService.waitAssociationToDisappear(idB)
         assertTrue("Both Services - Primary and Secondary - should be unbound now") {
-            waitFor(timeout = 1000, interval = 100) {
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
                 !PrimaryCompanionService.isBound && !SecondaryCompanionService.isBound
             }
         }
@@ -162,10 +166,14 @@ class SelfPresenceReportingTest : CoreTestBase() {
             .setSelfManaged(true)
             .setDisplayName(displayName)
             .build()
-        withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-            cdm.associate(request, SIMPLE_EXECUTOR, callback)
+        callback.assertInvokedByActions {
+            withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            }
         }
-        callback.waitForInvocation()
-        return callback.invocations[0].associationInfo.id
+
+        val callbackInvocation = callback.invocations.first()
+        assertIs<OnAssociationCreated>(callbackInvocation)
+        return callbackInvocation.associationInfo.id
     }
 }

@@ -266,7 +266,8 @@ public class RollbackUtils {
                 latch.countDown();
             }
         };
-        context.registerReceiver(crashReceiver, crashFilter);
+        context.registerReceiver(crashReceiver, crashFilter,
+                Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Launch the app.
         Intent intent = new Intent(Intent.ACTION_MAIN);

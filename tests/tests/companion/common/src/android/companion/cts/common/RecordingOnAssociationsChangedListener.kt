@@ -19,19 +19,13 @@ import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 
 class RecordingOnAssociationsChangedListener
-    : CompanionDeviceManager.OnAssociationsChangedListener {
-    private val _invocations: MutableList<List<AssociationInfo>> = mutableListOf()
-    val invocations: List<List<AssociationInfo>>
-        get() = _invocations
+private constructor(container: InvocationContainer<List<AssociationInfo>>) :
+    CompanionDeviceManager.OnAssociationsChangedListener,
+    InvocationTracker<List<AssociationInfo>> by container {
+
+    constructor() : this(InvocationContainer())
 
     override fun onAssociationsChanged(associations: List<AssociationInfo>) {
-        _invocations.add(associations)
+        recordInvocation(associations)
     }
-
-    fun waitForInvocation(timeout: Long = 1_000) {
-        if (!waitFor(timeout = timeout, interval = 100) { invocations.isNotEmpty() })
-            throw AssertionError("Callback hasn't been invoked")
-    }
-
-    fun clearRecordedInvocations() = _invocations.clear()
 }

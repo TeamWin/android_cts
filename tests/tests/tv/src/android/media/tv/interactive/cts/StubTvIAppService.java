@@ -17,6 +17,7 @@
 package android.media.tv.interactive.cts;
 
 import android.content.Context;
+import android.media.tv.interactive.TvIAppManager;
 import android.media.tv.interactive.TvIAppService;
 import android.view.KeyEvent;
 import android.view.Surface;
@@ -27,7 +28,8 @@ import android.view.Surface;
 public class StubTvIAppService extends TvIAppService {
     @Override
     public Session onCreateSession(String iAppServiceId, int type) {
-        return new StubSessionImpl(this);
+        Session session = new StubSessionImpl(this);
+        return session;
     }
 
     private static class StubSessionImpl extends Session {
@@ -37,6 +39,7 @@ public class StubTvIAppService extends TvIAppService {
 
         @Override
         public void onStartIApp() {
+            notifySessionStateChanged(TvIAppManager.TV_IAPP_RTE_STATE_READY);
         }
 
         @Override

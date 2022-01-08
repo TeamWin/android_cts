@@ -392,7 +392,7 @@ public class TestActivity extends Activity {
                 mainHandler.removeCallbacksAndMessages(token);
                 finish();
             }
-        }, filter);
+        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
         mainHandler.postDelayed(
                 () -> sendError(remoteCallback,
                         new MissingBroadcastException(action, timeoutMs)),
@@ -423,7 +423,7 @@ public class TestActivity extends Activity {
                     sendResult.run();
                 }
             }
-        }, filter);
+        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
         mainHandler.postDelayed(() -> sendResult.run(), token, timeoutMs);
     }
 
