@@ -31,7 +31,6 @@ import android.platform.test.annotations.AppModeFull
 import android.util.Size
 import android.util.SizeF
 import android.util.SparseArray
-import android.widget.ListView
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -73,10 +72,11 @@ class CompanionDeviceManagerTest {
         const val TEST_APP_PACKAGE_NAME = "android.os.cts.companiontestapp"
         const val TEST_APP_APK_LOCATION = "/data/local/tmp/cts/os/CtsCompanionTestApp.apk"
         const val CDM_UI_PACKAGE_NAME = "com.android.companiondevicemanager"
+        const val RECYCLER_VIEW_CLASS = "androidx.recyclerview.widget.RecyclerView"
 
         val DEVICE_LIST_ITEM_SELECTOR: BySelector = By.res(CDM_UI_PACKAGE_NAME, "list_item_device")
         val DEVICE_LIST_SELECTOR: BySelector = By.pkg(CDM_UI_PACKAGE_NAME)
-                .clazz(ListView::class.java.name)
+                .clazz(RECYCLER_VIEW_CLASS)
                 .hasChild(DEVICE_LIST_ITEM_SELECTOR)
     }
 
