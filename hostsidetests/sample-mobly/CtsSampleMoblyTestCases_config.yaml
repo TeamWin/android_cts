@@ -1,7 +1,0 @@
-TestBeds:
-- Name: SampleTestBed
-  Controllers:
-    AndroidDevice:
-    - serial: serial_1
-    - serial: serial_2
-MoblyParams: {LogPath: ./}
