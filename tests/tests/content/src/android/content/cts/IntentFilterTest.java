@@ -976,6 +976,14 @@ public class IntentFilterTest extends AndroidTestCase {
                 new String[]{"some.app.domain"},
                 null);
 
+        IntentFilter appWithWildcardWebLink = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                new String[]{"http", "https"},
+                new String[]{"*.app.domain"},
+                null);
+
         IntentFilter browserFilterWithWildcard = new Match(
                 new String[]{Intent.ACTION_VIEW},
                 new String[]{Intent.CATEGORY_BROWSABLE},
@@ -1007,6 +1015,13 @@ public class IntentFilterTest extends AndroidTestCase {
                 "https://",
                 true));
         checkMatches(appWithWebLink,
+                new MatchCondition(NO_MATCH_DATA,
+                Intent.ACTION_VIEW,
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                "https://",
+                true));
+        checkMatches(appWithWildcardWebLink,
                 new MatchCondition(NO_MATCH_DATA,
                 Intent.ACTION_VIEW,
                 new String[]{Intent.CATEGORY_BROWSABLE},
