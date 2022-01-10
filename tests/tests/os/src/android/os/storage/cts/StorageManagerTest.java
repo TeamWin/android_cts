@@ -807,15 +807,8 @@ public class StorageManagerTest extends AndroidTestCase {
         int REQUEST_CODE = 1;
         PendingIntent piActual = null;
 
-        // Without MANAGE_EXTERNAL_STORAGE permission, this call should fail.
-        assertThrows(
-                RuntimeException.class,
-                () -> mStorageManager.getManageSpaceActivityIntent(packageName, REQUEST_CODE));
-
-        // Adopt MANAGE_EXTERNAL_STORAGE permission and then try the API call. We launch
-        // the manageSpaceActivity in a new task.
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                android.Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+        // Test should only pass with MANAGE_EXTERNAL_STORAGE permission
+        assertThat(Environment.isExternalStorageManager()).isTrue();
 
         // Invalid packageName should throw an IllegalArgumentException
         String invalidPackageName = "this.is.invalid";
