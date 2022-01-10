@@ -90,13 +90,56 @@ public class TelephonyManagerTestOnMockModem {
         sMockModem.resetState();
 
         sMockModem.unsolSimSlotsStatusChanged();
-        assertTrue(
-                sMockModem.waitForLatchCountdown(MockModemService.LATCH_MOCK_MODEM_SIM_READY));
+        assertTrue(sMockModem.waitForLatchCountdown(MockModemService.LATCH_MOCK_MODEM_SIM_READY));
 
         TimeUnit.SECONDS.sleep(1);
         simCardState = mTelephonyManager.getSimCardState();
         Log.d(TAG, "New SIM card state: " + simCardState);
         assertEquals(TelephonyManager.SIM_STATE_PRESENT, simCardState);
+    }
+
+    @Test
+    public void testRadioPowerToggle() throws Throwable {
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testRadioPowerToggle");
+
+        int radioState = mTelephonyManager.getRadioPowerState();
+        Log.d(TAG, "Radio state: " + radioState);
+
+        // Toggle radio power
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.toggleRadioOnOff(),
+                    SecurityException.class,
+                    "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            Log.d(TAG, "TelephonyManager#toggleRadioOnOff should require " + e);
+        }
+
+        // Wait the radio state update in Framework
+        TimeUnit.SECONDS.sleep(1);
+        int toggleRadioState =
+                radioState == TelephonyManager.RADIO_POWER_ON
+                        ? TelephonyManager.RADIO_POWER_OFF
+                        : TelephonyManager.RADIO_POWER_ON;
+        assertEquals(mTelephonyManager.getRadioPowerState(), toggleRadioState);
+
+        // Toggle radio power again back to original radio state
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.toggleRadioOnOff(),
+                    SecurityException.class,
+                    "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            Log.d(TAG, "TelephonyManager#toggleRadioOnOff should require " + e);
+        }
+
+        // Wait the radio state update in Framework
+        TimeUnit.SECONDS.sleep(1);
+        assertEquals(mTelephonyManager.getRadioPowerState(), radioState);
+
+        Log.d(TAG, "Test Done ");
     }
 
     @Test
