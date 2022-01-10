@@ -23,6 +23,27 @@ package {
     default_applicable_licenses: ["cts_license"],
 }
 
+cc_test_library {
+    name: "libctsmediamuxertest_jni",
+    srcs: [
+        "jni/native_muxer_jni.cpp",
+    ],
+    shared_libs: [
+        "liblog",
+        "libmediandk",
+    ],
+    header_libs: ["liblog_headers"],
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+    gtest: false,
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.
+    sdk_version: "29",
+}
+
 android_test {
     name: "CtsMediaMuxerTestCases",
     defaults: ["cts_defaults"],
@@ -31,6 +52,9 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "cts-media-common",
+    ],
+    jni_libs: [
+        "libctsmediamuxertest_jni",
     ],
     // do not compress media files
     aaptflags: [
