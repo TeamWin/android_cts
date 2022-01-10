@@ -16,6 +16,8 @@
 
 package android.media.tv.interactive.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
@@ -44,18 +46,19 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.Executor;
 
 /**
- * Test {@link android.media.tv.interactive.TvInteractiveAppView}.
+ * Test {@link android.media.tv.interactive.TvInteractiveAppService}.
  */
 @RunWith(AndroidJUnit4.class)
-public class TvInteractiveAppViewTest {
+public class TvInteractiveAppServiceTest {
     private static final long TIME_OUT_MS = 20000L;
 
     private Instrumentation mInstrumentation;
     private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
     private TvInteractiveAppViewStubActivity mActivity;
-    private TvInteractiveAppView mTvInteractiveAppView;
+    private TvInteractiveAppView mTvIAppView;
     private TvInteractiveAppManager mManager;
     private TvInteractiveAppInfo mStubInfo;
+    private StubTvInteractiveAppService.StubSessionImpl mSession;
 
     @Rule
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
@@ -64,13 +67,15 @@ public class TvInteractiveAppViewTest {
     private final MockCallback mCallback = new MockCallback();
 
     public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
-        private String mInteractiveAppServiceId;
-        private int mState = -1;
+        private int mRequestCurrentChannelUriCount = 0;
+
+        private void resetCounts() {
+            mRequestCurrentChannelUriCount = 0;
+        }
 
         @Override
-        public void onSessionStateChanged(String interactiveAppServiceId, int state) {
-            mInteractiveAppServiceId = interactiveAppServiceId;
-            mState = state;
+        public void onRequestCurrentChannelUri(String iAppServiceId) {
+            mRequestCurrentChannelUriCount++;
         }
     }
 
@@ -116,8 +121,8 @@ public class TvInteractiveAppViewTest {
         activityReferenceObtained.block(TIME_OUT_MS);
 
         assertNotNull("Failed to acquire activity reference.", mActivity);
-        mTvInteractiveAppView = findTvInteractiveAppViewById(R.id.tviappview);
-        assertNotNull("Failed to find TvInteractiveAppView.", mTvInteractiveAppView);
+        mTvIAppView = findTvInteractiveAppViewById(R.id.tviappview);
+        assertNotNull("Failed to find TvInteractiveAppView.", mTvIAppView);
 
         mManager = (TvInteractiveAppManager) mActivity.getSystemService(
                 Context.TV_INTERACTIVE_APP_SERVICE);
@@ -129,14 +134,18 @@ public class TvInteractiveAppViewTest {
             }
         }
         assertNotNull(mStubInfo);
-        mTvInteractiveAppView.setCallback(getExecutor(), mCallback);
+        mTvIAppView.setCallback(getExecutor(), mCallback);
+        mTvIAppView.prepareInteractiveApp(mStubInfo.getId(), 1);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvIAppView.getInteractiveAppSession() != null);
+        mSession = StubTvInteractiveAppService.sSession;
     }
 
     @After
     public void tearDown() throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {
-                mTvInteractiveAppView.reset();
+                mTvIAppView.reset();
             }
         });
         mInstrumentation.waitForIdleSync();
@@ -145,34 +154,12 @@ public class TvInteractiveAppViewTest {
     }
 
     @Test
-    public void testConstructor() throws Throwable {
-        runTestOnUiThread(new Runnable() {
-            public void run() {
-                new TvInteractiveAppView(mActivity);
-                new TvInteractiveAppView(mActivity, null);
-                new TvInteractiveAppView(mActivity, null, 0);
-            }
-        });
-    }
+    public void testRequestCurrentChannelUri() throws Throwable {
+        assertNotNull(mSession);
+        mCallback.resetCounts();
+        mSession.requestCurrentChannelUri();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCurrentChannelUriCount > 0);
 
-    @Test
-    public void testStartInteractiveApp() throws Throwable {
-        mTvInteractiveAppView.prepareInteractiveApp(mStubInfo.getId(), 1);
-        mInstrumentation.waitForIdleSync();
-        new PollingCheck(TIME_OUT_MS) {
-            @Override
-            protected boolean check() {
-                return mTvInteractiveAppView.getInteractiveAppSession() != null;
-            }
-        }.run();
-        mTvInteractiveAppView.startInteractiveApp();
-        new PollingCheck(TIME_OUT_MS) {
-            @Override
-            protected boolean check() {
-                return mCallback.mInteractiveAppServiceId == mStubInfo.getId()
-                        && mCallback.mState
-                        == TvInteractiveAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY;
-            }
-        }.run();
+        assertThat(mCallback.mRequestCurrentChannelUriCount).isEqualTo(1);
     }
 }
