@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.audio.cts;
 
 import android.annotation.IntDef;
 import android.annotation.NonNull;
@@ -131,7 +131,7 @@ public class AudioRecordNative {
     }
 
     static {
-        System.loadLibrary("audio_jni");
+        System.loadLibrary("audiocts_jni");
     }
 
     private static final String TAG = "AudioRecordNative";
