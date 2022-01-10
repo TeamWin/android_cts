@@ -72,6 +72,31 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
         assertTrue(services.isEmpty());
     }
 
+    public void testConnect() throws Exception {
+        if (!TestUtils.isBleSupported(getContext())) {
+            return;
+        }
+
+        try {
+            mBluetoothGatt.connect();
+        } catch (Exception e) {
+            fail("Exception caught from connect(): " + e.toString());
+        }
+    }
+
+    public void testSetPreferredPhy() throws Exception {
+        if (!TestUtils.isBleSupported(getContext())) {
+            return;
+        }
+
+        try {
+            mBluetoothGatt.setPreferredPhy(BluetoothDevice.PHY_LE_1M, BluetoothDevice.PHY_LE_1M,
+                    BluetoothDevice.PHY_OPTION_NO_PREFERRED);
+        } catch (Exception e) {
+            fail("Exception caught from setPreferredPhy(): " + e.toString());
+        }
+    }
+
     public void testGetConnectedDevices() {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
