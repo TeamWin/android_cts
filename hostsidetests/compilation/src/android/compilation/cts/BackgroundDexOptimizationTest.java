@@ -24,8 +24,14 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 
+import com.google.common.io.ByteStreams;
+
 import junit.framework.Assert;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -48,6 +54,13 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
     private static final String CMD_CANCEL_POST_BOOT = "cmd jobscheduler timeout android 801";
     private static final String CMD_START_IDLE = "cmd jobscheduler run android 800";
     private static final String CMD_CANCEL_IDLE = "cmd jobscheduler timeout android 800";
+
+    private static final String APPLICATION_PACKAGE = "android.compilation.cts";
+    private static final String APPLICATION_APK = "CtsCompilationApp";
+    private static final String CMD_APP_ACTIVITY_LAUNCH =
+            "am start -n " + APPLICATION_PACKAGE + "/.CompilationTargetActivity";
+
+    private static final String CMD_DELETE_ODEX = "pm delete-dexopt " + APPLICATION_PACKAGE;
 
     private static final boolean DBG_LOG_CMD = false;
 
@@ -76,6 +89,7 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
     }
 
     public void testPostBootOptimizationCancelled() throws Exception {
+        reinstallAppPackage();
         LastDeviceExecutionTime timeBefore = getLastExecutionTime();
         postJobSchedulerJob(CMD_START_POST_BOOT);
 
@@ -113,6 +127,7 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
     public void testIdleOptimizationCancelled() throws Exception {
         completePostBootOptimization();
 
+        reinstallAppPackage();
         LastDeviceExecutionTime timeBefore = getLastExecutionTime();
         postJobSchedulerJob(CMD_START_IDLE);
 
@@ -144,6 +159,7 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
     }
 
     private void completePostBootOptimization() throws Exception {
+        reinstallAppPackage();
         LastDeviceExecutionTime timeBefore = getLastExecutionTime();
         postJobSchedulerJob(CMD_START_POST_BOOT);
 
@@ -158,6 +174,7 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
     }
 
     private void completeIdleOptimization() throws Exception {
+        reinstallAppPackage();
         LastDeviceExecutionTime timeBefore = getLastExecutionTime();
         postJobSchedulerJob(CMD_START_IDLE);
 
@@ -177,6 +194,7 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
         // Cancel all active dexopt jobs.
         executeShellCommand(CMD_CANCEL_IDLE);
         executeShellCommand(CMD_CANCEL_POST_BOOT);
+        mDevice.uninstallPackage(APPLICATION_PACKAGE);
         super.tearDown();
     }
 
@@ -187,6 +205,26 @@ public final class BackgroundDexOptimizationTest extends DeviceTestCase {
                     String r = executeShellCommand(cmd);
                     return r.contains("Running");
                 });
+    }
+
+    private void reinstallAppPackage() throws Exception {
+        mDevice.uninstallPackage(APPLICATION_PACKAGE);
+
+        File apkFile = File.createTempFile(APPLICATION_APK, ".apk");
+        try (OutputStream outputStream = new FileOutputStream(apkFile)) {
+            InputStream inputStream = getClass().getResourceAsStream(
+                    "/" + APPLICATION_APK + ".apk");
+            ByteStreams.copy(inputStream, outputStream);
+        }
+        String error = mDevice.installPackage(apkFile, /* reinstall= */ false);
+
+        assertThat(error).isNull();
+
+        // Delete odex files.
+        executeShellCommand(CMD_DELETE_ODEX);
+        executeShellCommand(CMD_APP_ACTIVITY_LAUNCH);
+        // Give short time to run some code.
+        Thread.sleep(500);
     }
 
     private boolean checkDexOptEnabled() throws Exception {
