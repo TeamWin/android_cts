@@ -62,6 +62,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
         const val APP_APK_PATH_LATEST_NONE = "$APK_DIRECTORY/CtsUsePermissionAppLatestNone.apk"
         const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
+        const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31 =
+            "$APK_DIRECTORY/CtsCreateNotificationChannelsApp31.apk"
+        const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33 =
+            "$APK_DIRECTORY/CtsCreateNotificationChannelsApp33.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
 
         const val ALLOW_BUTTON =
@@ -480,7 +484,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     // Automotive doesn't support one time permissions, and thus
                     // won't show an "Ask every time" message
                     when (state) {
-                        PermissionState.ALLOWED ->By.text(
+                        PermissionState.ALLOWED -> By.text(
                                 getPermissionControllerString("app_permission_button_allow"))
                         PermissionState.DENIED -> By.text(
                                 getPermissionControllerString("app_permission_button_deny"))
