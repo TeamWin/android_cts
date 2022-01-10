@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.provider.Settings;
 
@@ -39,6 +40,7 @@ public class AppLocaleSettingsTest {
     @Test
     public void testAppLocaleSettingsExist() throws RemoteException {
         final Intent intent = new Intent(Settings.ACTION_APP_LOCALE_SETTINGS);
+        intent.setData(Uri.parse("package:com.my.app"));
         final ResolveInfo ri = InstrumentationRegistry.getTargetContext()
                 .getPackageManager().resolveActivity(
                 intent, PackageManager.MATCH_DEFAULT_ONLY);
