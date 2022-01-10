@@ -83,10 +83,6 @@ class ItsBaseTest(base_test.BaseTestClass):
     else:
       self.lighting_cntl = 'None'
       self.lighting_ch = '1'
-    if self.user_params.get('chart_loc_arg'):
-      self.chart_loc_arg = self.user_params['chart_loc_arg']
-    else:
-      self.chart_loc_arg = ''
     if self.user_params.get('debug_mode'):
       self.debug_mode = True if self.user_params[
           'debug_mode'] == 'True' else False
