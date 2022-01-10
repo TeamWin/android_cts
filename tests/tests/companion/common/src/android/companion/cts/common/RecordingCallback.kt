@@ -28,17 +28,14 @@ private constructor(container: InvocationContainer<CallbackInvocation>) :
 
     constructor() : this(InvocationContainer())
 
-    override fun onDeviceFound(intentSender: IntentSender) {
+    override fun onDeviceFound(intentSender: IntentSender) =
         logAndRecordInvocation(OnDeviceFound(intentSender))
-    }
 
-    override fun onAssociationPending(intentSender: IntentSender) {
+    override fun onAssociationPending(intentSender: IntentSender) =
         logAndRecordInvocation(OnAssociationPending(intentSender))
-    }
 
-    override fun onAssociationCreated(associationInfo: AssociationInfo) {
+    override fun onAssociationCreated(associationInfo: AssociationInfo) =
         logAndRecordInvocation(OnAssociationCreated(associationInfo))
-    }
 
     override fun onFailure(error: CharSequence?) = logAndRecordInvocation(OnFailure(error))
 
