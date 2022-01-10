@@ -113,7 +113,6 @@ public class CtsConfigLoadingTest {
                             "CtsSliceTestCases.config",
                             "CtsSampleDeviceTestCases.config",
                             "CtsSampleMultiDeviceTestCases.config",
-                            "WifiAwareTestCases.config",
                             "CtsSampleMoblyTestCases.config",
                             "CtsUsbTests.config",
                             "CtsGpuToolsHostTestCases.config",
