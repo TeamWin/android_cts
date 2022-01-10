@@ -144,7 +144,9 @@ class AssociationsChangedListenerTest : CoreTestBase() {
             assertEquals(associationInfoFromListener, associationInfoFromCallback)
 
             // cleanup for the next repetition
-            cdm.disassociate(associationInfoFromListener.id)
+            observer.assertInvokedByActions {
+                cdm.disassociate(associationInfoFromListener.id)
+            }
             observer.clearRecordedInvocations()
         }
     }
