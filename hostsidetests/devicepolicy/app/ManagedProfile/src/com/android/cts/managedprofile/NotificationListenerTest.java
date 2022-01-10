@@ -15,8 +15,6 @@
  */
 package com.android.cts.managedprofile;
 
-import static android.Manifest.permission.POST_NOTIFICATIONS;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
@@ -26,7 +24,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.permission.cts.PermissionUtils;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -56,8 +53,8 @@ public class NotificationListenerTest {
 
     private static final String PARAM_PROFILE_ID = "profile-id";
 
-    static final String SENDER_PACKAGE = "com.android.cts.managedprofiletests.notificationsender";
-    static final String SENDER_COMPONENT = SENDER_PACKAGE + "/.SendNotification";
+    static final String SENDER_COMPONENT =
+            "com.android.cts.managedprofiletests.notificationsender/.SendNotification";
 
     private final LocalBroadcastReceiver mReceiver = new LocalBroadcastReceiver();
     private Context mContext;
@@ -71,7 +68,6 @@ public class NotificationListenerTest {
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mProfileUserId = getParam(InstrumentationRegistry.getArguments(), PARAM_PROFILE_ID);
-        PermissionUtils.grantPermission(SENDER_PACKAGE, POST_NOTIFICATIONS);
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_NOTIFICATION_POSTED);
         filter.addAction(ACTION_NOTIFICATION_REMOVED);
@@ -81,7 +77,6 @@ public class NotificationListenerTest {
 
     @After
     public void tearDown() throws Exception {
-        PermissionUtils.revokePermission(SENDER_PACKAGE, POST_NOTIFICATIONS);
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
         toggleNotificationListener(false);
     }
