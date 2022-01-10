@@ -17,7 +17,7 @@ package {
 }
 
 python_test_host {
-    name: "WifiAwareTestCases",
+    name: "CtsWifiAwareTestCases",
     main: "wifi_aware_test.py",
     srcs: ["wifi_aware_test.py"],
     test_suites: [
