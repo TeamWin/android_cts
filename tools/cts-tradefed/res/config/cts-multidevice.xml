@@ -24,7 +24,5 @@
         value="CtsSampleMultiDeviceTestCases"/>
     <option name="compatibility:include-filter"
         value="CtsSampleMoblyTestCases"/>
-    <option name="compatibility:include-filter"
-        value="WifiAwareTestCases"/>
 
 </configuration>
