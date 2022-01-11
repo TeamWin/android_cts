@@ -44,7 +44,7 @@ java_library {
 }
 
 // Build the res and asset library to
-// share with android.mediadrm.cts package.
+// share with android.media.drm.cts package.
 android_library {
     name: "cts-media-res-lib",
     asset_dirs: ["assets"],
@@ -112,8 +112,8 @@ android_test {
     resource_dirs: ["res"],
     aaptflags: [
         "--auto-add-overlay",
-        // Give com.android.mediadrm.cts Java files access to the R class
-        "--extra-packages com.android.mediadrm.cts",
+        // Give com.android.media.drm.cts Java files access to the R class
+        "--extra-packages com.android.media.drm.cts",
 
         // Do not compress these files:
         "-0 .vp9",
