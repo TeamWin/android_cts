@@ -45,6 +45,7 @@ public class ContactsContract_SettingsTest extends AndroidTestCase {
 
     private ContentResolver mResolver;
     private AccountManager mAccountManager;
+    private Account mInitialDefaultAccount;
 
     @Override
     protected void setUp() throws Exception {
@@ -58,6 +59,8 @@ public class ContactsContract_SettingsTest extends AndroidTestCase {
             SimContacts.addSimAccount(mResolver, SIM_ACCT_NAME, SIM_ACCT_TYPE, SIM_SLOT_0,
                     SimAccount.ADN_EF_TYPE);
         });
+
+        mInitialDefaultAccount = Settings.getDefaultAccount(mResolver);
     }
 
     @Override
@@ -69,6 +72,10 @@ public class ContactsContract_SettingsTest extends AndroidTestCase {
             SimContacts.removeSimAccounts(mResolver, SIM_SLOT_0);
         });
 
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Settings.setDefaultAccount(mResolver, mInitialDefaultAccount);
+        });
+
     }
 
     /**
@@ -77,16 +84,12 @@ public class ContactsContract_SettingsTest extends AndroidTestCase {
      * returned by {@link Settings#getDefaultAccount(ContentResolver)}
      */
     public void testSetDefaultAccount_returnedByGetDefaultAccount() {
-        // Default account is not set. getDefaultAccount should return NULL account.
-        Account defaultAccount = Settings.getDefaultAccount(mResolver);
-        assertThat(defaultAccount).isNull();
-
         // Set default account to a system account and call get to check.
         SystemUtil.runWithShellPermissionIdentity(() -> {
             Settings.setDefaultAccount(mResolver, ACCT_1);
         });
 
-        defaultAccount = Settings.getDefaultAccount(mResolver);
+        Account defaultAccount = Settings.getDefaultAccount(mResolver);
         assertThat(defaultAccount.name).isEqualTo("test for default account1");
         assertThat(defaultAccount.type).isEqualTo(StaticAccountAuthenticator.TYPE);
 
@@ -128,7 +131,7 @@ public class ContactsContract_SettingsTest extends AndroidTestCase {
         }
 
         Account defaultAccount = Settings.getDefaultAccount(mResolver);
-        assertThat(defaultAccount).isNull();
+        assertThat(defaultAccount).isEqualTo(mInitialDefaultAccount);
     }
 }
 
