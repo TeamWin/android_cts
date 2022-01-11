@@ -23,6 +23,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorSpace
 import android.graphics.ComposeShader
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Picture
 import android.graphics.Rect
@@ -31,11 +32,15 @@ import android.graphics.Shader
 import android.uirendering.cts.bitmapverifiers.RectVerifier
 import android.uirendering.cts.testinfrastructure.ActivityTestBase
 import android.uirendering.cts.testinfrastructure.CanvasClient
+import android.util.Half
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
+
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @MediumTest
 @RunWith(AndroidJUnit4::class)
@@ -168,6 +173,30 @@ class RuntimeShaderTests : ActivityTestBase() {
         shader.setInputShader("inputShader", Nulls.type<Shader>())
     }
 
+    @Test(expected = NullPointerException::class)
+    fun setNullBufferName() {
+        val shader = RuntimeShader(simpleShader)
+        shader.setInputBuffer(Nulls.type<String>(), bitmapShader)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun setEmptyBufferName() {
+        val shader = RuntimeShader(simpleShader)
+        shader.setInputBuffer("", bitmapShader)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun setInvalidBufferName() {
+        val shader = RuntimeShader(simpleShader)
+        shader.setInputBuffer("invalid", bitmapShader)
+    }
+
+    @Test(expected = NullPointerException::class)
+    fun setNullBufferValue() {
+        val shader = RuntimeShader(simpleShader)
+        shader.setInputBuffer("inputShader", Nulls.type<BitmapShader>())
+    }
+
     @Test
     fun testDefaultUniform() {
         val shader = RuntimeShader(simpleShader)
@@ -243,6 +272,90 @@ class RuntimeShaderTests : ActivityTestBase() {
         createTest().addCanvasClient(CanvasClient
                 { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
                 true).runWithVerifier(RectVerifier(Color.WHITE, Color.BLACK, rect))
+    }
+
+    @Test
+    fun testInputShaderWithFiltering() {
+        val bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+        bitmap.setPixel(0, 0, Color.RED)
+        bitmap.setPixel(1, 0, Color.BLUE)
+        bitmap.setPixel(0, 1, Color.BLUE)
+        bitmap.setPixel(1, 1, Color.RED)
+
+        val bitmapShader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+
+        // use slightly left than half to avoid any confusion on which pixel
+        // is sampled with FILTER_MODE_NEAREST
+        val matrix = Matrix()
+        matrix.postScale(0.49f, 0.49f)
+        bitmapShader.setLocalMatrix(matrix)
+
+        val shader = RuntimeShader(samplingShader)
+        shader.setInputShader("inputShader", bitmapShader)
+
+        val rect = Rect(0, 0, 1, 1)
+        val paint = Paint()
+
+        // The bitmap shader should be sampled with FILTER_MODE_NEAREST as the paint's filtering
+        // flag is not respected
+        paint.shader = shader
+        paint.blendMode = BlendMode.SRC
+        createTest().addCanvasClient(CanvasClient
+                { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
+                true).runWithVerifier(RectVerifier(Color.WHITE, Color.RED, rect))
+
+        // The bitmap shader should be sampled with FILTER_MODE_LINEAR as the paint's filtering
+        // flag is not respected
+        paint.isFilterBitmap = false
+        bitmapShader.filterMode = BitmapShader.FILTER_MODE_LINEAR
+        shader.setInputShader("inputShader", bitmapShader)
+        createTest().addCanvasClient(CanvasClient
+                { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
+                true).runWithVerifier(RectVerifier(Color.WHITE,
+                Color.valueOf(0.5f, 0.0f, 0.5f).toArgb(), rect))
+    }
+
+    @Test
+    fun testInputBuffer() {
+        val unpremulColor = Color.valueOf(0.75f, 0.0f, 1.0f, 0.5f)
+
+        // create a buffer and put an unpremul value into it
+        val srcBuf = ByteBuffer.allocate(8)
+        srcBuf.order(ByteOrder.LITTLE_ENDIAN)
+        srcBuf.putShort(Half(unpremulColor.red()).halfValue())
+        srcBuf.putShort(Half(unpremulColor.green()).halfValue())
+        srcBuf.putShort(Half(unpremulColor.blue()).halfValue())
+        srcBuf.putShort(Half(unpremulColor.alpha()).halfValue())
+        srcBuf.rewind()
+
+        // create a bitmap with the unpremul value and set a colorspace to something that is
+        // different from the destination
+        val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.RGBA_F16,
+                true, ColorSpace.get(ColorSpace.Named.BT2020))
+        bitmap.copyPixelsFromBuffer(srcBuf)
+        bitmap.setPremultiplied(false)
+
+        val bitmapShader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        val shader = RuntimeShader(sampleComparisonShader)
+        shader.setFloatUniform("expectedSample", unpremulColor.components)
+
+        val rect = Rect(0, 0, 1, 1)
+        val paint = Paint()
+        paint.shader = shader
+        paint.blendMode = BlendMode.SRC
+
+        // Use setInputBuffer and let the shader verify that the sample contents were unaltered.
+        shader.setInputBuffer("inputShader", bitmapShader)
+        createTest().addCanvasClient(CanvasClient
+                { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
+                true).runWithVerifier(RectVerifier(Color.WHITE, Color.GREEN, rect))
+
+        // Use setInputShader to treating it like a normal bitmap instead of data to verify
+        // everything is working as expected
+        shader.setInputShader("inputShader", bitmapShader)
+        createTest().addCanvasClient(CanvasClient
+                { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
+                true).runWithVerifier(RectVerifier(Color.WHITE, Color.RED, rect))
     }
 
     @Test
@@ -359,6 +472,21 @@ class RuntimeShaderTests : ActivityTestBase() {
           }
           return outputColor;
        }"""
+    val samplingShader = """
+        uniform shader inputShader;
+        vec4 main(vec2 coord) {
+          return inputShader.eval(coord).rgba;
+        }"""
+    val sampleComparisonShader = """
+        uniform shader inputShader;
+        uniform vec4 expectedSample;
+        vec4 main(vec2 coord) {
+          vec4 sampledValue = inputShader.eval(coord);
+          if (sampledValue == expectedSample) {
+            return vec4(0.0, 1.0, 0.0, 1.0);
+          }
+          return vec4(1.0, 0.0, 0.0, 1.0);
+        }"""
     val simpleShader = """
         uniform shader inputShader;
         uniform float inputFloat;
