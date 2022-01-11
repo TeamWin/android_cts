@@ -465,6 +465,14 @@ public final class MockIme extends InputMethodService {
 
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
+                    case "getStylusHandwritingWindowVisibility": {
+                        View decorView = getStylusHandwritingWindow().getDecorView();
+                        return decorView != null && decorView.getVisibility() == View.VISIBLE;
+                    }
+                    case "finishStylusHandwriting": {
+                        finishStylusHandwriting();
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
@@ -839,6 +847,18 @@ public final class MockIme extends InputMethodService {
     }
 
     @Override
+    public boolean onStartStylusHandwriting() {
+        getTracer().onStartStylusHandwriting(() -> super.onStartStylusHandwriting());
+        return true;
+    }
+
+    @Override
+    public void onFinishStylusHandwriting() {
+        getTracer().onFinishStylusHandwriting(() -> super.onFinishStylusHandwriting());
+    }
+
+
+    @Override
     public void onFinishInputView(boolean finishingInput) {
         getTracer().onFinishInputView(finishingInput,
                 () -> super.onFinishInputView(finishingInput));
@@ -1202,6 +1222,14 @@ public final class MockIme extends InputMethodService {
             arguments.putParcelable("editorInfo", editorInfo);
             arguments.putBoolean("restarting", restarting);
             recordEventInternal("onStartInputView", runnable, arguments);
+        }
+
+        void onStartStylusHandwriting(@NonNull Runnable runnable) {
+            recordEventInternal("onStartStylusHandwriting", runnable);
+        }
+
+        void onFinishStylusHandwriting(@NonNull Runnable runnable) {
+            recordEventInternal("onFinishStylusHandwriting", runnable);
         }
 
         void onFinishInputView(boolean finishingInput, @NonNull Runnable runnable) {

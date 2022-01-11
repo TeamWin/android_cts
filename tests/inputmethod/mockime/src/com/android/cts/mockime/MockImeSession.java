@@ -1374,4 +1374,14 @@ public class MockImeSession implements AutoCloseable {
     public ImeCommand callVerifyGetGestureDetectorOnDisplayContext() {
         return callCommandInternal("verifyGetGestureDetectorOnDisplayContext", new Bundle());
     }
+
+    @NonNull
+    public ImeCommand callGetStylusHandwritingWindowVisibility() {
+        return callCommandInternal("getStylusHandwritingWindowVisibility", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callFinishStylusHandwriting() {
+        return callCommandInternal("finishStylusHandwriting", new Bundle());
+    }
 }
