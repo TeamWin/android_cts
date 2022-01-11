@@ -43,27 +43,22 @@ private constructor(container: InvocationContainer<CdmEvent>) :
 
     // association change listener behavior
 
-    override fun onAssociationsChanged(associations: List<AssociationInfo>) {
+    override fun onAssociationsChanged(associations: List<AssociationInfo>) =
         recordInvocation(AssociationChange(associations))
-    }
 
     // CDM callback behavior
 
-    override fun onDeviceFound(intentSender: IntentSender) {
+    override fun onDeviceFound(intentSender: IntentSender) =
         recordInvocation(CdmCallback(OnDeviceFound(intentSender)))
-    }
 
-    override fun onAssociationPending(intentSender: IntentSender) {
+    override fun onAssociationPending(intentSender: IntentSender) =
         recordInvocation(CdmCallback(OnAssociationPending(intentSender)))
-    }
 
-    override fun onAssociationCreated(associationInfo: AssociationInfo) {
+    override fun onAssociationCreated(associationInfo: AssociationInfo) =
         recordInvocation(CdmCallback(OnAssociationCreated(associationInfo)))
-    }
 
-    override fun onFailure(error: CharSequence?) {
+    override fun onFailure(error: CharSequence?) =
         recordInvocation(CdmCallback(OnFailure(error)))
-    }
 
     sealed interface CdmEvent
     data class AssociationChange(val associations: List<AssociationInfo>) : CdmEvent

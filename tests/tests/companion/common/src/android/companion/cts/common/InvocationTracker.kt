@@ -48,7 +48,7 @@ interface InvocationTracker<T> {
 
     fun clearRecordedInvocations()
 
-    fun recordInvocation(invocation: T): Boolean
+    fun recordInvocation(invocation: T)
 }
 
 internal class InvocationContainer<T> : InvocationTracker<T> {
@@ -58,5 +58,7 @@ internal class InvocationContainer<T> : InvocationTracker<T> {
 
     override fun clearRecordedInvocations() = _invocations.clear()
 
-    override fun recordInvocation(invocation: T) = _invocations.add(invocation)
+    override fun recordInvocation(invocation: T) {
+        _invocations.add(invocation)
+    }
 }
