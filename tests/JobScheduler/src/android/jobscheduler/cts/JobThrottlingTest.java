@@ -194,7 +194,7 @@ public class JobThrottlingTest {
         if (mAutomotiveDevice || mLeanbackOnly) {
             setScreenState(true);
             // TODO(b/159176758): make sure that initial power supply is on.
-            BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+            setChargingState(true);
         }
 
         // Kill as many things in the background as possible so we avoid LMK interfering with the
@@ -456,7 +456,7 @@ public class JobThrottlingTest {
 
         setScreenState(true);
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
@@ -485,7 +485,7 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "1");
 
         setScreenState(true);
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
 
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
@@ -517,7 +517,7 @@ public class JobThrottlingTest {
 
         setScreenState(true);
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
@@ -529,7 +529,7 @@ public class JobThrottlingTest {
         assertFalse("New job started in RESTRICTED bucket after parole used",
                 mTestAppInterface.awaitJobStart(3_000));
 
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
         assertFalse("New job started in RESTRICTED bucket after parole when charging but not idle",
                 mTestAppInterface.awaitJobStart(3_000));
@@ -561,7 +561,7 @@ public class JobThrottlingTest {
         setAirplaneMode(true);
         setScreenState(true);
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
@@ -570,7 +570,7 @@ public class JobThrottlingTest {
         // Slowly add back required bucket constraints.
 
         // Battery charging and high.
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        setChargingState(true);
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
         BatteryUtils.runDumpsysBatterySetLevel(100);
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
@@ -602,7 +602,7 @@ public class JobThrottlingTest {
         setAirplaneMode(true);
         setScreenState(true);
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
@@ -612,7 +612,7 @@ public class JobThrottlingTest {
         // Slowly add back required bucket constraints.
 
         // Battery charging and high.
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        setChargingState(true);
         runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
         BatteryUtils.runDumpsysBatterySetLevel(100);
@@ -642,7 +642,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.NEVER);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
@@ -654,7 +654,7 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.NEVER);
         tempWhitelistTestApp(6_000);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
@@ -670,7 +670,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.assumeBatterySaverFeature();
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(false);
         sendScheduleJobBroadcast(false);
         assertTrue("New job failed to start with battery saver OFF",
@@ -684,7 +684,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.assumeBatterySaverFeature();
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(true);
         sendScheduleJobBroadcast(false);
         assertFalse("New job started with battery saver ON",
@@ -698,7 +698,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.assumeBatterySaverFeature();
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(true);
         tempWhitelistTestApp(6_000);
         sendScheduleJobBroadcast(false);
@@ -714,7 +714,7 @@ public class JobThrottlingTest {
         BatteryUtils.assumeBatterySaverFeature();
 
         // Enable battery saver, and schedule a job. It shouldn't run.
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(true);
         sendScheduleJobBroadcast(false);
         assertFalse("New job started with battery saver ON",
@@ -733,7 +733,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.assumeBatterySaverFeature();
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(true);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         assertTrue("New expedited job failed to start with battery saver ON",
@@ -747,7 +747,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.assumeBatterySaverFeature();
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(false);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         assertTrue("New expedited job failed to start with battery saver ON",
@@ -820,7 +820,7 @@ public class JobThrottlingTest {
         // Intentionally set a value below 1 minute to ensure the range checks work.
         mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(47_000L));
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(true);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
@@ -852,7 +852,7 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
         mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         toggleDozeState(true);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
@@ -910,7 +910,7 @@ public class JobThrottlingTest {
         // Intentionally set a value below 1 minute to ensure the range checks work.
         mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(0L));
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(false);
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
@@ -947,7 +947,7 @@ public class JobThrottlingTest {
         setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
         setWifiMeteredState(false);
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
         setScreenState(false);
         triggerJobIdle();
@@ -985,12 +985,12 @@ public class JobThrottlingTest {
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         assertTrue("New job didn't stop when device no longer charging",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         assertEquals(JobParameters.STOP_REASON_APP_STANDBY,
                 mTestAppInterface.getLastParams().getStopReason());
-        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        setChargingState(true);
         BatteryUtils.runDumpsysBatterySetLevel(100);
 
         // Battery not low
@@ -1011,7 +1011,7 @@ public class JobThrottlingTest {
     public void testRestrictingStopReason_Quota() throws Exception {
         // Reduce allowed time for testing.
         mDeviceConfigStateHelper.set("qc_allowed_time_per_period_ms", "60000");
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         setTestPackageStandbyBucket(Bucket.RARE);
 
         sendScheduleJobBroadcast(false);
@@ -1031,7 +1031,7 @@ public class JobThrottlingTest {
     public void testRestrictingStopReason_BatterySaver() throws Exception {
         BatteryUtils.assumeBatterySaverFeature();
 
-        BatteryUtils.runDumpsysBatteryUnplug();
+        setChargingState(false);
         BatteryUtils.enableBatterySaver(false);
         sendScheduleJobBroadcast(false);
         runJob();
@@ -1071,6 +1071,7 @@ public class JobThrottlingTest {
             toggleDozeState(false);
         }
         mTestAppInterface.cleanup();
+        mUiDevice.executeShellCommand("cmd jobscheduler monitor-battery off");
         BatteryUtils.runDumpsysBatteryReset();
         BatteryUtils.enableBatterySaver(false);
         removeTestAppFromTempWhitelist();
@@ -1194,6 +1195,31 @@ public class JobThrottlingTest {
         }
         // Wait a little bit to make sure the screen state has changed.
         Thread.sleep(2_000);
+    }
+
+    private void setChargingState(boolean isCharging) throws Exception {
+        mUiDevice.executeShellCommand("cmd jobscheduler monitor-battery on");
+
+        final String command;
+        if (isCharging) {
+            command = "cmd battery set -f ac 1";
+        } else {
+            command = "cmd battery unplug -f";
+        }
+        int seq = Integer.parseInt(mUiDevice.executeShellCommand(command).trim());
+        long startTime = SystemClock.elapsedRealtime();
+
+        // Wait for the battery update to be processed by job scheduler before proceeding.
+        waitUntil("JobScheduler didn't update charging status to " + isCharging, 15 /* seconds */,
+                () -> {
+                    int curSeq;
+                    boolean curCharging;
+                    curSeq = Integer.parseInt(mUiDevice.executeShellCommand(
+                            "cmd jobscheduler get-battery-seq").trim());
+                    curCharging = Boolean.parseBoolean(mUiDevice.executeShellCommand(
+                            "cmd jobscheduler get-battery-charging").trim());
+                    return curSeq >= seq && curCharging == isCharging;
+                });
     }
 
     /**
