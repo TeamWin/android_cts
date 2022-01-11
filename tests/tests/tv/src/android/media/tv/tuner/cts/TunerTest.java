@@ -527,6 +527,55 @@ public class TunerTest {
     }
 
     @Test
+    public void testRemoveOutputPid() throws Exception {
+        // Test w/o active frontend
+        try {
+            int status = mTuner.removeOutputPid(10);
+            if (TunerVersionChecker.isHigherOrEqualVersionTo(
+                        TunerVersionChecker.TUNER_VERSION_2_0)) {
+                fail("Remove output PID should throw IllegalStateException.");
+            } else {
+                assertEquals(status, Tuner.RESULT_UNAVAILABLE);
+            }
+        } catch (IllegalStateException e) {
+            // pass
+        }
+
+        // tune to get frontend resource
+        List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null)
+            return;
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            // TODO: get real CiCam id from MediaCas
+            res = mTuner.connectFrontendToCiCam(0);
+        } else {
+            assertEquals(Tuner.INVALID_LTS_ID, mTuner.connectFrontendToCiCam(0));
+        }
+
+        int status = mTuner.removeOutputPid(10);
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            if (status != Tuner.RESULT_SUCCESS) {
+                assertEquals(status, Tuner.RESULT_UNAVAILABLE);
+            }
+        } else {
+            assertEquals(status, Tuner.RESULT_UNAVAILABLE);
+        }
+
+        if (res != Tuner.INVALID_LTS_ID) {
+            assertEquals(mTuner.disconnectFrontendToCiCam(0), Tuner.RESULT_SUCCESS);
+        } else {
+            // Make sure the connectFrontendToCiCam only fails because the current device
+            // does not support connecting frontend to cicam
+            assertEquals(mTuner.disconnectFrontendToCiCam(0), Tuner.RESULT_UNAVAILABLE);
+        }
+    }
+
+    @Test
     public void testAvSyncId() throws Exception {
     // open filter to get demux resource
         Filter f = mTuner.openFilter(
