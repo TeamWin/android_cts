@@ -20,8 +20,6 @@ import static android.accessibilityservice.MagnificationConfig.MAGNIFICATION_MOD
 import static android.accessibilityservice.MagnificationConfig.MAGNIFICATION_MODE_WINDOW;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -55,24 +53,29 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.TestUtils;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Class for testing {@link AccessibilityServiceInfo}.
+ * Class for testing {@link MagnificationController} and the magnification overlay window.
  */
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
@@ -84,6 +87,9 @@ public class AccessibilityMagnificationTest {
     public static final int LISTENER_ANIMATION_TIMEOUT_MILLIS = 1000;
     public static final String ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED =
             "accessibility_display_magnification_enabled";
+
+    private static UiAutomation sUiAutomation;
+
     private StubMagnificationAccessibilityService mService;
     private Instrumentation mInstrumentation;
 
@@ -108,12 +114,26 @@ public class AccessibilityMagnificationTest {
             .around(mInstrumentedAccessibilityServiceRule)
             .around(mDumpOnFailureRule);
 
+    @BeforeClass
+    public static void oneTimeSetUp() {
+        sUiAutomation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        sUiAutomation.setServiceInfo(info);
+    }
+
+    @AfterClass
+    public static void postTestTearDown() {
+        sUiAutomation.destroy();
+    }
+
     @Before
     public void setUp() throws Exception {
-        ShellCommandBuilder.create(getInstrumentation())
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        ShellCommandBuilder.create(sUiAutomation)
                 .deleteSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED)
                 .run();
-        mInstrumentation = getInstrumentation();
         // Starting the service will force the accessibility subsystem to examine its settings, so
         // it will update magnification in the process to disable it.
         mService = mMagnificationAccessibilityServiceRule.enableService();
@@ -236,6 +256,25 @@ public class AccessibilityMagnificationTest {
             mService.runOnServiceSync(() -> {
                 controller.setMagnificationConfig(resetConfig, false);
             });
+        }
+    }
+
+    @Test
+    public void testSetWindowModeConfig_hasMagnificationOverlay() throws TimeoutException {
+        final MagnificationController controller = mService.getMagnificationController();
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_WINDOW)
+                .setScale(2.0f)
+                .build();
+
+        try {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> controller.setMagnificationConfig(config, false),
+                    event -> sUiAutomation.getWindows().stream().anyMatch(
+                            accessibilityWindowInfo -> accessibilityWindowInfo.getType()
+                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+        } finally {
+            controller.resetCurrentMagnification(false);
         }
     }
 
@@ -485,7 +524,7 @@ public class AccessibilityMagnificationTest {
 
     @Test
     public void testGetMagnificationRegion_whenMagnificationGesturesEnabled_shouldNotBeEmpty() {
-        ShellCommandBuilder.create(mInstrumentation)
+        ShellCommandBuilder.create(sUiAutomation)
                 .putSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED, "1")
                 .run();
         mService.runOnServiceSync(() -> mService.disableSelf());
@@ -498,7 +537,7 @@ public class AccessibilityMagnificationTest {
             assertFalse("Magnification region should not be empty when magnification "
                     + "gestures are active", magnificationRegion.isEmpty());
         } finally {
-            ShellCommandBuilder.create(mInstrumentation)
+            ShellCommandBuilder.create(sUiAutomation)
                     .deleteSecureSetting(ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED)
                     .run();
         }
@@ -638,17 +677,15 @@ public class AccessibilityMagnificationTest {
     @Test
     public void testA11yNodeInfoVisibility_whenOutOfMagnifiedArea_shouldVisible()
             throws Exception{
-        final UiAutomation uiAutomation = mInstrumentation.getUiAutomation(
-                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         final Activity activity = launchActivityAndWaitForItToBeOnscreen(
-                mInstrumentation, uiAutomation, mActivityRule);
+                mInstrumentation, sUiAutomation, mActivityRule);
         final MagnificationController controller = mService.getMagnificationController();
         final Rect magnifyBounds = controller.getMagnificationRegion().getBounds();
         final float scale = 8.0f;
         final Button button = activity.findViewById(R.id.button1);
         adjustViewBoundsIfNeeded(button, scale, magnifyBounds);
 
-        final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
+        final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
                         "android.accessibilityservice.cts:id/button1").get(0);
         assertNotNull("Can't find button on the screen", buttonNode);
