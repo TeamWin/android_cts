@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.encoder.cts;
 
 import static org.junit.Assert.assertTrue;
 
@@ -26,6 +26,7 @@ import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaFormat;
+import android.media.cts.InputSurface;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
