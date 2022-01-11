@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.mediadrm.cts;
+package android.media.drm.cts;
 
 import android.content.pm.PackageManager;
 import android.media.MediaDrm;
 import android.media.cts.ConnectionStatus;
 import android.media.cts.IConnectionStatus;
 import android.media.cts.MediaCodecBlockModelHelper;
+import android.media.cts.Utils;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
