@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.mediadrm.cts;
+package android.media.drm.cts;
 
 import android.media.cts.R;
 
@@ -39,6 +39,7 @@ import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
 import android.media.cts.Preconditions;
+import android.media.cts.Utils;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;

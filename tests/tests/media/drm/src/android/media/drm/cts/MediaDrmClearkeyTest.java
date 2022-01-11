@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.mediadrm.cts;
+package android.media.drm.cts;
 
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaDrm;
@@ -39,6 +39,7 @@ import android.media.cts.MediaStubActivity;
 import android.media.cts.NdkInputSurface;
 import android.media.cts.NdkMediaCodec;
 import android.media.cts.TestUtils.Monitor;
+import android.media.cts.Utils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Looper;
@@ -106,11 +107,11 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     private static final String CENC_AUDIO_PATH = "/clear/h264/llama/llama_aac_audio.mp4";
     private static final String CENC_VIDEO_PATH = "/clearkey/llama_h264_main_720p_8000.mp4";
     private static final Uri WEBM_URL = Uri.parse(
-            "android.resource://android.mediadrm.cts/" + R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz_crypt);
+            "android.resource://android.media.drm.cts/" + R.raw.video_320x240_webm_vp8_800kbps_30fps_vorbis_stereo_128kbps_44100hz_crypt);
     private static final Uri MPEG2TS_SCRAMBLED_URL = Uri.parse(
-            "android.resource://android.mediadrm.cts/" + R.raw.segment000001_scrambled);
+            "android.resource://android.media.drm.cts/" + R.raw.segment000001_scrambled);
     private static final Uri MPEG2TS_CLEAR_URL = Uri.parse(
-            "android.resource://android.mediadrm.cts/" + R.raw.segment000001);
+            "android.resource://android.media.drm.cts/" + R.raw.segment000001);
 
     private static final UUID COMMON_PSSH_SCHEME_UUID =
             new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
