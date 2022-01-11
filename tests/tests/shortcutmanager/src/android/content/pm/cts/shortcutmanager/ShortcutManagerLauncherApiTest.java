@@ -26,6 +26,7 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.retryUntil;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 
+import android.content.Intent;
 import android.content.LocusId;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
@@ -426,7 +427,14 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
             final ShortcutManager manager = getManager();
             // Verifies setDynamicShortcuts persists shortcuts into AppSearch
             manager.setDynamicShortcuts(list(
-                    makeShortcut("s1"),
+                    makeShortcutBuilder("s1")
+                            .setShortLabel("Title-s1")
+                            .setIntent(new Intent("main").putExtra("k1", "yyy"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.type", list("running", "jogging"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.duration", list("10m"))
+                            .build(),
                     makeShortcut("s2"),
                     makeShortcutExcludedFromLauncher("s3")
             ));
@@ -446,7 +454,16 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
                     list("s1", "s2", "s3"),
                     null);
             // Package 1
-            assertWith(ret).haveIds("s1", "s2", "s3");
+            assertWith(ret).haveIds("s1", "s2", "s3").forShortcutWithId("s1", si -> {
+                assertTrue(si.hasCapability("action.intent.START_EXERCISE"));
+                assertFalse(si.hasCapability("action.intent.STOP_EXERCISE"));
+                assertEquals(list("running", "jogging"),
+                        si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                "exercise.type"));
+                assertEquals(list("10m"),
+                        si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                "exercise.duration"));
+            });
         });
     }
 
@@ -458,14 +475,31 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
             final ShortcutManager manager = getManager();
             // Verifies setDynamicShortcuts persists shortcuts into AppSearch
             manager.setDynamicShortcuts(list(
-                    makeShortcut("s1"),
+                    makeShortcutBuilder("s1")
+                            .setShortLabel("Title-s1")
+                            .setIntent(new Intent("main").putExtra("k1", "yyy"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.type", list("running", "jogging"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.duration", list("10m"))
+                            .build(),
                     makeShortcut("s2"),
                     makeShortcutExcludedFromLauncher("s3")
             ));
             // Verify shortcut excluded from launcher are not included in search result
             assertWith(manager.getShortcuts(ShortcutManager.FLAG_MATCH_DYNAMIC))
                     .haveIds("s1", "s2")
-                    .areAllDynamic();
+                    .areAllDynamic()
+                    .forShortcutWithId("s1", si -> {
+                        assertTrue(si.hasCapability("action.intent.START_EXERCISE"));
+                        assertFalse(si.hasCapability("action.intent.STOP_EXERCISE"));
+                        assertEquals(list("running", "jogging"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.type"));
+                        assertEquals(list("10m"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.duration"));
+                    });
         });
         Thread.sleep(5000);
         runWithCallerWithStrictMode(mPackageContext1, () -> {
@@ -493,14 +527,31 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutManager manager = getManager();
             manager.setDynamicShortcuts(list(
-                    makeShortcut("s1"),
+                    makeShortcutBuilder("s1")
+                            .setShortLabel("Title-s1")
+                            .setIntent(new Intent("main").putExtra("k1", "yyy"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.type", list("running", "jogging"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.duration", list("10m"))
+                            .build(),
                     makeShortcut("s2"),
                     makeShortcutExcludedFromLauncher("s3")
             ));
             // Verify shortcut excluded from launcher are not included in search result
             assertWith(manager.getShortcuts(ShortcutManager.FLAG_MATCH_DYNAMIC))
                     .haveIds("s1", "s2")
-                    .areAllDynamic();
+                    .areAllDynamic()
+                    .forShortcutWithId("s1", si -> {
+                        assertTrue(si.hasCapability("action.intent.START_EXERCISE"));
+                        assertFalse(si.hasCapability("action.intent.STOP_EXERCISE"));
+                        assertEquals(list("running", "jogging"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.type"));
+                        assertEquals(list("10m"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.duration"));
+                    });
             // Verifies addDynamicShortcuts persists shortcuts into AppSearch
             manager.addDynamicShortcuts(list(makeShortcut("s4"), makeShortcut("s5")));
         });
@@ -525,7 +576,14 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         SystemUtil.runShellCommand("cmd shortcut override-config max_shortcuts=5");
         runWithCallerWithStrictMode(mPackageContext1, () ->
                 getManager().setDynamicShortcuts(list(
-                        makeShortcut("s1"),
+                        makeShortcutBuilder("s1")
+                                .setShortLabel("Title-s1")
+                                .setIntent(new Intent("main").putExtra("k1", "yyy"))
+                                .addCapabilityBinding("action.intent.START_EXERCISE",
+                                        "exercise.type", list("running", "jogging"))
+                                .addCapabilityBinding("action.intent.START_EXERCISE",
+                                        "exercise.duration", list("10m"))
+                                .build(),
                         makeShortcut("s2"),
                         makeShortcut("s3"),
                         makeShortcutExcludedFromLauncher("s4"),
@@ -541,7 +599,17 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
                     0,
                     list("s1", "s2", "s3", "s4", "s5"),
                     null);
-            assertWith(ret).haveIds("s1", "s2", "s3", "s4", "s5");
+            assertWith(ret).haveIds("s1", "s2", "s3", "s4", "s5")
+                    .forShortcutWithId("s1", si -> {
+                        assertTrue(si.hasCapability("action.intent.START_EXERCISE"));
+                        assertFalse(si.hasCapability("action.intent.STOP_EXERCISE"));
+                        assertEquals(list("running", "jogging"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.type"));
+                        assertEquals(list("10m"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.duration"));
+                    });
         });
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             // Verifies pushDynamicShortcuts further persists shortcuts into AppSearch without
