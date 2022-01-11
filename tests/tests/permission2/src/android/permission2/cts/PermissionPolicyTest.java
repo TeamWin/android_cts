@@ -22,12 +22,14 @@ import static android.os.Build.VERSION.SECURITY_PATCH;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -39,6 +41,7 @@ import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
@@ -86,6 +89,18 @@ public class PermissionPolicyTest {
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+    @Test
+    public void shellIsOnlySystemAppThatRequestsRevokePostNotificationsWithoutKill() {
+        List<PackageInfo> pkgs = sContext.getPackageManager().getInstalledPackages(
+                PackageManager.PackageInfoFlags.of(
+                PackageManager.GET_PERMISSIONS | PackageManager.MATCH_ALL));
+        int shellUid = Process.myUserHandle().getUid(Process.SHELL_UID);
+        for (PackageInfo pkg : pkgs) {
+            Assert.assertFalse(pkg.applicationInfo.uid != shellUid
+                    && hasRevokeNotificationNoKillPermission(pkg));
+        }
+    }
 
     @Test
     public void platformPermissionPolicyIsUnaltered() throws Exception {
@@ -234,6 +249,20 @@ public class PermissionPolicyTest {
 
         // Fail on any offending item
         assertWithMessage("list of offending permissions").that(offendingList).isEmpty();
+    }
+
+    private boolean hasRevokeNotificationNoKillPermission(PackageInfo info) {
+        if (info.requestedPermissions == null) {
+            return false;
+        }
+
+        for (int i = 0; i < info.requestedPermissions.length; i++) {
+            if (Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL.equals(
+                    info.requestedPermissions[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<ExpectedPermissionInfo> loadExpectedPermissions(int resourceId) throws Exception {
