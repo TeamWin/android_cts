@@ -18,6 +18,9 @@ package android.app.usage.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_FREQUENT;
+import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
+import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -77,6 +80,8 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -92,11 +97,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 /**
  * Test the UsageStats API. It is difficult to test the entire surface area
@@ -145,6 +151,14 @@ public class UsageStatsTest {
             "android.app.usage.cts.test2.PipActivity";
     private static final ComponentName TEST_APP2_PIP_COMPONENT = new ComponentName(TEST_APP2_PKG,
             TEST_APP2_CLASS_PIP);
+
+    // TODO(206518483): Define these constants in UsageStatsManager to avoid hardcoding here.
+    private static final String KEY_NOTIFICATION_SEEN_HOLD_DURATION =
+            "notification_seen_duration";
+    private static final String KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET =
+            "notification_seen_promoted_bucket";
+
+    private static final int DEFAULT_TIMEOUT_MS = 10_000;
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -543,7 +557,7 @@ public class UsageStatsTest {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
             if (event.getEventType() == UsageEvents.Event.STANDBY_BUCKET_CHANGED) {
-                found |= event.getAppStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE;
+                found |= event.getAppStandbyBucket() == STANDBY_BUCKET_RARE;
             }
         }
 
@@ -563,7 +577,7 @@ public class UsageStatsTest {
             assertTrue("No bucket data returned", bucketMap.size() > 0);
             final int bucket = bucketMap.getOrDefault(mTargetPackage, -1);
             assertEquals("Incorrect bucket returned for " + mTargetPackage, bucket,
-                    UsageStatsManager.STANDBY_BUCKET_RARE);
+                    STANDBY_BUCKET_RARE);
         } finally {
             AppStandbyUtils.setAppStandbyEnabledAtRuntime(origValue);
         }
@@ -596,7 +610,7 @@ public class UsageStatsTest {
             numEvents++;
             assertEquals("Event for a different package", mTargetPackage, event.getPackageName());
             if (event.getEventType() == Event.STANDBY_BUCKET_CHANGED) {
-                if (event.getAppStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE) {
+                if (event.getAppStandbyBucket() == STANDBY_BUCKET_RARE) {
                     rareTimeStamp = event.getTimeStamp();
                 }
                 else if (event.getAppStandbyBucket() == UsageStatsManager
@@ -778,7 +792,7 @@ public class UsageStatsTest {
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
 
-        // Skip the test for wearable devices, televisions and automotives; neither has
+        // Skip the test for wearable devices, televisions and automotives; none of them have
         // a notification shade, as notifications are shown via a different path than phones
         assumeFalse("Test cannot run on a watch- notification shade is not shown",
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
@@ -823,10 +837,56 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    public void testNotificationSeen_verifyBucket() throws Exception {
+        // Skip the test for wearable devices, televisions and automotives; none of them have
+        // a notification shade, as notifications are shown via a different path than phones
+        assumeFalse("Test cannot run on a watch- notification shade is not shown",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+        assumeFalse("Test cannot run on a television- notifications are not shown",
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_LEANBACK_ONLY));
+        assumeFalse("Test cannot run on an automotive - notification shade is not shown",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
+        final long promotedBucketHoldDurationMs = TimeUnit.MINUTES.toMillis(2);
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET,
+                    String.valueOf(STANDBY_BUCKET_FREQUENT));
+            deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_HOLD_DURATION,
+                    String.valueOf(promotedBucketHoldDurationMs));
+
+            mUiDevice.wakeUp();
+            dismissKeyguard();
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            try {
+                ITestReceiver testReceiver = connection.getITestReceiver();
+                testReceiver.generateAndSendNotification();
+            } finally {
+                connection.unbind();
+            }
+            setStandByBucket(TEST_APP_PKG, "rare");
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_RARE);
+            mUiDevice.openNotification();
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    STANDBY_BUCKET_FREQUENT);
+            // TODO(206518483): Verify the behavior after the promoted duration expires (which
+            // currently doesn't work as expected).
+            // SystemClock.sleep(promotedBucketHoldDurationMs);
+            // assertEquals(STANDBY_BUCKET_RARE, mUsageStatsManager.getAppStandbyBucket(
+            //                 TEST_APP_PKG));
+            mUiDevice.pressHome();
+        }
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
     public void testNotificationInterruptionEventsObfuscation() throws Exception {
         final long startTime = System.currentTimeMillis();
 
-        // Skip the test for wearable devices and televisions; neither has a notification shade.
+        // Skip the test for wearable devices and televisions; none of them have a
+        // notification shade.
         assumeFalse("Test cannot run on a watch- notification shade is not shown",
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
         assumeFalse("Test cannot run on a television- notifications are not shown",
@@ -1141,16 +1201,10 @@ public class UsageStatsTest {
         return events;
     }
 
-    private void waitUntil(BooleanSupplier condition, boolean expected) throws Exception {
-        final long sleepTimeMs = 500;
-        final int count = 10;
-        for (int i = 0; i < count; ++i) {
-            if (condition.getAsBoolean() == expected) {
-                return;
-            }
-            Thread.sleep(sleepTimeMs);
-        }
-        fail("Condition wasn't satisfied after " + (sleepTimeMs * count) + "ms");
+    private <T> void waitUntil(Supplier<T> resultSupplier, T expectedResult) throws Exception {
+        final T actualResult = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS, resultSupplier,
+                result -> Objects.equals(expectedResult, result));
+        assertEquals(expectedResult, actualResult);
     }
 
     static class AggrEventData {
@@ -1874,11 +1928,16 @@ public class UsageStatsTest {
     }
 
     private ITestReceiver bindToTestService() throws Exception {
+        final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+        return connection.getITestReceiver();
+    }
+
+    private TestServiceConnection bindToTestServiceAndGetConnection() throws Exception {
         final TestServiceConnection connection = new TestServiceConnection();
         final Intent intent = new Intent().setComponent(
                 new ComponentName(TEST_APP_PKG, TEST_APP_CLASS_SERVICE));
         mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
-        return ITestReceiver.Stub.asInterface(connection.getService());
+        return connection;
     }
 
     /**
@@ -1941,6 +2000,14 @@ public class UsageStatsTest {
             final IBinder service = mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC,
                     TimeUnit.SECONDS);
             return service;
+        }
+
+        public ITestReceiver getITestReceiver() throws Exception {
+            return ITestReceiver.Stub.asInterface(getService());
+        }
+
+        public void unbind() {
+            mContext.unbindService(this);
         }
     }
 

@@ -16,14 +16,23 @@
 
 package android.app.usage.cts.test1;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.app.usage.UsageStatsManager;
 import android.app.usage.cts.ITestReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.provider.Settings;
 
 public class TestService extends Service {
+    private static final String TEST_CHANNEL_ID = "test_channel_id";
+    private static final String TEST_CHANNEL_NAME = "test_channel_name";
+    private static final String TEST_CHANNEL_DESC = "Test channel";
+    private static final int TEST_NOTIFICATION_ID = 11;
+
     @Override
     public IBinder onBind(Intent intent) {
         return new TestReceiver();
@@ -32,9 +41,28 @@ public class TestService extends Service {
     private class TestReceiver extends ITestReceiver.Stub {
         @Override
         public boolean isAppInactive(String pkg) {
-            UsageStatsManager usm = (UsageStatsManager) getSystemService(
-                    Context.USAGE_STATS_SERVICE);
+            UsageStatsManager usm = getSystemService(UsageStatsManager.class);
             return usm.isAppInactive(pkg);
+        }
+
+        @Override
+        public void generateAndSendNotification() {
+            final NotificationManager notificationManager =
+                    getSystemService(NotificationManager.class);
+            final NotificationChannel mChannel = new NotificationChannel(TEST_CHANNEL_ID,
+                    TEST_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+            // Configure the notification channel.
+            mChannel.setDescription(TEST_CHANNEL_DESC);
+            notificationManager.createNotificationChannel(mChannel);
+            final Notification.Builder mBuilder =
+                    new Notification.Builder(getApplicationContext(), TEST_CHANNEL_ID)
+                            .setSmallIcon(android.R.drawable.ic_info)
+                            .setContentTitle("My notification")
+                            .setContentText("Hello World!");
+            final PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 1,
+                    new Intent(Settings.ACTION_SETTINGS), PendingIntent.FLAG_IMMUTABLE);
+            mBuilder.setContentIntent(pi);
+            notificationManager.notify(TEST_NOTIFICATION_ID, mBuilder.build());
         }
     }
 }
