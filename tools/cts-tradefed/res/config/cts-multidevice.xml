@@ -20,6 +20,6 @@
     <option name="plan" value="cts-multidevice" />
 
     <!-- CTS multi device test cases only-->
-    <option name="compatibility:include-filter" value="CtsWifiAwareTestCases"/>
+    <option name="multi-devices-modules" value="ONLY_MULTI_DEVICES" />
 
 </configuration>
