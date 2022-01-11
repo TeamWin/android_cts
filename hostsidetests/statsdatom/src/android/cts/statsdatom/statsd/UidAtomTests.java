@@ -57,8 +57,8 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.Pair;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -308,7 +308,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
                 atom -> atom.getCameraStateChanged().getState().getNumber());
     }
 
@@ -394,7 +394,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getFlashlightStateChanged().getState().getNumber());
     }
 
@@ -419,7 +419,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getForegroundServiceStateChanged().getState().getNumber());
     }
 
@@ -540,7 +540,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, videoDuration,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, videoDuration,
                 atom -> atom.getMediaCodecStateChanged().getState().getNumber());
     }
 
@@ -568,7 +568,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Assert that the events happened in the expected order.
         // The overlay box should appear about 2sec after the app start
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, 0,
                 atom -> atom.getOverlayStateChanged().getState().getNumber());
     }
 
@@ -659,7 +659,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         AtomTestUtils.popUntilFindFromEnd(data, screen140,
                 atom -> atom.getScreenBrightnessChanged().getLevel());
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getScreenBrightnessChanged().getLevel());
     }
 
@@ -680,7 +680,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data,
                 /* wait = */ 0 /* don't verify time differences between state changes */,
                 atom -> atom.getSyncStateChanged().getState().getNumber());
     }
@@ -708,7 +708,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 300,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, 300,
                 atom -> atom.getVibratorStateChanged().getState().getNumber());
     }
 
@@ -735,7 +735,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getWakelockStateChanged().getState().getNumber());
 
         for (EventMetricData event : data) {
@@ -877,7 +877,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
                 atom -> atom.getAppUsageEventOccurred().getEventType().getNumber();
         // clear out initial appusage states
         AtomTestUtils.popUntilFind(data, onStates, appUsageStateFunction);
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, 0, appUsageStateFunction);
     }
 /*
     public void testAppForceStopUsageEvent() throws Exception {
