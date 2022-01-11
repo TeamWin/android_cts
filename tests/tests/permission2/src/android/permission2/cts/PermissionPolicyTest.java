@@ -78,6 +78,9 @@ public class PermissionPolicyTest {
     private static final String READ_DREAM_SUPPRESSION_PERMISSION =
             "android.permission.READ_DREAM_SUPPRESSION";
 
+    private static final String RECEIVE_KEYCODE_EVENTS_PERMISSION =
+            "android.permission.RECEIVE_KEYCODE_EVENTS";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -129,11 +132,17 @@ public class PermissionPolicyTest {
         for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
-                // This permission doesn't need to exist yet, but will exist in
-                // a future SPL. It is acceptable to declare the permission
-                // even in an earlier SPL, so we remove it here so it doesn't
-                // trigger a failure after the loop.
-                declaredPermissionsMap.remove(expectedPermissionName);
+                // This permission doesn't need to exist, either because it
+                // will exist in a future SPL or because it is specific to a
+                // particular device type.
+
+                if (shouldAllowPermission(expectedPermissionName)) {
+                    // It is acceptable to declare the permission if it will
+                    // be in a future SPL, but not if it is for a different
+                    // device type. If the permission may be declared, remove
+                    // it here so it doesn't trigger a failure after the loop.
+                    declaredPermissionsMap.remove(expectedPermissionName);
+                }
                 continue;
             }
 
@@ -469,6 +478,18 @@ public class PermissionPolicyTest {
         return patchDate;
     }
 
+    private boolean shouldAllowPermission(String permissionName) {
+        boolean isWatch =
+                sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+
+        switch (permissionName) {
+            case RECEIVE_KEYCODE_EVENTS_PERMISSION:
+                return isWatch;
+            default:
+                return true;
+        }
+    }
+
     private boolean shouldSkipPermission(String permissionName) {
         switch (permissionName) {
             case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
@@ -478,6 +499,8 @@ public class PermissionPolicyTest {
             case INPUT_CONSUMER_PERMISSION:
                 return true;
             case READ_DREAM_SUPPRESSION_PERMISSION:
+                return true;
+            case RECEIVE_KEYCODE_EVENTS_PERMISSION:
                 return true;
             default:
                 return false;
