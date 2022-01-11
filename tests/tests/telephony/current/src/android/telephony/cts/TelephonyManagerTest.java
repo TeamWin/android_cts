@@ -895,6 +895,7 @@ public class TelephonyManagerTest {
         validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_DISABLED);
         validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
         validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
+        validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_FDN_CHECK_FAILURE);
 
         LinkedBlockingQueue<Integer> callWaitingStatusResult = new LinkedBlockingQueue<>(1);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
@@ -911,6 +912,7 @@ public class TelephonyManagerTest {
         Set<Integer> validCallWaitingErrors = new HashSet<Integer>();
         validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
         validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
+        validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_FDN_CHECK_FAILURE);
         Executor executor = getContext().getMainExecutor();
         {
             LinkedBlockingQueue<Integer> callWaitingResult = new LinkedBlockingQueue<>(1);
