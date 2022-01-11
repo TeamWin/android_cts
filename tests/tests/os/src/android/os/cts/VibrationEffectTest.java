@@ -18,7 +18,6 @@ package android.os.cts;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -63,9 +62,9 @@ public class VibrationEffectTest {
     private static final VibrationEffect TEST_WAVEFORM_BUILT =
             VibrationEffect.startWaveform()
                     .addStep(/* amplitude= */ 0.5f, /* duration= */ 10)
-                    .addStep(/* amplitude= */ 0.8f, /* frequency= */ -1f, /* duration= */ 20)
+                    .addStep(/* amplitude= */ 0.8f, /* frequency= */ 100f, /* duration= */ 20)
                     .addRamp(/* amplitude= */ 1f, /* duration= */ 100)
-                    .addRamp(/* amplitude= */ 0.2f, /* frequency= */ 1f, /* duration= */ 200)
+                    .addRamp(/* amplitude= */ 0.2f, /* frequency= */ 200f, /* duration= */ 200)
                     .build();
     private static final VibrationEffect TEST_PREBAKED =
             VibrationEffect.get(VibrationEffect.EFFECT_CLICK, true);
@@ -547,9 +546,9 @@ public class VibrationEffectTest {
 
         VibrationEffect effect = VibrationEffect.startWaveform()
                 .addStep(/* amplitude= */ 0.5f, /* duration= */ 10)
-                .addStep(/* amplitude= */ 0.8f, /* frequency= */ -1f, /* duration= */ 20)
+                .addStep(/* amplitude= */ 0.8f, /* frequency= */ 100f, /* duration= */ 20)
                 .addRamp(/* amplitude= */ 1f, /* duration= */ 100)
-                .addRamp(/* amplitude= */ 0.2f, /* frequency= */ 1f, /* duration= */ 200)
+                .addRamp(/* amplitude= */ 0.2f, /* frequency= */ 200f, /* duration= */ 200)
                 .build();
 
         assertArrayEquals(new long[]{10, 20, 100, 200}, getTimings(effect));
@@ -559,24 +558,24 @@ public class VibrationEffectTest {
 
         assertStepSegment(effect, 1);
         assertAmplitude(0.8f, effect, 1);
-        assertFrequency(-1f, effect, 1);
+        assertFrequency(100f, effect, 1);
 
         assertRampSegment(effect, 2);
         assertAmplitude(1f, effect, 2);
-        assertFrequency(-1f, effect, 2);
+        assertFrequency(100f, effect, 2);
 
         assertRampSegment(effect, 3);
         assertAmplitude(0.2f, effect, 3);
-        assertFrequency(1f, effect, 3);
+        assertFrequency(200f, effect, 3);
     }
 
     @Test
     public void testStartWaveformEquals() {
         VibrationEffect other = VibrationEffect.startWaveform()
                 .addStep(/* amplitude= */ 0.5f, /* duration= */ 10)
-                .addStep(/* amplitude= */ 0.8f, /* frequency= */ -1f, /* duration= */ 20)
+                .addStep(/* amplitude= */ 0.8f, /* frequency= */ 100f, /* duration= */ 20)
                 .addRamp(/* amplitude= */ 1f, /* duration= */ 100)
-                .addRamp(/* amplitude= */ 0.2f, /* frequency= */ 1f, /* duration= */ 200)
+                .addRamp(/* amplitude= */ 0.2f, /* frequency= */ 200f, /* duration= */ 200)
                 .build();
         assertEquals(TEST_WAVEFORM_BUILT, other);
         assertEquals(TEST_WAVEFORM_BUILT.hashCode(), other.hashCode());
@@ -647,10 +646,10 @@ public class VibrationEffectTest {
     @Test
     public void testStartWaveformNotEqualsDifferentFrequency() {
         VibrationEffect first = VibrationEffect.startWaveform()
-                .addStep(/* amplitude= */ 0.5f, /* frequency= */ 0.5f, /* duration= */ 10)
+                .addStep(/* amplitude= */ 0.5f, /* frequency= */ 1f, /* duration= */ 10)
                 .build();
         VibrationEffect second = VibrationEffect.startWaveform()
-                .addStep(/* amplitude= */ 0.5f, /* frequency= */ -1f, /* duration= */ 10)
+                .addStep(/* amplitude= */ 0.5f, /* frequency= */ 50f, /* duration= */ 10)
                 .build();
         assertNotEquals(first, second);
     }
@@ -735,11 +734,12 @@ public class VibrationEffectTest {
         assertTrue(index < composed.getSegments().size());
         VibrationEffectSegment segment = composed.getSegments().get(index);
         if (segment instanceof StepSegment) {
-            assertEquals(expected, ((StepSegment) composed.getSegments().get(index)).getFrequency(),
+            assertEquals(expected,
+                    ((StepSegment) composed.getSegments().get(index)).getFrequencyHz(),
                     TEST_TOLERANCE);
         } else if (segment instanceof RampSegment) {
             assertEquals(expected,
-                    ((RampSegment) composed.getSegments().get(index)).getEndFrequency(),
+                    ((RampSegment) composed.getSegments().get(index)).getEndFrequencyHz(),
                     TEST_TOLERANCE);
         } else {
             fail("Expected a step or ramp segment at index " + index + " of " + effect);

@@ -188,8 +188,8 @@ class AppHibernationIntegrationTest {
                 runWithShellPermissionIdentity {
                     permissionControllerManager.getUnusedAppCount({ r -> r.run() },
                         { res ->
-                            countDownLatch.countDown()
                             unusedAppCount = res
+                            countDownLatch.countDown()
                         })
 
                     assertTrue("Timed out waiting for unused app count",
