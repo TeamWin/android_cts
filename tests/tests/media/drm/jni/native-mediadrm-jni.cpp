@@ -1081,8 +1081,8 @@ static JNINativeMethod gMethods[] = {
     { "testFindSessionIdNative", "([B)Z",
             (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testFindSessionIdNative },
 
-    { "testGetKeyRequestWithDefaultUrlAndTypeNative",
-            "([BLandroid/media/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
+    { "testGetKeyRequestNative",
+            "([BLandroid/media/drm/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
             (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetKeyRequestNative},
 };
 
