@@ -28,7 +28,7 @@ python_test_host {
         unit_test: false,
     },
     data: [
-    	// Package the snippet with the mobly test
+        // Package the snippet with the mobly test
         ":wifi_aware_snippet",
     ],
 }
