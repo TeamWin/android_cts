@@ -771,7 +771,7 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
-                    GET_SHARED_LIBRARY_FILES);
+                    PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
             assertEquals(1, appInfo.sharedLibraryInfos.size());
             SharedLibraryInfo libInfo = appInfo.sharedLibraryInfos.get(0);
             assertEquals("com.test.sdk1", libInfo.getName());
@@ -805,7 +805,7 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
-                    GET_SHARED_LIBRARY_FILES);
+                    PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
             assertEquals(2, appInfo.sharedLibraryInfos.size());
             assertEquals("com.test.sdk1", appInfo.sharedLibraryInfos.get(0).getName());
             assertEquals(1, appInfo.sharedLibraryInfos.get(0).getLongVersion());
@@ -965,7 +965,7 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
-                    GET_SHARED_LIBRARY_FILES);
+                    PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
             assertEquals(1, appInfo.sharedLibraryInfos.size());
             SharedLibraryInfo libInfo = appInfo.sharedLibraryInfos.get(0);
             assertEquals("com.test.sdk3", libInfo.getName());
@@ -1003,7 +1003,7 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK_USER_PACKAGE,
-                    GET_SHARED_LIBRARY_FILES);
+                    PackageManager.ApplicationInfoFlags.of(GET_SHARED_LIBRARY_FILES));
             assertEquals(1, appInfo.sharedLibraryInfos.size());
             assertEquals("com.test.sdk3", appInfo.sharedLibraryInfos.get(0).getName());
             assertEquals(3, appInfo.sharedLibraryInfos.get(0).getLongVersion());
@@ -1408,7 +1408,7 @@ public class PackageManagerShellCommandTest {
     private List<SharedLibraryInfo> getSharedLibraries() {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
-            return getPackageManager().getSharedLibraries(0);
+            return getPackageManager().getSharedLibraries(PackageManager.PackageInfoFlags.of(0));
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
@@ -1501,7 +1501,8 @@ public class PackageManagerShellCommandTest {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             PackageInfo sdkPackageInfo = getPackageManager().getPackageInfo(packageName,
-                    GET_SIGNING_CERTIFICATES | MATCH_STATIC_SHARED_AND_SDK_LIBRARIES);
+                    PackageManager.PackageInfoFlags.of(
+                            GET_SIGNING_CERTIFICATES | MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
             SigningInfo signingInfo = sdkPackageInfo.signingInfo;
             Signature[] signatures =
                     signingInfo != null ? signingInfo.getSigningCertificateHistory() : null;

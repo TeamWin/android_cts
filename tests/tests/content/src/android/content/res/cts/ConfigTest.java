@@ -258,7 +258,8 @@ public class ConfigTest {
         mContext = InstrumentationRegistry.getContext();
         final PackageManager pm = mContext.getPackageManager();
         try {
-            ApplicationInfo appInfo = pm.getApplicationInfo(TEST_PACKAGE, 0);
+            ApplicationInfo appInfo = pm.getApplicationInfo(TEST_PACKAGE,
+                    PackageManager.ApplicationInfoFlags.of(0));
             mTargetSdkVersion = appInfo.targetSdkVersion;
         } catch (NameNotFoundException e) {
             fail("Should be able to find application info for this package");
