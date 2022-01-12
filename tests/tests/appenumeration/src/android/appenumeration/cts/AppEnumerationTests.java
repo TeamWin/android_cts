@@ -122,6 +122,7 @@ import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE_NORMAL;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_PREFERRED_ACTIVITY;
+import static android.appenumeration.cts.Constants.TARGET_PREFIX_WILDCARD_WEB;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_LIBRARY_PACKAGE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
@@ -737,6 +738,18 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_WILDCARD_BROWSER, TARGET_BROWSER_WILDCARD);
     }
 
+    @Test
+    public void queriesWildcardWeb_canSeePrefixWildcardWeb() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_PREFIX_WILDCARD_WEB);
+        assertVisible(QUERIES_WILDCARD_BROWSABLE, TARGET_PREFIX_WILDCARD_WEB);
+        assertVisible(QUERIES_WILDCARD_WEB, TARGET_PREFIX_WILDCARD_WEB);
+    }
+
+    @Test
+    public void queriesWildcardBrowser_cannotseePrefixWildcardWeb() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_PREFIX_WILDCARD_WEB);
+        assertNotVisible(QUERIES_WILDCARD_BROWSER, TARGET_PREFIX_WILDCARD_WEB);
+    }
 
     @Test
     public void queriesWildcardEditor() throws Exception {
