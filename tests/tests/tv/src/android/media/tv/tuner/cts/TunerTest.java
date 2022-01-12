@@ -1809,20 +1809,23 @@ public class TunerTest {
 
         int timeDelayInMs = 5000;
         Instant start = Instant.now();
-        f.delayCallbackUntilMillisElapsed(timeDelayInMs);
+        int status = f.delayCallbackUntilMillisElapsed(timeDelayInMs);
 
-        // start / stop prevents initial race condition after first setting the time delay.
-        f.start();
-        f.stop();
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            // start / stop prevents initial race condition after first setting the time delay.
+            f.start();
+            f.stop();
 
-        mLockLatch = new CountDownLatch(1);
-        f.start();
-        assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            mLockLatch = new CountDownLatch(1);
+            f.start();
+            assertTrue(mLockLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-        Instant finish = Instant.now();
-        Duration timeElapsed = Duration.between(start, finish);
-        assertTrue(timeElapsed.toMillis() >= timeDelayInMs);
-
+            Instant finish = Instant.now();
+            Duration timeElapsed = Duration.between(start, finish);
+            assertTrue(timeElapsed.toMillis() >= timeDelayInMs);
+        } else {
+            assertEquals(Tuner.RESULT_UNAVAILABLE, status);
+        }
         f.close();
         f = null;
     }
@@ -1830,7 +1833,12 @@ public class TunerTest {
     @Test
     public void testFilterDataSizeDelay() throws Exception {
         Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
-        assertEquals(Tuner.RESULT_SUCCESS, f.delayCallbackUntilBytesAccumulated(5000));
+        int status = f.delayCallbackUntilBytesAccumulated(5000);
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
+            assertEquals(Tuner.RESULT_SUCCESS, status);
+        } else {
+            assertEquals(Tuner.RESULT_UNAVAILABLE, status);
+        }
         f.close();
     }
 
