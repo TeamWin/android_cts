@@ -39,7 +39,7 @@ template <typename T> using shared_pointer = android::sp<T>;
 
 using namespace android;
 
-// Must be kept in sync with Java android.media.cts.AudioRecordNative.ReadFlags
+// Must be kept in sync with Java android.media.audio.cts.AudioRecordNative.ReadFlags
 enum {
     READ_FLAG_BLOCKING = (1 << 0),
 };
@@ -463,7 +463,7 @@ private:
  * to be passed in.
  */
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeTest(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeTest(
         JNIEnv * /* env */, jclass /* clazz */,
         jint numChannels, jint channelMask, jint sampleRate,
         jboolean useFloat, jint msecPerBuffer, jint numBuffers) {
@@ -498,19 +498,19 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeTest(
     return res;
 }
 
-extern "C" jlong Java_android_media_cts_AudioRecordNative_nativeCreateRecord(
+extern "C" jlong Java_android_media_audio_cts_AudioRecordNative_nativeCreateRecord(
     JNIEnv * /* env */, jclass /* clazz */)
 {
     return (jlong)(new shared_pointer<AudioRecordNative>(new AudioRecordNative()));
 }
 
-extern "C" void Java_android_media_cts_AudioRecordNative_nativeDestroyRecord(
+extern "C" void Java_android_media_audio_cts_AudioRecordNative_nativeDestroyRecord(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     delete (shared_pointer<AudioRecordNative> *)jrecord;
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeOpen(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeOpen(
         JNIEnv * /* env */, jclass /* clazz */, jlong jrecord,
         jint numChannels, jint channelMask, jint sampleRate, jboolean useFloat, jint numBuffers)
 {
@@ -522,7 +522,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeOpen(
             numBuffers);
 }
 
-extern "C" void Java_android_media_cts_AudioRecordNative_nativeClose(
+extern "C" void Java_android_media_audio_cts_AudioRecordNative_nativeClose(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -531,7 +531,7 @@ extern "C" void Java_android_media_cts_AudioRecordNative_nativeClose(
     }
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeStart(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeStart(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -541,7 +541,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeStart(
     return (jint)record->start();
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeStop(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeStop(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -551,7 +551,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeStop(
     return (jint)record->stop();
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativePause(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativePause(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -561,7 +561,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativePause(
     return (jint)record->pause();
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeFlush(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeFlush(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -571,7 +571,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeFlush(
     return (jint)record->flush();
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeGetPositionInMsec(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeGetPositionInMsec(
     JNIEnv *env, jclass /* clazz */, jlong jrecord, jlongArray jPosition)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -594,7 +594,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeGetPositionInMsec
 }
 
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeGetBuffersPending(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeGetBuffersPending(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -604,7 +604,7 @@ extern "C" jint Java_android_media_cts_AudioRecordNative_nativeGetBuffersPending
     return (jint)record->getBuffersPending();
 }
 
-extern "C" jobject Java_android_media_cts_AudioRecordNative_nativeGetRoutingInterface(
+extern "C" jobject Java_android_media_audio_cts_AudioRecordNative_nativeGetRoutingInterface(
     JNIEnv * /* env */, jclass /* clazz */, jlong jrecord)
 {
     auto record = *(shared_pointer<AudioRecordNative> *)jrecord;
@@ -648,21 +648,21 @@ static inline jint readArray(JNIEnv *env, jclass /* clazz */, jlong jrecord,
     return ret;
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeReadByteArray(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeReadByteArray(
     JNIEnv *env, jclass clazz, jlong jrecord,
     jbyteArray byteArray, jint offsetInSamples, jint sizeInSamples, jint readFlags)
 {
     return readArray(env, clazz, jrecord, byteArray, offsetInSamples, sizeInSamples, readFlags);
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeReadShortArray(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeReadShortArray(
     JNIEnv *env, jclass clazz, jlong jrecord,
     jshortArray shortArray, jint offsetInSamples, jint sizeInSamples, jint readFlags)
 {
     return readArray(env, clazz, jrecord, shortArray, offsetInSamples, sizeInSamples, readFlags);
 }
 
-extern "C" jint Java_android_media_cts_AudioRecordNative_nativeReadFloatArray(
+extern "C" jint Java_android_media_audio_cts_AudioRecordNative_nativeReadFloatArray(
     JNIEnv *env, jclass clazz, jlong jrecord,
     jfloatArray floatArray, jint offsetInSamples, jint sizeInSamples, jint readFlags)
 {

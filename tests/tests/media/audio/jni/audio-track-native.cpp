@@ -374,7 +374,7 @@ private:
  * to be passed in.
  */
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeTest(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeTest(
     JNIEnv * /* env */, jclass /* clazz */,
     jint numChannels, jint channelMask, jint sampleRate, jboolean useFloat,
     jint msecPerBuffer, jint numBuffers)
@@ -411,19 +411,19 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeTest(
     return res;
 }
 
-extern "C" jlong Java_android_media_cts_AudioTrackNative_nativeCreateTrack(
+extern "C" jlong Java_android_media_audio_cts_AudioTrackNative_nativeCreateTrack(
     JNIEnv * /* env */, jclass /* clazz */)
 {
     return (jlong)(new shared_pointer<AudioTrackNative>(new AudioTrackNative()));
 }
 
-extern "C" void Java_android_media_cts_AudioTrackNative_nativeDestroyTrack(
+extern "C" void Java_android_media_audio_cts_AudioTrackNative_nativeDestroyTrack(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     delete (shared_pointer<AudioTrackNative> *)jtrack;
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeOpen(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeOpen(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack,
     jint numChannels, jint channelMask, jint sampleRate,
     jboolean useFloat, jint numBuffers)
@@ -439,7 +439,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeOpen(
                               numBuffers);
 }
 
-extern "C" void Java_android_media_cts_AudioTrackNative_nativeClose(
+extern "C" void Java_android_media_audio_cts_AudioTrackNative_nativeClose(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -448,7 +448,7 @@ extern "C" void Java_android_media_cts_AudioTrackNative_nativeClose(
     }
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeStart(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeStart(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -458,7 +458,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeStart(
     return (jint)track->start();
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeStop(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeStop(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -468,7 +468,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeStop(
     return (jint)track->stop();
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativePause(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativePause(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -478,7 +478,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativePause(
     return (jint)track->pause();
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeFlush(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeFlush(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -488,7 +488,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeFlush(
     return (jint)track->flush();
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeGetPositionInMsec(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeGetPositionInMsec(
     JNIEnv *env, jclass /* clazz */, jlong jtrack, jlongArray jPosition)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -510,7 +510,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeGetPositionInMsec(
     return OK;
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeGetBuffersPending(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeGetBuffersPending(
     JNIEnv * /* env */, jclass /* clazz */, jlong jtrack)
 {
     auto track = *(shared_pointer<AudioTrackNative> *)jtrack;
@@ -554,7 +554,7 @@ static inline jint writeArray(JNIEnv *env, jclass /* clazz */, jlong jtrack,
     return ret;
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeWriteByteArray(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeWriteByteArray(
     JNIEnv *env, jclass clazz, jlong jtrack,
     jbyteArray byteArray, jint offsetInSamples, jint sizeInSamples, jint writeFlags)
 {
@@ -563,7 +563,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeWriteByteArray(
     return writeArray(env, clazz, jtrack, byteArray, offsetInSamples, sizeInSamples, writeFlags);
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeWriteShortArray(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeWriteShortArray(
     JNIEnv *env, jclass clazz, jlong jtrack,
     jshortArray shortArray, jint offsetInSamples, jint sizeInSamples, jint writeFlags)
 {
@@ -572,7 +572,7 @@ extern "C" jint Java_android_media_cts_AudioTrackNative_nativeWriteShortArray(
     return writeArray(env, clazz, jtrack, shortArray, offsetInSamples, sizeInSamples, writeFlags);
 }
 
-extern "C" jint Java_android_media_cts_AudioTrackNative_nativeWriteFloatArray(
+extern "C" jint Java_android_media_audio_cts_AudioTrackNative_nativeWriteFloatArray(
     JNIEnv *env, jclass clazz, jlong jtrack,
     jfloatArray floatArray, jint offsetInSamples, jint sizeInSamples, jint writeFlags)
 {
