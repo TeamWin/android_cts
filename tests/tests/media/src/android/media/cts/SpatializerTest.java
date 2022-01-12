@@ -16,7 +16,7 @@
 
 package android.media.cts;
 
-import static org.testng.Assert.assertThrows;
+import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.content.Context;
@@ -60,6 +60,46 @@ public class SpatializerTest extends CtsAndroidTestCase {
         assertFalse(spat.isAvailable());
     }
 
+    public void testSpatializerStateListenerManagement() {
+        final Spatializer spat = mAudioManager.getSpatializer();
+        final MySpatStateListener stateListener = new MySpatStateListener();
+
+        // add listener:
+        // verify null arg checks
+        assertThrows("null Executor allowed in addOnSpatializerStateChangedListener",
+                NullPointerException.class,
+                () -> spat.addOnSpatializerStateChangedListener(null, stateListener));
+        assertThrows("null listener allowed in addOnSpatializerStateChangedListener",
+                NullPointerException.class,
+                () -> spat.addOnSpatializerStateChangedListener(
+                        Executors.newSingleThreadExecutor(),null));
+
+        spat.addOnSpatializerStateChangedListener(Executors.newSingleThreadExecutor(),
+                stateListener);
+        // verify double add
+        assertThrows("duplicate listener allowed in addOnSpatializerStateChangedListener",
+                IllegalArgumentException.class,
+                () -> spat.addOnSpatializerStateChangedListener(Executors.newSingleThreadExecutor(),
+                        stateListener));
+
+        // remove listener:
+        // verify null arg check
+        assertThrows("null listener allowed in removeOnSpatializerStateChangedListener",
+                NullPointerException.class,
+                () -> spat.removeOnSpatializerStateChangedListener(null));
+
+        // verify unregistered listener
+        assertThrows("unregistered listener allowed in removeOnSpatializerStateChangedListener",
+                IllegalArgumentException.class,
+                () -> spat.removeOnSpatializerStateChangedListener(new MySpatStateListener()));
+
+        spat.removeOnSpatializerStateChangedListener(stateListener);
+        // verify double remove
+        assertThrows("double listener removal allowed in removeOnSpatializerStateChangedListener",
+                IllegalArgumentException.class,
+                () -> spat.removeOnSpatializerStateChangedListener(stateListener));
+    }
+
     public void testMinSpatializationCapabilities() {
         Spatializer spat = mAudioManager.getSpatializer();
         if (spat.getImmersiveAudioLevel() == Spatializer.SPATIALIZER_IMMERSIVE_LEVEL_NONE) {
@@ -81,7 +121,6 @@ public class SpatializerTest extends CtsAndroidTestCase {
                 AudioAttributes defAttr = new AudioAttributes.Builder()
                         .setUsage(usage)
                         .build();
-
                 assertTrue("AudioAttributes usage:" + usage + " at " + sampleRate
                         + " should be virtualizeable", spat.canBeSpatialized(defAttr, minFormat));
             }
@@ -99,21 +138,16 @@ public class SpatializerTest extends CtsAndroidTestCase {
 
         spat.addOnSpatializerStateChangedListener(Executors.newSingleThreadExecutor(),
                 stateListener);
-
         getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS");
 
         spat.setEnabled(!spatEnabled);
-
         getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
-
         assertEquals("VirtualizerStage enabled state differ",
                 !spatEnabled, spat.isEnabled());
-
         Boolean enabled = stateListener.getEnabled();
         assertNotNull("VirtualizerStage state listener wasn't called", enabled);
-
         assertEquals("VirtualizerStage state listener didn't get expected value",
                 !spatEnabled, enabled.booleanValue());
     }
