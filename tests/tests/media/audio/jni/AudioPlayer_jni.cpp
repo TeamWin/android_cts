@@ -15,14 +15,12 @@
  */
 #include <android/log.h>
 
-#include "com_android_ndkaudio_AudioPlayer.h"
-
 #include "AudioPlayer.h"
 #include "WaveTableGenerator.h"
 #include "WaveTableOscillator.h"
 #include "SystemParams.h"
 
-static const char* TAG = "_com_android_ndkaudio_AudioPlayer_";
+static const char* TAG = "AudioPlayer_jni";
 
 using namespace ndkaudio;
 
@@ -37,7 +35,7 @@ static SLresult lastSLResult = 0;
 
 extern "C" {
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_Create(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_Create(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_Create() ...");
 
   if (nativePlayer == 0) {
@@ -50,32 +48,32 @@ JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_Create(JNIEnv*, job
   }
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_Destroy(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_Destroy(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_Destroy() ...");
   nativePlayer->Close();
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_RealizePlayer(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_RealizePlayer(JNIEnv*, jobject) {
     __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_RealizePlayer() ...");
     nativePlayer->RealizePlayer();
   }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_RealizeRoutingProxy(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_RealizeRoutingProxy(JNIEnv*, jobject) {
     __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_RealizeRoutingProxy() ...");
     nativePlayer->RealizeRoutingProxy();
   }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_Start(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_Start(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_Start() ...");
   nativePlayer->Start();
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_Stop(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_Stop(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_Stop() ...");
   nativePlayer->Stop();
 }
 
-JNIEXPORT jobject JNICALL Java_com_android_ndkaudio_AudioPlayer_GetRoutingInterface(JNIEnv*, jobject) {
+JNIEXPORT jobject JNICALL Java_android_media_audio_cts_AudioPlayer_GetRoutingInterface(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_GetRoutingInterface() ...");
 
   SLAndroidConfigurationItf configItf = nativePlayer->getConfigItf();
@@ -86,18 +84,18 @@ JNIEXPORT jobject JNICALL Java_com_android_ndkaudio_AudioPlayer_GetRoutingInterf
   return routingObj;
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_ReleaseRoutingInterface(JNIEnv*, jobject, jobject /*proxyObj*/) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_ReleaseRoutingInterface(JNIEnv*, jobject, jobject /*proxyObj*/) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_ReleaseRoutingInterface() ...");
 
   SLAndroidConfigurationItf configItf = nativePlayer->getConfigItf();
   lastSLResult = (*configItf)->ReleaseJavaProxy(configItf, SL_ANDROID_JAVA_PROXY_ROUTING/*, proxyObj*/);
 }
 
-JNIEXPORT jlong JNICALL Java_com_android_ndkaudio_AudioPlayer_GetLastSLResult(JNIEnv*, jobject) {
+JNIEXPORT jlong JNICALL Java_android_media_audio_cts_AudioPlayer_GetLastSLResult(JNIEnv*, jobject) {
     return lastSLResult;
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioPlayer_ClearLastSLResult(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioPlayer_ClearLastSLResult(JNIEnv*, jobject) {
     lastSLResult = 0;
 }
 

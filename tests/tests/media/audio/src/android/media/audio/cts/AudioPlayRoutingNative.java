@@ -26,7 +26,6 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
-import com.android.ndkaudio.AudioPlayer;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -37,7 +36,7 @@ public class AudioPlayRoutingNative extends AndroidTestCase {
     private AudioManager mAudioManager;
 
     static {
-        System.loadLibrary("ndkaudioLib");
+        System.loadLibrary("audiocts_jni");
     }
 
     @Override

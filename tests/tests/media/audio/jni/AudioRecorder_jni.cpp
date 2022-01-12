@@ -15,13 +15,11 @@
  */
 #include <android/log.h>
 
-#include "com_android_ndkaudio_AudioRecorder.h"
-
 #include "AudioRecorder.h"
 
 using namespace ndkaudio;
 
-static const char* TAG = "_com_android_ndkaudio_AudioRecorder_";
+static const char* TAG = "AudioRecorder_jni";
 
 static int numChannels = 2;
 
@@ -30,7 +28,7 @@ static AudioRecorder* nativeRecorder;
 static SLresult lastSLResult = 0;
 extern "C" {
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_Create(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_Create(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioRecorder_Create() ...");
   if (nativeRecorder == 0) {
       nativeRecorder = new AudioRecorder();
@@ -38,34 +36,34 @@ JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_Create(JNIEnv*, j
   nativeRecorder->Open(numChannels, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_Destroy(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_Destroy(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioRecorder_Destroy() ...");
   nativeRecorder->Close();
   delete nativeRecorder;
   nativeRecorder = 0;
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_RealizeRecorder(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_RealizeRecorder(JNIEnv*, jobject) {
     __android_log_print(ANDROID_LOG_INFO, TAG, "AudioRecorder_RealizePlayer() ...");
     nativeRecorder->RealizeRecorder();
   }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_RealizeRoutingProxy(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_RealizeRoutingProxy(JNIEnv*, jobject) {
     __android_log_print(ANDROID_LOG_INFO, TAG, "RealizeRoutingProxy ...");
     nativeRecorder->RealizeRoutingProxy();
   }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_Start(JNIEnv *, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_Start(JNIEnv *, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioRecorder_Start() ...");
   nativeRecorder->Start();
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_Stop(JNIEnv *, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_Stop(JNIEnv *, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioRecorder_Stop() ...");
   nativeRecorder->Stop();
 }
 
-JNIEXPORT jobject JNICALL Java_com_android_ndkaudio_AudioRecorder_GetRoutingInterface(JNIEnv*, jobject) {
+JNIEXPORT jobject JNICALL Java_android_media_audio_cts_AudioRecorder_GetRoutingInterface(JNIEnv*, jobject) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_GetRoutingObj() ...");
 
   SLAndroidConfigurationItf configItf = nativeRecorder->getConfigItf();
@@ -75,29 +73,29 @@ JNIEXPORT jobject JNICALL Java_com_android_ndkaudio_AudioRecorder_GetRoutingInte
   return routingObj;
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_ReleaseRoutingInterface(JNIEnv*, jobject, jobject /*proxyObj*/) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_ReleaseRoutingInterface(JNIEnv*, jobject, jobject /*proxyObj*/) {
   __android_log_print(ANDROID_LOG_INFO, TAG, "AudioPlayer_ReleaseRoutingInterface() ...");
 
   SLAndroidConfigurationItf configItf = nativeRecorder->getConfigItf();
   lastSLResult = (*configItf)->ReleaseJavaProxy(configItf, SL_ANDROID_JAVA_PROXY_ROUTING/*, proxyObj*/);
 }
 
-JNIEXPORT jint JNICALL Java_com_android_ndkaudio_AudioRecorder_GetNumBufferSamples(JNIEnv*, jobject) {
+JNIEXPORT jint JNICALL Java_android_media_audio_cts_AudioRecorder_GetNumBufferSamples(JNIEnv*, jobject) {
     return nativeRecorder->GetNumBufferSamples();
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_GetBufferData(JNIEnv* jEnv, jobject, jfloatArray j_data) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_GetBufferData(JNIEnv* jEnv, jobject, jfloatArray j_data) {
     float* dataBuffer = nativeRecorder->GetRecordBuffer();
     if (dataBuffer != 0) {
         jEnv->SetFloatArrayRegion(j_data, 0, nativeRecorder->GetNumBufferSamples(), dataBuffer);
     }
 }
 
-JNIEXPORT jlong JNICALL Java_com_android_ndkaudio_AudioRecorder_GetLastSLResult(JNIEnv*, jobject) {
+JNIEXPORT jlong JNICALL Java_android_media_audio_cts_AudioRecorder_GetLastSLResult(JNIEnv*, jobject) {
     return lastSLResult;
 }
 
-JNIEXPORT void JNICALL Java_com_android_ndkaudio_AudioRecorder_ClearLastSLResult(JNIEnv*, jobject) {
+JNIEXPORT void JNICALL Java_android_media_audio_cts_AudioRecorder_ClearLastSLResult(JNIEnv*, jobject) {
     lastSLResult = 0;
 }
 
