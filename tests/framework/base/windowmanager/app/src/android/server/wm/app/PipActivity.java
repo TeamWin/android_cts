@@ -32,7 +32,10 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPEC
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
+import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
+import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
@@ -44,7 +47,6 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_CALLBAC
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_STASHED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
-import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
@@ -160,6 +162,11 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                     builder.setAspectRatio(getAspectRatio(getIntent(),
                             EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR,
                             EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR));
+                    if (shouldAddExpandedPipAspectRatios()) {
+                        builder.setExpandedAspectRatio(getAspectRatio(getIntent(),
+                                EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR,
+                                EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR));
+                    }
                     enteringPip = enterPictureInPictureMode(builder.build());
                 } catch (Exception e) {
                     // This call can fail intentionally if the aspect ratio is too extreme
@@ -371,5 +378,10 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                 "action " + index,
                 "contentDescription " + index,
                 PendingIntent.getBroadcast(this, 0, new Intent(), PendingIntent.FLAG_IMMUTABLE));
+    }
+
+    private boolean shouldAddExpandedPipAspectRatios() {
+        return getIntent().hasExtra(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR)
+            && getIntent().hasExtra(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR);
     }
 }

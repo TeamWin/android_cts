@@ -34,6 +34,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
+import static android.content.pm.PackageManager.FEATURE_EXPANDED_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -995,6 +996,10 @@ public abstract class ActivityManagerTestBase {
     protected boolean supportsPip() {
         return hasDeviceFeature(FEATURE_PICTURE_IN_PICTURE)
                 || PRETEND_DEVICE_SUPPORTS_PIP;
+    }
+
+    protected boolean supportsExpandedPip() {
+        return hasDeviceFeature(FEATURE_EXPANDED_PICTURE_IN_PICTURE);
     }
 
     protected boolean supportsFreeform() {
