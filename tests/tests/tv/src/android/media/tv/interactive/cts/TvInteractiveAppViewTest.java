@@ -173,7 +173,7 @@ public class TvInteractiveAppViewTest {
             protected boolean check() {
                 return mCallback.mInteractiveAppServiceId == mStubInfo.getId()
                         && mCallback.mState
-                        == TvInteractiveAppManager.SERVICE_STATE_READY
+                        == TvInteractiveAppManager.INTERACTIVE_APP_STATE_RUNNING
                         && mCallback.mErr == TvInteractiveAppManager.ERROR_NONE;
             }
         }.run();

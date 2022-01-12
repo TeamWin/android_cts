@@ -29,6 +29,9 @@ import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
+import android.view.KeyEvent;
+import android.view.SurfaceView;
+import android.view.View;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -68,14 +71,32 @@ public class TvInteractiveAppServiceTest {
 
     public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
         private int mRequestCurrentChannelUriCount = 0;
+        private int mStateChangedCount = 0;
 
-        private void resetCounts() {
+        private String mIAppServiceId = null;
+        private Integer mState = null;
+        private Integer mErr = null;
+
+        private void resetValues() {
             mRequestCurrentChannelUriCount = 0;
+            mStateChangedCount = 0;
+
+            mIAppServiceId = null;
+            mState = null;
+            mErr = null;
         }
 
         @Override
         public void onRequestCurrentChannelUri(String iAppServiceId) {
             mRequestCurrentChannelUriCount++;
+        }
+
+        @Override
+        public void onStateChanged(String iAppServiceId, int state, int err) {
+            mStateChangedCount++;
+            mIAppServiceId = iAppServiceId;
+            mState = state;
+            mErr = err;
         }
     }
 
@@ -156,10 +177,145 @@ public class TvInteractiveAppServiceTest {
     @Test
     public void testRequestCurrentChannelUri() throws Throwable {
         assertNotNull(mSession);
-        mCallback.resetCounts();
+        mCallback.resetValues();
         mSession.requestCurrentChannelUri();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCurrentChannelUriCount > 0);
 
         assertThat(mCallback.mRequestCurrentChannelUriCount).isEqualTo(1);
     }
+
+    @Test
+    public void testSetSurface() throws Throwable {
+        assertNotNull(mSession);
+
+        assertThat(mSession.mSetSurfaceCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testLayoutSurface() throws Throwable {
+        assertNotNull(mSession);
+
+        final int left = 10;
+        final int top = 20;
+        final int right = 30;
+        final int bottom = 40;
+
+        mSession.layoutSurface(left, top, right, bottom);
+
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                int childCount = mTvIAppView.getChildCount();
+                for (int i = 0; i < childCount; ++i) {
+                    View v = mTvIAppView.getChildAt(i);
+                    if (v instanceof SurfaceView) {
+                        return v.getLeft() == left
+                            && v.getTop() == top
+                            && v.getRight() == right
+                            && v.getBottom() == bottom;
+                    }
+                }
+                return false;
+            }
+        }.run();
+        assertThat(mSession.mSurfaceChangedCount > 0).isTrue();
+    }
+
+    @Test
+    public void testSessionStateChanged() throws Throwable {
+        assertNotNull(mSession);
+        mCallback.resetValues();
+        mSession.notifySessionStateChanged(
+                TvInteractiveAppManager.INTERACTIVE_APP_STATE_ERROR,
+                TvInteractiveAppManager.ERROR_UNKNOWN);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mStateChangedCount > 0);
+
+        assertThat(mCallback.mStateChangedCount).isEqualTo(1);
+        assertThat(mCallback.mIAppServiceId).isEqualTo(mStubInfo.getId());
+        assertThat(mCallback.mState)
+                .isEqualTo(TvInteractiveAppManager.INTERACTIVE_APP_STATE_ERROR);
+        assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_UNKNOWN);
+    }
+
+    @Test
+    public void testStartStopInteractiveApp() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.startInteractiveApp();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mStartInteractiveAppCount > 0);
+        assertThat(mSession.mStartInteractiveAppCount).isEqualTo(1);
+
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.stopInteractiveApp();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mStopInteractiveAppCount > 0);
+        assertThat(mSession.mStopInteractiveAppCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testDispatchKeyDown() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final int keyCode = KeyEvent.KEYCODE_Q;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
+
+        mTvIAppView.dispatchKeyEvent(event);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mKeyDownCount > 0);
+
+        assertThat(mSession.mKeyDownCount).isEqualTo(1);
+        assertThat(mSession.mKeyDownCode).isEqualTo(keyCode);
+        assertKeyEventEquals(mSession.mKeyDownEvent, event);
+    }
+
+    @Test
+    public void testDispatchKeyUp() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final int keyCode = KeyEvent.KEYCODE_I;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_UP, keyCode);
+
+        mTvIAppView.dispatchKeyEvent(event);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mKeyUpCount > 0);
+
+        assertThat(mSession.mKeyUpCount).isEqualTo(1);
+        assertThat(mSession.mKeyUpCode).isEqualTo(keyCode);
+        assertKeyEventEquals(mSession.mKeyUpEvent, event);
+    }
+
+    @Test
+    public void testDispatchKeyMultiple() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final int keyCode = KeyEvent.KEYCODE_L;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_MULTIPLE, keyCode);
+
+        mTvIAppView.dispatchKeyEvent(event);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mKeyMultipleCount > 0);
+
+        assertThat(mSession.mKeyMultipleCount).isEqualTo(1);
+        assertThat(mSession.mKeyMultipleCode).isEqualTo(keyCode);
+        assertKeyEventEquals(mSession.mKeyMultipleEvent, event);
+    }
+
+    public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
+        if (expected != null && actual != null) {
+            assertThat(actual.getDownTime()).isEqualTo(expected.getDownTime());
+            assertThat(actual.getEventTime()).isEqualTo(expected.getEventTime());
+            assertThat(actual.getAction()).isEqualTo(expected.getAction());
+            assertThat(actual.getKeyCode()).isEqualTo(expected.getKeyCode());
+            assertThat(actual.getRepeatCount()).isEqualTo(expected.getRepeatCount());
+            assertThat(actual.getMetaState()).isEqualTo(expected.getMetaState());
+            assertThat(actual.getDeviceId()).isEqualTo(expected.getDeviceId());
+            assertThat(actual.getScanCode()).isEqualTo(expected.getScanCode());
+            assertThat(actual.getFlags()).isEqualTo(expected.getFlags());
+            assertThat(actual.getSource()).isEqualTo(expected.getSource());
+            assertThat(actual.getCharacters()).isEqualTo(expected.getCharacters());
+        } else {
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
 }
