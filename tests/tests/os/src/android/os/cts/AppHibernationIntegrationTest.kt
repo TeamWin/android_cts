@@ -27,6 +27,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.permission.PermissionControllerManager
+import android.permission.PermissionControllerManager.HIBERNATION_ELIGIBILITY_ELIGIBLE
+import android.permission.PermissionControllerManager.HIBERNATION_ELIGIBILITY_UNKNOWN
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
@@ -49,6 +51,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matchers
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
@@ -199,6 +202,29 @@ class AppHibernationIntegrationTest {
                     assertTrue("Expected non-zero unused app count but is $unusedAppCount",
                         unusedAppCount > 0)
                 }
+            }
+        }
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testGetHibernationEligibility_eligibleByDefault() {
+        withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
+            // Verify app is eligible for hibernation
+            val countDownLatch = CountDownLatch(1)
+            var hibernationEligibility = HIBERNATION_ELIGIBILITY_UNKNOWN
+            runWithShellPermissionIdentity {
+                permissionControllerManager.getHibernationEligibility(APK_PACKAGE_NAME_S_APP,
+                    { r -> r.run() },
+                    { res ->
+                        hibernationEligibility = res
+                        countDownLatch.countDown()
+                    })
+
+                assertTrue("Timed out waiting for hibernation eligibility",
+                    countDownLatch.await(TIMEOUT_TIME_MS, TimeUnit.MILLISECONDS))
+                assertEquals("Expected test app to be eligible for hibernation but wasn't.",
+                    HIBERNATION_ELIGIBILITY_ELIGIBLE, hibernationEligibility)
             }
         }
     }
