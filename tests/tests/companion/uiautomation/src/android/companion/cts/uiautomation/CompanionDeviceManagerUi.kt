@@ -22,6 +22,8 @@ import androidx.test.uiautomator.SearchCondition
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class CompanionDeviceManagerUi(private val ui: UiDevice) {
     val isVisible: Boolean
@@ -76,28 +78,28 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
     private fun UiDevice.wait(
         condition: SearchCondition<Boolean>,
         message: String,
-        timeout: Long = 3_000
+        timeout: Duration = 3.seconds
     ) {
-        if (!wait(condition, timeout)) error(message)
+        if (!wait(condition, timeout.inWholeMilliseconds)) error(message)
     }
 
     private fun UiDevice.waitShort(condition: SearchCondition<Boolean>, message: String) =
-            wait(condition, message, 1_000)
+            wait(condition, message, 1.seconds)
 
     private fun UiDevice.waitAndFind(
         condition: SearchCondition<UiObject2>,
         message: String,
-        timeout: Long = 3_000
+        timeout: Duration = 3.seconds
     ): UiObject2 =
-            wait(condition, timeout) ?: error(message)
+            wait(condition, timeout.inWholeMilliseconds) ?: error(message)
 
     private fun UiDevice.waitShortAndFind(
         condition: SearchCondition<UiObject2>,
         message: String
-    ): UiObject2 = waitAndFind(condition, message, 1_000)
+    ): UiObject2 = waitAndFind(condition, message, 1.seconds)
 
     private fun UiDevice.waitLongAndFind(
         condition: SearchCondition<UiObject2>,
         message: String
-    ): UiObject2 = waitAndFind(condition, message, 10_000)
+    ): UiObject2 = waitAndFind(condition, message, 10.seconds)
 }

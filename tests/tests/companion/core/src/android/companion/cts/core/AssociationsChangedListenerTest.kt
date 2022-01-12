@@ -27,10 +27,13 @@ import android.companion.cts.common.RecordingCdmEventObserver
 import android.companion.cts.common.RecordingCdmEventObserver.AssociationChange
 import android.companion.cts.common.RecordingCdmEventObserver.CdmCallback
 import android.companion.cts.common.RecordingOnAssociationsChangedListener
+import android.companion.cts.common.Repeat
+import android.companion.cts.common.RepeatRule
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.assertEmpty
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
@@ -49,6 +52,8 @@ import kotlin.test.assertIs
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class AssociationsChangedListenerTest : CoreTestBase() {
+    @get:Rule
+    val repeatRule = RepeatRule()
 
     @Test
     fun test_addOnAssociationsChangedListener_requiresPermission() {
@@ -99,6 +104,7 @@ class AssociationsChangedListenerTest : CoreTestBase() {
     }
 
     @Test
+    @Repeat(100)
     fun test_associationChangeListener_notifiedBefore_cdmCallback() {
         val request: AssociationRequest = AssociationRequest.Builder()
             .setSelfManaged(true)
@@ -112,43 +118,35 @@ class AssociationsChangedListenerTest : CoreTestBase() {
             cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, observer)
         }
 
-        repeat(10) {
-            // test scenario: carry out an association and assert that
-            // the association listener is notified BEFORE the CDM observer
-            observer.assertInvokedByActions(minOccurrences = 2) {
-                withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-                    cdm.associate(request, SIMPLE_EXECUTOR, observer)
-                }
+        // test scenario: carry out an association and assert that
+        // the association listener is notified BEFORE the CDM observer
+        observer.assertInvokedByActions(minOccurrences = 2) {
+            withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, observer)
             }
-
-            // we should have observed exactly two events
-            assertEquals(2, observer.invocations.size)
-            val (event1, event2) = observer.invocations
-
-            // the event we observed first should be an association change
-            assertIs<AssociationChange>(event1)
-            // there should be exactly one association
-            assertEquals(1, event1.associations.size)
-            val associationInfoFromListener = event1.associations.first()
-            assertEquals(
-                actual = associationInfoFromListener.displayName,
-                expected = DEVICE_DISPLAY_NAME_A
-            )
-
-            // the second event should be the callback invocation
-            assertIs<CdmCallback>(event2)
-            val callbackInvocation = event2.invocation
-            assertIs<OnAssociationCreated>(callbackInvocation)
-
-            val associationInfoFromCallback = callbackInvocation.associationInfo
-            assertEquals(associationInfoFromListener, associationInfoFromCallback)
-
-            // cleanup for the next repetition
-            observer.assertInvokedByActions {
-                cdm.disassociate(associationInfoFromListener.id)
-            }
-            observer.clearRecordedInvocations()
         }
+
+        // we should have observed exactly two events
+        assertEquals(2, observer.invocations.size)
+        val (event1, event2) = observer.invocations
+
+        // the event we observed first should be an association change
+        assertIs<AssociationChange>(event1)
+        // there should be exactly one association
+        assertEquals(1, event1.associations.size)
+        val associationInfoFromListener = event1.associations.first()
+        assertEquals(
+            actual = associationInfoFromListener.displayName,
+            expected = DEVICE_DISPLAY_NAME_A
+        )
+
+        // the second event should be the callback invocation
+        assertIs<CdmCallback>(event2)
+        val callbackInvocation = event2.invocation
+        assertIs<OnAssociationCreated>(callbackInvocation)
+
+        val associationInfoFromCallback = callbackInvocation.associationInfo
+        assertEquals(associationInfoFromListener, associationInfoFromCallback)
     }
 
     companion object {

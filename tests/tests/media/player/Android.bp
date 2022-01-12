@@ -33,9 +33,6 @@ android_test {
         "ctstestserver",
         "cts-media-common",
     ],
-    jni_libs: [
-        "libctsmediadrm_jni",
-    ],
     resource_dirs: ["res"],
     // do not compress media files
     aaptflags: [

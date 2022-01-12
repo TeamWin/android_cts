@@ -778,22 +778,6 @@ def rotate_img_per_argv(img):
   return img_out
 
 
-def chart_located_per_argv(chart_loc_arg):
-  """Determine if chart already located outside of test.
-
-  If chart info provided, return location and size. If not, return None.
-  Args:
-   chart_loc_arg: chart_loc arg value.
-
-  Returns:
-    chart_loc:  float converted xnorm,ynorm,wnorm,hnorm,scale from argv
-    text.argv is of form 'chart_loc=0.45,0.45,0.1,0.1,1.0'
-  """
-  if chart_loc_arg:
-    return map(float, chart_loc_arg)
-  return None, None, None, None, None
-
-
 def stationary_lens_cap(cam, req, fmt):
   """Take up to NUM_TRYS caps and save the 1st one with lens stationary.
 

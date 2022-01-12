@@ -99,6 +99,19 @@ public class VibratorTest {
             VibrationEffect.Composition.PRIMITIVE_SPIN,
             VibrationEffect.Composition.PRIMITIVE_THUD,
     };
+    private static final int[] VIBRATION_USAGES = new int[] {
+            VibrationAttributes.USAGE_UNKNOWN,
+            VibrationAttributes.USAGE_ACCESSIBILITY,
+            VibrationAttributes.USAGE_ALARM,
+            VibrationAttributes.USAGE_COMMUNICATION_REQUEST,
+            VibrationAttributes.USAGE_HARDWARE_FEEDBACK,
+            VibrationAttributes.USAGE_MEDIA,
+            VibrationAttributes.USAGE_NOTIFICATION,
+            VibrationAttributes.USAGE_PHYSICAL_EMULATION,
+            VibrationAttributes.USAGE_RINGTONE,
+            VibrationAttributes.USAGE_TOUCH,
+    };
+
 
     /**
      * This listener is used for test helper methods like asserting it starts/stops vibrating.
@@ -140,6 +153,20 @@ public class VibratorTest {
         for (OnVibratorStateChangedListener listener : mStateListenersCreated) {
             mVibrator.removeVibratorStateListener(listener);
         }
+    }
+
+    @Test
+    public void getDefaultVibrationIntensity_returnsValidIntensityForAllUsages() {
+        for (int usage : VIBRATION_USAGES) {
+            int intensity = mVibrator.getDefaultVibrationIntensity(usage);
+            assertTrue("Error for usage " + usage + " with default intensity " + intensity,
+                    (intensity >= Vibrator.VIBRATION_INTENSITY_OFF)
+                            && (intensity <= Vibrator.VIBRATION_INTENSITY_HIGH));
+        }
+
+        assertEquals("Invalid usage expected to have same default as USAGE_UNKNOWN",
+                mVibrator.getDefaultVibrationIntensity(VibrationAttributes.USAGE_UNKNOWN),
+                mVibrator.getDefaultVibrationIntensity(-1));
     }
 
     @Test

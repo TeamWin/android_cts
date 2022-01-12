@@ -1809,7 +1809,7 @@ public class TunerTest {
 
         int timeDelayInMs = 5000;
         Instant start = Instant.now();
-        f.delayCallbackUntilTimeMillis(timeDelayInMs);
+        f.delayCallbackUntilMillisElapsed(timeDelayInMs);
 
         // start / stop prevents initial race condition after first setting the time delay.
         f.start();
@@ -1830,7 +1830,7 @@ public class TunerTest {
     @Test
     public void testFilterDataSizeDelay() throws Exception {
         Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
-        assertEquals(Tuner.RESULT_SUCCESS, f.delayCallbackUntilBufferFilled(5000));
+        assertEquals(Tuner.RESULT_SUCCESS, f.delayCallbackUntilBytesAccumulated(5000));
         f.close();
     }
 

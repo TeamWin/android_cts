@@ -23,6 +23,8 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentSender
 import android.os.Bundle
 import android.util.Log
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * An [Activity] for launching confirmation UI via an [android.content.IntentSender.sendIntent] and
@@ -59,7 +61,7 @@ class CompanionActivity : Activity() {
             intent.addFlags(FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
 
-            waitForResult(timeout = 3_000, interval = 100) {
+            waitForResult(timeout = 3.seconds, interval = 100.milliseconds) {
                 unsafeInstance?.takeIf { it.isResumed }
             } ?: error("CompanionActivity has not appeared")
         }
@@ -68,7 +70,7 @@ class CompanionActivity : Activity() {
                 instance.startIntentSenderForResult(intentSender, 0, null, 0, 0, 0)
 
         fun waitForActivityResult() =
-                waitForResult(timeout = 1_000, interval = 100) { instance.result }
+                waitForResult(timeout = 1.seconds, interval = 100.milliseconds) { instance.result }
                     ?: error("onActivityResult() has not been invoked")
 
         fun finish() = instance.finish()

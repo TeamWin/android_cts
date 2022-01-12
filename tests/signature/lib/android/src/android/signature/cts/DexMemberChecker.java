@@ -98,9 +98,7 @@ public class DexMemberChecker {
                 try {
                     observer.fieldAccessibleViaJni(hasMatchingField_JNI(klass, field), field);
                 } catch (ClassNotFoundException | Error e) {
-                    if ((e instanceof NoClassDefFoundError)
-                            && !(e.getCause() instanceof ExceptionInInitializerError)
-                            && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                    if ((e instanceof NoClassDefFoundError) && !(e.getCause() instanceof Error)) {
                         throw (NoClassDefFoundError) e;
                     }
 

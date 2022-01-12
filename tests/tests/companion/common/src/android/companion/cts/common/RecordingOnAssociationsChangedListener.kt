@@ -25,7 +25,6 @@ private constructor(container: InvocationContainer<List<AssociationInfo>>) :
 
     constructor() : this(InvocationContainer())
 
-    override fun onAssociationsChanged(associations: List<AssociationInfo>) {
+    override fun onAssociationsChanged(associations: List<AssociationInfo>) =
         recordInvocation(associations)
-    }
 }

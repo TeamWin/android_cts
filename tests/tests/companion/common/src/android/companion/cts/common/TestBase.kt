@@ -147,16 +147,16 @@ fun waitFor(
 }
 
 fun <R> waitForResult(
-    timeout: Long = 10_000,
-    interval: Long = 1_000,
+    timeout: Duration = 10.seconds,
+    interval: Duration = 1.seconds,
     block: () -> R
 ): R? {
     val startTime = uptimeMillis()
     while (true) {
         val result: R = block()
         if (result != null) return result
-        sleep(interval)
-        if (uptimeMillis() - startTime > timeout) return null
+        sleep(interval.inWholeMilliseconds)
+        if (uptimeMillis() - startTime > timeout.inWholeMilliseconds) return null
     }
 }
 

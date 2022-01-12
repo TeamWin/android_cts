@@ -73,7 +73,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mOwnerActivity = startActivity(ActivityA.class);
+        // Launch activities in fullscreen, otherwise, some tests fail on devices which use freeform
+        // as the default windowing mode, because tests' prerequisite are that activity A, B, and C
+        // need to overlay completely, but they can be partially overlay as freeform windows.
+        mOwnerActivity = startActivityInWindowingModeFullScreen(ActivityA.class);
         mOwnerToken = getActivityToken(mOwnerActivity);
     }
 
@@ -561,7 +564,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     @Test
     public void testTranslucentAdjacentTaskFragment() {
         // Create ActivityB on top of ActivityA
-        Activity activityB = startActivity(ActivityB.class);
+        Activity activityB = startActivityInWindowingModeFullScreen(ActivityB.class);
         waitAndAssertResumedActivity(mActivityB, "Activity B must be resumed.");
         waitAndAssertActivityState(mActivityA, STATE_STOPPED,
                 "Activity A is occluded by Activity B, so it must be stopped.");
