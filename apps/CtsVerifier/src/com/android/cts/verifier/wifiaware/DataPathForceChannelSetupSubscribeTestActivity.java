@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,17 @@
 package com.android.cts.verifier.wifiaware;
 
 import android.content.Context;
-import android.os.Bundle;
 
-import com.android.cts.verifier.R;
 import com.android.cts.verifier.wifiaware.testcase.DataPathInBandTestCase;
 
 /**
- * Test activity for data-path, open, unsolicited publish
+ * Test activity for data-path, in-band and force channel setup on Subscribe
  */
-public class DataPathOpenUnsolicitedPublishTestActivity extends BaseTestActivity {
+public class DataPathForceChannelSetupSubscribeTestActivity extends BaseTestActivity {
     @Override
     protected BaseTestCase getTestCase(Context context) {
-        return new DataPathInBandTestCase(context, /* isSecurityOpen */ true, /* isPublish */ true,
-                /* isUnsolicited */ true, /* usePmk */ false, /* acceptAny */ false,
-                /* forceChannel */false);
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setInfoResources(R.string.aware_data_path_open_unsolicited_publish,
-                R.string.aware_data_path_open_unsolicited_publish_info, 0);
+        return new DataPathInBandTestCase(context, /* isSecurityOpen */ false,
+                /* isPublish */ false, /* isUnsolicited */ true, /* usePmk */ true,
+                /* acceptAny */ false, /* forceChannel */ true);
     }
 }
