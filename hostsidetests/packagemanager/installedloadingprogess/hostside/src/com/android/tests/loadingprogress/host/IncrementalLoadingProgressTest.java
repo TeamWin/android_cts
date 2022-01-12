@@ -64,8 +64,9 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
+        // Only enable this test on devices with Incremental Delivery V2 features
         assumeTrue("true\n".equals(getDevice().executeShellCommand(
-                "pm has-feature android.software.incremental_delivery")));
+                "pm has-feature android.software.incremental_delivery 2")));
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File base_apk = buildHelper.getTestFile(TEST_APK);
