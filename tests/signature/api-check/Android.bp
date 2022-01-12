@@ -92,12 +92,21 @@ filegroup {
 // Defaults for hiddenapi blocklist checks.
 java_defaults {
     name: "hiddenapi-blocklist-check-defaults",
-    defaults: ["signature-api-check-defaults"],
+    defaults: ["signature-api-check-dynamic-config-defaults"],
     java_resources: [
         ":platform-bootclasspath{hiddenapi-flags.csv}",
         ":cts-api-hiddenapi-filter-csv"
     ],
     jni_libs: [
         "libcts_dexchecker",
+    ],
+}
+
+// The CtsHiddenApiBlocklistApiDynamicConfig file is intended to be used by
+// multiple CtsHiddenApiBlocklist...TestCases.
+filegroup {
+    name: "CtsHiddenApiBlocklistApiDynamicConfig",
+    srcs: [
+      "CtsHiddenApiBlocklistApiDynamicConfig.dynamic",
     ],
 }
