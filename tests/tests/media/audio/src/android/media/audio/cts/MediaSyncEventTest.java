@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.audio.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.cts.AudioHelper;
+import android.media.cts.NonMediaMainlineTest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
