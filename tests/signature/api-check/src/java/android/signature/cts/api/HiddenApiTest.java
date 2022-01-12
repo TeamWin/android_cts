@@ -44,7 +44,7 @@ public class HiddenApiTest extends AbstractApiTest {
     private Set<String> hiddenapiFilterSet;
 
     @Override
-    protected void initializeFromArgs(Bundle instrumentationArgs) {
+    protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
         hiddenapiFiles = getCommaSeparatedList(instrumentationArgs, "hiddenapi-files");
         hiddenapiTestFlags = getCommaSeparatedList(instrumentationArgs, "hiddenapi-test-flags");
         hiddenapiFilterFile = instrumentationArgs.getString("hiddenapi-filter-file");

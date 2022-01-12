@@ -46,6 +46,8 @@ LOCAL_PACKAGE_NAME := CtsSystemApiSignatureTestCases
 
 LOCAL_JAVA_RESOURCE_FILES := $(all_system_api_zip_file)
 
+LOCAL_STATIC_JAVA_LIBRARIES += cts-signature-with-dynamic-config
+
 LOCAL_SIGNATURE_API_FILES := \
     current.api.gz \
     android-test-mock-current.api.gz \

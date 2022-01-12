@@ -42,7 +42,7 @@ public class SignatureTest extends AbstractApiTest {
     private String[] unexpectedApiFiles;
 
     @Override
-    protected void initializeFromArgs(Bundle instrumentationArgs) {
+    protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
         systemApiFiles = getCommaSeparatedList(instrumentationArgs, "system-api-files");
         baseApiFiles = getCommaSeparatedList(instrumentationArgs, "base-api-files");
         unexpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "unexpected-api-files");
