@@ -31,7 +31,6 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "cts-media-common",
-        "cts-media-res-lib",
         "hamcrest-library",
         "testng",
     ],
