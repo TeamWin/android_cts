@@ -29,26 +29,16 @@ android_test {
     // include both the 32 and 64 bit versions
     compile_multilib: "both",
     static_libs: [
-        "androidx.test.core",
-        "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
         "cts-media-common",
         "cts-media-res-lib",
         "hamcrest-library",
-        "ctstestserver",
-        "junit",
-        "junit-params",
         "testng",
-        "truth-prebuilt",
-        "mockito-target-minus-junit4",
-        "androidx.heifwriter_heifwriter",
     ],
     aaptflags: [
         "--auto-add-overlay",
-        // Give com.android.mediadrm.cts Java files access to the R class
-        "--extra-packages com.android.mediadrm.cts",
+        // Give com.android.media.drm.cts Java files access to the R class
+        "--extra-packages com.android.media.drm.cts",
 
         // Do not compress these files:
         "-0 .vp9",
@@ -70,11 +60,9 @@ android_test {
     platform_apis: true,
     jni_uses_sdk_apis: true,
     libs: [
-        "org.apache.http.legacy",
         "android.test.base",
         "android.test.runner",
     ],
-    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",

@@ -1061,7 +1061,7 @@ static JNINativeMethod gMethods[] = {
             (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_isCryptoSchemeSupportedNative },
 
     { "testClearKeyPlaybackNative",
-            "([BLandroid/media/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
+            "([BLandroid/media/drm/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
             (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testClearKeyPlaybackNative },
 
     { "testGetPropertyStringNative",
@@ -1089,10 +1089,10 @@ static JNINativeMethod gMethods[] = {
 int register_android_mediadrm_cts_NativeMediaDrmClearkeyTest(JNIEnv* env) {
     jint result = JNI_ERR;
     jclass testClass =
-        env->FindClass("android/mediadrm/cts/NativeMediaDrmClearkeyTest");
+        env->FindClass("android/media/drm/cts/NativeMediaDrmClearkeyTest");
     if (testClass) {
         jclass playbackParamsClass = env->FindClass(
-            "android/mediadrm/cts/NativeMediaDrmClearkeyTest$PlaybackParams");
+            "android/media/drm/cts/NativeMediaDrmClearkeyTest$PlaybackParams");
         if (playbackParamsClass) {
             jclass surfaceClass =
                 env->FindClass("android/view/Surface");
