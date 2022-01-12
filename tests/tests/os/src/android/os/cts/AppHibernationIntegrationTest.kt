@@ -168,6 +168,7 @@ class AppHibernationIntegrationTest {
     }
 
     @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testUnusedAppCount() {
         withUnusedThresholdMs(TEST_UNUSED_THRESHOLD) {
             withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
