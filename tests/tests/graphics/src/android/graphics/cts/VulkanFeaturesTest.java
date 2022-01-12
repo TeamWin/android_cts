@@ -327,7 +327,7 @@ public class VulkanFeaturesTest {
             }
         }
         JSONObject limits = device.getJSONObject("properties").getJSONObject("limits");
-        int maxPerStageDescriptorStorageBuffers = limits.getInt("maxPerStageDescriptorStorageBuffers");
+        long maxPerStageDescriptorStorageBuffers = limits.getLong("maxPerStageDescriptorStorageBuffers");
         if (DEBUG) {
             Log.d(TAG, device.getJSONObject("properties").getString("deviceName") +
                 ": variablePointers=" + variablePointers +
