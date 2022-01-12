@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediadrm.cts;
+package android.media.drm.cts;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaDrm;
@@ -23,6 +23,7 @@ import android.media.MediaFormat;
 import android.media.cts.MediaCodecBlockModelHelper;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
+import android.media.cts.Utils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
