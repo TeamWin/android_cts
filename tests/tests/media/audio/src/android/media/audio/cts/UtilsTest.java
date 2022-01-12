@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.audio.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.media.cts.NonMediaMainlineTest;
 import android.media.Utils;
 import android.os.Handler;
 import android.os.HandlerThread;
