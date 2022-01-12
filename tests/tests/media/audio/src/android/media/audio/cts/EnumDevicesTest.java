@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.audio.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import android.media.cts.AudioHelper;
+import android.media.cts.DeviceUtils;
+import android.media.cts.NonMediaMainlineTest;
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
