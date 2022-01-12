@@ -1606,6 +1606,124 @@ public class AudioRecordTest {
         return;
     }
 
+    /**
+     * Test AudioRecord Builder error handling.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testAudioRecordBuilderError() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+
+        final AudioRecord[] audioRecord = new AudioRecord[1]; // pointer to AudioRecord.
+        final int BIGNUM = Integer.MAX_VALUE; // large value that should be invalid.
+        final int INVALID_SESSION_ID = 1024;  // can never occur (wrong type in 3 lsbs)
+        final int INVALID_CHANNEL_MASK = -1;
+
+        try {
+            // NOTE:
+            // AudioFormat tested in AudioFormatTest#testAudioFormatBuilderError.
+
+            // We must be able to create the AudioRecord.
+            audioRecord[0] = new AudioRecord.Builder().build();
+            audioRecord[0].release();
+
+            // Out of bounds buffer size.  A large size will fail in AudioRecord creation.
+            assertThrows(UnsupportedOperationException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setBufferSizeInBytes(BIGNUM)
+                        .build();
+            });
+
+            // 0 and negative buffer size throw IllegalArgumentException
+            for (int bufferSize : new int[] {-BIGNUM, -1, 0}) {
+                assertThrows(IllegalArgumentException.class, () -> {
+                    audioRecord[0] = new AudioRecord.Builder()
+                            .setBufferSizeInBytes(bufferSize)
+                            .build();
+                });
+            }
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setAudioSource(BIGNUM)
+                        .build();
+            });
+
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setAudioSource(-2)
+                        .build();
+            });
+
+            // Invalid session id that is positive.
+            // (logcat error message vague)
+            assertThrows(UnsupportedOperationException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setSessionId(INVALID_SESSION_ID)
+                        .build();
+            });
+
+            // Specialty AudioRecord tests
+            assertThrows(NullPointerException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setAudioPlaybackCaptureConfig(null)
+                        .build();
+            });
+
+            assertThrows(NullPointerException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setContext(null)
+                        .build();
+            });
+
+            // Bad audio encoding DRA expected unsupported.
+            try {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                                .setEncoding(AudioFormat.ENCODING_DRA)
+                                .build())
+                        .build();
+                // Don't throw an exception, maybe it is supported somehow, but warn.
+                Log.w(TAG, "ENCODING_DRA is expected to be unsupported");
+                audioRecord[0].release();
+                audioRecord[0] = null;
+            } catch (UnsupportedOperationException e) {
+                ; // OK expected
+            }
+
+            // Sample rate out of bounds.
+            // System levels caught on AudioFormat.
+            assertThrows(IllegalArgumentException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setSampleRate(BIGNUM)
+                                .build())
+                        .build();
+            });
+
+            // Invalid channel mask
+            // This is a UOE for AudioRecord vs IAE for AudioTrack.
+            assertThrows(UnsupportedOperationException.class, () -> {
+                audioRecord[0] = new AudioRecord.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setChannelMask(INVALID_CHANNEL_MASK)
+                                .build())
+                        .build();
+            });
+        } finally {
+            // Did we successfully complete for some reason but did not
+            // release?
+            if (audioRecord[0] != null) {
+                audioRecord[0].release();
+                audioRecord[0] = null;
+            }
+        }
+    }
+
     @Test
     public void testPrivacySensitiveBuilder() throws Exception {
         if (!hasMicrophone()) {
