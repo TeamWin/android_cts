@@ -275,4 +275,6 @@
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testForbidCapabilitiesRequest" />
     <option name="compatibility:exclude-filter" value="CtsTelephonyTestCases android.telephony.ims.cts.RcsUceAdapterTest#testTimeoutToRequestCapabilitiesWithPresenceMechanism" />
 
+    <!-- b/182630972, b/214019488 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.PinnedStackTests#testEnterPipWithMinimalSize" />
 </configuration>
