@@ -545,6 +545,9 @@ public class TunerTest {
                     case FrontendStatus.FRONTEND_STATUS_TYPE_DVBT_CELL_IDS:
                         status.getDvbtCellIds();
                         break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_ALL_PLP_INFO:
+                        status.getAllAtsc3PlpInfo();
+                        break;
                 }
             }
             tuner.close();
