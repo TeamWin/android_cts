@@ -18,8 +18,6 @@
      package="android.media.audio.cts"
      android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
@@ -32,12 +30,9 @@
 
     <uses-permission android:name="android.permission.VIBRATE"/>
 
-    <application android:networkSecurityConfig="@xml/network_security_config"
-         android:requestLegacyExternalStorage="true"
+    <application android:requestLegacyExternalStorage="true"
          android:largeHeap="true">
         <uses-library android:name="android.test.runner"/>
-        <uses-library android:name="org.apache.http.legacy"
-             android:required="false"/>
 
         <activity android:name="android.media.audio.cts.RingtonePickerActivity"
              android:label="RingtonePickerActivity"
