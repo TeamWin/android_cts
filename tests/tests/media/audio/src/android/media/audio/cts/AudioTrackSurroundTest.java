@@ -30,7 +30,6 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.audio.cts.R;
 import android.media.cts.NonMediaMainlineTest;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -50,7 +49,6 @@ import java.util.Random;
 // sample rate based on the AudioTimestamps.
 
 @NonMediaMainlineTest
-@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class AudioTrackSurroundTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackSurroundTest";
 
