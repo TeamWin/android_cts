@@ -18,6 +18,7 @@ package android.media.audio.cts;
 import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.res.AssetFileDescriptor;
+import android.media.audio.cts.R;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -27,7 +28,6 @@ import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
-import android.media.cts.Preconditions;
 import android.media.cts.Utils;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
@@ -44,7 +44,6 @@ public class RingtoneManagerTest
 
     private static final String PKG = "android.media.audio.cts";
     private static final String TAG = "RingtoneManagerTest";
-    static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private RingtonePickerActivity mActivity;
     private Instrumentation mInstrumentation;
@@ -182,10 +181,9 @@ public class RingtoneManagerTest
         Cursor c = mRingtoneManager.getCursor();
         assertTrue("Must have at least one ring tone available", c.getCount() > 0);
 
-        Preconditions.assertTestFileExists(mInpPrefix + "john_cage.ogg");
         mRingtoneManager.setStopPreviousRingtone(true);
         assertTrue(mRingtoneManager.getStopPreviousRingtone());
-        Uri uri = Uri.parse(mInpPrefix + "john_cage.ogg");
+        Uri uri = Uri.parse("android.resource://" + PKG + "/" + R.raw.john_cage);
         Ringtone ringtone = RingtoneManager.getRingtone(mContext, uri);
         ringtone.play();
         assertTrue(ringtone.isPlaying());
