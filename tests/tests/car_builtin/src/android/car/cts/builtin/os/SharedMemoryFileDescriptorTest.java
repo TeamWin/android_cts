@@ -42,6 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -100,7 +101,7 @@ public class SharedMemoryFileDescriptorTest {
     }
 
     @Test
-    public void testReadBufData() throws RemoteException, ErrnoException {
+    public void testReadBufData() throws RemoteException, ErrnoException, IOException {
         // setup
         int memSize = 32 * 1024;
 
