@@ -57,6 +57,7 @@ import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
+import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -1405,6 +1406,73 @@ public class PackageManagerShellCommandTest {
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
+    @Test
+    public void testPackageFullyRemovedBroadcastAfterUninstall() throws IOException {
+        final int currentUser = getContext().getUserId();
+        // Start another user and install this test itself for that user
+        mSecondUser = createUser("Another User");
+        assertTrue(startUser(mSecondUser));
+        installExistingPackageAsUser(getContext().getPackageName(), mSecondUser);
+        installPackage(TEST_HW5);
+        assertTrue(isAppInstalledForUser(getContext().getPackageName(), currentUser));
+        assertTrue(isAppInstalledForUser(getContext().getPackageName(), mSecondUser));
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, currentUser));
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, mSecondUser));
+        final FullyRemovedBroadcastReceiver broadcastReceiverForCurrentUser =
+                new FullyRemovedBroadcastReceiver(TEST_APP_PACKAGE, currentUser);
+        final FullyRemovedBroadcastReceiver broadcastReceiverForSecondUser =
+                new FullyRemovedBroadcastReceiver(TEST_APP_PACKAGE, mSecondUser);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED);
+        intentFilter.addDataScheme("package");
+        getContext().registerReceiver(
+                broadcastReceiverForCurrentUser, intentFilter, RECEIVER_EXPORTED);
+        getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.INTERACT_ACROSS_USERS,
+                android.Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        try {
+            getContext().createContextAsUser(UserHandle.of(mSecondUser), 0).registerReceiver(
+                    broadcastReceiverForSecondUser, intentFilter, RECEIVER_EXPORTED);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+        // Verify that uninstall with "keep data" doesn't send the broadcast
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, mSecondUser);
+        assertFalse(broadcastReceiverForSecondUser.isBroadcastReceived());
+        installExistingPackageAsUser(TEST_APP_PACKAGE, mSecondUser);
+        // Verify that uninstall on a specific user only sends the broadcast to the user
+        uninstallPackageAsUser(TEST_APP_PACKAGE, mSecondUser);
+        assertTrue(broadcastReceiverForSecondUser.isBroadcastReceived());
+        assertFalse(broadcastReceiverForCurrentUser.isBroadcastReceived());
+        uninstallPackageSilently(TEST_APP_PACKAGE);
+        assertTrue(broadcastReceiverForCurrentUser.isBroadcastReceived());
+    }
+
+    private static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
+        private final String mTargetPackage;
+        private final int mTargetUserId;
+        private final ConditionVariable mUserReceivedBroadcast;
+        FullyRemovedBroadcastReceiver(String packageName, int targetUserId) {
+            mTargetPackage = packageName;
+            mTargetUserId = targetUserId;
+            mUserReceivedBroadcast = new ConditionVariable();
+            mUserReceivedBroadcast.close();
+        }
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            context.unregisterReceiver(this);
+            final String packageName = intent.getData().getEncodedSchemeSpecificPart();
+            final int userId = context.getUserId();
+            if (intent.getAction().equals(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+                    && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
+                mUserReceivedBroadcast.open();
+            }
+        }
+        public boolean isBroadcastReceived() {
+            return mUserReceivedBroadcast.block(2000);
+        }
+    }
+
     private List<SharedLibraryInfo> getSharedLibraries() {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
@@ -1647,6 +1715,10 @@ public class PackageManagerShellCommandTest {
     /* Uninstall for one user */
     private void uninstallPackageAsUser(String packageName, int userId) throws IOException {
         executeShellCommand(String.format("pm uninstall --user %d %s", userId, packageName));
+    }
+
+    private void uninstallPackageWithKeepData(String packageName, int userId) throws IOException {
+        executeShellCommand(String.format("pm uninstall -k --user %d %s", userId, packageName));
     }
 
     private void uninstallSplits(String packageName, String[] splitNames) throws IOException {
