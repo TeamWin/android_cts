@@ -47,7 +47,6 @@ import android.server.wm.WindowManagerTestBase.FocusableActivity;
 import android.util.Size;
 
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 
 import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
@@ -72,7 +71,6 @@ import org.junit.rules.TestRule;
  * atest CtsWindowManagerDeviceTestCases:CompatChangeTests
  */
 @Presubmit
-@FlakyTest(bugId = 211853730)
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
             component(ResizeablePortraitActivity.class);
