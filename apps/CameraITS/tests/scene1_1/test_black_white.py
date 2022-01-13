@@ -29,6 +29,7 @@ import capture_request_utils
 import image_processing_utils
 import its_session_utils
 
+_ANDROID10_API_LEVEL = 29
 CH_FULL_SCALE = 255
 CH_THRESH_BLACK = 6
 CH_THRESH_WHITE = CH_FULL_SCALE - 6
@@ -148,10 +149,12 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
         assert mean > CH_THRESH_WHITE, e_msg
 
       # Assert channels saturate evenly (was test_channel_saturation)
-      e_msg = 'ch saturation not equal! RGB: %s, ATOL: %.f' % (
-          str(white_means), CH_TOL_WHITE)
-      assert np.isclose(
-          np.amin(white_means), np.amax(white_means), atol=CH_TOL_WHITE), e_msg
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+      if first_api_level >= _ANDROID10_API_LEVEL:
+        e_msg = 'ch saturation not equal! RGB: %s, ATOL: %.f' % (
+            str(white_means), CH_TOL_WHITE)
+        assert np.isclose(
+            np.amin(white_means), np.amax(white_means), atol=CH_TOL_WHITE), e_msg
 
 if __name__ == '__main__':
   test_runner.main()
