@@ -16,7 +16,21 @@
 
 package android.hardware.camera2.cts;
 
-import android.content.Context;
+import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
+import static android.hardware.camera2.cts.CameraTestUtils.SESSION_READY_TIMEOUT_MS;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
+import static android.hardware.camera2.cts.CameraTestUtils.dumpFile;
+import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
+
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
@@ -27,6 +41,7 @@ import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -41,6 +56,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
+import android.media.ImageWriter;
 import android.os.ConditionVariable;
 import android.util.Log;
 import android.util.Size;
@@ -48,24 +64,15 @@ import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.Test;
-
-import static android.hardware.camera2.cts.CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS;
-import static android.hardware.camera2.cts.CameraTestUtils.SESSION_READY_TIMEOUT_MS;
-import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
-import static android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
-import static android.hardware.camera2.cts.CameraTestUtils.dumpFile;
-import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
-import static com.google.common.truth.Truth.assertWithMessage;
-import static junit.framework.Assert.*;
 
 /**
  * <p>Basic test for ImageReader APIs. It uses CameraDevice as producer, camera
@@ -401,6 +408,76 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             } finally {
                 closeDevice(id);
             }
+        }
+    }
+
+    @Test
+    public void testImageReaderBuilderSetHardwareBufferFormatAndDataSpace() throws Exception {
+        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(20, 45)
+                .setMaxImages(2)
+                .setDefaultHardwareBufferFormat(HardwareBuffer.RGB_888)
+                .setDefaultDataSpace(DataSpace.DATASPACE_BT709)
+                .setUsage(usage)
+                .build();
+            ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
+            Image outputImage = writer.dequeueInputImage()
+        ) {
+            assertEquals(2, reader.getMaxImages());
+            assertEquals(usage, reader.getUsage());
+            assertEquals(HardwareBuffer.RGB_888, reader.getHardwareBufferFormat());
+
+            assertEquals(20, outputImage.getWidth());
+            assertEquals(45, outputImage.getHeight());
+            assertEquals(HardwareBuffer.RGB_888, outputImage.getFormat());
+        }
+    }
+
+    @Test
+    public void testImageReaderBuilderImageFormatOverride() throws Exception {
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(20, 45)
+                .setImageFormat(ImageFormat.HEIC)
+                .setDefaultHardwareBufferFormat(HardwareBuffer.RGB_888)
+                .setDefaultDataSpace(DataSpace.DATASPACE_BT709)
+                .build();
+            ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
+            Image outputImage = writer.dequeueInputImage()
+        ) {
+            assertEquals(1, reader.getMaxImages());
+            assertEquals(HardwareBuffer.USAGE_CPU_READ_OFTEN, reader.getUsage());
+            assertEquals(HardwareBuffer.RGB_888, reader.getHardwareBufferFormat());
+            assertEquals(DataSpace.DATASPACE_BT709, reader.getDataSpace());
+
+            assertEquals(20, outputImage.getWidth());
+            assertEquals(45, outputImage.getHeight());
+            assertEquals(HardwareBuffer.RGB_888, outputImage.getFormat());
+        }
+    }
+
+    @Test
+    public void testImageReaderBuilderSetImageFormat() throws Exception {
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(20, 45)
+                .setMaxImages(2)
+                .setImageFormat(ImageFormat.YUV_420_888)
+                .build();
+            ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
+            Image outputImage = writer.dequeueInputImage()
+        ) {
+            assertEquals(2, reader.getMaxImages());
+            assertEquals(ImageFormat.YUV_420_888, reader.getImageFormat());
+            assertEquals(HardwareBuffer.USAGE_CPU_READ_OFTEN, reader.getUsage());
+            // ImageFormat.YUV_420_888 hal dataspace is DATASPACE_JFIF
+            assertEquals(DataSpace.DATASPACE_JFIF, reader.getDataSpace());
+
+            assertEquals(20, outputImage.getWidth());
+            assertEquals(45, outputImage.getHeight());
+            assertEquals(ImageFormat.YUV_420_888, outputImage.getFormat());
         }
     }
 
