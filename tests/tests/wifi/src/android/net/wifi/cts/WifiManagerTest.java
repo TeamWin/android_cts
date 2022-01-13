@@ -1202,6 +1202,39 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify {@link WifiManager#setSsidsDoNotBlocklist(Set)} can be called with sufficient
+     * privilege.
+     */
+    public void testGetAndSetSsidsDoNotBlocklist() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        Set<WifiSsid> ssids = new ArraySet<>();
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSsidsDoNotBlocklist(ssids));
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> assertEquals("Ssids should match", ssids,
+                        mWifiManager.getSsidsDoNotBlocklist()));
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> assertEquals("Should equal to empty set",
+                        Collections.EMPTY_SET,
+                        mWifiManager.getSsidsDoNotBlocklist()));
+
+        try {
+            mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET);
+            fail("Expected SecurityException when called without permission");
+        } catch (SecurityException e) {
+            // expect the exception
+        }
+    }
+
+    /**
      * Verify that {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} throws a
      * SecurityException when called by a normal app.
      */
