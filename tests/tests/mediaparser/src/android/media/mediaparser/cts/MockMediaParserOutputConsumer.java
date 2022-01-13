@@ -30,7 +30,6 @@ import com.google.android.exoplayer2.extractor.SeekMap;
 import com.google.android.exoplayer2.extractor.SeekPoint;
 import com.google.android.exoplayer2.extractor.TrackOutput;
 import com.google.android.exoplayer2.testutil.FakeExtractorOutput;
-import com.google.android.exoplayer2.testutil.FakeTrackOutput;
 import com.google.android.exoplayer2.upstream.DataReader;
 import com.google.android.exoplayer2.video.ColorInfo;
 
@@ -53,10 +52,7 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
 
     public MockMediaParserOutputConsumer(boolean usingInBandCryptoInfo) {
         mUsingInBandCryptoInfo = usingInBandCryptoInfo;
-        mFakeExtractorOutput =
-                new FakeExtractorOutput(
-                        /* trackOutputFactory= */ (id, type) ->
-                                new FakeTrackOutput(/* deduplicateConsecutiveFormats= */ true));
+        mFakeExtractorOutput = new FakeExtractorOutput();
         mTrackOutputs = new ArrayList<>();
     }
 
