@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.android.cts.verifier.R;
@@ -22,7 +23,11 @@ public class ScreenOffPaymentEmulatorActivity extends BaseEmulatorActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pass_fail_text);
         setPassFailButtonClickListeners();
-        getPassButton().setEnabled(false);
+        if (Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.S) {
+            getPassButton().setEnabled(false);
+        } else {
+            getPassButton().setEnabled(true);
+        }
         mState = STATE_SCREEN_ON;
         setupServices(this, ScreenOffPaymentService.COMPONENT);
 
