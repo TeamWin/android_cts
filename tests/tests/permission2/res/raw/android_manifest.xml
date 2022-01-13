@@ -2785,6 +2785,10 @@
     <permission android:name="android.permission.CONFIGURE_INTERACT_ACROSS_PROFILES"
         android:protectionLevel="signature|role" />
 
+    <!-- @SystemApi @hide Allows starting activities across profiles in the same profile group. -->
+    <permission android:name="android.permission.START_CROSS_PROFILE_ACTIVITIES"
+        android:protectionLevel="signature|role" />
+
     <!-- @SystemApi @hide Allows an application to call APIs that allow it to query and manage
          users on the device. This permission is not available to
          third party applications. -->
