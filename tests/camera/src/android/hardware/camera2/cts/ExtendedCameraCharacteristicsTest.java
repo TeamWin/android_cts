@@ -51,6 +51,7 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.cts.helpers.CameraUtils;
@@ -845,7 +846,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             try {
                 RecommendedStreamConfigurationMap map = c.getRecommendedStreamConfigurationMap(
-                        RecommendedStreamConfigurationMap.USECASE_LOW_LATENCY_SNAPSHOT + 1);
+                        RecommendedStreamConfigurationMap.USECASE_10BIT_OUTPUT + 1);
                 fail("Recommended configuration map shouldn't be available for invalid " +
                         "use case!");
             } catch (IllegalArgumentException e) {
@@ -873,6 +874,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             RecommendedStreamConfigurationMap lowLatencyConfig =
                     c.getRecommendedStreamConfigurationMap(
                     RecommendedStreamConfigurationMap.USECASE_LOW_LATENCY_SNAPSHOT);
+            RecommendedStreamConfigurationMap dynamic10BitOutputConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                            RecommendedStreamConfigurationMap.USECASE_10BIT_OUTPUT);
             if ((previewConfig == null) && (videoRecordingConfig == null) &&
                     (videoSnapshotConfig == null) && (snapshotConfig == null) &&
                     (rawConfig == null) && (zslConfig == null) && (lowLatencyConfig == null)) {
@@ -913,6 +917,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             if (lowLatencyConfig != null) {
                 verifyRecommendedLowLatencyConfiguration(mAllCameraIds[i], c, lowLatencyConfig);
+            }
+
+            if (dynamic10BitOutputConfig != null) {
+                verifyCommonRecommendedConfiguration(mAllCameraIds[i], c, dynamic10BitOutputConfig,
+                        /*checkNoInput*/ true, /*checkNoHighRes*/ false,
+                        /*checkNoHighSpeed*/ false, /*checkNoPrivate*/ false,
+                        /*checkNoDepth*/ true);
             }
         }
     }
@@ -1802,6 +1813,76 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                             "Calibration keys must present where distortion is reported",
                             reportCalibration);
                 }
+            }
+        }
+    }
+
+    /**
+     * Check 10-Bit output capability
+     */
+    @Test
+    public void test10BitOutputCharacteristics() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "test10BitOutputCharacteristics: Testing camera ID " + mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supports10BitOutput = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+            if (!supports10BitOutput) {
+                continue;
+            }
+
+            DynamicRangeProfiles dynamicProfiles = c.get(
+                    CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
+            mCollector.expectNotNull("Dynamic range profile must always be present in case " +
+                    "of 10-bit capable devices!", dynamicProfiles);
+            Set<Integer> supportedProfiles = dynamicProfiles.getSupportedProfiles();
+            mCollector.expectTrue("Dynamic range profiles not present!",
+                    !supportedProfiles.isEmpty());
+            // STANDARD and HLG10 must always be present in the supported profiles
+            mCollector.expectContains(supportedProfiles.toArray(), DynamicRangeProfiles.STANDARD);
+            mCollector.expectContains(supportedProfiles.toArray(), DynamicRangeProfiles.HLG10);
+
+            Integer recommendedProfile = c.get(
+                    CameraCharacteristics.REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE);
+            assertNotNull(recommendedProfile);
+            mCollector.expectContains(supportedProfiles.toArray(), recommendedProfile);
+            mCollector.expectTrue("The recommended 10-bit dynamic range profile must " +
+                            "not be the same as standard",
+                    recommendedProfile != DynamicRangeProfiles.STANDARD);
+
+            // Verify constraints validity. For example if HLG10 advertises support for HDR10, then
+            // there shouldn't be any HDR10 constraints related to HLG10.
+            for (Integer profile : supportedProfiles) {
+                Set<Integer> currentConstraints =
+                        dynamicProfiles.getProfileCaptureRequestConstraints(profile);
+                boolean isSameProfilePresent = false;
+                for (Integer concurrentProfile : currentConstraints) {
+                    if (concurrentProfile == profile) {
+                        isSameProfilePresent = true;
+                        continue;
+                    }
+                    String msg = String.format("Dynamic profile %d supports profile %d " +
+                                    "in the same capture request, however profile %d is not" +
+                                    "advertised as supported!", profile, concurrentProfile,
+                                    concurrentProfile);
+                    mCollector.expectTrue(msg, supportedProfiles.contains(concurrentProfile));
+
+                    Set<Integer> supportedConstraints =
+                            dynamicProfiles.getProfileCaptureRequestConstraints(concurrentProfile);
+                    msg = String.format("Dynamic range profile %d advertises support " +
+                                    "for profile %d, however the opposite is not true!",
+                                    profile, concurrentProfile);
+                    mCollector.expectTrue(msg, supportedConstraints.isEmpty() ||
+                            supportedConstraints.contains(profile));
+                }
+
+                String msg = String.format("Dynamic profile %d not present in its advertised " +
+                        "capture request constraints!", profile);
+                mCollector.expectTrue(msg, isSameProfilePresent || currentConstraints.isEmpty());
             }
         }
     }
