@@ -40,6 +40,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageManager.StorageVolumeCallback;
 import android.os.storage.StorageVolume;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -50,6 +51,7 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FileUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.AssertionFailedError;
 
@@ -1013,30 +1015,53 @@ public class StorageManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testComputeStorageCacheBytesHint() throws Exception {
+    public void testComputeStorageCacheBytes() throws Exception {
         File mockFile = mock(File.class);
+
+        final int[] storageThresholdPercentHigh = new int[1];
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            storageThresholdPercentHigh[0] = DeviceConfig.getInt(
+                DeviceConfig.NAMESPACE_STORAGE_NATIVE_BOOT,
+                StorageManager.STORAGE_THRESHOLD_PERCENT_HIGH_KEY, 0);
+        });
+        assertTrue("storageThresholdPercentHigh [" + storageThresholdPercentHigh[0]
+                + "] expected to be greater than equal to 0", storageThresholdPercentHigh[0] >= 0);
+        assertTrue("storageThresholdPercentHigh [" + storageThresholdPercentHigh[0]
+                + "] expected to be lesser than equal to 100",
+                storageThresholdPercentHigh[0] <= 100);
 
         when(mockFile.getUsableSpace()).thenReturn(10000L);
         when(mockFile.getTotalSpace()).thenReturn(15000L);
-        final long resultHigh = mStorageManager.computeStorageCacheBytes(mockFile);
-        assertTrue("" + resultHigh + " expected to be greater than equal to 0", resultHigh >= 0L);
-        assertTrue("" + resultHigh + " expected to be less than equal to total space",
-                resultHigh <= mockFile.getTotalSpace());
+        final long[] resultHigh = new long[1];
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            resultHigh[0] = mStorageManager.computeStorageCacheBytes(mockFile);
+        });
+        assertTrue("" + resultHigh[0] + " expected to be greater than equal to 0",
+                resultHigh[0] >= 0L);
+        assertTrue("" + resultHigh[0] + " expected to be less than equal to total space",
+                resultHigh[0] <= mockFile.getTotalSpace());
 
         when(mockFile.getUsableSpace()).thenReturn(10000L);
         when(mockFile.getTotalSpace()).thenReturn(250000L);
-        final long resultLow = mStorageManager.computeStorageCacheBytes(mockFile);
-        assertTrue("" + resultLow + " expected to be greater than equal to 0", resultLow >= 0L);
-        assertTrue("" + resultLow + " expected to be less than equal to total space",
-                resultLow <= mockFile.getTotalSpace());
+        final long[] resultLow = new long[1];
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            resultLow[0] = mStorageManager.computeStorageCacheBytes(mockFile);
+        });
+        assertTrue("" + resultLow[0] + " expected to be greater than equal to 0",
+                resultLow[0] >= 0L);
+        assertTrue("" + resultLow[0] + " expected to be less than equal to total space",
+                resultLow[0] <= mockFile.getTotalSpace());
 
         when(mockFile.getUsableSpace()).thenReturn(10000L);
         when(mockFile.getTotalSpace()).thenReturn(100000L);
-        final long resultModerate = mStorageManager.computeStorageCacheBytes(mockFile);
-        assertTrue("" + resultModerate + " expected to be greater than equal to 0",
-                resultModerate >= 0L);
-        assertTrue("" + resultModerate + " expected to be less than equal to total space",
-                resultModerate <= mockFile.getTotalSpace());
+        final long[] resultModerate = new long[1];
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            resultModerate[0] = mStorageManager.computeStorageCacheBytes(mockFile);
+        });
+        assertTrue("" + resultModerate[0] + " expected to be greater than equal to 0",
+                resultModerate[0] >= 0L);
+        assertTrue("" + resultModerate[0] + " expected to be less than equal to total space",
+                resultModerate[0] <= mockFile.getTotalSpace());
     }
 
     public static byte[] readFully(InputStream in) throws IOException {

@@ -172,7 +172,6 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         // To make the cache clearing logic easier to verify, ignore any cache
         // and low space reserved space.
         getDevice().executeShellCommand("settings put global sys_storage_threshold_max_bytes 0");
-        getDevice().executeShellCommand("settings put global sys_storage_cache_max_bytes 0");
         getDevice().executeShellCommand("svc data disable");
         getDevice().executeShellCommand("svc wifi disable");
         try {
@@ -187,7 +186,6 @@ public class StorageHostTest extends BaseHostJUnit4Test {
             }
         } finally {
             getDevice().executeShellCommand("settings delete global sys_storage_threshold_max_bytes");
-            getDevice().executeShellCommand("settings delete global sys_storage_cache_max_bytes");
             getDevice().executeShellCommand("svc data enable");
             getDevice().executeShellCommand("svc wifi enable");
         }
