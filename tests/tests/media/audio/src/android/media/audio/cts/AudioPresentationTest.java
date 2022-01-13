@@ -32,7 +32,7 @@ import java.util.Map;
 @NonMediaMainlineTest
 public class AudioPresentationTest extends CtsAndroidTestCase {
     private String TAG = "AudioPresentationTest";
-    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";
 
     public void testGetters() throws Exception {
         final int PRESENTATION_ID = 42;
