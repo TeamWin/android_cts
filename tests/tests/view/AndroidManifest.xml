@@ -475,6 +475,14 @@
             tools:replace="android:theme"
             android:theme="@style/WhiteBackgroundTheme" />
 
+        <activity android:name="android.view.cts.OnBackInvokedDispatcherTestActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
         <service android:name="android.view.textclassifier.cts.CtsTextClassifierService"
              android:exported="true"
              android:permission="android.permission.BIND_TEXTCLASSIFIER_SERVICE">
