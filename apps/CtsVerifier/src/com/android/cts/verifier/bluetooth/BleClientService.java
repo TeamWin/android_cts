@@ -1157,18 +1157,30 @@ public class BleClientService extends Service {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
+            // Note: Both this method and onCharacteristicRead(byte[]) will be called.
             UUID uid = characteristic.getUuid();
             if (DEBUG) {
-                Log.d(TAG, "onCharacteristicRead: status=" + status);
+                Log.d(TAG, "onCharacteristicRead (deprecated): status=" + status);
             }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                BluetoothGattCharacteristic characteristic, byte[] value, int status) {
+            super.onCharacteristicRead(gatt, characteristic, value, status);
+            UUID uid = characteristic.getUuid();
+            if (DEBUG) {
+                Log.d(TAG, "onCharacteristicRead (memory safe version): status=" + status);
+            }
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                String value = characteristic.getStringValue(0);
+                String stringValue = new String(value);
                 if (characteristic.getUuid().equals(CHARACTERISTIC_NEED_ENCRYPTED_READ_UUID)) {
-                    notifyCharacteristicReadNeedEncrypted(value);
+                    notifyCharacteristicReadNeedEncrypted(stringValue);
                 } else {
                     // verify
-                    if (BleServerService.WRITE_VALUE.equals(value)) {
-                        notifyCharacteristicRead(value);
+                    if (BleServerService.WRITE_VALUE.equals(stringValue)) {
+                        notifyCharacteristicRead(stringValue);
                     } else {
                         notifyError("Read data is not correct");
                     }
@@ -1225,21 +1237,32 @@ public class BleClientService extends Service {
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             super.onDescriptorRead(gatt, descriptor, status);
+            // Note: Both this method and onDescriptorRead(byte[]) will be called.
             if (DEBUG) {
-                Log.d(TAG, "onDescriptorRead");
+                Log.d(TAG, "onDescriptorRead (deprecated)");
+            }
+        }
+
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor,
+                int status, byte[] value) {
+            super.onDescriptorRead(gatt, descriptor, status, value);
+            if (DEBUG) {
+                Log.d(TAG, "onDescriptorRead (memory safe version)");
             }
 
             UUID uid = descriptor.getUuid();
+            String stringValue = new String(value);
             if ((status == BluetoothGatt.GATT_SUCCESS)) {
                 if ((uid != null) && (uid.equals(DESCRIPTOR_UUID))) {
                     // verify
-                    if (Arrays.equals(BleServerService.WRITE_VALUE.getBytes(), descriptor.getValue())) {
-                        notifyDescriptorRead(new String(descriptor.getValue()));
+                    if (BleServerService.WRITE_VALUE.equals(stringValue)) {
+                        notifyDescriptorRead(stringValue);
                     } else {
                         notifyError("Read data is not correct");
                     }
                 } else if (uid.equals(DESCRIPTOR_NEED_ENCRYPTED_READ_UUID)) {
-                    notifyDescriptorReadNeedEncrypted(new String(descriptor.getValue()));
+                    notifyDescriptorReadNeedEncrypted(stringValue);
                 }
             } else if (status == BluetoothGatt.GATT_READ_NOT_PERMITTED) {
                 if (uid.equals(DESCRIPTOR_NO_READ_UUID)) {
@@ -1257,14 +1280,28 @@ public class BleClientService extends Service {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
             UUID uid = characteristic.getUuid();
+            // Note: Both this method and onCharacteristicChanged(byte[]) will be called.
             if (DEBUG) {
-                Log.d(TAG, "onCharacteristicChanged: " + uid);
+                Log.d(TAG, "onCharacteristicChanged (deprecated): uid=" + uid);
             }
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                BluetoothGattCharacteristic characteristic, byte[] value) {
+            super.onCharacteristicChanged(gatt, characteristic, value);
+            UUID uid = characteristic.getUuid();
+            if (DEBUG) {
+                Log.d(TAG, "onCharacteristicChanged (memory safe version): uid=" + uid);
+            }
+
+            String stringValue = new String(value);
             if (uid != null) {
-                if (uid.equals(INDICATE_CHARACTERISTIC_UUID)) {
+                if (uid.equals(INDICATE_CHARACTERISTIC_UUID)
+                        && BleServerService.INDICATE_VALUE.equals(stringValue)) {
                     setNotification(characteristic, false);
                     notifyCharacteristicIndicated();
-                } else {
+                } else if (BleServerService.NOTIFY_VALUE.equals(stringValue)) {
                     mNotifyCount--;
                     setNotification(characteristic, false);
                     if (mNotifyCount == 0) {
