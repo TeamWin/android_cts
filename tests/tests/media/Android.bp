@@ -43,16 +43,6 @@ java_library {
     target_sdk_version: "31",
 }
 
-// Build the res and asset library to
-// share with android.media.drm.cts package.
-android_library {
-    name: "cts-media-res-lib",
-    asset_dirs: ["assets"],
-    resource_dirs: ["res"],
-    min_sdk_version: "29",
-    target_sdk_version: "31",
-}
-
 android_library {
     name: "cts-media-common",
     srcs: [
@@ -91,7 +81,6 @@ android_test {
         "hamcrest-library",
         "ctstestserver",
         "cts-media-common",
-        "cts-media-res-lib",
         "junit",
         "junit-params",
         "testng",
@@ -110,8 +99,6 @@ android_test {
     resource_dirs: ["res"],
     aaptflags: [
         "--auto-add-overlay",
-        // Give com.android.media.drm.cts Java files access to the R class
-        "--extra-packages com.android.media.drm.cts",
 
         // Do not compress these files:
         "-0 .vp9",
