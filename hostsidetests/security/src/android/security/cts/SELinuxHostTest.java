@@ -935,8 +935,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
 
         List<String> args = new ArrayList<String>();
         args.add(sepolicyTests.getAbsolutePath());
-        args.add("-l");
-        args.add(libsepolwrap.getAbsolutePath());
         args.add("-f");
         args.add(devicePlatFcFile.getAbsolutePath());
         args.add("--test");
