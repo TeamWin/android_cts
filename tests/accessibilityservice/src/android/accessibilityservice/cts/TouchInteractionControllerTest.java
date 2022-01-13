@@ -17,13 +17,10 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
-import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_DOWN;
-import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_UP;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
-import static android.accessibilityservice.cts.utils.GestureUtils.isRawAtPoint;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_HOVER_ENTER;
@@ -38,8 +35,6 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTI
 import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTION_START;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 
-import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -85,7 +80,6 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import java.util.List;
 import java.util.concurrent.Executors;
 
 /**
@@ -384,12 +378,7 @@ public class TouchInteractionControllerTest {
                 });
         PointF endPoint = add(mTapLocation, mSwipeDistance, 0);
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0), mSwipeTimeMillis));
-        // mHoverListener.assertNonePropagated();
-        List<MotionEvent> motionEvents = mTouchListener.getRawEvents();
-        assertThat(motionEvents.get(0), both(IS_ACTION_DOWN).and(isRawAtPoint(mTapLocation, 1.0f)));
-        assertThat(
-                motionEvents.get(motionEvents.size() - 1),
-                both(IS_ACTION_UP).and(isRawAtPoint(endPoint, 1.0f)));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
     }
 
     @Test
