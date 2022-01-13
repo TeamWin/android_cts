@@ -371,6 +371,29 @@ public class HyphenationTest {
     }
 
     @Test
+    public void testSwedishPattern() {
+        final String locale = "sv";
+        final String text = "nederbörd nederbörd nederbörd nederbörd";
+        final float textSize = 10.0f;
+        sPaint.setTextLocale(new Locale(locale));
+        sPaint.setTextSize(textSize);
+
+        // The visual BALANCED line break output is like
+        // | nederbörd ne-  |
+        // | derbörd neder- |
+        // | börd nederbörd |
+        final LineBreaker.Result r = computeLineBreaks(text);
+
+        assertEquals(3, r.getLineCount());
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+    }
+
+    @Test
     public void testUkrainianPattern() {
         final String locale = "uk";
         final String text = "Увімкніть Увімкніть Увімкніть Увімкніть";
