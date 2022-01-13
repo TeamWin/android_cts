@@ -24,14 +24,14 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRouting;
 import android.media.cts.AudioHelper;
-import android.media.cts.AudioRecordNative;
-import android.media.cts.AudioTrackNative;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.Build;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+
+import org.junit.Assert;
 
 @NonMediaMainlineTest
 public class AudioNativeTest extends CtsAndroidTestCase {
@@ -218,7 +218,7 @@ public class AudioNativeTest extends CtsAndroidTestCase {
         if (!hasMicrophone()) {
             return;
         }
-        AudioRecordNative record = new AudioHelper.AudioRecordAuditNative();
+        AudioRecordNative record = new AudioRecordAuditNative();
         doRecordTest(record, 4 /* numChannels */, 44100 /* sampleRate */, false /* useFloat */,
                 1000 /* segmentDurationMs */, 10 /* numSegments */);
     }
@@ -393,4 +393,78 @@ public class AudioNativeTest extends CtsAndroidTestCase {
 
     private static native void nativeAppendixBBufferQueue();
     private static native void nativeAppendixBRecording();
+
+    /* AudioRecordAudit extends AudioRecord to allow concurrent playback
+     * of read content to an AudioTrack.  This is for testing only.
+     * For general applications, it is NOT recommended to extend AudioRecord.
+     * This affects AudioRecord timing.
+     */
+    public static class AudioRecordAuditNative extends AudioRecordNative {
+        public AudioRecordAuditNative() {
+            super();
+            // Caution: delayMs too large results in buffer sizes that cannot be created.
+            mTrack = new AudioTrackNative();
+        }
+
+        public boolean open(int numChannels, int sampleRate, boolean useFloat, int numBuffers) {
+            if (super.open(numChannels, sampleRate, useFloat, numBuffers)) {
+                if (!mTrack.open(numChannels, sampleRate, useFloat, 2 /* numBuffers */)) {
+                    mTrack = null; // remove track
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public void close() {
+            super.close();
+            if (mTrack != null) {
+                mTrack.close();
+            }
+        }
+
+        public boolean start() {
+            if (super.start()) {
+                if (mTrack != null) {
+                    mTrack.start();
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public boolean stop() {
+            if (super.stop()) {
+                if (mTrack != null) {
+                    mTrack.stop(); // doesn't allow remaining data to play out
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public int read(short[] audioData, int offsetInShorts, int sizeInShorts, int readFlags) {
+            int samples = super.read(audioData, offsetInShorts, sizeInShorts, readFlags);
+            if (mTrack != null) {
+                Assert.assertEquals(samples, mTrack.write(audioData, offsetInShorts, samples,
+                        AudioTrackNative.WRITE_FLAG_BLOCKING));
+                mPosition += samples / mTrack.getChannelCount();
+            }
+            return samples;
+        }
+
+        public int read(float[] audioData, int offsetInFloats, int sizeInFloats, int readFlags) {
+            int samples = super.read(audioData, offsetInFloats, sizeInFloats, readFlags);
+            if (mTrack != null) {
+                Assert.assertEquals(samples, mTrack.write(audioData, offsetInFloats, samples,
+                        AudioTrackNative.WRITE_FLAG_BLOCKING));
+                mPosition += samples / mTrack.getChannelCount();
+            }
+            return samples;
+        }
+
+        public AudioTrackNative mTrack;
+        private final static String TAG = "AudioRecordAuditNative";
+        private int mPosition;
+    }
 }

@@ -110,6 +110,9 @@ public class Constants {
     public static final String TARGET_SHARE = PKG_BASE + "share.activity";
     /** A package that offers an activity that handles browsable web intents for a specific host */
     public static final String TARGET_WEB = PKG_BASE + "web.activity";
+    /** A package that offers an activity acts as a browser, but use a prefix wildcard for host */
+    public static final String TARGET_PREFIX_WILDCARD_WEB =
+            PKG_BASE + "prefix.wildcard.web.activity";
     /** A package that offers an activity acts as a browser with host undefined */
     public static final String TARGET_BROWSER = PKG_BASE + "browser.activity";
     /** A package that offers an activity acts as a browser, but uses a wildcard for host */

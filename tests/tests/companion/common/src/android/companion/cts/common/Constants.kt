@@ -5,6 +5,8 @@ import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.net.MacAddress
+import android.os.Handler
+import android.os.HandlerThread
 import java.util.concurrent.Executor
 
 /** Set of all supported CDM Device Profiles. */
@@ -35,4 +37,17 @@ val MAC_ADDRESS_C = MacAddress.fromString("00:00:00:00:00:CC")
 const val DEVICE_DISPLAY_NAME_A = "Device A"
 const val DEVICE_DISPLAY_NAME_B = "Device B"
 
-val SIMPLE_EXECUTOR: Executor = Executor { it.run() }
+val SIMPLE_EXECUTOR: Executor by lazy { Executor { it.run() } }
+
+val MAIN_THREAD_EXECUTOR: Executor by lazy {
+    Executor {
+        with(Handler.getMain()) { post(it) }
+    }
+}
+
+val BACKGROUND_THREAD_EXECUTOR: Executor by lazy {
+    with(HandlerThread("CdmTestBackgroundThread")) {
+        start()
+        Executor { threadHandler.post(it) }
+    }
+}

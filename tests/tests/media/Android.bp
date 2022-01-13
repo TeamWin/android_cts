@@ -44,7 +44,7 @@ java_library {
 }
 
 // Build the res and asset library to
-// share with android.mediadrm.cts package.
+// share with android.media.drm.cts package.
 android_library {
     name: "cts-media-res-lib",
     asset_dirs: ["assets"],
@@ -94,7 +94,6 @@ android_test {
         "cts-media-res-lib",
         "junit",
         "junit-params",
-        "ndkaudio",
         "testng",
         "truth-prebuilt",
         "mockito-target-minus-junit4",
@@ -106,14 +105,13 @@ android_test {
         "libctsimagereader_jni",
         "libctsmediacodec_jni",
         "libnativehelper_compat_libc++",
-        "libndkaudioLib",
     ],
     asset_dirs: ["assets"],
     resource_dirs: ["res"],
     aaptflags: [
         "--auto-add-overlay",
-        // Give com.android.mediadrm.cts Java files access to the R class
-        "--extra-packages com.android.mediadrm.cts",
+        // Give com.android.media.drm.cts Java files access to the R class
+        "--extra-packages com.android.media.drm.cts",
 
         // Do not compress these files:
         "-0 .vp9",

@@ -20,8 +20,10 @@ import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
 import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager
+import android.companion.cts.common.BACKGROUND_THREAD_EXECUTOR
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.MAC_ADDRESS_A
+import android.companion.cts.common.MAIN_THREAD_EXECUTOR
 import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.companion.cts.common.RecordingCdmEventObserver
 import android.companion.cts.common.RecordingCdmEventObserver.AssociationChange
@@ -115,14 +117,14 @@ class AssociationsChangedListenerTest : CoreTestBase() {
 
         // preparation: register the observer as an association change listener
         withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
-            cdm.addOnAssociationsChangedListener(SIMPLE_EXECUTOR, observer)
+            cdm.addOnAssociationsChangedListener(BACKGROUND_THREAD_EXECUTOR, observer)
         }
 
         // test scenario: carry out an association and assert that
         // the association listener is notified BEFORE the CDM observer
         observer.assertInvokedByActions(minOccurrences = 2) {
             withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-                cdm.associate(request, SIMPLE_EXECUTOR, observer)
+                cdm.associate(request, MAIN_THREAD_EXECUTOR, observer)
             }
         }
 
