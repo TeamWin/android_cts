@@ -4454,6 +4454,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    /**
+     * Tests {@link WifiManager#isTrustOnFirstUseSupported()} does not crash.
+     */
+    // TODO(b/196180536): Wait for T SDK finalization before changing
+    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)`
+    @SdkSuppress(minSdkVersion = 31)
+    public void testIsTrustOnFirstUseSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isTrustOnFirstUseSupported();
+    }
+
     public class TestCoexCallback extends WifiManager.CoexCallback {
         private Object mCoexLock;
         private int mOnCoexUnsafeChannelChangedCount;
