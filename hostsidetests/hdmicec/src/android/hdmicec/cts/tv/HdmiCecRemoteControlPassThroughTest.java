@@ -40,10 +40,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /** HDMI CEC test to check Remote Control Pass Through behaviour (Sections 11.1.13) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTest {
+
+    private static final int WAIT_TIME_MS = 300;
 
     private HashMap<String, Integer> remoteControlKeys = new HashMap<String, Integer>();
     private HashMap<String, Integer> remoteControlAudioKeys = new HashMap<String, Integer>();
@@ -81,6 +84,11 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                  */
                 hdmiCecClient.broadcastActiveSource(
                         LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+                try {
+                    TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+                } catch (InterruptedException ex) {
+                    // Do nothing
+                }
             }
         }
     }
@@ -95,6 +103,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_1_RemoteControlMessagesToRecorder() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         validateKeyeventToUserControlPress(LogicalAddress.RECORDER_1, remoteControlKeys);
     }
 
@@ -108,6 +117,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_2_RemoteControlMessagesToPlayback() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.PLAYBACK_1, hdmiCecClient.getPhysicalAddress());
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         validateKeyeventToUserControlPress(LogicalAddress.PLAYBACK_1, remoteControlKeys);
     }
 
@@ -121,6 +131,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_3_RemoteControlMessagesToTuner() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.TUNER_1, hdmiCecClient.getPhysicalAddress());
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         validateKeyeventToUserControlPress(LogicalAddress.TUNER_1, remoteControlKeys);
     }
 
@@ -134,6 +145,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_4_RemoteControlMessagesToAudioSystem() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.AUDIO_SYSTEM, hdmiCecClient.getPhysicalAddress());
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         validateKeyeventToUserControlPress(LogicalAddress.AUDIO_SYSTEM, remoteControlAudioKeys);
     }
 
