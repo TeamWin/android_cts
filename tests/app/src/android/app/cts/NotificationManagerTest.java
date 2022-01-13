@@ -1859,32 +1859,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testNotify_blockedChannelGroup() throws Exception {
-        mNotificationManager.cancelAll();
-
-        NotificationChannelGroup group = new NotificationChannelGroup(mId, "group name");
-        group.setBlocked(true);
-        mNotificationManager.createNotificationChannelGroup(group);
-        NotificationChannel channel =
-                new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
-        channel.setGroup(mId);
-        mNotificationManager.createNotificationChannel(channel);
-
-        int id = 1;
-        final Notification notification =
-                new Notification.Builder(mContext, mId)
-                        .setSmallIcon(R.drawable.black)
-                        .setWhen(System.currentTimeMillis())
-                        .setContentTitle("notify#" + id)
-                        .setContentText("This is #" + id + "notification  ")
-                        .build();
-        mNotificationManager.notify(id, notification);
-
-        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-            fail("found unexpected notification id=" + id);
-        }
-    }
-
     public void testCancel() throws Exception {
         final int id = 9;
         sendNotification(id, R.drawable.black);
