@@ -15,8 +15,6 @@
  */
 package android.media.drm.cts;
 
-import android.media.cts.R;
-
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
