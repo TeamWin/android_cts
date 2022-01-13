@@ -79,7 +79,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class AudioRecordTest {
     private final static String TAG = "AudioRecordTest";
-    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";
     private AudioRecord mAudioRecord;
     private static final int SAMPLING_RATE_HZ = 44100;
     private boolean mIsOnMarkerReachedCalled;

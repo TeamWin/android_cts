@@ -21,17 +21,18 @@ import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
 
 import android.annotation.Nullable;
+import android.annotation.RawRes;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.AudioAttributes.CapturePolicy;
 import android.media.AudioManager;
 import android.media.AudioPlaybackConfiguration;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.media.audio.cts.R;
 import android.media.cts.NonMediaMainlineTest;
-import android.media.cts.Preconditions;
 import android.media.cts.TestUtils;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
@@ -41,7 +42,6 @@ import android.util.Log;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.internal.annotations.GuardedBy;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -52,7 +52,6 @@ import java.util.List;
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";
 
-    static final String mInpPrefix = WorkDir.getMediaDirString();
     private final static int TEST_TIMING_TOLERANCE_MS = 150;
     /** acceptable timeout for the time it takes for a prepared MediaPlayer to have an audio device
      * selected and reported when starting to play */
@@ -99,10 +98,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .setAllowedCapturePolicy(ALLOW_CAPTURE_BY_NONE)
                 .build();
-        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
-        mMp = createPreparedMediaPlayer(
-                Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
-                am.generateAudioSessionId());
+        mMp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, aa, am.generateAudioSessionId());
         mMp.start();
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
@@ -149,10 +145,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
         final int nbActivePlayersBeforeStart = configs.size();
 
-        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
-        mMp = createPreparedMediaPlayer(
-                Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
-                am.generateAudioSessionId());
+        mMp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, aa, am.generateAudioSessionId());
         configs = am.getActivePlaybackConfigurations();
         assertEquals("inactive MediaPlayer, number of configs shouldn't have changed",
                 nbActivePlayersBeforeStart /*expected*/, configs.size());
@@ -218,10 +211,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .build();
 
-        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         try {
-            mMp =  createPreparedMediaPlayer(
-                    Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
+            mMp =  createPreparedMediaPlayer(R.raw.sine1khzs40dblong, aa,
                     am.generateAudioSessionId());
 
             am.registerAudioPlaybackCallback(callback, h /*handler*/);
@@ -284,10 +275,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .build();
 
-        Preconditions.assertTestFileExists(mInpPrefix + "sine1khzs40dblong.mp3");
         try {
-            mMp = createPreparedMediaPlayer(
-                    Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
+            mMp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, aa,
                     am.generateAudioSessionId());
 
             am.registerAudioPlaybackCallback(callback, h /*handler*/);
@@ -359,8 +348,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 }
             }
         });
-        Preconditions.assertTestFileExists(mInpPrefix +  "sine1320hz5sec.wav");
-        final int loadId = mSp.load(mInpPrefix + "sine1320hz5sec.wav", 1/*priority*/);
+        final int loadId = mSp.load(getContext(), R.raw.sine1320hz5sec, 1/*priority*/);
         synchronized (loadLock) {
             loadLock.wait(TEST_TIMEOUT_SOUNDPOOL_LOAD_MS);
         }
@@ -402,10 +390,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .build();
 
-        Preconditions.assertTestFileExists(mInpPrefix +  "sine1khzs40dblong.mp3");
         try {
-            mMp = createPreparedMediaPlayer(
-                    Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), aa,
+            mMp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, aa,
                     am.generateAudioSessionId());
 
             am.registerAudioPlaybackCallback(callback, h /*handler*/);
@@ -430,9 +416,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     }
 
     private @Nullable MediaPlayer createPreparedMediaPlayer(
-            Uri uri, AudioAttributes aa, int session) throws Exception {
+            @RawRes int resID, AudioAttributes aa, int session) throws Exception {
         final TestUtils.Monitor onPreparedCalled = new TestUtils.Monitor();
-        final MediaPlayer mp = createPlayer(uri, aa, session);
+        final MediaPlayer mp = createPlayer(resID, aa, session);
         mp.setOnPreparedListener(mp1 -> onPreparedCalled.signal());
         mp.prepare();
         onPreparedCalled.waitForSignal(MEDIAPLAYER_PREPARE_TIMEOUT_MS);
@@ -443,11 +429,16 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     }
 
     private MediaPlayer createPlayer(
-            Uri uri, AudioAttributes aa, int session) throws IOException {
+            @RawRes int resID, AudioAttributes aa, int session) throws IOException {
         MediaPlayer mp = new MediaPlayer();
         mp.setAudioAttributes(aa);
         mp.setAudioSessionId(session);
-        mp.setDataSource(getContext(), uri);
+        AssetFileDescriptor afd = getContext().getResources().openRawResourceFd(resID);
+        try {
+            mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        } finally {
+            afd.close();
+        }
         return mp;
     }
 

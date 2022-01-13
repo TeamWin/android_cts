@@ -79,7 +79,6 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "hamcrest-library",
-        "ctstestserver",
         "cts-media-common",
         "junit-params",
         "testng",
@@ -90,12 +89,10 @@ android_test {
     resource_dirs: ["res"],
     srcs: [
         "src/**/*.java",
-        "aidl/**/*.aidl",
     ],
     platform_apis: true,
     jni_uses_sdk_apis: true,
     libs: [
-        "org.apache.http.legacy",
         "android.test.base",
         "android.test.runner",
     ],
@@ -105,7 +102,6 @@ android_test {
         "general-tests",
         "mts-media",
     ],
-    host_required: ["cts-dynamic-config"],
     min_sdk_version: "29",
     target_sdk_version: "31",
 }
