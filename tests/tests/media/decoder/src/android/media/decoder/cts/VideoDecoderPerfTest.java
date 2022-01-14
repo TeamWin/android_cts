@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.decoder.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -25,6 +25,9 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.MediaHeavyPresubmitTest;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.Preconditions;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -55,7 +58,7 @@ import java.util.LinkedList;
 @RunWith(AndroidJUnit4.class)
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
-    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static final int TOTAL_FRAMES = 30000;
     private static final int MIN_FRAMES = 3000;
     private static final int MAX_TIME_MS = 120000;  // 2 minutes
