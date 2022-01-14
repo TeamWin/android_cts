@@ -112,7 +112,8 @@ public class SystemMediaRouter2Test {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL);
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.MEDIA_CONTENT_CONTROL,
+                                                   Manifest.permission.QUERY_AUDIO_STATE);
 
         mExecutor = Executors.newSingleThreadExecutor();
         mAudioManager = (AudioManager) mContext.getSystemService(AUDIO_SERVICE);
