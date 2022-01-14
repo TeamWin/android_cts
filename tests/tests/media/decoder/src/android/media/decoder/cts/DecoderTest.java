@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.decoder.cts;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel31;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel32;
@@ -49,7 +49,17 @@ import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.CodecState;
+import android.media.cts.MediaCodecTunneledPlayer;
+import android.media.cts.MediaCodecWrapper;
+import android.media.cts.MediaHeavyPresubmitTest;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.NdkMediaCodec;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.Preconditions;
+import android.media.cts.SdkMediaCodec;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -102,7 +112,7 @@ import java.util.zip.CRC32;
 @RunWith(AndroidJUnit4.class)
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
-    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     private static final int RESET_MODE_NONE = 0;
@@ -127,7 +137,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     private static final int SLEEP_TIME_MS = 1000;
     private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 
-    private static final String MODULE_NAME = "CtsMediaTestCases";
+    private static final String MODULE_NAME = "CtsMediaDecoderTestCases";
     private DynamicConfigDeviceSide dynamicConfig;
     private DisplayManager mDisplayManager;
     static final Map<String, String> sDefaultDecoders = new HashMap<>();
@@ -768,7 +778,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 " (Expect R: " + expectRange + " S: " + expectStandard + " T: " + expectTransfer + ")";
         Log.d(TAG, reportName);
 
-        DeviceReportLog log = new DeviceReportLog("CtsMediaTestCases", "color_aspects_test");
+        DeviceReportLog log = new DeviceReportLog("CtsMediaDecoderTestCases", "color_aspects_test");
         log.addValue("decoder_name", decoderName, ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValue("test_id", testId, ResultType.NEUTRAL, ResultUnit.NONE);
         log.addValues(
