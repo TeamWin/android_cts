@@ -36,7 +36,6 @@ import android.media.cts.TestUtils;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -47,7 +46,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-@AppModeFull(reason = "Instant apps cannot access the SD card")
 @NonMediaMainlineTest
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";

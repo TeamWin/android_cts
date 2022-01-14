@@ -33,7 +33,6 @@ import android.media.cts.TestUtils;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -384,7 +383,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * Test delayed focus loss after fade out
      * @throws Exception
      */
-    @AppModeFull(reason = "Instant apps cannot access the SD card")
     public void testAudioFocusRequestMediaGainLossWithPlayer() throws Exception {
         if (hasAutomotiveFeature(getContext())) {
             Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithPlayer "
@@ -464,7 +462,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * Test there is no delayed focus loss when focus loser is playing speech
      * @throws Exception
      */
-    @AppModeFull(reason = "Instant apps cannot access the SD card")
     public void testAudioFocusRequestMediaGainLossWithSpeechPlayer() throws Exception {
         if (hasAutomotiveFeature(getContext())) {
             Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
@@ -482,7 +479,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * AudioAttributes with speech content type
      * @throws Exception
      */
-    @AppModeFull(reason = "Instant apps cannot access the SD card")
     public void testAudioFocusRequestMediaGainLossWithSpeechFocusRequest() throws Exception {
         if (hasAutomotiveFeature(getContext())) {
             Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
@@ -500,7 +496,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      * it pauses on duck
      * @throws Exception
      */
-    @AppModeFull(reason = "Instant apps cannot access the SD card")
     public void testAudioFocusRequestMediaGainLossWithPauseOnDuckFocusRequest() throws Exception {
         if (hasAutomotiveFeature(getContext())) {
             Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithSpeechPlayer "
