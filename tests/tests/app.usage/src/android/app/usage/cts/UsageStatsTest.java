@@ -17,6 +17,7 @@
 package android.app.usage.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -208,10 +209,12 @@ public class UsageStatsTest {
         }
         // Use test API to prevent PermissionManager from killing the test process when revoking
         // permission.
-        mContext.getSystemService(PermissionManager.class)
-                .revokePostNotificationPermissionWithoutKillForTest(
-                        mTargetPackage,
-                        Process.myUserHandle().getIdentifier());
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mContext.getSystemService(PermissionManager.class)
+                        .revokePostNotificationPermissionWithoutKillForTest(
+                                mTargetPackage,
+                                Process.myUserHandle().getIdentifier()),
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL);
     }
 
     private static void assertLessThan(long left, long right) {
