@@ -1,4 +1,4 @@
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,32 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
-
-java_test_host {
-    name: "CtsStrictJavaPackagesTestCases",
+android_test_helper_app {
+    name: "StrictJavaPackagesTestApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    libs: [
-        "tradefed",
-        "compatibility-host-util",
-        "cts-tradefed",
-    ],
     static_libs: [
-        "compat-classpaths-testing",
-        "dexlib2-no-guava-no-cli",
+        "androidx.test.rules",
+        "androidx.test.core",
     ],
-    // tag this module as a cts test artifact
+    sdk_version: "test_current",
     test_suites: [
+        "ats",
         "cts",
+        "gts",
         "general-tests",
-        "mts-mainline-infra",
+        "mts",
+        "tvts",
     ],
-    data: [
-        ":SharedLibraryInfoTestApp",
-        ":StrictJavaPackagesTestApp",
-    ],
-    per_testcase_directory: true,
 }
