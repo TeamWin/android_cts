@@ -22,7 +22,6 @@ import android.companion.AssociationRequest
 import android.companion.cts.common.BACKGROUND_THREAD_EXECUTOR
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.MAC_ADDRESS_A
-import android.companion.cts.common.MAIN_THREAD_EXECUTOR
 import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.companion.cts.common.RecordingCdmEventObserver
 import android.companion.cts.common.RecordingCdmEventObserver.AssociationChange
@@ -123,7 +122,11 @@ class AssociationsChangedListenerTest : CoreTestBase() {
         // the association listener is notified BEFORE the CDM observer
         observer.assertInvokedByActions(minOccurrences = 2) {
             withShellPermissionIdentity(REQUEST_COMPANION_SELF_MANAGED) {
-                cdm.associate(request, MAIN_THREAD_EXECUTOR, observer)
+                // in order to make sure the OnAssociationsChangedListener and
+                // CompanionDeviceManager.Callback callbacks are recorded in the right order use
+                // the same Executor - BACKGROUND_THREAD_EXECUTOR - here that we used for
+                // addOnAssociationsChangedListener above.
+                cdm.associate(request, BACKGROUND_THREAD_EXECUTOR, observer)
             }
         }
 
