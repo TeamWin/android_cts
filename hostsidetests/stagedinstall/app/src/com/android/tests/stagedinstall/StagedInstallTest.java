@@ -751,7 +751,6 @@ public class StagedInstallTest {
     public void testStagedApkSessionCallbacks() throws Exception {
 
         List<Integer> created = new ArrayList<Integer>();
-        List<Integer> finished = new ArrayList<Integer>();
 
         HandlerThread handlerThread = new HandlerThread(
                 "StagedApkSessionCallbacksTestHandlerThread");
@@ -770,13 +769,7 @@ public class StagedInstallTest {
             @Override public void onBadgingChanged(int sessionId) { }
             @Override public void onActiveChanged(int sessionId, boolean active) { }
             @Override public void onProgressChanged(int sessionId, float progress) { }
-
-            @Override
-            public void onFinished(int sessionId, boolean success) {
-                synchronized (finished) {
-                    finished.add(sessionId);
-                }
-            }
+            @Override public void onFinished(int sessionId, boolean success) { }
         };
 
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
@@ -796,9 +789,6 @@ public class StagedInstallTest {
 
         synchronized (created) {
             assertThat(created).containsExactly(sessionId);
-        }
-        synchronized (finished) {
-            assertThat(finished).containsExactly(sessionId);
         }
         packageInstaller.abandonSession(sessionId);
     }
