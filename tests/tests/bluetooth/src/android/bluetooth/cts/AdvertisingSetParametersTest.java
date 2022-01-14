@@ -215,6 +215,13 @@ public class AdvertisingSetParametersTest {
     }
 
     @Test
+    public void testIsAnonymous() {
+        AdvertisingSetParameters params =
+                new AdvertisingSetParameters.Builder().setAnonymous(true).build();
+        assertTrue(params.isAnonymous());
+    }
+
+    @Test
     public void testDescribeContents() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder().build();
         assertEquals(0, params.describeContents());
