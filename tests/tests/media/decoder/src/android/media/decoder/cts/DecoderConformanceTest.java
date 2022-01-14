@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.decoder.cts;
 
 import static org.junit.Assert.fail;
 
 import android.content.res.AssetFileDescriptor;
+import android.media.decoder.cts.R;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.Preconditions;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -67,7 +70,7 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
         SKIP;
     }
 
-    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static final String TAG = "DecoderConformanceTest";
     private static final String CONFORMANCE_SUBDIR = "conformance_vectors/";
     private DeviceReportLog mReportLog;
