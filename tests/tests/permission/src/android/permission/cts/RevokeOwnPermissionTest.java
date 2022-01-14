@@ -53,11 +53,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SelfRevokeRuntimePermissionTest {
+public class RevokeOwnPermissionTest {
     private static final String APP_PKG_NAME =
-            "android.permission.cts.apptotestselfrevokepermission";
+            "android.permission.cts.apptotestrevokeownpermission";
     private static final String APK =
-            "/data/local/tmp/cts/permissions/CtsAppToTestSelfRevokePermission.apk";
+            "/data/local/tmp/cts/permissions/CtsAppToTestRevokeOwnPermission.apk";
     private static final long ONE_TIME_TIMEOUT_MILLIS = 500;
     private static final long KILLED_DELAY_MILLIS = 100;
     private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 1000;
@@ -69,11 +69,11 @@ public class SelfRevokeRuntimePermissionTest {
             mContext.getSystemService(ActivityManager.class);
     private final UiDevice mUiDevice = UiDevice.getInstance(mInstrumentation);
     private String mOldOneTimePermissionTimeoutValue;
+    private String mOldOneTimePermissionKilledDayValue;
 
     @Before
     public void wakeUpScreen() {
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
-        SystemUtil.runShellCommand("input keyevent 82");
     }
 
     @Before
@@ -81,6 +81,8 @@ public class SelfRevokeRuntimePermissionTest {
         runWithShellPermissionIdentity(() -> {
             mOldOneTimePermissionTimeoutValue = DeviceConfig.getProperty("permissions",
                     "one_time_permissions_timeout_millis");
+            mOldOneTimePermissionKilledDayValue = DeviceConfig.getProperty("permissions",
+                    "one_time_permissions_killed_delay_millis");
             DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
                     Long.toString(ONE_TIME_TIMEOUT_MILLIS), false);
             DeviceConfig.setProperty("permissions", "one_time_permissions_killed_delay_millis",
@@ -95,9 +97,12 @@ public class SelfRevokeRuntimePermissionTest {
 
     @After
     public void restoreDeviceForOneTime() {
-        runWithShellPermissionIdentity(
-                () -> DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
-                        mOldOneTimePermissionTimeoutValue, false));
+        runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
+                    mOldOneTimePermissionTimeoutValue, false);
+            DeviceConfig.setProperty("permissions", "one_time_permissions_killed_delay_millis",
+                    mOldOneTimePermissionKilledDayValue, false);
+        });
     }
 
     @Test
@@ -149,8 +154,8 @@ public class SelfRevokeRuntimePermissionTest {
 
     @Test
     public void testNoRevocationWhileForeground() throws Throwable {
-        // Even after calling selfRevokePermission, the permission should stay granted while the
-        // package is in the foreground.
+        // Even after calling revokeOwnPermissionOnKill, the permission should stay granted while
+        // the package is in the foreground.
         installApp();
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);

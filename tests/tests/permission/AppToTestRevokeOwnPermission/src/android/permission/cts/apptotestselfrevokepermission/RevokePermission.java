@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission.cts.apptotestselfrevokepermission;
+package android.permission.cts.apptotestrevokeownpermission;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -29,9 +29,9 @@ public class RevokePermission extends Activity {
         Intent intent = getIntent();
         String[] permissions = intent.getStringArrayExtra("permissions");
         if (permissions.length == 1) {
-            getApplicationContext().selfRevokePermission(permissions[0]);
+            getApplicationContext().revokeOwnPermissionOnKill(permissions[0]);
         } else {
-            getApplicationContext().selfRevokePermissions(Arrays.asList(permissions));
+            getApplicationContext().revokeOwnPermissionsOnKill(Arrays.asList(permissions));
         }
     }
 }
