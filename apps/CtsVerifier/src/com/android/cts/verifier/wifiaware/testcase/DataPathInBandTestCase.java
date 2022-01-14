@@ -24,6 +24,7 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.aware.PublishDiscoverySession;
+import android.net.wifi.aware.WifiAwareChannelInfo;
 import android.net.wifi.aware.WifiAwareNetworkInfo;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.util.Log;
@@ -84,10 +85,13 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
     private static final byte[] MSG_CLIENT_TO_SERVER = "GET SOME BYTES".getBytes();
     private static final byte[] MSG_SERVER_TO_CLIENT = "PUT SOME OTHER BYTES".getBytes();
 
+    private static final int CHANNEL_IN_MHZ = 2412;
+
     private boolean mIsSecurityOpen;
     private boolean mUsePmk;
     private boolean mIsPublish;
     private boolean mIsAcceptAny;
+    private boolean mForceChannel;
     private Thread mClientServerThread;
     private ConnectivityManager mCm;
     private CallbackUtils.NetworkCb mNetworkCb;
@@ -95,13 +99,14 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
     private static int sSDKLevel = android.os.Build.VERSION.SDK_INT;
 
     public DataPathInBandTestCase(Context context, boolean isSecurityOpen, boolean isPublish,
-            boolean isUnsolicited, boolean usePmk, boolean acceptAny) {
+            boolean isUnsolicited, boolean usePmk, boolean acceptAny, boolean forceChannel) {
         super(context, isUnsolicited, false);
 
         mIsSecurityOpen = isSecurityOpen;
         mUsePmk = usePmk;
         mIsPublish = isPublish;
         mIsAcceptAny = acceptAny;
+        mForceChannel = forceChannel;
     }
 
     @Override
@@ -182,6 +187,15 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
                 nsBuilder.setPskPassphrase(PASSPHRASE);
             }
         }
+        if (mForceChannel) {
+            nsBuilder.setChannelInMhz(CHANNEL_IN_MHZ, true);
+            WifiAwareNetworkSpecifier ns = nsBuilder.build();
+            if (ns.getChannelInMhz() != CHANNEL_IN_MHZ || !ns.isChannelRequired()) {
+                Log.e(TAG, "executeTestSubscriber: channel configure for data-path is not match");
+                return false;
+            }
+        }
+
         NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
                 NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
                 nsBuilder.build()).build();
@@ -214,14 +228,40 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));
         if (DBG) Log.d(TAG, "executeTestSubscriber: network request granted - AVAILABLE");
 
-        if (!mIsSecurityOpen) {
-            if (!(info.second.getTransportInfo() instanceof WifiAwareNetworkInfo)) {
+        if (!(info.second.getTransportInfo() instanceof WifiAwareNetworkInfo)) {
+            setFailureReason(mContext.getString(R.string.aware_status_network_failed));
+            Log.e(TAG, "executeTestSubscriber: did not get WifiAwareNetworkInfo from peer!?");
+            return false;
+        }
+        WifiAwareNetworkInfo peerAwareInfo =
+                (WifiAwareNetworkInfo) info.second.getTransportInfo();
+        StringBuilder builder = new StringBuilder();
+        for (WifiAwareChannelInfo channelInfo : peerAwareInfo.getChannelInfos()) {
+            builder.append(channelInfo.toString());
+        }
+        if (DBG) Log.d(TAG, "executeTestSubscriber: channelInfo:" + builder.toString());
+
+        if (mForceChannel) {
+            if (peerAwareInfo.getChannelInfos().size() != 1) {
                 setFailureReason(mContext.getString(R.string.aware_status_network_failed));
-                Log.e(TAG, "executeTestSubscriber: did not get WifiAwareNetworkInfo from peer!?");
+                Log.e(TAG, "executeTestSubscriber: number of channel info is incorrect");
                 return false;
             }
-            WifiAwareNetworkInfo peerAwareInfo =
-                    (WifiAwareNetworkInfo) info.second.getTransportInfo();
+            WifiAwareChannelInfo channelInfo = peerAwareInfo.getChannelInfos().get(0);
+            if (channelInfo.getChannelFreqInMhz() != CHANNEL_IN_MHZ) {
+                setFailureReason(mContext.getString(R.string.aware_status_network_failed));
+                Log.e(TAG, "executeTestSubscriber: channel freq is not match the request");
+                return false;
+            }
+            if (DBG) {
+                Log.d(TAG, "executeTestSubscriber: ChannelFreqInMhz="
+                        + channelInfo.getChannelFreqInMhz()
+                        + " ChannelBandWidth=" + channelInfo.getChannelBandwidth()
+                        + " NumSpatialStreams=" + channelInfo.getNumSpatialStreams());
+            }
+        }
+
+        if (!mIsSecurityOpen) {
             Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
             int peerPort = peerAwareInfo.getPort();
             int peerTransportProtocol = peerAwareInfo.getTransportProtocol();
@@ -384,6 +424,14 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
                 nsBuilder.setPskPassphrase(PASSPHRASE);
             }
             nsBuilder.setPort(port).setTransportProtocol(6); // 6 == TCP
+        }
+        if (mForceChannel) {
+            nsBuilder.setChannelInMhz(CHANNEL_IN_MHZ, true);
+            WifiAwareNetworkSpecifier ns = nsBuilder.build();
+            if (ns.getChannelInMhz() != CHANNEL_IN_MHZ || !ns.isChannelRequired()) {
+                Log.e(TAG, "executeTestSubscriber: channel configure for data-path is not match");
+                return false;
+            }
         }
         NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
                 NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
