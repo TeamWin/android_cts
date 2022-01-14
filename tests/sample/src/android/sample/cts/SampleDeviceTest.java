@@ -19,6 +19,11 @@ import android.sample.SampleDeviceActivity;
 import android.test.ActivityInstrumentationTestCase2;
 
 /**
+ * WARNING: This sample test is out of date. Newer tests should be written using
+ * androidx testing libraries. See SampleJUnit4DeviceTest.java
+ *
+ * TODO(b/211678773): This test can be probably removed.
+ *
  * A simple compatibility test which tests the SharedPreferences API.
  *
  * This test uses {@link android.test.ActivityInstrumentationTestCase2} to instrument the
