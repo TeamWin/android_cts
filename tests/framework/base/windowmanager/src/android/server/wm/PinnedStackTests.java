@@ -107,8 +107,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteCallback;
-import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.SizeInfo;
@@ -450,7 +450,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testAutoEnterPictureInPictureOnUserLeaveHintWhenPipRequestedNotOverridden()
             {
         // Launch a test activity so that we're not over home
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         // Launch the PIP activity that enters PIP on user leave hint, not on PIP requested
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT, "true"));
@@ -1248,7 +1248,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testDisplayMetricsPinUnpin() {
         separateTestJournal();
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         final int defaultWindowingMode = mWmState
                 .getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
         final SizeInfo initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY);
@@ -1282,14 +1282,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testAutoPipAllowedBypassesExplicitEnterPip() {
         // Launch a test activity so that we're not over home.
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         // Launch the PIP activity and set its pip params to allow auto-pip.
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
         assertPinnedStackDoesNotExist();
 
         // Launch a new activity and ensure that there is a pinned stack.
-        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
@@ -1302,7 +1302,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotExist();
 
         // Launch another and ensure that there is a pinned stack.
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
