@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.decoder.cts;
 
 import static junit.framework.TestCase.assertTrue;
 
 import static org.junit.Assert.fail;
 
-import android.media.cts.R;
+import android.media.decoder.cts.R;
 
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaFormat;
+import android.media.cts.MediaCodecTunneledPlayer;
+import android.media.cts.MediaHeavyPresubmitTest;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
