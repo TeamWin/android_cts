@@ -90,6 +90,7 @@ import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
 import android.media.tv.tuner.frontend.FrontendStatus;
 import android.media.tv.tuner.frontend.FrontendStatus.Atsc3PlpTuningInfo;
+import android.media.tv.tuner.frontend.FrontendStatusReadiness;
 import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
 import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
@@ -550,6 +551,60 @@ public class TunerTest {
                         break;
                 }
             }
+            tuner.close();
+            tuner = null;
+        }
+    }
+
+    @Test
+    public void testFrontendStatusReadiness() throws Exception {
+        // Test w/o active frontend
+        try {
+            int[] caps = {0};
+            FrontendStatusReadiness[] readiness = mTuner.getFrontendStatusReadiness(caps);
+            if (TunerVersionChecker.isHigherOrEqualVersionTo(
+                        TunerVersionChecker.TUNER_VERSION_2_0)) {
+                fail("Get Frontend Status Readiness should throw IllegalStateException.");
+            } else {
+                assertNull(readiness);
+            }
+        } catch (IllegalStateException e) {
+            // pass
+        }
+
+        List<Integer> ids = mTuner.getFrontendIds();
+        if (ids == null)
+            return;
+        assertFalse(ids.isEmpty());
+
+        for (int id : ids) {
+            Tuner tuner = new Tuner(mContext, null, 100);
+            FrontendInfo info = tuner.getFrontendInfoById(id);
+            int res = tuner.tune(createFrontendSettings(info));
+
+            int[] statusCapabilities = info.getStatusCapabilities();
+            assertNotNull(statusCapabilities);
+            FrontendStatusReadiness[] readiness =
+                    tuner.getFrontendStatusReadiness(statusCapabilities);
+            if (TunerVersionChecker.isHigherOrEqualVersionTo(
+                        TunerVersionChecker.TUNER_VERSION_2_0)) {
+                assertNotNull(readiness);
+                assertEquals(readiness.length, statusCapabilities.length);
+                for (int i = 0; i < readiness.length; i++) {
+                    assertEquals(readiness[i].getStatusType(), statusCapabilities[i]);
+                    int r = readiness[i].getStatusReadiness();
+                    if (r == FrontendStatusReadiness.FRONTEND_STATUS_READINESS_UNAVAILABLE
+                            || r == FrontendStatusReadiness.FRONTEND_STATUS_READINESS_UNSTABLE
+                            || r == FrontendStatusReadiness.FRONTEND_STATUS_READINESS_STABLE) {
+                        // pass
+                    } else {
+                        fail("Get Frontend Status Readiness returned wrong readiness " + r);
+                    }
+                }
+            } else {
+                assertNull(readiness);
+            }
+            tuner.cancelTuning();
             tuner.close();
             tuner = null;
         }
