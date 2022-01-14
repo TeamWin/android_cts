@@ -37,6 +37,8 @@ import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertFailsWith
@@ -51,6 +53,14 @@ class SafetyCenterManagerTest {
         Intent(ACTION_SAFETY_CENTER).addFlags(FLAG_ACTIVITY_NEW_TASK),
         FLAG_IMMUTABLE
     )
+
+    @Before
+    @After
+    fun clearSafetyCenterDataBetweenTest() {
+        runWithShellPermissionIdentity {
+            safetyCenterManager.clearSafetyCenterData()
+        }
+    }
 
     @Test
     fun getLastSafetyCenterUpdate_noUpdate_returnsNull() {
@@ -118,10 +128,11 @@ class SafetyCenterManagerTest {
 
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_SAFETY_CENTER_ENABLED,
-                    /* value = */ true.toString(),
-                    /* makeDefault = */ false)
+                DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_SAFETY_CENTER_ENABLED,
+                /* value = */ true.toString(),
+                /* makeDefault = */ false
+            )
         }
 
         val isSafetyCenterEnabled = callWithShellPermissionIdentity {
@@ -139,10 +150,11 @@ class SafetyCenterManagerTest {
 
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_SAFETY_CENTER_ENABLED,
-                    /* value = */ false.toString(),
-                    /* makeDefault = */ false)
+                DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_SAFETY_CENTER_ENABLED,
+                /* value = */ false.toString(),
+                /* makeDefault = */ false
+            )
         }
 
         val isSafetyCenterEnabled = callWithShellPermissionIdentity {
@@ -160,10 +172,11 @@ class SafetyCenterManagerTest {
 
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_SAFETY_CENTER_ENABLED,
-                    /* value = */ true.toString(),
-                    /* makeDefault = */ false)
+                DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_SAFETY_CENTER_ENABLED,
+                /* value = */ true.toString(),
+                /* makeDefault = */ false
+            )
         }
 
         val isSafetyCenterEnabled = callWithShellPermissionIdentity {
@@ -181,10 +194,11 @@ class SafetyCenterManagerTest {
 
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_SAFETY_CENTER_ENABLED,
-                    /* value = */ false.toString(),
-                    /* makeDefault = */ false)
+                DeviceConfig.NAMESPACE_PRIVACY,
+                PROPERTY_SAFETY_CENTER_ENABLED,
+                /* value = */ false.toString(),
+                /* makeDefault = */ false
+            )
         }
 
         val isSafetyCenterEnabled = callWithShellPermissionIdentity {
@@ -202,10 +216,13 @@ class SafetyCenterManagerTest {
     }
 
     private fun deviceSupportsSafetyCenter() =
-            context.resources.getBoolean(Resources.getSystem().getIdentifier(
-                    "config_enableSafetyCenter",
-                    "bool",
-                    "android"))
+        context.resources.getBoolean(
+            Resources.getSystem().getIdentifier(
+                "config_enableSafetyCenter",
+                "bool",
+                "android"
+            )
+        )
 
     companion object {
         /** Name of the flag that determines whether SafetyCenter is enabled. */
