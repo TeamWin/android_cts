@@ -19,7 +19,6 @@ package android.companion.cts.core
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.Manifest.permission.REQUEST_COMPANION_SELF_MANAGED
 import android.companion.AssociationRequest
-import android.companion.CompanionDeviceManager
 import android.companion.cts.common.BACKGROUND_THREAD_EXECUTOR
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
 import android.companion.cts.common.MAC_ADDRESS_A
@@ -149,9 +148,5 @@ class AssociationsChangedListenerTest : CoreTestBase() {
 
         val associationInfoFromCallback = callbackInvocation.associationInfo
         assertEquals(associationInfoFromListener, associationInfoFromCallback)
-    }
-
-    companion object {
-        val NO_OP_LISTENER = CompanionDeviceManager.OnAssociationsChangedListener { }
     }
 }
