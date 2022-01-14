@@ -29,6 +29,13 @@ import java.util.Arrays;
 import java.util.Random;
 
 /**
+ * WARNING: This sample test is out of date. Newer tests should be written using
+ * androidx testing libraries. See SampleJUnit4DeviceTest.java
+ *
+ * TODO(b/211678773): Update the test to use androidx testing libraries.
+ *
+ * A simple compatibility test which includes results in the report.
+ *
  * A simple compatibility test which includes results in the report.
  *
  * This test measures the time taken to run a workload and adds in the report.
