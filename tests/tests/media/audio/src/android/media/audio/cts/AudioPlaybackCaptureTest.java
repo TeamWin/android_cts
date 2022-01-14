@@ -40,6 +40,7 @@ import android.media.AudioPlaybackCaptureConfiguration;
 import android.media.AudioRecord;
 import android.media.cts.MediaProjectionActivity;
 import android.media.MediaPlayer;
+import android.media.audio.cts.R;
 import android.media.projection.MediaProjection;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.Handler;

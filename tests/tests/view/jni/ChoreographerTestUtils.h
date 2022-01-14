@@ -69,10 +69,10 @@ struct ExtendedCallback : Callback {
               : vsyncId(AChoreographerFrameCallbackData_getFrameTimelineVsyncId(callbackData,
                                                                                 index)),
                 expectedPresentTime(
-                        AChoreographerFrameCallbackData_getFrameTimelineExpectedPresentTime(
+                        AChoreographerFrameCallbackData_getFrameTimelineExpectedPresentTimeNanos(
                                 callbackData, index)),
-                deadline(AChoreographerFrameCallbackData_getFrameTimelineDeadline(callbackData,
-                                                                                  index)) {}
+                deadline(AChoreographerFrameCallbackData_getFrameTimelineDeadlineNanos(callbackData,
+                                                                                       index)) {}
 
         const int64_t vsyncId{-1};
         const int64_t expectedPresentTime{-1};

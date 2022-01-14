@@ -160,6 +160,8 @@
         <map code="0X00ED" name="1em" /> <!-- á -->
         <map code="0X00ED" name="1em" /> <!-- í -->
 
+        <map code="0X00F6" name="1em" /> <!-- ö -->
+
         <map code="0X0101" name="1em" /> <!-- ā -->
 
         <map code="0X016B" name="1em" /> <!-- ū -->

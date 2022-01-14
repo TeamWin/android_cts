@@ -159,8 +159,11 @@ public class AudioEffectTest extends PostProcTestBase {
         MediaPlayer mp = new MediaPlayer();
         assertNotNull("could not create mediaplayer", mp);
         AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(R.raw.testmp3);
-        mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        afd.close();
+        try {
+            mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        } finally {
+            afd.close();
+        }
         getEffect(AudioEffect.EFFECT_TYPE_EQUALIZER, mp.getAudioSessionId());
         try {
             mEffect.setEnabled(true);
@@ -185,10 +188,13 @@ public class AudioEffectTest extends PostProcTestBase {
 
             mError = 0;
             AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(R.raw.testmp3);
-            mMediaPlayer.setDataSource(afd.getFileDescriptor(),
-                                       afd.getStartOffset(),
-                                       afd.getLength());
-            afd.close();
+            try {
+                mMediaPlayer.setDataSource(afd.getFileDescriptor(),
+                                           afd.getStartOffset(),
+                                           afd.getLength());
+            } finally {
+                afd.close();
+            }
             getEffect(AudioEffect.EFFECT_TYPE_PRESET_REVERB, 0);
             try {
                 try {

@@ -19,6 +19,7 @@ package android.photopicker.cts.util;
 import static android.os.SystemProperties.getBoolean;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+import static android.provider.MediaStore.PickerMediaColumns;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -32,8 +33,6 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.provider.CloudMediaProviderContract;
-import android.provider.MediaStore;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -65,8 +64,7 @@ public class PhotoPickerAssertionsUtils {
 
     public static void assertRedactedReadOnlyAccess(Uri uri) throws Exception {
         assertThat(uri).isNotNull();
-        final String[] projection = new String[]{MediaStore.Files.FileColumns.TITLE,
-            MediaStore.Files.FileColumns.MEDIA_TYPE};
+        final String[] projection = new String[]{ PickerMediaColumns.MIME_TYPE };
         final Context context = InstrumentationRegistry.getTargetContext();
         final ContentResolver resolver = context.getContentResolver();
         try (Cursor c = resolver.query(uri, projection, null, null)) {
@@ -75,7 +73,7 @@ public class PhotoPickerAssertionsUtils {
 
             if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
                 final String mimeType = c.getString(c.getColumnIndex(
-                                CloudMediaProviderContract.MediaColumns.MIME_TYPE));
+                                PickerMediaColumns.MIME_TYPE));
                 if (mimeType.startsWith("image")) {
                     assertImageRedactedReadOnlyAccess(uri, resolver);
                 } else if (mimeType.startsWith("video")) {

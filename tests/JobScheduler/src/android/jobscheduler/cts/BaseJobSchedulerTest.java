@@ -15,6 +15,8 @@
  */
 package android.jobscheduler.cts;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import android.annotation.CallSuper;
 import android.annotation.TargetApi;
 import android.app.Instrumentation;
@@ -228,21 +230,17 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         long startTime = SystemClock.elapsedRealtime();
 
         // Wait for the battery update to be processed by job scheduler before proceeding.
-        int curSeq;
-        boolean curCharging;
-        do {
-            Thread.sleep(50);
-            curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd jobscheduler get-battery-seq").trim());
-            curCharging = Boolean.parseBoolean(SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd jobscheduler get-battery-charging").trim());
-            if (curSeq >= seq && curCharging == plugged) {
-                return;
-            }
-        } while ((SystemClock.elapsedRealtime() - startTime) < 5000);
-
-        fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq
-                + ", expected charging=" + plugged + " curCharging=" + curCharging);
+        waitUntil("JobScheduler didn't update charging status to " + plugged, 15 /* seconds */,
+                () -> {
+                    int curSeq;
+                    boolean curCharging;
+                    curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
+                            "cmd jobscheduler get-battery-seq").trim());
+                    curCharging = Boolean.parseBoolean(
+                            SystemUtil.runShellCommand(getInstrumentation(),
+                                    "cmd jobscheduler get-battery-charging").trim());
+                    return curSeq >= seq && curCharging == plugged;
+                });
     }
 
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */

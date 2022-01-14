@@ -58,7 +58,6 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
@@ -69,7 +68,6 @@ import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
-import android.util.DisplayMetrics;
 import android.view.Display;
 
 import org.junit.Test;
@@ -503,11 +501,10 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         assertEquals("The last reported size should be the same as the one from onCreate",
                 reportedSizes, onCreateConfigInfo.sizeInfo);
 
-        final Display display = mDm.getDisplay(Display.DEFAULT_DISPLAY);
-        final Point expectedRealDisplaySize = new Point();
-        display.getRealSize(expectedRealDisplaySize);
-
-        final int expectedRotation = display.getRotation();
+        final WindowManagerState.DisplayContent dc = mWmState.getDisplay(Display.DEFAULT_DISPLAY);
+        final Point expectedRealDisplaySize =
+                new Point(dc.getDisplayRect().width(), dc.getDisplayRect().height());
+        final int expectedRotation = mWmState.getRotation();
         assertEquals("The activity should get the final display rotation in onCreate",
                 expectedRotation, onCreateConfigInfo.rotation);
         assertEquals("The application should get the final display rotation in onCreate",
@@ -526,10 +523,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 appConfigInfo.sizeInfo.displayWidth > appConfigInfo.sizeInfo.displayHeight);
         assertEquals("The app display metrics must be landscape", isLandscape,
                 appConfigInfo.sizeInfo.metricsWidth > appConfigInfo.sizeInfo.metricsHeight);
-
-        final DisplayMetrics globalMetrics = Resources.getSystem().getDisplayMetrics();
         assertEquals("The display metrics of system resources must be landscape",
-                new Point(globalMetrics.widthPixels, globalMetrics.heightPixels),
+                new Point(dc.getAppRect().width(), dc.getAppRect().height()),
                 new Point(globalSizeInfo.metricsWidth, globalSizeInfo.metricsHeight));
     }
 

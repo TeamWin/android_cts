@@ -112,10 +112,18 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         if (!mHasManagedUserFeature) {
             return;
         }
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartMainActivityByComponent");
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartNonMainActivityByComponent");
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartNotExportedActivityByComponent");
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityInOtherPackageByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartMainActivityByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartMainActivityByComponentWithStartCrossProfileActivitiesPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartNonMainActivityByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartNonMainActivityByComponentWithStartCrossProfileActivitiesPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCannotStartNotExportedActivityByComponent");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCannotStartActivityInOtherPackageByComponent");
     }
 
     @LargeTest
@@ -138,10 +146,16 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
         if (!mHasManagedUserFeature) {
             return;
         }
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCannotStartActivityByIntentWithNoPermissions");
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartActivityByIntentWithInteractAcrossProfilesPermission");
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartActivityByIntentWithInteractAcrossUsersPermission");
-        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS, "testCanStartActivityByIntentWithInteractAcrossUsersFullPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCannotStartActivityByIntentWithNoPermissions");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartActivityByIntentWithInteractAcrossProfilesPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCannotStartActivityByIntentWithStartCrossProfileActivitiesPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartActivityByIntentWithInteractAcrossUsersPermission");
+        verifyCrossProfileAppsApi(mProfileId, mPrimaryUserId, START_ACTIVITY_TEST_CLASS,
+                "testCanStartActivityByIntentWithInteractAcrossUsersFullPermission");
     }
 
     @LargeTest

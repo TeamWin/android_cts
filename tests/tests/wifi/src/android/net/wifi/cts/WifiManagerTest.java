@@ -1202,6 +1202,39 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify {@link WifiManager#setSsidsDoNotBlocklist(Set)} can be called with sufficient
+     * privilege.
+     */
+    public void testGetAndSetSsidsDoNotBlocklist() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        Set<WifiSsid> ssids = new ArraySet<>();
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSsidsDoNotBlocklist(ssids));
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> assertEquals("Ssids should match", ssids,
+                        mWifiManager.getSsidsDoNotBlocklist()));
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> assertEquals("Should equal to empty set",
+                        Collections.EMPTY_SET,
+                        mWifiManager.getSsidsDoNotBlocklist()));
+
+        try {
+            mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET);
+            fail("Expected SecurityException when called without permission");
+        } catch (SecurityException e) {
+            // expect the exception
+        }
+    }
+
+    /**
      * Verify that {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} throws a
      * SecurityException when called by a normal app.
      */
@@ -4419,6 +4452,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (isSupportedWhenWifiDisabled) {
             assertTrue(isSupportedWhenWifiEnabled);
         }
+    }
+
+    /**
+     * Tests {@link WifiManager#isTrustOnFirstUseSupported()} does not crash.
+     */
+    // TODO(b/196180536): Wait for T SDK finalization before changing
+    // to `@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)`
+    @SdkSuppress(minSdkVersion = 31)
+    public void testIsTrustOnFirstUseSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isTrustOnFirstUseSupported();
     }
 
     public class TestCoexCallback extends WifiManager.CoexCallback {

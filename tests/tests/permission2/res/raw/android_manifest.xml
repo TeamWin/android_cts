@@ -2785,6 +2785,10 @@
     <permission android:name="android.permission.CONFIGURE_INTERACT_ACROSS_PROFILES"
         android:protectionLevel="signature|role" />
 
+    <!-- @SystemApi @hide Allows starting activities across profiles in the same profile group. -->
+    <permission android:name="android.permission.START_CROSS_PROFILE_ACTIVITIES"
+        android:protectionLevel="signature|role" />
+
     <!-- @SystemApi @hide Allows an application to call APIs that allow it to query and manage
          users on the device. This permission is not available to
          third party applications. -->
@@ -5316,6 +5320,12 @@
     <!-- @SystemApi Allows an application to control keyguard features like secure notifications.
          @hide -->
     <permission android:name="android.permission.CONTROL_KEYGUARD_SECURE_NOTIFICATIONS"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Allows an application to manage weak escrow token on the device. This permission
+         is not available to third party applications.
+         @hide -->
+    <permission android:name="android.permission.MANAGE_WEAK_ESCROW_TOKEN"
         android:protectionLevel="signature|privileged" />
 
     <!-- Allows an application to listen to trust changes.  Only allowed for system processes.
