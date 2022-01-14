@@ -23,10 +23,12 @@ import android.companion.cts.common.MAC_ADDRESS_B
 import android.companion.cts.common.MAC_ADDRESS_C
 import android.companion.cts.common.assertAssociations
 import android.companion.cts.common.assertEmpty
+import android.companion.cts.common.runShellCommand
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
@@ -204,6 +206,30 @@ class RetrieveAssociationsTest : CoreTestBase() {
         assertNotEquals(
             actual = associationsAfterUpdate.first(),
             illegal = associationInfo
+        )
+    }
+
+    @Test
+    fun test_associationChanges_persistCorrectly() {
+        targetApp.associate(MAC_ADDRESS_A)
+
+        // update the association
+        withShellPermissionIdentity(Manifest.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE) {
+            cdm.startObservingDevicePresence(MAC_ADDRESS_A.toString())
+        }
+
+        val associationsBeforeClearCache = cdm.myAssociations
+        assertEquals(1, associationsBeforeClearCache.size)
+
+        // drop the in-memory association cache of the cdm
+        // and force it to re-read from persistent storage
+        instrumentation.runShellCommand("cmd companiondevice clear-association-memory-cache")
+
+        val associationsAfterClearCache = cdm.myAssociations
+        assertEquals(1, associationsAfterClearCache.size)
+        assertContentEquals(
+            actual = associationsAfterClearCache,
+            expected = associationsBeforeClearCache
         )
     }
 }
