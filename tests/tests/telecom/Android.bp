@@ -32,6 +32,7 @@ filegroup {
     ],
     path: "aidl/",
 }
+
 filegroup {
     name: "third-pty-dialer-app-srcs",
     srcs: [
@@ -41,6 +42,7 @@ filegroup {
     ],
     path: "ThirdPtyInCallServiceTestApp/",
 }
+
 filegroup {
     name: "third-pty-dialer-app-aidl",
     srcs: [
@@ -76,6 +78,7 @@ android_test {
         "Api29InCallServiceTestApp/**/I*.aidl",
         "ThirdPtyDialerTestApp/**/*.java",
         "ThirdPtyDialerTestAppTwo/**/*.java",
+        "CarModeTestAppSelfManaged/**/*.java",
         "CarModeTestAppTwo/**/*.java",
     ],
     exclude_srcs: [
