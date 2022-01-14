@@ -26,6 +26,8 @@ import android.hardware.radio.modem.RadioState;
 import android.os.RemoteException;
 import android.util.Log;
 
+import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
+
 public class IRadioModemImpl extends IRadioModem.Stub {
     private static final String TAG = "MRMDM";
 
@@ -38,6 +40,8 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     private final MockModemService mService;
     private IRadioModemResponse mRadioModemResponse;
     private IRadioModemIndication mRadioModemIndication;
+
+    private int mForceRadioPowerError = -1;
 
     public IRadioModemImpl(MockModemService service) {
         Log.d(TAG, "Instantiated");
@@ -268,10 +272,17 @@ public class IRadioModemImpl extends IRadioModem.Stub {
             boolean forEmergencyCall,
             boolean preferredForEmergencyCall) {
         Log.d(TAG, "setRadioPower");
+        RadioResponseInfo rsp = null;
 
         // TODO: cache value
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial);
+        // Check if the error response needs to be modified
+        if (mForceRadioPowerError != -1) {
+            rsp = mService.makeSolRsp(serial, mForceRadioPowerError);
+        } else {
+            rsp = mService.makeSolRsp(serial);
+        }
+
         try {
             mRadioModemResponse.setRadioPowerResponse(rsp);
         } catch (RemoteException ex) {
@@ -279,12 +290,14 @@ public class IRadioModemImpl extends IRadioModem.Stub {
         }
 
         // TODO: The below should be handled by Helper function
-        if (powerOn) {
-            radioStateChanged(RadioState.ON);
-            mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
-        } else {
-            radioStateChanged(RadioState.OFF);
-            mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
+        if (rsp.error == RadioError.NONE) {
+            if (powerOn) {
+                radioStateChanged(RadioState.ON);
+                mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
+            } else {
+                radioStateChanged(RadioState.OFF);
+                mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
+            }
         }
     }
 
@@ -345,6 +358,16 @@ public class IRadioModemImpl extends IRadioModem.Stub {
         } else {
 
             Log.e(TAG, "null mRadioModemIndication");
+        }
+    }
+
+    public void forceErrorResponse(int requestId, int error) {
+        switch (requestId) {
+            case RIL_REQUEST_RADIO_POWER:
+                mForceRadioPowerError = error;
+                break;
+            default:
+                break;
         }
     }
 }
