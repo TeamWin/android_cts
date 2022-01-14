@@ -427,10 +427,14 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectImeInvisible(TIMEOUT);
 
             // Expect fallback input connection started and keyboard invisible after activity
-            // focused.
-            final ImeEvent onStart = expectEvent(stream,
-                    event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
-            assertTrue(onStart.getEnterState().hasFallbackInputConnection());
+            // focused
+            // unless avoidable keyboard startup is desired,
+            // in which case, no fallback will be started.
+            if (!isPreventImeStartup()) {
+                final ImeEvent onStart = expectEvent(stream,
+                        event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+                assertTrue(onStart.getEnterState().hasFallbackInputConnection());
+            }
             TestUtils.waitOnMainUntil(() -> testActivity.hasWindowFocus(), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.GONE, TIMEOUT);

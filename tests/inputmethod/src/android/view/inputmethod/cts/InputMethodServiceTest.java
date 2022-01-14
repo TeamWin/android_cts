@@ -502,6 +502,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         try (MockImeSession imeSession = MockImeSession.create(
                 mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
                 new ImeSettings.Builder().setVerifyGetDisplayOnCreate(true))) {
+            ensureImeRunning();
             final ImeEventStream stream = imeSession.openEventStream();
 
             // Verify if getDisplay doesn't throw exception before InputMethodService's
@@ -514,6 +515,13 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             // Verify if getDisplay doesn't throw exception
             assertTrue(expectCommand(stream, imeSession.callVerifyGetDisplay(), TIMEOUT)
                     .getReturnBooleanValue());
+        }
+    }
+
+    /** Explicitly start-up the IME process if it would have been prevented. */
+    protected void ensureImeRunning() {
+        if (isPreventImeStartup()) {
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 

@@ -58,6 +58,8 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -80,6 +82,13 @@ public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.InputConnectionBlockingMethodTest";
+
+    @Before
+    public void setUp() {
+        // These tests do not work with the modified binding behavior introduced with
+        // the config_preventImeStartupUnlessTextEditor option.
+        Assume.assumeFalse(isPreventImeStartup());
+    }
 
     private static String getTestMarker() {
         return TEST_MARKER_PREFIX + "/"  + SystemClock.elapsedRealtimeNanos();

@@ -73,12 +73,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.lang.IllegalArgumentException
 import java.util.Locale
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import kotlin.collections.ArrayList
 
 @MediumTest
 @RunWith(AndroidJUnit4::class)
@@ -410,6 +408,7 @@ class SpellCheckerTest : EndToEndImeTestBase() {
 
     @Test
     fun suppressesSpellChecker() {
+        Assume.assumeFalse(isPreventImeStartup())
         val configuration = MockSpellCheckerConfiguration.newBuilder()
                 .addSuggestionRules(
                         MockSpellCheckerProto.SuggestionRule.newBuilder()
