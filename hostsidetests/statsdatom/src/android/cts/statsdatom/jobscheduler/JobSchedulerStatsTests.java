@@ -83,7 +83,7 @@ public class JobSchedulerStatsTests extends DeviceTestCase implements IBuildRece
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSet, data, 0,
                 atom -> atom.getScheduledJobStateChanged().getState().getNumber());
 
         for (StatsLog.EventMetricData e : data) {
@@ -112,7 +112,7 @@ public class JobSchedulerStatsTests extends DeviceTestCase implements IBuildRece
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurred(stateSet, data,
                 atom -> atom.getScheduledJobStateChanged().getState().getNumber());
 
         for (StatsLog.EventMetricData e : data) {
