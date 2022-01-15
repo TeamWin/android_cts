@@ -29,9 +29,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -534,7 +532,7 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         List<Set<Integer>> directionList = Arrays.asList(directionSet);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        AtomTestUtils.assertStatesOccurred(directionList, data, 0,
+        AtomTestUtils.assertStatesOccurredInOrder(directionList, data, 0,
                 atom -> atom.getMediametricsAaudiostreamReported().getDirection().getNumber());
 
         for (StatsLog.EventMetricData event : data) {

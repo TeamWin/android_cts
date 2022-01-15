@@ -16,6 +16,7 @@
 
 package android.companion.cts.core
 
+import android.Manifest
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.MAC_ADDRESS_B
@@ -26,7 +27,9 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 
 /**
@@ -179,5 +182,28 @@ class RetrieveAssociationsTest : CoreTestBase() {
                         targetApp.packageName to MAC_ADDRESS_A,
                         testApp.packageName to MAC_ADDRESS_B
                 ))
+    }
+
+    @Test
+    fun test_ObservePresence_updatesAssociationInfo() {
+        targetApp.associate(MAC_ADDRESS_A)
+
+        // Ensure the new association is stored in the CDM
+        val associationsBeforeChange = cdm.myAssociations
+        assertEquals(1, associationsBeforeChange.size)
+        val associationInfo = cdm.myAssociations.first()
+
+        // update the underlying association
+        withShellPermissionIdentity(Manifest.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE) {
+            cdm.startObservingDevicePresence(MAC_ADDRESS_A.toString())
+        }
+
+        // Assert the association change was reflected
+        val associationsAfterUpdate = cdm.myAssociations
+        assertEquals(1, associationsAfterUpdate.size)
+        assertNotEquals(
+            actual = associationsAfterUpdate.first(),
+            illegal = associationInfo
+        )
     }
 }

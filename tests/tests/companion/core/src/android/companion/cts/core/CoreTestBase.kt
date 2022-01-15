@@ -1,6 +1,7 @@
 package android.companion.cts.core
 
 import android.annotation.CallSuper
+import android.companion.CompanionDeviceManager
 import android.companion.cts.common.AppHelper
 import android.companion.cts.common.TestBase
 import kotlin.test.assertTrue
@@ -19,4 +20,12 @@ open class CoreTestBase : TestBase() {
             assertTrue("Test app $packageName is not installed") { isInstalled() }
         }
     }
+
+    protected val NO_OP_LISTENER: CompanionDeviceManager.OnAssociationsChangedListener =
+        CompanionDeviceManager.OnAssociationsChangedListener { }
+
+    protected val NO_OP_CALLBACK: CompanionDeviceManager.Callback =
+        object : CompanionDeviceManager.Callback() {
+            override fun onFailure(error: CharSequence?) = Unit
+        }
 }

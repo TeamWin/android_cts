@@ -17,6 +17,7 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -36,6 +37,7 @@ import java.util.Locale;
 /**
  * Tests for APK signature verification during installation.
  */
+@Presubmit
 public class PkgInstallSignatureVerificationTest extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";

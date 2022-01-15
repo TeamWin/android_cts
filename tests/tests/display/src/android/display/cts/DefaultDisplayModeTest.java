@@ -16,6 +16,7 @@
 
 package android.display.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -24,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.content.Context;
+import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,7 +70,7 @@ public class DefaultDisplayModeTest {
         mDisplayManager = context.getSystemService(DisplayManager.class);
         mDefaultDisplay = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
         cacheOriginalUserPreferredModeSetting();
-        mDisplayManager.clearUserPreferredDisplayMode();
+        mDisplayManager.clearGlobalUserPreferredDisplayMode();
     }
 
     @After
@@ -81,13 +83,13 @@ public class DefaultDisplayModeTest {
         assertThrows(
                 "The mode is invalid. Width, height and refresh rate should be positive.",
                 IllegalArgumentException.class,
-                () -> mDisplayManager.setUserPreferredDisplayMode(
+                () -> mDisplayManager.setGlobalUserPreferredDisplayMode(
                         new Display.Mode(-1, 1080, 120.0f)));
 
         assertThrows(
                 "The mode is invalid. Width, height and refresh rate should be positive.",
                 IllegalArgumentException.class,
-                () -> mDisplayManager.setUserPreferredDisplayMode(
+                () -> mDisplayManager.setGlobalUserPreferredDisplayMode(
                         new Display.Mode(720, 1080, 0.0f)));
     }
 
@@ -106,7 +108,7 @@ public class DefaultDisplayModeTest {
         Handler handler = new Handler(Looper.getMainLooper());
         mDisplayManager.registerDisplayListener(listener, handler);
         try {
-            mDisplayManager.setUserPreferredDisplayMode(newDefaultMode);
+            mDisplayManager.setGlobalUserPreferredDisplayMode(newDefaultMode);
             assertTrue(listener.await());
         } finally {
             mDisplayManager.unregisterDisplayListener(listener);
@@ -116,11 +118,105 @@ public class DefaultDisplayModeTest {
         listener = new DefaultModeListener(mDefaultDisplay, initialDefaultMode.getModeId());
         mDisplayManager.registerDisplayListener(listener, handler);
         try {
-            mDisplayManager.clearUserPreferredDisplayMode();
+            mDisplayManager.clearGlobalUserPreferredDisplayMode();
             assertTrue(listener.await());
         } finally {
             mDisplayManager.unregisterDisplayListener(listener);
         }
+    }
+
+    @Test
+    public void testDisplayChangedOnSetAndClearUserPreferredDisplayModeForSpecificDevice()
+            throws Exception {
+        Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
+        assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
+
+        // Test set
+        Display.Mode initialDefaultMode = mDefaultDisplay.getDefaultMode();
+
+        Display.Mode newDefaultMode = findNonDefaultMode(mDefaultDisplay);
+        assertNotNull(newDefaultMode);
+        DefaultModeListener listener =
+                new DefaultModeListener(mDefaultDisplay, newDefaultMode.getModeId());
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(listener, handler);
+        try {
+            mDefaultDisplay.setUserPreferredDisplayMode(newDefaultMode);
+            assertTrue(listener.await());
+        } finally {
+            mDisplayManager.unregisterDisplayListener(listener);
+        }
+
+        // Test clear
+        listener = new DefaultModeListener(mDefaultDisplay, initialDefaultMode.getModeId());
+        mDisplayManager.registerDisplayListener(listener, handler);
+        try {
+            mDefaultDisplay.clearUserPreferredDisplayMode();
+            assertTrue(listener.await());
+        } finally {
+            mDisplayManager.unregisterDisplayListener(listener);
+        }
+    }
+
+    @Test
+    public void testSetUserPreferredDisplayModeForSpecificDevice() {
+        Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
+        assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
+
+        // Set a display mode which is different from default display mode
+        Display.Mode newDefaultMode = findNonDefaultMode(mDefaultDisplay);
+        assertNotNull(newDefaultMode);
+        mDefaultDisplay.setUserPreferredDisplayMode(newDefaultMode);
+        assertTrue(mDefaultDisplay.getUserPreferredDisplayMode()
+                .matches(newDefaultMode.getPhysicalWidth(),
+                        newDefaultMode.getPhysicalHeight(),
+                        newDefaultMode.getRefreshRate()));
+
+        mDefaultDisplay.clearUserPreferredDisplayMode();
+        assertNull(mDefaultDisplay.getUserPreferredDisplayMode());
+    }
+
+    @Test
+    public void testSetUserPreferredRefreshRateForSpecificDevice() {
+        Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
+        assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
+
+        // Set a refresh rate which is different from default display refresh rate
+        float refreshRate = findNonDefaultRefreshRate(mDefaultDisplay);
+        assumeTrue("Need two or more refresh rates to exercise switching.", refreshRate != 0.0f);
+
+        mDefaultDisplay.setUserPreferredDisplayMode(
+                new Display.Mode.Builder().setRefreshRate(refreshRate).build());
+        assertNotNull(mDefaultDisplay.getUserPreferredDisplayMode());
+        assertEquals(
+                refreshRate,
+                mDefaultDisplay.getUserPreferredDisplayMode().getRefreshRate(),
+                0.00001 /* delta */);
+
+        mDefaultDisplay.clearUserPreferredDisplayMode();
+        assertNull(mDefaultDisplay.getUserPreferredDisplayMode());
+    }
+
+    @Test
+    public void testSetUserPreferredResolutionForSpecificDevice() {
+        Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
+        assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
+
+        // Set a refresh rate which is different from default display refresh rate
+        Point resolution = findNonDefaultResolution(mDefaultDisplay);
+        assumeTrue("Need two or more resolutions to exercise switching.",
+                resolution.x != -1 && resolution.y != -1);
+
+        mDefaultDisplay.setUserPreferredDisplayMode(
+                new Display.Mode.Builder().setResolution(resolution.x, resolution.y).build());
+        assertNotNull(mDefaultDisplay.getUserPreferredDisplayMode());
+        assertEquals(resolution.x,
+                mDefaultDisplay.getUserPreferredDisplayMode().getPhysicalWidth());
+        assertEquals(resolution.y,
+                mDefaultDisplay.getUserPreferredDisplayMode().getPhysicalHeight());
+
+        mDefaultDisplay.clearUserPreferredDisplayMode();
+        assertNull(mDefaultDisplay.getUserPreferredDisplayMode());
     }
 
     @Test
@@ -131,18 +227,19 @@ public class DefaultDisplayModeTest {
         // Set a display mode which is different from default display mode
         Display.Mode newDefaultMode = findNonDefaultMode(mDefaultDisplay);
         assertNotNull(newDefaultMode);
-        mDisplayManager.setUserPreferredDisplayMode(newDefaultMode);
-        assertTrue(mDisplayManager.getUserPreferredDisplayMode()
+        mDisplayManager.setGlobalUserPreferredDisplayMode(newDefaultMode);
+        assertTrue(mDisplayManager.getGlobalUserPreferredDisplayMode()
                 .matches(newDefaultMode.getPhysicalWidth(),
                         newDefaultMode.getPhysicalHeight(),
                         newDefaultMode.getRefreshRate()));
 
-        mDisplayManager.clearUserPreferredDisplayMode();
-        assertNull(mDisplayManager.getUserPreferredDisplayMode());
+        mDisplayManager.clearGlobalUserPreferredDisplayMode();
+        assertNull(mDisplayManager.getGlobalUserPreferredDisplayMode());
     }
 
     private void cacheOriginalUserPreferredModeSetting() {
-        mOriginalDisplayModeSettings = mDisplayManager.getUserPreferredDisplayMode();
+        mOriginalDisplayModeSettings =
+                mDisplayManager.getGlobalUserPreferredDisplayMode();
     }
 
     private void restoreOriginalDisplayModeSettings() {
@@ -151,9 +248,9 @@ public class DefaultDisplayModeTest {
             return;
         }
         if (mOriginalDisplayModeSettings == null) {
-            mDisplayManager.clearUserPreferredDisplayMode();
+            mDisplayManager.clearGlobalUserPreferredDisplayMode();
         } else {
-            mDisplayManager.setUserPreferredDisplayMode(mOriginalDisplayModeSettings);
+            mDisplayManager.setGlobalUserPreferredDisplayMode(mOriginalDisplayModeSettings);
         }
     }
 
@@ -164,6 +261,25 @@ public class DefaultDisplayModeTest {
             }
         }
         return null;
+    }
+
+    private float findNonDefaultRefreshRate(Display display) {
+        for (Display.Mode mode : display.getSupportedModes()) {
+            if (mode.getRefreshRate() != display.getDefaultMode().getRefreshRate()) {
+                return mode.getRefreshRate();
+            }
+        }
+        return 0.0f;
+    }
+
+    private Point findNonDefaultResolution(Display display) {
+        for (Display.Mode mode : display.getSupportedModes()) {
+            if (mode.getPhysicalWidth() != display.getDefaultMode().getPhysicalWidth()
+                    || mode.getPhysicalHeight() != display.getDefaultMode().getPhysicalHeight()) {
+                return new Point(mode.getPhysicalWidth(), mode.getPhysicalHeight());
+            }
+        }
+        return new Point(-1, -1);
     }
 
     private static class DefaultModeListener implements DisplayManager.DisplayListener {

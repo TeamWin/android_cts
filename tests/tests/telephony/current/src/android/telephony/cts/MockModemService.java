@@ -29,6 +29,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -309,5 +311,25 @@ public class MockModemService extends Service {
 
         sIRadioSimImpl.setSimPresent(slotId);
         sIRadioConfigImpl.setSimPresent(slotId);
+    }
+
+    /**
+     * Change the response error per specific RIL request
+     *
+     * @param requestId the request/response message ID
+     * @param error RIL_Errno and -1 means to disable the modifed mechanism,
+     *  back to original mock modem behavior
+     */
+    public void forceErrorResponse(int requestId, int error) {
+        Log.d(TAG, "setReturnResponseError for request:" + requestId + " ,error:" + error);
+
+        switch (requestId) {
+            case RIL_REQUEST_RADIO_POWER:
+                sIRadioModemImpl.forceErrorResponse(requestId, error);
+                break;
+            default:
+                Log.e(TAG, "request:" + requestId + " not support to change the response error");
+                break;
+        }
     }
 }

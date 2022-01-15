@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotNull;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.util.CpuFeatures;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -41,6 +42,7 @@ import java.util.Set;
 /**
  * Tests that verify installing of various split APKs from host side.
  */
+@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class SplitTests extends BaseAppSecurityTest {
     static final String PKG_NO_RESTART = "com.android.cts.norestart";
