@@ -16,7 +16,6 @@
 
 package android.telecom.cts;
 
-import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
@@ -24,13 +23,20 @@ import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
-import android.telecom.PhoneAccountHandle;
 
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.UUID;
 
 public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
+
+    // mirrors constant in PhoneAccountRegistrar called MAX_PHONE_ACCOUNT_REGISTRATIONS
+    public static final int MAX_PHONE_ACCOUNT_REGISTRATIONS = 10;
+
+    // In setUp(), setupConnectionService registers a phone account
+    // In setUp(), setupForEmergencyCalling register another phone account
+    public static final int EMERGENCY_CALL_TESTS_CLASS_OFFSET = 2;
+
+    public static final int MAX_PHONE_ACCOUNT_REGISTRATIONS_FOR_EMERGENCY_CALL_TESTS_CLASS =
+            MAX_PHONE_ACCOUNT_REGISTRATIONS - EMERGENCY_CALL_TESTS_CLASS_OFFSET;
 
     @Override
     public void setUp() throws Exception {
@@ -45,21 +51,23 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
     /**
      * Tests a scenario where an emergency call could fail due to the presence of invalid
      * {@link PhoneAccount} data.
-     * The seed and quantity for {@link #generateRandomPhoneAccounts(long, int)} is chosen to
-     * represent a set of phone accounts which is known in AOSP to cause a failure placing an
-     * emergency call.  {@code 52L} was chosen as a random seed and {@code 50} was chosen as the
-     * set size for {@link PhoneAccount}s as these were observed in repeated test invocations to
-     * induce the failure method.
-     *
-     * @throws Exception
+     * The seed and quantity for {@link TestUtils#generateRandomPhoneAccounts(long, int, String,
+     * String)} is chosen to represent a set of phone accounts which is known in AOSP to cause a
+     * failure placing an emergency call.  {@code 52L} was chosen as a random seed and {@code 50}
+     * was chosen as the set size for {@link PhoneAccount}s as these were observed in repeated test
+     * invocations to induce the failure method.
      */
     public void testEmergencyCallFailureDueToInvalidPhoneAccounts() throws Exception {
         if (!mShouldTestTelecom) return;
 
-        ArrayList<PhoneAccount> accounts = generateRandomPhoneAccounts(52L, 50);
-        accounts.stream().forEach(a -> mTelecomManager.registerPhoneAccount(a));
+        ArrayList<PhoneAccount> accounts = TestUtils.generateRandomPhoneAccounts(52L,
+                MAX_PHONE_ACCOUNT_REGISTRATIONS_FOR_EMERGENCY_CALL_TESTS_CLASS,
+                TestUtils.PACKAGE, TestUtils.COMPONENT);
+
         try {
-            assertTrue(mTelecomManager.getSelfManagedPhoneAccounts().size() >= 50);
+            accounts.stream().forEach(a -> mTelecomManager.registerPhoneAccount(a));
+            assertTrue(mTelecomManager.getSelfManagedPhoneAccounts().size()
+                    >= MAX_PHONE_ACCOUNT_REGISTRATIONS_FOR_EMERGENCY_CALL_TESTS_CLASS);
 
             // The existing start emergency call test is impacted if there is a failure due to
             // excess phone accounts being present.
@@ -186,44 +194,4 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         // Notify as missed instead of rejected, since the user did not explicitly reject.
         verifyCallLogging(normalIncomingCallNumber, CallLog.Calls.MISSED_TYPE);
     }
-
-    /**
-     * Generates random phone accounts.
-     * @param seed random seed to use for random UUIDs; passed in for determinism.
-     * @param count How many phone accounts to use.
-     * @return Random phone accounts.
-     */
-    private ArrayList<PhoneAccount> generateRandomPhoneAccounts(long seed, int count) {
-        Random random = new Random(seed);
-        ArrayList<PhoneAccount> accounts = new ArrayList<>();
-        for (int ix = 0 ; ix < count; ix++) {
-            ArrayList<String> supportedSchemes = new ArrayList<>();
-            supportedSchemes.add("tel");
-            supportedSchemes.add("sip");
-            supportedSchemes.add("custom");
-            PhoneAccountHandle handle = new PhoneAccountHandle(new ComponentName(TestUtils.PACKAGE,
-                    TestUtils.COMPONENT), getRandomUuid(random).toString());
-            PhoneAccount acct = new PhoneAccount.Builder(handle, "TelecommTests")
-                    .setAddress(Uri.fromParts("tel", "555-1212", null))
-                    .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
-                    .setHighlightColor(0)
-                    .setShortDescription("test_" + ix)
-                    .setSupportedUriSchemes(supportedSchemes)
-                    .build();
-            accounts.add(acct);
-        }
-        return accounts;
-    }
-
-    /**
-     * Returns a random UUID based on the passed in Random generator.
-     * @param random Random generator.
-     * @return The UUID.
-     */
-    private UUID getRandomUuid(Random random) {
-        byte[] array = new byte[16];
-        random.nextBytes(array);
-        return UUID.nameUUIDFromBytes(array);
-    }
-
 }
