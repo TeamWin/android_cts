@@ -16,7 +16,6 @@
 
 package android.telephony.ims.cts;
 
-import android.app.UiAutomation;
 import android.os.Bundle;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsStreamMediaProfile;
@@ -26,8 +25,6 @@ import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsCallSessionImplBase;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.List;
 import java.util.Set;
@@ -190,13 +187,7 @@ public class TestMmTelFeature extends MmTelFeature {
 
         Executor executor = incomingSession.getExecutor();
         executor.execute(() -> {
-            UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-            try {
-                ui.adoptShellPermissionIdentity();
-                notifyIncomingCall(incomingSession, extras);
-            } finally {
-                ui.dropShellPermissionIdentity();
-            }
+            notifyIncomingCall(incomingSession, extras);
         });
     }
 }

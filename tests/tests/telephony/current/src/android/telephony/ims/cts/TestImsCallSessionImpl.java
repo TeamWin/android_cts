@@ -63,6 +63,8 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     public static final int TEST_TYPE_NONE = 0x00000000;
     public static final int TEST_TYPE_MO_ANSWER = 0x00000001;
     public static final int TEST_TYPE_MO_FAILED = 0x00000002;
+    public static final int TEST_TYPE_HOLD_FAILED = 0x00000004;
+    public static final int TEST_TYPE_RESUME_FAILED = 0x00000008;
 
     private int mTestType = TEST_TYPE_NONE;
 
@@ -321,6 +323,132 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                 }
             });
             setState(ImsCallSessionImplBase.State.TERMINATED);
+        }
+    }
+
+    @Override
+    public void hold(ImsStreamMediaProfile profile) {
+        if (isTestType(TEST_TYPE_HOLD_FAILED)) {
+            holdFailed(profile);
+        } else {
+            int audioDirection = profile.getAudioDirection();
+            if (audioDirection == ImsStreamMediaProfile.DIRECTION_SEND) {
+                ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                        ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                        ImsStreamMediaProfile.DIRECTION_RECEIVE,
+                        ImsStreamMediaProfile.VIDEO_QUALITY_NONE,
+                        ImsStreamMediaProfile.DIRECTION_INVALID,
+                        ImsStreamMediaProfile.RTT_MODE_DISABLED);
+                ImsCallProfile mprofile = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                        ImsCallProfile.CALL_TYPE_VOICE, new Bundle(), mediaProfile);
+                mCallProfile.updateMediaProfile(mprofile);
+            }
+            setState(ImsCallSessionImplBase.State.RENEGOTIATING);
+
+            postAndRunTask(() -> {
+                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    Log.d(LOG_TAG, "invokeHeld mCallId = " + mCallId);
+                    mListener.callSessionHeld(mCallProfile);
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+            setState(ImsCallSessionImplBase.State.ESTABLISHED);
+        }
+    }
+
+    @Override
+    public void resume(ImsStreamMediaProfile profile) {
+        if (isTestType(TEST_TYPE_RESUME_FAILED)) {
+            resumeFailed(profile);
+        } else {
+            int audioDirection = profile.getAudioDirection();
+            if (audioDirection == ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE) {
+                ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                        ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                        ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                        ImsStreamMediaProfile.VIDEO_QUALITY_NONE,
+                        ImsStreamMediaProfile.DIRECTION_INVALID,
+                        ImsStreamMediaProfile.RTT_MODE_DISABLED);
+                ImsCallProfile mprofile = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                        ImsCallProfile.CALL_TYPE_VOICE, new Bundle(), mediaProfile);
+                mCallProfile.updateMediaProfile(mprofile);
+            }
+            setState(ImsCallSessionImplBase.State.RENEGOTIATING);
+
+            postAndRunTask(() -> {
+                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    Log.d(LOG_TAG, "invokeResume mCallId = " + mCallId);
+                    mListener.callSessionResumed(mCallProfile);
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+            setState(ImsCallSessionImplBase.State.ESTABLISHED);
+        }
+    }
+
+    private void holdFailed(ImsStreamMediaProfile profile) {
+        int audioDirection = profile.getAudioDirection();
+        if (audioDirection == ImsStreamMediaProfile.DIRECTION_SEND) {
+            postAndRunTask(() -> {
+                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    Log.d(LOG_TAG, "invokeHoldFailed mCallId = " + mCallId);
+                    mListener.callSessionHoldFailed(getReasonInfo(ImsReasonInfo
+                            .CODE_SESSION_MODIFICATION_FAILED, ImsReasonInfo.CODE_UNSPECIFIED));
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+            setState(ImsCallSessionImplBase.State.ESTABLISHED);
+        }
+    }
+
+    private void resumeFailed(ImsStreamMediaProfile profile) {
+        int audioDirection = profile.getAudioDirection();
+        if (audioDirection == ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE) {
+            postAndRunTask(() -> {
+                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    Log.d(LOG_TAG, "invokeResumeFailed mCallId = " + mCallId);
+                    mListener.callSessionResumeFailed(getReasonInfo(ImsReasonInfo
+                            .CODE_SESSION_MODIFICATION_FAILED, ImsReasonInfo.CODE_UNSPECIFIED));
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+            setState(ImsCallSessionImplBase.State.ESTABLISHED);
         }
     }
 
