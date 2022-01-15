@@ -38,8 +38,8 @@ public class StubTvIAppService extends TvIAppService {
         }
 
         @Override
-        public void onStartIApp() {
-            notifySessionStateChanged(TvIAppManager.TV_IAPP_RTE_STATE_READY);
+        public void onStartInteractiveApp() {
+            notifySessionStateChanged(TvIAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY);
         }
 
         @Override
