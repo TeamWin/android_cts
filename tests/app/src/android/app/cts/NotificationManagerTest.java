@@ -16,6 +16,9 @@
 
 package android.app.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.Notification.CATEGORY_CALL;
 import static android.app.Notification.FLAG_BUBBLE;
 import static android.app.NotificationManager.BUBBLE_PREFERENCE_ALL;
@@ -122,6 +125,8 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.permission.PermissionManager;
+import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -210,6 +215,8 @@ public class NotificationManagerTest extends AndroidTestCase {
             new ComponentName(TRAMPOLINE_APP_API_30,
                     "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
 
+    private static final String STUB_PACKAGE_NAME = "android.app.stubs";
+
     private static final long TIMEOUT_LONG_MS = 10000;
     private static final long TIMEOUT_MS = 4000;
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
@@ -251,6 +258,11 @@ public class NotificationManagerTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(TEST_APP, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(TRAMPOLINE_APP, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
         // This will leave a set of channels on the device with each test run.
         mId = UUID.randomUUID().toString();
         mNotificationManager = (NotificationManager) mContext.getSystemService(
@@ -342,6 +354,20 @@ public class NotificationManagerTest extends AndroidTestCase {
         if (mPreviousDefaultBrowser != null) {
             restoreDefaultBrowser();
         }
+
+        // Use test API to prevent PermissionManager from killing the test process when revoking
+        // permission.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mContext.getSystemService(PermissionManager.class)
+                        .revokePostNotificationPermissionWithoutKillForTest(
+                                mContext.getPackageName(),
+                                android.os.Process.myUserHandle().getIdentifier()),
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
+        PermissionUtils.revokePermission(STUB_PACKAGE_NAME, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(TEST_APP, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(TRAMPOLINE_APP, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
     }
 
     private void assertNotificationCancelled(int id, boolean all) {
