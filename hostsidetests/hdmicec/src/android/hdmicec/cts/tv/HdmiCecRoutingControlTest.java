@@ -39,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
 
+    private static final int WAIT_TIME_MS = 300;
+
     @Rule
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
@@ -68,6 +70,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
              */
             hdmiCecClient.broadcastActiveSource(
                     hdmiCecClient.getSelfDevice(), hdmiCecClient.getPhysicalAddress());
+            TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         }
     }
 
