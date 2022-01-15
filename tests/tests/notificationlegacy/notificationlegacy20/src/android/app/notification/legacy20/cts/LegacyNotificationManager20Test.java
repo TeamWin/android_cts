@@ -16,6 +16,9 @@
 
 package android.app.notification.legacy20.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertNotNull;
@@ -33,12 +36,17 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
+import android.permission.PermissionManager;
+import android.permission.cts.PermissionUtils;
 import android.provider.Telephony.Threads;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
 
@@ -68,6 +76,7 @@ public class LegacyNotificationManager20Test {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         mNotificationManager = (NotificationManager) mContext.getSystemService(
@@ -79,6 +88,14 @@ public class LegacyNotificationManager20Test {
 
     @After
     public void tearDown() throws Exception {
+        // Use test API to prevent PermissionManager from killing the test process when revoking
+        // permission.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mContext.getSystemService(PermissionManager.class)
+                        .revokePostNotificationPermissionWithoutKillForTest(
+                                mContext.getPackageName(),
+                                Process.myUserHandle().getIdentifier()),
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL);
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         Thread.sleep(500); // wait for listener to disconnect
