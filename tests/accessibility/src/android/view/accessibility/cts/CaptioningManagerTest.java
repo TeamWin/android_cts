@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.app.UiAutomation;
+import android.content.res.Resources;
 import android.os.ParcelFileDescriptor;
 import android.view.accessibility.CaptioningManager;
 import android.view.accessibility.CaptioningManager.CaptionStyle;
@@ -143,6 +144,22 @@ public class CaptioningManagerTest {
         assertFalse("Default user style has no background color", userStyle.hasBackgroundColor());
         assertFalse("Default user style has no window color", userStyle.hasWindowColor());
         assertNull("Default user style has no typeface", userStyle.getTypeface());
+    }
+
+    @Test
+    public void testIsCallCaptioningEnabled() {
+        Resources resources =
+                getInstrumentation().getTargetContext().getResources();
+        // com.android.internal.R is not visible to this test so we need
+        // to query for the resource id.
+        int resourceId = resources.getIdentifier(
+                "config_systemCaptionsServiceCallsEnabled", "bool", "android");
+
+        boolean expected = resources.getBoolean(resourceId);
+
+        boolean actual = mManager.isCallCaptioningEnabled();
+
+        assertEquals(expected, actual);
     }
 
     private void deleteSecureSetting(String name) {
