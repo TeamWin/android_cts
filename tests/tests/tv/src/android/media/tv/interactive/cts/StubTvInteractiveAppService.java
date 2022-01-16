@@ -42,7 +42,9 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onStartInteractiveApp() {
-            notifySessionStateChanged(TvInteractiveAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY);
+            notifySessionStateChanged(
+                    TvInteractiveAppManager.SERVICE_STATE_READY,
+                    TvInteractiveAppManager.ERROR_NONE);
         }
 
         @Override
