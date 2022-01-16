@@ -22,9 +22,9 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.tv.interactive.TvIAppInfo;
 import android.media.tv.interactive.TvIAppManager;
-import android.media.tv.interactive.TvIAppView;
+import android.media.tv.interactive.TvInteractiveAppInfo;
+import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
 
@@ -41,19 +41,21 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.Executor;
+
 /**
- * Test {@link android.media.tv.interactive.TvIAppView}.
+ * Test {@link android.media.tv.interactive.TvInteractiveAppView}.
  */
 @RunWith(AndroidJUnit4.class)
-public class TvIAppViewTest {
+public class TvInteractiveAppViewTest {
     private static final long TIME_OUT_MS = 20000L;
 
     private Instrumentation mInstrumentation;
-    private ActivityScenario<TvIAppViewStubActivity> mActivityScenario;
-    private TvIAppViewStubActivity mActivity;
-    private TvIAppView mTvIAppView;
+    private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
+    private TvInteractiveAppViewStubActivity mActivity;
+    private TvInteractiveAppView mTvInteractiveAppView;
     private TvIAppManager mManager;
-    private TvIAppInfo mStubInfo;
+    private TvInteractiveAppInfo mStubInfo;
 
     @Rule
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
@@ -61,7 +63,7 @@ public class TvIAppViewTest {
 
     private final MockCallback mCallback = new MockCallback();
 
-    public static class MockCallback extends TvIAppView.TvIAppCallback {
+    public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
         private String mIAppServiceId;
         private int mState = -1;
 
@@ -72,8 +74,8 @@ public class TvIAppViewTest {
         }
     }
 
-    private TvIAppView findTvIAppViewById(int id) {
-        return (TvIAppView) mActivity.findViewById(id);
+    private TvInteractiveAppView findTvInteractiveAppViewById(int id) {
+        return (TvInteractiveAppView) mActivity.findViewById(id);
     }
 
     private void runTestOnUiThread(final Runnable r) throws Throwable {
@@ -92,11 +94,16 @@ public class TvIAppViewTest {
         }
     }
 
+    private Executor getExecutor() {
+        return Runnable::run;
+    }
+
     @Before
     public void setUp() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClass(mInstrumentation.getTargetContext(), TvIAppViewStubActivity.class);
+        intent.setClass(
+                mInstrumentation.getTargetContext(), TvInteractiveAppViewStubActivity.class);
 
         // DO NOT use ActivityScenario.launch(Class), which can cause ActivityNotFoundException
         // related to BootstrapActivity.
@@ -109,26 +116,26 @@ public class TvIAppViewTest {
         activityReferenceObtained.block(TIME_OUT_MS);
 
         assertNotNull("Failed to acquire activity reference.", mActivity);
-        mTvIAppView = findTvIAppViewById(R.id.tviappview);
-        assertNotNull("Failed to find TvIAppView.", mTvIAppView);
+        mTvInteractiveAppView = findTvInteractiveAppViewById(R.id.tviappview);
+        assertNotNull("Failed to find TvInteractiveAppView.", mTvInteractiveAppView);
 
         mManager = (TvIAppManager) mActivity.getSystemService(Context.TV_IAPP_SERVICE);
         assertNotNull("Failed to get TvIAppManager.", mManager);
 
-        for (TvIAppInfo info : mManager.getTvIAppServiceList()) {
+        for (TvInteractiveAppInfo info : mManager.getTvInteractiveAppServiceList()) {
             if (info.getServiceInfo().name.equals(StubTvIAppService.class.getName())) {
                 mStubInfo = info;
             }
         }
         assertNotNull(mStubInfo);
-        mTvIAppView.setCallback(mCallback);
+        mTvInteractiveAppView.setCallback(mCallback, getExecutor());
     }
 
     @After
     public void tearDown() throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {
-                mTvIAppView.reset();
+                mTvInteractiveAppView.reset();
             }
         });
         mInstrumentation.waitForIdleSync();
@@ -140,29 +147,29 @@ public class TvIAppViewTest {
     public void testConstructor() throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {
-                new TvIAppView(mActivity);
-                new TvIAppView(mActivity, null);
-                new TvIAppView(mActivity, null, 0);
+                new TvInteractiveAppView(mActivity);
+                new TvInteractiveAppView(mActivity, null);
+                new TvInteractiveAppView(mActivity, null, 0);
             }
         });
     }
 
     @Test
-    public void testStartIApp() throws Throwable {
-        mTvIAppView.prepareIApp(mStubInfo.getId(), 1);
+    public void testStartInteractiveApp() throws Throwable {
+        mTvInteractiveAppView.prepareInteractiveApp(mStubInfo.getId(), 1);
         mInstrumentation.waitForIdleSync();
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                return mTvIAppView.getIAppSession() != null;
+                return mTvInteractiveAppView.getInteractiveAppSession() != null;
             }
         }.run();
-        mTvIAppView.startIApp();
+        mTvInteractiveAppView.startInteractiveApp();
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
                 return mCallback.mIAppServiceId == mStubInfo.getId()
-                        && mCallback.mState == TvIAppManager.TV_IAPP_RTE_STATE_READY;
+                        && mCallback.mState == TvIAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY;
             }
         }.run();
     }

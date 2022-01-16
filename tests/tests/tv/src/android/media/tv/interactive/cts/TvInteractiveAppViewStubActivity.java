@@ -17,11 +17,11 @@
 package android.media.tv.interactive.cts;
 
 import android.app.Activity;
-import android.media.tv.interactive.TvIAppView;
+import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.Bundle;
 import android.tv.cts.R;
 
-public class TvIAppViewStubActivity extends Activity {
+public class TvInteractiveAppViewStubActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -29,7 +29,7 @@ public class TvIAppViewStubActivity extends Activity {
         setContentView(R.layout.tviappview_layout);
     }
 
-    public TvIAppView getTvIAppView() {
+    public TvInteractiveAppView getTvInteractiveAppView() {
         return findViewById(R.id.tviappview);
     }
 }

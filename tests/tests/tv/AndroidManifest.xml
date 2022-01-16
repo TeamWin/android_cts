@@ -160,7 +160,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.media.tv.interactive.cts.TvIAppViewStubActivity"
+        <activity android:name="android.media.tv.interactive.cts.TvInteractiveAppViewStubActivity"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

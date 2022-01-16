@@ -16,6 +16,7 @@
 
 package android.app.notification.legacy.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_NOTIFICATION_LIST;
@@ -28,17 +29,16 @@ import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.assertTrue;
 
-import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
-import android.content.pm.PackageManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Telephony.Threads;
@@ -75,6 +75,8 @@ public class LegacyNotificationManagerTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(POST_NOTIFICATIONS);
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         toggleListenerAccess(SecondaryNotificationListener.getId(),
@@ -87,6 +89,8 @@ public class LegacyNotificationManagerTest {
 
     @After
     public void tearDown() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         toggleListenerAccess(SecondaryNotificationListener.getId(),
