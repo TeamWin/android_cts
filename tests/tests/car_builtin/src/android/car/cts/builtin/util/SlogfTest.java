@@ -16,10 +16,14 @@
 
 package android.car.cts.builtin.util;
 
+import static android.car.cts.builtin.util.SlogfTest.Level.DEBUG;
 import static android.car.cts.builtin.util.SlogfTest.Level.ERROR;
 import static android.car.cts.builtin.util.SlogfTest.Level.VERBOSE;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.car.builtin.util.Slogf;
+import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -30,13 +34,20 @@ import org.junit.Test;
 public final class SlogfTest {
     private static final String TAG = SlogfTest.class.getSimpleName();
     private static final int TIMEOUT_MS = 60_000;
+    // All Slogf would be logged to system buffer.
+    private static final LogcatHelper.Buffer BUFFER = LogcatHelper.Buffer.SYSTEM;
     // wait time for waiting to make sure msg is not logged. Should not be a high value as tests
     // waits for this much time.
     private static final int NOT_LOGGED_WAIT_TIME_MS = 5_000;
     private static final String LOGCAT_LINE_FORMAT = "%s %s: %s";
 
+    private static final String LOGGED_MSG = "This message should exist in logcat.";
+    private static final String NOT_LOGGED_MSG = "This message should not exist in logcat.";
+    private static final String FORMATTED_MSG = "This message is a format with two args %s and %s.";
+    private static final String EXCEPTION_MSG = "This message should exist in logcat.";
+
     enum Level {
-        VERBOSE("V"), ERROR("E");
+        VERBOSE("V"), DEBUG("D"), ERROR("E");
 
         private String mValue;
 
@@ -63,27 +74,102 @@ public final class SlogfTest {
 
     @Test
     public void testV_msg1() {
-        Slogf.v(TAG, "This is the message to be checked.");
+        Slogf.v(TAG, LOGGED_MSG);
 
-        assertLogcatMessage(VERBOSE, "This is the message to be checked.");
+        assertLogcatMessage(VERBOSE, LOGGED_MSG);
     }
 
     @Test
-    public void testV_msg2() {
-        Slogf.v(TAG, "This is the message to be checked.",
-                new Throwable("Exception message to be checked."));
+    public void testV_msg2() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
 
-        assertLogcatMessage(VERBOSE, "This is the message to be checked.");
-        assertLogcatMessage(VERBOSE, "java.lang.Throwable: Exception message to be checked.");
+        Slogf.v(TAG, LOGGED_MSG, throwable);
+
+        assertLogcatMessage(VERBOSE, LOGGED_MSG);
+        assertLogcatMessage(VERBOSE, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(VERBOSE, throwable);
+
     }
 
     @Test
-    public void testV_noMsg() throws Exception {
+    public void testV_msg3() {
+        Slogf.v(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(VERBOSE, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testV_noMsg1() throws Exception {
         setLogLevel(ERROR);
 
-        Slogf.v(TAG, "This message should not exists.");
+        Slogf.v(TAG, NOT_LOGGED_MSG);
 
-        assertNoLogcatMessage(VERBOSE, "This message should not exists.");
+        assertNoLogcatMessage(VERBOSE, NOT_LOGGED_MSG);
+    }
+
+    @Test
+    public void testV_noMsg2() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.v(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertNoLogcatMessage(VERBOSE, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testD_msg1() {
+        Slogf.d(TAG, LOGGED_MSG);
+
+        assertLogcatMessage(DEBUG, LOGGED_MSG);
+    }
+
+    @Test
+    public void testD_msg2() {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+        Slogf.d(TAG, LOGGED_MSG, throwable);
+
+        assertLogcatMessage(DEBUG, LOGGED_MSG);
+        assertLogcatMessage(DEBUG, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(DEBUG, throwable);
+    }
+
+    @Test
+    public void testD_msg3() {
+        Slogf.d(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(DEBUG, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testD_noMsg1() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.d(TAG, NOT_LOGGED_MSG);
+
+        assertNoLogcatMessage(DEBUG, NOT_LOGGED_MSG);
+    }
+
+    @Test
+    public void testD_noMsg2() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.d(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertNoLogcatMessage(DEBUG, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testIsLoggableTrue() throws Exception {
+        setLogLevel(VERBOSE);
+
+        assertThat(Slogf.isLoggable(TAG, Log.VERBOSE)).isTrue();
+    }
+
+    @Test
+    public void testIsLoggableFalse() throws Exception {
+        setLogLevel(ERROR);
+
+        assertThat(Slogf.isLoggable(TAG, Log.VERBOSE)).isFalse();
     }
 
     private void clearLog() {
@@ -101,6 +187,13 @@ public final class SlogfTest {
 
     private void assertLogcatMessage(Level level, String msg) {
         String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG, msg);
-        LogcatHelper.assertLogcatMessage(match, TIMEOUT_MS);
+        LogcatHelper.assertLogcatMessage(match, BUFFER, TIMEOUT_MS);
+    }
+
+    private void assertLogcatStackTrace(Level level, Throwable throwable) {
+        StackTraceElement[] elements = throwable.getStackTrace();
+        for (int i = 0; i < elements.length; i++) {
+            assertLogcatMessage(level, "\tat " + elements[i]);
+        }
     }
 }
