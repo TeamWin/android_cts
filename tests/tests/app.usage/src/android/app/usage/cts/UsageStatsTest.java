@@ -18,6 +18,7 @@ package android.app.usage.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_FREQUENT;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
 import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
@@ -228,7 +229,8 @@ public class UsageStatsTest {
                         .revokePostNotificationPermissionWithoutKillForTest(
                                 mTargetPackage,
                                 Process.myUserHandle().getIdentifier()),
-                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL);
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
     }
 
     private static void assertLessThan(long left, long right) {
