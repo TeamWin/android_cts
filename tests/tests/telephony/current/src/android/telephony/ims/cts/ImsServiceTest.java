@@ -3165,8 +3165,21 @@ public class ImsServiceTest {
 
         // test in case provision for mmtel is required
         PersistableBundle bundle = new PersistableBundle();
-        bundle.putStringArray(CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_STRING_ARRAY,
-                new String[]{"1,0", "1,1", "2,0"});
+
+        PersistableBundle innerBundle = new PersistableBundle();
+        innerBundle.putIntArray(
+                CarrierConfigManager.Ims.KEY_CAPABILITY_TYPE_VOICE_INT_ARRAY,
+                new int[]{IMS_REGI_TECH_LTE, IMS_REGI_TECH_IWLAN}
+        );
+        innerBundle.putIntArray(
+                CarrierConfigManager.Ims.KEY_CAPABILITY_TYPE_VIDEO_INT_ARRAY,
+                new int[]{IMS_REGI_TECH_LTE}
+        );
+
+        bundle.putPersistableBundle(
+                CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_BUNDLE,
+                innerBundle);
+
         overrideCarrierConfig(bundle);
 
         triggerFrameworkConnectToCarrierImsService();
@@ -3346,8 +3359,11 @@ public class ImsServiceTest {
 
         // test in case provision for mmtel is required
         PersistableBundle bundle = new PersistableBundle();
-        bundle.putStringArray(CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_STRING_ARRAY,
-                new String[]{});
+        PersistableBundle innerBundle = new PersistableBundle();
+
+        bundle.putPersistableBundle(
+                CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_BUNDLE,
+                innerBundle);
         overrideCarrierConfig(bundle);
 
         triggerFrameworkConnectToCarrierImsService();
@@ -3431,8 +3447,17 @@ public class ImsServiceTest {
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL,
                 true);
-        bundle.putStringArray(CarrierConfigManager.Ims.KEY_RCS_REQUIRES_PROVISIONING_STRING_ARRAY,
-                new String[]{"2,0", "2,1", "2,2", "2,3"});
+
+        PersistableBundle innerBundle = new PersistableBundle();
+        innerBundle.putIntArray(
+                CarrierConfigManager.Ims.KEY_CAPABILITY_TYPE_PRESENCE_UCE_INT_ARRAY,
+                new int[]{IMS_REGI_TECH_LTE, IMS_REGI_TECH_IWLAN, IMS_REGI_TECH_CROSS_SIM,
+                        IMS_REGI_TECH_NR}
+        );
+        bundle.putPersistableBundle(
+                CarrierConfigManager.Ims.KEY_RCS_REQUIRES_PROVISIONING_BUNDLE,
+                innerBundle);
+
         overrideCarrierConfig(bundle);
 
         triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
@@ -3579,8 +3604,12 @@ public class ImsServiceTest {
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL,
                 true);
-        bundle.putStringArray(CarrierConfigManager.Ims.KEY_RCS_REQUIRES_PROVISIONING_STRING_ARRAY,
-                new String[]{});
+
+        PersistableBundle innerBundle = new PersistableBundle();
+        bundle.putPersistableBundle(
+                CarrierConfigManager.Ims.KEY_RCS_REQUIRES_PROVISIONING_BUNDLE,
+                innerBundle);
+
         overrideCarrierConfig(bundle);
 
         triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
@@ -3856,9 +3885,15 @@ public class ImsServiceTest {
 
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_SUPPORTS_SS_OVER_UT_BOOL, true);
-        //bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_UT_PROVISIONING_REQUIRED_BOOL, true);
-        bundle.putStringArray(CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_STRING_ARRAY,
-                new String[]{"4,0"}); // UT/LTE
+
+        PersistableBundle innerBundle = new PersistableBundle();
+        innerBundle.putIntArray(
+                CarrierConfigManager.Ims.KEY_CAPABILITY_TYPE_UT_INT_ARRAY,
+                new int[]{IMS_REGI_TECH_LTE}); // UT/LTE
+        bundle.putPersistableBundle(
+                CarrierConfigManager.Ims.KEY_MMTEL_REQUIRES_PROVISIONING_BUNDLE,
+                innerBundle);
+
         overrideCarrierConfig(bundle);
 
         ProvisioningManager provisioningManager =
@@ -3906,9 +3941,19 @@ public class ImsServiceTest {
                 true);
         bundle.putBoolean(CarrierConfigManager.Ims.KEY_RCS_BULK_CAPABILITY_EXCHANGE_BOOL, true);
         bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_RCS_PROVISIONING_REQUIRED_BOOL, true);
-        bundle.putStringArray(CarrierConfigManager.Ims.KEY_RCS_REQUIRES_PROVISIONING_STRING_ARRAY,
-                new String[]{"2,0", "2,1", "2,2", "2,3"});
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL,
+                true);
+        PersistableBundle innerBundle = new PersistableBundle();
+        innerBundle.putIntArray(
+                CarrierConfigManager.Ims.KEY_CAPABILITY_TYPE_PRESENCE_UCE_INT_ARRAY,
+                new int[]{IMS_REGI_TECH_LTE, IMS_REGI_TECH_IWLAN, IMS_REGI_TECH_CROSS_SIM,
+                        IMS_REGI_TECH_NR}
+        );
+        bundle.putPersistableBundle(
+                CarrierConfigManager.Ims.KEY_RCS_REQUIRES_PROVISIONING_BUNDLE,
+                innerBundle);
         overrideCarrierConfig(bundle);
+
 
         ProvisioningManager provisioningManager =
                 ProvisioningManager.createForSubscriptionId(sTestSub);
