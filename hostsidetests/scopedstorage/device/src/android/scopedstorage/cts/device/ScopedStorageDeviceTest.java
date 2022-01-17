@@ -210,7 +210,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             "CtsScopedStorageTestAppFileManager.apk");
     // A legacy targeting app with RES and WES permissions
     private static final TestApp APP_D_LEGACY_HAS_RW = new TestApp("TestAppDLegacy",
-            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
+            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppDLegacy.apk");
 
     // The following apps are not installed at test startup - please install before using.
     private static final TestApp APP_C = new TestApp("TestAppC",
