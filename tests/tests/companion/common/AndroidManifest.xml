@@ -33,7 +33,7 @@
             </intent-filter>
 
             <meta-data
-                    android:name="primary"
+                    android:name="android.companion.primary"
                     android:value="true" />
         </service>
 
