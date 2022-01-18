@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.annotation.TargetApi;
 import android.content.res.AssetFileDescriptor;
@@ -27,6 +27,10 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.media.MediaPlayer;
+import android.media.cts.InputSurface;
+import android.media.cts.MediaStubActivity;
+import android.media.cts.OutputSurface;
+import android.media.cts.Preconditions;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.app.Presentation;
 import android.content.ComponentName;
@@ -30,7 +30,10 @@ import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.media.cts.CompositionTextureView;
 import android.media.cts.R;
+import android.media.cts.InputSurface;
+import android.media.cts.OutputSurface;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
@@ -1403,8 +1406,8 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
 
         void connect() throws Exception {
             Intent intent = new Intent();
-            intent.setClassName("android.media.cts",
-                    "android.media.cts.RemoteVirtualDisplayService");
+            intent.setClassName("android.media.codec.cts",
+                    "android.media.codec.cts.RemoteVirtualDisplayService");
             mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
             if (!mConnectionWait.tryAcquire(DEFAULT_WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 fail("cannot bind to service");

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.graphics.ImageFormat;
 import android.media.Image;
@@ -22,6 +22,12 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.media.cts.InputSurface;
+import android.media.cts.InputSurfaceInterface;
+import android.media.cts.MediaCodecWrapper;
+import android.media.cts.NdkMediaCodec;
+import android.media.cts.OutputSurface;
+import android.media.cts.SdkMediaCodec;
 import android.opengl.GLES20;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
