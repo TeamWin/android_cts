@@ -198,4 +198,28 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
             wakeUpDevice();
         }
     }
+
+    /**
+     * Test HF4-2-16 (CEC 2.0)
+     *
+     * <p>Tests that the DUT responds to a {@code <Give Device Vendor Id>} with a {@code <Device
+     * Vendor ID>} message or a {@code <Feature Abort>[Unrecognized Opcode]}
+     */
+    @Test
+    public void cect_hf_4_2_16_GiveDeviceVendorId() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(), CecOperand.GIVE_DEVICE_VENDOR_ID);
+        String message =
+                hdmiCecClient.checkExpectedOutputOrFeatureAbort(
+                        LogicalAddress.BROADCAST,
+                        CecOperand.DEVICE_VENDOR_ID,
+                        CecOperand.GIVE_DEVICE_VENDOR_ID,
+                        HdmiCecConstants.ABORT_UNRECOGNIZED_MODE);
+        if (CecMessage.getOperand(message) == CecOperand.GIVE_DEVICE_VENDOR_ID) {
+            assertThat(CecMessage.getParams(message))
+                    .isNotEqualTo(HdmiCecConstants.INVALID_VENDOR_ID);
+        }
+    }
 }
