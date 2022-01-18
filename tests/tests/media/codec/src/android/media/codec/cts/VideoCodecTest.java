@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.media.cts.MediaCodecWrapper;
+import android.media.cts.MediaHeavyPresubmitTest;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 

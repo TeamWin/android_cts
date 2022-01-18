@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.media.cts.MediaPlayerTestBase;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
@@ -82,7 +83,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             "media_codec_capabilities_test_avc_baseline30";
     private static final String AVC_HIGH_31_KEY = "media_codec_capabilities_test_avc_high31";
     private static final String AVC_HIGH_40_KEY = "media_codec_capabilities_test_avc_high40";
-    private static final String MODULE_NAME = "CtsMediaTestCases";
+    private static final String MODULE_NAME = "CtsMediaCodecTestCases";
     private DynamicConfigDeviceSide dynamicConfig;
 
     @Before

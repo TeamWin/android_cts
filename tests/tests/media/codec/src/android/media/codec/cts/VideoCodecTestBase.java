@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -24,6 +24,10 @@ import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.media.cts.MediaCodecWrapper;
+import android.media.cts.NdkMediaCodec;
+import android.media.cts.Preconditions;
+import android.media.cts.SdkMediaCodec;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
