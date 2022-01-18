@@ -99,6 +99,7 @@ public class TestUtils {
     public static final String CREATE_IMAGE_ENTRY_QUERY =
             "android.scopedstorage.cts.createimageentry";
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
+    public static final String DELETE_RECURSIVE_QUERY = "android.scopedstorage.cts.deleteRecursive";
     public static final String CAN_OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.can_openfile_read";
     public static final String CAN_OPEN_FILE_FOR_WRITE_QUERY =
@@ -293,6 +294,17 @@ public class TestUtils {
      */
     public static boolean deleteFileAs(TestApp testApp, String path) throws Exception {
         return getResultFromTestApp(testApp, path, DELETE_FILE_QUERY);
+    }
+
+    /**
+     * Makes the given {@code testApp} delete a file or directory.
+     * If the file is a directory, then deletes all of its children (file or directories)
+     * recursively.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean deleteRecursivelyAs(TestApp testApp, String path) throws Exception {
+        return getResultFromTestApp(testApp, path, DELETE_RECURSIVE_QUERY);
     }
 
     /**

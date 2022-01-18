@@ -45,6 +45,7 @@ import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
+import static android.scopedstorage.cts.lib.TestUtils.deleteRecursivelyAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
@@ -1161,7 +1162,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             // Delete the directory if it already exists
             if (podcastsDir.exists()) {
-                deleteAsLegacyApp(podcastsDir);
+                deleteRecursivelyAsLegacyApp(podcastsDir);
             }
             assertThat(podcastsDir.exists()).isFalse();
             assertThat(podcastsDirLowerCase.exists()).isFalse();
@@ -3379,5 +3380,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         // Use a legacy app to delete this file, since it could be outside shared storage.
         Log.d(TAG, "Deleting file " + file);
         deleteFileAs(APP_D_LEGACY_HAS_RW, file.getAbsolutePath());
+    }
+
+    /**
+     * Deletes the given file/directory recursively. If the file is a directory, then deletes all
+     * of its children (files or directories) recursively.
+     */
+    private void deleteRecursivelyAsLegacyApp(File dir) throws Exception {
+        // Use a legacy app to delete this directory, since it could be outside shared storage.
+        Log.d(TAG, "Deleting directory " + dir);
+        deleteRecursivelyAs(APP_D_LEGACY_HAS_RW, dir.getAbsolutePath());
     }
 }
