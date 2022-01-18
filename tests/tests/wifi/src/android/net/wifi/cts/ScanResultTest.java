@@ -371,14 +371,12 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         synchronized (mMySync) {
             for (int i = 0; i < SCAN_REQUEST_THROTTLE_MAX_IN_TIME_WINDOW_FG_APPS; ++i) {
                 mWifiManager.startScan();
-                mMySync.wait(SCAN_WAIT_MSEC);
-                assertEquals("Iteration #" + i, STATE_SCAN_RESULTS_AVAILABLE,
-                        mMySync.expectedState);
+                assertTrue("Iteration #" + i,
+                        waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_RESULTS_AVAILABLE));
             }
 
             mWifiManager.startScan();
-            mMySync.wait(SCAN_WAIT_MSEC);
-            assertEquals("Should be throttled", STATE_SCAN_FAILURE, mMySync.expectedState);
+            assertTrue("Should be throttled", waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_FAILURE));
         }
     }
 }
