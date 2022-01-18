@@ -316,6 +316,31 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
     }
 
+    public void sendMultipleUserControlPressAndRelease(
+            LogicalAddress source, List<Integer> keycodes) throws CecClientWrapperException {
+        try {
+            for (int keycode : keycodes) {
+                String key = String.format("%02x", keycode);
+                mOutputConsole.write(
+                        "tx "
+                                + source
+                                + targetDevice
+                                + ":"
+                                + CecOperand.USER_CONTROL_PRESSED
+                                + ":"
+                                + key);
+                mOutputConsole.newLine();
+                mOutputConsole.write(
+                        "tx " + source + targetDevice + ":" + CecOperand.USER_CONTROL_RELEASED);
+                mOutputConsole.newLine();
+                mOutputConsole.flush();
+                TimeUnit.MILLISECONDS.sleep(200);
+            }
+        } catch (InterruptedException | IOException ioe) {
+            throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
+        }
+    }
+
     /**
      * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to device through the
      * output console of the cec-communication channel with the mentioned keycode.
