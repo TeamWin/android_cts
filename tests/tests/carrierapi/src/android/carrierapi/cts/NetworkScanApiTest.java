@@ -95,7 +95,9 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
     // results.
     private static final int MAX_INIT_WAIT_MS = (SCAN_SEARCH_TIME_SECONDS + 1) * 1000;
     private Object mLock = new Object();
+    private Object mLock2 = new Object();
     private boolean mReady;
+    private boolean mDone;
     private int mErrorCode;
     /* All the following constants are used to construct NetworkScanRequest*/
     private static final int SCAN_TYPE = NetworkScanRequest.SCAN_TYPE_ONE_SHOT;
@@ -147,6 +149,7 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
     }
 
     private void waitUntilReady() {
+        Log.d(TAG, "waitUntilReady+");
         synchronized (mLock) {
             try {
                 mLock.wait(MAX_INIT_WAIT_MS);
@@ -155,13 +158,40 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
 
             assertWithMessage("NetworkScanApiTest failed to initialize").that(mReady).isTrue();
         }
+        Log.d(TAG, "waitUntilReady-");
+    }
+
+    private void waitUntilDone() {
+        Log.d(TAG, "waitUntilDone+");
+        synchronized (mLock2) {
+            try {
+                mLock2.wait(MAX_INIT_WAIT_MS);
+            } catch (InterruptedException ie) {
+            }
+
+            if (!mDone) {
+                fail("NetworkScanApiTest failed to initialize");
+            }
+        }
+        Log.d(TAG, "waitUntilDone-");
     }
 
     private void setReady(boolean ready) {
+        Log.d(TAG, "setReady+");
         synchronized (mLock) {
             mReady = ready;
             mLock.notifyAll();
         }
+        Log.d(TAG, "setReady-");
+    }
+
+    private void setDone(boolean done) {
+        Log.d(TAG, "setDone+");
+        synchronized (mLock2) {
+            mDone = done;
+            mLock2.notifyAll();
+        }
+        Log.d(TAG, "setDone-");
     }
 
     private class NetworkScanHandlerThread extends HandlerThread {
@@ -187,6 +217,7 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
                                                 .adoptShellPermissionIdentity();
                                     }
                                     try {
+                                        setDone(false);
                                         mNetworkScan =
                                                 mTelephonyManager.requestNetworkScan(
                                                         mNetworkScanRequest,
@@ -205,6 +236,7 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
                                                     .getUiAutomation()
                                                     .dropShellPermissionIdentity();
                                         }
+                                        setDone(true);
                                     }
                                     break;
                                 default:
@@ -324,6 +356,7 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
                     .that(isScanStatusValid())
                     .isTrue();
         } finally {
+            waitUntilDone();
             getAndSetLocationSwitch(isLocationSwitchOn);
         }
     }
@@ -369,6 +402,7 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
                     .that(isScanStatusValid())
                     .isTrue();
         } finally {
+            waitUntilDone();
             getAndSetLocationSwitch(isLocationSwitchOn);
         }
     }
