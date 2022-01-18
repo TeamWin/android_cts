@@ -52,7 +52,10 @@ import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.UnresolvedUser;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.ClassRule;
@@ -62,7 +65,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -383,8 +388,17 @@ public final class DevicePolicyManagerTest {
     }
 
     private Set<String> getInstalledPackagesOnUser(Set<String> packages, UserHandle user) {
-        return packages.stream().filter(p -> isPackageInstalledOnUser(p, user))
-                .collect(Collectors.toSet());
+        Set<String> installedPackagesOnUser = new HashSet<>();
+
+        UserReference userRef = sTestApis.users().find(user);
+        Collection<PackageReference> packageInUser = sTestApis.packages().installedForUser(userRef);
+        for (PackageReference pkg : packageInUser) {
+            if (packages.contains(pkg.packageName())) {
+                installedPackagesOnUser.add(pkg.packageName());
+            }
+        }
+
+        return installedPackagesOnUser;
     }
 
     private boolean isPackageInstalledOnCurrentUser(String packageName) {
