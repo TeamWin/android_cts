@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package android.cts.tagging.sdk30memtag;
+package android.cts.tagging.sdk30;
 
-import android.content.pm.ApplicationInfo;
+import android.cts.tagging.GetCurrentTaggingModeService;
+import android.cts.tagging.Utils;
 
-public class ZygotePreload implements android.app.ZygotePreload {
-    @Override
-    public void doPreload(ApplicationInfo appInfo) {}
+public class ExportedMemtagSyncAppZygoteService extends GetCurrentTaggingModeService {
 }

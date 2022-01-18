@@ -21,19 +21,67 @@
     <uses-permission android:name="android.permission.READ_LOGS"/>
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
 
+    <queries>
+      <package android:name="android.cts.tagging.sdk30" />
+    </queries>
+
     <application android:debuggable="true"
                  android:memtagMode="sync"
                  android:zygotePreloadName=".ZygotePreload">
       <uses-library android:name="android.test.runner" />
+      <processes>
+        <process />
+        <process android:process=":MemtagSyncProcess" />
+        <process android:process=":MemtagOffProcess"
+                 android:memtagMode="off" />
+      </processes>
 
-      <activity android:name=".ServiceRunnerActivity" />
+      <activity android:name="android.cts.tagging.ServiceRunnerActivity" />
 
-      <service android:name=".CrashAppZygoteService"
-               android:process=":CrashIsolatedProcess"
+      <service android:name=".MemtagOffService"
+               android:process=":MemtagOffProcess"
+               android:useAppZygote="false"
+               android:isolatedProcess="false"
+               android:exported="false" />
+
+      <service android:name=".MemtagOffIsolatedService"
+               android:process=":MemtagOffProcess"
+               android:useAppZygote="false"
+               android:isolatedProcess="true"
+               android:exported="false" />
+
+      <service android:name=".MemtagOffAppZygoteService"
+               android:process=":MemtagOffProcess"
                android:useAppZygote="true"
                android:isolatedProcess="true"
                android:exported="false" />
-    </application>
+
+      <service android:name=".ExportedMemtagSyncAppZygoteService"
+               android:process=":MemtagSyncProcess"
+               android:useAppZygote="true"
+               android:isolatedProcess="true"
+	       android:externalService="true"
+               android:exported="true" />
+
+      <service android:name=".ExportedMemtagOffAppZygoteService"
+               android:process=":MemtagOffProcess"
+               android:useAppZygote="true"
+               android:isolatedProcess="true"
+	       android:externalService="true"
+               android:exported="true" />
+
+      <service android:name=".ExportedMemtagSyncService"
+               android:process=":MemtagSyncProcess"
+               android:isolatedProcess="true"
+	       android:externalService="true"
+               android:exported="true" />
+
+      <service android:name=".ExportedMemtagOffService"
+               android:process=":MemtagOffProcess"
+               android:isolatedProcess="true"
+	       android:externalService="true"
+               android:exported="true" />
+</application>
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"

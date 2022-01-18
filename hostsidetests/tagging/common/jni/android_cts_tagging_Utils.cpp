@@ -27,12 +27,33 @@
 
 extern "C" JNIEXPORT jboolean Java_android_cts_tagging_Utils_kernelSupportsTaggedPointers() {
 #ifdef __aarch64__
-#define PR_SET_TAGGED_ADDR_CTRL 55
-#define PR_TAGGED_ADDR_ENABLE (1UL << 0)
   int res = prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0);
   return res >= 0 && res & PR_TAGGED_ADDR_ENABLE;
 #else
   return false;
+#endif
+}
+
+static const int TAGGING_MODE_OFF = 100;
+#ifdef __aarch64__
+static const int TAGGING_MODE_ASYNC = 101;
+static const int TAGGING_MODE_SYNC = 102;
+#endif
+
+extern "C" JNIEXPORT jboolean Java_android_cts_tagging_Utils_getCurrentTaggingMode() {
+#ifdef __aarch64__
+  int res = prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0);
+  if (res < 0)
+    return TAGGING_MODE_OFF;
+
+  if (res & PR_MTE_TCF_SYNC)
+    return TAGGING_MODE_SYNC;
+  else if (res & PR_MTE_TCF_ASYNC)
+    return TAGGING_MODE_ASYNC;
+  else
+    return TAGGING_MODE_OFF;
+#else
+  return TAGGING_MODE_OFF;
 #endif
 }
 

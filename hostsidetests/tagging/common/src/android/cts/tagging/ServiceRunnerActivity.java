@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package android.cts.tagging.sdk30memtag;
+package android.cts.tagging;
 
 import android.app.Activity;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.cts.tagging.TestingService;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -31,18 +31,6 @@ import android.util.Log;
 
 public class ServiceRunnerActivity extends Activity {
   private static String TAG = ServiceRunnerActivity.class.getName();
-
-  // Message received from the client.
-  public static final int MSG_START_TEST = 1;
-
-  public static final int RESULT_TEST_UNKNOWN = RESULT_FIRST_USER + 1;
-  public static final int RESULT_TEST_SUCCESS = RESULT_FIRST_USER + 2;
-  public static final int RESULT_TEST_IGNORED = RESULT_FIRST_USER + 3;
-  public static final int RESULT_TEST_FAILED = RESULT_FIRST_USER + 4;
-  public static final int RESULT_TEST_CRASHED = RESULT_FIRST_USER + 5;
-
-  // Messages sent to the client.
-  public static final int MSG_NOTIFY_TEST_RESULT = 2;
 
   private Messenger mService;
   private boolean mIsBound;
@@ -61,7 +49,7 @@ public class ServiceRunnerActivity extends Activity {
     @Override
     public void handleMessage(Message msg) {
       switch (msg.what) {
-        case MSG_NOTIFY_TEST_RESULT:
+        case TestingService.MSG_NOTIFY_TEST_RESULT:
           synchronized (mActivity.mFinishEvent) {
             mActivity.mResult = msg.arg1;
             mFinishEvent.notify();
@@ -85,7 +73,7 @@ public class ServiceRunnerActivity extends Activity {
 
       // Send a message to the service to register.
       try {
-        Message msg = Message.obtain(null, MSG_START_TEST);
+        Message msg = Message.obtain(null, TestingService.MSG_START_TEST);
         msg.replyTo = mMessenger;
         mService.send(msg);
       } catch (RemoteException e) {
@@ -101,16 +89,11 @@ public class ServiceRunnerActivity extends Activity {
       Log.i(TAG, "Service disconnected.");
       mService = null;
       synchronized (mFinishEvent) {
-        mResult = RESULT_TEST_CRASHED;
+        mResult = TestingService.RESULT_TEST_CRASHED;
         mFinishEvent.notify();
       }
     }
   };
-
-  void doBindService(Class<?> cls) {
-    bindService(new Intent(this, cls), mConnection, Context.BIND_AUTO_CREATE);
-    mIsBound = true;
-  }
 
   void doUnbindService() {
     // Detach our existing connection.
@@ -118,14 +101,34 @@ public class ServiceRunnerActivity extends Activity {
     mIsBound = false;
   }
 
-  void runService(Class<?> cls) throws Exception {
-    mResult = RESULT_TEST_UNKNOWN;
-    doBindService(cls);
+  public void runExternalService(ComponentName component) throws Exception {
+    Intent intent = new Intent();
+    intent.setComponent(component);
+    runServiceCommon(intent, true);
+  }
+
+  public void runService(Class<?> cls) throws Exception {
+    Intent intent = new Intent(this, cls);
+    runServiceCommon(intent, false);
+  }
+
+  void runServiceCommon(Intent intent, boolean external) throws Exception {
+    mResult = TestingService.RESULT_TEST_UNKNOWN;
+    int flags = Context.BIND_AUTO_CREATE;
+    if (external)
+      flags |= Context.BIND_EXTERNAL_SERVICE;
+    boolean result = bindService(intent, mConnection, flags);
+    if (result == false) {
+      mResult = TestingService.RESULT_TEST_BIND_FAILED;
+      return;
+    }
+
+    mIsBound = true;
     Thread thread = new Thread() {
       @Override
       public void run() {
         synchronized (mFinishEvent) {
-          while (mResult == RESULT_TEST_UNKNOWN) {
+          while (mResult == TestingService.RESULT_TEST_UNKNOWN) {
             try {
               mFinishEvent.wait();
             } catch (InterruptedException e) {
