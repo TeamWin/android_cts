@@ -29,6 +29,8 @@ public final class HdmiCecConstants {
     public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
     public static final int TIMEOUT_SAFETY_MS = 500;
 
+    public static final int INVALID_VENDOR_ID = 0xFFFFFF;
+
     // Standard delay to allow the DUT to react to a CEC message or ADB command
     public static final int DEVICE_WAIT_TIME_SECONDS = 5;
     public static final int DEVICE_WAIT_TIME_MS = 5000;
