@@ -41,6 +41,9 @@ public final class LocaleConstants {
     public static final ComponentName TEST_APP_MAIN_ACTIVITY = new ComponentName(TEST_APP_PACKAGE,
             TEST_APP_PACKAGE + ".MainActivity");
 
+    public static final ComponentName INSTALLER_APP_MAIN_ACTIVITY =
+            new ComponentName(INSTALLER_PACKAGE, INSTALLER_PACKAGE + ".MainActivity");
+
     public static final String TEST_APP_BROADCAST_INFO_PROVIDER_ACTION =
             "android.locale.cts.action.TEST_APP_BROADCAST_INFO_PROVIDER";
 
@@ -52,6 +55,9 @@ public final class LocaleConstants {
 
     public static final String INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION =
             "android.locale.cts.action.INSTALLER_APP_BROADCAST_INFO_PROVIDER";
+
+    public static final String INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION =
+            "android.locale.cts.action.INSTALLER_APP_CREATION_INFO_PROVIDER";
 
     public static final String TEST_APP_BROADCAST_RECEIVER = TEST_APP_PACKAGE
             + ".TestBroadcastReceiver";
