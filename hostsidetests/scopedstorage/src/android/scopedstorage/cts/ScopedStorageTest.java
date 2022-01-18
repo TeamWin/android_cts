@@ -329,7 +329,8 @@ public class ScopedStorageTest {
             final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
                     THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
             final File otherAppExternalDataSubDir = new File(otherAppExternalDataDir, "subdir");
-            final File otherAppExternalDataFile = new File(otherAppExternalDataSubDir, "abc.jpg");
+            final File otherAppExternalDataFile =
+                    new File(otherAppExternalDataSubDir, IMAGE_FILE_NAME);
             assertThat(createFileAs(APP_B_NO_PERMS, otherAppExternalDataFile.getAbsolutePath()))
                     .isTrue();
 
