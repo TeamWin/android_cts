@@ -104,7 +104,7 @@ class AssociationsChangedListenerTest : CoreTestBase() {
     }
 
     @Test
-    @Repeat(100)
+    @Repeat(10)
     fun test_associationChangeListener_notifiedBefore_cdmCallback() {
         val request: AssociationRequest = AssociationRequest.Builder()
             .setSelfManaged(true)
