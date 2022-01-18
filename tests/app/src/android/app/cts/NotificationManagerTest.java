@@ -576,7 +576,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private void verifyNotificationBubbleState(int id, boolean shouldBeBubble) {
         try {
             // FLAG_BUBBLE relies on notification being posted, wait for notification listener
-            Thread.sleep(500);
+            Thread.sleep(700);
         } catch (InterruptedException ex) {
         }
 
