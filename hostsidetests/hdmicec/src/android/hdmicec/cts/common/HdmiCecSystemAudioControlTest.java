@@ -97,7 +97,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
         String message =
                 hdmiCecClient.checkExpectedOutput(
                         hdmiCecClient.getSelfDevice(), CecOperand.USER_CONTROL_PRESSED);
-        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_CONTROL_VOLUME_UP);
+        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_KEYCODE_VOLUME_UP);
         hdmiCecClient.checkExpectedOutput(
                 hdmiCecClient.getSelfDevice(), CecOperand.USER_CONTROL_RELEASED);
         /* TODO: b/174733146  For TV devices, assert that the volume level has not changed. */
@@ -107,7 +107,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
                 hdmiCecClient.checkExpectedOutput(
                         hdmiCecClient.getSelfDevice(), CecOperand.USER_CONTROL_PRESSED);
         assertThat(CecMessage.getParams(message))
-                .isEqualTo(HdmiCecConstants.CEC_CONTROL_VOLUME_DOWN);
+                .isEqualTo(HdmiCecConstants.CEC_KEYCODE_VOLUME_DOWN);
         hdmiCecClient.checkExpectedOutput(
                 hdmiCecClient.getSelfDevice(), CecOperand.USER_CONTROL_RELEASED);
         /* TODO: b/174733146  For TV devices, assert that the volume level has not changed. */
@@ -138,7 +138,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
         String message =
                 hdmiCecClient.checkExpectedOutput(
                         hdmiCecClient.getSelfDevice(), CecOperand.USER_CONTROL_PRESSED);
-        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_CONTROL_MUTE);
+        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_KEYCODE_MUTE);
         hdmiCecClient.checkExpectedOutput(
                 hdmiCecClient.getSelfDevice(), CecOperand.USER_CONTROL_RELEASED);
         /* TODO: b/174733146  For TV devices, assert that the volume level has not changed. */

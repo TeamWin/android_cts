@@ -251,7 +251,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
                 CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
                     HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         hdmiCecClient.sendUserControlPressAndRelease(LogicalAddress.TV, AUDIO_DEVICE,
-                HdmiCecConstants.CEC_CONTROL_MUTE, false);
+                HdmiCecConstants.CEC_KEYCODE_MUTE, false);
         assertWithMessage("Device is not muted")
                 .that(AudioManagerHelper.isDeviceMuted(getDevice()))
                 .isTrue();

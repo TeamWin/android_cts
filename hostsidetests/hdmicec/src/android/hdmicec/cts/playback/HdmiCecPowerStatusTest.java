@@ -52,16 +52,16 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
     private static final List<String> UCP_POWER_MSGS = new ArrayList<>(Arrays.asList(
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
-                    CecOperand.USER_CONTROL_PRESSED, HdmiCecConstants.CEC_CONTROL_POWER),
+                    CecOperand.USER_CONTROL_PRESSED, HdmiCecConstants.CEC_KEYCODE_POWER),
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
                     CecOperand.USER_CONTROL_PRESSED,
-                    HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION),
+                    HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION),
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
                     CecOperand.USER_CONTROL_PRESSED,
-                    HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION),
+                    HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION),
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
                     CecOperand.USER_CONTROL_PRESSED,
-                    HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION)));
+                    HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION)));
 
     private static final List<CecOperand> VIEW_ON_MSGS =
             new ArrayList<>(Arrays.asList(CecOperand.TEXT_VIEW_ON, CecOperand.IMAGE_VIEW_ON));
