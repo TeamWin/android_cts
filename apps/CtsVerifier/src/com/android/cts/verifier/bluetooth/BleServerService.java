@@ -1160,27 +1160,28 @@ public class BleServerService extends Service {
                 Log.d(TAG, "   characteristic uuid = " + uid);
             }
 
-            descriptor.setValue(value);
             UUID duid = descriptor.getUuid();
             // If there is a written request to the CCCD for Notify.
             if (duid.equals(UPDATE_DESCRIPTOR_UUID)) {
                 if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
-                    mGattServer.notifyCharacteristicChanged(mDevice, descriptor.getCharacteristic(), false);
+                    mGattServer.notifyCharacteristicChanged(
+                            mDevice, descriptor.getCharacteristic(), false, value);
                     mIndicated = false;
                 } else if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
-                    mGattServer.notifyCharacteristicChanged(mDevice, descriptor.getCharacteristic(), true);
+                    mGattServer.notifyCharacteristicChanged(
+                            mDevice, descriptor.getCharacteristic(), true, value);
                     mIndicated = true;
                 }
             } else if (duid.equals(DESCRIPTOR_NEED_ENCRYPTED_WRITE_UUID)) {
                 // verify
-                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), descriptor.getValue())) {
+                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), value)) {
                     notifyDescriptorWriteRequestNeedEncrypted();
                 } else {
                     showMessage("Written data is not correct");
                 }
             } else {
                 // verify
-                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), descriptor.getValue())) {
+                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), value)) {
                     notifyDescriptorWriteRequest();
                 } else {
                     showMessage("Written data is not correct");
