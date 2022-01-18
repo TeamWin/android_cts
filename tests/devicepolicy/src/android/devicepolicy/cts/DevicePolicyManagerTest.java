@@ -64,6 +64,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -83,6 +84,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -95,7 +97,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -164,6 +165,22 @@ public final class DevicePolicyManagerTest {
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
+
+    @Before
+    public void setUp() {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            sDevicePolicyManager.setDpcDownloaded(false);
+        }
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            sDevicePolicyManager.setDpcDownloaded(false);
+        }
+    }
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
@@ -1353,5 +1370,30 @@ public final class DevicePolicyManagerTest {
         } else {
             assertWithMessage("Intent bundles are not equal").that(bundle2).isNull();
         }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setDpcDownloaded_withoutRequiredPermission_throwsSecurityException() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.setDpcDownloaded(true));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setDpcDownloaded_withRequiredPermission_doesNotThrowSecurityException() {
+        sDevicePolicyManager.setDpcDownloaded(true);
+
+        // Doesn't throw exception
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void isDpcDownloaded_returnsResultOfSetDpcDownloaded() {
+        sDevicePolicyManager.setDpcDownloaded(true);
+
+        assertThat(sDevicePolicyManager.isDpcDownloaded()).isTrue();
     }
 }
