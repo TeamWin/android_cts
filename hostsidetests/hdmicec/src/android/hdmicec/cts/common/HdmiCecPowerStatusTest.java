@@ -252,4 +252,26 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             }
         }
     }
+
+    /**
+     * Test HF4-6-26
+     *
+     * <p> Verify that, when a Source device is put to Standby by the user, it does not broadcast a
+     * system {@code <Standby>} message unless explicitly requested by the user.
+     */
+    @Test
+    public void cect_hf4_6_26_standby_noBroadcast_20() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+        String previousPowerControlMode =
+                setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_NONE);
+        try {
+            sendDeviceToSleep();
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        } finally {
+            wakeUpDevice();
+            setPowerControlMode(previousPowerControlMode);
+        }
+    }
 }
