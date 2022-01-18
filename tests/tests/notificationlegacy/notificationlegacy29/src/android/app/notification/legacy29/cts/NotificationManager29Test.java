@@ -18,6 +18,7 @@ package android.app.notification.legacy29.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.app.NotificationManager.Policy.CONVERSATION_SENDERS_ANYONE;
 import static android.app.NotificationManager.Policy.PRIORITY_CATEGORY_CONVERSATIONS;
 
@@ -87,7 +88,8 @@ public class NotificationManager29Test {
                         .revokePostNotificationPermissionWithoutKillForTest(
                                 mContext.getPackageName(),
                                 Process.myUserHandle().getIdentifier()),
-                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL);
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
     }
 
     private void toggleNotificationPolicyAccess(String packageName,
