@@ -40,9 +40,11 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
 
-    private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
-            "hdmi_control_auto_device_off_enabled";
-    private static final String POWER_CONTROL_MODE = "send_standby_on_sleep";
+    private static final String TV_SEND_STANDBY_ON_SLEEP = "tv_send_standby_on_sleep";
+    private static final String TV_SEND_STANDBY_ON_SLEEP_ENABLED = "1";
+    private static final String TV_SEND_STANDBY_ON_SLEEP_DISABLED = "0";
+
+    private static final String POWER_CONTROL_MODE = "power_control_mode";
     private static final String POWER_CONTROL_MODE_NONE = "none";
 
     public List<LogicalAddress> mLogicalAddresses = new ArrayList<>();
@@ -140,14 +142,10 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     }
 
     private boolean setHdmiControlDeviceAutoOff(boolean turnOn) throws Exception {
-        ITestDevice device = getDevice();
-        String val = device.executeShellCommand("settings get global " +
-                HDMI_CONTROL_DEVICE_AUTO_OFF).trim();
-        String valToSet = turnOn ? "1" : "0";
-        device.executeShellCommand("settings put global "
-                + HDMI_CONTROL_DEVICE_AUTO_OFF + " " + valToSet);
-        device.executeShellCommand("settings get global " + HDMI_CONTROL_DEVICE_AUTO_OFF);
-        return val.equals("1");
+        String val = getSettingsValue(TV_SEND_STANDBY_ON_SLEEP);
+        setSettingsValue(TV_SEND_STANDBY_ON_SLEEP, turnOn ? TV_SEND_STANDBY_ON_SLEEP_ENABLED
+                                                          : TV_SEND_STANDBY_ON_SLEEP_DISABLED);
+        return val == TV_SEND_STANDBY_ON_SLEEP_ENABLED;
     }
 
     private String setPowerControlMode(String valToSet) throws Exception {
