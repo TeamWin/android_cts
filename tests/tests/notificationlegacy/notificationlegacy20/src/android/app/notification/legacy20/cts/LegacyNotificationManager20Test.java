@@ -18,6 +18,7 @@ package android.app.notification.legacy20.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 
 import static junit.framework.Assert.fail;
 
@@ -95,7 +96,8 @@ public class LegacyNotificationManager20Test {
                         .revokePostNotificationPermissionWithoutKillForTest(
                                 mContext.getPackageName(),
                                 Process.myUserHandle().getIdentifier()),
-                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL);
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         Thread.sleep(500); // wait for listener to disconnect

@@ -18,6 +18,7 @@ package android.app.notification.legacy29.cts;
 
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
+import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
 import static android.service.notification.NotificationAssistantService.FEEDBACK_RATING;
 
 import static junit.framework.Assert.assertEquals;
@@ -113,7 +114,8 @@ public class NotificationAssistantServiceTest {
                         .revokePostNotificationPermissionWithoutKillForTest(
                                 mContext.getPackageName(),
                                 Process.myUserHandle().getIdentifier()),
-                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL);
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
         if (mNotificationListenerService != null) mNotificationListenerService.resetData();
 
         toggleListenerAccess(false);
