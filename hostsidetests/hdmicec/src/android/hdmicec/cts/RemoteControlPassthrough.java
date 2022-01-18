@@ -203,4 +203,28 @@ public final class RemoteControlPassthrough {
                 true);
         LogHelper.assertLog(device, CLASS, "Long press KEYCODE_BACK");
     }
+
+    /**
+     * Tests that the device responds correctly to a {@code <User Control Pressed> [keyCode]} press
+     * and release operation when it has an additional parameter following the keyCode.
+     */
+    public static void checkUserControlPressAndReleaseWithAdditionalParams(
+            HdmiCecClientWrapper hdmiCecClient,
+            ITestDevice device,
+            LogicalAddress sourceDevice,
+            LogicalAddress dutLogicalAddress)
+            throws Exception {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND);
+        hdmiCecClient.sendUserControlPressAndReleaseWithAdditionalParams(
+                sourceDevice,
+                dutLogicalAddress,
+                HdmiCecConstants.CEC_KEYCODE_UP,
+                HdmiCecConstants.CEC_KEYCODE_DOWN);
+        LogHelper.assertLog(device, CLASS, "Short press KEYCODE_DPAD_UP");
+    }
 }
