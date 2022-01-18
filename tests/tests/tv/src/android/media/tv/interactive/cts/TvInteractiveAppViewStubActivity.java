@@ -17,6 +17,7 @@
 package android.media.tv.interactive.cts;
 
 import android.app.Activity;
+import android.media.tv.TvView;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.Bundle;
 import android.tv.cts.R;
@@ -31,5 +32,9 @@ public class TvInteractiveAppViewStubActivity extends Activity {
 
     public TvInteractiveAppView getTvInteractiveAppView() {
         return findViewById(R.id.tviappview);
+    }
+
+    public TvView getTvView() {
+        return findViewById(R.id.tviapp_tvview);
     }
 }

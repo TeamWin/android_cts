@@ -136,6 +136,16 @@
                  android:resource="@xml/stub_tv_input_service"/>
         </service>
 
+        <service android:name="android.media.tv.interactive.cts.StubTvInputService2"
+             android:permission="android.permission.BIND_TV_INPUT"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.tv.TvInputService"/>
+            </intent-filter>
+            <meta-data android:name="android.media.tv.input"
+                 android:resource="@xml/stub_tv_input_service"/>
+        </service>
+
         <service android:name="android.media.tv.interactive.cts.StubTvInteractiveAppService"
              android:exported="true">
             <intent-filter>

@@ -19,6 +19,8 @@ package android.media.tv.interactive.cts;
 import android.content.Context;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
+import android.net.Uri;
+import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Surface;
 
@@ -53,6 +55,10 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mKeyDownCount;
         public int mKeyUpCount;
         public int mKeyMultipleCount;
+        public int mVideoAvailableCount;
+        public int mTunedCount;
+        public int mCreateBiIAppCount;
+        public int mDestroyBiIAppCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -60,6 +66,10 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public KeyEvent mKeyDownEvent;
         public KeyEvent mKeyUpEvent;
         public KeyEvent mKeyMultipleEvent;
+        public Uri mTunedUri;
+        public Uri mCreateBiIAppUri;
+        public Bundle mCreateBiIAppParams;
+        public String mDestroyBiIAppId;
 
 
         StubSessionImpl(Context context) {
@@ -74,6 +84,10 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mKeyDownCount = 0;
             mKeyUpCount = 0;
             mKeyMultipleCount = 0;
+            mVideoAvailableCount = 0;
+            mTunedCount = 0;
+            mCreateBiIAppCount = 0;
+            mDestroyBiIAppCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -81,6 +95,10 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mKeyDownEvent = null;
             mKeyUpEvent = null;
             mKeyMultipleEvent = null;
+            mTunedUri = null;
+            mCreateBiIAppUri = null;
+            mCreateBiIAppParams = null;
+            mDestroyBiIAppId = null;
         }
 
         @Override
@@ -138,6 +156,31 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mKeyMultipleCode = keyCode;
             mKeyMultipleEvent = event;
             return false;
+        }
+
+        @Override
+        public void onCreateBiInteractiveApp(Uri biIAppUri, Bundle params) {
+            mCreateBiIAppCount++;
+            mCreateBiIAppUri = biIAppUri;
+            mCreateBiIAppParams = params;
+            notifyBiInteractiveAppCreated(biIAppUri, "biIAppId");
+        }
+
+        @Override
+        public void onDestroyBiInteractiveApp(String biIAppId) {
+            mDestroyBiIAppCount++;
+            mDestroyBiIAppId = biIAppId;
+        }
+
+        @Override
+        public void onTuned(Uri uri) {
+            mTunedCount++;
+            mTunedUri = uri;
+        }
+
+        @Override
+        public void onVideoAvailable() {
+            mVideoAvailableCount++;
         }
     }
 }
