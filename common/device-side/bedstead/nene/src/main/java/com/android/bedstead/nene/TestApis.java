@@ -21,6 +21,7 @@ import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
+import com.android.bedstead.nene.location.Locations;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
@@ -81,6 +82,12 @@ public final class TestApis {
     /** Access Test APIs related to the device. */
     public static Device device() {
         return Device.sInstance;
+    }
+
+    /** Access Test APIs related to location */
+    @Experimental
+    public static Locations location() {
+        return Locations.sInstance;
     }
 
     /** @deprecated Use statically */
