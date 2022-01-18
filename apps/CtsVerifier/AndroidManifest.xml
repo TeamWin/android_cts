@@ -1466,6 +1466,27 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity
+            android:name=".bluetooth.BleAdvertisingSetTestActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/ble_advertising_set_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BleAdvertiserTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
+
         <activity android:name=".biometrics.BiometricTestList"
             android:label="@string/biometric_test"
             android:exported="true"
