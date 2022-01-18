@@ -35,6 +35,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.PackageInfoFlags;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -46,7 +47,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -57,6 +58,8 @@ public class SharedUserMigrationTest {
     private static final String PERM_TEST_PKG = "android.uidmigration.cts.PermissionTestApp";
     private static final String DATA_TEST_PKG = "android.uidmigration.cts.DataTestApp";
     private static final String ACTION_COUNTDOWN = "android.uidmigration.cts.ACTION_COUNTDOWN";
+
+    private static final Throwable NOT_AN_ERROR = new Throwable();
 
     private Context mContext;
     private PackageManager mPm;
@@ -83,7 +86,7 @@ public class SharedUserMigrationTest {
         assertTrue(installPackage(apk + "2.apk"));
 
         // Both app should share the same UID
-        int uid = mPm.getPackageUid(INSTALL_TEST_PKG, 0);
+        int uid = mPm.getPackageUid(INSTALL_TEST_PKG, PackageInfoFlags.of(0));
         String[] pkgs = mPm.getPackagesForUid(uid);
         assertNotNull(pkgs);
         assertEquals(2, pkgs.length);
@@ -150,7 +153,7 @@ public class SharedUserMigrationTest {
     public void testDataMigration() throws PackageManager.NameNotFoundException {
         String apk = TMP_APK_PATH + "/DataTestApp";
         assertTrue(installPackage(apk + "1.apk"));
-        int oldUid = mPm.getPackageUid(DATA_TEST_PKG, 0);
+        int oldUid = mPm.getPackageUid(DATA_TEST_PKG, PackageInfoFlags.of(0));
 
         String authority = DATA_TEST_PKG + ".provider";
         ContentResolver resolver = mContext.getContentResolver();
@@ -189,12 +192,15 @@ public class SharedUserMigrationTest {
 
         // Update the data test APK and make sure UID changed
         assertTrue(installPackage(apk + "2.apk"));
-        int newUid = mPm.getPackageUid(DATA_TEST_PKG, 0);
+        int newUid = mPm.getPackageUid(DATA_TEST_PKG, PackageInfoFlags.of(0));
         assertNotEquals(oldUid, newUid);
 
         // Ensure system broadcasts are delivered properly
         try {
-            assertTrue(verifier.await(5, TimeUnit.SECONDS));
+            final Throwable e = verifier.poll(5, TimeUnit.SECONDS);
+            if (e != NOT_AN_ERROR) {
+                throw new AssertionError(e);
+            }
         } catch (InterruptedException e) {
             fail(e.getMessage());
         }
@@ -220,7 +226,7 @@ public class SharedUserMigrationTest {
         runShellCommand("pm uninstall " + packageName);
     }
 
-    static class PackageBroadcastVerifier extends CountDownLatch {
+    static class PackageBroadcastVerifier extends ArrayBlockingQueue<Throwable> {
 
         public int newUid = -1;
 
@@ -233,6 +239,14 @@ public class SharedUserMigrationTest {
         }
 
         void verify(Intent intent) {
+            try {
+                verifyInternal(intent);
+            } catch (Throwable e) {
+                offer(e);
+            }
+        }
+
+        private void verifyInternal(Intent intent) {
             String action = intent.getAction();
             assertNotNull(action);
 
@@ -284,7 +298,8 @@ public class SharedUserMigrationTest {
                 case ACTION_COUNTDOWN:
                     assertEquals(4, mCounter);
                     assertEquals(newUid, intent.getIntExtra(Intent.EXTRA_UID, -2));
-                    countDown();
+                    // End of actions
+                    offer(NOT_AN_ERROR);
                     break;
                 case Intent.ACTION_PACKAGE_REPLACED:
                     fail("PACKAGE_REPLACED should not be called!");
