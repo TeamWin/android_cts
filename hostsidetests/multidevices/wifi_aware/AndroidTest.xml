@@ -18,6 +18,12 @@
     <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
 
     <device name="device1">
+        <!-- For coverage to work, the APK should not be uninstalled until after coverage is pulled.
+             So it's a lot easier to install APKs outside the python code.
+        -->
+        <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+            <option name="test-file-name" value="wifi_aware_snippet.apk" />
+        </target_preparer>
         <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
             <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
             <option name="run-command" value="wm dismiss-keyguard" />
@@ -28,6 +34,9 @@
         </target_preparer>
     </device>
     <device name="device2">
+        <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+            <option name="test-file-name" value="wifi_aware_snippet.apk" />
+        </target_preparer>
         <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
             <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
             <option name="run-command" value="wm dismiss-keyguard" />

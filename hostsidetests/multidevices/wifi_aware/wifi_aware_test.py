@@ -14,9 +14,6 @@ from mobly.controllers import android_device
 
 WIFI_AWARE_SNIPPET_PATH = 'wifi_aware_snippet.apk'
 
-# The snippet is packed with the test binary in the same folder
-WIFI_AWARE_SNIPPET_APK_PATH = os.path.dirname(sys.argv[0]) + '/' + WIFI_AWARE_SNIPPET_PATH
-
 WIFI_AWARE_SNIPPET_PACKAGE = 'com.google.snippet'
 
 TEST_MESSAGE = 'test message!'
@@ -32,7 +29,8 @@ class WifiAwareTest(base_test.BaseTestClass):
       android_device, min_number=2)
 
     def setup_device(device):
-      device.adb.install(WIFI_AWARE_SNIPPET_APK_PATH)
+      # Expect wifi_aware apk to be installed as it is configured to install
+      # with the module configuration AndroidTest.xml on both devices.
       device.adb.shell([
           'pm', 'grant', WIFI_AWARE_SNIPPET_PACKAGE,
           'android.permission.ACCESS_FINE_LOCATION'
