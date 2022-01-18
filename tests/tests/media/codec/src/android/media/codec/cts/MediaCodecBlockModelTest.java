@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.content.res.AssetFileDescriptor;
 import android.hardware.HardwareBuffer;
@@ -26,6 +26,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaCodecBlockModelHelper;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.Preconditions;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
