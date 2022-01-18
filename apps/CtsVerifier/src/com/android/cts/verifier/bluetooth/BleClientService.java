@@ -1318,6 +1318,17 @@ public class BleClientService extends Service {
         }
 
         @Override
+        public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+            // TODO: Currently this is not called when BluetoothGatt.setPreferredPhy() is called.
+            // It is because the path is not wired in native code. (acl_legacy_interface.cc)
+            // Add a proper implementation and related test.
+            super.onPhyUpdate(gatt, txPhy, rxPhy, status);
+            if (DEBUG) {
+                Log.d(TAG, "onPhyUpdate");
+            }
+        }
+
+        @Override
         public void onServiceChanged(BluetoothGatt gatt) {
             super.onServiceChanged(gatt);
             if (DEBUG) {
