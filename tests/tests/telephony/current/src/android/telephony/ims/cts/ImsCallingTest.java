@@ -82,8 +82,10 @@ public class ImsCallingTest {
     public static final int WAIT_FOR_CONDITION = 3000;
     public static final int WAIT_FOR_CALL_STATE = 10000;
     public static final int WAIT_FOR_CALL_DISCONNECT = 5000;
+    public static final int WAIT_FOR_CALL_CONNECT = 5000;
     public static final int WAIT_FOR_CALL_STATE_HOLD = 3000;
     public static final int WAIT_FOR_CALL_STATE_RESUME = 3000;
+    public static final int WAIT_FOR_CALL_STATE_ACTIVE = 15000;
     public static final int LATCH_WAIT = 0;
     public static final int LATCH_INCALL_SERVICE_BOUND = 1;
     public static final int LATCH_INCALL_SERVICE_UNBOUND = 2;
@@ -113,6 +115,10 @@ public class ImsCallingTest {
     private Context mContext;
     private ConcurrentHashMap<String, Call> mCalls = new ConcurrentHashMap<String, Call>();
     private String mCurrentCallId = null;
+    private Call mCall1 = null;
+    private Call mCall2 = null;
+    private TestImsCallSessionImpl mCallSession1 = null;
+    private TestImsCallSessionImpl mCallSession2 = null;
 
     private static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
     static {
@@ -666,6 +672,239 @@ public class ImsCallingTest {
         isCallDisconnected(call, callSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
         waitForUnboundService();
+    }
+
+    @Test
+    public void testOutGoingIncomingMultiCall() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        // Place outgoing call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call moCall = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl moCallSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+        isCallActive(moCall, moCallSession);
+        assertTrue("Call is not in Active State", (moCall.getDetails().getState()
+                == Call.STATE_ACTIVE));
+
+        extras.putBoolean("android.telephony.ims.feature.extra.IS_USSD", false);
+        extras.putBoolean("android.telephony.ims.feature.extra.IS_UNKNOWN_CALL", false);
+        extras.putString("android:imsCallID",  String.valueOf(++sCounter));
+        extras.putLong("android:phone_id", 123456);
+        sServiceConnector.getCarrierService().getMmTelFeature().onIncomingCallReceived(extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call mtCall = null;
+        if (mCurrentCallId != null) {
+            mtCall = getCall(mCurrentCallId);
+            if (mtCall.getDetails().getState() == Call.STATE_RINGING) {
+                callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_CONNECT);
+                mtCall.answer(0);
+            }
+        }
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        TestImsCallSessionImpl mtCallSession = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getImsCallsession();
+        isCallActive(mtCall, mtCallSession);
+        assertTrue("Call is not in Active State", (mtCall.getDetails().getState()
+                == Call.STATE_ACTIVE));
+
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        mtCall.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mtCall, mtCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        isCallActive(moCall, moCallSession);
+        assertTrue("Call is not in Active State", (moCall.getDetails().getState()
+                == Call.STATE_ACTIVE));
+
+        moCall.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(moCall, moCallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testOutGoingCallSwap() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+        addOutgoingCalls();
+
+        // Swap the call
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE_RESUME);
+        mCall1.unhold();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertTrue("Call is not in Hold State", (mCall2.getDetails().getState()
+                == Call.STATE_HOLDING));
+        isCallActive(mCall1, mCallSession1);
+
+        // After successful call swap disconnect the call
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        mCall1.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall1, mCallSession1);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        //Wait till second call is in active state
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return (mCall2.getDetails().getState() == Call.STATE_ACTIVE)
+                                ? true : false;
+                    }
+                }, WAIT_FOR_CALL_STATE_ACTIVE, "Call in Active State");
+
+        isCallActive(mCall2, mCallSession2);
+        mCall2.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall2, mCallSession2);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        resetCallSessionObjects();
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testOutGoingCallSwapFail() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+        addOutgoingCalls();
+
+        mCallSession1.addTestType(TestImsCallSessionImpl.TEST_TYPE_RESUME_FAILED);
+        // Swap the call
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE_RESUME);
+        mCall1.unhold();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertTrue("Call is not in Hold State", (mCall1.getDetails().getState()
+                == Call.STATE_HOLDING));
+
+        // Wait till second call is in active state
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return (mCall2.getDetails().getState() == Call.STATE_ACTIVE)
+                                ? true : false;
+                    }
+                }, WAIT_FOR_CALL_STATE_ACTIVE, "Call in Active State");
+
+        isCallActive(mCall2, mCallSession2);
+        mCallSession1.removeTestType(TestImsCallSessionImpl.TEST_TYPE_RESUME_FAILED);
+        mCall2.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall2, mCallSession2);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        // Wait till second call is in active state
+        isCallActive(mCall1, mCallSession1);
+        mCall1.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall1, mCallSession1);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        resetCallSessionObjects();
+        waitForUnboundService();
+    }
+
+    private void addOutgoingCalls() throws Exception {
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        // Place first outgoing call
+        final Uri imsUri1 = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter),
+                null);
+        Bundle extras1 = new Bundle();
+
+        telecomManager.placeCall(imsUri1, extras1);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        mCall1 = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+        mCallSession1 = sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
+        isCallActive(mCall1, mCallSession1);
+        assertTrue("Call is not in Active State", (mCall1.getDetails().getState()
+                == Call.STATE_ACTIVE));
+
+        // Place second outgoing call
+        final Uri imsUri2 = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter),
+                null);
+        Bundle extras2 = new Bundle();
+
+        telecomManager.placeCall(imsUri2, extras2);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        mCall2 = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_HOLDING, WAIT_FOR_CALL_STATE));
+        assertTrue("Call is not in Hold State", (mCall1.getDetails().getState()
+                == Call.STATE_HOLDING));
+
+        //Wait till the object of TestImsCallSessionImpl for second call created.
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        TestMmTelFeature mmtelfeatue = sServiceConnector.getCarrierService()
+                                .getMmTelFeature();
+                        return (mmtelfeatue.getImsCallsession() != mCallSession1) ? true : false;
+                    }
+                }, WAIT_FOR_CONDITION, "CallSession Created");
+
+        mCallSession2 = sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
+        isCallActive(mCall2, mCallSession2);
+        assertTrue("Call is not in Active State", (mCall2.getDetails().getState()
+                == Call.STATE_ACTIVE));
+    }
+
+    private void resetCallSessionObjects() {
+        mCall1 = mCall2 = null;
+        mCallSession1 = mCallSession2 = null;
     }
 
     public void waitForUnboundService() {
