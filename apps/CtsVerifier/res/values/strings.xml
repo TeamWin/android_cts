@@ -703,6 +703,23 @@
     <string name="ble_scan_start">Start scan</string>
     <string name="ble_scan_stop">Stop scan</string>
 
+    <!-- BLE Advertising Set test strings -->
+    <string name="ble_advertising_set_test_name">Bluetooth LE Advertising Set Test</string>
+    <string name="ble_advertising_set_test_info">Bluetooth LE Advertising Set tests AdvertisingSet and AdvertisingSetCallback APIs.</string>
+    <string name="ble_advertising_set_test_instruction">Press the \"Set Up\" button first, then start the test by pressing the \"Start Test\" button. UI thread may freeze for a few seconds while enabling/disabling bluetooth adapter.</string>
+    <string name="ble_advertising_set_start_test">Start Test</string>
+    <string name="ble_advertising_set_running_test">Running Test...</string>
+    <string name="ble_advertising_set_finished_test">Finished Test</string>
+    <string name="ble_advertising_set_start">Starting advertising set.</string>
+    <string name="ble_advertising_set_enable_disable">Enabling/Disabling advertising set.</string>
+    <string name="ble_advertising_set_advertising_data">Setting advertising data.</string>
+    <string name="ble_advertising_set_advertising_params">Setting advertising parameters.</string>
+    <string name="ble_advertising_set_periodic_advertising_data">Setting periodic advertising data.</string>
+    <string name="ble_advertising_set_periodic_advertising_enabled_disabled">Enabling/Disabling periodic advertising.</string>
+    <string name="ble_advertising_set_periodic_advertising_params">Setting periodic advertising parameters.</string>
+    <string name="ble_advertising_set_scan_response_data">Setting scan response data.</string>
+    <string name="ble_advertising_set_stop">Stopping advertising set.</string>
+
     <!-- BLE connection priority test strings -->
     <string name="ble_client_connection_priority">Testing connection priority switching </string>
     <string name="ble_server_connection_priority_result_passed">All test passed</string>
