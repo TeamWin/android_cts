@@ -186,9 +186,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_hf4_6_8_userControlPressed_powerOn() throws Exception {
         ITestDevice device = getDevice();
-        List<Integer> powerControlOperands = Arrays.asList(HdmiCecConstants.CEC_CONTROL_POWER,
-                HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION,
-                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+        List<Integer> powerControlOperands = Arrays.asList(HdmiCecConstants.CEC_KEYCODE_POWER,
+                HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION,
+                HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION);
 
         LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
                 ? LogicalAddress.PLAYBACK_1
@@ -224,8 +224,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     public void cect_hf4_6_10_userControlPressed_powerOff() throws Exception {
         ITestDevice device = getDevice();
         List<Integer> powerControlOperands = Arrays.asList(
-                HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION,
-                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+                HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION,
+                HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION);
 
         LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
                 ? LogicalAddress.PLAYBACK_1
