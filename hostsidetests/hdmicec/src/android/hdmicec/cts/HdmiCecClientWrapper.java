@@ -345,6 +345,37 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
+     * Sends a {@code <UCP>} with and additional param. This is used to check that the DUT ignores
+     * additional params in an otherwise correct message.
+     */
+    public void sendUserControlPressAndReleaseWithAdditionalParams(
+            LogicalAddress source, LogicalAddress destination, int keyCode, int additionalParam)
+            throws CecClientWrapperException {
+        String key = String.format("%02x", keyCode);
+        String command =
+                "tx "
+                        + source
+                        + destination
+                        + ":"
+                        + CecOperand.USER_CONTROL_PRESSED
+                        + ":"
+                        + key
+                        + ":"
+                        + additionalParam;
+
+        try {
+            mOutputConsole.write(command);
+            mOutputConsole.newLine();
+            mOutputConsole.write(
+                    "tx " + source + destination + ":" + CecOperand.USER_CONTROL_RELEASED);
+            mOutputConsole.newLine();
+            mOutputConsole.flush();
+        } catch (IOException ioe) {
+            throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
+        }
+    }
+
+    /**
      * Sends a <UCP> message from source to destination through the output console of the
      * cec-communication channel with the mentioned keycode. If holdKey is true, the method will
      * send multiple <UCP> messages to simulate a long press. No <UCR> will be sent.
