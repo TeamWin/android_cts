@@ -222,12 +222,19 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     void setBatteryState(boolean plugged, int level) throws Exception {
         if (plugged) {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set ac 1");
+            final int curLevel = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
+                    "dumpsys battery get level").trim());
+            if (curLevel >= level) {
+                // Lower the level so when we set it to the desired level, JobScheduler thinks
+                // the device is charging.
+                SystemUtil.runShellCommand(getInstrumentation(),
+                        "cmd battery set level " + Math.max(1, level - 1));
+            }
         } else {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd battery unplug");
         }
         int seq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd battery set -f level " + level).trim());
-        long startTime = SystemClock.elapsedRealtime();
 
         // Wait for the battery update to be processed by job scheduler before proceeding.
         waitUntil("JobScheduler didn't update charging status to " + plugged, 15 /* seconds */,
