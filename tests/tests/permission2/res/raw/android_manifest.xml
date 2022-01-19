@@ -5011,6 +5011,11 @@
     <permission android:name="android.permission.INPUT_CONSUMER"
                 android:protectionLevel="signature" />
 
+    <!-- @hide Allows an application to receive keycode events.
+         <p>Wear specific. -->
+    <permission android:name="android.permission.RECEIVE_KEYCODE_EVENTS"
+                android:protectionLevel="signature|preinstalled" />
+
     <application android:process="system"
                  android:persistent="true"
                  android:hasCode="false"
