@@ -64,6 +64,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -174,7 +175,12 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // check we have >= 1 saved network
         assertFalse("Need at least one saved network", savedNetworks.isEmpty());
         // Pick the first saved network on the device (assumes that it is in range)
-        mTestNetwork = savedNetworks.get(0);
+        for (WifiConfiguration config : savedNetworks) {
+            if (!isEnterpriseConfig(config)) {
+                mTestNetwork = config;
+                break;
+            }
+        }
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
@@ -590,5 +596,16 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
+    }
+
+    private boolean isEnterpriseConfig(WifiConfiguration config) {
+        BitSet allowedKeyManagement = config.allowedKeyManagement;
+        WifiEnterpriseConfig enterpriseConfig = config.enterpriseConfig;
+        return (allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_EAP)
+                || allowedKeyManagement.get(WifiConfiguration.KeyMgmt.IEEE8021X)
+                || allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SUITE_B_192)
+                || allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WAPI_CERT))
+                && enterpriseConfig != null
+                && enterpriseConfig.getEapMethod() != WifiEnterpriseConfig.Eap.NONE;
     }
 }
