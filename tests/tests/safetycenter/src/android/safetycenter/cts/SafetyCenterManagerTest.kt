@@ -26,10 +26,12 @@ import android.content.IntentFilter
 import android.content.res.Resources
 import android.os.Build.VERSION_CODES.TIRAMISU
 import android.provider.DeviceConfig
+import android.safetycenter.SafetyCenterData
 import android.safetycenter.SafetyCenterManager
 import android.safetycenter.SafetyCenterManager.ACTION_REFRESH_SAFETY_SOURCES
 import android.safetycenter.SafetyCenterManager.REFRESH_REASON_PAGE_OPEN
 import android.safetycenter.SafetyCenterManager.REFRESH_REASON_RESCAN_BUTTON_CLICK
+import android.safetycenter.SafetyCenterManager.OnSafetyCenterDataChangedListener
 import android.safetycenter.SafetySourceData
 import android.safetycenter.SafetySourceIssue
 import android.safetycenter.SafetySourceIssue.SEVERITY_LEVEL_CRITICAL_WARNING
@@ -223,7 +225,7 @@ class SafetyCenterManagerTest {
     }
 
     @Test
-    fun isSafetyCenterEnabled_whenAppDoesntHoldPermission_methodThrows() {
+    fun isSafetyCenterEnabled_whenAppDoesNotHoldPermission_methodThrows() {
         assertFailsWith(SecurityException::class) {
             safetyCenterManager.isSafetyCenterEnabled
         }
@@ -290,6 +292,44 @@ class SafetyCenterManagerTest {
         val lastSafetyCenterUpdate =
             safetyCenterManager.getLastUpdateWithPermission(sourceId)
         assertThat(lastSafetyCenterUpdate).isNull()
+    }
+
+    @Test
+    fun getSafetyCenterData_whenAppDoesNotHoldPermission_methodThrows() {
+        assertFailsWith(SecurityException::class) {
+            safetyCenterManager.safetyCenterData
+        }
+    }
+
+    // Object required instead of lambda because kotlin wraps functions in a new Java functional
+    // interface implementation each time they are referenced/cast to a Java interface: b/215569072
+    private val emptyListener = object : OnSafetyCenterDataChangedListener {
+        override fun onSafetyCenterDataChanged(data: SafetyCenterData) {}
+    }
+
+    @Test
+    fun addOnSafetyCenterDataChangedListener_whenAppDoesNotHoldPermission_methodThrows() {
+        assertFailsWith(SecurityException::class) {
+            safetyCenterManager.addOnSafetyCenterDataChangedListener(
+                    context.mainExecutor, emptyListener)
+        }
+    }
+
+    @Test
+    fun removeOnSafetyCenterDataChangedListener_whenAppDoesNotHoldPermission_methodThrows() {
+        safetyCenterManager.addOnSafetyCenterDataChangedListenerWithPermission(
+                context.mainExecutor, emptyListener)
+
+        assertFailsWith(SecurityException::class) {
+            safetyCenterManager.removeOnSafetyCenterDataChangedListener(emptyListener)
+        }
+    }
+
+    @Test
+    fun dismissSafetyIssue_whenAppDoesNotHoldPermission_methodThrows() {
+        assertFailsWith(SecurityException::class) {
+            safetyCenterManager.dismissSafetyIssue("bleh")
+        }
     }
 
     private fun deviceSupportsSafetyCenter() =

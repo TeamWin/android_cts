@@ -19,9 +19,11 @@ package android.safetycenter.cts
 import android.Manifest.permission.MANAGE_SAFETY_CENTER
 import android.Manifest.permission.SEND_SAFETY_CENTER_UPDATE
 import android.safetycenter.SafetyCenterManager
+import android.safetycenter.SafetyCenterManager.OnSafetyCenterDataChangedListener
 import android.safetycenter.SafetySourceData
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import java.util.concurrent.Executor
 
 /**
  * Call {@link SafetyCenterManager#sendSafetyCenterUpdate} adopting Shell's
@@ -71,3 +73,11 @@ fun SafetyCenterManager.clearDataWithPermission() =
     runWithShellPermissionIdentity({
         clearSafetyCenterData()
     }, MANAGE_SAFETY_CENTER)
+
+fun SafetyCenterManager.addOnSafetyCenterDataChangedListenerWithPermission(
+    executor: Executor,
+    listener: OnSafetyCenterDataChangedListener
+) =
+        runWithShellPermissionIdentity({
+            addOnSafetyCenterDataChangedListener(executor, listener)
+        }, MANAGE_SAFETY_CENTER)
