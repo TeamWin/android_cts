@@ -17,9 +17,11 @@
 package android.permission3.cts
 
 import android.os.Build
+import androidx.test.filters.SdkSuppress
 import org.junit.Assert
 import org.junit.Test
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class PermissionTestLatest : BaseUsePermissionTest() {
     /**
      * Not exactly a cts type test but it needs to be run continuously. This test is supposed to

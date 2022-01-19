@@ -16,6 +16,8 @@
 
 package android.permission3.cts
 
+import android.os.Build
+import androidx.test.filters.SdkSuppress
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
@@ -53,18 +55,21 @@ class PermissionSplitTest : BaseUsePermissionTest() {
         testLocationPermissionSplit(false)
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
     fun testBodySensorSplit() {
         installPackage(APP_APK_PATH_31)
         testBodySensorPermissionSplit(true)
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
     fun testBodySensorSplit32() {
         installPackage(APP_APK_PATH_32)
         testBodySensorPermissionSplit(true)
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     @Test
     fun testBodySensorNonSplit() {
         installPackage(APP_APK_PATH_LATEST)
