@@ -18,6 +18,11 @@
     <option name="config-descriptor:metadata" key="component" value="systems" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="device" />
+        <option name="config-filename" value="CtsHiddenApiBlocklistApiDynamicConfig" />
+        <option name="version" value="1.0" />
+    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/signature-test" />
@@ -32,9 +37,12 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api.hiddenapi_blacklist_debug_class" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="class" value="android.signature.cts.api.DebugClassHiddenApiTest" />
+        <option name="class" value="android.signature.cts.api.blocklist.debug.DebugClassHiddenApiTest" />
+        <option name="instrumentation-arg" key="dynamic-config-name" value="CtsHiddenApiBlocklistApiDynamicConfig" />
         <option name="instrumentation-arg" key="hiddenapi-files" value="hiddenapi_flags.csv" />
         <option name="instrumentation-arg" key="hiddenapi-test-flags" value="blacklist,greylist-max-o,greylist-max-p" />
         <option name="runtime-hint" value="30s" />
+        <!-- disable isolated storage so tests can access dynamic config stored in /sdcard. -->
+        <option name="isolated-storage" value="false" />
     </test>
 </configuration>
