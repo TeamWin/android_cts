@@ -143,7 +143,6 @@ public class WindowManagerState {
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private Boolean mIsHomeRecentsComponent;
-    private int mDefaultMinSizeOfResizableTaskDp;
     private String mTopResumedActivityRecord = null;
     final List<String> mResumedActivitiesInRootTasks = new ArrayList<>();
     final List<String> mResumedActivitiesInDisplays = new ArrayList<>();
@@ -420,7 +419,6 @@ public class WindowManagerState {
             mTopResumedActivityRecord = focusedDisplay.mResumedActivity;
         }
         mIsHomeRecentsComponent = new Boolean(root.isHomeRecentsComponent);
-        mDefaultMinSizeOfResizableTaskDp = root.defaultMinSizeResizableTask;
 
         for (int i = 0; i < root.pendingActivities.length; i++) {
             mPendingActivities.add(root.pendingActivities[i].title);
@@ -1106,6 +1104,7 @@ public class WindowManagerState {
         boolean mSingleTaskInstance;
         Rect mDefaultPinnedStackBounds = null;
         Rect mPinnedStackMovementBounds = null;
+        int mMinSizeOfResizeableTaskDp;
 
         private Rect mDisplayRect = new Rect();
         private Rect mAppRect = new Rect();
@@ -1144,6 +1143,7 @@ public class WindowManagerState {
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
             mSurfaceSize = proto.surfaceSize;
             mFocusedApp = proto.focusedApp;
+            mMinSizeOfResizeableTaskDp = proto.minSizeOfResizeableTaskDp;
 
             final AppTransitionProto appTransitionProto = proto.appTransition;
             int appState = 0;
@@ -2121,7 +2121,8 @@ public class WindowManagerState {
     }
 
     int defaultMinimalTaskSize(int displayId) {
-        return dpToPx(mDefaultMinSizeOfResizableTaskDp, getDisplay(displayId).getDpi());
+        final DisplayContent dc = getDisplay(displayId);
+        return dpToPx(dc.mMinSizeOfResizeableTaskDp, dc.getDpi());
     }
 
     int defaultMinimalDisplaySizeForSplitScreen(int displayId) {
