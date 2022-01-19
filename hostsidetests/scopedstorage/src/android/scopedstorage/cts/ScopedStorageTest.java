@@ -32,6 +32,7 @@ import static android.scopedstorage.cts.lib.TestUtils.canReadAndWriteAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
+import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
 import static android.scopedstorage.cts.lib.TestUtils.dropShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidDir;
@@ -520,7 +521,7 @@ public class ScopedStorageTest {
             nomediaFile.delete();
             mediaFile.delete();
             renamedMediaFile.delete();
-            nomediaDir.delete();
+            deleteRecursively(nomediaDir);
         }
     }
 
@@ -557,8 +558,8 @@ public class ScopedStorageTest {
             mediaFile1InSubDir.delete();
             mediaFile2InSubDir.delete();
             topLevelNomediaFile.delete();
-            nomediaSubDir.delete();
-            nomediaDir.delete();
+            deleteRecursively(nomediaSubDir);
+            deleteRecursively(nomediaDir);
             // Scan the directory to remove stale db rows.
             MediaStore.scanFile(getContentResolver(), nomediaDir);
         }
@@ -905,8 +906,8 @@ public class ScopedStorageTest {
             imageFile.delete();
             renamedImageFile.delete();
             imageFileInRenamedDir.delete();
-            dir.delete();
-            renamedDir.delete();
+            deleteRecursively(dir);
+            deleteRecursively(renamedDir);
         }
     }
 
