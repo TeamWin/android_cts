@@ -24,8 +24,10 @@ import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.camera2.params.Capability;
+import android.util.ArraySet;
 import android.util.Range;
 import android.util.Size;
 import android.util.Log;
@@ -77,7 +79,7 @@ public class StaticMetadata {
 
     // Last defined capability enum, for iterating over all of them
     public static final int LAST_CAPABILITY_ENUM =
-            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING;
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT;
 
     // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {
@@ -789,6 +791,22 @@ public class StaticMetadata {
         }
 
         return count;
+    }
+
+    /**
+     * Get and check the available dynamic range profiles.
+     *
+     * @return the available dynamic range profiles
+     */
+    public Set<Integer> getAvailableDynamicRangeProfilesChecked() {
+        DynamicRangeProfiles profiles = mCharacteristics.get(
+                CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
+
+        if (profiles == null) {
+            return new ArraySet<Integer>();
+        }
+
+        return profiles.getSupportedProfiles();
     }
 
     /**

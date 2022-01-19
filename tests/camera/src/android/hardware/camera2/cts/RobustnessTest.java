@@ -64,6 +64,7 @@ import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MandatoryStreamCombination;
 import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
@@ -75,6 +76,7 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
+import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -91,6 +93,7 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -491,6 +494,173 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     String.format("Closing down for combination: %s failed due to: %s",
                             combination.getDescription(), e.getMessage()));
             }
+        }
+
+        targets.close();
+    }
+
+    /**
+     * Test for making sure the required 10-bit stream combinations work as expected.
+     * Since we have too many possible combinations between different 8-bit vs. 10-bit as well
+     * as 10-bit dynamic profiles and in order to maximize the coverage within some reasonable
+     * amount of iterations, the test case will configure 8-bit and 10-bit outputs randomly. In case
+     * we have 10-bit output, then the dynamic range profile will also be randomly picked.
+     */
+    @Test
+    public void testMandatory10BitStreamCombinations() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            openDevice(id);
+            CameraCharacteristics chars = mStaticInfo.getCharacteristics();
+            if (!CameraTestUtils.hasCapability(
+                    chars, CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
+                Log.i(TAG, "Camera id " + id + " doesn't support 10-bit output, skip test");
+                closeDevice(id);
+                continue;
+            }
+            CameraCharacteristics.Key<MandatoryStreamCombination []> ck =
+                    CameraCharacteristics.SCALER_MANDATORY_TEN_BIT_OUTPUT_STREAM_COMBINATIONS;
+
+            MandatoryStreamCombination[] combinations = chars.get(ck);
+            assertNotNull(combinations);
+
+            try {
+                for (MandatoryStreamCombination combination : combinations) {
+                    Log.i(TAG, "Testing fixed mandatory 10-bit output stream combination: " +
+                            combination.getDescription() + " on camera: " + id);
+                    DynamicRangeProfiles profiles = mStaticInfo.getCharacteristics().get(
+                            CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
+                    assertNotNull(profiles);
+
+                    // First we want to make sure that a fixed set of 10-bit streams
+                    // is functional
+                    for (Integer profile : profiles.getSupportedProfiles()) {
+                        if (profile != DynamicRangeProfiles.STANDARD) {
+                            ArrayList<Integer> testProfiles = new ArrayList<Integer>() {
+                                { add(profile); } };
+                            testMandatory10BitStreamCombination(id, combination, profiles,
+                                    testProfiles);
+                        }
+                    }
+
+                    Log.i(TAG, "Testing random mandatory 10-bit output stream combination: " +
+                            combination.getDescription() + " on camera: " + id);
+                    // Next try out a random mix of standard 8-bit and 10-bit profiles.
+                    // The number of possible combinations is quite big and testing them
+                    // all on physical hardware can become unfeasible.
+                    ArrayList<Integer> testProfiles = new ArrayList<>(
+                            profiles.getSupportedProfiles());
+                    testMandatory10BitStreamCombination(id, combination, profiles, testProfiles);
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void testMandatory10BitStreamCombination(String cameraId,
+            MandatoryStreamCombination combination, DynamicRangeProfiles profiles,
+            List<Integer> testProfiles) {
+        final int TIMEOUT_FOR_RESULT_MS = 1000;
+        final int MIN_RESULT_COUNT = 3;
+
+        // Setup outputs
+        List<OutputConfiguration> outputConfigs = new ArrayList<>();
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        List<Surface> uhOutputSurfaces = new ArrayList<Surface>();
+        StreamCombinationTargets targets = new StreamCombinationTargets();
+
+        CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(),
+                targets, outputConfigs, outputSurfaces, uhOutputSurfaces, MIN_RESULT_COUNT,
+                /*substituteY8*/ false, /*substituteHeic*/false,
+                /*physicalCameraId*/ null,
+                /*multiResStreamConfig*/null, mHandler,
+                testProfiles);
+
+        try {
+            checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs,
+                    /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                    true/*defaultSupport*/,
+                    String.format("Session configuration query from combination: %s failed",
+                            combination.getDescription()));
+
+            createSessionByConfigs(outputConfigs);
+
+            boolean constraintPresent = false;
+            List<Surface> constrainedOutputs = new ArrayList<>(outputSurfaces);
+
+            while (!outputSurfaces.isEmpty()) {
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                // Check to see how many outputs can be combined in to a single request including
+                // the first output surface and respecting the advertised constraints
+                Iterator<OutputConfiguration> it = outputConfigs.iterator();
+                OutputConfiguration config = it.next();
+                HashSet<Integer> currentProfiles = new HashSet<>();
+                currentProfiles.add(config.getDynamicRangeProfile());
+                requestBuilder.addTarget(config.getSurface());
+                outputSurfaces.remove(config.getSurface());
+                it.remove();
+                while (it.hasNext()) {
+                    config = it.next();
+                    Integer currentProfile = config.getDynamicRangeProfile();
+                    Set<Integer> newLimitations = profiles.getProfileCaptureRequestConstraints(
+                            currentProfile);
+                    if (newLimitations.isEmpty() || (newLimitations.containsAll(currentProfiles))) {
+                        currentProfiles.add(currentProfile);
+                        requestBuilder.addTarget(config.getSurface());
+                        outputSurfaces.remove(config.getSurface());
+                        it.remove();
+                    } else if (!constraintPresent && !newLimitations.isEmpty() &&
+                            !newLimitations.containsAll(currentProfiles)) {
+                        constraintPresent = true;
+                    }
+                }
+
+                CaptureRequest request = requestBuilder.build();
+                CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                        mock(CameraCaptureSession.CaptureCallback.class);
+                mCameraSession.capture(request, mockCaptureCallback, mHandler);
+                verify(mockCaptureCallback,
+                        timeout(TIMEOUT_FOR_RESULT_MS).atLeastOnce())
+                        .onCaptureCompleted(
+                                eq(mCameraSession),
+                                eq(request),
+                                isA(TotalCaptureResult.class));
+
+                verify(mockCaptureCallback, never()).
+                        onCaptureFailed(
+                                eq(mCameraSession),
+                                eq(request),
+                                isA(CaptureFailure.class));
+            }
+
+            if (constraintPresent) {
+                // Capture requests that include output surfaces with dynamic range profiles that
+                // cannot be combined must throw a corresponding exception
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                for (Surface s : constrainedOutputs) {
+                    requestBuilder.addTarget(s);
+                }
+
+                CaptureRequest request = requestBuilder.build();
+                CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                        mock(CameraCaptureSession.CaptureCallback.class);
+                try {
+                    mCameraSession.capture(request, mockCaptureCallback, mHandler);
+                    fail("Capture request to outputs with incompatible dynamic range profiles "
+                            + "must always fail!");
+                } catch (IllegalArgumentException e) {
+                    // Expected
+                }
+            }
+
+            Log.i(TAG, String.format("Done with camera %s, combination: %s, closing session",
+                    cameraId, combination.getDescription()));
+        } catch (Throwable e) {
+            mCollector.addMessage(
+                    String.format("Closing down for combination: %s failed due to: %s",
+                            combination.getDescription(), e.getMessage()));
         }
 
         targets.close();
