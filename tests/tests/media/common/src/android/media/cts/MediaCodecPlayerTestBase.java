@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +37,10 @@ public class MediaCodecPlayerTestBase<T extends Activity> extends ActivityInstru
     private static final String TAG = MediaCodecPlayerTestBase.class.getSimpleName();
     private static final int CONNECTION_RETRIES = 10;
     private static final int SLEEP_TIME_MS = 1000;
-    private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(25, TimeUnit.SECONDS);
+    // The first ten seconds in PLAY_TIME_MS plays the clear lead,
+    // the next ten seconds verifies encrypted playback.
+    // This applies to both streaming and offline tests.
+    private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.SECONDS);
 
     protected Context mContext;
     protected MediaCodecClearKeyPlayer mMediaCodecPlayer;
