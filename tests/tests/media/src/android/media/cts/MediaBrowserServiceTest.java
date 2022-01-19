@@ -40,6 +40,8 @@ import androidx.test.core.app.ApplicationProvider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test {@link android.service.media.MediaBrowserService}.
@@ -51,98 +53,86 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     private static final long WAIT_TIME_FOR_NO_RESPONSE_MS = 500L;
     private static final ComponentName TEST_BROWSER_SERVICE = new ComponentName(
             "android.media.cts", "android.media.cts.StubMediaBrowserService");
-    private final Object mWaitLock = new Object();
 
-    private final MediaBrowser.ConnectionCallback mConnectionCallback =
-            new MediaBrowser.ConnectionCallback() {
-        @Override
-        public void onConnected() {
-            synchronized (mWaitLock) {
-                mMediaBrowserService = StubMediaBrowserService.sInstance;
-                mWaitLock.notify();
-            }
-        }
-    };
+    private final TestCountDownLatch mOnChildrenLoadedLatch = new TestCountDownLatch();
+    private final TestCountDownLatch mOnChildrenLoadedWithOptionsLatch = new TestCountDownLatch();
+    private final TestCountDownLatch mOnItemLoadedLatch = new TestCountDownLatch();
 
     private final MediaBrowser.SubscriptionCallback mSubscriptionCallback =
             new MediaBrowser.SubscriptionCallback() {
             @Override
             public void onChildrenLoaded(String parentId, List<MediaItem> children) {
-                synchronized (mWaitLock) {
-                    mOnChildrenLoaded = true;
-                    if (children != null) {
-                        for (MediaItem item : children) {
-                            assertRootHints(item);
-                        }
+                if (children != null) {
+                    for (MediaItem item : children) {
+                        assertRootHints(item);
                     }
-                    mWaitLock.notify();
                 }
+                mOnChildrenLoadedLatch.countDown();
             }
 
             @Override
             public void onChildrenLoaded(String parentId, List<MediaItem> children,
                     Bundle options) {
-                synchronized (mWaitLock) {
-                    mOnChildrenLoadedWithOptions = true;
-                    if (children != null) {
-                        for (MediaItem item : children) {
-                            assertRootHints(item);
-                        }
+                if (children != null) {
+                    for (MediaItem item : children) {
+                        assertRootHints(item);
                     }
-                    mWaitLock.notify();
                 }
+                mOnChildrenLoadedWithOptionsLatch.countDown();
             }
         };
 
     private final MediaBrowser.ItemCallback mItemCallback = new MediaBrowser.ItemCallback() {
         @Override
         public void onItemLoaded(MediaItem item) {
-            synchronized (mWaitLock) {
-                mOnItemLoaded = true;
-                assertRootHints(item);
-                mWaitLock.notify();
-            }
+            assertRootHints(item);
+            mOnItemLoadedLatch.countDown();
         }
     };
 
     private MediaBrowser mMediaBrowser;
     private RemoteUserInfo mBrowserInfo;
     private StubMediaBrowserService mMediaBrowserService;
-    private boolean mOnChildrenLoaded;
-    private boolean mOnChildrenLoadedWithOptions;
-    private boolean mOnItemLoaded;
     private Bundle mRootHints;
 
     @Override
     public void setUp() throws Exception {
-        getInstrumentation().runOnMainSync(new Runnable() {
-            @Override
-            public void run() {
-                mRootHints = new Bundle();
-                mRootHints.putBoolean(MediaBrowserService.BrowserRoot.EXTRA_RECENT, true);
-                mRootHints.putBoolean(MediaBrowserService.BrowserRoot.EXTRA_OFFLINE, true);
-                mRootHints.putBoolean(MediaBrowserService.BrowserRoot.EXTRA_SUGGESTED, true);
-                mMediaBrowser = new MediaBrowser(getInstrumentation().getTargetContext(),
-                        TEST_BROWSER_SERVICE, mConnectionCallback, mRootHints);
-                mBrowserInfo = new RemoteUserInfo(
-                        getInstrumentation().getTargetContext().getPackageName(),
-                        Process.myPid(),
-                        Process.myUid());
-            }
-        });
-        synchronized (mWaitLock) {
+        mRootHints = new Bundle();
+        mRootHints.putBoolean(BrowserRoot.EXTRA_RECENT, true);
+        mRootHints.putBoolean(BrowserRoot.EXTRA_OFFLINE, true);
+        mRootHints.putBoolean(BrowserRoot.EXTRA_SUGGESTED, true);
+        mBrowserInfo = new RemoteUserInfo(
+                getInstrumentation().getTargetContext().getPackageName(),
+                Process.myPid(),
+                Process.myUid());
+        mOnChildrenLoadedLatch.reset();
+        mOnChildrenLoadedWithOptionsLatch.reset();
+        mOnItemLoadedLatch.reset();
+
+        final CountDownLatch onConnectedLatch = new CountDownLatch(1);
+        getInstrumentation().runOnMainSync(()-> {
+            mMediaBrowser = new MediaBrowser(getInstrumentation().getTargetContext(),
+                    TEST_BROWSER_SERVICE, new MediaBrowser.ConnectionCallback() {
+                @Override
+                public void onConnected() {
+                    mMediaBrowserService = StubMediaBrowserService.sInstance;
+                    onConnectedLatch.countDown();
+                }
+            }, mRootHints);
             mMediaBrowser.connect();
-            mWaitLock.wait(TIME_OUT_MS);
-        }
+        });
+        assertTrue(onConnectedLatch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
         assertNotNull(mMediaBrowserService);
     }
 
     @Override
     public void tearDown() {
-        if (mMediaBrowser != null) {
-            mMediaBrowser.disconnect();
-            mMediaBrowser = null;
-        }
+        getInstrumentation().runOnMainSync(()-> {
+            if (mMediaBrowser != null) {
+                mMediaBrowser.disconnect();
+                mMediaBrowser = null;
+            }
+        });
     }
 
     public void testGetSessionToken() {
@@ -151,16 +141,14 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     }
 
     public void testNotifyChildrenChanged() throws Exception {
-        synchronized (mWaitLock) {
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoaded);
+        });
+        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
 
-            mOnChildrenLoaded = false;
-            mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoaded);
-        }
+        mOnChildrenLoadedLatch.reset();
+        mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
+        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
     }
 
     public void testNotifyChildrenChangedWithNullOptionsThrowsIAE() {
@@ -173,103 +161,91 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         }
     }
 
-    public void testNotifyChildrenChangedWithPagination() throws Exception {
-        synchronized (mWaitLock) {
-            final int pageSize = 5;
-            final int page = 2;
-            Bundle options = new Bundle();
-            options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
-            options.putInt(MediaBrowser.EXTRA_PAGE, page);
+    public void testNotifyChildrenChangedWithPagination() {
+        final int pageSize = 5;
+        final int page = 2;
+        Bundle options = new Bundle();
+        options.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
+        options.putInt(MediaBrowser.EXTRA_PAGE, page);
 
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, options,
                     mSubscriptionCallback);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoadedWithOptions);
+        });
+        assertTrue(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS));
 
-            mOnChildrenLoadedWithOptions = false;
-            mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoadedWithOptions);
+        mOnChildrenLoadedWithOptionsLatch.reset();
+        mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
+        assertTrue(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS));
 
-            // Notify that the items overlapping with the given options are changed.
-            mOnChildrenLoadedWithOptions = false;
-            final int newPageSize = 3;
-            final int overlappingNewPage = pageSize * page / newPageSize;
-            Bundle overlappingOptions = new Bundle();
-            overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE_SIZE, newPageSize);
-            overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, overlappingNewPage);
-            mMediaBrowserService.notifyChildrenChanged(
-                    StubMediaBrowserService.MEDIA_ID_ROOT, overlappingOptions);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoadedWithOptions);
+        // Notify that the items overlapping with the given options are changed.
+        mOnChildrenLoadedWithOptionsLatch.reset();
+        final int newPageSize = 3;
+        final int overlappingNewPage = pageSize * page / newPageSize;
+        Bundle overlappingOptions = new Bundle();
+        overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE_SIZE, newPageSize);
+        overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, overlappingNewPage);
+        mMediaBrowserService.notifyChildrenChanged(
+                StubMediaBrowserService.MEDIA_ID_ROOT, overlappingOptions);
+        assertTrue(mOnChildrenLoadedWithOptionsLatch.await(TIME_OUT_MS));
 
-            // Notify that the items non-overlapping with the given options are changed.
-            mOnChildrenLoadedWithOptions = false;
-            Bundle nonOverlappingOptions = new Bundle();
-            nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
-            nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, page + 1);
-            mMediaBrowserService.notifyChildrenChanged(
-                    StubMediaBrowserService.MEDIA_ID_ROOT, nonOverlappingOptions);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mOnChildrenLoadedWithOptions);
-        }
+        // Notify that the items non-overlapping with the given options are changed.
+        mOnChildrenLoadedWithOptionsLatch.reset();
+        Bundle nonOverlappingOptions = new Bundle();
+        nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
+        nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, page + 1);
+        mMediaBrowserService.notifyChildrenChanged(
+                StubMediaBrowserService.MEDIA_ID_ROOT, nonOverlappingOptions);
+        assertFalse(mOnChildrenLoadedWithOptionsLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
     }
 
     public void testDelayedNotifyChildrenChanged() throws Exception {
-        synchronized (mWaitLock) {
-            mOnChildrenLoaded = false;
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mSubscriptionCallback);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mOnChildrenLoaded);
+        });
+        assertFalse(mOnChildrenLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
 
-            mMediaBrowserService.sendDelayedNotifyChildrenChanged();
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoaded);
+        mMediaBrowserService.sendDelayedNotifyChildrenChanged();
+        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
 
-            mOnChildrenLoaded = false;
-            mMediaBrowserService.notifyChildrenChanged(
-                    StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mOnChildrenLoaded);
+        mOnChildrenLoadedLatch.reset();
+        mMediaBrowserService.notifyChildrenChanged(
+                StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED);
+        assertFalse(mOnChildrenLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
 
-            mMediaBrowserService.sendDelayedNotifyChildrenChanged();
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoaded);
-        }
+        mMediaBrowserService.sendDelayedNotifyChildrenChanged();
+        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
     }
 
     public void testDelayedItem() throws Exception {
-        synchronized (mWaitLock) {
-            mOnItemLoaded = false;
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN_DELAYED,
                     mItemCallback);
-            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
-            assertFalse(mOnItemLoaded);
+        });
+        assertFalse(mOnItemLoadedLatch.await(WAIT_TIME_FOR_NO_RESPONSE_MS));
 
-            mMediaBrowserService.sendDelayedItemLoaded();
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnItemLoaded);
-        }
+        mMediaBrowserService.sendDelayedItemLoaded();
+        assertTrue(mOnItemLoadedLatch.await(TIME_OUT_MS));
     }
 
     public void testGetBrowserInfo() throws Exception {
-        synchronized (mWaitLock) {
-            // StubMediaBrowserService stores the browser info in its onGetRoot().
-            assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
+        // StubMediaBrowserService stores the browser info in its onGetRoot().
+        assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
 
-            StubMediaBrowserService.clearBrowserInfo();
+        StubMediaBrowserService.clearBrowserInfo();
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnChildrenLoaded);
-            assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
+        });
+        assertTrue(mOnChildrenLoadedLatch.await(TIME_OUT_MS));
+        assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
 
-            StubMediaBrowserService.clearBrowserInfo();
+        StubMediaBrowserService.clearBrowserInfo();
+        getInstrumentation().runOnMainSync(()-> {
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
-            mWaitLock.wait(TIME_OUT_MS);
-            assertTrue(mOnItemLoaded);
-            assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
-        }
+        });
+        assertTrue(mOnItemLoadedLatch.await(TIME_OUT_MS));
+        assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
     }
 
     public void testBrowserRoot() {
@@ -328,5 +304,29 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
                 rootHints.getBoolean(BrowserRoot.EXTRA_OFFLINE));
         assertEquals(mRootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED),
                 rootHints.getBoolean(BrowserRoot.EXTRA_SUGGESTED));
+    }
+
+    private static class TestCountDownLatch {
+        private CountDownLatch mLatch;
+
+        TestCountDownLatch() {
+            mLatch = new CountDownLatch(1);
+        }
+
+        void reset() {
+            mLatch = new CountDownLatch(1);
+        }
+
+        void countDown() {
+            mLatch.countDown();
+        }
+
+        boolean await(long timeoutMs) {
+            try {
+                return mLatch.await(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
     }
 }
