@@ -111,8 +111,11 @@ android_test_helper_app {
 
 android_test_helper_app {
     name: "CtsAppLocalesBackupApp1",
-    defaults: ["cts_support_defaults"],
-    sdk_version: "current",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.java",
     ],
@@ -132,8 +135,11 @@ android_test_helper_app {
 
 android_test_helper_app {
     name: "CtsAppLocalesBackupApp2",
-    defaults: ["cts_support_defaults"],
-    sdk_version: "current",
+    defaults: [
+        "cts_support_defaults",
+        "mts-target-sdk-version-current",
+    ],
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.java",
     ],
