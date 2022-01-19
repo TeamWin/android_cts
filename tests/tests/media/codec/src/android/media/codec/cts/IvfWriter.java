@@ -17,6 +17,7 @@
 package android.media.codec.cts;
 
 import android.media.MediaFormat;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -29,6 +30,7 @@ import java.io.RandomAccessFile;
  */
 
 public class IvfWriter {
+    private static final String TAG = "IvfWriter";
     private static final byte HEADER_END = 32;
     private RandomAccessFile mOutputFile;
     private int mWidth;
@@ -102,6 +104,24 @@ public class IvfWriter {
         mFrameCount++;
     }
 
+    private static byte[] getCodecFourcc(String mimeType) {
+        switch(mimeType) {
+        case MediaFormat.MIMETYPE_VIDEO_AVC:
+            return new byte[] {'H', '2', '6', '4'};
+        case MediaFormat.MIMETYPE_VIDEO_HEVC:
+            return new byte[] {'H', 'E', 'V', 'C'};
+        case MediaFormat.MIMETYPE_VIDEO_VP8:
+            return new byte[] {'V', 'P', '8', '0'};
+        case MediaFormat.MIMETYPE_VIDEO_VP9:
+            return new byte[] {'V', 'P', '9', '0'};
+        case MediaFormat.MIMETYPE_VIDEO_AV1:
+            return new byte[] {'A', 'V', '0', '1'};
+        default:
+            Log.w(TAG, "Unexpected mimeType in getCodecFourcc: " + mimeType);
+            return new byte[] {'0', '0', '0', '0'};
+      }
+    }
+
     /**
      * Makes a 32 byte file header for IVF format.
      *
@@ -122,10 +142,11 @@ public class IvfWriter {
         ivfHeader[3] = 'F';
         lay16Bits(ivfHeader, 4, 0);  // version
         lay16Bits(ivfHeader, 6, 32);  // header size
-        ivfHeader[8] = 'V';  // fourcc
-        ivfHeader[9] = 'P';
-        ivfHeader[10] = (byte) (MediaFormat.MIMETYPE_VIDEO_VP8.equals(mimeType) ? '8' : '9');
-        ivfHeader[11] = '0';
+        byte[] codecFourcc = getCodecFourcc(mimeType);
+        ivfHeader[8] = codecFourcc[0];
+        ivfHeader[9] = codecFourcc[1];
+        ivfHeader[10] = codecFourcc[2];
+        ivfHeader[11] = codecFourcc[3];
         lay16Bits(ivfHeader, 12, width);
         lay16Bits(ivfHeader, 14, height);
         lay32Bits(ivfHeader, 16, rate);  // scale/rate
