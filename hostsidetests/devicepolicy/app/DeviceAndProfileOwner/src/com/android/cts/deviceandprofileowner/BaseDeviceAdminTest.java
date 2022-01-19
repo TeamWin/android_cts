@@ -127,6 +127,7 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
     protected UserManager mUserManager;
     protected Context mContext;
     protected boolean mHasSecureLockScreen;
+    protected boolean mIsAutomotive;
     static CountDownLatch mOnPasswordExpiryTimeoutCalled;
 
     protected final String mTag = getClass().getSimpleName();
@@ -141,6 +142,8 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
 
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
+        mIsAutomotive = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE);
 
         boolean isDeviceOwnerTest = "DeviceOwner"
                 .equals(InstrumentationRegistry.getArguments().getString("admin_type"));
