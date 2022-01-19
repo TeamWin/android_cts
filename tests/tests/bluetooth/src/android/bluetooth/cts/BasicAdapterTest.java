@@ -245,6 +245,24 @@ public class BasicAdapterTest extends AndroidTestCase {
         assertNotSame(BluetoothStatusCodes.ERROR_UNKNOWN, adapter.isLeAudioSupported());
     }
 
+    public void test_isLeAudioBroadcastSourceSupported() throws IOException {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        assertNotSame(BluetoothStatusCodes.ERROR_UNKNOWN, adapter.isLeAudioBroadcastSourceSupported());
+    }
+
+    public void test_isLeAudioBroadcastAssistantSupported() throws IOException {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        assertNotSame(BluetoothStatusCodes.ERROR_UNKNOWN, adapter.isLeAudioBroadcastAssistantSupported());
+    }
+
     public void test_listenUsingRfcommWithServiceRecord() throws IOException {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.
