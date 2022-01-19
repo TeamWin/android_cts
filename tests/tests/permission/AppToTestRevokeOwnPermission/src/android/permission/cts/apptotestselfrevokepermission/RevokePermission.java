@@ -28,6 +28,9 @@ public class RevokePermission extends Activity {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         String[] permissions = intent.getStringArrayExtra("permissions");
+        if (permissions == null) {
+            return;
+        }
         if (permissions.length == 1) {
             getApplicationContext().revokeOwnPermissionOnKill(permissions[0]);
         } else {
