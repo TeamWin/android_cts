@@ -1013,9 +1013,11 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         if (!otherUserIds.isEmpty()) {
             for (Integer userId : otherUserIds) {
                 switchUser(userId);
+                waitForUserUnlock(userId);
                 startProtectedPackage(userId);
             }
             switchUser(mPrimaryUserId);
+            waitForUserUnlock(mPrimaryUserId);
         }
     }
 
@@ -1056,9 +1058,11 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 // TODO(b/188464764): Run device tests on the required user instead of switching
                 //  users
                 switchUser(userId);
+                waitForUserUnlock(userId);
                 tryStoppingProtectedPackage(userId, canUserStopPackage);
             }
             switchUser(mPrimaryUserId);
+            waitForUserUnlock(mPrimaryUserId);
         }
         tryStoppingProtectedPackage(mPrimaryUserId, canUserStopPackage);
     }
