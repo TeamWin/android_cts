@@ -76,6 +76,7 @@ import javax.annotation.Nullable;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
@@ -83,7 +84,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     private static final String FEATURE_LEANBACK = "android.software.leanback";
     private static final String FEATURE_NFC = "android.hardware.nfc";
     private static final String FEATURE_NFC_BEAM = "android.software.nfc.beam";
-
     private static final String FEATURE_PRINT = "android.software.print";
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     private static final String FEATURE_SECURE_LOCK_SCREEN = "android.software.secure_lock_screen";
@@ -1335,6 +1335,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     boolean isTv() throws DeviceNotAvailableException {
         return hasDeviceFeature(FEATURE_LEANBACK);
+    }
+
+    boolean isAutomotive() throws DeviceNotAvailableException {
+        return hasDeviceFeature(FEATURE_AUTOMOTIVE);
     }
 
     void pushUpdateFileToDevice(String fileName)
