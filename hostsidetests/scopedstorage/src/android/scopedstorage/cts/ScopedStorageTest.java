@@ -144,7 +144,7 @@ public class ScopedStorageTest {
             "CtsScopedStorageTestAppB.apk");
     // A legacy targeting app with RES and WES permissions
     private static final TestApp APP_D_LEGACY_HAS_RW = new TestApp("TestAppDLegacy",
-            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
+            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppDLegacy.apk");
 
     @Before
     public void setup() throws Exception {
@@ -329,7 +329,8 @@ public class ScopedStorageTest {
             final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
                     THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
             final File otherAppExternalDataSubDir = new File(otherAppExternalDataDir, "subdir");
-            final File otherAppExternalDataFile = new File(otherAppExternalDataSubDir, "abc.jpg");
+            final File otherAppExternalDataFile =
+                    new File(otherAppExternalDataSubDir, IMAGE_FILE_NAME);
             assertThat(createFileAs(APP_B_NO_PERMS, otherAppExternalDataFile.getAbsolutePath()))
                     .isTrue();
 

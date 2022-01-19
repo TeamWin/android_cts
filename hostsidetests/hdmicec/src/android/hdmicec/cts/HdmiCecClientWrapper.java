@@ -316,6 +316,31 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
     }
 
+    public void sendMultipleUserControlPressAndRelease(
+            LogicalAddress source, List<Integer> keycodes) throws CecClientWrapperException {
+        try {
+            for (int keycode : keycodes) {
+                String key = String.format("%02x", keycode);
+                mOutputConsole.write(
+                        "tx "
+                                + source
+                                + targetDevice
+                                + ":"
+                                + CecOperand.USER_CONTROL_PRESSED
+                                + ":"
+                                + key);
+                mOutputConsole.newLine();
+                mOutputConsole.write(
+                        "tx " + source + targetDevice + ":" + CecOperand.USER_CONTROL_RELEASED);
+                mOutputConsole.newLine();
+                mOutputConsole.flush();
+                TimeUnit.MILLISECONDS.sleep(200);
+            }
+        } catch (InterruptedException | IOException ioe) {
+            throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
+        }
+    }
+
     /**
      * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to device through the
      * output console of the cec-communication channel with the mentioned keycode.
@@ -340,6 +365,37 @@ public final class HdmiCecClientWrapper extends ExternalResource {
                     "tx " + source + destination + ":" + CecOperand.USER_CONTROL_RELEASED);
             mOutputConsole.flush();
         } catch (IOException | InterruptedException ioe) {
+            throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
+        }
+    }
+
+    /**
+     * Sends a {@code <UCP>} with and additional param. This is used to check that the DUT ignores
+     * additional params in an otherwise correct message.
+     */
+    public void sendUserControlPressAndReleaseWithAdditionalParams(
+            LogicalAddress source, LogicalAddress destination, int keyCode, int additionalParam)
+            throws CecClientWrapperException {
+        String key = String.format("%02x", keyCode);
+        String command =
+                "tx "
+                        + source
+                        + destination
+                        + ":"
+                        + CecOperand.USER_CONTROL_PRESSED
+                        + ":"
+                        + key
+                        + ":"
+                        + additionalParam;
+
+        try {
+            mOutputConsole.write(command);
+            mOutputConsole.newLine();
+            mOutputConsole.write(
+                    "tx " + source + destination + ":" + CecOperand.USER_CONTROL_RELEASED);
+            mOutputConsole.newLine();
+            mOutputConsole.flush();
+        } catch (IOException ioe) {
             throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
         }
     }

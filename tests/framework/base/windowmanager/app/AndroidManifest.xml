@@ -610,6 +610,14 @@
              android:exported="true"
              android:colorMode="wideColorGamut"
              android:theme="@style/BadBlurryDialog"/>
+        <activity android:name=".ClearBackgroundTransitionExitActivity"
+            android:theme="@style/Theme.BackgroundColor"
+            android:exported="true"
+            android:colorMode="wideColorGamut"/>
+        <activity android:name=".ClearBackgroundTransitionEnterActivity"
+            android:theme="@style/Theme.BackgroundColor"
+            android:exported="true"
+            android:colorMode="wideColorGamut"/>
 
         <!-- Splash Screen Test Activities -->
         <activity android:name=".HandleSplashScreenExitActivity"

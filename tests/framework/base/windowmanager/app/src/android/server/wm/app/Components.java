@@ -278,6 +278,12 @@ public class Components extends ComponentsBase {
     public static final ComponentName BAD_BLUR_ACTIVITY =
             component("BadBlurActivity");
 
+    public static final ComponentName CLEAR_BACKGROUND_TRANSITION_EXIT_ACTIVITY =
+            component("ClearBackgroundTransitionExitActivity");
+
+    public static final ComponentName CLEAR_BACKGROUND_TRANSITION_ENTER_ACTIVITY =
+            component("ClearBackgroundTransitionExitActivity");
+
     /**
      * The keys are used for {@link TestJournalProvider} when testing starting window.
      */
@@ -637,6 +643,10 @@ public class Components extends ComponentsBase {
         public static final String ACTION = "hide_action";
         public static final String PONG = "pong_action";
         public static final String SHOULD_HIDE = "should_hide";
+    }
+
+    public static class BackgroundActivityTransition {
+        public static final String TRANSITION_REQUESTED = "transition_requested";
     }
 
     private static ComponentName component(String className) {

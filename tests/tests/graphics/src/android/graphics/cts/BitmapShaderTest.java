@@ -22,11 +22,14 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ColorUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -161,5 +164,48 @@ public class BitmapShaderTest {
         dstBitmap.getPixels(pixels, 0, 4, 0, 0, 4, 1);
         Assert.assertArrayEquals(new int[] { Color.RED, Color.BLUE, Color.BLUE, Color.RED },
                 pixels);
+    }
+
+    @Test
+    public void testFiltering() {
+        Bitmap bitmap = Bitmap.createBitmap(2, 2, Config.ARGB_8888);
+        bitmap.setPixel(0, 0, Color.RED);
+        bitmap.setPixel(1, 0, Color.BLUE);
+        bitmap.setPixel(0, 1, Color.BLUE);
+        bitmap.setPixel(1, 1, Color.RED);
+
+        BitmapShader shader = new BitmapShader(bitmap,
+                Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        Assert.assertEquals(BitmapShader.FILTER_MODE_DEFAULT, shader.getFilterMode());
+
+        // use slightly left than half to avoid any confusion on which pixel
+        // is sampled with FILTER_MODE_NEAREST
+        Matrix matrix = new Matrix();
+        matrix.postScale(0.49f, 0.49f);
+        shader.setLocalMatrix(matrix);
+
+        Bitmap dstBitmap = Bitmap.createBitmap(1, 1, Config.ARGB_8888);
+        Canvas canvas = new Canvas(dstBitmap);
+        Paint paint = new Paint();
+        paint.setShader(shader);
+
+        paint.setFilterBitmap(false);
+        canvas.drawPaint(paint);
+        ColorUtils.verifyColor("expected solid red color", Color.RED, dstBitmap.getPixel(0, 0), 0);
+
+        paint.setFilterBitmap(true);
+        canvas.drawPaint(paint);
+        ColorUtils.verifyColor("color should be a blue/red mix", Color.valueOf(0.5f, 0.0f, 0.5f),
+                dstBitmap.getColor(0, 0), 0.05f);
+
+        shader.setFilterMode(BitmapShader.FILTER_MODE_NEAREST);
+        canvas.drawPaint(paint);
+        ColorUtils.verifyColor("expected solid red color", Color.RED, dstBitmap.getPixel(0, 0), 0);
+
+        shader.setFilterMode(BitmapShader.FILTER_MODE_LINEAR);
+        paint.setFilterBitmap(false);
+        canvas.drawPaint(paint);
+        ColorUtils.verifyColor("color should be a blue/red mix", Color.valueOf(0.5f, 0.0f, 0.5f),
+                dstBitmap.getColor(0, 0), 0.05f);
     }
 }

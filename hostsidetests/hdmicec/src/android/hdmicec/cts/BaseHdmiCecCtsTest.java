@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public static final String PROPERTY_LOCALE = "persist.sys.locale";
+    private static final String POWER_CONTROL_MODE = "power_control_mode";
 
     /** Enum contains the list of possible address types. */
     private enum AddressType {
@@ -408,10 +409,14 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         }
     }
 
-    public void sendDeviceToSleep() throws Exception {
+    public void sendDeviceToSleepWithoutWait() throws Exception {
         ITestDevice device = getDevice();
         WakeLockHelper.acquirePartialWakeLock(device);
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+    }
+
+    public void sendDeviceToSleep() throws Exception {
+        sendDeviceToSleepWithoutWait();
         waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
 
@@ -430,5 +435,37 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     public void sendOtp() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("cmd hdmi_control onetouchplay");
+    }
+
+    public String setPowerControlMode(String valToSet) throws Exception {
+        String val = getSettingsValue(POWER_CONTROL_MODE);
+        setSettingsValue(POWER_CONTROL_MODE, valToSet);
+        return val;
+    }
+
+    public boolean isDeviceActiveSource(ITestDevice device) throws DumpsysParseException {
+        final String activeSource = "activeSource";
+        final String pattern =
+                "(.*?)"
+                        + "(isActiveSource\\(\\): )"
+                        + "(?<"
+                        + activeSource
+                        + ">\\btrue\\b|\\bfalse\\b)"
+                        + "(.*?)";
+        try {
+            Pattern p = Pattern.compile(pattern);
+            String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
+            BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = p.matcher(line);
+                if (matcher.matches()) {
+                    return matcher.group(activeSource).equals("true");
+                }
+            }
+        } catch (IOException | DeviceNotAvailableException e) {
+            throw new DumpsysParseException("Could not fetch 'dumpsys hdmi_control' output.", e);
+        }
+        throw new DumpsysParseException("Could not parse isActiveSource() from dumpsys.");
     }
 }

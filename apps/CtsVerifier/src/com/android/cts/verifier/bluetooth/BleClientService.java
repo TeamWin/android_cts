@@ -568,8 +568,13 @@ public class BleClientService extends Service {
 
     private void writeCharacteristic(BluetoothGattCharacteristic characteristic, String writeValue) {
         if (characteristic != null) {
+            // Note: setValue() should not be necessary when using writeCharacteristic(byte[]) which
+            // is added on Android T, but here we call the method in order to make the test
+            // easier to read. Otherwise, we should verify the written value by calling
+            // readCharacteristic() but that makes the whole test hard to read.
             characteristic.setValue(writeValue);
-            mBluetoothGatt.writeCharacteristic(characteristic);
+            mBluetoothGatt.writeCharacteristic(characteristic, writeValue.getBytes(),
+                    characteristic.getWriteType());
         }
     }
 
@@ -590,8 +595,12 @@ public class BleClientService extends Service {
     private void writeDescriptor(UUID uid, String writeValue) {
         BluetoothGattDescriptor descriptor = getDescriptor(uid);
         if (descriptor != null) {
+            // Note: setValue() should not be necessary when using writeDescriptor(byte[]) which
+            // is added on Android T, but here we call the method in order to make the test
+            // easier to read. Otherwise, we should verify the written value by calling
+            // readDescriptor() but that makes the whole test hard to read.
             descriptor.setValue(writeValue.getBytes());
-            mBluetoothGatt.writeDescriptor(descriptor);
+            mBluetoothGatt.writeDescriptor(descriptor, writeValue.getBytes());
         }
     }
 
@@ -605,8 +614,12 @@ public class BleClientService extends Service {
     private void writeDescriptor(UUID cuid, UUID duid, String writeValue) {
         BluetoothGattDescriptor descriptor = getDescriptor(cuid, duid);
         if (descriptor != null) {
+            // Note: setValue() should not be necessary when using writeDescriptor(byte[]) which
+            // is added on Android T, but here we call the method in order to make the test
+            // easier to read. Otherwise, we should verify the written value by calling
+            // readDescriptor() but that makes the whole test hard to read.
             descriptor.setValue(writeValue.getBytes());
-            mBluetoothGatt.writeDescriptor(descriptor);
+            mBluetoothGatt.writeDescriptor(descriptor, writeValue.getBytes());
         }
     }
 
@@ -1351,6 +1364,17 @@ public class BleClientService extends Service {
                 notifyPhyRead(txPhy, rxPhy);
             } else {
                 notifyError("Failed to read phy");
+            }
+        }
+
+        @Override
+        public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+            // TODO: Currently this is not called when BluetoothGatt.setPreferredPhy() is called.
+            // It is because the path is not wired in native code. (acl_legacy_interface.cc)
+            // Add a proper implementation and related test.
+            super.onPhyUpdate(gatt, txPhy, rxPhy, status);
+            if (DEBUG) {
+                Log.d(TAG, "onPhyUpdate");
             }
         }
 

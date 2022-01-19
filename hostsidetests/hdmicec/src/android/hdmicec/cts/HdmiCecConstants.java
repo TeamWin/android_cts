@@ -29,6 +29,8 @@ public final class HdmiCecConstants {
     public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
     public static final int TIMEOUT_SAFETY_MS = 500;
 
+    public static final int INVALID_VENDOR_ID = 0xFFFFFF;
+
     // Standard delay to allow the DUT to react to a CEC message or ADB command
     public static final int DEVICE_WAIT_TIME_SECONDS = 5;
     public static final int DEVICE_WAIT_TIME_MS = 5000;
@@ -38,19 +40,19 @@ public final class HdmiCecConstants {
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
 
-    public static final int CEC_CONTROL_SELECT = 0x0;
-    public static final int CEC_CONTROL_UP = 0x1;
-    public static final int CEC_CONTROL_DOWN = 0x2;
-    public static final int CEC_CONTROL_LEFT = 0x3;
-    public static final int CEC_CONTROL_RIGHT = 0x4;
-    public static final int CEC_CONTROL_BACK = 0xd;
-    public static final int CEC_CONTROL_POWER = 0x40;
-    public static final int CEC_CONTROL_VOLUME_UP = 0x41;
-    public static final int CEC_CONTROL_VOLUME_DOWN = 0x42;
-    public static final int CEC_CONTROL_MUTE = 0x43;
-    public static final int CEC_CONTROL_POWER_TOGGLE_FUNCTION = 0x6B;
-    public static final int CEC_CONTROL_POWER_OFF_FUNCTION = 0x6C;
-    public static final int CEC_CONTROL_POWER_ON_FUNCTION = 0x6D;
+    public static final int CEC_KEYCODE_SELECT = 0x00;
+    public static final int CEC_KEYCODE_UP = 0x01;
+    public static final int CEC_KEYCODE_DOWN = 0x02;
+    public static final int CEC_KEYCODE_LEFT = 0x03;
+    public static final int CEC_KEYCODE_RIGHT = 0x04;
+    public static final int CEC_KEYCODE_BACK = 0x0D;
+    public static final int CEC_KEYCODE_POWER = 0x40;
+    public static final int CEC_KEYCODE_VOLUME_UP = 0x41;
+    public static final int CEC_KEYCODE_VOLUME_DOWN = 0x42;
+    public static final int CEC_KEYCODE_MUTE = 0x43;
+    public static final int CEC_KEYCODE_POWER_TOGGLE_FUNCTION = 0x6B;
+    public static final int CEC_KEYCODE_POWER_OFF_FUNCTION = 0x6C;
+    public static final int CEC_KEYCODE_POWER_ON_FUNCTION = 0x6D;
 
     public static final int UNRECOGNIZED_OPCODE = 0x0;
 
@@ -107,4 +109,9 @@ public final class HdmiCecConstants {
      */
     public static final File CEC_MAP_FOLDER =
             new File(System.getProperty("java.io.tmpdir"), "cec-cts-temp");
+
+    // Power Control Modes for source devices
+    public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";
+    public static final String POWER_CONTROL_MODE_NONE = "none";
+    public static final String POWER_CONTROL_MODE_TV = "to_tv";
 }
