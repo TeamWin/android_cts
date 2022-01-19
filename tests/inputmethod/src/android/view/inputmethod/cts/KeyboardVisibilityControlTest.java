@@ -34,7 +34,9 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.AlertDialog;
 import android.app.Instrumentation;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiObject2;
@@ -279,7 +281,10 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     TimeUnit.SECONDS.toMillis(5));
             assertNotNull("Editor must exists on WebView", inputTextField);
 
-            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            // Expect startInput only if avoidable IME startup is not enabled
+            if (!isPreventImeStartup()) {
+                expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            }
             notExpectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
                     TIMEOUT);
             expectImeInvisible(TIMEOUT);
@@ -402,10 +407,14 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     View.GONE, TIMEOUT);
             expectImeInvisible(TIMEOUT);
 
-            // Expect fake input connection started and keyboard invisible after activity focused.
-            final ImeEvent onStart = expectEvent(stream,
-                    event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
-            assertTrue(onStart.getEnterState().hasDummyInputConnection());
+            // Expect fake input connection started and keyboard invisible after activity focused
+            // unless avoidable keyboard startup is desired,
+            // in which case, no fallback will be started.
+            if (!isPreventImeStartup()) {
+                final ImeEvent onStart = expectEvent(stream,
+                        event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+                assertTrue(onStart.getEnterState().hasDummyInputConnection());
+            }
             TestUtils.waitOnMainUntil(() -> testActivity.hasWindowFocus(), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.GONE, TIMEOUT);
@@ -421,5 +430,17 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         // to ensure it.
         builder.setNavigationBarColor(navigationBarColor);
         return builder;
+    }
+
+    private static boolean isPreventImeStartup() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        try {
+            return context.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier("config_preventImeStartupUnlessTextEditor",
+                            "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume this is not enabled.
+            return false;
+        }
     }
 }
