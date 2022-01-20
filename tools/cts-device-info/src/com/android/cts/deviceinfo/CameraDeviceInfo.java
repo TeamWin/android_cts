@@ -660,6 +660,8 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.REQUEST_PIPELINE_MAX_DEPTH.getName());
         charsKeyNames.add(CameraCharacteristics.REQUEST_PARTIAL_RESULT_COUNT.getName());
         charsKeyNames.add(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES.getName());
+        charsKeyNames.add(CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES.getName());
+        charsKeyNames.add(CameraCharacteristics.REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_CROPPING_TYPE.getName());
@@ -670,6 +672,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.SCALER_MULTI_RESOLUTION_STREAM_CONFIGURATION_MAP.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_MAXIMUM_RESOLUTION_STREAM_COMBINATIONS.getName());
+        charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_TEN_BIT_OUTPUT_STREAM_COMBINATIONS.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1.getName());

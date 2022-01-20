@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.graphics.text.LineBreakConfig;
 import android.os.LocaleList;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -47,13 +48,18 @@ public class StaticLayoutLineBreakingVariantsTest {
         return paint;
     }
 
-    private static StaticLayout buildLayout(String text, LocaleList locales, int width) {
-        return StaticLayout.Builder.obtain(
-                text, 0, text.length(), setupPaint(locales), width).build();
+    private static StaticLayout buildLayout(String text, LocaleList locales,
+            LineBreakConfig lineBreakConfig, int width) {
+        StaticLayout.Builder builder = StaticLayout.Builder.obtain(text, 0, text.length(),
+                setupPaint(locales), width);
+        builder.setLineBreakConfig(lineBreakConfig);
+        return builder.build();
     }
 
-    private static void assertLineBreak(String text, String locale, int width, String... expected) {
-        final StaticLayout layout = buildLayout(text, LocaleList.forLanguageTags(locale), width);
+    private static void assertLineBreak(String text, String locale,
+            LineBreakConfig lineBreakConfig, int width, String... expected) {
+        final StaticLayout layout = buildLayout(text, LocaleList.forLanguageTags(locale),
+                lineBreakConfig, width);
         assertEquals(expected.length, layout.getLineCount());
 
         int currentExpectedOffset = 0;
@@ -78,34 +84,36 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_loose() {
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 90, SAMPLE_TEXT);
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 80,
+        LineBreakConfig config = new LineBreakConfig();
+        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 70,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 70,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 60,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 60,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB",
                 "\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 50,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 50,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 40,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 40,
                 "\u30D0\u30C3\u30C6\u30EA",
                 "\u30FC\u30BB\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 30,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 30,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC\u30BB",
                 "\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 20,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 20,
                 "\u30D0\u30C3",
                 "\u30C6\u30EA",
                 "\u30FC\u30BB",
                 "\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-loose", 10,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 10,
                 "\u30D0",
                 "\u30C3",
                 "\u30C6",
@@ -119,35 +127,37 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_strict() {
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 90, SAMPLE_TEXT);
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 80,
+        LineBreakConfig config = new LineBreakConfig();
+        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 70,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 70,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 60,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 60,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 50,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 50,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 40,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 40,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 30,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 30,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC",
                 "\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 20,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 20,
                 "\u30D0\u30C3",
                 "\u30C6",
                 "\u30EA\u30FC",
                 "\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP-u-lb-strict", 10,
+        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 10,
                 "\u30D0",
                 "\u30C3",
                 "\u30C6",

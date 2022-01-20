@@ -117,6 +117,8 @@ public final class MockIme extends InputMethodService {
 
     private final Handler mMainHandler = new Handler();
 
+    private final Configuration mLastDispatchedConfiguration = new Configuration();
+
     private static final class CommandReceiver extends BroadcastReceiver {
         @NonNull
         private final String mActionName;
@@ -473,6 +475,10 @@ public final class MockIme extends InputMethodService {
                         finishStylusHandwriting();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
+                    case "getCurrentWindowMetricsBounds": {
+                        return getSystemService(WindowManager.class)
+                                .getCurrentWindowMetrics().getBounds();
+                    }
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
@@ -619,6 +625,10 @@ public final class MockIme extends InputMethodService {
             if (mSettings.hasNavigationBarColor()) {
                 getWindow().getWindow().setNavigationBarColor(mSettings.getNavigationBarColor());
             }
+
+            // Initialize to current Configuration to prevent unexpected configDiff value dispatched
+            // in IME event.
+            mLastDispatchedConfiguration.setTo(getResources().getConfiguration());
         });
     }
 
@@ -1080,6 +1090,7 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onConfigurationChanged(Configuration configuration) {
         getTracer().onConfigurationChanged(() -> {}, configuration);
+        mLastDispatchedConfiguration.setTo(configuration);
     }
 
     /**
@@ -1371,6 +1382,8 @@ public final class MockIme extends InputMethodService {
         void onConfigurationChanged(@NonNull Runnable runnable, Configuration configuration) {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("Configuration", configuration);
+            arguments.putInt("ConfigUpdates", configuration.diff(
+                    mIme.mLastDispatchedConfiguration));
             recordEventInternal("onConfigurationChanged", runnable, arguments);
         }
     }

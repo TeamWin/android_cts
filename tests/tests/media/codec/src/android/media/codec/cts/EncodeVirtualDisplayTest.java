@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.codec.cts;
 
 import android.app.Presentation;
 import android.content.Context;
@@ -26,6 +26,10 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.media.cts.CompositionTextureView;
+import android.media.cts.InputSurface;
+import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.OutputSurface;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;

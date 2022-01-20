@@ -1202,12 +1202,14 @@ public class JobThrottlingTest {
 
         final String command;
         if (isCharging) {
-            command = "cmd battery set -f ac 1";
+            mUiDevice.executeShellCommand("cmd battery set ac 1");
+            final int curLevel = Integer.parseInt(
+                    mUiDevice.executeShellCommand("dumpsys battery get level").trim());
+            command = "cmd battery set -f level " + Math.min(100, curLevel + 1);
         } else {
             command = "cmd battery unplug -f";
         }
         int seq = Integer.parseInt(mUiDevice.executeShellCommand(command).trim());
-        long startTime = SystemClock.elapsedRealtime();
 
         // Wait for the battery update to be processed by job scheduler before proceeding.
         waitUntil("JobScheduler didn't update charging status to " + isCharging, 15 /* seconds */,

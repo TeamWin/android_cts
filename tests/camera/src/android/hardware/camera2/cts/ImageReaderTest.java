@@ -51,6 +51,7 @@ import android.hardware.camera2.cts.CameraTestUtils.ImageDropperListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.rs.BitmapUtils;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
@@ -230,7 +231,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing YUV P010 capture for Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.YCBCR_P010, /*repeating*/false);
+                if (!mStaticInfo.isCapabilitySupported(CameraCharacteristics.
+                            REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
+                    continue;
+                }
+                Set<Integer> availableProfiles =
+                    mStaticInfo.getAvailableDynamicRangeProfilesChecked();
+                assertFalse("Absent dynamic range profiles", availableProfiles.isEmpty());
+                assertTrue("HLG10 not present in the available dynamic range profiles",
+                        availableProfiles.contains(DynamicRangeProfiles.HLG10));
+
+                bufferFormatTestByCamera(ImageFormat.YCBCR_P010, /*repeating*/false,
+                    DynamicRangeProfiles.HLG10);
             } finally {
                 closeDevice(id);
             }
@@ -1153,6 +1165,13 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 /*checkSession*/ false, /*validateImageData*/ true);
     }
 
+    private void bufferFormatTestByCamera(int format, boolean repeating, int dynamicRangeProfile)
+            throws Exception {
+        bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN, repeating, /*checkSession*/ false,
+                /*validateImageData*/ true, /*physicalId*/null, dynamicRangeProfile);
+    }
+
     private void bufferFormatTestByCamera(int format, boolean repeating, boolean checkSession)
             throws Exception {
         bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
@@ -1167,9 +1186,17 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
+            boolean repeating, boolean checkSession, boolean validateImageData, String physicalId)
+            throws Exception {
+        bufferFormatTestByCamera(format, setUsageFlag, usageFlag, repeating, checkSession,
+                validateImageData, physicalId, DynamicRangeProfiles.STANDARD);
+    }
+
+    private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
             // TODO: Consider having some sort of test configuration class passed to reduce the
             //       proliferation of parameters ?
-            boolean repeating, boolean checkSession, boolean validateImageData, String physicalId)
+            boolean repeating, boolean checkSession, boolean validateImageData, String physicalId,
+            int dynamicRangeProfile)
             throws Exception {
         StaticMetadata staticInfo;
         if (physicalId == null) {
@@ -1227,6 +1254,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 if (physicalId != null) {
                     config.setPhysicalCameraId(physicalId);
                 }
+                config.setDynamicRangeProfile(dynamicRangeProfile);
                 outputConfigs.add(config);
                 CaptureRequest request = prepareCaptureRequestForConfigs(
                         outputConfigs, CameraDevice.TEMPLATE_PREVIEW).build();

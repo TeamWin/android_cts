@@ -59,6 +59,9 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_1_15_1_DutSendsSystemAudioModeRequest() throws Exception {
+        // Ensure that system audio mode is off before testing 11.1.15-5.
+        setSystemAudioMode(false);
+
         hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.AUDIO_SYSTEM);
         hdmiCecClient.broadcastReportPhysicalAddress(
                 LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());

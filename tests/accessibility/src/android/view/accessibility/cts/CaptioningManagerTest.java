@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import android.Manifest;
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.app.UiAutomation;
 import android.content.res.Resources;
@@ -83,6 +85,10 @@ public class CaptioningManagerTest {
         putSecureSetting("accessibility_captioning_preset", "1");
         putSecureSetting("accessibility_captioning_locale", "en_US");
         putSecureSetting("accessibility_captioning_font_scale", "1.0");
+        // TODO (b209352162): We need to backup and restore the original values for
+        //  these two setting keys.
+        putSecureSetting("odi_captions_enabled", "0");
+        putSecureSetting("odi_captions_volume_ui_enabled", "0");
 
         CaptioningChangeListener mockListener = mock(CaptioningChangeListener.class);
         mManager.addCaptioningChangeListener(mockListener);
@@ -101,11 +107,19 @@ public class CaptioningManagerTest {
         putSecureSetting("accessibility_captioning_font_scale", "2.0");
         verify(mockListener, timeout(LISTENER_TIMEOUT)).onFontScaleChanged(anyFloat());
 
+        putSecureSetting("odi_captions_enabled", "1");
+        verify(mockListener, timeout(LISTENER_TIMEOUT)).onSystemAudioCaptioningChanged(true);
+
+        putSecureSetting("odi_captions_volume_ui_enabled", "1");
+        verify(mockListener, timeout(LISTENER_TIMEOUT)).onSystemAudioCaptioningUiChanged(true);
+
         mManager.removeCaptioningChangeListener(mockListener);
 
         Mockito.reset(mockListener);
 
         putSecureSetting("accessibility_captioning_enabled","0");
+        putSecureSetting("odi_captions_enabled", "0");
+        putSecureSetting("odi_captions_volume_ui_enabled", "0");
         verifyZeroInteractions(mockListener);
 
         try {
@@ -160,6 +174,36 @@ public class CaptioningManagerTest {
         boolean actual = mManager.isCallCaptioningEnabled();
 
         assertEquals(expected, actual);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testSetSystemAudioCaptionWithoutPermission_throwSecurityException() {
+        mManager.setSystemAudioCaptioningRequested(true);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testSetSystemAudioCaptionUiWithoutPermission_throwSecurityException() {
+        mManager.setSystemAudioCaptioningUiRequested(true);
+    }
+
+    @Test
+    public void testSystemAudioCaption() {
+        putSecureSetting("odi_captions_enabled", "0");
+        putSecureSetting("odi_captions_volume_ui_enabled", "0");
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.SET_SYSTEM_AUDIO_CAPTION);
+        try {
+            mManager.setSystemAudioCaptioningRequested(true);
+            assertTrue("Test runner set system audio caption enabled to true",
+                    mManager.isSystemAudioCaptioningRequested());
+
+            mManager.setSystemAudioCaptioningUiRequested(true);
+            assertTrue("Test runner set system audio caption ui enabled to true",
+                    mManager.isSystemAudioCaptioningUiRequested());
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
+            putSecureSetting("odi_captions_enabled", "0");
+            putSecureSetting("odi_captions_volume_ui_enabled", "0");
+        }
     }
 
     private void deleteSecureSetting(String name) {
