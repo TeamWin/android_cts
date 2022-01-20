@@ -19,8 +19,6 @@ package android.media.decoder.cts;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources.NotFoundException;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.media.Image;
@@ -37,7 +35,6 @@ import android.media.cts.CodecUtils;
 import android.media.cts.Preconditions;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
@@ -50,12 +47,8 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -162,14 +155,6 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
     }
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
-    protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
-            throws FileNotFoundException {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        File inpFile = new File(mInpPrefix + res);
-        ParcelFileDescriptor parcelFD =
-                ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
-        return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
-    }
 
     private static MediaAssets H263_ASSETS = new MediaAssets(
             MediaFormat.MIMETYPE_VIDEO_H263,
@@ -269,37 +254,13 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
             if (DEBUG) Log.d(TAG, "videoDecode " + mName + " " + width + "x" + height);
 
             MediaCodec decoder = null;
-            AssetFileDescriptor vidFD = null;
 
             MediaExtractor extractor = null;
-            File tmpFile = null;
-            InputStream is = null;
-            FileOutputStream os = null;
             MediaFormat mediaFormat = null;
             try {
                 extractor = new MediaExtractor();
-
-                try {
-                    vidFD = getAssetFileDescriptorFor(video);
-                    extractor.setDataSource(
-                            vidFD.getFileDescriptor(), vidFD.getStartOffset(), vidFD.getLength());
-                } catch (NotFoundException e) {
-                    // resource is compressed, uncompress locally
-                    String tmpName = "tempStream";
-                    tmpFile = File.createTempFile(tmpName, null, mContext.getCacheDir());
-                    is = new FileInputStream(mInpPrefix + video);
-                    os = new FileOutputStream(tmpFile);
-                    byte[] buf = new byte[1024];
-                    int len;
-                    while ((len = is.read(buf, 0, buf.length)) > 0) {
-                        os.write(buf, 0, len);
-                    }
-                    os.close();
-                    is.close();
-
-                    extractor.setDataSource(tmpFile.getAbsolutePath());
-                }
-
+                Preconditions.assertTestFileExists(mInpPrefix + video);
+                extractor.setDataSource(mInpPrefix + video);
                 mediaFormat = extractor.getTrackFormat(0);
                 mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);
 
@@ -312,9 +273,6 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
                         width, height, imageFormat, mode, checkSwirl);
 
                 decoder.stop();
-                if (vidFD != null) {
-                    vidFD.close();
-                }
             } catch (Throwable e) {
                 throw new RuntimeException(
                         "while " + mName + " decoding " + video + ": " + mediaFormat, e);
@@ -324,9 +282,6 @@ public class ImageReaderDecoderTest extends AndroidTestCase {
                 }
                 if (extractor != null) {
                     extractor.release();
-                }
-                if (tmpFile != null) {
-                    tmpFile.delete();
                 }
             }
         }
