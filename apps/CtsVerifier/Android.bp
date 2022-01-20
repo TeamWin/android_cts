@@ -16,13 +16,33 @@
 
 package {
     // See: http://go/android-license-faq
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "cts_license"
-    // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
-    //   SPDX-license-identifier-BSD
-    //   SPDX-license-identifier-CC-BY
-    default_applicable_licenses: ["cts_license"],
+    default_applicable_licenses: [
+        "cts_apps_CtsVerifier_opencv_license",
+        "Android-Apache-2.0",
+        "cts_apps_CtsVerifier_fatcow_license",
+    ]
+}
+
+license {
+    name: "cts_apps_CtsVerifier_opencv_license",
+    package_name: "opencv",
+    license_kinds: [
+        "SPDX-license-identifier-BSD",
+    ],
+    license_text: [
+        "libs/opencv-android_LICENSE",
+        "res/raw/opencv_library_license",
+    ],
+}
+
+// See: src/com/android/cts/verifier/features/FeatureSummaryActivity.java
+license {
+    name: "cts_apps_CtsVerifier_fatcow_license",
+    package_name: "fatcow icons",
+    license_kinds: [
+        "SPDX-license-identifier-CC-BY-3.0",
+    ],
+    license_text: ["LICENSE_CC_BY"],
 }
 
 filegroup {
