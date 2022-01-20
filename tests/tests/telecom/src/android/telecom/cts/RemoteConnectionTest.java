@@ -239,7 +239,10 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         }
 
         try {
-            mTelecomManager.startConference(PARTICIPANTS, null);
+            Bundle extra = new Bundle();
+            extra.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                    TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
+            mTelecomManager.startConference(PARTICIPANTS, extra);
             MockConference conference = verifyConference(2);
             MockConference remoteConference = verifyConferenceOnRemoteCS(2);
             RemoteConferenceTest.verifyRemoteConferenceObject(conference.getRemoteConference(),
