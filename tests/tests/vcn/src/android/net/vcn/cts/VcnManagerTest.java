@@ -26,6 +26,7 @@ import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.internal.util.FunctionalUtils.ThrowingConsumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -96,8 +97,6 @@ public class VcnManagerTest extends VcnTestBase {
     private final TelephonyManager mTelephonyManager;
     private final ConnectivityManager mConnectivityManager;
 
-    private TestNetworkWrapper mTestNetworkWrapper;
-
     public VcnManagerTest() {
         mContext = InstrumentationRegistry.getContext();
         mVcnManager = mContext.getSystemService(VcnManager.class);
@@ -115,14 +114,7 @@ public class VcnManagerTest extends VcnTestBase {
 
     @After
     public void tearDown() throws Exception {
-        try {
-            if (mTestNetworkWrapper != null) {
-                mTestNetworkWrapper.close();
-                mTestNetworkWrapper = null;
-            }
-        } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     private VcnConfig.Builder buildVcnConfigBase() {
@@ -353,61 +345,73 @@ public class VcnManagerTest extends VcnTestBase {
         mVcnManager.unregisterVcnStatusCallback(callback);
     }
 
-    @Test
-    public void testVcnManagedNetworkLosesNotVcnManagedCapability() throws Exception {
-        final int subId = verifyAndGetValidDataSubId();
-
-        mTestNetworkWrapper =
+    private TestNetworkWrapper createTestNetworkWrapper(
+            boolean isMetered, int subId, InetAddress localAddress) throws Exception {
+        TestNetworkWrapper testNetworkWrapper =
                 new TestNetworkWrapper(
                         mContext,
                         TEST_NETWORK_MTU,
-                        true /* isMetered */,
+                        isMetered,
                         Collections.singleton(subId),
-                        LOCAL_ADDRESS);
-        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+                        localAddress);
+        assertNotNull("No test network found", testNetworkWrapper.tunNetwork);
+        return testNetworkWrapper;
+    }
 
-        // Before the VCN starts, the test network should have NOT_VCN_MANAGED
-        waitForExpectedUnderlyingNetworkWithCapabilities(
-                true /* expectNotVcnManaged */,
-                false /* expectNotMetered */,
-                TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+    @Test
+    public void testVcnManagedNetworkLosesNotVcnManagedCapability() throws Exception {
+        final int subId = verifyAndGetValidDataSubId();
+        try (TestNetworkWrapper testNetworkWrapper =
+                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
+            // Before the VCN starts, the test network should have NOT_VCN_MANAGED
+            waitForExpectedUnderlyingNetworkWithCapabilities(
+                    testNetworkWrapper,
+                    true /* expectNotVcnManaged */,
+                    false /* expectNotMetered */,
+                    TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
-        CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
-            SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
-                mVcnManager.setVcnConfig(subGrp, buildVcnConfig());
+            CarrierPrivilegeUtils.withCarrierPrivilegesForShell(mContext, subId, () -> {
+                SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, subId, (subGrp) -> {
+                    mVcnManager.setVcnConfig(subGrp, buildVcnConfig());
 
-                // Once VCN starts, the test network should lose NOT_VCN_MANAGED
-                waitForExpectedUnderlyingNetworkWithCapabilities(
-                        false /* expectNotVcnManaged */,
-                        false /* expectNotMetered */,
-                        TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+                    // Once VCN starts, the test network should lose NOT_VCN_MANAGED
+                    waitForExpectedUnderlyingNetworkWithCapabilities(
+                            testNetworkWrapper,
+                            false /* expectNotVcnManaged */,
+                            false /* expectNotMetered */,
+                            TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
-                mVcnManager.clearVcnConfig(subGrp);
+                    mVcnManager.clearVcnConfig(subGrp);
 
-                // After the VCN tears down, the test network should have
-                // NOT_VCN_MANAGED again
-                waitForExpectedUnderlyingNetworkWithCapabilities(
-                        true /* expectNotVcnManaged */,
-                        false /* expectNotMetered */,
-                        TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+                    // After the VCN tears down, the test network should have
+                    // NOT_VCN_MANAGED again
+                    waitForExpectedUnderlyingNetworkWithCapabilities(
+                            testNetworkWrapper,
+                            true /* expectNotVcnManaged */,
+                            false /* expectNotMetered */,
+                            TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+                });
             });
-        });
+        }
     }
 
     private void waitForExpectedUnderlyingNetworkWithCapabilities(
-            boolean expectNotVcnManaged, boolean expectNotMetered, long timeoutMillis)
+            TestNetworkWrapper testNetworkWrapper,
+            boolean expectNotVcnManaged,
+            boolean expectNotMetered,
+            long timeoutMillis)
             throws Exception {
         final long start = SystemClock.elapsedRealtime();
 
         // Wait for NetworkCapabilities changes until they match the expected capabilities
         do {
             final CapabilitiesChangedEvent capabilitiesChangedEvent =
-                    mTestNetworkWrapper.vcnNetworkCallback.waitForOnCapabilitiesChanged(
+                    testNetworkWrapper.vcnNetworkCallback.waitForOnCapabilitiesChanged(
                             timeoutMillis);
             assertNotNull("Failed to receive NetworkCapabilities change", capabilitiesChangedEvent);
 
             final NetworkCapabilities nc = capabilitiesChangedEvent.networkCapabilities;
-            if (mTestNetworkWrapper.tunNetwork.equals(capabilitiesChangedEvent.network)
+            if (testNetworkWrapper.tunNetwork.equals(capabilitiesChangedEvent.network)
                     && nc.hasCapability(NET_CAPABILITY_VALIDATED)
                     && expectNotVcnManaged == nc.hasCapability(NET_CAPABILITY_NOT_VCN_MANAGED)
                     && expectNotMetered == nc.hasCapability(NET_CAPABILITY_NOT_METERED)) {
@@ -417,7 +421,7 @@ public class VcnManagerTest extends VcnTestBase {
 
         fail(
                 "Expected update for network="
-                        + mTestNetworkWrapper.tunNetwork.getNetId()
+                        + testNetworkWrapper.tunNetwork.getNetId()
                         + ". Wanted NOT_VCN_MANAGED="
                         + expectNotVcnManaged
                         + " NOT_METERED="
@@ -458,29 +462,22 @@ public class VcnManagerTest extends VcnTestBase {
     public void testSetVcnConfigOnTestNetwork() throws Exception {
         final int subId = verifyAndGetValidDataSubId();
 
-        mTestNetworkWrapper =
-                new TestNetworkWrapper(
-                        mContext,
-                        TEST_NETWORK_MTU,
-                        true /* isMetered */,
-                        Collections.singleton(subId),
-                        LOCAL_ADDRESS);
-        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+        try (TestNetworkWrapper testNetworkWrapper =
+                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
+            verifyUnderlyingCellAndRunTest(subId, (subGrp, cellNetwork, cellNetworkCb) -> {
+                final Network vcnNetwork =
+                    setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb, testNetworkWrapper);
 
-        verifyUnderlyingCellAndRunTest(
-                subId,
-                (subGrp, cellNetwork, cellNetworkCb) -> {
-                    final Network vcnNetwork =
-                            setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb);
-
-                    clearVcnConfigsAndVerifyNetworkTeardown(subGrp, cellNetworkCb, vcnNetwork);
-                });
+                clearVcnConfigsAndVerifyNetworkTeardown(subGrp, cellNetworkCb, vcnNetwork);
+            });
+        }
     }
 
     private Network setupAndGetVcnNetwork(
             @NonNull ParcelUuid subGrp,
             @NonNull Network cellNetwork,
-            @NonNull VcnTestNetworkCallback cellNetworkCb)
+            @NonNull VcnTestNetworkCallback cellNetworkCb,
+            @NonNull TestNetworkWrapper testNetworkWrapper)
             throws Exception {
         cellNetworkCb.waitForAvailable();
         mVcnManager.setVcnConfig(subGrp, buildTestModeVcnConfig());
@@ -490,7 +487,7 @@ public class VcnManagerTest extends VcnTestBase {
         final Network lostCellNetwork = cellNetworkCb.waitForLost();
         assertEquals(cellNetwork, lostCellNetwork);
 
-        injectAndVerifyIkeSessionNegotiationPackets(mTestNetworkWrapper.ikeTunUtils);
+        injectAndVerifyIkeSessionNegotiationPackets(testNetworkWrapper.ikeTunUtils);
 
         final Network vcnNetwork = cellNetworkCb.waitForAvailable();
         assertNotNull("VCN network did not come up", vcnNetwork);
@@ -568,43 +565,27 @@ public class VcnManagerTest extends VcnTestBase {
     public void testVcnMigrationAfterNetworkDies() throws Exception {
         final int subId = verifyAndGetValidDataSubId();
 
-        mTestNetworkWrapper =
-                new TestNetworkWrapper(
-                        mContext,
-                        TEST_NETWORK_MTU,
-                        true /* isMetered */,
-                        Collections.singleton(subId),
-                        LOCAL_ADDRESS);
-        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+        try (TestNetworkWrapper testNetworkWrapper =
+                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
+            verifyUnderlyingCellAndRunTest(subId, (subGrp, cellNetwork, cellNetworkCb) -> {
+                final Network vcnNetwork =
+                    setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb, testNetworkWrapper);
 
-        verifyUnderlyingCellAndRunTest(
-                subId,
-                (subGrp, cellNetwork, cellNetworkCb) -> {
-                    final Network vcnNetwork =
-                            setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb);
+                testNetworkWrapper.close();
+                testNetworkWrapper.vcnNetworkCallback.waitForLost();
 
-                    mTestNetworkWrapper.close();
-                    mTestNetworkWrapper.vcnNetworkCallback.waitForLost();
+            try (TestNetworkWrapper secondaryTestNetworkWrapper =
+                    createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
+                try {
+                    injectAndVerifyIkeMobikePackets(secondaryTestNetworkWrapper.ikeTunUtils);
 
-                    final TestNetworkWrapper secondaryTestNetworkWrapper =
-                            new TestNetworkWrapper(
-                                    mContext,
-                                    TEST_NETWORK_MTU,
-                                    true /* isMetered */,
-                                    Collections.singleton(subId),
-                                    SECONDARY_LOCAL_ADDRESS);
-
-                    try {
-                        assertNotNull(
-                                "No test network found", secondaryTestNetworkWrapper.tunNetwork);
-
-                        injectAndVerifyIkeMobikePackets(secondaryTestNetworkWrapper.ikeTunUtils);
-
-                        clearVcnConfigsAndVerifyNetworkTeardown(subGrp, cellNetworkCb, vcnNetwork);
-                    } finally {
-                        secondaryTestNetworkWrapper.close();
-                    }
-                });
+                    clearVcnConfigsAndVerifyNetworkTeardown(subGrp, cellNetworkCb, vcnNetwork);
+                } finally {
+                    secondaryTestNetworkWrapper.close();
+                }
+            }
+            });
+        }
     }
 
     private void injectAndVerifyIkeMobikePackets(@NonNull IkeTunUtils ikeTunUtils)
@@ -653,47 +634,41 @@ public class VcnManagerTest extends VcnTestBase {
     public void testVcnSafemodeOnTestNetwork() throws Exception {
         final int subId = verifyAndGetValidDataSubId();
 
-        mTestNetworkWrapper =
-                new TestNetworkWrapper(
-                        mContext,
-                        TEST_NETWORK_MTU,
-                        true /* isMetered */,
-                        Collections.singleton(subId),
-                        LOCAL_ADDRESS);
-        assertNotNull("No test network found", mTestNetworkWrapper.tunNetwork);
+        try (TestNetworkWrapper testNetworkWrapper =
+                createTestNetworkWrapper(true /* isMetered */, subId, LOCAL_ADDRESS)) {
+            // Before the VCN starts, the test network should have NOT_VCN_MANAGED
+            waitForExpectedUnderlyingNetworkWithCapabilities(
+                    testNetworkWrapper,
+                    true /* expectNotVcnManaged */,
+                    false /* expectNotMetered */,
+                    TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+            verifyUnderlyingCellAndRunTest(subId, (subGrp, cellNetwork, cellNetworkCb) -> {
+                final Network vcnNetwork =
+                    setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb, testNetworkWrapper);
 
-        // Before the VCN starts, the test network should have NOT_VCN_MANAGED
-        waitForExpectedUnderlyingNetworkWithCapabilities(
-                true /* expectNotVcnManaged */,
-                false /* expectNotMetered */,
-                TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+                // TODO(b/191801185): use VcnStatusCallbacks to verify safemode
 
-        verifyUnderlyingCellAndRunTest(
-                subId,
-                (subGrp, cellNetwork, cellNetworkCb) -> {
-                    final Network vcnNetwork =
-                            setupAndGetVcnNetwork(subGrp, cellNetwork, cellNetworkCb);
+                // Once VCN starts, the test network should lose NOT_VCN_MANAGED
+                waitForExpectedUnderlyingNetworkWithCapabilities(
+                        testNetworkWrapper,
+                        false /* expectNotVcnManaged */,
+                        false /* expectNotMetered */,
+                        TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
 
-                    // TODO(b/191801185): use VcnStatusCallbacks to verify safemode
+                // After VCN has started up, wait for safemode to kick in and expect the
+                // underlying Test Network to regain NOT_VCN_MANAGED.
+                waitForExpectedUnderlyingNetworkWithCapabilities(
+                        testNetworkWrapper,
+                        true /* expectNotVcnManaged */,
+                        false /* expectNotMetered */,
+                        SAFEMODE_TIMEOUT_MILLIS);
 
-                    // Once VCN starts, the test network should lose NOT_VCN_MANAGED
-                    waitForExpectedUnderlyingNetworkWithCapabilities(
-                            false /* expectNotVcnManaged */,
-                            false /* expectNotMetered */,
-                            TestNetworkWrapper.NETWORK_CB_TIMEOUT_MS);
+                // Verify that VCN Network is also lost in safemode
+                final Network lostVcnNetwork = cellNetworkCb.waitForLost();
+                assertEquals(vcnNetwork, lostVcnNetwork);
 
-                    // After VCN has started up, wait for safemode to kick in and expect the
-                    // underlying Test Network to regain NOT_VCN_MANAGED.
-                    waitForExpectedUnderlyingNetworkWithCapabilities(
-                            true /* expectNotVcnManaged */,
-                            false /* expectNotMetered */,
-                            SAFEMODE_TIMEOUT_MILLIS);
-
-                    // Verify that VCN Network is also lost in safemode
-                    final Network lostVcnNetwork = cellNetworkCb.waitForLost();
-                    assertEquals(vcnNetwork, lostVcnNetwork);
-
-                    mVcnManager.clearVcnConfig(subGrp);
-                });
+                mVcnManager.clearVcnConfig(subGrp);
+            });
+        }
     }
 }
