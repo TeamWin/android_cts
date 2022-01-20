@@ -1608,9 +1608,6 @@ public class AppEnumerationTests {
         final LocalIntentSender sender = new LocalIntentSender();
         session.commit(sender.getIntentSender());
         InstallUtils.assertStatusSuccess(sender.getResult());
-        if (session.isStaged()) {
-            InstallUtils.waitForSessionReady(sessionId);
-        }
     }
 
     private void adoptShellPermissions() {

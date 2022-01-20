@@ -32,7 +32,6 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 
@@ -136,11 +135,6 @@ public class RollbackUtils {
         if (status != RollbackManager.STATUS_SUCCESS) {
             String message = result.getStringExtra(RollbackManager.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message);
-        }
-
-        RollbackInfo committed = getCommittedRollbackById(rollbackId);
-        if (committed.isStaged()) {
-            InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         }
     }
 
