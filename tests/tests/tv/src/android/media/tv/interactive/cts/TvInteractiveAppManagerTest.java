@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppView;
+import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
 
@@ -53,7 +54,7 @@ import java.util.concurrent.Executor;
  */
 @RunWith(AndroidJUnit4.class)
 public class TvInteractiveAppManagerTest {
-    private static final long TIME_OUT_MS = 200000L;
+    private static final long TIME_OUT_MS = 20000L;
 
     private Instrumentation mInstrumentation;
     private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
@@ -187,5 +188,40 @@ public class TvInteractiveAppManagerTest {
         assertThat(mCallback.mState)
                 .isEqualTo(TvInteractiveAppManager.SERVICE_STATE_PREPARING);
         assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_NONE);
+    }
+
+    @Test
+    public void testAppLinkCommand() throws Exception {
+        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+
+        TvInteractiveAppInfo stubInfo = null;
+        for (TvInteractiveAppInfo info : list) {
+            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
+                stubInfo = info;
+                break;
+            }
+        }
+        assertNotNull(stubInfo);
+
+        Bundle bundle = new Bundle();
+        bundle.putString(TvInteractiveAppManager.KEY_PACKAGE_NAME, "pkg_name");
+        bundle.putString(TvInteractiveAppManager.KEY_CLASS_NAME, "clazz_name");
+
+        mManager.sendAppLinkCommand(stubInfo.getId(), bundle);
+        PollingCheck.waitFor(
+                TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkCommand != null);
+
+        assertBundlesAreEqual(StubTvInteractiveAppService.sAppLinkCommand, bundle);
+    }
+
+    private static void assertBundlesAreEqual(Bundle actual, Bundle expected) {
+        if (expected != null && actual != null) {
+            assertThat(actual.keySet()).isEqualTo(expected.keySet());
+            for (String key : expected.keySet()) {
+                assertThat(actual.get(key)).isEqualTo(expected.get(key));
+            }
+        } else {
+            assertThat(actual).isEqualTo(expected);
+        }
     }
 }

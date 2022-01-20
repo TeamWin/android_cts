@@ -24,6 +24,8 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.tv.AdRequest;
+import android.media.tv.AdResponse;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -34,6 +36,7 @@ import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ConditionVariable;
+import android.os.ParcelFileDescriptor;
 import android.tv.cts.R;
 import android.view.KeyEvent;
 import android.view.SurfaceView;
@@ -52,6 +55,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.concurrent.Executor;
 
 /**
@@ -152,6 +156,20 @@ public class TvInteractiveAppServiceTest {
         if (exceptions[0] != null) {
             throw exceptions[0];
         }
+    }
+
+    private void linkTvView() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvView.setCallback(mTvInputCallback);
+        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
+        mInputSession = StubTvInputService2.sStubSessionImpl2;
+        assertNotNull(mInputSession);
+        mInputSession.resetValues();
+
+        mTvIAppView.setTvView(mTvView);
+        mTvView.setInteractiveAppNotificationEnabled(true);
     }
 
     private Executor getExecutor() {
@@ -388,16 +406,8 @@ public class TvInteractiveAppServiceTest {
 
     @Test
     public void testTuned() {
-        assertNotNull(mSession);
-        mSession.resetValues();
-        mTvView.setCallback(mTvInputCallback);
-        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
-        mInputSession = StubTvInputService2.sStubSessionImpl2;
-        assertNotNull(mInputSession);
+        linkTvView();
 
-        mTvIAppView.setTvView(mTvView);
-        mTvView.setInteractiveAppNotificationEnabled(true);
         mInputSession.notifyTuned(CHANNEL_0);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTunedCount > 0);
@@ -408,21 +418,56 @@ public class TvInteractiveAppServiceTest {
 
     @Test
     public void testVideoAvailable() {
-        assertNotNull(mSession);
-        mSession.resetValues();
-        mTvView.setCallback(mTvInputCallback);
-        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
-        mInputSession = StubTvInputService2.sStubSessionImpl2;
-        assertNotNull(mInputSession);
+        linkTvView();
 
-        mTvIAppView.setTvView(mTvView);
-        mTvView.setInteractiveAppNotificationEnabled(true);
         mInputSession.notifyVideoAvailable();
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mVideoAvailableCount > 0);
 
         assertThat(mSession.mVideoAvailableCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testAdRequest() throws Throwable {
+        linkTvView();
+
+        File tmpFile = File.createTempFile("cts_tv_interactive_app", "tias_test");
+        ParcelFileDescriptor fd =
+                ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_WRITE);
+        AdRequest adRequest = new AdRequest(
+                567, AdRequest.REQUEST_TYPE_START, fd, 787L, 989L, 100L, "MMM", new Bundle());
+        mSession.requestAd(adRequest);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mAdRequestCount > 0);
+
+        assertThat(mInputSession.mAdRequestCount).isEqualTo(1);
+        assertThat(mInputSession.mAdRequest.getId()).isEqualTo(567);
+        assertThat(mInputSession.mAdRequest.getRequestType())
+                .isEqualTo(AdRequest.REQUEST_TYPE_START);
+        assertNotNull(mInputSession.mAdRequest.getFileDescriptor());
+        assertThat(mInputSession.mAdRequest.getStartTimeMillis()).isEqualTo(787L);
+        assertThat(mInputSession.mAdRequest.getStopTimeMillis()).isEqualTo(989L);
+        assertThat(mInputSession.mAdRequest.getEchoIntervalMillis()).isEqualTo(100L);
+        assertThat(mInputSession.mAdRequest.getMediaFileType()).isEqualTo("MMM");
+        assertNotNull(mInputSession.mAdRequest.getMetadata());
+
+        fd.close();
+        tmpFile.delete();
+    }
+
+    @Test
+    public void testAdResponse() throws Throwable {
+        linkTvView();
+
+        AdResponse adResponse = new AdResponse(767, AdResponse.RESPONSE_TYPE_PLAYING, 909L);
+        mInputSession.notifyAdResponse(adResponse);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mAdResponseCount > 0);
+
+        assertThat(mSession.mAdResponseCount).isEqualTo(1);
+        assertThat(mSession.mAdResponse.getResponseType())
+                .isEqualTo(AdResponse.RESPONSE_TYPE_PLAYING);
+        assertThat(mSession.mAdResponse.getElapsedTimeMillis()).isEqualTo(909L);
     }
 
     public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
