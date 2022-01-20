@@ -395,6 +395,8 @@ public class SystemFeaturesTest {
         assertFeatureForSensor(featuresLeft,
                 PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES_UNCALIBRATED,
                 Sensor.TYPE_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
+        assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HEADING,
+                Sensor.TYPE_HEADING);
 
         /*
          * We have three cases to test for :

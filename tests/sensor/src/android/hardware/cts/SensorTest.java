@@ -238,6 +238,20 @@ public class SensorTest extends SensorTestCase {
 
         validateLimitedAxesImuSensorType(Sensor.TYPE_GYROSCOPE_LIMITED_AXES_UNCALIBRATED,
                 PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
+
+        sensor =  mSensorManager.getDefaultSensor(Sensor.TYPE_HEADING);
+        boolean hasHeadingSensor = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_HEADING);
+        if (hasHeadingSensor) {
+            assertNotNull(sensor);
+            assertEquals(Sensor.TYPE_HEADING, sensor.getType());
+            assertSensorValues(sensor);
+            assertTrue("Max range must not be greater or equal to 360. Range="
+                    + sensor.getMaximumRange() + " " + sensor.getName(),
+                    sensor.getMaximumRange() < 360);
+        } else {
+            assertNull(sensor);
+        }
     }
 
     private void validateLimitedAxesImuSensorType(int sensorType, String systemFeature) {
