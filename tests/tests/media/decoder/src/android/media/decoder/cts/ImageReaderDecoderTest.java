@@ -17,6 +17,7 @@
 package android.media.decoder.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -164,15 +165,21 @@ public class ImageReaderDecoderTest {
     }
 
     static class MediaAsset {
-        public MediaAsset(String resource, int width, int height, boolean isSwirl) {
+        public MediaAsset(String resource, int width, int height, boolean isSwirl,
+                          int bitDepth) {
             mResource = resource;
             mWidth = width;
             mHeight = height;
             mIsSwirl = isSwirl;
+            mBitDepth = bitDepth;
         }
 
         public MediaAsset(String resource, int width, int height) {
-            this(resource, width, height, true);
+            this(resource, width, height, true, 8);
+        }
+
+        public MediaAsset(String resource, int width, int height, boolean isSwirl) {
+            this(resource, width, height, isSwirl, 8);
         }
 
         public int getWidth() {
@@ -187,6 +194,10 @@ public class ImageReaderDecoderTest {
             return mIsSwirl;
         }
 
+        public int getBitDepth() {
+            return mBitDepth;
+        }
+
         public String getResource() {
             return mResource;
         }
@@ -195,6 +206,7 @@ public class ImageReaderDecoderTest {
         private final int mWidth;
         private final int mHeight;
         private final boolean mIsSwirl;
+        private final int mBitDepth;
     }
 
     static class MediaAssets {
@@ -297,7 +309,18 @@ public class ImageReaderDecoderTest {
             int width = mMediaAsset.getWidth();
             int height = mMediaAsset.getHeight();
 
-            if (DEBUG) Log.d(TAG, "videoDecode " + mName + " " + width + "x" + height);
+            if (8 == mMediaAsset.getBitDepth()) {
+                imageFormat = ImageFormat.YUV_420_888;
+                colorFormat = COLOR_FormatYUV420Flexible;
+            } else {
+                imageFormat = ImageFormat.YCBCR_P010;
+                colorFormat = COLOR_FormatYUVP010;
+            }
+
+            if (DEBUG) {
+                Log.d(TAG, "videoDecode " + mName + " " + width + "x" + height + " bit depth " +
+                        mMediaAsset.getBitDepth());
+            }
 
             MediaCodec decoder = null;
 
@@ -611,10 +634,11 @@ public class ImageReaderDecoderTest {
     private static void validateYuvData(byte[] yuvData, int width, int height, int format,
             long ts) {
 
-        assertTrue("YUV format must be one of the YUV_420_888, NV21, or YV12",
+        assertTrue("YUV format must be one of the YUV_420_888, NV21, YV12 or YCBCR_P010",
                 format == ImageFormat.YUV_420_888 ||
                 format == ImageFormat.NV21 ||
-                format == ImageFormat.YV12);
+                format == ImageFormat.YV12 ||
+                format == ImageFormat.YCBCR_P010);
 
         if (VERBOSE) Log.v(TAG, "Validating YUV data");
         int expectedSize = width * height * ImageFormat.getBitsPerPixel(format) / 8;
@@ -624,7 +648,8 @@ public class ImageReaderDecoderTest {
     private static void checkYuvFormat(int format) {
         if ((format != ImageFormat.YUV_420_888) &&
                 (format != ImageFormat.NV21) &&
-                (format != ImageFormat.YV12)) {
+                (format != ImageFormat.YV12) &&
+                (format != ImageFormat.YCBCR_P010)) {
             fail("Wrong formats: " + format);
         }
     }
