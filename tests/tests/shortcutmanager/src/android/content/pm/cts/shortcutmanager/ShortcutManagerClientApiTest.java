@@ -593,6 +593,54 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         testSetDynamicShortcuts_details();
     }
 
+    public void testSetDynamicShortcuts_withCapabilities() {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            assertTrue(getManager().setDynamicShortcuts(list(
+                    makeShortcutBuilder("s1")
+                            .setShortLabel("title1")
+                            .setIntent(new Intent("main").putExtra("k1", "yyy"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.type", list("running", "jogging"))
+                            .addCapabilityBinding("action.intent.START_EXERCISE",
+                                    "exercise.duration", list("10m"))
+                            .build(),
+                    makeShortcutBuilder("s2")
+                            .setShortLabel("title2")
+                            .setIntent(new Intent("main").putExtra("k1", "yyy"))
+                            .addCapabilityBinding("action.intent.STOP_EXERCISE",
+                                    "exercise.type", list("running", "jogging"))
+                            .build(),
+                    makeShortcut("s3", "title3"))));
+        });
+
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s1", "s2", "s3")
+                    .forShortcutWithId("s1", si -> {
+                        assertTrue(si.hasCapability("action.intent.START_EXERCISE"));
+                        assertFalse(si.hasCapability("action.intent.STOP_EXERCISE"));
+                        assertEquals(list("running", "jogging"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                "exercise.type"));
+                        assertEquals(list("10m"),
+                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
+                                        "exercise.duration"));
+                    })
+                    .forShortcutWithId("s2", si -> {
+                        assertFalse(si.hasCapability("action.intent.START_EXERCISE"));
+                        assertTrue(si.hasCapability("action.intent.STOP_EXERCISE"));
+                        assertEquals(list("running", "jogging"),
+                                si.getCapabilityParameterValues("action.intent.STOP_EXERCISE",
+                                        "exercise.type"));
+                    })
+                    .forShortcutWithId("s3", si -> {
+                        assertEquals("title3", si.getShortLabel());
+                    });
+        });
+    }
+
     public void testAddDynamicShortcuts() {
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
