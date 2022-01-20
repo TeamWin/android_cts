@@ -82,6 +82,7 @@ public abstract class InputTestCase {
     @Before
     public void setUp() throws Exception {
         mActivityRule.getActivity().clearUnhandleKeyCode();
+        mActivityRule.getActivity().setInputCallback(mInputListener);
         mDecorView = mActivityRule.getActivity().getWindow().getDecorView();
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
         mVid = mParser.readVendorId(mRegisterResourceId);
@@ -228,7 +229,6 @@ public abstract class InputTestCase {
     }
 
     protected void verifyEvents(List<InputEvent> events) {
-        mActivityRule.getActivity().setInputCallback(mInputListener);
         // Make sure we received the expected input events
         if (events.size() == 0) {
             // If no event is expected we need to wait for event until timeout and fail on
