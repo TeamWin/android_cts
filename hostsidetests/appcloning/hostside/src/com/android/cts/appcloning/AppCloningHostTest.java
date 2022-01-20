@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.host;
+package com.android.cts.appcloning;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -34,22 +34,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Runs the AppCloning tests.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class AppCloningHostTest extends BaseHostTestCase {
-    private static final String APP_A = "CtsScopedStorageTestAppA.apk";
-    private static final String APP_A_PACKAGE = "android.scopedstorage.cts.testapp.A.withres";
+
+    private static final String APP_A = "CtsAppCloningTestApp.apk";
+    private static final String APP_A_PACKAGE = "com.android.cts.appcloningtestapp";
+
     private static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
+
     private String mCloneUserId;
     private ContentProviderHandler mContentProviderHandler;
-
 
     @Before
     public void setup() throws Exception {
@@ -57,13 +56,17 @@ public class AppCloningHostTest extends BaseHostTestCase {
         assumeTrue(isAtLeastS());
         assumeFalse("Device uses sdcardfs", usesSdcardFs());
 
+        // create clone user
         String output = executeShellCommand(
                 "pm create-user --profileOf 0 --user-type android.os.usertype.profile.CLONE "
                         + "testUser");
-        mCloneUserId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]", "");
+        mCloneUserId = output.substring(output.lastIndexOf(' ') + 1).replaceAll("[^0-9]",
+                "");
         assertThat(mCloneUserId).isNotEmpty();
+
         CommandResult out = executeShellV2Command("am start-user -w %s", mCloneUserId);
         assertThat(out.getStderr()).isEmpty();
+
         mContentProviderHandler = new ContentProviderHandler(getDevice());
         mContentProviderHandler.setUp();
     }
@@ -74,6 +77,8 @@ public class AppCloningHostTest extends BaseHostTestCase {
         if (mContentProviderHandler != null) {
             mContentProviderHandler.tearDown();
         }
+
+        // remove the clone user
         executeShellCommand("pm remove-user %s", mCloneUserId);
     }
 
@@ -92,7 +97,8 @@ public class AppCloningHostTest extends BaseHostTestCase {
         eventually(() -> {
             // Wait for finish.
             assertThat(isSuccessful(
-                    runContentProviderCommand("query", mCloneUserId, "/sdcard", ""))).isTrue();
+                    runContentProviderCommand("query", mCloneUserId,
+                            "/sdcard", ""))).isTrue();
         }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
 
         // Create a file on the clone user storage
@@ -101,16 +107,19 @@ public class AppCloningHostTest extends BaseHostTestCase {
         eventually(() -> {
             // Wait for finish.
             assertThat(isSuccessful(
-                    runContentProviderCommand("write", mCloneUserId, "/sdcard/testFile.txt",
+                    runContentProviderCommand("write", mCloneUserId,
+                            "/sdcard/testFile.txt",
                             "< /sdcard/testFile.txt"))).isTrue();
         }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
 
         // Check that the above created file exists on the clone user storage
-        out = runContentProviderCommand("query", mCloneUserId, "/sdcard/testFile.txt", "");
+        out = runContentProviderCommand("query", mCloneUserId,
+                "/sdcard/testFile.txt", "");
         assertThat(isSuccessful(out)).isTrue();
 
         // Cleanup the created file
-        out = runContentProviderCommand("delete", mCloneUserId, "/sdcard/testFile.txt", "");
+        out = runContentProviderCommand("delete", mCloneUserId,
+                "/sdcard/testFile.txt", "");
         assertThat(isSuccessful(out)).isTrue();
     }
 
@@ -136,7 +145,6 @@ public class AppCloningHostTest extends BaseHostTestCase {
     }
 
     private boolean usesSdcardFs() throws Exception {
-        List<String> mounts = new ArrayList<>();
         CommandResult out = executeShellV2Command("cat /proc/mounts");
         assertThat(isSuccessful(out)).isTrue();
         for (String line : out.getStdout().split("\n")) {
@@ -147,6 +155,4 @@ public class AppCloningHostTest extends BaseHostTestCase {
         }
         return false;
     }
-
-
 }
