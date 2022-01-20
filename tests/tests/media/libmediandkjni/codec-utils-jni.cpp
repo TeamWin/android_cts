@@ -38,6 +38,9 @@ namespace std
 
 #include "md5_utils.h"
 
+// ImageFormat.YCBCR_P010 was defined in API31.
+#define __YCBCR_P010_MIN_API__ 31
+
 typedef ssize_t offs_t;
 
 struct NativeImage {
@@ -99,6 +102,7 @@ private:
 static struct ImageFieldsAndMethods {
     // android.graphics.ImageFormat
     int YUV_420_888;
+    int YCBCR_P010;
     // android.media.Image
     jmethodID methodWidth;
     jmethodID methodHeight;
@@ -126,6 +130,14 @@ void initializeGlobalFields(JNIEnv *env) {
         jclass imageFormatClazz = env->FindClass("android/graphics/ImageFormat");
         const jfieldID fieldYUV420888 = env->GetStaticFieldID(imageFormatClazz, "YUV_420_888", "I");
         gFields.YUV_420_888 = env->GetStaticIntField(imageFormatClazz, fieldYUV420888);
+        if (__builtin_available(android __YCBCR_P010_MIN_API__, *)) {
+            const jfieldID fieldYCBCRP010 = env->GetStaticFieldID(imageFormatClazz,
+                    "YCBCR_P010", "I");
+            gFields.YCBCR_P010 = env->GetStaticIntField(imageFormatClazz, fieldYCBCRP010);
+        } else {
+            // Set this to -1 to ensure it doesn't get equated to any valid color format
+            gFields.YCBCR_P010 = -1;
+        }
         env->DeleteLocalRef(imageFormatClazz);
         imageFormatClazz = NULL;
     }
@@ -199,10 +211,10 @@ NativeImage *getNativeImage(JNIEnv *env, jobject image, jobject area = NULL) {
         cropRect = NULL;
     }
 
-    if (img->format != gFields.YUV_420_888) {
+    if (img->format != gFields.YUV_420_888 && img->format != gFields.YCBCR_P010) {
         jniThrowException(
                 env, "java/lang/UnsupportedOperationException",
-                "only support YUV_420_888 images");
+                "only support YUV_420_888 and YCBCR_P010 images");
         delete img;
         img = NULL;
         return NULL;
@@ -406,9 +418,16 @@ void getRawStats(NativeImage *img, jlong rawStats[10])
         uint8_t *vcol = (uint8_t *)vrow;
 
         for (size_t x = img->plane[0].cropWidth; x; --x) {
-            uint64_t Y = *ycol;
-            uint64_t U = *ucol;
-            uint64_t V = *vcol;
+            uint64_t Y = 0, U = 0, V = 0;
+            if (img->format == gFields.YCBCR_P010) {
+                Y = ((uint16_t)(*(ycol + 1)) << 2) || (*ycol >> 6);
+                U = ((uint16_t)(*(ucol + 1)) << 2) || (*ucol >> 6);
+                V = ((uint16_t)(*(vcol + 1)) << 2) || (*vcol >> 6);
+            } else {
+                Y = *ycol;
+                U = *ucol;
+                V = *vcol;
+            }
 
             sum_x[0] += Y;
             sum_x[1] += U;
