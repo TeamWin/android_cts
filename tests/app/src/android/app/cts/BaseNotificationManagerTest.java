@@ -282,7 +282,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        return new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("foo")
                 .setShortcutId(SHARE_SHORTCUT_ID)
                 .setStyle(new Notification.MessagingStyle(person)
@@ -293,7 +293,6 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
-        return nb;
     }
 
     protected void sendNotification(final int id,
@@ -302,13 +301,13 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
     }
 
     protected void sendNotification(final int id,
-            String groupKey, final int icon) throws Exception {
+            String groupKey, final int icon) {
         sendNotification(id, groupKey, icon, false, null);
     }
 
     protected void sendNotification(final int id,
             String groupKey, final int icon,
-            boolean isCall, Uri phoneNumber) throws Exception {
+            boolean isCall, Uri phoneNumber) {
         final Intent intent = new Intent(Intent.ACTION_MAIN, Telephony.Threads.CONTENT_URI);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
