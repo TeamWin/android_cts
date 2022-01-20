@@ -16,24 +16,19 @@
 
 package android.media.audio.cts;
 
-import android.platform.test.annotations.AppModeFull;
-import java.io.IOException;
-
-
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.midi.MidiDevice;
-import android.media.midi.MidiDevice.MidiConnection;
 import android.media.midi.MidiDeviceInfo;
-import android.media.midi.MidiDeviceStatus;
-import android.media.midi.MidiInputPort;
 import android.media.midi.MidiManager;
 import android.media.midi.MidiReceiver;
-import android.media.midi.MidiSender;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+
+import java.io.IOException;
+import java.util.Collection;
 
 /**
  * Test MIDI when there may be no MIDI devices available. There is not much we
@@ -96,12 +91,22 @@ public class MidiSoloTest extends CtsAndroidTestCase {
 
         MidiDeviceInfo[] infos = midiManager.getDevices();
         assertTrue("Device list was null.", infos != null);
+        Collection<MidiDeviceInfo> legacyDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
+        assertTrue("Legacy Device list was null.", legacyDeviceInfos != null);
+        Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
+        assertTrue("Universal Device list was null.", universalDeviceInfos != null);
 
         MidiManager.DeviceCallback callback = new MidiManager.DeviceCallback();
 
         // These should not crash.
         midiManager.unregisterDeviceCallback(callback);
         midiManager.registerDeviceCallback(callback, null);
+        midiManager.registerDeviceCallbackForTransport(callback, null,
+                MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
+        midiManager.registerDeviceCallbackForTransport(callback, null,
+                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
         midiManager.unregisterDeviceCallback(callback);
         midiManager.registerDeviceCallback(callback, new Handler(Looper.getMainLooper()));
         midiManager.registerDeviceCallback(callback, new Handler(Looper.getMainLooper()));
