@@ -18,6 +18,7 @@ package android.media.tv.interactive.cts;
 
 import android.content.Context;
 import android.media.tv.AdResponse;
+import android.media.tv.BroadcastInfoResponse;
 import android.media.tv.interactive.AppLinkInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
@@ -88,7 +89,6 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public Bundle mCreateBiIAppParams;
         public String mDestroyBiIAppId;
         public AdResponse mAdResponse;
-
 
         StubSessionImpl(Context context) {
             super(context);
@@ -283,6 +283,11 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onVideoUnavailable(int reason) {
+        }
+
+        @Override
+        public void onBroadcastInfoResponse(BroadcastInfoResponse response) {
+            // TODO: pending implementation
         }
     }
 }

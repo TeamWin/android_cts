@@ -27,6 +27,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
+import android.media.tv.TsRequest;
+import android.media.tv.TsResponse;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -73,6 +75,7 @@ public class TvInteractiveAppServiceTest {
     private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
     private TvInteractiveAppViewStubActivity mActivity;
     private TvInteractiveAppView mTvIAppView;
+
     private TvView mTvView;
     private TvInteractiveAppManager mManager;
     private TvInteractiveAppInfo mStubInfo;
@@ -601,6 +604,38 @@ public class TvInteractiveAppServiceTest {
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
+    public void testBroadcastInfoRequest() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvView.setCallback(mTvInputCallback);
+        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
+        mInputSession = StubTvInputService2.sStubSessionImpl2;
+        assertNotNull(mInputSession);
+
+        mTvIAppView.setTvView(mTvView);
+        mTvView.setInteractiveAppNotificationEnabled(true);
+        mSession.requestBroadcastInfo(new TsRequest(1, 1, 1));
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testBroadcastInfoResponse() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvView.setCallback(mTvInputCallback);
+        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
+        mInputSession = StubTvInputService2.sStubSessionImpl2;
+        assertNotNull(mInputSession);
+
+        mTvIAppView.setTvView(mTvView);
+        mTvView.setInteractiveAppNotificationEnabled(true);
+        mInputSession.notifyBroadcastInfoResponse(new TsResponse(1, 1, 1, null));
+        mInstrumentation.waitForIdleSync();
+    }
+
     public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
         if (expected != null && actual != null) {
             assertThat(actual.getDownTime()).isEqualTo(expected.getDownTime());
@@ -629,5 +664,4 @@ public class TvInteractiveAppServiceTest {
             assertThat(actual).isEqualTo(expected);
         }
     }
-
 }
