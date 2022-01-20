@@ -32,7 +32,9 @@ public class CVE_2018_9558 extends SecurityTestCase {
     @AsbSecurityTest(cveBugId = 112161557)
     public void testPocCVE_2018_9558() throws Exception {
         AdbUtils.assumeHasNfc(getDevice());
+        assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9558", null, getDevice());
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2018-9558", getDevice(),
+                AdbUtils.TIMEOUT_SEC);
     }
 }
