@@ -1,0 +1,15 @@
+<MockSim numofapp="2" iccid="89886920042507847155">
+<MockSimProfile id="0" type="APPTYPE_USIM">
+    <PinProfile appstate="APPSTATE_READY">
+        <Pin1State>PINSTATE_DISABLED</Pin1State>
+        <Pin2State>PINSTATE_ENABLED_NOT_VERIFIED</Pin2State>
+    </PinProfile>
+</MockSimProfile>
+
+<MockSimProfile id="1" type="APPTYPE_ISIM">
+    <PinProfile appstate="APPSTATE_DETECTED">
+        <Pin1State>PINSTATE_DISABLED</Pin1State>
+        <Pin2State>PINSTATE_ENABLED_NOT_VERIFIED</Pin2State>
+    </PinProfile>
+</MockSimProfile>
+</MockSim>

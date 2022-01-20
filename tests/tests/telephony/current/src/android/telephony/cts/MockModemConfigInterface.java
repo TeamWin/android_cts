@@ -93,10 +93,18 @@ public interface MockModemConfigInterface {
     void setRadioState(int state, String client);
 
     /**
-     * Sets a specific logical SIM state to absent or present
+     * Query whether any SIM cards are present or not.
      *
-     * @param isPresent true means "present", false means "absent".
+     * @param client for tracking calling client
+     * @return boolean true if any sim card inserted, otherwise false.
+     */
+    boolean isSimCardPresent(String client);
+
+    /**
+     * Change SIM profile
+     *
+     * @param simProfileId The target profile to be switched.
      * @param client for tracking calling client
      */
-    void setSimPresent(boolean isPresent, String client);
+    void changeSimProfile(int simProfileId, String client);
 }

@@ -48,6 +48,15 @@ public class MockModemManager {
      * @return boolean true if the operation is successful, otherwise false.
      */
     public boolean connectMockModemService() throws Exception {
+        return connectMockModemService(MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT);
+    }
+    /**
+     * Bring up Mock Modem Service and connect to it.
+     *
+     * @pararm simprofile for initial Sim profile
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean connectMockModemService(int simprofile) throws Exception {
         boolean result = false;
 
         if (sServiceConnector == null) {
@@ -56,7 +65,8 @@ public class MockModemManager {
         }
 
         if (sServiceConnector != null) {
-            result = sServiceConnector.connectMockModemService();
+            // TODO: support DSDS
+            result = sServiceConnector.connectMockModemService(simprofile);
 
             if (result) {
                 mMockModemService = sServiceConnector.getMockModemService();
@@ -104,19 +114,62 @@ public class MockModemManager {
     }
 
     /**
-     * Set SIM card status as present.
+     * Query whether an active SIM card is present on this sub or not.
      *
-     * @param subId which sub needs to be set.
-     * @return boolean true if the operation is successful, otherwise false.
+     * @param subId which sub would be checked.
+     * @return boolean true if any sim card inserted, otherwise false.
      */
-    public boolean setSimPresent(int subId) throws Exception {
-        Log.d(TAG, "setSimPresent[" + subId + "]");
-        boolean result = true;
+    public boolean isSimCardPresent(int subId) throws Exception {
+        Log.d(TAG, "isSimCardPresent[" + subId + "]");
 
         MockModemConfigInterface[] configInterfaces =
                 mMockModemService.getMockModemConfigInterfaces();
-        configInterfaces[subId].setSimPresent(true, TAG);
-        waitForTelephonyFrameworkDone(1);
+        return configInterfaces[subId].isSimCardPresent(TAG);
+    }
+
+    /**
+     * Insert a SIM card.
+     *
+     * @param subId which sub would insert.
+     * @param simProfileId which carrier sim card is inserted.
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean insertSimCard(int subId, int simProfileId) throws Exception {
+        Log.d(TAG, "insertSimCard[" + subId + "] with profile Id(" + simProfileId + ")");
+        boolean result = true;
+
+        if (!isSimCardPresent(subId)) {
+            MockModemConfigInterface[] configInterfaces =
+                    mMockModemService.getMockModemConfigInterfaces();
+            configInterfaces[subId].changeSimProfile(simProfileId, TAG);
+            waitForTelephonyFrameworkDone(1);
+        } else {
+            Log.d(TAG, "There is a SIM inserted. Need to remove first.");
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Remove a SIM card.
+     *
+     * @param subId which sub would remove the SIM.
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean removeSimCard(int subId) throws Exception {
+        Log.d(TAG, "removeSimCard[" + subId + "]");
+        boolean result = true;
+
+        if (isSimCardPresent(subId)) {
+            MockModemConfigInterface[] configInterfaces =
+                    mMockModemService.getMockModemConfigInterfaces();
+            configInterfaces[subId].changeSimProfile(
+                    MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT, TAG);
+            waitForTelephonyFrameworkDone(1);
+        } else {
+            Log.d(TAG, "There is no SIM inserted.");
+            result = false;
+        }
         return result;
     }
 

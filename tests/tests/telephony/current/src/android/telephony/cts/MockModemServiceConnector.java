@@ -186,7 +186,7 @@ class MockModemServiceConnector {
      *
      * @return true if this request succeeded, false otherwise.
      */
-    boolean switchFrameworkConnectionToMockModemService() throws Exception {
+    boolean switchFrameworkConnectionToMockModemService(int simprofile) throws Exception {
         boolean isComplete = false;
 
         if (overrideModemService()) {
@@ -196,7 +196,8 @@ class MockModemServiceConnector {
                             BIND_RADIO_INTERFACE_READY_TIMEOUT_MS);
 
             if (isComplete) {
-                isComplete = mMockModemService.initialize();
+                // TODO: support DSDS
+                isComplete = mMockModemService.initialize(simprofile);
             }
         }
 
@@ -211,13 +212,13 @@ class MockModemServiceConnector {
         return isServiceTheSame(mModemServiceName, serviceName);
     }
 
-    boolean connectMockModemService() throws Exception {
+    boolean connectMockModemService(int simprofile) throws Exception {
         boolean result = false;
         if (!connectMockModemServiceLocally()) return false;
 
         result = checkModemServiceOverridden(getModemService());
         if (result) mIsServiceOverridden = true;
-        else result = switchFrameworkConnectionToMockModemService();
+        else result = switchFrameworkConnectionToMockModemService(simprofile);
 
         return result;
     }

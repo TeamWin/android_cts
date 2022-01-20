@@ -20,6 +20,7 @@ import android.content.Context;
 import android.hardware.radio.config.PhoneCapability;
 import android.hardware.radio.config.SimPortInfo;
 import android.hardware.radio.config.SimSlotStatus;
+import android.hardware.radio.config.SlotPortMapping;
 import android.hardware.radio.sim.CardStatus;
 import android.os.AsyncResult;
 import android.os.Handler;
@@ -41,7 +42,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** Events
     static final int EVENT_SET_RADIO_POWER = 1;
-    static final int EVENT_SET_SIM_PRESENT = 2;
+    static final int EVENT_CHANGE_SIM_PROFILE = 2;
 
     // ***** Modem config values
     private String mBasebandVersion = MockModemConfigInterface.DEFAULT_BASEBAND_VERSION;
@@ -53,7 +54,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     private byte mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
     private SimSlotStatus[] mSimSlotStatus;
     private CardStatus mCardStatus;
-    private MockSimCard[] mSIMCard;
+    private MockSimService[] mSimService;
     private PhoneCapability mPhoneCapability = new PhoneCapability();
 
     // ***** RegistrantLists
@@ -86,7 +87,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
         mHandler = new MockModemConfigHandler();
         mSimSlotStatus = new SimSlotStatus[mNumOfSim];
         mCardStatus = new CardStatus();
-        mSIMCard = new MockSimCard[mNumOfSim];
+        mSimService = new MockSimService[mNumOfSim];
         mSimPhyicalId = mSubId; // for default mapping
         createSIMCards();
         setDefaultConfigValue();
@@ -118,21 +119,22 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                             mRadioStateChangedRegistrants.notifyRegistrants(null);
                         }
                         break;
-                    case EVENT_SET_SIM_PRESENT:
-                        boolean isPresent = msg.getData().getBoolean("isPresent", false);
-                        Log.d(mTAG, "EVENT_SET_SIM_PRESENT: " + (isPresent ? "Present" : "Absent"));
-                        int newCardState =
-                                isPresent ? CardStatus.STATE_PRESENT : CardStatus.STATE_ABSENT;
-                        if (mSubId == DEFAULT_SUB_ID
-                                && mSimSlotStatus[mSimPhyicalId].cardState != newCardState) {
-                            mSimSlotStatus[mSimPhyicalId].cardState = newCardState;
-                            mSimSlotStatusChangedRegistrants.notifyRegistrants(
-                                    new AsyncResult(null, mSimSlotStatus, null));
-                        }
-                        if (mCardStatus.cardState != newCardState) {
-                            mCardStatus.cardState = newCardState;
+                    case EVENT_CHANGE_SIM_PROFILE:
+                        int simprofileid =
+                                msg.getData()
+                                        .getInt(
+                                                "changeSimProfile",
+                                                MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT);
+                        Log.d(mTAG, "EVENT_CHANGE_SIM_PROFILE: sim profile(" + simprofileid + ")");
+                        if (loadSIMCard(simprofileid)) {
+                            if (mSubId == DEFAULT_SUB_ID) {
+                                mSimSlotStatusChangedRegistrants.notifyRegistrants(
+                                        new AsyncResult(null, mSimSlotStatus, null));
+                            }
                             mCardStatusChangedRegistrants.notifyRegistrants(
                                     new AsyncResult(null, mCardStatus, null));
+                        } else {
+                            Log.e(mTAG, "Load Sim card failed.");
                         }
                         break;
                 }
@@ -151,9 +153,9 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
             setDefaultPhoneCapability(mPhoneCapability);
             if (mSubId == DEFAULT_SUB_ID) {
-                setDefaultSimSlotStatus();
+                updateSimSlotStatus();
             }
-            setDefaultCardStatus();
+            updateCardStatus();
         }
     }
 
@@ -171,57 +173,81 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     private void createSIMCards() {
         for (int i = 0; i < mNumOfSim; i++) {
-            mSIMCard[i] = new MockSimCard(i);
+            mSimService[i] = new MockSimService(mContext, i);
         }
     }
 
-    private void setDefaultSimSlotStatus() {
+    private void updateSimSlotStatus() {
         if (mSubId != DEFAULT_SUB_ID) {
             // Only sub 0 needs to response SimSlotStatus
             return;
         }
 
+        if (mSimService == null) {
+            Log.e(mTAG, "SIM service didn't be created yet.");
+        }
+
         for (int i = 0; i < mNumOfSim; i++) {
-            int portInfoListLen = mSIMCard[i].getNumOfSimPortInfo();
+            if (mSimService[i] == null) {
+                Log.e(mTAG, "SIM service[" + i + "] didn't be created yet.");
+                continue;
+            }
+            int portInfoListLen = mSimService[i].getNumOfSimPortInfo();
             mSimSlotStatus[i] = new SimSlotStatus();
             mSimSlotStatus[i].cardState =
-                    mSIMCard[i].isCardPresent()
+                    mSimService[i].isCardPresent()
                             ? CardStatus.STATE_PRESENT
                             : CardStatus.STATE_ABSENT;
-            mSimSlotStatus[i].atr = mSIMCard[i].getATR();
-            mSimSlotStatus[i].eid = mSIMCard[i].getEID();
-            // Current only support one Sim port in MockSimCard
+            mSimSlotStatus[i].atr = mSimService[i].getATR();
+            mSimSlotStatus[i].eid = mSimService[i].getEID();
+            // Current only support one Sim port in MockSimService
             SimPortInfo[] portInfoList0 = new SimPortInfo[portInfoListLen];
             portInfoList0[0] = new SimPortInfo();
-            portInfoList0[0].portActive = mSIMCard[i].isSlotPortActive();
-            portInfoList0[0].logicalSlotId = mSIMCard[i].getLogicalSlotId();
-            portInfoList0[0].iccId = mSIMCard[i].getICCID();
+            portInfoList0[0].portActive = mSimService[i].isSlotPortActive();
+            portInfoList0[0].logicalSlotId = mSimService[i].getLogicalSlotId();
+            portInfoList0[0].iccId = mSimService[i].getICCID();
             mSimSlotStatus[i].portInfo = portInfoList0;
         }
     }
 
-    private void setDefaultCardStatus() {
-        if (mSimPhyicalId != -1) {
-            int numbOfSimApp = mSIMCard[mSimPhyicalId].getNumOfSimApp();
+    private void updateCardStatus() {
+        if (mSimPhyicalId != -1 && mSimService != null && mSimService[mSimPhyicalId] != null) {
+            int numOfSimApp = mSimService[mSimPhyicalId].getNumOfSimApp();
             mCardStatus = new CardStatus();
             mCardStatus.cardState =
-                    mSIMCard[mSimPhyicalId].isCardPresent()
+                    mSimService[mSimPhyicalId].isCardPresent()
                             ? CardStatus.STATE_PRESENT
                             : CardStatus.STATE_ABSENT;
-            mCardStatus.universalPinState = mSIMCard[mSimPhyicalId].getUniversalPinState();
-            mCardStatus.gsmUmtsSubscriptionAppIndex = mSIMCard[mSimPhyicalId].getGsmAppIndex();
-            mCardStatus.cdmaSubscriptionAppIndex = mSIMCard[mSimPhyicalId].getCdmaAppIndex();
-            mCardStatus.imsSubscriptionAppIndex = mSIMCard[mSimPhyicalId].getImsAppIndex();
-            mCardStatus.applications = new android.hardware.radio.sim.AppStatus[numbOfSimApp];
-            mCardStatus.atr = mSIMCard[mSimPhyicalId].getATR();
-            mCardStatus.iccid = mSIMCard[mSimPhyicalId].getICCID();
-            mCardStatus.eid = mSIMCard[mSimPhyicalId].getEID();
-            mCardStatus.slotMap = new android.hardware.radio.config.SlotPortMapping();
-            mCardStatus.slotMap.physicalSlotId = mSIMCard[mSimPhyicalId].getPhysicalSlotId();
-            mCardStatus.slotMap.portId = mSIMCard[mSimPhyicalId].getSlotPortId();
+            mCardStatus.universalPinState = mSimService[mSimPhyicalId].getUniversalPinState();
+            mCardStatus.gsmUmtsSubscriptionAppIndex = mSimService[mSimPhyicalId].getGsmAppIndex();
+            mCardStatus.cdmaSubscriptionAppIndex = mSimService[mSimPhyicalId].getCdmaAppIndex();
+            mCardStatus.imsSubscriptionAppIndex = mSimService[mSimPhyicalId].getImsAppIndex();
+            mCardStatus.applications = mSimService[mSimPhyicalId].getSimApp();
+            mCardStatus.atr = mSimService[mSimPhyicalId].getATR();
+            mCardStatus.iccid = mSimService[mSimPhyicalId].getICCID();
+            mCardStatus.eid = mSimService[mSimPhyicalId].getEID();
+            mCardStatus.slotMap = new SlotPortMapping();
+            mCardStatus.slotMap.physicalSlotId = mSimService[mSimPhyicalId].getPhysicalSlotId();
+            mCardStatus.slotMap.portId = mSimService[mSimPhyicalId].getSlotPortId();
         } else {
-            Log.e(mTAG, "Invalid Sim physical id");
+            Log.e(
+                    mTAG,
+                    "Invalid Sim physical id("
+                            + mSimPhyicalId
+                            + ") or SIM card didn't be created.");
         }
+    }
+
+    private boolean loadSIMCard(int simProfileId) {
+        boolean result = false;
+        if (mSimPhyicalId != -1 && mSimService != null && mSimService[mSimPhyicalId] != null) {
+            result = mSimService[mSimPhyicalId].loadSimCard(simProfileId);
+            if (mSubId == DEFAULT_SUB_ID) {
+                updateSimSlotStatus();
+            }
+            updateCardStatus();
+        }
+        return result;
     }
 
     private void notifyDeviceIdentityChangedRegistrants() {
@@ -359,11 +385,17 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** Helper APIs implementation
     @Override
-    public void setSimPresent(boolean isPresent, String client) {
-        Log.d(mTAG, "setSimPresent (" + (isPresent ? "Present" : "Absent") + ") from: " + client);
+    public boolean isSimCardPresent(String client) {
+        Log.d(mTAG, "isSimCardPresent from: " + client);
+        return (mCardStatus.cardState == CardStatus.STATE_PRESENT) ? true : false;
+    }
 
-        Message msg = mHandler.obtainMessage(EVENT_SET_SIM_PRESENT);
-        msg.getData().putBoolean("isPresent", isPresent);
+    @Override
+    public void changeSimProfile(int simprofileid, String client) {
+        Log.d(mTAG, "changeSimProfile: profile id(" + simprofileid + ") from: " + client);
+
+        Message msg = mHandler.obtainMessage(EVENT_CHANGE_SIM_PROFILE);
+        msg.getData().putInt("changeSimProfile", simprofileid);
         mHandler.sendMessage(msg);
     }
 }
