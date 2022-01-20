@@ -243,7 +243,7 @@ public class AppATests {
         testUnlockDevice();
 
         assertTrue("User not unlocked", unlocked.await(1, TimeUnit.MINUTES));
-        assertTrue("No locked boot complete", bootCompleted.await(1, TimeUnit.MINUTES));
+        assertTrue("No locked boot complete", bootCompleted.await(2, TimeUnit.MINUTES));
 
         setUpExternalStoragePaths();
 
