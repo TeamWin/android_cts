@@ -69,6 +69,7 @@ class AppHibernationIntegrationTest {
     companion object {
         const val LOG_TAG = "AppHibernationIntegrationTest"
         const val WAIT_TIME_MS = 1000L
+        const val TIMEOUT_TIME_MS = 5000L
         const val MAX_SCROLL_ATTEMPTS = 3
         const val TEST_UNUSED_THRESHOLD = 1L
 
@@ -194,7 +195,7 @@ class AppHibernationIntegrationTest {
                         })
 
                     assertTrue("Timed out waiting for unused app count",
-                        countDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS))
+                        countDownLatch.await(TIMEOUT_TIME_MS, TimeUnit.MILLISECONDS))
                     assertTrue("Expected non-zero unused app count but is $unusedAppCount",
                         unusedAppCount > 0)
                 }
