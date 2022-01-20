@@ -23,7 +23,9 @@ import org.junit.Test;
 
 public final class EventLogHelperTest {
 
-    private static final int TIMEOUT_MS = 10_000;
+    private static final int TIMEOUT_MS = 60_000;
+    // All Eventlogs would be logged to event buffer.
+    private static final LogcatHelper.Buffer BUFFER = LogcatHelper.Buffer.EVENTS;
 
     @Before
     public void setup() {
@@ -297,6 +299,6 @@ public final class EventLogHelperTest {
     }
 
     private void assertLogMessage(String match) {
-        LogcatHelper.assertLogcatMessage(match, TIMEOUT_MS);
+        LogcatHelper.assertLogcatMessage(match, BUFFER, TIMEOUT_MS);
     }
 }

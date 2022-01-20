@@ -37,15 +37,35 @@ public final class LogcatHelper {
     private LogcatHelper() {}
 
     /**
-     * Asserts if a message appears in logcat messages within given timeout.
+     * Logcat buffers to search.
+     */
+    public enum Buffer{
+        EVENTS, MAIN, SYSTEM, ALL;
+    }
+
+    /**
+     * Asserts if a message appears in logcat messages within given timeout. All logcat buffers are
+     * searched.
      *
      * @param match to find in the logcat messages
      * @param timeout for waiting the message
      */
     public static void assertLogcatMessage(String match, int timeout) {
+        assertLogcatMessage(match, Buffer.ALL, timeout);
+    }
+
+    /**
+     * Asserts if a message appears in logcat messages within given timeout in the given buffer.
+     *
+     * @param match to find in the logcat messages
+     * @param buffer is logcat buffer to search
+     * @param timeout for waiting the message
+     */
+    public static void assertLogcatMessage(String match, Buffer buffer, int timeout) {
         long startTime = SystemClock.elapsedRealtime();
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ParcelFileDescriptor output = automation.executeShellCommand("logcat -b all");
+        ParcelFileDescriptor output = automation
+                .executeShellCommand("logcat -b " + buffer.name().toLowerCase());
         FileDescriptor fd = output.getFileDescriptor();
         FileInputStream fileInputStream = new FileInputStream(fd);
         try (BufferedReader bufferedReader = new BufferedReader(
