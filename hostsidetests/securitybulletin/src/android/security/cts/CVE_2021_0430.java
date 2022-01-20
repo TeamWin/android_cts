@@ -31,6 +31,8 @@ public class CVE_2021_0430 extends SecurityTestCase {
     @Test
     @AsbSecurityTest(cveBugId = 178725766)
     public void testPocCVE_2021_0430() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
+        assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-0430", null, getDevice());
     }
