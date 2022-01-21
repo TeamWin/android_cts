@@ -131,8 +131,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                 new android.hardware.radio.network.RegStateResult();
         dataRegResponse.accessTechnologySpecificInfo =
                 android.hardware.radio.network.AccessTechnologySpecificInfo.noinit(true);
-        dataRegResponse.cellIdentity =
-                android.hardware.radio.network.CellIdentity.noinit(true);
+        dataRegResponse.cellIdentity = android.hardware.radio.network.CellIdentity.noinit(true);
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -230,8 +229,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
                 new android.hardware.radio.network.RegStateResult();
         voiceRegResponse.accessTechnologySpecificInfo =
                 android.hardware.radio.network.AccessTechnologySpecificInfo.noinit(true);
-        voiceRegResponse.cellIdentity =
-                android.hardware.radio.network.CellIdentity.noinit(true);
+        voiceRegResponse.cellIdentity = android.hardware.radio.network.CellIdentity.noinit(true);
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
