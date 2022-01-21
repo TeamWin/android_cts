@@ -430,7 +430,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             ImageReader reader = new ImageReader
                 .Builder(20, 45)
                 .setMaxImages(2)
-                .setDefaultHardwareBufferFormat(HardwareBuffer.RGB_888)
+                .setDefaultHardwareBufferFormat(HardwareBuffer.RGBA_8888)
                 .setDefaultDataSpace(DataSpace.DATASPACE_BT709)
                 .setUsage(usage)
                 .build();
@@ -439,11 +439,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         ) {
             assertEquals(2, reader.getMaxImages());
             assertEquals(usage, reader.getUsage());
-            assertEquals(HardwareBuffer.RGB_888, reader.getHardwareBufferFormat());
+            assertEquals(HardwareBuffer.RGBA_8888, reader.getHardwareBufferFormat());
 
             assertEquals(20, outputImage.getWidth());
             assertEquals(45, outputImage.getHeight());
-            assertEquals(HardwareBuffer.RGB_888, outputImage.getFormat());
+            assertEquals(HardwareBuffer.RGBA_8888, outputImage.getFormat());
         }
     }
 
