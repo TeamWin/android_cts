@@ -70,10 +70,13 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 
 /**
  * Tests the entire connection flow using {@link WifiNetworkSpecifier} embedded in a
@@ -227,6 +230,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 () -> wifiManager.getPrivilegedConfiguredNetworks());
         assertWithMessage("Need at least one saved network")
                 .that(savedNetworks.isEmpty()).isFalse();
+        savedNetworks = savedNetworks.stream()
+                .filter(a -> !isEnterpriseConfig(a)).collect(Collectors.toList());
 
         // Pick any network in range.
         sTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(wifiManager, savedNetworks)
@@ -600,5 +605,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         } else {
             assertThat(redacted.equals(specifier)).isTrue();
         }
+    }
+
+    private static boolean isEnterpriseConfig(WifiConfiguration config) {
+        WifiEnterpriseConfig enterpriseConfig = config.enterpriseConfig;
+        return enterpriseConfig != null
+                && enterpriseConfig.getEapMethod() != WifiEnterpriseConfig.Eap.NONE;
     }
 }
