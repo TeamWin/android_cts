@@ -16,6 +16,8 @@
 
 package android.telephony.cts;
 
+import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
+
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
@@ -23,26 +25,119 @@ import android.hardware.radio.modem.IRadioModem;
 import android.hardware.radio.modem.IRadioModemIndication;
 import android.hardware.radio.modem.IRadioModemResponse;
 import android.hardware.radio.modem.RadioState;
+import android.os.AsyncResult;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
 public class IRadioModemImpl extends IRadioModem.Stub {
     private static final String TAG = "MRMDM";
 
-    private static final String BASEBAND_VERSION = "mock-modem-service-1.0";
-    private static final String DEFAULT_IMEI = "123456789012345";
-    private static final String DEFAULT_IMEISV = "01";
-    private static final String DEFAULT_ESN = "123456789";
-    private static final String DEFAULT_MEID = "123456789012345";
-
     private final MockModemService mService;
     private IRadioModemResponse mRadioModemResponse;
     private IRadioModemIndication mRadioModemIndication;
 
-    public IRadioModemImpl(MockModemService service) {
+    private int mForceRadioPowerError = -1;
+
+    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
+    private Object mCacheUpdateMutex;
+    private final Handler mHandler;
+    private int mSubId;
+
+    // ***** Events
+    static final int EVENT_BASEBAND_VERSION_CHANGED = 1;
+    static final int EVENT_DEVICE_IDENTITY_CHANGED = 2;
+    static final int EVENT_RADIO_STATE_CHANGED = 3;
+
+    // ***** Cache of modem attributes/status
+    private String mBasebandVer;
+    private String mImei;
+    private String mImeiSv;
+    private String mEsn;
+    private String mMeid;
+    private int mRadioState;
+
+    public IRadioModemImpl(
+            MockModemService service, MockModemConfigInterface[] interfaces, int instanceId) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
+        sMockModemConfigInterfaces = interfaces;
+        mCacheUpdateMutex = new Object();
+        mHandler = new IRadioModemHandler();
+        mSubId = instanceId;
+
+        // Register events
+        sMockModemConfigInterfaces[mSubId].registerForBasebandVersionChanged(
+                mHandler, EVENT_BASEBAND_VERSION_CHANGED, null);
+        sMockModemConfigInterfaces[mSubId].registerForDeviceIdentityChanged(
+                mHandler, EVENT_DEVICE_IDENTITY_CHANGED, null);
+        sMockModemConfigInterfaces[mSubId].registerForRadioStateChanged(
+                mHandler, EVENT_RADIO_STATE_CHANGED, null);
+    }
+
+    /** Handler class to handle callbacks */
+    private final class IRadioModemHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            AsyncResult ar;
+            synchronized (mCacheUpdateMutex) {
+                switch (msg.what) {
+                    case EVENT_BASEBAND_VERSION_CHANGED:
+                        Log.d(TAG, "Received EVENT_BASEBAND_VERSION_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mBasebandVer = (String) ar.result;
+                            Log.i(TAG, "Basedband version = " + mBasebandVer);
+                        } else {
+                            Log.e(
+                                    TAG,
+                                    msg.what
+                                            + " failure. Not update baseband version."
+                                            + ar.exception);
+                        }
+                        break;
+                    case EVENT_DEVICE_IDENTITY_CHANGED:
+                        Log.d(TAG, "Received EVENT_DEVICE_IDENTITY_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            String[] deviceIdentity = (String[]) ar.result;
+                            mImei = deviceIdentity[0];
+                            mImeiSv = deviceIdentity[1];
+                            mEsn = deviceIdentity[2];
+                            mMeid = deviceIdentity[3];
+                            Log.i(
+                                    TAG,
+                                    "Device identity: IMEI = "
+                                            + mImei
+                                            + " IMEISV = "
+                                            + mImeiSv
+                                            + " ESN = "
+                                            + mEsn
+                                            + " MEID ="
+                                            + mMeid);
+                        } else {
+                            Log.e(
+                                    TAG,
+                                    msg.what
+                                            + " failure. Not update device identity."
+                                            + ar.exception);
+                        }
+                        break;
+                    case EVENT_RADIO_STATE_CHANGED:
+                        Log.d(TAG, "Received EVENT_RADIO_STATE_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mRadioState = (int) ar.result;
+                            Log.i(TAG, "Radio state: " + mRadioState);
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     // Implementation of IRadioModem functions
@@ -72,7 +167,11 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     public void getBasebandVersion(int serial) {
         Log.d(TAG, "getBasebandVersion");
 
-        String baseband = BASEBAND_VERSION;
+        String baseband;
+
+        synchronized (mCacheUpdateMutex) {
+            baseband = mBasebandVer;
+        }
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -86,10 +185,14 @@ public class IRadioModemImpl extends IRadioModem.Stub {
     public void getDeviceIdentity(int serial) {
         Log.d(TAG, "getDeviceIdentity");
 
-        String imei = DEFAULT_IMEI;
-        String imeisv = DEFAULT_IMEISV;
-        String esn = DEFAULT_ESN;
-        String meid = DEFAULT_MEID;
+        String imei, imeisv, esn, meid;
+
+        synchronized (mCacheUpdateMutex) {
+            imei = mImei;
+            imeisv = mImeiSv;
+            esn = mEsn;
+            meid = mMeid;
+        }
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -268,23 +371,35 @@ public class IRadioModemImpl extends IRadioModem.Stub {
             boolean forEmergencyCall,
             boolean preferredForEmergencyCall) {
         Log.d(TAG, "setRadioPower");
+        RadioResponseInfo rsp = null;
 
-        // TODO: cache value
+        // Check if the error response needs to be modified
+        if (mForceRadioPowerError != -1) {
+            rsp = mService.makeSolRsp(serial, mForceRadioPowerError);
+        } else {
+            synchronized (mCacheUpdateMutex) {
+                if (powerOn) {
+                    mRadioState = MockModemConfigInterface.RADIO_STATE_ON;
+                } else {
+                    mRadioState = MockModemConfigInterface.RADIO_STATE_OFF;
+                }
+                sMockModemConfigInterfaces[mSubId].setRadioState(mRadioState, TAG);
+            }
+            rsp = mService.makeSolRsp(serial);
+        }
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioModemResponse.setRadioPowerResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to setRadioPower from AIDL. Exception" + ex);
         }
 
-        // TODO: The below should be handled by Helper function
-        if (powerOn) {
-            radioStateChanged(RadioState.ON);
-            mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
-        } else {
-            radioStateChanged(RadioState.OFF);
-            mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
+        if (rsp.error == RadioError.NONE) {
+            if (powerOn) {
+                radioStateChanged(RadioState.ON);
+            } else {
+                radioStateChanged(RadioState.OFF);
+            }
         }
     }
 
@@ -345,6 +460,16 @@ public class IRadioModemImpl extends IRadioModem.Stub {
         } else {
 
             Log.e(TAG, "null mRadioModemIndication");
+        }
+    }
+
+    public void forceErrorResponse(int requestId, int error) {
+        switch (requestId) {
+            case RIL_REQUEST_RADIO_POWER:
+                mForceRadioPowerError = error;
+                break;
+            default:
+                break;
         }
     }
 }
