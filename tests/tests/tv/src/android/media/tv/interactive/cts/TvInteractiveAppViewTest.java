@@ -66,11 +66,13 @@ public class TvInteractiveAppViewTest {
     public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
         private String mInteractiveAppServiceId;
         private int mState = -1;
+        private int mErr = -1;
 
         @Override
-        public void onSessionStateChanged(String interactiveAppServiceId, int state) {
+        public void onStateChanged(String interactiveAppServiceId, int state, int err) {
             mInteractiveAppServiceId = interactiveAppServiceId;
             mState = state;
+            mErr = err;
         }
     }
 
@@ -171,7 +173,8 @@ public class TvInteractiveAppViewTest {
             protected boolean check() {
                 return mCallback.mInteractiveAppServiceId == mStubInfo.getId()
                         && mCallback.mState
-                        == TvInteractiveAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY;
+                        == TvInteractiveAppManager.SERVICE_STATE_READY
+                        && mCallback.mErr == TvInteractiveAppManager.ERROR_NONE;
             }
         }.run();
     }
