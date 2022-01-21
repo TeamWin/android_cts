@@ -29,6 +29,7 @@ import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.Executor;
 
 /**
  * Test MIDI when there may be no MIDI devices available. There is not much we
@@ -103,13 +104,17 @@ public class MidiSoloTest extends CtsAndroidTestCase {
         // These should not crash.
         midiManager.unregisterDeviceCallback(callback);
         midiManager.registerDeviceCallback(callback, null);
-        midiManager.registerDeviceCallbackForTransport(callback, null,
-                MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
-        midiManager.registerDeviceCallbackForTransport(callback, null,
-                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
         midiManager.unregisterDeviceCallback(callback);
         midiManager.registerDeviceCallback(callback, new Handler(Looper.getMainLooper()));
         midiManager.registerDeviceCallback(callback, new Handler(Looper.getMainLooper()));
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        midiManager.registerDeviceCallback(MidiManager.TRANSPORT_MIDI_BYTE_STREAM,
+                executor, callback);
+        midiManager.registerDeviceCallback(MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS,
+                executor, callback);
+        midiManager.unregisterDeviceCallback(callback);
+        midiManager.unregisterDeviceCallback(callback);
         midiManager.unregisterDeviceCallback(callback);
         midiManager.unregisterDeviceCallback(callback);
         midiManager.unregisterDeviceCallback(callback);
