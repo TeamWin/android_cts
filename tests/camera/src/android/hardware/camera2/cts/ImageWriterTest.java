@@ -221,26 +221,59 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
     }
 
     @Test
-    public void testWriterBuilder() throws Exception {
+    public void testWriterWithImageFormatOverride() throws Exception {
+        final int imageReaderFormat = ImageFormat.YUV_420_888;
+        final int imageWriterFormat = ImageFormat.YV12;
+        final long dataSpace = DataSpace.DATASPACE_JFIF;
+        final int hardwareBufferFormat = ImageFormat.YV12;
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(BUFFER_WIDTH, BUFFER_HEIGHT)
+                .setImageFormat(imageReaderFormat)
+                .build();
+            ImageWriter writer = new ImageWriter
+                .Builder(reader.getSurface())
+                .setImageFormat(imageWriterFormat)
+                .build();
+            Image outputImage = writer.dequeueInputImage()
+        ) {
+            assertEquals(1, reader.getMaxImages());
+            assertEquals(imageReaderFormat, reader.getImageFormat());
+            assertEquals(dataSpace, reader.getDataSpace());
+
+            assertEquals(HardwareBuffer.USAGE_CPU_READ_OFTEN, reader.getUsage());
+            assertEquals(dataSpace, writer.getDataSpace());
+            assertEquals(imageWriterFormat, writer.getFormat());
+
+            assertEquals(BUFFER_WIDTH, outputImage.getWidth());
+            assertEquals(BUFFER_HEIGHT, outputImage.getHeight());
+            assertEquals(imageWriterFormat, outputImage.getFormat());
+            assertEquals(dataSpace, outputImage.getDataSpace());
+        }
+    }
+
+    @Test
+    public void testWriterBuilderDefault() throws Exception {
         try (
             ImageReader reader = new ImageReader
                 .Builder(BUFFER_WIDTH, BUFFER_HEIGHT)
                 .setImageFormat(ImageFormat.HEIC)
-                .setDefaultHardwareBufferFormat(HardwareBuffer.RGB_888)
+                .setDefaultHardwareBufferFormat(HardwareBuffer.RGBA_8888)
                 .setDefaultDataSpace(DataSpace.DATASPACE_BT709)
                 .build();
-            ImageWriter writer = new ImageWriter.Builder(reader.getSurface())
-                    .build();
+            ImageWriter writer = new ImageWriter
+                .Builder(reader.getSurface())
+                .build();
             Image outputImage = writer.dequeueInputImage()
         ) {
-            assertEquals(1, reader.getMaxImages());
-            assertEquals(HardwareBuffer.USAGE_CPU_READ_OFTEN, reader.getUsage());
-            assertEquals(HardwareBuffer.RGB_888, reader.getHardwareBufferFormat());
+            assertEquals(1, reader.getMaxImages()); // default maxImages
+            assertEquals(HardwareBuffer.USAGE_CPU_READ_OFTEN, reader.getUsage()); // default usage
+            assertEquals(HardwareBuffer.RGBA_8888, reader.getHardwareBufferFormat());
             assertEquals(DataSpace.DATASPACE_BT709, reader.getDataSpace());
 
             assertEquals(BUFFER_WIDTH, outputImage.getWidth());
             assertEquals(BUFFER_HEIGHT, outputImage.getHeight());
-            assertEquals(HardwareBuffer.RGB_888, outputImage.getFormat());
+            assertEquals(HardwareBuffer.RGBA_8888, outputImage.getFormat());
         }
     }
 
@@ -286,7 +319,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             ImageWriter writer = new ImageWriter
                 .Builder(surface)
                 .setImageFormat(ImageFormat.YV12)
-                .setHardwareBufferFormat(HardwareBuffer.RGB_888)
+                .setHardwareBufferFormat(HardwareBuffer.RGBA_8888)
                 .setDataSpace(DataSpace.DATASPACE_BT709)
                 .setUsage(usage)
                 .build();
@@ -295,7 +328,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             assertEquals(BUFFER_WIDTH, writer.getWidth());
             assertEquals(BUFFER_HEIGHT, writer.getHeight());
             assertEquals(DataSpace.DATASPACE_BT709, writer.getDataSpace());
-            assertEquals(HardwareBuffer.RGB_888, writer.getHardwareBufferFormat());
+            assertEquals(HardwareBuffer.RGBA_8888, writer.getHardwareBufferFormat());
             assertEquals(usage, writer.getUsage());
 
             assertEquals(DataSpace.DATASPACE_BT709, image.getDataSpace());
