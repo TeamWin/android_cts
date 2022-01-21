@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -47,6 +47,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public static final String PROPERTY_LOCALE = "persist.sys.locale";
     private static final String POWER_CONTROL_MODE = "power_control_mode";
+    private static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST =
+            "power_state_change_on_active_source_lost";
 
     /** Enum contains the list of possible address types. */
     private enum AddressType {
@@ -366,16 +368,9 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 "dumpsys hdmi_control | sed -n '/mDeviceInfos/,/mCecController/{//!p;}'");
     }
 
-    public void checkDeviceAsleep() throws Exception {
-        ITestDevice device = getDevice();
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-        String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
-        assertThat(wakeState.trim()).isEqualTo("mWakefulness=Asleep");
-    }
-
     public void sendDeviceToSleepAndValidate() throws Exception {
         sendDeviceToSleep();
-        checkDeviceAsleep();
+        assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
     }
 
     public void waitForTransitionTo(int finalState) throws Exception {
@@ -417,19 +412,43 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public void sendDeviceToSleep() throws Exception {
         sendDeviceToSleepWithoutWait();
+        assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
         waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
 
     public void wakeUpDevice() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_AWAKE);
         waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
         WakeLockHelper.releasePartialWakeLock(device);
     }
 
     public void checkStandbyAndWakeUp() throws Exception {
-        checkDeviceAsleep();
+        assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
         wakeUpDevice();
+    }
+
+    public void assertDeviceWakefulness(String wakefulness) throws Exception {
+        ITestDevice device = getDevice();
+        String actualWakefulness;
+        int waitTimeSeconds = 0;
+
+        do {
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.SLEEP_TIMESTEP_SECONDS);
+            waitTimeSeconds += HdmiCecConstants.SLEEP_TIMESTEP_SECONDS;
+            actualWakefulness =
+                    device.executeShellCommand("dumpsys power | grep mWakefulness=")
+                            .trim().replace("mWakefulness=", "");
+        } while (!actualWakefulness.equals(wakefulness)
+                && waitTimeSeconds <= HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
+        assertWithMessage(
+                "Device wakefulness is "
+                        + actualWakefulness
+                        + " but expected to be "
+                        + wakefulness)
+                .that(actualWakefulness)
+                .isEqualTo(wakefulness);
     }
 
     public void sendOtp() throws Exception {
@@ -441,6 +460,13 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         String val = getSettingsValue(POWER_CONTROL_MODE);
         setSettingsValue(POWER_CONTROL_MODE, valToSet);
         return val;
+    }
+
+    public String setPowerStateChangeOnActiveSourceLost(String valToSet) throws Exception {
+        String previousPowerStateChange =
+                getSettingsValue(POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST);
+        setSettingsValue(POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST, valToSet);
+        return previousPowerStateChange;
     }
 
     public boolean isDeviceActiveSource(ITestDevice device) throws DumpsysParseException {
@@ -467,5 +493,40 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             throw new DumpsysParseException("Could not fetch 'dumpsys hdmi_control' output.", e);
         }
         throw new DumpsysParseException("Could not parse isActiveSource() from dumpsys.");
+    }
+
+    /**
+     * For source devices, simulate that a sink is connected by responding to the
+     * {@code Give Power Status} message that is sent when re-enabling CEC.
+     * Validate that HdmiControlService#mIsCecAvailable is set to true as a result.
+     */
+    public void simulateCecSinkConnected(ITestDevice device, LogicalAddress source)
+            throws Exception {
+        hdmiCecClient.clearClientOutput();
+        device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_enabled 0");
+        device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_enabled 1");
+        // When a CEC device has just become available, the CEC adapter isn't able to send it
+        // messages right away. Therefore we let the first <Give Power Status> message time-out, and
+        // only respond to the retry.
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
+        hdmiCecClient.clearClientOutput();
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, source, CecOperand.REPORT_POWER_STATUS,
+                CecMessage.formatParams(HdmiCecConstants.CEC_POWER_STATUS_STANDBY));
+        checkIsCecAvailable(device);
+    }
+
+    private void checkIsCecAvailable(ITestDevice device) throws Exception {
+        boolean isCecAvailable;
+        int waitTimeSeconds = 0;
+        do {
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.SLEEP_TIMESTEP_SECONDS);
+            waitTimeSeconds += HdmiCecConstants.SLEEP_TIMESTEP_SECONDS;
+            isCecAvailable =
+                    device.executeShellCommand("dumpsys hdmi_control | grep mIsCecAvailable:")
+                            .replace("mIsCecAvailable:", "").trim().equals("true");
+        } while (!isCecAvailable && waitTimeSeconds <= HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
+        assertWithMessage("Simulating that a sink is connected, failed.")
+                .that(isCecAvailable).isTrue();
     }
 }
