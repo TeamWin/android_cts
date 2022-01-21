@@ -18,6 +18,7 @@ package android.media.tv.interactive.cts;
 
 import android.content.Context;
 import android.media.tv.AdResponse;
+import android.media.tv.interactive.AppLinkInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
 import android.net.Uri;
@@ -52,6 +53,14 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     @Override
     public void onAppLinkCommand(Bundle command) {
         sAppLinkCommand = command;
+    }
+
+    @Override
+    public void onRegisterAppLinkInfo(AppLinkInfo bundle) {
+    }
+
+    @Override
+    public void onUnregisterAppLinkInfo(AppLinkInfo bundle) {
     }
 
     public static class StubSessionImpl extends Session {
@@ -198,6 +207,82 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public void onAdResponse(AdResponse response) {
             mAdResponseCount++;
             mAdResponse = response;
+        }
+
+        @Override
+        public void onContentAllowed() {
+        }
+
+        @Override
+        public void onContentBlocked(android.media.tv.TvContentRating rating) {
+        }
+
+        @Override
+        public android.view.View onCreateMediaView() {
+            return null;
+        }
+
+        @Override
+        public void onCurrentChannelLcn(int lcn) {
+        }
+
+        @Override
+        public void onCurrentChannelUri(android.net.Uri uri) {
+        }
+
+        @Override
+        public void onCurrentTvInputId(String id) {
+        }
+
+        @Override
+        public boolean onGenericMotionEvent(android.view.MotionEvent event) {
+            return false;
+        }
+
+        @Override
+        public void onMediaViewSizeChanged(int w, int h) {
+        }
+
+        @Override
+        public void onResetInteractiveApp() {
+        }
+
+        @Override
+        public void onSetTeletextAppEnabled(boolean enable) {
+        }
+
+        @Override
+        public void onSignalStrength(int strength) {
+        }
+
+        @Override
+        public void onStreamVolume(float v) {
+        }
+
+        @Override
+        public boolean onTouchEvent(android.view.MotionEvent event) {
+            return false;
+        }
+
+        @Override
+        public void onTrackInfoList(java.util.List<android.media.tv.TvTrackInfo> infos) {
+        }
+
+        @Override
+        public void onTrackSelected(int type, String id) {
+        }
+
+        @Override
+        public boolean onTrackballEvent(android.view.MotionEvent event) {
+            return false;
+        }
+
+        @Override
+        public void onTracksChanged(java.util.List<android.media.tv.TvTrackInfo> info) {
+        }
+
+        @Override
+        public void onVideoUnavailable(int reason) {
         }
     }
 }

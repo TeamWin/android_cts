@@ -24,6 +24,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.tv.interactive.AppLinkInfo;
 import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppView;
@@ -70,6 +71,23 @@ public class TvInteractiveAppManagerTest {
         private int mState;
         private int mErr;
 
+        @Override
+        public void onInteractiveAppServiceAdded(String iAppServiceId) {
+        }
+
+        @Override
+        public void onInteractiveAppServiceRemoved(String iAppServiceId) {
+        }
+
+        @Override
+        public void onInteractiveAppServiceUpdated(String iAppServiceId) {
+        }
+
+        @Override
+        public void onTvInteractiveAppInfoUpdated(TvInteractiveAppInfo iAppInfo) {
+        }
+
+        @Override
         public void onTvInteractiveAppServiceStateChanged(
                 String iAppServiceId, int type, int state, int err) {
             mIAppServiceId = iAppServiceId;
@@ -212,6 +230,25 @@ public class TvInteractiveAppManagerTest {
                 TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkCommand != null);
 
         assertBundlesAreEqual(StubTvInteractiveAppService.sAppLinkCommand, bundle);
+    }
+
+    @Test
+    public void testAppLinkInfo() throws Exception {
+        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+
+        TvInteractiveAppInfo stubInfo = null;
+        for (TvInteractiveAppInfo info : list) {
+            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
+                stubInfo = info;
+                break;
+            }
+        }
+        assertNotNull(stubInfo);
+
+        AppLinkInfo info = new AppLinkInfo.Builder("pkg_name", "clazz_name").build();
+
+        mManager.registerAppLinkInfo(stubInfo.getId(), info);
+        mManager.unregisterAppLinkInfo(stubInfo.getId(), info);
     }
 
     private static void assertBundlesAreEqual(Bundle actual, Bundle expected) {
