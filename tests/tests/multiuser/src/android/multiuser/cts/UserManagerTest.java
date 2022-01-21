@@ -125,25 +125,26 @@ public final class UserManagerTest {
 
     @Test
     @SystemUserOnly(reason = "Profiles are only supported on system user.")
-    public void testCloneUser() throws Exception {
+    public void testCloneProfile() throws Exception {
         UserHandle userHandle = null;
 
         // Need CREATE_USERS permission to create user in test
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             Set<String> disallowedPackages = new HashSet<String>();
             userHandle = mUserManager.createProfile(
-                    "Clone user", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
+                    "Clone profile", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
             assertThat(userHandle).isNotNull();
 
             final Context userContext = sContext.createPackageContextAsUser("system", 0,
                     userHandle);
             final UserManager cloneUserManager = userContext.getSystemService(UserManager.class);
             assertThat(cloneUserManager.isMediaSharedWithParent()).isTrue();
+            assertThat(cloneUserManager.isCredentialSharedWithParent()).isTrue();
             assertThat(cloneUserManager.isCloneProfile()).isTrue();
 
-            List<UserInfo> list = mUserManager.getUsers(true, true, true);
+            final List<UserInfo> list = mUserManager.getUsers(true, true, true);
             final UserHandle finalUserHandle = userHandle;
-            List<UserInfo> cloneUsers = list.stream().filter(
+            final List<UserInfo> cloneUsers = list.stream().filter(
                     user -> (user.id == finalUserHandle.getIdentifier()
                             && user.isCloneProfile()))
                     .collect(Collectors.toList());
