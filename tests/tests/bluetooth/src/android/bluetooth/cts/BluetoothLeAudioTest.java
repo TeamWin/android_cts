@@ -140,6 +140,21 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
                 mBluetoothLeAudio.getConnectionState(testDevice));
     }
 
+    public void testGetAudioLocation() {
+        if (!(mHasBluetooth && mIsLeAudioSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeAudio);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns false if bluetooth is not enabled
+        assertEquals(BluetoothLeAudio.AUDIO_LOCATION_INVALID,
+                mBluetoothLeAudio.getAudioLocation(testDevice));
+    }
+
     private boolean waitForProfileConnect() {
         mProfileConnectedlock.lock();
         try {
