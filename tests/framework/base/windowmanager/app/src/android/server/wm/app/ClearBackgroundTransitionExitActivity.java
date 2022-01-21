@@ -29,10 +29,16 @@ import android.server.wm.TestJournalProvider;
  * Activity to test that show background for activity transitions works
  */
 public class ClearBackgroundTransitionExitActivity extends Activity {
+    int mBackgroundColor = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.background_image);
+
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        mBackgroundColor = bundle.getInt("backgroundColorOverride", 0);
 
         // Delay the starting the activity so we don't skip the transition.
         startActivityDelayed();
@@ -46,10 +52,11 @@ public class ClearBackgroundTransitionExitActivity extends Activity {
                         bundle.putBoolean(TRANSITION_REQUESTED,
                                 true);
                     });
-            startActivity(new Intent(
+            final Intent i = new Intent(
                     ClearBackgroundTransitionExitActivity.this,
-                    ClearBackgroundTransitionEnterActivity.class
-            ));
+                    ClearBackgroundTransitionEnterActivity.class);
+            i.putExtra("backgroundColorOverride", mBackgroundColor);
+            startActivity(i);
         };
 
         Handler h = new Handler();

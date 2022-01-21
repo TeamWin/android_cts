@@ -17,16 +17,33 @@
 package android.server.wm.app;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.Nullable;
 
 /**
  * Activity to test that show background for activity transitions works
  */
 public class ClearBackgroundTransitionEnterActivity extends Activity {
+
+    @ColorInt int mBackgroundColor = 0;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.background_image);
+
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        mBackgroundColor = bundle.getInt("backgroundColorOverride");
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        setContentView(R.layout.background_image);
         overridePendingTransition(R.anim.show_background_hide_window_animation,
-                R.anim.show_background_hide_window_animation);
+                R.anim.show_background_hide_window_animation, mBackgroundColor);
     }
 }
