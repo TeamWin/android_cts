@@ -17,9 +17,11 @@
 package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
+
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2021_0430 extends SecurityTestCase {
@@ -31,6 +33,8 @@ public class CVE_2021_0430 extends SecurityTestCase {
     @Test
     @AsbSecurityTest(cveBugId = 178725766)
     public void testPocCVE_2021_0430() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
+        assumeIsSupportedNfcDevice(getDevice());
         pocPusher.only64();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-0430", null, getDevice());
     }

@@ -90,6 +90,15 @@ public class AudioAttributesTest extends CtsAndroidTestCase {
         }
     }
 
+    // Test case 4: verify the Ultrasound content APIs for AudioAttributes
+    public void testSetUltrasoundContentType() throws Exception {
+        final AudioAttributes internalContentApiAttr = new AudioAttributes.Builder()
+                .setInternalContentType(AudioAttributes.CONTENT_TYPE_ULTRASOUND)
+                .build();
+
+        assertEquals("Ultrasound by setInternalContentType doesn't match",
+                internalContentApiAttr.getContentType(), AudioAttributes.CONTENT_TYPE_ULTRASOUND);
+    }
     // -----------------------------------------------------------------
     // Builder tests
     // ----------------------------------

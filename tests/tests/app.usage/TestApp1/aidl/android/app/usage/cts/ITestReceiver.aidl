@@ -17,4 +17,5 @@ package android.app.usage.cts;
 
 interface ITestReceiver {
     boolean isAppInactive(String pkg);
+    void generateAndSendNotification();
 }

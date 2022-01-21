@@ -16,6 +16,8 @@
 
 package android.media.muxer.cts;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec.BufferInfo;
@@ -32,6 +34,13 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
 
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.MetadataRetriever;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.video.ColorInfo;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,6 +48,8 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 @AppModeFull(reason = "No interaction with system server")
@@ -336,6 +347,75 @@ public class MediaMuxerTest extends AndroidTestCase {
         checkTimestampsWithStartOffsets(startOffsetUsVect);
     }
 
+    public void testAdditionOfHdrStaticMetadata() throws Exception {
+        String outputFilePath =
+                File.createTempFile("MediaMuxerTest_testAdditionOfHdrStaticMetadata", ".mp4")
+                        .getAbsolutePath();
+        // HDR static metadata encoding the following information (format defined in CTA-861.3 -
+        // Static Metadata Descriptor, includes descriptor ID):
+        // Mastering display color primaries:
+        //   R: x=0.677980 y=0.321980, G: x=0.245000 y=0.703000, B: x=0.137980 y=0.052000,
+        //   White point: x=0.312680 y=0.328980
+        // Mastering display luminance min: 0.0000 cd/m2, max: 1000 cd/m2
+        // Maximum Content Light Level: 1100 cd/m2
+        // Maximum Frame-Average Light Level: 180 cd/m2
+        byte[] inputHdrStaticMetadata =
+                Util.getBytesFromHexString("006b84e33eda2f4e89f31a280a123d4140e80300004c04b400");
+        Function<MediaFormat, MediaFormat> staticMetadataAdditionFunction =
+                (mediaFormat) -> {
+                    if (!mediaFormat.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                        return mediaFormat;
+                    }
+                    MediaFormat result = new MediaFormat(mediaFormat);
+                    result.setByteBuffer(
+                            MediaFormat.KEY_HDR_STATIC_INFO,
+                            ByteBuffer.wrap(inputHdrStaticMetadata));
+                    return result;
+                };
+        try {
+            cloneMediaUsingMuxer(
+                    /* srcMedia= */ "video_h264_main_b_frames.mp4",
+                    outputFilePath,
+                    /* expectedTrackCount= */ 2,
+                    /* degrees= */ 0,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    staticMetadataAdditionFunction);
+            assertArrayEquals(
+                    inputHdrStaticMetadata, getVideoColorInfo(outputFilePath).hdrStaticInfo);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    public void testAdditionOfInvalidHdrStaticMetadataIsIgnored() throws Exception {
+        String outputFilePath =
+                File.createTempFile(
+                                "MediaMuxerTest_testAdditionOfInvalidHdrStaticMetadataIsIgnored",
+                                ".mp4")
+                        .getAbsolutePath();
+        Function<MediaFormat, MediaFormat> staticMetadataAdditionFunction =
+                (mediaFormat) -> {
+                    MediaFormat result = new MediaFormat(mediaFormat);
+                    // The input static info should be ignored, because its size is invalid (26 vs
+                    // expected 25).
+                    result.setByteBuffer(
+                            MediaFormat.KEY_HDR_STATIC_INFO, ByteBuffer.allocateDirect(26));
+                    return result;
+                };
+        try {
+            cloneMediaUsingMuxer(
+                    /* srcMedia= */ "video_h264_main_b_frames.mp4",
+                    outputFilePath,
+                    /* expectedTrackCount= */ 2,
+                    /* degrees= */ 0,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    staticMetadataAdditionFunction);
+            assertNull(getVideoColorInfo(outputFilePath));
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
     /**
      * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
      * when video and audio samples start after different times.
@@ -430,8 +510,13 @@ public class MediaMuxerTest extends AndroidTestCase {
     private void cloneAndVerify(final String srcMedia, String outputMediaFile,
             int expectedTrackCount, int degrees, int fmt) throws IOException {
         try {
-            cloneMediaUsingMuxer(srcMedia, outputMediaFile, expectedTrackCount,
-                    degrees, fmt);
+            cloneMediaUsingMuxer(
+                    srcMedia,
+                    outputMediaFile,
+                    expectedTrackCount,
+                    degrees,
+                    fmt,
+                    Function.identity());
             if (fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 ||
                     fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
                 verifyAttributesMatch(srcMedia, outputMediaFile, degrees);
@@ -445,11 +530,14 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
     }
 
-    /**
-     * Using the MediaMuxer to clone a media file.
-     */
-    private void cloneMediaUsingMuxer(final String  srcMedia, String dstMediaPath,
-            int expectedTrackCount, int degrees, int fmt)
+    /** Using the MediaMuxer to clone a media file. */
+    private void cloneMediaUsingMuxer(
+            final String srcMedia,
+            String dstMediaPath,
+            int expectedTrackCount,
+            int degrees,
+            int fmt,
+            Function<MediaFormat, MediaFormat> muxerInputTrackFormatTransformer)
             throws IOException {
         // Set up MediaExtractor to read from the source.
         AssetFileDescriptor srcFd = getAssetFileDescriptorFor(srcMedia);
@@ -469,7 +557,7 @@ public class MediaMuxerTest extends AndroidTestCase {
         for (int i = 0; i < trackCount; i++) {
             extractor.selectTrack(i);
             MediaFormat format = extractor.getTrackFormat(i);
-            int dstIndex = muxer.addTrack(format);
+            int dstIndex = muxer.addTrack(muxerInputTrackFormatTransformer.apply(format));
             indexMap.put(i, dstIndex);
         }
 
@@ -1164,6 +1252,20 @@ public class MediaMuxerTest extends AndroidTestCase {
         if (srcAdvance != testAdvance) {
             fail("either audio track has not reached its last sample");
         }
+    }
+
+    /** Returns the static HDR metadata in the given {@code file}, or null if not present. */
+    private ColorInfo getVideoColorInfo(String path)
+            throws ExecutionException, InterruptedException {
+        TrackGroupArray trackGroupArray =
+                MetadataRetriever.retrieveMetadata(getContext(), MediaItem.fromUri(path)).get();
+        for (int i = 0; i < trackGroupArray.length; i++) {
+            Format format = trackGroupArray.get(i).getFormat(0);
+            if (format.sampleMimeType.startsWith("video/")) {
+                return format.colorInfo;
+            }
+        }
+        return null;
     }
 }
 
