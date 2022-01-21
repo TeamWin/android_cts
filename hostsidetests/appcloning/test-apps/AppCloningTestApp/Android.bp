@@ -20,8 +20,10 @@ android_test_helper_app {
     name: "CtsAppCloningTestApp",
     defaults: ["cts_defaults"],
     static_libs: [
+        "cts-scopedstorage-lib",
         "androidx.test.rules",
         "truth-prebuilt",
+        "androidx.appcompat_appcompat",
         "cts-install-lib",
     ],
     srcs: ["src/**/*.java"],

@@ -21,6 +21,7 @@ java_test_host {
     srcs: [
         "hostside/src/**/AppCloningHostTest.java",
         "hostside/src/**/BaseHostTestCase.java",
+        "hostside/src/**/AppCloningBaseHostTest.java",
     ],
     libs: [
         "cts-tradefed",
@@ -34,5 +35,7 @@ java_test_host {
         "cts",
     ],
     test_config: "AndroidTestAppCloning.xml",
-    data: [":CtsAppCloningTestApp"],
+    data: [
+        ":CtsAppCloningTestApp",
+    ],
 }
