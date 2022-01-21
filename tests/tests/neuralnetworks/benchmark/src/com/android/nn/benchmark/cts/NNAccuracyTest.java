@@ -19,6 +19,7 @@ package com.android.nn.benchmark.cts;
 import static junit.framework.TestCase.assertFalse;
 
 import android.app.Activity;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
@@ -49,6 +50,7 @@ import java.util.List;
  */
 @RunWith(Parameterized.class)
 public class NNAccuracyTest {
+    protected static final String TAG = NNAccuracyTest.class.getSimpleName();
 
     @Rule
     public ActivityTestRule<NNAccuracyActivity> mActivityRule =
@@ -105,7 +107,12 @@ public class NNAccuracyTest {
             try (NNTestBase test = mModel.createNNTestBase(/*useNNAPI=*/true,
                         /*enableIntermediateTensorsDump=*/false)) {
                 test.setNNApiDeviceName(accelerator);
-                test.setupModel(mActivity);
+                if (!test.setupModel(mActivity)) {
+                    Log.d(TAG, String.format(
+                        "Cannot initialise test '%s' on accelerator %s, skipping",
+                        mModel.mModelName, accelerator));
+                    continue;
+                }
                 Pair<List<InferenceInOutSequence>, List<InferenceResult>> inferenceResults =
                         test.runBenchmarkCompleteInputSet(/*setRepeat=*/1, /*timeoutSec=*/3600);
                 BenchmarkResult benchmarkResult =
