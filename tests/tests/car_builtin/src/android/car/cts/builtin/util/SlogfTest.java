@@ -16,9 +16,12 @@
 
 package android.car.cts.builtin.util;
 
+import static android.car.cts.builtin.util.SlogfTest.Level.ASSERT;
 import static android.car.cts.builtin.util.SlogfTest.Level.DEBUG;
 import static android.car.cts.builtin.util.SlogfTest.Level.ERROR;
+import static android.car.cts.builtin.util.SlogfTest.Level.INFO;
 import static android.car.cts.builtin.util.SlogfTest.Level.VERBOSE;
+import static android.car.cts.builtin.util.SlogfTest.Level.WARN;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -33,7 +36,7 @@ import org.junit.Test;
 
 public final class SlogfTest {
     private static final String TAG = SlogfTest.class.getSimpleName();
-    private static final int TIMEOUT_MS = 60_000;
+    private static final int TIMEOUT_MS = 10_000;
     // All Slogf would be logged to system buffer.
     private static final LogcatHelper.Buffer BUFFER = LogcatHelper.Buffer.SYSTEM;
     // wait time for waiting to make sure msg is not logged. Should not be a high value as tests
@@ -47,7 +50,7 @@ public final class SlogfTest {
     private static final String EXCEPTION_MSG = "This message should exist in logcat.";
 
     enum Level {
-        VERBOSE("V"), DEBUG("D"), ERROR("E");
+        VERBOSE("V"), DEBUG("D"), INFO("I"), WARN("W"), ERROR("E"), ASSERT("A");
 
         private String mValue;
 
@@ -156,6 +159,170 @@ public final class SlogfTest {
         Slogf.d(TAG, FORMATTED_MSG, "input1", "input2");
 
         assertNoLogcatMessage(DEBUG, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testI_msg1() {
+        Slogf.i(TAG, LOGGED_MSG);
+
+        assertLogcatMessage(INFO, LOGGED_MSG);
+    }
+
+    @Test
+    public void testI_msg2() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+
+        Slogf.i(TAG, LOGGED_MSG, throwable);
+
+        assertLogcatMessage(INFO, LOGGED_MSG);
+        assertLogcatMessage(INFO, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(INFO, throwable);
+
+    }
+
+    @Test
+    public void testI_msg3() {
+        Slogf.i(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(INFO, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testI_noMsg1() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.i(TAG, NOT_LOGGED_MSG);
+
+        assertNoLogcatMessage(INFO, NOT_LOGGED_MSG);
+    }
+
+    @Test
+    public void testI_noMsg2() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.i(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertNoLogcatMessage(INFO, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testW_msg1() {
+        Slogf.w(TAG, LOGGED_MSG);
+
+        assertLogcatMessage(WARN, LOGGED_MSG);
+    }
+
+    @Test
+    public void testW_msg2() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+
+        Slogf.w(TAG, LOGGED_MSG, throwable);
+
+        assertLogcatMessage(WARN, LOGGED_MSG);
+        assertLogcatMessage(WARN, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(WARN, throwable);
+
+    }
+
+    @Test
+    public void testW_msg3() {
+        Slogf.w(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(WARN, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testW_msg4() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+
+        Slogf.w(TAG, throwable);
+
+        assertLogcatMessage(WARN, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(WARN, throwable);
+    }
+
+    @Test
+    public void testW_msg5() {
+        Exception exception = new Exception(EXCEPTION_MSG);
+
+        Slogf.w(TAG, exception, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(WARN, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(WARN, "java.lang.Exception: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(WARN, exception);
+    }
+
+    @Test
+    public void testW_noMsg1() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.w(TAG, NOT_LOGGED_MSG);
+
+        assertNoLogcatMessage(WARN, NOT_LOGGED_MSG);
+    }
+
+    @Test
+    public void testW_noMsg2() throws Exception {
+        setLogLevel(ERROR);
+
+        Slogf.w(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertNoLogcatMessage(WARN, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testE_msg1() {
+        Slogf.e(TAG, LOGGED_MSG);
+
+        assertLogcatMessage(ERROR, LOGGED_MSG);
+    }
+
+    @Test
+    public void testE_msg2() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+
+        Slogf.e(TAG, LOGGED_MSG, throwable);
+
+        assertLogcatMessage(ERROR, LOGGED_MSG);
+        assertLogcatMessage(ERROR, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(ERROR, throwable);
+
+    }
+
+    @Test
+    public void testE_msg3() {
+        Slogf.e(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(ERROR, String.format(FORMATTED_MSG, "input1", "input2"));
+    }
+
+    @Test
+    public void testE_msg4() {
+        Exception exception = new Exception(EXCEPTION_MSG);
+
+        Slogf.e(TAG, exception, FORMATTED_MSG, "input1", "input2");
+
+        assertLogcatMessage(ERROR, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(ERROR, "java.lang.Exception: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(ERROR, exception);
+    }
+
+    @Test
+    public void testE_noMsg1() throws Exception {
+        setLogLevel(ASSERT);
+
+        Slogf.e(TAG, NOT_LOGGED_MSG);
+
+        assertNoLogcatMessage(ERROR, NOT_LOGGED_MSG);
+    }
+
+    @Test
+    public void testE_noMsg2() throws Exception {
+        setLogLevel(ASSERT);
+
+        Slogf.e(TAG, FORMATTED_MSG, "input1", "input2");
+
+        assertNoLogcatMessage(ERROR, String.format(FORMATTED_MSG, "input1", "input2"));
     }
 
     @Test
