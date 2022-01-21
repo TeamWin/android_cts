@@ -84,7 +84,7 @@ class PermissionAttributionTest : BasePermissionHubTest() {
         useMicrophone()
         openMicrophoneTimeline()
 
-        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL))
         waitFindObject(By.textContains(ATTRIBUTION_LABEL))
     }
