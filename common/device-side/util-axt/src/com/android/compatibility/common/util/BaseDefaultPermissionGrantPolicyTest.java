@@ -81,6 +81,13 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
     public abstract Set<String> getRuntimePermissionNames(List<PackageInfo> packageInfos);
 
     /**
+     * Return the names of all the packages whose permissions can always be granted as fixed.
+     */
+    public Set<String> getGrantAsFixedPackageNames(ArrayMap<String, PackageInfo> packagesToVerify) {
+        return Collections.emptySet();
+    }
+
+    /**
      * Returns whether the permission name, as defined in
      * {@link PermissionManager.SplitPermissionInfo#getNewPermissions()}
      * should be considered a violation.
@@ -532,9 +539,10 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
         }
     }
 
-    public void checkDefaultGrantsInCorrectState(Map<String, PackageInfo> packagesToVerify,
+    public void checkDefaultGrantsInCorrectState(ArrayMap<String, PackageInfo> packagesToVerify,
             SparseArray<UidState> pregrantUidStates,
             Map<String, ArrayMap<String, ArraySet<String>>> violations) {
+        Set<String> grantAsFixedPackageNames = getGrantAsFixedPackageNames(packagesToVerify);
         PackageManager packageManager = getInstrumentation().getContext().getPackageManager();
         for (PackageInfo packageInfo : packagesToVerify.values()) {
             final int uid = packageInfo.applicationInfo.uid;
@@ -576,7 +584,8 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
 
                 setPermissionGrantState(packageInfo.packageName, permission, false);
 
-                Boolean fixed = uidState.grantedPermissions.valueAt(i);
+                Boolean fixed = grantAsFixedPackageNames.contains(packageInfo.packageName)
+                        || uidState.grantedPermissions.valueAt(i);
 
                 // Weaker grant is fine, e.g. not-fixed instead of fixed.
                 if (!fixed && packageManager.checkPermission(permission, packageInfo.packageName)
