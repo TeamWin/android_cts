@@ -56,8 +56,6 @@ cc_test_library {
     name: "libctsmediacodec_jni",
     srcs: [
         "native-media-jni.cpp",
-        "native_media_utils.cpp",
-        "native_media_decoder_source.cpp",
     ],
     shared_libs: [
         "libandroid",
