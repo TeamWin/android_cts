@@ -394,14 +394,11 @@ public class IRadioModemImpl extends IRadioModem.Stub {
             Log.e(TAG, "Failed to setRadioPower from AIDL. Exception" + ex);
         }
 
-        // TODO: The below should be handled by Helper function
         if (rsp.error == RadioError.NONE) {
             if (powerOn) {
                 radioStateChanged(RadioState.ON);
-                mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_ON);
             } else {
                 radioStateChanged(RadioState.OFF);
-                mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_RADIO_POWR_OFF);
             }
         }
     }
