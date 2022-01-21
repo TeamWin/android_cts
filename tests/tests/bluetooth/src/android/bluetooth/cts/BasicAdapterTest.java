@@ -238,6 +238,49 @@ public class BasicAdapterTest extends AndroidTestCase {
         assertEquals("01:02:03:04:05:06", device.getAddress());
     }
 
+    public void test_getRemoteLeDevice() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+        // getRemoteLeDevice() should work even with Bluetooth disabled
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        assertTrue(BTAdapterUtils.disableAdapter(adapter, mContext));
+
+        // test bad addresses
+        try {
+            adapter.getRemoteLeDevice((String) null, BluetoothDevice.ADDRESS_TYPE_PUBLIC);
+            fail("IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) { }
+        try {
+            adapter.getRemoteLeDevice("01:02:03:04:05:06:07:08",
+                    BluetoothDevice.ADDRESS_TYPE_PUBLIC);
+            fail("IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) { }
+        try {
+            adapter.getRemoteLeDevice("01:02:03:04:05", BluetoothDevice.ADDRESS_TYPE_PUBLIC);
+            fail("IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) { }
+        try {
+            adapter.getRemoteLeDevice("00:01:02:03:04:05", BluetoothDevice.ADDRESS_TYPE_RANDOM + 1);
+            fail("IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) { }
+        try {
+            adapter.getRemoteLeDevice("00:01:02:03:04:05", BluetoothDevice.ADDRESS_TYPE_PUBLIC - 1);
+            fail("IllegalArgumentException not thrown");
+        } catch (IllegalArgumentException e) { }
+
+        // test success
+        BluetoothDevice device = adapter.getRemoteLeDevice("00:11:22:AA:BB:CC",
+                BluetoothDevice.ADDRESS_TYPE_PUBLIC);
+        assertNotNull(device);
+        assertEquals("00:11:22:AA:BB:CC", device.getAddress());
+        device = adapter.getRemoteLeDevice("01:02:03:04:05:06",
+                BluetoothDevice.ADDRESS_TYPE_RANDOM);
+        assertNotNull(device);
+        assertEquals("01:02:03:04:05:06", device.getAddress());
+    }
+
     public void test_isLeAudioSupported() throws IOException {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.
