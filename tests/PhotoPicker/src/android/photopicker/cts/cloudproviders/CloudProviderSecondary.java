@@ -74,15 +74,16 @@ public class CloudProviderSecondary extends CloudMediaProvider {
     }
 
     @Override
-    public AssetFileDescriptor onOpenThumbnail(String mediaId, Point size,
+    public AssetFileDescriptor onOpenPreview(String mediaId, Point size, Bundle extras,
             CancellationSignal signal) throws FileNotFoundException {
-        throw new UnsupportedOperationException("onOpenThumbnail not supported");
+        return new AssetFileDescriptor(mMediaGenerator.openMedia(mediaId), 0,
+                AssetFileDescriptor.UNKNOWN_LENGTH);
     }
 
     @Override
-    public ParcelFileDescriptor onOpenMedia(String mediaId, CancellationSignal signal)
-            throws FileNotFoundException {
-        throw new UnsupportedOperationException("onOpenMedia not supported");
+    public ParcelFileDescriptor onOpenMedia(String mediaId, Bundle extras,
+            CancellationSignal signal) throws FileNotFoundException {
+        return mMediaGenerator.openMedia(mediaId);
     }
 
     @Override
