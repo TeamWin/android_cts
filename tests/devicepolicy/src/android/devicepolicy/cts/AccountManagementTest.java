@@ -90,7 +90,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = AccountManagement.class)
     public void getAccountTypesWithManagementDisabled_emptyByDefault() {
         assertThat(mDpm.getAccountTypesWithManagementDisabled()).isEmpty();
@@ -107,7 +106,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class, singleTestOnly = true)
     public void setAccountTypesWithManagementDisabled_nullAdmin_throwsException() {
         assertThrows(NullPointerException.class, () ->
@@ -116,7 +114,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_disableAccountType_works() {
         try {
@@ -131,7 +128,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @PositivePolicyTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_addSameAccountTypeTwice_presentOnlyOnce() {
         try {
@@ -147,7 +143,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_disableThenEnable_noDisabledAccountTypes() {
         mDpm.setAccountManagementDisabled(mAdmin, FAKE_ACCOUNT_TYPE, /* disabled= */ true);
@@ -211,7 +206,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void addAccount_withDisallowModifyAccountsRestriction_throwsException() {
         try (TestAppInstance accountAuthenticatorApp = sAccountManagementApp.install()) {
@@ -242,7 +236,6 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void addAccount_withAccountManagementDisabled_throwsException() {
         try (TestAppInstance accountAuthenticatorApp = sAccountManagementApp.install()) {
