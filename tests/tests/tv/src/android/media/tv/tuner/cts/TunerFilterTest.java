@@ -216,7 +216,7 @@ public class TunerFilterTest {
         assertTrue(settings.isCrcEnabled());
         assertFalse(settings.isRepeat());
         assertFalse(settings.isRaw());
-        assertEquals(settings.getBitWidthOfLengthField(), 16);
+        assertEquals(settings.getLengthFieldBitWidth(), 16);
         Assert.assertArrayEquals(new byte[] {2, 3, 4}, settings.getFilterBytes());
         Assert.assertArrayEquals(new byte[] {7, 6, 5, 4}, settings.getMask());
         Assert.assertArrayEquals(new byte[] {22, 55, 33}, settings.getMode());
@@ -237,7 +237,7 @@ public class TunerFilterTest {
         assertEquals(11, settings.getTableId());
         assertEquals(2, settings.getVersion());
         assertTrue(settings.isCrcEnabled());
-        assertEquals(settings.getBitWidthOfLengthField(), 32);
+        assertEquals(settings.getLengthFieldBitWidth(), 32);
         assertTrue(settings.isRepeat());
         assertTrue(settings.isRaw());
     }
