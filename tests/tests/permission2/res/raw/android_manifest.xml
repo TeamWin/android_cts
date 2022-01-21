@@ -6177,6 +6177,11 @@
     <permission android:name="android.permission.ACCESS_FPS_COUNTER"
                 android:protectionLevel="signature|privileged" />
 
+    <!-- Allows managing the Game service
+         @hide @TestApi Used only for testing. -->
+    <permission android:name="android.permission.SET_GAME_SERVICE"
+                android:protectionLevel="signature" />
+
     <!-- @SystemApi Allows the holder to register callbacks to inform the RebootReadinessManager
          when they are performing reboot-blocking work.
          @hide -->
