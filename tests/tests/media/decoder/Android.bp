@@ -60,7 +60,7 @@ android_test {
     ],
     jni_libs: [
         "libctscodecutils_jni",
-        "libctsmediacodec_jni",
+        "libctsmediacommon_jni",
         "libctsmediadecodertest_jni",
         "libnativehelper_compat_libc++",
     ],
