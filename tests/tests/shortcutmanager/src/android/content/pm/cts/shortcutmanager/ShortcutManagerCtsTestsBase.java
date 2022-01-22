@@ -648,6 +648,6 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected boolean isAppSearchEnabled() {
         return SystemUtil.runWithShellPermissionIdentity(() ->
                 DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_SYSTEMUI,
-                        "shortcut_appsearch_integration", false));
+                        "shortcut_appsearch_integration", true));
     }
 }
