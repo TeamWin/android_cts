@@ -126,6 +126,7 @@ public class MockSimService {
         private String mPath;
         private int mFdnStatus;
         private int mPin1State;
+        private String mImsi;
 
         public SimAppData(int simappid, String aid, String path) {
             mSimAppId = simappid;
@@ -164,6 +165,14 @@ public class MockSimService {
 
         public void setPin1State(int state) {
             mPin1State = state;
+        }
+
+        public String getImsi() {
+            return mImsi;
+        }
+
+        public void setImsi(String imsi) {
+            mImsi = imsi;
         }
     }
 
@@ -424,6 +433,30 @@ public class MockSimService {
         return facilitylock;
     }
 
+    private int getSimAppDataIndexByAid(String aid) {
+        int idx;
+        for (idx = 0; idx < mSimAppList.size(); idx++) {
+            if (aid.equals(mSimAppList.get(idx).getAid())) {
+                break;
+            }
+        }
+        return idx;
+    }
+
+    private boolean storeEfData(String aid, String name, String id, String value) {
+        boolean result = true;
+        switch (name) {
+            case "EF_IMSI":
+                mSimAppList.get(getSimAppDataIndexByAid(aid)).setImsi(value);
+                break;
+            default:
+                result = false;
+                Log.w(TAG, "Not support EF field - " + name + "(" + id + ")");
+                break;
+        }
+        return result;
+    }
+
     private boolean loadSimProfileFromXml() {
         boolean result = true;
 
@@ -442,6 +475,7 @@ public class MockSimService {
             int appidx = 0;
             int fd_lock = 0;
             int sc_lock = 0;
+            String adf_aid = "";
 
             input = mContext.getAssets().open(file);
             parser.setInput(input, null);
@@ -488,15 +522,15 @@ public class MockSimService {
                             }
                             Log.d(
                                     TAG,
-                                    "Found "
+                                    "Found ["
                                             + MOCK_SIM_PROFILE_TAG
-                                            + ": id = "
+                                            + "]: id = "
                                             + id
                                             + " type = "
                                             + parser.getAttributeValue(1)
                                             + " ("
                                             + type
-                                            + ")");
+                                            + ")========");
                         } else if (mocksim_validation
                                 && MOCK_PIN_PROFILE_TAG.equals(parser.getName())) {
                             int appstate = convertMockSimAppState(parser.getAttributeValue(0));
@@ -604,12 +638,37 @@ public class MockSimService {
                                             + " aid = "
                                             + aid);
                             mocksim_mf_validation = true;
+                        } else if (mocksim_validation
+                                && mocksim_mf_validation
+                                && MOCK_ADF_TAG.equals(parser.getName())) {
+                            String aid = parser.getAttributeValue(0);
+                            Log.d(TAG, "Found " + MOCK_ADF_TAG + ": aid = " + aid);
+                            adf_aid = aid;
+                        } else if (mocksim_validation
+                                && mocksim_mf_validation
+                                && (adf_aid.length() > 0)
+                                && MOCK_EF_TAG.equals(parser.getName())) {
+                            String name = parser.getAttributeValue(0);
+                            String id = parser.getAttributeValue(1);
+                            String value = parser.nextText();
+                            if (storeEfData(adf_aid, name, id, value)) {
+                                Log.d(
+                                        TAG,
+                                        "Found "
+                                                + MOCK_EF_TAG
+                                                + ": name = "
+                                                + name
+                                                + " id = "
+                                                + id);
+                            }
                         }
                         break;
                     case XmlPullParser.END_TAG:
                         if (mocksim_validation && MOCK_SIM_PROFILE_TAG.equals(parser.getName())) {
                             appidx++;
                             mocksim_mf_validation = false;
+                        } else if (mocksim_validation && MOCK_ADF_TAG.equals(parser.getName())) {
+                            adf_aid = "";
                         }
                         break;
                 }

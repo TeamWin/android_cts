@@ -13,6 +13,10 @@
     <MF name="MF" path="3F00">
         <EFDIR name="ADF1" curr_active="true">A0000000871002F886FF9289050B00FE</EFDIR>
     </MF>
+
+    <ADF aid="A0000000871002F886FF9289050B00FE">
+        <EF name="EF_IMSI" id="6F07">311740123456789</EF>
+    </ADF>
 </MockSimProfile>
 
 <MockSimProfile id="1" type="APPTYPE_ISIM">

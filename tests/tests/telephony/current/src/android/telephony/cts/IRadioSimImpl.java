@@ -305,10 +305,25 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     @Override
     public void getImsiForApp(int serial, String aid) {
         Log.d(TAG, "getImsiForApp");
-        // TODO: cache value
         String imsi = "";
+        int numOfSimApp = mSimAppList.size();
+        int responseError = RadioError.NONE;
+        int simAppIdx;
+        boolean isHandled;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        for (simAppIdx = 0, isHandled = false; simAppIdx < numOfSimApp && !isHandled; simAppIdx++) {
+            if (aid.equals(mSimAppList.get(simAppIdx).getAid())) {
+                imsi = mSimAppList.get(simAppIdx).getImsi();
+                isHandled = true;
+            }
+        }
+
+        if (!isHandled) {
+            Log.e(TAG, "Not support sim application aid = " + aid);
+            responseError = RadioError.NO_SUCH_ELEMENT;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioSimResponse.getImsiForAppResponse(rsp, imsi);
         } catch (RemoteException ex) {
