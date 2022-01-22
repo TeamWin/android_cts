@@ -84,6 +84,11 @@ public interface MockModemConfigInterface {
 
     void unregisterForCardStatusChanged(Handler h);
 
+    /** Register/unregister notification handler for sim app data changed */
+    void registerForSimAppDataChanged(Handler h, int what, Object obj);
+
+    void unregisterForSimAppDataChanged(Handler h);
+
     /**
      * Sets the latest radio power state of modem
      *

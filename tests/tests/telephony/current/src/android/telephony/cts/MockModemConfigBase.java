@@ -26,7 +26,10 @@ import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RegistrantList;
+import android.telephony.cts.MockSimService.SimAppData;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** Instance Variables
@@ -54,8 +57,10 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     private byte mNumOfLiveModem = MockModemConfigInterface.DEFAULT_NUM_OF_LIVE_MODEM;
     private SimSlotStatus[] mSimSlotStatus;
     private CardStatus mCardStatus;
+    private int mFdnStatus;
     private MockSimService[] mSimService;
     private PhoneCapability mPhoneCapability = new PhoneCapability();
+    private ArrayList<SimAppData> mSimAppList;
 
     // ***** RegistrantLists
     // ***** IRadioConfig RegistrantLists
@@ -70,6 +75,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
 
     // ***** IRadioSim RegistrantLists
     private RegistrantList mCardStatusChangedRegistrants = new RegistrantList();
+    private RegistrantList mSimAppDataChangedRegistrants = new RegistrantList();
 
     public MockModemConfigBase(Context context, int instanceId, int numOfSim, int numOfPhone) {
         mContext = context;
@@ -133,6 +139,8 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                             }
                             mCardStatusChangedRegistrants.notifyRegistrants(
                                     new AsyncResult(null, mCardStatus, null));
+                            mSimAppDataChangedRegistrants.notifyRegistrants(
+                                    new AsyncResult(null, mSimAppList, null));
                         } else {
                             Log.e(mTAG, "Load Sim card failed.");
                         }
@@ -229,6 +237,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             mCardStatus.slotMap = new SlotPortMapping();
             mCardStatus.slotMap.physicalSlotId = mSimService[mSimPhyicalId].getPhysicalSlotId();
             mCardStatus.slotMap.portId = mSimService[mSimPhyicalId].getSlotPortId();
+            mSimAppList = mSimService[mSimPhyicalId].getSimAppList();
         } else {
             Log.e(
                     mTAG,
@@ -285,6 +294,8 @@ public class MockModemConfigBase implements MockModemConfigInterface {
             // IRadioSim
             mCardStatusChangedRegistrants.notifyRegistrants(
                     new AsyncResult(null, mCardStatus, null));
+            mSimAppDataChangedRegistrants.notifyRegistrants(
+                    new AsyncResult(null, mSimAppList, null));
         }
     }
 
@@ -359,6 +370,16 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     @Override
     public void unregisterForCardStatusChanged(Handler h) {
         mCardStatusChangedRegistrants.remove(h);
+    }
+
+    @Override
+    public void registerForSimAppDataChanged(Handler h, int what, Object obj) {
+        mSimAppDataChangedRegistrants.addUnique(h, what, obj);
+    }
+
+    @Override
+    public void unregisterForSimAppDataChanged(Handler h) {
+        mSimAppDataChangedRegistrants.remove(h);
     }
 
     // ***** IRadioConfig set APIs implementation

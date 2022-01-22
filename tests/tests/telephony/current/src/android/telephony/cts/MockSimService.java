@@ -25,6 +25,7 @@ import android.util.Xml;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 
 public class MockSimService {
     private static final String TAG = "MockSimService";
@@ -40,6 +41,13 @@ public class MockSimService {
     private static final String MOCK_PIN_PROFILE_TAG = "PinProfile";
     private static final String MOCK_PIN1_STATE_TAG = "Pin1State";
     private static final String MOCK_PIN2_STATE_TAG = "Pin2State";
+    private static final String MOCK_FACILITY_LOCK_TAG = "FacilityLock";
+    private static final String MOCK_FACILITY_LOCK_FD_TAG = "FD";
+    private static final String MOCK_FACILITY_LOCK_SC_TAG = "SC";
+    private static final String MOCK_MF_TAG = "MF";
+    private static final String MOCK_EF_TAG = "EF";
+    private static final String MOCK_EF_DIR_TAG = "EFDIR";
+    private static final String MOCK_ADF_TAG = "ADF";
 
     /* Support SIM slot */
     private static final int MOCK_SIM_SLOT_1 = 0;
@@ -109,6 +117,55 @@ public class MockSimService {
     private int mUniversalPinState;
 
     private AppStatus[] mSimApp;
+    private ArrayList<SimAppData> mSimAppList;
+
+    public class SimAppData {
+        private int mSimAppId;
+        private String mAid;
+        private boolean mIsCurrentActive;
+        private String mPath;
+        private int mFdnStatus;
+        private int mPin1State;
+
+        public SimAppData(int simappid, String aid, String path) {
+            mSimAppId = simappid;
+            mAid = aid;
+            mIsCurrentActive = false;
+            mPath = path;
+        }
+
+        public int getSimAppId() {
+            return mSimAppId;
+        }
+
+        public String getAid() {
+            return mAid;
+        }
+
+        public boolean isCurrentActive() {
+            return mIsCurrentActive;
+        }
+
+        public String getPath() {
+            return mPath;
+        }
+
+        public int getFdnStatus() {
+            return mFdnStatus;
+        }
+
+        public void setFdnStatus(int status) {
+            mFdnStatus = status;
+        }
+
+        public int getPin1State() {
+            return mPin1State;
+        }
+
+        public void setPin1State(int state) {
+            mPin1State = state;
+        }
+    }
 
     public class SimProfileInfo {
         private int mSimProfileId;
@@ -354,6 +411,19 @@ public class MockSimService {
         return mocksim_appstate;
     }
 
+    private int convertMockSimFacilityLock(String lock) {
+        int facilitylock = 0;
+        switch (lock) {
+            case "LOCK_ENABLED":
+                facilitylock = 1;
+                break;
+            case "LOCK_DISABLED":
+                facilitylock = 0;
+                break;
+        }
+        return facilitylock;
+    }
+
     private boolean loadSimProfileFromXml() {
         boolean result = true;
 
@@ -368,7 +438,11 @@ public class MockSimService {
             XmlPullParser parser = Xml.newPullParser();
             InputStream input;
             boolean mocksim_validation = false;
+            boolean mocksim_mf_validation = false;
             int appidx = 0;
+            int fd_lock = 0;
+            int sc_lock = 0;
+
             input = mContext.getAssets().open(file);
             parser.setInput(input, null);
             while (result && (event = parser.next()) != XmlPullParser.END_DOCUMENT) {
@@ -463,16 +537,84 @@ public class MockSimService {
                                             + " ("
                                             + pin2state
                                             + ")");
+                        } else if (mocksim_validation
+                                && MOCK_FACILITY_LOCK_FD_TAG.equals(parser.getName())) {
+                            fd_lock = convertMockSimFacilityLock(parser.nextText());
+                            Log.d(
+                                    TAG,
+                                    "Found "
+                                            + MOCK_FACILITY_LOCK_FD_TAG
+                                            + ": fd lock = "
+                                            + fd_lock);
+                        } else if (mocksim_validation
+                                && MOCK_FACILITY_LOCK_SC_TAG.equals(parser.getName())) {
+                            sc_lock = convertMockSimFacilityLock(parser.nextText());
+                            Log.d(
+                                    TAG,
+                                    "Found "
+                                            + MOCK_FACILITY_LOCK_SC_TAG
+                                            + ": sc lock = "
+                                            + sc_lock);
+                        } else if (mocksim_validation && MOCK_MF_TAG.equals(parser.getName())) {
+                            SimAppData simAppData;
+                            String name = parser.getAttributeValue(0);
+                            String path = parser.getAttributeValue(1);
+                            simAppData = new SimAppData(appidx, name, path);
+                            if (simAppData == null) {
+                                Log.e(TAG, "Create SIM app data failed!");
+                                result = false;
+                                break;
+                            }
+                            mSimAppList.add(simAppData);
+                            Log.d(
+                                    TAG,
+                                    "Found "
+                                            + MOCK_MF_TAG
+                                            + ": name = "
+                                            + name
+                                            + " path = "
+                                            + path);
+                        } else if (mocksim_validation
+                                && !mocksim_mf_validation
+                                && MOCK_EF_DIR_TAG.equals(parser.getName())) {
+                            SimAppData simAppData;
+                            String name = parser.getAttributeValue(0);
+                            boolean curr_active = Boolean.parseBoolean(parser.getAttributeValue(1));
+                            String aid = parser.nextText();
+                            simAppData = new SimAppData(appidx, aid, name);
+                            if (simAppData == null) {
+                                Log.e(TAG, "Create SIM app data failed!");
+                                result = false;
+                                break;
+                            }
+                            simAppData.setFdnStatus(fd_lock);
+                            simAppData.setPin1State(sc_lock);
+                            mSimAppList.add(simAppData);
+                            if (curr_active) {
+                                mSimApp[appidx].aidPtr = aid;
+                            }
+                            Log.d(
+                                    TAG,
+                                    "Found "
+                                            + MOCK_EF_DIR_TAG
+                                            + ": name = "
+                                            + name
+                                            + ": curr_active = "
+                                            + curr_active
+                                            + " aid = "
+                                            + aid);
+                            mocksim_mf_validation = true;
                         }
                         break;
                     case XmlPullParser.END_TAG:
                         if (mocksim_validation && MOCK_SIM_PROFILE_TAG.equals(parser.getName())) {
                             appidx++;
+                            mocksim_mf_validation = false;
                         }
                         break;
                 }
             }
-            Log.d(TAG, "Totally create " + appidx + " SIM applications");
+            Log.d(TAG, "Totally create " + appidx + " SIM profiles");
             mSimProfileInfoList[mSimProfileId].setNumOfSimApp(appidx);
             input.close();
         } catch (Exception e) {
@@ -485,6 +627,12 @@ public class MockSimService {
 
     private boolean loadSimApp() {
         boolean result = true;
+
+        if (mSimAppList == null) {
+            mSimAppList = new ArrayList<SimAppData>();
+        } else {
+            mSimAppList.clear();
+        }
 
         if (mSimProfileId == MOCK_SIM_PROFILE_ID_DEFAULT
                 || mSimProfileInfoList[mSimProfileId].getXmlFile().length() == 0) {
@@ -612,5 +760,9 @@ public class MockSimService {
 
     public AppStatus[] getSimApp() {
         return mSimApp;
+    }
+
+    public ArrayList<SimAppData> getSimAppList() {
+        return mSimAppList;
     }
 }

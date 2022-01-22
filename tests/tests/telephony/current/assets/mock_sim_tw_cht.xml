@@ -4,6 +4,15 @@
         <Pin1State>PINSTATE_DISABLED</Pin1State>
         <Pin2State>PINSTATE_ENABLED_NOT_VERIFIED</Pin2State>
     </PinProfile>
+
+    <FacilityLock>
+        <FD>LOCK_DISABLED</FD>
+        <SC>LOCK_DISABLED</SC>
+    </FacilityLock>
+
+    <MF name="MF" path="3F00">
+        <EFDIR name="ADF1" curr_active="true">A0000000871002F886FF9289050B00FE</EFDIR>
+    </MF>
 </MockSimProfile>
 
 <MockSimProfile id="1" type="APPTYPE_ISIM">
