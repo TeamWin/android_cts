@@ -137,6 +137,7 @@
         </service>
 
         <service android:name="android.media.tv.interactive.cts.StubTvInteractiveAppService"
+             android:permission="android.permission.BIND_TV_INTERACTIVE_APP"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.media.tv.interactive.TvInteractiveAppService"/>
