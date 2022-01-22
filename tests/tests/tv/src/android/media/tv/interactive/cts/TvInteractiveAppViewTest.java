@@ -22,8 +22,8 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.tv.interactive.TvIAppManager;
 import android.media.tv.interactive.TvInteractiveAppInfo;
+import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
@@ -54,7 +54,7 @@ public class TvInteractiveAppViewTest {
     private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
     private TvInteractiveAppViewStubActivity mActivity;
     private TvInteractiveAppView mTvInteractiveAppView;
-    private TvIAppManager mManager;
+    private TvInteractiveAppManager mManager;
     private TvInteractiveAppInfo mStubInfo;
 
     @Rule
@@ -64,13 +64,15 @@ public class TvInteractiveAppViewTest {
     private final MockCallback mCallback = new MockCallback();
 
     public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
-        private String mIAppServiceId;
+        private String mInteractiveAppServiceId;
         private int mState = -1;
+        private int mErr = -1;
 
         @Override
-        public void onSessionStateChanged(String iAppServiceId, int state) {
-            mIAppServiceId = iAppServiceId;
+        public void onStateChanged(String interactiveAppServiceId, int state, int err) {
+            mInteractiveAppServiceId = interactiveAppServiceId;
             mState = state;
+            mErr = err;
         }
     }
 
@@ -119,16 +121,17 @@ public class TvInteractiveAppViewTest {
         mTvInteractiveAppView = findTvInteractiveAppViewById(R.id.tviappview);
         assertNotNull("Failed to find TvInteractiveAppView.", mTvInteractiveAppView);
 
-        mManager = (TvIAppManager) mActivity.getSystemService(Context.TV_IAPP_SERVICE);
-        assertNotNull("Failed to get TvIAppManager.", mManager);
+        mManager = (TvInteractiveAppManager) mActivity.getSystemService(
+                Context.TV_INTERACTIVE_APP_SERVICE);
+        assertNotNull("Failed to get TvInteractiveAppManager.", mManager);
 
         for (TvInteractiveAppInfo info : mManager.getTvInteractiveAppServiceList()) {
-            if (info.getServiceInfo().name.equals(StubTvIAppService.class.getName())) {
+            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 mStubInfo = info;
             }
         }
         assertNotNull(mStubInfo);
-        mTvInteractiveAppView.setCallback(mCallback, getExecutor());
+        mTvInteractiveAppView.setCallback(getExecutor(), mCallback);
     }
 
     @After
@@ -168,8 +171,10 @@ public class TvInteractiveAppViewTest {
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
-                return mCallback.mIAppServiceId == mStubInfo.getId()
-                        && mCallback.mState == TvIAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY;
+                return mCallback.mInteractiveAppServiceId == mStubInfo.getId()
+                        && mCallback.mState
+                        == TvInteractiveAppManager.SERVICE_STATE_READY
+                        && mCallback.mErr == TvInteractiveAppManager.ERROR_NONE;
             }
         }.run();
     }

@@ -139,7 +139,7 @@ public class DataSpaceTest {
         mSurfaceTexture.setDefaultBufferSize(16, 16);
 
         mSurface = new Surface(mSurfaceTexture);
-        mWriter = ImageWriter.newInstance(mSurface, 1);
+        mWriter = new ImageWriter.Builder(mSurface).build();
 
         long dataSpace = DataSpace.pack(DataSpace.STANDARD_BT709,
                                         DataSpace.TRANSFER_SMPTE_170M,
@@ -207,7 +207,9 @@ public class DataSpaceTest {
         mSurfaceTexture.setDefaultBufferSize(16, 16);
 
         mSurface = new Surface(mSurfaceTexture);
-        mWriter = ImageWriter.newInstance(mSurface, 1, ImageFormat.YUV_420_888);
+        mWriter = new ImageWriter.Builder(mSurface)
+                .setImageFormat(ImageFormat.YUV_420_888)
+                .build();
 
         Image inputImage = null;
         try {

@@ -23,7 +23,20 @@ package {
     // to get the below license kinds:
     //   SPDX-license-identifier-Apache-2.0
     //   legacy_unencumbered
-    default_applicable_licenses: ["cts_license"],
+    default_applicable_licenses: [
+        "Android-Apache-2.0",
+        "cts_tests_tests_media_libmediaandkjni_license",
+    ],
+}
+
+license_kind {
+    name: "libmediaandkjni_public_domain",
+    conditions: ["unencumbered"],
+}
+
+license {
+    name: "cts_tests_tests_media_libmediaandkjni_license",
+    license_kinds: ["libmediaandkjni_public_domain"],
 }
 
 cc_test_library {

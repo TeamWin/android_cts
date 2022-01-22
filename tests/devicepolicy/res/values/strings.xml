@@ -17,5 +17,7 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
            xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="test_string">test string</string>
+    <string name="test_string_1">test string 1</string>
+    <string name="test_string_2">test string 2</string>
+    <string name="test_string_with_arg">test string %s</string>
 </resources>

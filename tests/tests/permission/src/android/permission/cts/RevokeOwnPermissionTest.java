@@ -53,13 +53,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SelfRevokeRuntimePermissionTest {
+public class RevokeOwnPermissionTest {
     private static final String APP_PKG_NAME =
-            "android.permission.cts.apptotestselfrevokepermission";
+            "android.permission.cts.apptotestrevokeownpermission";
     private static final String APK =
-            "/data/local/tmp/cts/permissions/CtsAppToTestSelfRevokePermission.apk";
+            "/data/local/tmp/cts/permissions/CtsAppToTestRevokeOwnPermission.apk";
     private static final long ONE_TIME_TIMEOUT_MILLIS = 500;
-    private static final long KILLED_DELAY_MILLIS = 100;
     private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 1000;
 
     private final Instrumentation mInstrumentation =
@@ -73,7 +72,6 @@ public class SelfRevokeRuntimePermissionTest {
     @Before
     public void wakeUpScreen() {
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
-        SystemUtil.runShellCommand("input keyevent 82");
     }
 
     @Before
@@ -83,8 +81,6 @@ public class SelfRevokeRuntimePermissionTest {
                     "one_time_permissions_timeout_millis");
             DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
                     Long.toString(ONE_TIME_TIMEOUT_MILLIS), false);
-            DeviceConfig.setProperty("permissions", "one_time_permissions_killed_delay_millis",
-                    Long.toString(KILLED_DELAY_MILLIS), false);
         });
     }
 
@@ -95,9 +91,10 @@ public class SelfRevokeRuntimePermissionTest {
 
     @After
     public void restoreDeviceForOneTime() {
-        runWithShellPermissionIdentity(
-                () -> DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
-                        mOldOneTimePermissionTimeoutValue, false));
+        runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
+                    mOldOneTimePermissionTimeoutValue, false);
+        });
     }
 
     @Test
@@ -108,6 +105,7 @@ public class SelfRevokeRuntimePermissionTest {
         String[] permissions = new String[] {ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, CAMERA};
         for (String permission : permissions) {
             grantPermission(APP_PKG_NAME, permission);
+            assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, permission);
         }
         revokePermissions(permissions);
         placeAppInBackground();
@@ -140,20 +138,22 @@ public class SelfRevokeRuntimePermissionTest {
         // Killing the process should start the revocation right away
         installApp();
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
+        assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_FINE_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);
         killApp();
-        assertDenied(KILLED_DELAY_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
-                ACCESS_FINE_LOCATION);
+        assertDenied(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_FINE_LOCATION);
         uninstallApp();
     }
 
     @Test
     public void testNoRevocationWhileForeground() throws Throwable {
-        // Even after calling selfRevokePermission, the permission should stay granted while the
-        // package is in the foreground.
+        // Even after calling revokeOwnPermissionOnKill, the permission should stay granted while
+        // the package is in the foreground.
         installApp();
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
+        assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_FINE_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);
+        keepAppInForeground(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD);
         try {
             waitUntilPermissionRevoked(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
                     ACCESS_FINE_LOCATION);
@@ -171,7 +171,9 @@ public class SelfRevokeRuntimePermissionTest {
         // location permission group should be revoked.
         installApp();
         grantPermission(APP_PKG_NAME, ACCESS_COARSE_LOCATION);
+        assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_COARSE_LOCATION);
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
+        assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_FINE_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);
         placeAppInBackground();
         assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
@@ -201,6 +203,25 @@ public class SelfRevokeRuntimePermissionTest {
 
     private void installApp() {
         runShellCommand("pm install -r " + APK);
+    }
+
+    private void keepAppInForeground(long timeoutMillis) {
+        new Thread(() -> {
+            long start = System.currentTimeMillis();
+            while (System.currentTimeMillis() < start + timeoutMillis) {
+                runWithShellPermissionIdentity(() -> {
+                    if (mActivityManager.getPackageImportance(APP_PKG_NAME)
+                            > IMPORTANCE_FOREGROUND) {
+                        runShellCommand("am start-activity -W -n " + APP_PKG_NAME
+                                + "/.RevokePermission");
+                    }
+                });
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+        }).start();
     }
 
     private void placeAppInBackground() {

@@ -136,10 +136,10 @@
                  android:resource="@xml/stub_tv_input_service"/>
         </service>
 
-        <service android:name="android.media.tv.interactive.cts.StubTvIAppService"
+        <service android:name="android.media.tv.interactive.cts.StubTvInteractiveAppService"
              android:exported="true">
             <intent-filter>
-                <action android:name="android.media.tv.interactive.TvIAppService"/>
+                <action android:name="android.media.tv.interactive.TvInteractiveAppService"/>
             </intent-filter>
             <meta-data android:name="android.media.tv.interactive.app"
                  android:resource="@xml/stub_tv_iapp_service"/>

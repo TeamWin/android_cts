@@ -727,8 +727,8 @@ public class PackageManagerShellCommandTest {
 
         // Major version 1, different signer.
         installPackage(TEST_SDK1_DIFFERENT_SIGNER,
-                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package com.test.sdk1_1 signatures "
-                        + "do not match previously installed version");
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.test.sdk1_1 "
+                        + "signatures do not match newer version");
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
     }
 
@@ -740,8 +740,8 @@ public class PackageManagerShellCommandTest {
 
         // Major version 2.
         installPackage(TEST_SDK1_MAJOR_VERSION2,
-                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package com.test.sdk1_1 signatures "
-                        + "do not match previously installed version");
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package com.test.sdk1_1 "
+                        + "signatures do not match newer version");
 
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
     }

@@ -23,7 +23,9 @@ import org.junit.Test;
 
 public final class EventLogHelperTest {
 
-    private static final int TIMEOUT_MS = 60_000;
+    private static final int TIMEOUT_MS = 10_000;
+    // All Eventlogs would be logged to event buffer.
+    private static final LogcatHelper.Buffer BUFFER = LogcatHelper.Buffer.EVENTS;
 
     @Before
     public void setup() {
@@ -115,7 +117,7 @@ public final class EventLogHelperTest {
     }
 
     @Test
-    public void tesWriteCarServiceOnUserLifecycle() {
+    public void testWriteCarServiceOnUserLifecycle() {
         EventLogHelper.writeCarServiceOnUserLifecycle(1, 2, 3);
 
         assertLogMessage("I car_service_on_user_lifecycle: [1,2,3]");
@@ -146,7 +148,7 @@ public final class EventLogHelperTest {
     public void testWriteCarServiceVhalDied() {
         EventLogHelper.writeCarServiceVhalDied(101);
 
-        assertLogMessage("I car_service_vhal_died: 1");
+        assertLogMessage("I car_service_vhal_died: 101");
     }
 
     @Test
@@ -163,7 +165,523 @@ public final class EventLogHelperTest {
         assertLogMessage("I car_service_on_user_removed: 101");
     }
 
+    @Test
+    public void testWriteCarUserServiceInitialUserInfoReq() {
+        EventLogHelper.writeCarUserServiceInitialUserInfoReq(1, 2, 3, 4, 5);
+
+        assertLogMessage("I car_user_svc_initial_user_info_req: [1,2,3,4,5]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceInitialUserInfoResp() {
+        EventLogHelper.writeCarUserServiceInitialUserInfoResp(1, 2, 3, 4, "string1", "string2");
+
+        assertLogMessage("I car_user_svc_initial_user_info_resp: [1,2,3,4,string1,string2]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSetInitialUser() {
+        EventLogHelper.writeCarUserServiceSetInitialUser(101);
+
+        assertLogMessage("I car_user_svc_set_initial_user: 101");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSetLifecycleListener() {
+        EventLogHelper.writeCarUserServiceSetLifecycleListener(101, "string1");
+
+        assertLogMessage("I car_user_svc_set_lifecycle_listener: [101,string1]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceResetLifecycleListener() {
+        EventLogHelper.writeCarUserServiceResetLifecycleListener(101, "string1");
+
+        assertLogMessage("I car_user_svc_reset_lifecycle_listener: [101,string1]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSwitchUserReq() {
+        EventLogHelper.writeCarUserServiceSwitchUserReq(101, 102);
+
+        assertLogMessage("I car_user_svc_switch_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSwitchUserResp() {
+        EventLogHelper.writeCarUserServiceSwitchUserResp(101, 102, "string");
+
+        assertLogMessage("I car_user_svc_switch_user_resp: [101,102,string]");
+    }
+
+    @Test
+    public void testWriteCarUserServicePostSwitchUserReq() {
+        EventLogHelper.writeCarUserServicePostSwitchUserReq(101, 102);
+
+        assertLogMessage("I car_user_svc_post_switch_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceGetUserAuthReq() {
+        EventLogHelper.writeCarUserServiceGetUserAuthReq(101, 102, 103);
+
+        assertLogMessage("I car_user_svc_get_user_auth_req: [101,102,103]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceGetUserAuthResp() {
+        EventLogHelper.writeCarUserServiceGetUserAuthResp(101);
+
+        assertLogMessage("I car_user_svc_get_user_auth_resp: 101");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSwitchUserUiReq() {
+        EventLogHelper.writeCarUserServiceSwitchUserUiReq(101);
+
+        assertLogMessage("I car_user_svc_switch_user_ui_req: 101");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSwitchUserFromHalReq() {
+        EventLogHelper.writeCarUserServiceSwitchUserFromHalReq(101, 102);
+
+        assertLogMessage("I car_user_svc_switch_user_from_hal_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSetUserAuthReq() {
+        EventLogHelper.writeCarUserServiceSetUserAuthReq(101, 102, 103);
+
+        assertLogMessage("I car_user_svc_set_user_auth_req: [101,102,103]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceSetUserAuthResp() {
+        EventLogHelper.writeCarUserServiceSetUserAuthResp(101, "string");
+
+        assertLogMessage("I car_user_svc_set_user_auth_resp: [101,string]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceCreateUserReq() {
+        EventLogHelper.writeCarUserServiceCreateUserReq("string1", "string2", 101, 102, 103);
+
+        assertLogMessage("I car_user_svc_create_user_req: [string1,string2,101,102,103]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceCreateUserResp() {
+        EventLogHelper.writeCarUserServiceCreateUserResp(101, 102, "string");
+
+        assertLogMessage("I car_user_svc_create_user_resp: [101,102,string]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceCreateUserUserCreated() {
+        EventLogHelper.writeCarUserServiceCreateUserUserCreated(101, "string1", "string2", 102);
+
+        assertLogMessage("I car_user_svc_create_user_user_created: [101,string1,string2,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceCreateUserUserRemoved() {
+        EventLogHelper.writeCarUserServiceCreateUserUserRemoved(101, "string");
+
+        assertLogMessage("I car_user_svc_create_user_user_removed: [101,string]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceRemoveUserReq() {
+        EventLogHelper.writeCarUserServiceRemoveUserReq(101, 102);
+
+        assertLogMessage("I car_user_svc_remove_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceRemoveUserResp() {
+        EventLogHelper.writeCarUserServiceRemoveUserResp(101, 102);
+
+        assertLogMessage("I car_user_svc_remove_user_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceNotifyAppLifecycleListener() {
+        EventLogHelper.writeCarUserServiceNotifyAppLifecycleListener(101, "string", 102, 103, 104);
+
+        assertLogMessage("I car_user_svc_notify_app_lifecycle_listener: [101,string,102,103,104]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceNotifyInternalLifecycleListener() {
+        EventLogHelper.writeCarUserServiceNotifyInternalLifecycleListener("string", 102, 103, 104);
+
+        assertLogMessage("I car_user_svc_notify_internal_lifecycle_listener: [string,102,103,104]");
+    }
+
+    @Test
+    public void testWriteCarUserServicePreCreationRequested() {
+        EventLogHelper.writeCarUserServicePreCreationRequested(101, 102);
+
+        assertLogMessage("I car_user_svc_pre_creation_requested: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServicePreCreationStatus() {
+        EventLogHelper.writeCarUserServicePreCreationStatus(101, 102, 103, 104, 105, 106, 107);
+
+        assertLogMessage("I car_user_svc_pre_creation_status: [101,102,103,104,105,106,107]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceStartUserInBackgroundReq() {
+        EventLogHelper.writeCarUserServiceStartUserInBackgroundReq(101);
+
+        assertLogMessage("I car_user_svc_start_user_in_background_req: 101");
+    }
+
+    @Test
+    public void testWriteCarUserServiceStartUserInBackgroundResp() {
+        EventLogHelper.writeCarUserServiceStartUserInBackgroundResp(101, 102);
+
+        assertLogMessage("I car_user_svc_start_user_in_background_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceStopUserReq() {
+        EventLogHelper.writeCarUserServiceStopUserReq(101);
+
+        assertLogMessage("I car_user_svc_stop_user_req: 101");
+    }
+
+    @Test
+    public void testWriteCarUserServiceStopUserResp() {
+        EventLogHelper.writeCarUserServiceStopUserResp(101, 102);
+
+        assertLogMessage("I car_user_svc_stop_user_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceInitialUserInfoReqComplete() {
+        EventLogHelper.writeCarUserServiceInitialUserInfoReqComplete(101);
+
+        assertLogMessage("I car_user_svc_initial_user_info_req_complete: 101");
+    }
+
+    @Test
+    public void testWriteCarUserHalInitialUserInfoReq() {
+        EventLogHelper.writeCarUserHalInitialUserInfoReq(101, 102, 103);
+
+        assertLogMessage("I car_user_hal_initial_user_info_req: [101,102,103]");
+    }
+
+    @Test
+    public void testWriteCarUserHalInitialUserInfoResp() {
+        EventLogHelper.writeCarUserHalInitialUserInfoResp(101, 102, 103, 104, 105, "string1",
+                "string2");
+
+        assertLogMessage(
+                "I car_user_hal_initial_user_info_resp: [101,102,103,104,105,string1,string2]");
+    }
+
+    @Test
+    public void testWriteCarUserHalSwitchUserReq() {
+        EventLogHelper.writeCarUserHalSwitchUserReq(101, 102, 103, 104);
+
+        assertLogMessage("I car_user_hal_switch_user_req: [101,102,103,104]");
+    }
+
+    @Test
+    public void testWriteCarUserHalSwitchUserResp() {
+        EventLogHelper.writeCarUserHalSwitchUserResp(101, 102, 103, "string");
+
+        assertLogMessage("I car_user_hal_switch_user_resp: [101,102,103,string]");
+    }
+
+    @Test
+    public void testWriteCarUserHalPostSwitchUserReq() {
+        EventLogHelper.writeCarUserHalPostSwitchUserReq(101, 102, 103);
+
+        assertLogMessage("I car_user_hal_post_switch_user_req: [101,102,103]");
+    }
+
+    @Test
+    public void writeCarUserHalGetUserAuthReq() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserHalGetUserAuthReq(objectArray);
+
+        assertLogMessage("I car_user_hal_get_user_auth_req: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserHalGetUserAuthResp() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserHalGetUserAuthResp(objectArray);
+
+        assertLogMessage("I car_user_hal_get_user_auth_resp: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserHalLegacySwitchUserReq() {
+        EventLogHelper.writeCarUserHalLegacySwitchUserReq(101, 102, 103);
+
+        assertLogMessage("I car_user_hal_legacy_switch_user_req: [101,102,103]");
+    }
+
+    @Test
+    public void testWriteCarUserHalSetUserAuthReq() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserHalSetUserAuthReq(objectArray);
+
+        assertLogMessage("I car_user_hal_set_user_auth_req: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserHalSetUserAuthResp() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserHalSetUserAuthResp(objectArray);
+
+        assertLogMessage("I car_user_hal_set_user_auth_resp: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserHalOemSwitchUserReq() {
+        EventLogHelper.writeCarUserHalOemSwitchUserReq(101, 102);
+
+        assertLogMessage("I car_user_hal_oem_switch_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserHalCreateUserReq() {
+        EventLogHelper.writeCarUserHalCreateUserReq(101, "string", 102, 103);
+
+        assertLogMessage("I car_user_hal_create_user_req: [101,string,102,103]");
+    }
+
+    @Test
+    public void testWriteCarUserHalCreateUserResp() {
+        EventLogHelper.writeCarUserHalCreateUserResp(101, 102, 103, "string");
+
+        assertLogMessage("I car_user_hal_create_user_resp: [101,102,103,string]");
+    }
+
+    @Test
+    public void testWriteCarUserHalRemoveUserReq() {
+        EventLogHelper.writeCarUserHalRemoveUserReq(101, 102);
+
+        assertLogMessage("I car_user_hal_remove_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerAddListener() {
+        EventLogHelper.writeCarUserManagerAddListener(101, "string");
+
+        assertLogMessage("I car_user_mgr_add_listener: [101,string]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerRemoveListener() {
+        EventLogHelper.writeCarUserManagerRemoveListener(101, "string");
+
+        assertLogMessage("I car_user_mgr_remove_listener: [101,string]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerDisconnected() {
+        EventLogHelper.writeCarUserManagerDisconnected(101);
+
+        assertLogMessage("I car_user_mgr_disconnected: 101");
+    }
+
+    @Test
+    public void testWriteCarUserManagerSwitchUserReq() {
+        EventLogHelper.writeCarUserManagerSwitchUserReq(101, 102);
+
+        assertLogMessage("I car_user_mgr_switch_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerSwitchUserResp() {
+        EventLogHelper.writeCarUserManagerSwitchUserResp(101, 102, "string");
+
+        assertLogMessage("I car_user_mgr_switch_user_resp: [101,102,string]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerGetUserAuthReq() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserManagerGetUserAuthReq(objectArray);
+
+        assertLogMessage("I car_user_mgr_get_user_auth_req: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerGetUserAuthResp() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserManagerGetUserAuthResp(objectArray);
+
+        assertLogMessage("I car_user_mgr_get_user_auth_resp: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerSetUserAuthReq() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserManagerSetUserAuthReq(objectArray);
+
+        assertLogMessage("I car_user_mgr_set_user_auth_req: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerSetUserAuthResp() {
+        Object[] objectArray = new Object[] {
+                101, 102, 103, "string", 104
+        };
+        EventLogHelper.writeCarUserManagerSetUserAuthResp(objectArray);
+
+        assertLogMessage("I car_user_mgr_set_user_auth_resp: [101,102,103,string,104]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerCreateUserReq() {
+        EventLogHelper.writeCarUserManagerCreateUserReq(101, "string1", "string2", 102);
+
+        assertLogMessage("I car_user_mgr_create_user_req: [101,string1,string2,102]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerCreateUserResp() {
+        EventLogHelper.writeCarUserManagerCreateUserResp(101, 102, "string");
+
+        assertLogMessage("I car_user_mgr_create_user_resp: [101,102,string]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerRemoveUserReq() {
+        EventLogHelper.writeCarUserManagerRemoveUserReq(101, 102);
+
+        assertLogMessage("I car_user_mgr_remove_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerRemoveUserResp() {
+        EventLogHelper.writeCarUserManagerRemoveUserResp(101, 102);
+
+        assertLogMessage("I car_user_mgr_remove_user_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerNotifyLifecycleListener() {
+        EventLogHelper.writeCarUserManagerNotifyLifecycleListener(101, 102, 103, 104);
+
+        assertLogMessage("I car_user_mgr_notify_lifecycle_listener: [101,102,103,104]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerPreCreateUserReq() {
+        EventLogHelper.writeCarUserManagerPreCreateUserReq(101);
+
+        assertLogMessage("I car_user_mgr_pre_create_user_req: 101");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerRemoveUserReq() {
+        EventLogHelper.writeCarDevicePolicyManagerRemoveUserReq(101, 102);
+
+        assertLogMessage("I car_dp_mgr_remove_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerRemoveUserResp() {
+        EventLogHelper.writeCarDevicePolicyManagerRemoveUserResp(101, 102);
+
+        assertLogMessage("I car_dp_mgr_remove_user_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerCreateUserReq() {
+        EventLogHelper.writeCarDevicePolicyManagerCreateUserReq(101, "string", 102);
+
+        assertLogMessage("I car_dp_mgr_create_user_req: [101,string,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerCreateUserResp() {
+        EventLogHelper.writeCarDevicePolicyManagerCreateUserResp(101, 102);
+
+        assertLogMessage("I car_dp_mgr_create_user_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerStartUserInBackgroundReq() {
+        EventLogHelper.writeCarDevicePolicyManagerStartUserInBackgroundReq(101, 102);
+
+        assertLogMessage("I car_dp_mgr_start_user_in_background_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerStartUserInBackgroundResp() {
+        EventLogHelper.writeCarDevicePolicyManagerStartUserInBackgroundResp(101, 102);
+
+        assertLogMessage("I car_dp_mgr_start_user_in_background_resp: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerStopUserReq() {
+        EventLogHelper.writeCarDevicePolicyManagerStopUserReq(101, 102);
+
+        assertLogMessage("I car_dp_mgr_stop_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarDevicePolicyManagerStopUserResp() {
+        EventLogHelper.writeCarDevicePolicyManagerStopUserResp(101, 102);
+
+        assertLogMessage("I car_dp_mgr_stop_user_resp: [101,102]");
+    }
+
+    @Test
+    public void testWritePowerPolicyChange() {
+        EventLogHelper.writePowerPolicyChange("string");
+
+        assertLogMessage("I car_pwr_mgr_pwr_policy_change: string");
+    }
+
+    @Test
+    public void testWriteCarPowerManagerStateChange() {
+        EventLogHelper.writeCarPowerManagerStateChange(101);
+
+        assertLogMessage("I car_pwr_mgr_state_change: 101");
+    }
+
+    @Test
+    public void testWriteCarPowerManagerStateRequest() {
+        EventLogHelper.writeCarPowerManagerStateRequest(101, 102);
+
+        assertLogMessage("I car_pwr_mgr_state_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteGarageModeEvent() {
+        EventLogHelper.writeGarageModeEvent(101);
+
+        assertLogMessage("I car_pwr_mgr_garage_mode: 101");
+    }
+
     private void assertLogMessage(String match) {
-        LogcatHelper.assertLogcatMessage(match, TIMEOUT_MS);
+        LogcatHelper.assertLogcatMessage(match, BUFFER, TIMEOUT_MS);
     }
 }

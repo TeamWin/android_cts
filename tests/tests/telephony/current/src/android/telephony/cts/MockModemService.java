@@ -24,12 +24,10 @@ import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.RadioResponseType;
 import android.os.Binder;
 import android.os.IBinder;
-import android.sysprop.TelephonyProperties;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +46,7 @@ public class MockModemService extends Service {
     public static final String PHONE_ID = "phone_id";
 
     private static Context sContext;
+    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
     private static IRadioConfigImpl sIRadioConfigImpl;
     private static IRadioModemImpl sIRadioModemImpl;
     private static IRadioSimImpl sIRadioSimImpl;
@@ -60,19 +59,16 @@ public class MockModemService extends Service {
     public static final byte PHONE_ID_1 = 0x01;
 
     public static final int LATCH_MOCK_MODEM_SERVICE_READY = 0;
-    public static final int LATCH_MOCK_MODEM_RADIO_POWR_ON = 1;
-    public static final int LATCH_MOCK_MODEM_RADIO_POWR_OFF = 2;
-    public static final int LATCH_MOCK_MODEM_SIM_READY = 3;
-    public static final int LATCH_MAX = 4;
+    public static final int LATCH_RADIO_INTERFACES_READY = 1;
+    public static final int LATCH_MAX = 2;
 
     private static final int IRADIO_CONFIG_INTERFACE_NUMBER = 1;
     private static final int IRADIO_INTERFACE_NUMBER = 6;
-    public static final int LATCH_RADIO_INTERFACES_READY = LATCH_MAX;
-    public static final int LATCH_MOCK_MODEM_INITIALIZATION_READY =
-            LATCH_RADIO_INTERFACES_READY + 1;
-    public static final int TOTAL_LATCH_NUMBER = LATCH_MAX + 2;
 
-    private int mSimNumber;
+    private TelephonyManager mTelephonyManager;
+    private int mNumOfSim;
+    private int mNumOfPhone;
+    private static final int DEFAULT_SUB_ID = 0;
 
     private Object mLock;
     protected static CountDownLatch[] sLatches;
@@ -89,24 +85,36 @@ public class MockModemService extends Service {
     public void onCreate() {
         Log.d(TAG, "Mock Modem Service Created");
 
-        mSimNumber = 1; // TODO: Read property to know the device is single SIM or DSDS
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mTelephonyManager = sContext.getSystemService(TelephonyManager.class);
+        mNumOfSim = getNumPhysicalSlots();
+        mNumOfPhone = mTelephonyManager.getActiveModemCount();
+        Log.d(TAG, "Support number of phone = " + mNumOfPhone + ", number of SIM = " + mNumOfSim);
 
         mLock = new Object();
 
-        sLatches = new CountDownLatch[TOTAL_LATCH_NUMBER];
+        sLatches = new CountDownLatch[LATCH_MAX];
         for (int i = 0; i < LATCH_MAX; i++) {
             sLatches[i] = new CountDownLatch(1);
+            if (i == LATCH_RADIO_INTERFACES_READY) {
+                int radioInterfaceNumber =
+                        IRADIO_CONFIG_INTERFACE_NUMBER + mNumOfPhone * IRADIO_INTERFACE_NUMBER;
+                sLatches[i] = new CountDownLatch(radioInterfaceNumber);
+            } else {
+                sLatches[i] = new CountDownLatch(1);
+            }
         }
 
-        int radioInterfaceNumber =
-                IRADIO_CONFIG_INTERFACE_NUMBER + mSimNumber * IRADIO_INTERFACE_NUMBER;
-        sLatches[LATCH_RADIO_INTERFACES_READY] = new CountDownLatch(radioInterfaceNumber);
-        sLatches[LATCH_MOCK_MODEM_INITIALIZATION_READY] = new CountDownLatch(1);
+        sMockModemConfigInterfaces = new MockModemConfigBase[mNumOfPhone];
+        for (int i = 0; i < mNumOfPhone; i++) {
+            sMockModemConfigInterfaces[i] =
+                    new MockModemConfigBase(sContext, i, mNumOfSim, mNumOfPhone);
+        }
 
-        sContext = InstrumentationRegistry.getInstrumentation().getContext();
-        sIRadioConfigImpl = new IRadioConfigImpl(this);
-        sIRadioModemImpl = new IRadioModemImpl(this);
-        sIRadioSimImpl = new IRadioSimImpl(this);
+        sIRadioConfigImpl = new IRadioConfigImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
+        // TODO: Support DSDS
+        sIRadioModemImpl = new IRadioModemImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
+        sIRadioSimImpl = new IRadioSimImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
         sIRadioNetworkImpl = new IRadioNetworkImpl(this);
         sIRadioDataImpl = new IRadioDataImpl(this);
         sIRadioMessagingImpl = new IRadioMessagingImpl(this);
@@ -183,14 +191,6 @@ public class MockModemService extends Service {
         return mBinder;
     }
 
-    public void resetState() {
-        synchronized (mLock) {
-            for (int i = 0; i < LATCH_MAX; i++) {
-                sLatches[i] = new CountDownLatch(1);
-            }
-        }
-    }
-
     public boolean waitForLatchCountdown(int latchIndex) {
         boolean complete = false;
         try {
@@ -233,7 +233,6 @@ public class MockModemService extends Service {
         int numPhysicalSlots =
                 sContext.getResources()
                         .getInteger(com.android.internal.R.integer.config_num_physical_slots);
-        Log.d(TAG, "numPhysicalSlots: " + numPhysicalSlots);
         return numPhysicalSlots;
     }
 
@@ -255,81 +254,51 @@ public class MockModemService extends Service {
         return rspInfo;
     }
 
-    private boolean initRadioState() {
-        int waitLatch;
+    public boolean initialize() {
+        Log.d(TAG, "initialize");
+        boolean result = true;
 
-        boolean apm = TelephonyProperties.airplane_mode_on().orElse(false);
-        Log.d(TAG, "APM setting: " + apm);
-
-        if (!apm) {
-            waitLatch = LATCH_MOCK_MODEM_RADIO_POWR_ON;
-        } else {
-            waitLatch = LATCH_MOCK_MODEM_RADIO_POWR_OFF;
+        // Sync mock modem status between modules
+        for (int i = 0; i < mNumOfPhone; i++) {
+            sMockModemConfigInterfaces[i].notifyAllRegistrantNotifications();
         }
 
-        sIRadioModemImpl.radioStateChanged(android.hardware.radio.modem.RadioState.OFF);
-
-        // Radio Power command is expected.
-        return waitForLatchCountdown(waitLatch);
-    }
-
-    private boolean initSimSlotState() {
-
-        // SIM/Slot commands are expected.
-        return waitForLatchCountdown(LATCH_MOCK_MODEM_SIM_READY);
-    }
-
-    public void initialization() {
-        Log.d(TAG, "initialization");
-
-        boolean status = false;
-
+        // Connect to telephony framework
         sIRadioModemImpl.rilConnected();
 
-        status = initRadioState();
-        if (!status) {
-            Log.e(TAG, "radio state initialization fail");
-            return;
-        }
-
-        status = initSimSlotState();
-        if (!status) {
-            Log.e(TAG, "sim/slot state initialization fail");
-            return;
-        }
-
-        countDownLatch(LATCH_MOCK_MODEM_INITIALIZATION_READY);
+        return result;
     }
 
-    public void unsolSimSlotsStatusChanged() {
-        sIRadioConfigImpl.unsolSimSlotsStatusChanged();
-        sIRadioSimImpl.simStatusChanged();
+    public MockModemConfigInterface[] getMockModemConfigInterfaces() {
+        return sMockModemConfigInterfaces;
     }
 
-    public void setSimPresent(int slotId) {
-        Log.d(TAG, "setSimPresent");
-
-        sIRadioSimImpl.setSimPresent(slotId);
-        sIRadioConfigImpl.setSimPresent(slotId);
+    // TODO: Support DSDS
+    public IRadioConfigImpl getIRadioConfig() {
+        return sIRadioConfigImpl;
     }
 
-    /**
-     * Change the response error per specific RIL request
-     *
-     * @param requestId the request/response message ID
-     * @param error RIL_Errno and -1 means to disable the modifed mechanism,
-     *  back to original mock modem behavior
-     */
-    public void forceErrorResponse(int requestId, int error) {
-        Log.d(TAG, "setReturnResponseError for request:" + requestId + " ,error:" + error);
+    public IRadioModemImpl getIRadioModem() {
+        return sIRadioModemImpl;
+    }
 
-        switch (requestId) {
-            case RIL_REQUEST_RADIO_POWER:
-                sIRadioModemImpl.forceErrorResponse(requestId, error);
-                break;
-            default:
-                Log.e(TAG, "request:" + requestId + " not support to change the response error");
-                break;
-        }
+    public IRadioSimImpl getIRadioSim() {
+        return sIRadioSimImpl;
+    }
+
+    public IRadioNetworkImpl getIRadioNetwork() {
+        return sIRadioNetworkImpl;
+    }
+
+    public IRadioVoiceImpl getIRadioVoice() {
+        return sIRadioVoiceImpl;
+    }
+
+    public IRadioMessagingImpl getIRadioMessaging() {
+        return sIRadioMessagingImpl;
+    }
+
+    public IRadioDataImpl getIRadioData() {
+        return sIRadioDataImpl;
     }
 }

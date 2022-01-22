@@ -17,29 +17,34 @@
 package android.media.tv.interactive.cts;
 
 import android.content.Context;
-import android.media.tv.interactive.TvIAppManager;
-import android.media.tv.interactive.TvIAppService;
+import android.media.tv.interactive.TvInteractiveAppManager;
+import android.media.tv.interactive.TvInteractiveAppService;
 import android.view.KeyEvent;
 import android.view.Surface;
 
 /**
- * Stub implementation of (@link android.media.tv.interactive.TvIAppService}.
+ * Stub implementation of (@link android.media.tv.interactive.TvInteractiveAppService}.
  */
-public class StubTvIAppService extends TvIAppService {
+public class StubTvInteractiveAppService extends TvInteractiveAppService {
+
+    public static StubSessionImpl sSession;
+
     @Override
     public Session onCreateSession(String iAppServiceId, int type) {
-        Session session = new StubSessionImpl(this);
-        return session;
+        sSession = new StubSessionImpl(this);
+        return sSession;
     }
 
-    private static class StubSessionImpl extends Session {
+    public static class StubSessionImpl extends Session {
         StubSessionImpl(Context context) {
             super(context);
         }
 
         @Override
         public void onStartInteractiveApp() {
-            notifySessionStateChanged(TvIAppManager.TV_INTERACTIVE_APP_RTE_STATE_READY);
+            notifySessionStateChanged(
+                    TvInteractiveAppManager.SERVICE_STATE_READY,
+                    TvInteractiveAppManager.ERROR_NONE);
         }
 
         @Override

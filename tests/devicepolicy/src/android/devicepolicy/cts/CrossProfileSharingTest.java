@@ -56,6 +56,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
 public final class CrossProfileSharingTest {
@@ -208,13 +209,14 @@ public final class CrossProfileSharingTest {
 
     private ResolveInfo getCrossProfileIntentForwarder(Intent intent) {
         List<ResolveInfo> result = TestApis.context().instrumentedContext().getPackageManager()
-                .queryIntentActivities(intent, MATCH_DEFAULT_ONLY);
+                .queryIntentActivities(intent, MATCH_DEFAULT_ONLY)
+                .stream().filter(ResolveInfo::isCrossProfileIntentForwarderActivity)
+                .collect(Collectors.toList());
+
         assertWithMessage("Failed to get intent forwarder component")
                 .that(result.size()).isEqualTo(1);
-        ResolveInfo forwarder = result.get(0);
-        assertWithMessage("Forwarder doesn't consider itself as such")
-                .that(forwarder.isCrossProfileIntentForwarderActivity()).isTrue();
-        return forwarder;
+
+        return result.get(0);
     }
 
     private void setSharingIntoProfileEnabled(boolean enabled) {
