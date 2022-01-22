@@ -1,17 +1,4 @@
 {
-  "presubmit": [
-    {
-      "name": "FrameworksCoreTests",
-      "options": [
-        {
-          "include-filter": "android.content.pm.PackageManagerTests"
-        },
-        {
-          "exclude-annotation": "androidx.test.filters.Suppress"
-        }
-      ]
-    }
-  ],
   "presubmit-large": [
     {
       "name": "CtsContentTestCases",
