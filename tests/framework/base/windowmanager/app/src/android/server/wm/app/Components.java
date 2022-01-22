@@ -284,6 +284,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName CLEAR_BACKGROUND_TRANSITION_ENTER_ACTIVITY =
             component("ClearBackgroundTransitionExitActivity");
 
+    public static final ComponentName KEEP_CLEAR_RECTS_ACTIVITY =
+            component("KeepClearRectsActivity");
+
     /**
      * The keys are used for {@link TestJournalProvider} when testing starting window.
      */
@@ -647,6 +650,13 @@ public class Components extends ComponentsBase {
 
     public static class BackgroundActivityTransition {
         public static final String TRANSITION_REQUESTED = "transition_requested";
+    }
+
+    /**
+     * Extra constants for {@link android.server.wm.app.KeepClearRectsActivity}.
+     */
+    public static class KeepClearRectsActivity {
+        public static final String EXTRA_KEEP_CLEAR_RECTS = "keep_clear_rects";
     }
 
     private static ComponentName component(String className) {
