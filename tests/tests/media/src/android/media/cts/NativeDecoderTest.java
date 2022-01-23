@@ -78,7 +78,7 @@ import java.util.zip.Adler32;
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
-public class NativeDecoderTest extends MediaPlayerTestBase {
+public class NativeDecoderTest extends MediaTestBase {
     private static final String TAG = "DecoderTest";
 
     private static final boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);

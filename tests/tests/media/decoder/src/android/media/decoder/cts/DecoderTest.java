@@ -53,7 +53,7 @@ import android.media.cts.CodecState;
 import android.media.cts.MediaCodecTunneledPlayer;
 import android.media.cts.MediaCodecWrapper;
 import android.media.cts.MediaHeavyPresubmitTest;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.NdkMediaCodec;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
@@ -110,7 +110,7 @@ import java.util.zip.CRC32;
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
 @RunWith(AndroidJUnit4.class)
-public class DecoderTest extends MediaPlayerTestBase {
+public class DecoderTest extends MediaTestBase {
     private static final String TAG = "DecoderTest";
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);

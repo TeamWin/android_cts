@@ -26,7 +26,7 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
 import android.net.Uri;
@@ -60,7 +60,7 @@ import java.util.Set;
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
-public class NativeMuxerTest extends MediaPlayerTestBase {
+public class NativeMuxerTest extends MediaTestBase {
     private static final String TAG = "NativeMuxerTest";
 
     private static final boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
