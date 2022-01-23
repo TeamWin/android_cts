@@ -776,6 +776,17 @@ public class WindowManagerStateHelper extends WindowManagerState {
         return getInputMethodWindowState();
     }
 
+    /**
+     * @return the window state for the given {@param activityName}'s window.
+     */
+    WindowState getWindowState(ComponentName activityName) {
+        String windowName = getWindowName(activityName);
+        computeState(activityName);
+        final List<WindowManagerState.WindowState> tempWindowList =
+                getMatchingVisibleWindowState(windowName);
+        return tempWindowList.get(0);
+    }
+
     boolean isScreenPortrait(int displayId) {
         final Rect displayRect = getDisplay(displayId).getDisplayRect();
         return displayRect.height() > displayRect.width();

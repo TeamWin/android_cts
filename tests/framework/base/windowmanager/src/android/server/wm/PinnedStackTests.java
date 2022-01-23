@@ -128,7 +128,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -291,7 +290,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPipAnimationComplete(PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE);
         assertPinnedStackExists();
 
-        final WindowManagerState.WindowState windowState = getWindowState(
+        final WindowManagerState.WindowState windowState = mWmState.getWindowState(
                 PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE);
         final WindowManagerState.DisplayContent display = mWmState.getDisplay(
                 windowState.getDisplayId());
@@ -1437,7 +1436,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the pinned stack bounds is contained in the display bounds.
      */
     private void assertPinnedStackActivityIsInDisplayBounds(ComponentName activityName) {
-        final WindowManagerState.WindowState windowState = getWindowState(activityName);
+        final WindowManagerState.WindowState windowState = mWmState.getWindowState(activityName);
         final WindowManagerState.DisplayContent display = mWmState.getDisplay(
                 windowState.getDisplayId());
         final Rect displayRect = display.getDisplayRect();
@@ -1589,17 +1588,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                     .getBounds();
             return floatEquals((float) bounds.width() / bounds.height(), (float) num / denom);
         }, "valid aspect ratio");
-    }
-
-    /**
-     * @return the window state for the given {@param activityName}'s window.
-     */
-    private WindowManagerState.WindowState getWindowState(ComponentName activityName) {
-        String windowName = getWindowName(activityName);
-        mWmState.computeState(activityName);
-        final List<WindowManagerState.WindowState> tempWindowList =
-                mWmState.getMatchingVisibleWindowState(windowName);
-        return tempWindowList.get(0);
     }
 
     /**
