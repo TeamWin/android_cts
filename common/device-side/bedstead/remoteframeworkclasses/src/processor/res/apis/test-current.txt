@@ -36,6 +36,7 @@ package android {
     field public static final String RECORD_BACKGROUND_AUDIO = "android.permission.RECORD_BACKGROUND_AUDIO";
     field public static final String REMOVE_TASKS = "android.permission.REMOVE_TASKS";
     field public static final String RESET_APP_ERRORS = "android.permission.RESET_APP_ERRORS";
+    field public static final String REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL = "android.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL";
     field public static final String SET_AND_VERIFY_LOCKSCREEN_CREDENTIALS = "android.permission.SET_AND_VERIFY_LOCKSCREEN_CREDENTIALS";
     field public static final String START_TASKS_FROM_RECENTS = "android.permission.START_TASKS_FROM_RECENTS";
     field public static final String SUSPEND_APPS = "android.permission.SUSPEND_APPS";
@@ -66,6 +67,7 @@ package android {
   public static final class R.string {
     field public static final int config_defaultAssistant = 17039393; // 0x1040021
     field public static final int config_defaultDialer = 17039395; // 0x1040023
+    field public static final int config_systemAutomotiveCalendarSyncManager;
     field public static final int config_systemAutomotiveCluster = 17039400; // 0x1040028
     field public static final int config_systemAutomotiveProjection = 17039401; // 0x1040029
     field public static final int config_systemGallery = 17039399; // 0x1040027
@@ -1679,6 +1681,10 @@ package android.os {
     method public void removeSyncBarrier(int);
   }
 
+  public final class NewUserResponse {
+    ctor public NewUserResponse(@Nullable android.os.UserHandle, int);
+  }
+
   public final class PackageTagsList implements android.os.Parcelable {
     method public boolean contains(@NonNull String, @Nullable String);
     method public boolean contains(@NonNull android.os.PackageTagsList);
@@ -1818,11 +1824,19 @@ package android.os {
 
   public static final class VibrationEffect.WaveformBuilder {
     method @NonNull public android.os.VibrationEffect.WaveformBuilder addRamp(@FloatRange(from=0.0f, to=1.0f) float, @IntRange(from=0) int);
-    method @NonNull public android.os.VibrationEffect.WaveformBuilder addRamp(@FloatRange(from=0.0f, to=1.0f) float, @FloatRange(from=-1.0F, to=1.0f) float, @IntRange(from=0) int);
+    method @NonNull public android.os.VibrationEffect.WaveformBuilder addRamp(@FloatRange(from=0.0f, to=1.0f) float, @FloatRange(from=1.0f) float, @IntRange(from=0) int);
     method @NonNull public android.os.VibrationEffect.WaveformBuilder addStep(@FloatRange(from=0.0f, to=1.0f) float, @IntRange(from=0) int);
-    method @NonNull public android.os.VibrationEffect.WaveformBuilder addStep(@FloatRange(from=0.0f, to=1.0f) float, @FloatRange(from=-1.0F, to=1.0f) float, @IntRange(from=0) int);
+    method @NonNull public android.os.VibrationEffect.WaveformBuilder addStep(@FloatRange(from=0.0f, to=1.0f) float, @FloatRange(from=1.0f) float, @IntRange(from=0) int);
     method @NonNull public android.os.VibrationEffect build();
     method @NonNull public android.os.VibrationEffect build(int);
+  }
+
+  public abstract class Vibrator {
+    method public int getDefaultVibrationIntensity(int);
+    field public static final int VIBRATION_INTENSITY_HIGH = 3; // 0x3
+    field public static final int VIBRATION_INTENSITY_LOW = 1; // 0x1
+    field public static final int VIBRATION_INTENSITY_MEDIUM = 2; // 0x2
+    field public static final int VIBRATION_INTENSITY_OFF = 0; // 0x0
   }
 
   public class VintfObject {
@@ -1978,9 +1992,9 @@ package android.os.vibrator {
     method public int describeContents();
     method public long getDuration();
     method public float getEndAmplitude();
-    method public float getEndFrequency();
+    method public float getEndFrequencyHz();
     method public float getStartAmplitude();
-    method public float getStartFrequency();
+    method public float getStartFrequencyHz();
     method public void writeToParcel(@NonNull android.os.Parcel, int);
     field @NonNull public static final android.os.Parcelable.Creator<android.os.vibrator.RampSegment> CREATOR;
   }
@@ -1989,7 +2003,7 @@ package android.os.vibrator {
     method public int describeContents();
     method public float getAmplitude();
     method public long getDuration();
-    method public float getFrequency();
+    method public float getFrequencyHz();
     method public void writeToParcel(@NonNull android.os.Parcel, int);
     field @NonNull public static final android.os.Parcelable.Creator<android.os.vibrator.StepSegment> CREATOR;
   }
@@ -2032,6 +2046,7 @@ package android.permission {
     method @NonNull @RequiresPermission(android.Manifest.permission.GET_APP_OPS_STATS) public java.util.List<android.permission.PermGroupUsage> getIndicatorAppOpUsageData();
     method @NonNull @RequiresPermission(android.Manifest.permission.GET_APP_OPS_STATS) public java.util.List<android.permission.PermGroupUsage> getIndicatorAppOpUsageData(boolean);
     method @NonNull public android.content.AttributionSource registerAttributionSource(@NonNull android.content.AttributionSource);
+    method public void revokePostNotificationPermissionWithoutKillForTest(@NonNull String, int);
   }
 
 }
@@ -2305,6 +2320,7 @@ package android.service.dreams {
     method @Nullable public final android.os.IBinder onBind(@NonNull android.content.Intent);
     method public abstract void onStartDream(@NonNull android.view.WindowManager.LayoutParams);
     method public final void requestExit();
+    method public final boolean shouldShowComplications();
   }
 
 }
