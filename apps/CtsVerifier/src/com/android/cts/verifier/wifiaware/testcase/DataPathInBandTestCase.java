@@ -23,8 +23,10 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.wifi.aware.Characteristics;
 import android.net.wifi.aware.PublishDiscoverySession;
 import android.net.wifi.aware.WifiAwareChannelInfo;
+import android.net.wifi.aware.WifiAwareDataPathSecurityConfig;
 import android.net.wifi.aware.WifiAwareNetworkInfo;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.util.Log;
@@ -182,7 +184,11 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
                 new WifiAwareNetworkSpecifier.Builder(mWifiAwareDiscoverySession, mPeerHandle);
         if (!mIsSecurityOpen) {
             if (mUsePmk) {
-                nsBuilder.setPmk(PMK);
+                nsBuilder.setDataPathSecurityConfig(
+                        new WifiAwareDataPathSecurityConfig
+                                .Builder(Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_SK_128)
+                                .setPmk(PMK)
+                                .build());
             } else {
                 nsBuilder.setPskPassphrase(PASSPHRASE);
             }
