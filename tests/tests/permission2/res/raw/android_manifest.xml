@@ -3944,6 +3944,17 @@
         android:protectionLevel="signature" />
     <uses-permission android:name="android.permission.BIND_ROTATION_RESOLVER_SERVICE" />
 
+    <!-- @SystemApi Allows an application to access ambient context service.
+         @hide <p>Not for use by third-party applications.</p> -->
+    <permission android:name="android.permission.ACCESS_AMBIENT_CONTEXT_EVENT"
+        android:protectionLevel="internal|role"/>
+
+    <!-- @SystemApi Required by a AmbientContextEventDetectionService
+         to ensure that only the service with this permission can bind to it.
+         @hide <p>Not for use by third-party applications.</p> -->
+    <permission android:name="android.permission.BIND_AMBIENT_CONTEXT_DETECTION_SERVICE"
+        android:protectionLevel="signature"/>
+
     <!-- Must be required by a {@link android.net.VpnService},
          to ensure that only the system can bind to it.
          <p>Protection level: signature
