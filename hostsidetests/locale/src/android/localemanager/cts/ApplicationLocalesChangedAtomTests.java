@@ -223,7 +223,7 @@ public class ApplicationLocalesChangedAtomTests extends DeviceTestCase implement
             throws Exception {
         getDevice().executeShellCommand(
                 String.format(
-                        "cmd locale set-app-locales %s --user 0 --locales %s",
+                        "cmd locale set-app-locales %s --user current --locales %s",
                         packageName,
                         languageTags
                 )
