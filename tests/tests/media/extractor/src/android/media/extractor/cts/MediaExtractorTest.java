@@ -120,43 +120,6 @@ public class MediaExtractorTest {
         return ds;
     }
 
-    @Ignore
-    @Test
-    public void SKIP_testNullMediaDataSourceIsRejected() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
-        // #testIfNullMediaDataSourceIsRejectedBySetDataSource
-        try {
-            mExtractor.setDataSource((MediaDataSource)null);
-            fail("Expected IllegalArgumentException.");
-        } catch (IllegalArgumentException ex) {
-            // Expected, test passed.
-        }
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testMediaDataSourceIsClosedOnRelease() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testMediaDataSource
-        TestMediaDataSource dataSource = setDataSource("testvideo.3gp");
-        mExtractor.release();
-        assertTrue(dataSource.isClosed());
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testExtractorFailsIfMediaDataSourceThrows() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
-        // #testIfInvalidDataSourceIsRejectedBySetDataSource
-        TestMediaDataSource dataSource = getDataSourceFor("testvideo.3gp");
-        dataSource.throwFromReadAt();
-        try {
-            mExtractor.setDataSource(dataSource);
-            fail("Expected IOException.");
-        } catch (IOException e) {
-            // Expected.
-        }
-    }
-
     @Test
     public void testExtractorFailsIfMediaDataSourceReturnsAnError() throws Exception {
         TestMediaDataSource dataSource = getDataSourceFor("testvideo.3gp");
@@ -167,28 +130,6 @@ public class MediaExtractorTest {
         } catch (IOException e) {
             // Expected.
         }
-    }
-
-    // Smoke test MediaExtractor reading from a DataSource.
-    @Ignore
-    @Test
-    public void SKIP_testExtractFromAMediaDataSource() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testMediaDataSource and
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testMetrics
-        TestMediaDataSource dataSource = setDataSource("testvideo.3gp");
-        checkExtractorSamplesAndMetrics();
-    }
-
-    // Smoke test MediaExtractor reading from an AssetFileDescriptor.
-    @Ignore
-    @Test
-    public void SKIP_testExtractFromAssetFileDescriptor() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testAssetFD and
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testMetrics
-       AssetFileDescriptor afd = getAssetFileDescriptorFor("testvideo.3gp");
-        mExtractor.setDataSource(afd);
-        checkExtractorSamplesAndMetrics();
-        afd.close();
     }
 
     private boolean advertisesDolbyVision() {
@@ -256,32 +197,6 @@ public class MediaExtractorTest {
         // The backward-compatible track should have mime video/hevc
         final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
         assertEquals("video/hevc", mimeType);
-    }
-
-    // DolbyVisionMediaExtractor for profile-level (DvheStn/Fhd60).
-    @CddTest(requirement="5.3.8")
-    @Ignore
-    @Test
-    public void SKIP_testDolbyVisionMediaExtractorProfileDvheStn() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$ValidateKeyValuePairs[video/dolby-vision]
-        TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvhe_05.mp4");
-
-        if (advertisesDolbyVision()) {
-            // DvheStn exposes only a single non-backward compatible Dolby Vision HDR track.
-            assertEquals("There must be 1 track", 1, mExtractor.getTrackCount());
-            final MediaFormat trackFormat = mExtractor.getTrackFormat(0);
-
-            final String mimeType = trackFormat.getString(MediaFormat.KEY_MIME);
-            assertEquals("video/dolby-vision", mimeType);
-
-            final int profile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);
-            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheStn, profile);
-
-            final int level = trackFormat.getInteger(MediaFormat.KEY_LEVEL);
-            assertEquals(MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, level);
-        } else {
-            MediaUtils.skipTest("Device does not provide a Dolby Vision decoder");
-        }
     }
 
     // DolbyVisionMediaExtractor for profile-level (DvheSt/Fhd60).
@@ -658,71 +573,6 @@ public class MediaExtractorTest {
         }
     }
 
-    @AppModeFull(reason = "Instant apps cannot bind sockets.")
-    @Ignore
-    @Test
-    public void SKIP_testExtractorGetCachedDuration() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testUrlDataSource
-        CtsTestServer foo = new CtsTestServer(getContext());
-        String url = foo.getAssetUrl("ringer.mp3");
-        mExtractor.setDataSource(url);
-        long cachedDurationUs = mExtractor.getCachedDuration();
-        assertTrue("cached duration should be non-negative", cachedDurationUs >= 0);
-        foo.shutdown();
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testExtractorHasCacheReachedEndOfStream() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testUrlDataSource
-        // Using file source to get deterministic result.
-        AssetFileDescriptor afd = getAssetFileDescriptorFor("testvideo.3gp");
-        mExtractor.setDataSource(afd);
-        assertTrue(mExtractor.hasCacheReachedEndOfStream());
-        afd.close();
-    }
-
-    /*
-     * Makes sure if PTS(order) of a video file with BFrames matches the expected values in
-     * the corresponding text file with just PTS values.
-     */
-    @Ignore
-    @Test
-    public void SKIP_testVideoPresentationTimeStampsMatch() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$ExtractorTimeStampTest
-        setDataSource("binary_counter_320x240_30fps_600frames.mp4");
-        // Select the only video track present in the file.
-        final int trackCount = mExtractor.getTrackCount();
-        for (int i = 0; i < trackCount; i++) {
-            mExtractor.selectTrack(i);
-        }
-
-        Reader txtRdr = new BufferedReader(new InputStreamReader(new FileInputStream(
-                mInpPrefix + "timestamps_binary_counter_320x240_30fps_600frames.txt")));
-        StreamTokenizer strTok = new StreamTokenizer(txtRdr);
-        strTok.parseNumbers();
-
-        boolean srcAdvance = false;
-        long srcSampleTimeUs = -1;
-        long testSampleTimeUs = -1;
-
-        strTok.nextToken();
-        do {
-            srcSampleTimeUs = mExtractor.getSampleTime();
-            testSampleTimeUs = (long) strTok.nval;
-
-            // Ignore round-off error if any.
-            if (Math.abs(srcSampleTimeUs - testSampleTimeUs) > 1) {
-                Log.d(TAG, "srcSampleTimeUs:" + srcSampleTimeUs + " testSampleTimeUs:" +
-                        testSampleTimeUs);
-                fail("video presentation timestamp not equal");
-            }
-
-            srcAdvance = mExtractor.advance();
-            strTok.nextToken();
-        } while (srcAdvance);
-    }
-
     /* package */ static class ByteBufferDataSource extends MediaDataSource {
         private final long mSize;
         private TreeMap<Long, ByteBuffer> mMap = new TreeMap<Long, ByteBuffer>();
@@ -873,78 +723,6 @@ public class MediaExtractorTest {
         }
     }
 
-    @SmallTest
-    @Ignore
-    @Test
-    public void SKIP_testFlacIdentity() throws Exception {
-        // duplicate of CtsMediaV2TestCases:CodecEncoderTest$testLosslessEncodeDecode[audio/flac]
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FusedExtractorDecoderTest[audio/flac]
-        final int PCM_FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
-        final int CHANNEL_COUNT = 2;
-        final int SAMPLES = PCM_FRAMES * CHANNEL_COUNT;
-        final int[] SAMPLE_RATES = {44100, 192000}; // ensure 192kHz supported.
-
-        for (int sampleRate : SAMPLE_RATES) {
-            final MediaFormat format = new MediaFormat();
-            format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_FLAC);
-            format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
-            format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, CHANNEL_COUNT);
-
-            Log.d(TAG, "Trying sample rate: " + sampleRate
-                    + " channel count: " + CHANNEL_COUNT);
-            format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, 5);
-
-            // TODO: Add float mode when MediaExtractor supports float configuration.
-            final StreamUtils.PcmAudioBufferStream audioStream =
-                    new StreamUtils.PcmAudioBufferStream(
-                            SAMPLES, sampleRate, 1000 /* frequency */, 100 /* sweep */,
-                          false /* useFloat */);
-
-            final StreamUtils.MediaCodecStream rawToFlac =
-                    new StreamUtils.MediaCodecStream(
-                            new StreamUtils.ByteBufferInputStream(audioStream),
-                            format, true /* encode */);
-            final MediaExtractorStream flacToRaw =
-                    new MediaExtractorStream(MediaFormat.MIMETYPE_AUDIO_FLAC /* inMime */,
-                            MediaFormat.MIMETYPE_AUDIO_RAW /* outMime */, rawToFlac);
-
-            // Note: the existence of signed zero (as well as NAN) may make byte
-            // comparisons invalid for floating point output. In our case, since the
-            // floats come through integer to float conversion, it does not matter.
-            assertEquals("Audio data not identical after compression",
-                audioStream.sizeInBytes(),
-                StreamUtils.compareStreams(new StreamUtils.ByteBufferInputStream(flacToRaw),
-                    new StreamUtils.ByteBufferInputStream(
-                            new StreamUtils.PcmAudioBufferStream(audioStream))));
-        }
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testFlacMovExtraction() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FusedExtractorDecoderTest[audio/flac]
-        AssetFileDescriptor testFd = getAssetFileDescriptorFor("sinesweepalac.mov");
-        MediaExtractor extractor = new MediaExtractor();
-        extractor.setDataSource(testFd.getFileDescriptor(), testFd.getStartOffset(),
-                testFd.getLength());
-        testFd.close();
-        extractor.selectTrack(0);
-        boolean lastAdvanceResult = true;
-        boolean lastReadResult = true;
-        ByteBuffer buf = ByteBuffer.allocate(2*1024*1024);
-        int totalSize = 0;
-        while(true) {
-            int n = extractor.readSampleData(buf, 0);
-            if (n > 0) {
-                totalSize += n;
-            }
-            if (!extractor.advance()) {
-                break;
-            }
-        }
-        assertTrue("could not read alac mov", totalSize > 0);
-    }
-
     @Test
     public void testProgramStreamExtraction() throws Exception {
         AssetFileDescriptor testFd = getAssetFileDescriptorFor("programstream.mpeg");
@@ -1070,29 +848,6 @@ public class MediaExtractorTest {
         extractor.release();
     }
 
-    @Ignore
-    @Test
-    public void SKIP_testAdvance() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest and
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract[*]
-        // audio-only
-        doTestAdvance("sinesweepm4a.m4a");
-        doTestAdvance("sinesweepmp3lame.mp3");
-        doTestAdvance("sinesweepmp3smpb.mp3");
-        doTestAdvance("sinesweepwav.wav");
-        doTestAdvance("sinesweepflac.flac");
-        doTestAdvance("sinesweepogg.ogg");
-        doTestAdvance("sinesweepoggmkv.mkv");
-
-        // video-only
-        doTestAdvance("swirl_144x136_mpeg4.mp4");
-        doTestAdvance("video_640x360_mp4_hevc_450kbps_no_b.mp4");
-
-        // audio+video
-        doTestAdvance("video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz.mp4");
-        doTestAdvance("video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
-    }
-
     private void readAllData() {
         // 1MB is enough for any sample.
         final ByteBuffer buf = ByteBuffer.allocate(1024*1024);
@@ -1108,46 +863,6 @@ public class MediaExtractorTest {
         do {
             mExtractor.readSampleData(buf, 0);
         } while (mExtractor.advance());
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testAC3inMP4() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac3]
-        setDataSource("testac3mp4.mp4");
-        readAllData();
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testEAC3inMP4() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/eac3]
-        setDataSource("testeac3mp4.mp4");
-        readAllData();
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testAC3inTS() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac3]
-        setDataSource("testac3ts.ts");
-        readAllData();
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testEAC3inTS() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/eac3]
-        setDataSource("testeac3ts.ts");
-        readAllData();
-    }
-
-    @Ignore
-    @Test
-    public void SKIP_testAC4inMP4() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac4]
-        setDataSource("multi0.mp4");
-        readAllData();
     }
 
     @Test
