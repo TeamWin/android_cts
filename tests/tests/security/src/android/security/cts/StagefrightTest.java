@@ -2365,6 +2365,10 @@ public class StagefrightTest {
                                         " as it is part of mainline");
                             continue;
                         }
+                        if (info.isAlias()) {
+                            Log.i(TAG, "Skipping codec " + info.getName() + " as it is an alias");
+                            continue;
+                        }
                         matchingCodecs.add(info.getName());
                         Log.i(TAG, "Found matching codec " + info.getName() + " for track " + t);
                     }
@@ -2742,6 +2746,10 @@ public class StagefrightTest {
                                     " as it is part of mainline");
                         continue;
                     }
+                    if (info.isAlias()) {
+                        Log.i(TAG, "Skipping codec " + info.getName() + " as it is an alias");
+                        continue;
+                    }
                     matchingCodecs.add(info.getName());
                 }
             } catch (IllegalArgumentException e) {
@@ -2877,6 +2885,10 @@ public class StagefrightTest {
                     if (isCodecInMainlineModule(info.getName())) {
                         Log.i(TAG, "Skipping codec " + info.getName() +
                                     " as it is part of mainline");
+                        continue;
+                    }
+                    if (info.isAlias()) {
+                        Log.i(TAG, "Skipping codec " + info.getName() + " as it is an alias");
                         continue;
                     }
                     matchingCodecs.add(info.getName());
@@ -3028,6 +3040,10 @@ public class StagefrightTest {
                     if (isCodecInMainlineModule(info.getName())) {
                         Log.i(TAG, "Skipping codec " + info.getName() +
                                     " as it is part of mainline");
+                        continue;
+                    }
+                    if (info.isAlias()) {
+                        Log.i(TAG, "Skipping codec " + info.getName() + " as it is an alias");
                         continue;
                     }
                     matchingCodecs.add(info.getName());
