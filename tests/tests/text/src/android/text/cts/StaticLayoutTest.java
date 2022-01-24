@@ -254,6 +254,21 @@ public class StaticLayoutTest {
             StaticLayout layout = builder.build();
             assertNotNull(layout);
         }
+        {
+            // setLineBreakConfig with word style(lw=phrase)
+            LineBreakConfig lineBreakConfig = new LineBreakConfig();
+            lineBreakConfig.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+
+            StaticLayout.Builder builder = StaticLayout.Builder.obtain(LAYOUT_TEXT, 0,
+                    LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
+            builder.setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY);
+            builder.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_FULL);
+            builder.setIncludePad(true);
+            builder.setIndents(null, null);
+            builder.setLineBreakConfig(lineBreakConfig);
+            StaticLayout layout = builder.build();
+            assertNotNull(layout);
+        }
     }
 
     @Test
