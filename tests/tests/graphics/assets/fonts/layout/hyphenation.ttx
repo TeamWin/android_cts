@@ -181,6 +181,8 @@
         <map code="0X0432" name="1em" /> <!-- в -->
         <map code="0X043A" name="1em" /> <!-- к -->
         <map code="0X043C" name="1em" /> <!-- м -->
+        <map code="0X043D" name="1em" /> <!-- п -->
+        <map code="0X0440" name="1em" /> <!-- р -->
         <map code="0X043D" name="1em" /> <!-- н -->
         <map code="0X0442" name="1em" /> <!-- т -->
         <map code="0X044C" name="1em" /> <!-- ь -->
