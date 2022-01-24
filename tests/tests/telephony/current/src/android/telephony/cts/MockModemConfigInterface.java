@@ -42,6 +42,7 @@ public interface MockModemConfigInterface {
     int DEFAULT_LOGICAL_MODEM2_ID = 1;
 
     // ***** Methods
+    Handler getMockModemConfigHandler();
 
     /** Broadcast all notifications */
     void notifyAllRegistrantNotifications();
@@ -88,6 +89,12 @@ public interface MockModemConfigInterface {
     void registerForSimAppDataChanged(Handler h, int what, Object obj);
 
     void unregisterForSimAppDataChanged(Handler h);
+
+    // ***** IRadioNetwork
+    /** Register/unregister notification handler for service status changed */
+    void registerForServiceStateChanged(Handler h, int what, Object obj);
+
+    void unregisterForServiceStateChanged(Handler h);
 
     /**
      * Sets the latest radio power state of modem

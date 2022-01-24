@@ -46,6 +46,7 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** Events
     static final int EVENT_SET_RADIO_POWER = 1;
     static final int EVENT_CHANGE_SIM_PROFILE = 2;
+    static final int EVENT_SERVICE_STATE_CHANGE = 3;
 
     // ***** Modem config values
     private String mBasebandVersion = MockModemConfigInterface.DEFAULT_BASEBAND_VERSION;
@@ -76,6 +77,9 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     // ***** IRadioSim RegistrantLists
     private RegistrantList mCardStatusChangedRegistrants = new RegistrantList();
     private RegistrantList mSimAppDataChangedRegistrants = new RegistrantList();
+
+    // ***** IRadioNetwork RegistrantLists
+    private RegistrantList mServiceStateChangedRegistrants = new RegistrantList();
 
     public MockModemConfigBase(Context context, int instanceId, int numOfSim, int numOfPhone) {
         mContext = context;
@@ -145,9 +149,19 @@ public class MockModemConfigBase implements MockModemConfigInterface {
                             Log.e(mTAG, "Load Sim card failed.");
                         }
                         break;
+                    case EVENT_SERVICE_STATE_CHANGE:
+                        Log.d(mTAG, "EVENT_SERVICE_STATE_CHANGE");
+                        // Notify object MockNetworkService
+                        mServiceStateChangedRegistrants.notifyRegistrants(
+                                new AsyncResult(null, msg.obj, null));
+                        break;
                 }
             }
         }
+    }
+
+    public Handler getMockModemConfigHandler() {
+        return mHandler;
     }
 
     private void setDefaultConfigValue() {
@@ -380,6 +394,17 @@ public class MockModemConfigBase implements MockModemConfigInterface {
     @Override
     public void unregisterForSimAppDataChanged(Handler h) {
         mSimAppDataChangedRegistrants.remove(h);
+    }
+
+    // ***** IRadioNetwork notification implementation
+    @Override
+    public void registerForServiceStateChanged(Handler h, int what, Object obj) {
+        mServiceStateChangedRegistrants.addUnique(h, what, obj);
+    }
+
+    @Override
+    public void unregisterForServiceStateChanged(Handler h) {
+        mServiceStateChangedRegistrants.remove(h);
     }
 
     // ***** IRadioConfig set APIs implementation

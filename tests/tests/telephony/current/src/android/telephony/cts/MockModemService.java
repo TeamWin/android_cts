@@ -115,7 +115,8 @@ public class MockModemService extends Service {
         // TODO: Support DSDS
         sIRadioModemImpl = new IRadioModemImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
         sIRadioSimImpl = new IRadioSimImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
-        sIRadioNetworkImpl = new IRadioNetworkImpl(this);
+        sIRadioNetworkImpl =
+                new IRadioNetworkImpl(this, sMockModemConfigInterfaces, DEFAULT_SUB_ID);
         sIRadioDataImpl = new IRadioDataImpl(this);
         sIRadioMessagingImpl = new IRadioMessagingImpl(this);
         sIRadioVoiceImpl = new IRadioVoiceImpl(this);
