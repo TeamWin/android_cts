@@ -151,9 +151,18 @@ public class WifiNl80211ManagerTest {
         // Register listener and unregister listener for API coverage only.
         // Since current cts don't have sufficient permission to call WifiNl80211Manager API.
         // Assert register fail because the CTS don't have sufficient permission to call
-        // WifiNl80211Manager API which are guarded by selinux.
+        // WifiNl80211Manager API which is guarded by selinux.
         assertFalse(manager.registerCountryCodeChangedListener(executor,
                 testCountryCodeChangeListener));
         manager.unregisterCountryCodeChangedListener(testCountryCodeChangeListener);
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Test
+    public void testNotifyCountryCodeChanged() {
+        WifiNl80211Manager manager = mContext.getSystemService(WifiNl80211Manager.class);
+        // Assert fail because the CTS don't have sufficient permission to call
+        // WifiNl80211Manager API which is guarded by selinux.
+        assertFalse(manager.notifyCountryCodeChanged());
     }
 }
