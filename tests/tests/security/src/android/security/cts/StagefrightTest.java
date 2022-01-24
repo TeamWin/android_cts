@@ -94,6 +94,8 @@ import org.junit.runner.RunWith;
 import static org.junit.Assume.*;
 import static org.junit.Assert.*;
 
+import static org.hamcrest.Matchers.is;
+
 /**
  * Verify that the device is not vulnerable to any known Stagefright
  * vulnerabilities.
@@ -2638,9 +2640,8 @@ public class StagefrightTest {
         } catch (InterruptedException e) {
             fail("operation was interrupted");
         }
-        if (t.isAlive()) {
-            fail("operation not completed within timeout of " + timeout + "ms");
-        }
+        assumeThat("operation not completed within timeout of " + timeout + "ms", t.isAlive(),
+                   is(false));
     }
 
     private void releaseCodec(final MediaCodec codec) {
