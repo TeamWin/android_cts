@@ -1001,7 +1001,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         } catch (Exception ex) {
         } finally {
             // clean up
-            mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
+            unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
             uiAutomation.dropShellPermissionIdentity();
         }
         TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
@@ -1581,6 +1581,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    private void unregisterLocalOnlyHotspotSoftApCallback(TestSoftApCallback lohsSoftApCallback) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
+        } else {
+            mWifiManager.unregisterSoftApCallback(lohsSoftApCallback);
+        }
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testStartLocalOnlyHotspotWithSupportedBand() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -1684,7 +1693,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         } finally {
             // clean up
             stopLocalOnlyHotspot(callback, wifiEnabled);
-            mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
+            unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -2213,7 +2222,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private void verifyLohsRegisterSoftApCallback(TestExecutor executor,
             TestSoftApCallback callback) throws Exception {
         // Register callback to get SoftApCapability
-        mWifiManager.registerLocalOnlyHotspotSoftApCallback(executor, callback);
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            mWifiManager.registerLocalOnlyHotspotSoftApCallback(executor, callback);
+        } else {
+            mWifiManager.registerSoftApCallback(executor, callback);
+        }
         PollingCheck.check(
                 "SoftAp register failed!", 5_000,
                 () -> {

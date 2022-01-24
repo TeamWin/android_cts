@@ -17,6 +17,7 @@ package android {
     field public static final String ACCESS_MEDIA_LOCATION = "android.permission.ACCESS_MEDIA_LOCATION";
     field public static final String ACCESS_NETWORK_STATE = "android.permission.ACCESS_NETWORK_STATE";
     field public static final String ACCESS_NOTIFICATION_POLICY = "android.permission.ACCESS_NOTIFICATION_POLICY";
+    field public static final String ACCESS_SUPPLEMENTAL_APIS = "android.permission.ACCESS_SUPPLEMENTAL_APIS";
     field public static final String ACCESS_WIFI_STATE = "android.permission.ACCESS_WIFI_STATE";
     field public static final String ACCOUNT_MANAGER = "android.permission.ACCOUNT_MANAGER";
     field public static final String ACTIVITY_RECOGNITION = "android.permission.ACTIVITY_RECOGNITION";
@@ -971,6 +972,7 @@ package android {
     field public static final int listSeparatorTextViewStyle = 16843272; // 0x1010208
     field public static final int listViewStyle = 16842868; // 0x1010074
     field public static final int listViewWhiteStyle = 16842869; // 0x1010075
+    field public static final int localeConfig;
     field public static final int lockTaskMode = 16844013; // 0x10104ed
     field public static final int logo = 16843454; // 0x10102be
     field public static final int logoDescription = 16844009; // 0x10104e9
@@ -1312,6 +1314,8 @@ package android {
     field public static final int shouldDisableView = 16843246; // 0x10101ee
     field public static final int shouldUseDefaultUnfoldTransition = 16844364; // 0x101064c
     field public static final int showAsAction = 16843481; // 0x10102d9
+    field public static final int showBackground;
+    field public static final int showClockAndComplications;
     field public static final int showDefault = 16843258; // 0x10101fa
     field public static final int showDividers = 16843561; // 0x1010329
     field public static final int showForAllUsers = 16844015; // 0x10104ef
@@ -2258,6 +2262,7 @@ package android {
     field public static final int TextAppearance = 16973886; // 0x103003e
     field public static final int TextAppearance_DeviceDefault = 16974253; // 0x10301ad
     field public static final int TextAppearance_DeviceDefault_DialogWindowTitle = 16974264; // 0x10301b8
+    field public static final int TextAppearance_DeviceDefault_Headline;
     field public static final int TextAppearance_DeviceDefault_Inverse = 16974254; // 0x10301ae
     field public static final int TextAppearance_DeviceDefault_Large = 16974255; // 0x10301af
     field public static final int TextAppearance_DeviceDefault_Large_Inverse = 16974256; // 0x10301b0
@@ -3130,11 +3135,13 @@ package android.accessibilityservice {
     method public void addListener(@NonNull android.accessibilityservice.AccessibilityService.MagnificationController.OnMagnificationChangedListener, @Nullable android.os.Handler);
     method public float getCenterX();
     method public float getCenterY();
+    method @NonNull public android.graphics.Region getCurrentMagnificationRegion();
     method @Nullable public android.accessibilityservice.MagnificationConfig getMagnificationConfig();
     method @NonNull public android.graphics.Region getMagnificationRegion();
     method public float getScale();
     method public boolean removeListener(@NonNull android.accessibilityservice.AccessibilityService.MagnificationController.OnMagnificationChangedListener);
     method public boolean reset(boolean);
+    method public boolean resetCurrentMagnification(boolean);
     method public boolean setCenter(float, float, boolean);
     method public boolean setMagnificationConfig(@NonNull android.accessibilityservice.MagnificationConfig, boolean);
     method public boolean setScale(float, boolean);
@@ -3142,6 +3149,7 @@ package android.accessibilityservice {
 
   public static interface AccessibilityService.MagnificationController.OnMagnificationChangedListener {
     method public void onMagnificationChanged(@NonNull android.accessibilityservice.AccessibilityService.MagnificationController, @NonNull android.graphics.Region, float, float, float);
+    method public default void onMagnificationChanged(@NonNull android.accessibilityservice.AccessibilityService.MagnificationController, @NonNull android.graphics.Region, @NonNull android.accessibilityservice.MagnificationConfig);
   }
 
   public static final class AccessibilityService.ScreenshotResult {
@@ -5691,6 +5699,17 @@ package android.app {
     method @Deprecated public android.view.Window startActivity(String, android.content.Intent);
   }
 
+  public class LocaleConfig {
+    ctor public LocaleConfig(@NonNull android.content.Context);
+    method public int getStatus();
+    method @Nullable public android.os.LocaleList getSupportedLocales();
+    field public static final int STATUS_NOT_SPECIFIED = 1; // 0x1
+    field public static final int STATUS_PARSING_FAILED = 2; // 0x2
+    field public static final int STATUS_SUCCESS = 0; // 0x0
+    field public static final String TAG_LOCALE = "locale";
+    field public static final String TAG_LOCALE_CONFIG = "locale-config";
+  }
+
   public class LocaleManager {
     method @NonNull public android.os.LocaleList getApplicationLocales();
     method public void setApplicationLocales(@NonNull android.os.LocaleList);
@@ -7284,6 +7303,7 @@ package android.app.admin {
     method public int getMaximumFailedPasswordsForWipe(@Nullable android.content.ComponentName);
     method public long getMaximumTimeToLock(@Nullable android.content.ComponentName);
     method @NonNull public java.util.List<java.lang.String> getMeteredDataDisabledPackages(@NonNull android.content.ComponentName);
+    method public int getMinimumRequiredWifiSecurityLevel();
     method @RequiresPermission(value=android.Manifest.permission.READ_NEARBY_STREAMING_POLICY, conditional=true) public int getNearbyAppStreamingPolicy();
     method @RequiresPermission(value=android.Manifest.permission.READ_NEARBY_STREAMING_POLICY, conditional=true) public int getNearbyNotificationStreamingPolicy();
     method @Deprecated @ColorInt public int getOrganizationColor(@NonNull android.content.ComponentName);
@@ -7324,6 +7344,7 @@ package android.app.admin {
     method @NonNull public java.util.List<java.lang.String> getUserControlDisabledPackages(@NonNull android.content.ComponentName);
     method @NonNull public android.os.Bundle getUserRestrictions(@NonNull android.content.ComponentName);
     method @Nullable public String getWifiMacAddress(@NonNull android.content.ComponentName);
+    method @Nullable public android.app.admin.WifiSsidPolicy getWifiSsidPolicy();
     method public boolean grantKeyPairToApp(@Nullable android.content.ComponentName, @NonNull String, @NonNull String);
     method public boolean grantKeyPairToWifiAuth(@NonNull String);
     method public boolean hasCaCertInstalled(@Nullable android.content.ComponentName, byte[]);
@@ -7428,6 +7449,7 @@ package android.app.admin {
     method public void setMaximumFailedPasswordsForWipe(@NonNull android.content.ComponentName, int);
     method public void setMaximumTimeToLock(@NonNull android.content.ComponentName, long);
     method @NonNull public java.util.List<java.lang.String> setMeteredDataDisabledPackages(@NonNull android.content.ComponentName, @NonNull java.util.List<java.lang.String>);
+    method public void setMinimumRequiredWifiSecurityLevel(int);
     method public void setNearbyAppStreamingPolicy(int);
     method public void setNearbyNotificationStreamingPolicy(int);
     method public void setNetworkLoggingEnabled(@Nullable android.content.ComponentName, boolean);
@@ -7476,6 +7498,7 @@ package android.app.admin {
     method public void setUsbDataSignalingEnabled(boolean);
     method public void setUserControlDisabledPackages(@NonNull android.content.ComponentName, @NonNull java.util.List<java.lang.String>);
     method public void setUserIcon(@NonNull android.content.ComponentName, android.graphics.Bitmap);
+    method public void setWifiSsidPolicy(@Nullable android.app.admin.WifiSsidPolicy);
     method public int startUserInBackground(@NonNull android.content.ComponentName, @NonNull android.os.UserHandle);
     method public int stopUser(@NonNull android.content.ComponentName, @NonNull android.os.UserHandle);
     method public boolean switchUser(@NonNull android.content.ComponentName, @Nullable android.os.UserHandle);
@@ -7491,6 +7514,7 @@ package android.app.admin {
     field public static final String ACTION_CHECK_POLICY_COMPLIANCE = "android.app.action.CHECK_POLICY_COMPLIANCE";
     field public static final String ACTION_DEVICE_ADMIN_SERVICE = "android.app.action.DEVICE_ADMIN_SERVICE";
     field public static final String ACTION_DEVICE_OWNER_CHANGED = "android.app.action.DEVICE_OWNER_CHANGED";
+    field public static final String ACTION_DEVICE_POLICY_RESOURCE_UPDATED = "android.app.action.DEVICE_POLICY_RESOURCE_UPDATED";
     field public static final String ACTION_GET_PROVISIONING_MODE = "android.app.action.GET_PROVISIONING_MODE";
     field public static final String ACTION_MANAGED_PROFILE_PROVISIONED = "android.app.action.MANAGED_PROFILE_PROVISIONED";
     field public static final String ACTION_PROFILE_OWNER_CHANGED = "android.app.action.PROFILE_OWNER_CHANGED";
@@ -7566,6 +7590,8 @@ package android.app.admin {
     field public static final String EXTRA_PROVISIONING_WIFI_SECURITY_TYPE = "android.app.extra.PROVISIONING_WIFI_SECURITY_TYPE";
     field public static final String EXTRA_PROVISIONING_WIFI_SSID = "android.app.extra.PROVISIONING_WIFI_SSID";
     field public static final String EXTRA_PROVISIONING_WIFI_USER_CERTIFICATE = "android.app.extra.PROVISIONING_WIFI_USER_CERTIFICATE";
+    field public static final String EXTRA_RESOURCE_ID = "android.app.extra.RESOURCE_ID";
+    field public static final String EXTRA_RESOURCE_TYPE_DRAWABLE = "android.app.extra.RESOURCE_TYPE_DRAWABLE";
     field public static final int FLAG_EVICT_CREDENTIAL_ENCRYPTION_KEY = 1; // 0x1
     field public static final int FLAG_MANAGED_CAN_ACCESS_PARENT = 2; // 0x2
     field public static final int FLAG_PARENT_CAN_ACCESS_MANAGED = 1; // 0x1
@@ -7640,6 +7666,10 @@ package android.app.admin {
     field public static final int RESET_PASSWORD_DO_NOT_ASK_CREDENTIALS_ON_BOOT = 2; // 0x2
     field public static final int RESET_PASSWORD_REQUIRE_ENTRY = 1; // 0x1
     field public static final int SKIP_SETUP_WIZARD = 1; // 0x1
+    field public static final int WIFI_SECURITY_ENTERPRISE_192 = 3; // 0x3
+    field public static final int WIFI_SECURITY_ENTERPRISE_EAP = 2; // 0x2
+    field public static final int WIFI_SECURITY_OPEN = 0; // 0x0
+    field public static final int WIFI_SECURITY_PERSONAL = 1; // 0x1
     field public static final int WIPE_EUICC = 4; // 0x4
     field public static final int WIPE_EXTERNAL_STORAGE = 1; // 0x1
     field public static final int WIPE_RESET_PROTECTION_DATA = 2; // 0x2
@@ -7796,6 +7826,15 @@ package android.app.admin {
     method @NonNull public java.util.List<java.lang.Integer> getReasons();
     method public void writeToParcel(@NonNull android.os.Parcel, int);
     field @NonNull public static final android.os.Parcelable.Creator<android.app.admin.UnsafeStateException> CREATOR;
+  }
+
+  public class WifiSsidPolicy {
+    method @NonNull public static android.app.admin.WifiSsidPolicy createAllowlistPolicy(@NonNull java.util.Set<java.lang.String>);
+    method @NonNull public static android.app.admin.WifiSsidPolicy createDenylistPolicy(@NonNull java.util.Set<java.lang.String>);
+    method public int getPolicyType();
+    method @NonNull public java.util.Set<java.lang.String> getSsids();
+    field public static final int WIFI_SSID_POLICY_TYPE_ALLOWLIST = 0; // 0x0
+    field public static final int WIFI_SSID_POLICY_TYPE_DENYLIST = 1; // 0x1
   }
 
 }
@@ -9158,6 +9197,7 @@ package android.bluetooth {
     field public static final int AUDIO = 2097152; // 0x200000
     field public static final int CAPTURE = 524288; // 0x80000
     field public static final int INFORMATION = 8388608; // 0x800000
+    field public static final int LE_AUDIO = 16384; // 0x4000
     field public static final int LIMITED_DISCOVERABILITY = 8192; // 0x2000
     field public static final int NETWORKING = 131072; // 0x20000
     field public static final int OBJECT_TRANSFER = 1048576; // 0x100000
@@ -9737,13 +9777,14 @@ package android.bluetooth {
     field public static final int ERROR_BLUETOOTH_NOT_ALLOWED = 2; // 0x2
     field public static final int ERROR_BLUETOOTH_NOT_ENABLED = 1; // 0x1
     field public static final int ERROR_DEVICE_NOT_BONDED = 3; // 0x3
-    field public static final int ERROR_FEATURE_NOT_SUPPORTED = 10; // 0xa
-    field public static final int ERROR_GATT_WRITE_NOT_ALLOWED = 101; // 0x65
-    field public static final int ERROR_GATT_WRITE_REQUEST_BUSY = 102; // 0x66
+    field public static final int ERROR_GATT_WRITE_NOT_ALLOWED = 200; // 0xc8
+    field public static final int ERROR_GATT_WRITE_REQUEST_BUSY = 201; // 0xc9
     field public static final int ERROR_MISSING_BLUETOOTH_CONNECT_PERMISSION = 6; // 0x6
     field public static final int ERROR_MISSING_BLUETOOTH_PRIVILEGED_PERMISSION = 8; // 0x8
     field public static final int ERROR_PROFILE_SERVICE_NOT_BOUND = 9; // 0x9
     field public static final int ERROR_UNKNOWN = 2147483647; // 0x7fffffff
+    field public static final int FEATURE_NOT_SUPPORTED = 11; // 0xb
+    field public static final int FEATURE_SUPPORTED = 10; // 0xa
     field public static final int SUCCESS = 0; // 0x0
   }
 
@@ -10766,7 +10807,7 @@ package android.content {
     method public boolean bindIsolatedService(@NonNull @RequiresPermission android.content.Intent, int, @NonNull String, @NonNull java.util.concurrent.Executor, @NonNull android.content.ServiceConnection);
     method public abstract boolean bindService(@RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int);
     method public boolean bindService(@NonNull @RequiresPermission android.content.Intent, int, @NonNull java.util.concurrent.Executor, @NonNull android.content.ServiceConnection);
-    method @RequiresPermission(anyOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.INTERACT_ACROSS_PROFILES}) public boolean bindServiceAsUser(@NonNull @RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int, @NonNull android.os.UserHandle);
+    method @RequiresPermission(anyOf={"android.permission.INTERACT_ACROSS_USERS", "android.permission.INTERACT_ACROSS_USERS_FULL", android.Manifest.permission.INTERACT_ACROSS_PROFILES}, conditional=true) public boolean bindServiceAsUser(@NonNull @RequiresPermission android.content.Intent, @NonNull android.content.ServiceConnection, int, @NonNull android.os.UserHandle);
     method @CheckResult(suggest="#enforceCallingOrSelfPermission(String,String)") public abstract int checkCallingOrSelfPermission(@NonNull String);
     method @CheckResult(suggest="#enforceCallingOrSelfUriPermission(Uri,int,String)") public abstract int checkCallingOrSelfUriPermission(android.net.Uri, int);
     method @NonNull public int[] checkCallingOrSelfUriPermissions(@NonNull java.util.List<android.net.Uri>, int);
@@ -10870,6 +10911,8 @@ package android.content {
     method @Deprecated @RequiresPermission(allOf={"android.permission.INTERACT_ACROSS_USERS", android.Manifest.permission.BROADCAST_STICKY}) public abstract void removeStickyBroadcastAsUser(@RequiresPermission android.content.Intent, android.os.UserHandle);
     method public abstract void revokeUriPermission(android.net.Uri, int);
     method public abstract void revokeUriPermission(String, android.net.Uri, int);
+    method public void selfRevokePermission(@NonNull String);
+    method public void selfRevokePermissions(@NonNull java.util.Collection<java.lang.String>);
     method public abstract void sendBroadcast(@RequiresPermission android.content.Intent);
     method public abstract void sendBroadcast(@RequiresPermission android.content.Intent, @Nullable String);
     method @RequiresPermission("android.permission.INTERACT_ACROSS_USERS") public abstract void sendBroadcastAsUser(@RequiresPermission android.content.Intent, android.os.UserHandle);
@@ -12756,11 +12799,16 @@ package android.content.pm {
     method public void writeToParcel(android.os.Parcel, int);
     field public static final android.os.Parcelable.Creator<android.content.pm.PackageInstaller.SessionInfo> CREATOR;
     field public static final int INVALID_ID = -1; // 0xffffffff
-    field public static final int STAGED_SESSION_ACTIVATION_FAILED = 2; // 0x2
-    field public static final int STAGED_SESSION_CONFLICT = 4; // 0x4
-    field public static final int STAGED_SESSION_NO_ERROR = 0; // 0x0
-    field public static final int STAGED_SESSION_UNKNOWN = 3; // 0x3
-    field public static final int STAGED_SESSION_VERIFICATION_FAILED = 1; // 0x1
+    field public static final int SESSION_ACTIVATION_FAILED = 2; // 0x2
+    field public static final int SESSION_CONFLICT = 4; // 0x4
+    field public static final int SESSION_NO_ERROR = 0; // 0x0
+    field public static final int SESSION_UNKNOWN_ERROR = 3; // 0x3
+    field public static final int SESSION_VERIFICATION_FAILED = 1; // 0x1
+    field @Deprecated public static final int STAGED_SESSION_ACTIVATION_FAILED = 2; // 0x2
+    field @Deprecated public static final int STAGED_SESSION_CONFLICT = 4; // 0x4
+    field @Deprecated public static final int STAGED_SESSION_NO_ERROR = 0; // 0x0
+    field @Deprecated public static final int STAGED_SESSION_UNKNOWN = 3; // 0x3
+    field @Deprecated public static final int STAGED_SESSION_VERIFICATION_FAILED = 1; // 0x1
   }
 
   public static class PackageInstaller.SessionParams implements android.os.Parcelable {
@@ -15215,6 +15263,11 @@ package android.graphics {
 
   public class BitmapShader extends android.graphics.Shader {
     ctor public BitmapShader(@NonNull android.graphics.Bitmap, @NonNull android.graphics.Shader.TileMode, @NonNull android.graphics.Shader.TileMode);
+    method public int getFilterMode();
+    method public void setFilterMode(int);
+    field public static final int FILTER_MODE_DEFAULT = 0; // 0x0
+    field public static final int FILTER_MODE_LINEAR = 2; // 0x2
+    field public static final int FILTER_MODE_NEAREST = 1; // 0x1
   }
 
   public enum BlendMode {
@@ -15972,6 +16025,8 @@ package android.graphics {
     method public String getFontFeatureSettings();
     method public float getFontMetrics(android.graphics.Paint.FontMetrics);
     method public android.graphics.Paint.FontMetrics getFontMetrics();
+    method public void getFontMetricsInt(@NonNull CharSequence, @IntRange(from=0) int, @IntRange(from=0) int, @IntRange(from=0) int, @IntRange(from=0) int, boolean, @NonNull android.graphics.Paint.FontMetricsInt);
+    method public void getFontMetricsInt(@NonNull char[], @IntRange(from=0) int, @IntRange(from=0) int, @IntRange(from=0) int, @IntRange(from=0) int, boolean, @NonNull android.graphics.Paint.FontMetricsInt);
     method public int getFontMetricsInt(android.graphics.Paint.FontMetricsInt);
     method public android.graphics.Paint.FontMetricsInt getFontMetricsInt();
     method public float getFontSpacing();
@@ -16619,6 +16674,7 @@ package android.graphics {
     method public void setFloatUniform(@NonNull String, float, float, float);
     method public void setFloatUniform(@NonNull String, float, float, float, float);
     method public void setFloatUniform(@NonNull String, @NonNull float[]);
+    method public void setInputBuffer(@NonNull String, @NonNull android.graphics.BitmapShader);
     method public void setInputShader(@NonNull String, @NonNull android.graphics.Shader);
     method public void setIntUniform(@NonNull String, int);
     method public void setIntUniform(@NonNull String, int, int);
@@ -17999,6 +18055,7 @@ package android.hardware {
     field public static final String STRING_TYPE_GRAVITY = "android.sensor.gravity";
     field public static final String STRING_TYPE_GYROSCOPE = "android.sensor.gyroscope";
     field public static final String STRING_TYPE_GYROSCOPE_UNCALIBRATED = "android.sensor.gyroscope_uncalibrated";
+    field public static final String STRING_TYPE_HEAD_TRACKER = "android.sensor.head_tracker";
     field public static final String STRING_TYPE_HEART_BEAT = "android.sensor.heart_beat";
     field public static final String STRING_TYPE_HEART_RATE = "android.sensor.heart_rate";
     field public static final String STRING_TYPE_HINGE_ANGLE = "android.sensor.hinge_angle";
@@ -18029,6 +18086,7 @@ package android.hardware {
     field public static final int TYPE_GRAVITY = 9; // 0x9
     field public static final int TYPE_GYROSCOPE = 4; // 0x4
     field public static final int TYPE_GYROSCOPE_UNCALIBRATED = 16; // 0x10
+    field public static final int TYPE_HEAD_TRACKER = 37; // 0x25
     field public static final int TYPE_HEART_BEAT = 31; // 0x1f
     field public static final int TYPE_HEART_RATE = 21; // 0x15
     field public static final int TYPE_HINGE_ANGLE = 36; // 0x24
@@ -18091,6 +18149,7 @@ package android.hardware {
     method public void onFlushCompleted(android.hardware.Sensor);
     method public void onSensorAdditionalInfo(android.hardware.SensorAdditionalInfo);
     method public void onSensorChanged(android.hardware.SensorEvent);
+    method public void onSensorDiscontinuity(@NonNull android.hardware.Sensor);
   }
 
   public interface SensorEventListener {
@@ -18314,10 +18373,12 @@ package android.hardware.biometrics {
     ctor public BiometricPrompt.CryptoObject(@NonNull java.security.Signature);
     ctor public BiometricPrompt.CryptoObject(@NonNull javax.crypto.Cipher);
     ctor public BiometricPrompt.CryptoObject(@NonNull javax.crypto.Mac);
-    ctor public BiometricPrompt.CryptoObject(@NonNull android.security.identity.IdentityCredential);
+    ctor @Deprecated public BiometricPrompt.CryptoObject(@NonNull android.security.identity.IdentityCredential);
+    ctor public BiometricPrompt.CryptoObject(@NonNull android.security.identity.PresentationSession);
     method public javax.crypto.Cipher getCipher();
-    method @Nullable public android.security.identity.IdentityCredential getIdentityCredential();
+    method @Deprecated @Nullable public android.security.identity.IdentityCredential getIdentityCredential();
     method public javax.crypto.Mac getMac();
+    method @Nullable public android.security.identity.PresentationSession getPresentationSession();
     method public java.security.Signature getSignature();
   }
 
@@ -19735,6 +19796,7 @@ package android.inputmethodservice {
   @UiContext public class InputMethodService extends android.inputmethodservice.AbstractInputMethodService {
     ctor public InputMethodService();
     method @Deprecated public boolean enableHardwareAcceleration();
+    method public final void finishStylusHandwriting();
     method public int getBackDisposition();
     method public int getCandidatesHiddenVisibility();
     method public android.view.inputmethod.InputBinding getCurrentInputBinding();
@@ -19744,6 +19806,7 @@ package android.inputmethodservice {
     method @Deprecated public int getInputMethodWindowRecommendedHeight();
     method public android.view.LayoutInflater getLayoutInflater();
     method public int getMaxWidth();
+    method @Nullable public final android.view.Window getStylusHandwritingWindow();
     method public CharSequence getTextForImeAction(int);
     method public android.app.Dialog getWindow();
     method public void hideStatusIcon();
@@ -19774,6 +19837,7 @@ package android.inputmethodservice {
     method public void onFinishCandidatesView(boolean);
     method public void onFinishInput();
     method public void onFinishInputView(boolean);
+    method public void onFinishStylusHandwriting();
     method public void onInitializeInterface();
     method public boolean onInlineSuggestionsResponse(@NonNull android.view.inputmethod.InlineSuggestionsResponse);
     method public boolean onKeyDown(int, android.view.KeyEvent);
@@ -19784,6 +19848,7 @@ package android.inputmethodservice {
     method public void onStartCandidatesView(android.view.inputmethod.EditorInfo, boolean);
     method public void onStartInput(android.view.inputmethod.EditorInfo, boolean);
     method public void onStartInputView(android.view.inputmethod.EditorInfo, boolean);
+    method public boolean onStartStylusHandwriting();
     method public void onUnbindInput();
     method @Deprecated public void onUpdateCursor(android.graphics.Rect);
     method public void onUpdateCursorAnchorInfo(android.view.inputmethod.CursorAnchorInfo);
@@ -20129,6 +20194,24 @@ package android.location {
     field @NonNull public static final android.os.Parcelable.Creator<android.location.GnssAntennaInfo.SphericalCorrections> CREATOR;
   }
 
+  public final class GnssAutomaticGainControl implements android.os.Parcelable {
+    method public int describeContents();
+    method @IntRange(from=0) public long getCarrierFrequencyHz();
+    method public int getConstellationType();
+    method @FloatRange(from=0xffffd8f0, to=10000) public double getLevelDb();
+    method public void writeToParcel(@NonNull android.os.Parcel, int);
+    field @NonNull public static final android.os.Parcelable.Creator<android.location.GnssAutomaticGainControl> CREATOR;
+  }
+
+  public static final class GnssAutomaticGainControl.Builder {
+    ctor public GnssAutomaticGainControl.Builder();
+    ctor public GnssAutomaticGainControl.Builder(@NonNull android.location.GnssAutomaticGainControl);
+    method @NonNull public android.location.GnssAutomaticGainControl build();
+    method @NonNull public android.location.GnssAutomaticGainControl.Builder setCarrierFrequencyHz(@IntRange(from=0) long);
+    method @NonNull public android.location.GnssAutomaticGainControl.Builder setConstellationType(int);
+    method @NonNull public android.location.GnssAutomaticGainControl.Builder setLevelDb(@FloatRange(from=0xffffd8f0, to=10000) double);
+  }
+
   public final class GnssCapabilities implements android.os.Parcelable {
     method public int describeContents();
     method public boolean hasAntennaInfo();
@@ -20185,7 +20268,7 @@ package android.location {
     method public double getAccumulatedDeltaRangeMeters();
     method public int getAccumulatedDeltaRangeState();
     method public double getAccumulatedDeltaRangeUncertaintyMeters();
-    method public double getAutomaticGainControlLevelDb();
+    method @Deprecated public double getAutomaticGainControlLevelDb();
     method @FloatRange(from=0, to=63) public double getBasebandCn0DbHz();
     method @Deprecated public long getCarrierCycles();
     method public float getCarrierFrequencyHz();
@@ -20207,7 +20290,7 @@ package android.location {
     method public int getState();
     method public int getSvid();
     method public double getTimeOffsetNanos();
-    method public boolean hasAutomaticGainControlLevelDb();
+    method @Deprecated public boolean hasAutomaticGainControlLevelDb();
     method public boolean hasBasebandCn0DbHz();
     method @Deprecated public boolean hasCarrierCycles();
     method public boolean hasCarrierFrequencyHz();
@@ -20269,9 +20352,19 @@ package android.location {
   public final class GnssMeasurementsEvent implements android.os.Parcelable {
     method public int describeContents();
     method @NonNull public android.location.GnssClock getClock();
+    method @NonNull public java.util.Collection<android.location.GnssAutomaticGainControl> getGnssAutomaticGainControls();
     method @NonNull public java.util.Collection<android.location.GnssMeasurement> getMeasurements();
     method public void writeToParcel(android.os.Parcel, int);
     field @NonNull public static final android.os.Parcelable.Creator<android.location.GnssMeasurementsEvent> CREATOR;
+  }
+
+  public static final class GnssMeasurementsEvent.Builder {
+    ctor public GnssMeasurementsEvent.Builder();
+    ctor public GnssMeasurementsEvent.Builder(@NonNull android.location.GnssMeasurementsEvent);
+    method @NonNull public android.location.GnssMeasurementsEvent build();
+    method @NonNull public android.location.GnssMeasurementsEvent.Builder setClock(@NonNull android.location.GnssClock);
+    method @NonNull public android.location.GnssMeasurementsEvent.Builder setGnssAutomaticGainControls(@NonNull java.util.Collection<android.location.GnssAutomaticGainControl>);
+    method @NonNull public android.location.GnssMeasurementsEvent.Builder setMeasurements(@NonNull java.util.Collection<android.location.GnssMeasurement>);
   }
 
   public abstract static class GnssMeasurementsEvent.Callback {
@@ -20945,6 +21038,7 @@ package android.media {
     method @NonNull public java.util.List<android.media.AudioPlaybackConfiguration> getActivePlaybackConfigurations();
     method @NonNull public java.util.List<android.media.AudioRecordingConfiguration> getActiveRecordingConfigurations();
     method public int getAllowedCapturePolicy();
+    method @NonNull public java.util.List<android.media.AudioDeviceInfo> getAudioDevicesForAttributes(@NonNull android.media.AudioAttributes);
     method public int getAudioHwSyncForSession(int);
     method @NonNull public java.util.List<android.media.AudioDeviceInfo> getAvailableCommunicationDevices();
     method @Nullable public android.media.AudioDeviceInfo getCommunicationDevice();
@@ -21886,14 +21980,27 @@ package android.media {
     method public android.media.Image acquireNextImage();
     method public void close();
     method public void discardFreeBuffers();
+    method public long getDataSpace();
+    method public int getHardwareBufferFormat();
     method public int getHeight();
     method public int getImageFormat();
     method public int getMaxImages();
     method public android.view.Surface getSurface();
+    method public long getUsage();
     method public int getWidth();
     method @NonNull public static android.media.ImageReader newInstance(@IntRange(from=1) int, @IntRange(from=1) int, int, @IntRange(from=1) int);
     method @NonNull public static android.media.ImageReader newInstance(@IntRange(from=1) int, @IntRange(from=1) int, int, @IntRange(from=1) int, long);
     method public void setOnImageAvailableListener(android.media.ImageReader.OnImageAvailableListener, android.os.Handler);
+  }
+
+  public static final class ImageReader.Builder {
+    ctor public ImageReader.Builder(@IntRange(from=1) int, @IntRange(from=1) int);
+    method @NonNull public android.media.ImageReader build();
+    method @NonNull public android.media.ImageReader.Builder setDefaultDataSpace(long);
+    method @NonNull public android.media.ImageReader.Builder setDefaultHardwareBufferFormat(int);
+    method @NonNull public android.media.ImageReader.Builder setImageFormat(int);
+    method @NonNull public android.media.ImageReader.Builder setMaxImages(int);
+    method @NonNull public android.media.ImageReader.Builder setUsage(long);
   }
 
   public static interface ImageReader.OnImageAvailableListener {
@@ -27356,11 +27463,13 @@ package android.net {
     method @NonNull public android.net.VpnService.Builder addDnsServer(@NonNull java.net.InetAddress);
     method @NonNull public android.net.VpnService.Builder addDnsServer(@NonNull String);
     method @NonNull public android.net.VpnService.Builder addRoute(@NonNull java.net.InetAddress, int);
+    method @NonNull public android.net.VpnService.Builder addRoute(@NonNull android.net.IpPrefix);
     method @NonNull public android.net.VpnService.Builder addRoute(@NonNull String, int);
     method @NonNull public android.net.VpnService.Builder addSearchDomain(@NonNull String);
     method @NonNull public android.net.VpnService.Builder allowBypass();
     method @NonNull public android.net.VpnService.Builder allowFamily(int);
     method @Nullable public android.os.ParcelFileDescriptor establish();
+    method @NonNull public android.net.VpnService.Builder excludeRoute(@NonNull android.net.IpPrefix);
     method @NonNull public android.net.VpnService.Builder setBlocking(boolean);
     method @NonNull public android.net.VpnService.Builder setConfigureIntent(@NonNull android.app.PendingIntent);
     method @NonNull public android.net.VpnService.Builder setHttpProxy(@NonNull android.net.ProxyInfo);
@@ -27678,6 +27787,25 @@ package android.net.sip {
 
 package android.net.vcn {
 
+  public final class VcnCellUnderlyingNetworkTemplate extends android.net.vcn.VcnUnderlyingNetworkTemplate {
+    method @NonNull public java.util.Set<java.lang.String> getOperatorPlmnIds();
+    method public int getOpportunistic();
+    method public int getRoaming();
+    method @NonNull public java.util.Set<java.lang.Integer> getSimSpecificCarrierIds();
+  }
+
+  public static final class VcnCellUnderlyingNetworkTemplate.Builder {
+    ctor public VcnCellUnderlyingNetworkTemplate.Builder();
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate build();
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setMetered(int);
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setMinDownstreamBandwidthKbps(int, int);
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setMinUpstreamBandwidthKbps(int, int);
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setOperatorPlmnIds(@NonNull java.util.Set<java.lang.String>);
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setOpportunistic(int);
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setRoaming(int);
+    method @NonNull public android.net.vcn.VcnCellUnderlyingNetworkTemplate.Builder setSimSpecificCarrierIds(@NonNull java.util.Set<java.lang.Integer>);
+  }
+
   public final class VcnConfig implements android.os.Parcelable {
     method public int describeContents();
     method @NonNull public java.util.Set<android.net.vcn.VcnGatewayConnectionConfig> getGatewayConnectionConfigs();
@@ -27696,6 +27824,7 @@ package android.net.vcn {
     method @NonNull public String getGatewayConnectionName();
     method @IntRange(from=0x500) public int getMaxMtu();
     method @NonNull public long[] getRetryIntervalsMillis();
+    method @NonNull public java.util.List<android.net.vcn.VcnUnderlyingNetworkTemplate> getVcnUnderlyingNetworkPriorities();
   }
 
   public static final class VcnGatewayConnectionConfig.Builder {
@@ -27705,6 +27834,7 @@ package android.net.vcn {
     method @NonNull public android.net.vcn.VcnGatewayConnectionConfig.Builder removeExposedCapability(int);
     method @NonNull public android.net.vcn.VcnGatewayConnectionConfig.Builder setMaxMtu(@IntRange(from=0x500) int);
     method @NonNull public android.net.vcn.VcnGatewayConnectionConfig.Builder setRetryIntervalsMillis(@NonNull long[]);
+    method @NonNull public android.net.vcn.VcnGatewayConnectionConfig.Builder setVcnUnderlyingNetworkPriorities(@NonNull java.util.List<android.net.vcn.VcnUnderlyingNetworkTemplate>);
   }
 
   public class VcnManager {
@@ -27726,6 +27856,30 @@ package android.net.vcn {
     ctor public VcnManager.VcnStatusCallback();
     method public abstract void onGatewayConnectionError(@NonNull String, int, @Nullable Throwable);
     method public abstract void onStatusChanged(int);
+  }
+
+  public abstract class VcnUnderlyingNetworkTemplate {
+    method public int getMetered();
+    method public int getMinEntryDownstreamBandwidthKbps();
+    method public int getMinEntryUpstreamBandwidthKbps();
+    method public int getMinExitDownstreamBandwidthKbps();
+    method public int getMinExitUpstreamBandwidthKbps();
+    field public static final int MATCH_ANY = 0; // 0x0
+    field public static final int MATCH_FORBIDDEN = 2; // 0x2
+    field public static final int MATCH_REQUIRED = 1; // 0x1
+  }
+
+  public final class VcnWifiUnderlyingNetworkTemplate extends android.net.vcn.VcnUnderlyingNetworkTemplate {
+    method @NonNull public java.util.Set<java.lang.String> getSsids();
+  }
+
+  public static final class VcnWifiUnderlyingNetworkTemplate.Builder {
+    ctor public VcnWifiUnderlyingNetworkTemplate.Builder();
+    method @NonNull public android.net.vcn.VcnWifiUnderlyingNetworkTemplate build();
+    method @NonNull public android.net.vcn.VcnWifiUnderlyingNetworkTemplate.Builder setMetered(int);
+    method @NonNull public android.net.vcn.VcnWifiUnderlyingNetworkTemplate.Builder setMinDownstreamBandwidthKbps(int, int);
+    method @NonNull public android.net.vcn.VcnWifiUnderlyingNetworkTemplate.Builder setMinUpstreamBandwidthKbps(int, int);
+    method @NonNull public android.net.vcn.VcnWifiUnderlyingNetworkTemplate.Builder setSsids(@NonNull java.util.Set<java.lang.String>);
   }
 
 }
@@ -32485,6 +32639,7 @@ package android.os {
 
   public final class SystemClock {
     method @NonNull public static java.time.Clock currentGnssTimeClock();
+    method @NonNull public static java.time.Clock currentNetworkTimeClock();
     method public static long currentThreadTimeMillis();
     method public static long elapsedRealtime();
     method public static long elapsedRealtimeNanos();
@@ -34291,6 +34446,7 @@ package android.provider {
     field public static final int PRESENTATION_ALLOWED = 1; // 0x1
     field public static final int PRESENTATION_PAYPHONE = 4; // 0x4
     field public static final int PRESENTATION_RESTRICTED = 2; // 0x2
+    field public static final int PRESENTATION_UNAVAILABLE = 5; // 0x5
     field public static final int PRESENTATION_UNKNOWN = 3; // 0x3
     field public static final String PRIORITY = "priority";
     field public static final int PRIORITY_NORMAL = 0; // 0x0
@@ -37955,6 +38111,51 @@ package android.security.identity {
     ctor public CipherSuiteNotSupportedException(@NonNull String, @NonNull Throwable);
   }
 
+  public class CredentialDataRequest {
+    method @NonNull public java.util.Map<java.lang.String,java.util.Collection<java.lang.String>> getDeviceSignedEntriesToRequest();
+    method @NonNull public java.util.Map<java.lang.String,java.util.Collection<java.lang.String>> getIssuerSignedEntriesToRequest();
+    method @Nullable public byte[] getReaderSignature();
+    method @Nullable public byte[] getRequestMessage();
+    method public boolean isAllowUsingExhaustedKeys();
+    method public boolean isAllowUsingExpiredKeys();
+    method public boolean isIncrementUseCount();
+  }
+
+  public static final class CredentialDataRequest.Builder {
+    ctor public CredentialDataRequest.Builder();
+    method @NonNull public android.security.identity.CredentialDataRequest build();
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setAllowUsingExhaustedKeys(boolean);
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setAllowUsingExpiredKeys(boolean);
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setDeviceSignedEntriesToRequest(@NonNull java.util.Map<java.lang.String,java.util.Collection<java.lang.String>>);
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setIncrementUseCount(boolean);
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setIssuerSignedEntriesToRequest(@NonNull java.util.Map<java.lang.String,java.util.Collection<java.lang.String>>);
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setReaderSignature(@NonNull byte[]);
+    method @NonNull public android.security.identity.CredentialDataRequest.Builder setRequestMessage(@NonNull byte[]);
+  }
+
+  public abstract class CredentialDataResult {
+    method @Nullable public abstract byte[] getDeviceMac();
+    method @NonNull public abstract byte[] getDeviceNameSpaces();
+    method @NonNull public abstract android.security.identity.CredentialDataResult.Entries getDeviceSignedEntries();
+    method @NonNull public abstract android.security.identity.CredentialDataResult.Entries getIssuerSignedEntries();
+    method @NonNull public abstract byte[] getStaticAuthenticationData();
+  }
+
+  public static interface CredentialDataResult.Entries {
+    method @Nullable public byte[] getEntry(@NonNull String, @NonNull String);
+    method @NonNull public java.util.Collection<java.lang.String> getEntryNames(@NonNull String);
+    method @NonNull public java.util.Collection<java.lang.String> getNamespaces();
+    method @NonNull public java.util.Collection<java.lang.String> getRetrievedEntryNames(@NonNull String);
+    method public int getStatus(@NonNull String, @NonNull String);
+    field public static final int STATUS_NOT_IN_REQUEST_MESSAGE = 3; // 0x3
+    field public static final int STATUS_NOT_REQUESTED = 2; // 0x2
+    field public static final int STATUS_NO_ACCESS_CONTROL_PROFILES = 6; // 0x6
+    field public static final int STATUS_NO_SUCH_ENTRY = 1; // 0x1
+    field public static final int STATUS_OK = 0; // 0x0
+    field public static final int STATUS_READER_AUTHENTICATION_FAILED = 5; // 0x5
+    field public static final int STATUS_USER_AUTHENTICATION_FAILED = 4; // 0x4
+  }
+
   public class DocTypeNotSupportedException extends android.security.identity.IdentityCredentialException {
     ctor public DocTypeNotSupportedException(@NonNull String);
     ctor public DocTypeNotSupportedException(@NonNull String, @NonNull Throwable);
@@ -37966,19 +38167,19 @@ package android.security.identity {
   }
 
   public abstract class IdentityCredential {
-    method @NonNull public abstract java.security.KeyPair createEphemeralKeyPair();
-    method @NonNull public abstract byte[] decryptMessageFromReader(@NonNull byte[]) throws android.security.identity.MessageDecryptionException;
+    method @Deprecated @NonNull public abstract java.security.KeyPair createEphemeralKeyPair();
+    method @Deprecated @NonNull public abstract byte[] decryptMessageFromReader(@NonNull byte[]) throws android.security.identity.MessageDecryptionException;
     method @NonNull public byte[] delete(@NonNull byte[]);
-    method @NonNull public abstract byte[] encryptMessageToReader(@NonNull byte[]);
+    method @Deprecated @NonNull public abstract byte[] encryptMessageToReader(@NonNull byte[]);
     method @NonNull public abstract java.util.Collection<java.security.cert.X509Certificate> getAuthKeysNeedingCertification();
     method @NonNull public abstract int[] getAuthenticationDataUsageCount();
     method @NonNull public abstract java.util.Collection<java.security.cert.X509Certificate> getCredentialKeyCertificateChain();
-    method @NonNull public abstract android.security.identity.ResultData getEntries(@Nullable byte[], @NonNull java.util.Map<java.lang.String,java.util.Collection<java.lang.String>>, @Nullable byte[], @Nullable byte[]) throws android.security.identity.EphemeralPublicKeyNotFoundException, android.security.identity.InvalidReaderSignatureException, android.security.identity.InvalidRequestMessageException, android.security.identity.NoAuthenticationKeyAvailableException, android.security.identity.SessionTranscriptMismatchException;
+    method @Deprecated @NonNull public abstract android.security.identity.ResultData getEntries(@Nullable byte[], @NonNull java.util.Map<java.lang.String,java.util.Collection<java.lang.String>>, @Nullable byte[], @Nullable byte[]) throws android.security.identity.EphemeralPublicKeyNotFoundException, android.security.identity.InvalidReaderSignatureException, android.security.identity.InvalidRequestMessageException, android.security.identity.NoAuthenticationKeyAvailableException, android.security.identity.SessionTranscriptMismatchException;
     method @NonNull public byte[] proveOwnership(@NonNull byte[]);
-    method public abstract void setAllowUsingExhaustedKeys(boolean);
-    method public void setAllowUsingExpiredKeys(boolean);
+    method @Deprecated public abstract void setAllowUsingExhaustedKeys(boolean);
+    method @Deprecated public void setAllowUsingExpiredKeys(boolean);
     method public abstract void setAvailableAuthenticationKeys(int, int);
-    method public abstract void setReaderEphemeralPublicKey(@NonNull java.security.PublicKey) throws java.security.InvalidKeyException;
+    method @Deprecated public abstract void setReaderEphemeralPublicKey(@NonNull java.security.PublicKey) throws java.security.InvalidKeyException;
     method @Deprecated public abstract void storeStaticAuthenticationData(@NonNull java.security.cert.X509Certificate, @NonNull byte[]) throws android.security.identity.UnknownAuthenticationKeyException;
     method public void storeStaticAuthenticationData(@NonNull java.security.cert.X509Certificate, @NonNull java.time.Instant, @NonNull byte[]) throws android.security.identity.UnknownAuthenticationKeyException;
     method @NonNull public byte[] update(@NonNull android.security.identity.PersonalizationData);
@@ -37991,6 +38192,7 @@ package android.security.identity {
 
   public abstract class IdentityCredentialStore {
     method @NonNull public abstract android.security.identity.WritableIdentityCredential createCredential(@NonNull String, @NonNull String) throws android.security.identity.AlreadyPersonalizedException, android.security.identity.DocTypeNotSupportedException;
+    method @NonNull public android.security.identity.PresentationSession createPresentationSession(int) throws android.security.identity.CipherSuiteNotSupportedException;
     method @Deprecated @Nullable public abstract byte[] deleteCredentialByName(@NonNull String);
     method @Nullable public abstract android.security.identity.IdentityCredential getCredentialByName(@NonNull String, int) throws android.security.identity.CipherSuiteNotSupportedException;
     method @Nullable public static android.security.identity.IdentityCredentialStore getDirectAccessInstance(@NonNull android.content.Context);
@@ -38029,22 +38231,29 @@ package android.security.identity {
     method @NonNull public android.security.identity.PersonalizationData.Builder putEntry(@NonNull String, @NonNull String, @NonNull java.util.Collection<android.security.identity.AccessControlProfileId>, @NonNull byte[]);
   }
 
-  public abstract class ResultData {
-    method @NonNull public abstract byte[] getAuthenticatedData();
-    method @Nullable public abstract byte[] getEntry(@NonNull String, @NonNull String);
-    method @Nullable public abstract java.util.Collection<java.lang.String> getEntryNames(@NonNull String);
-    method @Nullable public abstract byte[] getMessageAuthenticationCode();
-    method @NonNull public abstract java.util.Collection<java.lang.String> getNamespaces();
-    method @Nullable public abstract java.util.Collection<java.lang.String> getRetrievedEntryNames(@NonNull String);
-    method @NonNull public abstract byte[] getStaticAuthenticationData();
-    method public abstract int getStatus(@NonNull String, @NonNull String);
-    field public static final int STATUS_NOT_IN_REQUEST_MESSAGE = 3; // 0x3
-    field public static final int STATUS_NOT_REQUESTED = 2; // 0x2
-    field public static final int STATUS_NO_ACCESS_CONTROL_PROFILES = 6; // 0x6
-    field public static final int STATUS_NO_SUCH_ENTRY = 1; // 0x1
-    field public static final int STATUS_OK = 0; // 0x0
-    field public static final int STATUS_READER_AUTHENTICATION_FAILED = 5; // 0x5
-    field public static final int STATUS_USER_AUTHENTICATION_FAILED = 4; // 0x4
+  public abstract class PresentationSession {
+    method @Nullable public abstract android.security.identity.CredentialDataResult getCredentialData(@NonNull String, @NonNull android.security.identity.CredentialDataRequest) throws android.security.identity.EphemeralPublicKeyNotFoundException, android.security.identity.InvalidReaderSignatureException, android.security.identity.InvalidRequestMessageException, android.security.identity.NoAuthenticationKeyAvailableException;
+    method @NonNull public abstract java.security.KeyPair getEphemeralKeyPair();
+    method public abstract void setReaderEphemeralPublicKey(@NonNull java.security.PublicKey) throws java.security.InvalidKeyException;
+    method public abstract void setSessionTranscript(@NonNull byte[]);
+  }
+
+  @Deprecated public abstract class ResultData {
+    method @Deprecated @NonNull public abstract byte[] getAuthenticatedData();
+    method @Deprecated @Nullable public abstract byte[] getEntry(@NonNull String, @NonNull String);
+    method @Deprecated @Nullable public abstract java.util.Collection<java.lang.String> getEntryNames(@NonNull String);
+    method @Deprecated @Nullable public abstract byte[] getMessageAuthenticationCode();
+    method @Deprecated @NonNull public abstract java.util.Collection<java.lang.String> getNamespaces();
+    method @Deprecated @Nullable public abstract java.util.Collection<java.lang.String> getRetrievedEntryNames(@NonNull String);
+    method @Deprecated @NonNull public abstract byte[] getStaticAuthenticationData();
+    method @Deprecated public abstract int getStatus(@NonNull String, @NonNull String);
+    field @Deprecated public static final int STATUS_NOT_IN_REQUEST_MESSAGE = 3; // 0x3
+    field @Deprecated public static final int STATUS_NOT_REQUESTED = 2; // 0x2
+    field @Deprecated public static final int STATUS_NO_ACCESS_CONTROL_PROFILES = 6; // 0x6
+    field @Deprecated public static final int STATUS_NO_SUCH_ENTRY = 1; // 0x1
+    field @Deprecated public static final int STATUS_OK = 0; // 0x0
+    field @Deprecated public static final int STATUS_READER_AUTHENTICATION_FAILED = 5; // 0x5
+    field @Deprecated public static final int STATUS_USER_AUTHENTICATION_FAILED = 4; // 0x4
   }
 
   public class SessionTranscriptMismatchException extends android.security.identity.IdentityCredentialException {
@@ -40258,6 +40467,7 @@ package android.telecom {
     field public static final int PROPERTY_NETWORK_IDENTIFIED_EMERGENCY_CALL = 2048; // 0x800
     field public static final int PROPERTY_RTT = 1024; // 0x400
     field public static final int PROPERTY_SELF_MANAGED = 256; // 0x100
+    field public static final int PROPERTY_TETHERED_CALL = 32768; // 0x8000
     field public static final int PROPERTY_VOIP_AUDIO_MODE = 4096; // 0x1000
     field public static final int PROPERTY_WIFI = 8; // 0x8
   }
@@ -40286,6 +40496,7 @@ package android.telecom {
     field @NonNull public static final android.os.Parcelable.Creator<android.telecom.CallAudioState> CREATOR;
     field public static final int ROUTE_BLUETOOTH = 2; // 0x2
     field public static final int ROUTE_EARPIECE = 1; // 0x1
+    field public static final int ROUTE_EXTERNAL = 16; // 0x10
     field public static final int ROUTE_SPEAKER = 8; // 0x8
     field public static final int ROUTE_WIRED_HEADSET = 4; // 0x4
     field public static final int ROUTE_WIRED_OR_EARPIECE = 5; // 0x5
@@ -40560,6 +40771,7 @@ package android.telecom {
     field public static final int PROPERTY_IS_RTT = 256; // 0x100
     field public static final int PROPERTY_NETWORK_IDENTIFIED_EMERGENCY_CALL = 1024; // 0x400
     field public static final int PROPERTY_SELF_MANAGED = 128; // 0x80
+    field public static final int PROPERTY_TETHERED_CALL = 16384; // 0x4000
     field public static final int PROPERTY_WIFI = 8; // 0x8
     field public static final int STATE_ACTIVE = 4; // 0x4
     field public static final int STATE_DIALING = 3; // 0x3
@@ -41064,6 +41276,7 @@ package android.telecom {
     field public static final int PRESENTATION_ALLOWED = 1; // 0x1
     field public static final int PRESENTATION_PAYPHONE = 4; // 0x4
     field public static final int PRESENTATION_RESTRICTED = 2; // 0x2
+    field public static final int PRESENTATION_UNAVAILABLE = 5; // 0x5
     field public static final int PRESENTATION_UNKNOWN = 3; // 0x3
     field public static final int PRIORITY_NORMAL = 0; // 0x0
     field public static final int PRIORITY_URGENT = 1; // 0x1
@@ -41652,21 +41865,101 @@ package android.telephony {
     field public static final String PROTOCOL_IPV6 = "IPV6";
   }
 
+  public static final class CarrierConfigManager.Bsf {
+    field public static final String KEY_BSF_SERVER_FQDN_STRING = "bsf.bsf_server_fqdn_string";
+    field public static final String KEY_BSF_SERVER_PORT_INT = "bsf.bsf_server_port_int";
+    field public static final String KEY_BSF_TRANSPORT_TYPE_INT = "bsf.bsf_transport type_int";
+    field public static final String KEY_PREFIX = "bsf.";
+  }
+
   public static final class CarrierConfigManager.Gps {
     field public static final String KEY_PERSIST_LPP_MODE_BOOL = "gps.persist_lpp_mode_bool";
     field public static final String KEY_PREFIX = "gps.";
   }
 
   public static final class CarrierConfigManager.Ims {
+    field public static final int E911_RTCP_INACTIVITY_ON_CONNECTED = 3; // 0x3
+    field public static final int E911_RTP_INACTIVITY_ON_CONNECTED = 4; // 0x4
+    field public static final int GEOLOCATION_PIDF_FOR_EMERGENCY_ON_CELLULAR = 4; // 0x4
+    field public static final int GEOLOCATION_PIDF_FOR_EMERGENCY_ON_WIFI = 2; // 0x2
+    field public static final int GEOLOCATION_PIDF_FOR_NON_EMERGENCY_ON_CELLULAR = 3; // 0x3
+    field public static final int GEOLOCATION_PIDF_FOR_NON_EMERGENCY_ON_WIFI = 1; // 0x1
+    field public static final int IPSEC_AUTHENTICATION_ALGORITHM_HMAC_MD5 = 0; // 0x0
+    field public static final int IPSEC_AUTHENTICATION_ALGORITHM_HMAC_SHA1 = 1; // 0x1
+    field public static final int IPSEC_ENCRYPTION_ALGORITHM_AES_CBC = 2; // 0x2
+    field public static final int IPSEC_ENCRYPTION_ALGORITHM_DES_EDE3_CBC = 1; // 0x1
+    field public static final int IPSEC_ENCRYPTION_ALGORITHM_NULL = 0; // 0x0
     field public static final String KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL = "ims.enable_presence_capability_exchange_bool";
     field public static final String KEY_ENABLE_PRESENCE_GROUP_SUBSCRIBE_BOOL = "ims.enable_presence_group_subscribe_bool";
     field public static final String KEY_ENABLE_PRESENCE_PUBLISH_BOOL = "ims.enable_presence_publish_bool";
+    field public static final String KEY_GEOLOCATION_PIDF_IN_SIP_INVITE_SUPPORT_INT_ARRAY = "ims.geolocation_pidf_in_sip_invite_support_int_array";
+    field public static final String KEY_GEOLOCATION_PIDF_IN_SIP_REGISTER_SUPPORT_INT_ARRAY = "ims.geolocation_pidf_in_sip_register_support_int_array";
+    field public static final String KEY_GRUU_ENABLED_BOOL = "ims.gruu_enabled_bool";
+    field public static final String KEY_IMS_PDN_ENABLED_IN_NO_VOPS_SUPPORT_INT_ARRAY = "ims.ims_pdn_enabled_in_no_vops_support_int_array";
     field public static final String KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL = "ims.ims_single_registration_required_bool";
+    field public static final String KEY_IMS_USER_AGENT_STRING = "ims.ims_user_agent_string";
+    field public static final String KEY_IPSEC_AUTHENTICATION_ALGORITHMS_INT_ARRAY = "ims.ipsec_authentication_algorithms_int_array";
+    field public static final String KEY_IPSEC_ENCRYPTION_ALGORITHMS_INT_ARRAY = "ims.ipsec_encryption_algorithms_int_array";
+    field public static final String KEY_IPV4_SIP_MTU_SIZE_CELLULAR_INT = "ims.ipv4_sip_mtu_size_cellular_int";
+    field public static final String KEY_IPV6_SIP_MTU_SIZE_CELLULAR_INT = "ims.ipv6_sip_mtu_size_cellular_int";
+    field public static final String KEY_KEEP_PDN_UP_IN_NO_VOPS_BOOL = "ims.keep_pdn_up_in_no_vops_bool";
     field public static final String KEY_NON_RCS_CAPABILITIES_CACHE_EXPIRATION_SEC_INT = "ims.non_rcs_capabilities_cache_expiration_sec_int";
+    field public static final String KEY_PHONE_CONTEXT_DOMAIN_NAME_STRING = "ims.phone_context_domain_name_string";
     field public static final String KEY_PREFIX = "ims.";
     field public static final String KEY_RCS_BULK_CAPABILITY_EXCHANGE_BOOL = "ims.rcs_bulk_capability_exchange_bool";
     field public static final String KEY_RCS_FEATURE_TAG_ALLOWED_STRING_ARRAY = "ims.rcs_feature_tag_allowed_string_array";
+    field public static final String KEY_REGISTRATION_EVENT_PACKAGE_SUPPORTED_BOOL = "ims.registration_event_package_supported_bool";
+    field public static final String KEY_REGISTRATION_EXPIRY_TIMER_SEC_INT = "ims.registration_expiry_timer_sec_int";
+    field public static final String KEY_REGISTRATION_RETRY_BASE_TIMER_MILLIS_INT = "ims.registration_retry_base_timer_millis_int";
+    field public static final String KEY_REGISTRATION_RETRY_MAX_TIMER_MILLIS_INT = "ims.registration_retry_max_timer_millis_int";
+    field public static final String KEY_REGISTRATION_SUBSCRIBE_EXPIRY_TIMER_SEC_INT = "ims.registration_subscribe_expiry_timer_sec_int";
+    field public static final String KEY_REQUEST_URI_TYPE_INT = "ims.request_uri_type_int";
+    field public static final String KEY_SIP_OVER_IPSEC_ENABLED_BOOL = "ims.sip_over_ipsec_enabled_bool";
+    field public static final String KEY_SIP_PREFERRED_TRANSPORT_INT = "ims.sip_preferred_transport_int";
+    field public static final String KEY_SIP_SERVER_PORT_NUMBER_INT = "ims.sip_server_port_number_int";
+    field public static final String KEY_SIP_TIMER_B_MILLIS_INT = "ims.sip_timer_b_millis_int";
+    field public static final String KEY_SIP_TIMER_C_MILLIS_INT = "ims.sip_timer_c_millis_int";
+    field public static final String KEY_SIP_TIMER_D_MILLIS_INT = "ims.sip_timer_d_millis_int";
+    field public static final String KEY_SIP_TIMER_F_MILLIS_INT = "ims.sip_timer_f_millis_int";
+    field public static final String KEY_SIP_TIMER_H_MILLIS_INT = "ims.sip_timer_h_millis_int";
+    field public static final String KEY_SIP_TIMER_J_MILLIS_INT = "ims.sip_timer_j_millis_int";
+    field public static final String KEY_SIP_TIMER_T1_MILLIS_INT = "ims.sip_timer_t1_millis_int";
+    field public static final String KEY_SIP_TIMER_T2_MILLIS_INT = "ims.sip_timer_t2_millis_int";
+    field public static final String KEY_SIP_TIMER_T4_MILLIS_INT = "ims.sip_timer_t4_millis_int";
     field public static final String KEY_WIFI_OFF_DEFERRING_TIME_MILLIS_INT = "ims.wifi_off_deferring_time_millis_int";
+    field public static final int NETWORK_TYPE_HOME = 0; // 0x0
+    field public static final int NETWORK_TYPE_ROAMING = 1; // 0x1
+    field public static final int PREFERRED_TRANSPORT_DYNAMIC_UDP_TCP = 2; // 0x2
+    field public static final int PREFERRED_TRANSPORT_TCP = 1; // 0x1
+    field public static final int PREFERRED_TRANSPORT_TLS = 3; // 0x3
+    field public static final int PREFERRED_TRANSPORT_UDP = 0; // 0x0
+    field public static final int REQUEST_URI_FORMAT_SIP = 1; // 0x1
+    field public static final int REQUEST_URI_FORMAT_TEL = 0; // 0x0
+    field public static final int RTCP_INACTIVITY_ON_CONNECTED = 1; // 0x1
+    field public static final int RTCP_INACTIVITY_ON_HOLD = 0; // 0x0
+    field public static final int RTP_INACTIVITY_ON_CONNECTED = 2; // 0x2
+  }
+
+  public static final class CarrierConfigManager.ImsEmergency {
+    field public static final String KEY_EMERGENCY_CALLBACK_MODE_SUPPORTED_BOOL = "imsemergency.emergency_callback_mode_supported_bool";
+    field public static final String KEY_EMERGENCY_OVER_IMS_SUPPORTED_RATS_INT_ARRAY = "imsemergency.emergency_over_ims_supported_rats_int_array";
+    field public static final String KEY_EMERGENCY_QOS_PRECONDITION_SUPPORTED_BOOL = "imsemergency.emergency_qos_precondition_supported_bool";
+    field public static final String KEY_EMERGENCY_REGISTRATION_TIMER_MILLIS_INT = "imsemergency.emergency_registration_timer_millis_int";
+    field public static final String KEY_PREFIX = "imsemergency.";
+    field public static final String KEY_RETRY_EMERGENCY_ON_IMS_PDN_BOOL = "imsemergency.retry_emergency_on_ims_pdn_bool";
+  }
+
+  public static final class CarrierConfigManager.ImsRtt {
+    field public static final String KEY_PREFIX = "imsrtt.";
+    field public static final String KEY_RED_PAYLOAD_TYPE_INT = "imsrtt.red_payload_type_int";
+    field public static final String KEY_T140_PAYLOAD_TYPE_INT = "imsrtt.t140_payload_type_int";
+    field public static final String KEY_TEXT_AS_BANDWIDTH_KBPS_INT = "imsrtt.text_as_bandwidth_kbps_int";
+    field public static final String KEY_TEXT_CODEC_CAPABILITY_PAYLOAD_TYPES_BUNDLE = "imsrtt.text_codec_capability_payload_types_bundle";
+    field public static final String KEY_TEXT_INACTIVITY_CALL_END_REASONS_INT_ARRAY = "imsrtt.text_inactivity_call_end_reasons_int_array";
+    field public static final String KEY_TEXT_ON_DEFAULT_BEARER_SUPPORTED_BOOL = "imsrtt.text_on_default_bearer_supported_bool";
+    field public static final String KEY_TEXT_QOS_PRECONDITION_SUPPORTED_BOOL = "imsrtt.text_qos_precondition_supported_bool";
+    field public static final String KEY_TEXT_RR_BANDWIDTH_BPS_INT = "imsrtt.text_rr_bandwidth_bps_int";
+    field public static final String KEY_TEXT_RS_BANDWIDTH_BPS_INT = "imsrtt.text_rs_bandwidth_bps_int";
   }
 
   public static final class CarrierConfigManager.ImsServiceEntitlement {
@@ -41677,6 +41970,167 @@ package android.telephony {
     field public static final String KEY_SHOW_VOWIFI_WEBVIEW_BOOL = "imsserviceentitlement.show_vowifi_webview_bool";
   }
 
+  public static final class CarrierConfigManager.ImsSms {
+    field public static final String KEY_PREFIX = "imssms.";
+    field public static final String KEY_SMS_CSFB_RETRY_ON_FAILURE_BOOL = "imssms.sms_csfb_retry_on_failure_bool";
+    field public static final String KEY_SMS_OVER_IMS_FORMAT_INT = "imssms.sms_over_ims_format_int";
+    field public static final String KEY_SMS_OVER_IMS_SUPPORTED_BOOL = "imssms.sms_over_ims_supported_bool";
+    field public static final String KEY_SMS_OVER_IMS_SUPPORTED_RATS_INT_ARRAY = "imssms.sms_over_ims_supported_rats_int_array";
+    field public static final int SMS_FORMAT_3GPP = 0; // 0x0
+    field public static final int SMS_FORMAT_3GPP2 = 1; // 0x1
+  }
+
+  public static final class CarrierConfigManager.ImsSs {
+    field public static final String KEY_NETWORK_INITIATED_USSD_OVER_IMS_SUPPORTED_BOOL = "imsss.network_initiated_ussd_over_ims_supported_bool";
+    field public static final String KEY_PREFIX = "imsss.";
+    field public static final String KEY_USE_CSFB_ON_XCAP_OVER_UT_FAILURE_BOOL = "imsss.use_csfb_on_xcap_over_ut_failure_bool";
+    field public static final String KEY_UT_AS_SERVER_FQDN_STRING = "imsss.ut_as_server_fqdn_string";
+    field public static final String KEY_UT_AS_SERVER_PORT_INT = "imsss.ut_as_server_port_int";
+    field public static final String KEY_UT_IPTYPE_HOME_INT = "imsss.ut_iptype_home_int";
+    field public static final String KEY_UT_IPTYPE_ROAMING_INT = "imsss.ut_iptype_roaming_int";
+    field public static final String KEY_UT_REQUIRES_IMS_REGISTRATION_BOOL = "imsss.ut_requires_ims_registration_bool";
+    field public static final String KEY_UT_SERVER_BASED_SERVICES_INT_ARRAY = "imsss.ut_server_based_services_int_array";
+    field public static final String KEY_UT_SUPPORTED_WHEN_PS_DATA_OFF_BOOL = "imsss.ut_supported_when_ps_data_off_bool";
+    field public static final String KEY_UT_TERMINAL_BASED_SERVICES_INT_ARRAY = "imsss.ut_terminal_based_services_int_array";
+    field public static final String KEY_UT_TRANSPORT_TYPE_INT = "imsss.ut_transport_type_int";
+    field public static final String KEY_XCAP_OVER_UT_SUPPORTED_RATS_INT_ARRAY = "imsss.xcap_over_ut_supported_rats_int_array";
+    field public static final int SUPPLEMENTARY_SERVICE_CB_ACR = 20; // 0x14
+    field public static final int SUPPLEMENTARY_SERVICE_CB_ALL = 12; // 0xc
+    field public static final int SUPPLEMENTARY_SERVICE_CB_BAIC = 18; // 0x12
+    field public static final int SUPPLEMENTARY_SERVICE_CB_BAOC = 14; // 0xe
+    field public static final int SUPPLEMENTARY_SERVICE_CB_BIC_ROAM = 19; // 0x13
+    field public static final int SUPPLEMENTARY_SERVICE_CB_BIL = 21; // 0x15
+    field public static final int SUPPLEMENTARY_SERVICE_CB_BOIC = 15; // 0xf
+    field public static final int SUPPLEMENTARY_SERVICE_CB_BOIC_EXHC = 16; // 0x10
+    field public static final int SUPPLEMENTARY_SERVICE_CB_IBS = 17; // 0x11
+    field public static final int SUPPLEMENTARY_SERVICE_CB_OBS = 13; // 0xd
+    field public static final int SUPPLEMENTARY_SERVICE_CF_ALL = 1; // 0x1
+    field public static final int SUPPLEMENTARY_SERVICE_CF_ALL_CONDITONAL_FORWARDING = 3; // 0x3
+    field public static final int SUPPLEMENTARY_SERVICE_CF_CFB = 4; // 0x4
+    field public static final int SUPPLEMENTARY_SERVICE_CF_CFNL = 7; // 0x7
+    field public static final int SUPPLEMENTARY_SERVICE_CF_CFNRC = 6; // 0x6
+    field public static final int SUPPLEMENTARY_SERVICE_CF_CFNRY = 5; // 0x5
+    field public static final int SUPPLEMENTARY_SERVICE_CF_CFU = 2; // 0x2
+    field public static final int SUPPLEMENTARY_SERVICE_CW = 0; // 0x0
+    field public static final int SUPPLEMENTARY_SERVICE_IDENTIFICATION_OIP = 8; // 0x8
+    field public static final int SUPPLEMENTARY_SERVICE_IDENTIFICATION_OIR = 10; // 0xa
+    field public static final int SUPPLEMENTARY_SERVICE_IDENTIFICATION_TIP = 9; // 0x9
+    field public static final int SUPPLEMENTARY_SERVICE_IDENTIFICATION_TIR = 11; // 0xb
+  }
+
+  public static final class CarrierConfigManager.ImsVoice {
+    field public static final int ALERTING_SRVCC_SUPPORT = 1; // 0x1
+    field public static final int BANDWIDTH_EFFICIENT = 0; // 0x0
+    field public static final int BASIC_SRVCC_SUPPORT = 0; // 0x0
+    field public static final int CONFERENCE_SUBSCRIBE_TYPE_IN_DIALOG = 0; // 0x0
+    field public static final int CONFERENCE_SUBSCRIBE_TYPE_OUT_OF_DIALOG = 1; // 0x1
+    field public static final int EVS_ENCODED_BW_TYPE_FB = 3; // 0x3
+    field public static final int EVS_ENCODED_BW_TYPE_NB = 0; // 0x0
+    field public static final int EVS_ENCODED_BW_TYPE_NB_WB = 4; // 0x4
+    field public static final int EVS_ENCODED_BW_TYPE_NB_WB_SWB = 5; // 0x5
+    field public static final int EVS_ENCODED_BW_TYPE_NB_WB_SWB_FB = 6; // 0x6
+    field public static final int EVS_ENCODED_BW_TYPE_SWB = 2; // 0x2
+    field public static final int EVS_ENCODED_BW_TYPE_WB = 1; // 0x1
+    field public static final int EVS_ENCODED_BW_TYPE_WB_SWB = 7; // 0x7
+    field public static final int EVS_ENCODED_BW_TYPE_WB_SWB_FB = 8; // 0x8
+    field public static final int EVS_OPERATIONAL_MODE_AMRWB_IO = 1; // 0x1
+    field public static final int EVS_OPERATIONAL_MODE_PRIMARY = 0; // 0x0
+    field public static final int EVS_PRIMARY_MODE_BITRATE_128_0_KBPS = 11; // 0xb
+    field public static final int EVS_PRIMARY_MODE_BITRATE_13_2_KBPS = 4; // 0x4
+    field public static final int EVS_PRIMARY_MODE_BITRATE_16_4_KBPS = 5; // 0x5
+    field public static final int EVS_PRIMARY_MODE_BITRATE_24_4_KBPS = 6; // 0x6
+    field public static final int EVS_PRIMARY_MODE_BITRATE_32_0_KBPS = 7; // 0x7
+    field public static final int EVS_PRIMARY_MODE_BITRATE_48_0_KBPS = 8; // 0x8
+    field public static final int EVS_PRIMARY_MODE_BITRATE_5_9_KBPS = 0; // 0x0
+    field public static final int EVS_PRIMARY_MODE_BITRATE_64_0_KBPS = 9; // 0x9
+    field public static final int EVS_PRIMARY_MODE_BITRATE_7_2_KBPS = 1; // 0x1
+    field public static final int EVS_PRIMARY_MODE_BITRATE_8_0_KBPS = 2; // 0x2
+    field public static final int EVS_PRIMARY_MODE_BITRATE_96_0_KBPS = 10; // 0xa
+    field public static final int EVS_PRIMARY_MODE_BITRATE_9_6_KBPS = 3; // 0x3
+    field public static final String KEY_AMRNB_PAYLOAD_DESCRIPTION_BUNDLE = "imsvoice.amrnb_payload_description_bundle";
+    field public static final String KEY_AMRNB_PAYLOAD_TYPE_INT_ARRAY = "imsvoice.amrnb_payload_type_int_array";
+    field public static final String KEY_AMRWB_PAYLOAD_DESCRIPTION_BUNDLE = "imsvoice.amrwb_payload_description_bundle";
+    field public static final String KEY_AMRWB_PAYLOAD_TYPE_INT_ARRAY = "imsvoice.amrwb_payload_type_int_array";
+    field public static final String KEY_AMR_CODEC_ATTRIBUTE_MODESET_INT_ARRAY = "imsvoice.amr_codec_attribute_modeset_int_array";
+    field public static final String KEY_AMR_CODEC_ATTRIBUTE_PAYLOAD_FORMAT_INT = "imsvoice.amr_codec_attribute_payload_format_int";
+    field public static final String KEY_AUDIO_AS_BANDWIDTH_KBPS_INT = "imsvoice.audio_as_bandwidth_kbps_int";
+    field public static final String KEY_AUDIO_CODEC_CAPABILITY_PAYLOAD_TYPES_BUNDLE = "imsvoice.audio_codec_capability_payload_types_bundle";
+    field public static final String KEY_AUDIO_INACTIVITY_CALL_END_REASONS_INT_ARRAY = "imsvoice.audio_inactivity_call_end_reasons_int_array";
+    field public static final String KEY_AUDIO_RR_BANDWIDTH_BPS_INT = "imsvoice.audio_rr_bandwidth_bps_int";
+    field public static final String KEY_AUDIO_RS_BANDWIDTH_BPS_INT = "imsvoice.audio_rs_bandwidth_bps_int";
+    field public static final String KEY_AUDIO_RTCP_INACTIVITY_TIMER_MILLIS_INT = "imsvoice.audio_rtcp_inactivity_timer_millis_int";
+    field public static final String KEY_AUDIO_RTP_INACTIVITY_TIMER_MILLIS_INT = "imsvoice.audio_rtp_inactivity_timer_millis_int";
+    field public static final String KEY_CARRIER_VOLTE_ROAMING_AVAILABLE_BOOL = "imsvoice.carrier_volte_roaming_available_bool";
+    field public static final String KEY_CODEC_ATTRIBUTE_MODE_CHANGE_CAPABILITY_INT = "imsvoice.codec_attribute_mode_change_capability_int";
+    field public static final String KEY_CODEC_ATTRIBUTE_MODE_CHANGE_NEIGHBOR_INT = "imsvoice.codec_attribute_mode_change_neighbor_int";
+    field public static final String KEY_CODEC_ATTRIBUTE_MODE_CHANGE_PERIOD_INT = "imsvoice.codec_attribute_mode_change_period_int";
+    field public static final String KEY_CONFERENCE_FACTORY_URI_STRING = "imsvoice.conference_factory_uri_string";
+    field public static final String KEY_CONFERENCE_SUBSCRIBE_TYPE_INT = "imsvoice.conference_subscribe_type_int";
+    field public static final String KEY_DEDICATED_BEARER_WAIT_TIMER_MILLIS_INT = "imsvoice.dedicated_bearer_wait_timer_millis_int";
+    field public static final String KEY_DTMFNB_PAYLOAD_TYPE_INT_ARRAY = "imsvoice.dtmfnb_payload_type_int_array";
+    field public static final String KEY_DTMFWB_PAYLOAD_TYPE_INT_ARRAY = "imsvoice.dtmfwb_payload_type_int_array";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_BANDWIDTH_INT = "imsvoice.evs_codec_attribute_bandwidth_int";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_BITRATE_INT_ARRAY = "imsvoice.evs_codec_attribute_bitrate_int_array";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_CHANNELS_INT = "imsvoice.evs_codec_attribute_channels_int";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_CH_AW_RECV_INT = "imsvoice.evs_codec_attribute_ch_aw_recv_int";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_CMR_INT = "imsvoice.codec_attribute_cmr_int";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_DTX_BOOL = "imsvoice.evs_codec_attribute_dtx_bool";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_DTX_RECV_BOOL = "imsvoice.evs_codec_attribute_dtx_recv_bool";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_HF_ONLY_INT = "imsvoice.evs_codec_attribute_hf_only_int";
+    field public static final String KEY_EVS_CODEC_ATTRIBUTE_MODE_SWITCH_INT = "imsvoice.evs_codec_attribute_mode_switch_int";
+    field public static final String KEY_EVS_PAYLOAD_DESCRIPTION_BUNDLE = "imsvoice.evs_payload_description_bundle";
+    field public static final String KEY_EVS_PAYLOAD_TYPE_INT_ARRAY = "imsvoice.evs_payload_type_int_array";
+    field public static final String KEY_INCLUDE_CALLER_ID_SERVICE_CODES_IN_SIP_INVITE_BOOL = "imsvoice.include_caller_id_service_codes_in_sip_invite_bool";
+    field public static final String KEY_MINIMUM_SESSION_EXPIRES_TIMER_SEC_INT = "imsvoice.minimum_session_expires_timer_sec_int";
+    field public static final String KEY_MO_CALL_REQUEST_TIMEOUT_MILLIS_INT = "imsvoice.mo_call_request_timeout_millis_int";
+    field public static final String KEY_MULTIENDPOINT_SUPPORTED_BOOL = "imsvoice.multiendpoint_supported_bool";
+    field public static final String KEY_OIP_SOURCE_FROM_HEADER_BOOL = "imsvoice.oip_source_from_header_bool";
+    field public static final String KEY_PRACK_SUPPORTED_FOR_18X_BOOL = "imsvoice.prack_supported_for_18x_bool";
+    field public static final String KEY_PREFIX = "imsvoice.";
+    field public static final String KEY_RINGBACK_TIMER_MILLIS_INT = "imsvoice.ringback_timer_millis_int";
+    field public static final String KEY_RINGING_TIMER_MILLIS_INT = "imsvoice.ringing_timer_millis_int";
+    field public static final String KEY_SESSION_EXPIRES_TIMER_SEC_INT = "imsvoice.session_expires_timer_sec_int";
+    field public static final String KEY_SESSION_REFRESHER_TYPE_INT = "imsvoice.session_refresher_type_int";
+    field public static final String KEY_SESSION_REFRESH_METHOD_INT = "imsvoice.session_refresh_method_int";
+    field public static final String KEY_SESSION_TIMER_SUPPORTED_BOOL = "imsvoice.session_timer_supported_bool";
+    field public static final String KEY_SRVCC_TYPE_INT_ARRAY = "imsvoice.srvcc_type_int_array";
+    field public static final String KEY_VOICE_ON_DEFAULT_BEARER_SUPPORTED_BOOL = "imsvoice.voice_on_default_bearer_supported_bool";
+    field public static final String KEY_VOICE_QOS_PRECONDITION_SUPPORTED_BOOL = "imsvoice.voice_qos_precondition_supported_bool";
+    field public static final int MIDCALL_SRVCC_SUPPORT = 3; // 0x3
+    field public static final int OCTET_ALIGNED = 1; // 0x1
+    field public static final int PREALERTING_SRVCC_SUPPORT = 2; // 0x2
+    field public static final int SESSION_REFRESHER_TYPE_UAC = 1; // 0x1
+    field public static final int SESSION_REFRESHER_TYPE_UAS = 2; // 0x2
+    field public static final int SESSION_REFRESHER_TYPE_UNKNOWN = 0; // 0x0
+    field public static final int SESSION_REFRESH_METHOD_INVITE = 0; // 0x0
+    field public static final int SESSION_REFRESH_METHOD_UPDATE_PREFERRED = 1; // 0x1
+  }
+
+  public static final class CarrierConfigManager.ImsVt {
+    field public static final String KEY_H264_PAYLOAD_DESCRIPTION_BUNDLE = "imsvt.h264_payload_description_bundle";
+    field public static final String KEY_H264_PAYLOAD_TYPE_INT_ARRAY = "imsvt.h264_payload_type_int_array";
+    field public static final String KEY_H264_VIDEO_CODEC_ATTRIBUTE_PROFILE_LEVEL_ID_STRING = "imsvt.h264_video_codec_attribute_profile_level_id_string";
+    field public static final String KEY_PREFIX = "imsvt.";
+    field public static final String KEY_VIDEO_AS_BANDWIDTH_KBPS_INT = "imsvt.video_as_bandwidth_kbps_int";
+    field public static final String KEY_VIDEO_CODEC_ATTRIBUTE_FRAME_RATE_INT = "imsvt.video_codec_attribute_frame_rate_int";
+    field public static final String KEY_VIDEO_CODEC_ATTRIBUTE_PACKETIZATION_MODE_INT = "imsvt.video_codec_attribute_packetization_mode_int";
+    field public static final String KEY_VIDEO_CODEC_ATTRIBUTE_RESOLUTION_INT_ARRAY = "imsvt.video_codec_attribute_resolution_int_array";
+    field public static final String KEY_VIDEO_CODEC_CAPABILITY_PAYLOAD_TYPES_BUNDLE = "imsvt.video_codec_capability_payload_types_bundle";
+    field public static final String KEY_VIDEO_ON_DEFAULT_BEARER_SUPPORTED_BOOL = "imsvt.video_on_default_bearer_supported_bool";
+    field public static final String KEY_VIDEO_QOS_PRECONDITION_SUPPORTED_BOOL = "imsvt.video_qos_precondition_supported_bool";
+    field public static final String KEY_VIDEO_RR_BANDWIDTH_BPS_INT = "imsvt.video_rr_bandwidth_bps_int";
+    field public static final String KEY_VIDEO_RS_BANDWIDTH_BPS_INT = "imsvt.video_rs_bandwidth_bps_int";
+    field public static final String KEY_VIDEO_RTCP_INACTIVITY_TIMER_MILLIS_INT = "imsvt.video_rtcp_inactivity_timer_millis_int";
+    field public static final String KEY_VIDEO_RTP_DSCP_INT = "imsvt.video_rtp_dscp_int";
+    field public static final String KEY_VIDEO_RTP_INACTIVITY_TIMER_MILLIS_INT = "imsvt.video_rtp_inactivity_timer_millis_int";
+  }
+
+  public static final class CarrierConfigManager.ImsWfc {
+    field public static final String KEY_EMERGENCY_CALL_OVER_EMERGENCY_PDN_BOOL = "imswfc.emergency_call_over_emergency_pdn_bool";
+    field public static final String KEY_PIDF_SHORT_CODE_STRING_ARRAY = "imswfc.pidf_short_code_string_array";
+    field public static final String KEY_PREFIX = "imswfc.";
+  }
+
   public static final class CarrierConfigManager.Iwlan {
     field public static final int AUTHENTICATION_METHOD_CERT = 1; // 0x1
     field public static final int AUTHENTICATION_METHOD_EAP_ONLY = 0; // 0x0
@@ -41684,6 +42138,7 @@ package android.telephony {
     field public static final int EPDG_ADDRESS_PCO = 2; // 0x2
     field public static final int EPDG_ADDRESS_PLMN = 1; // 0x1
     field public static final int EPDG_ADDRESS_STATIC = 0; // 0x0
+    field public static final int EPDG_ADDRESS_VISITED_COUNTRY = 4; // 0x4
     field public static final int ID_TYPE_FQDN = 2; // 0x2
     field public static final int ID_TYPE_KEY_ID = 11; // 0xb
     field public static final int ID_TYPE_RFC822_ADDR = 3; // 0x3
@@ -41694,6 +42149,7 @@ package android.telephony {
     field public static final String KEY_CHILD_SESSION_AES_CTR_KEY_SIZE_INT_ARRAY = "iwlan.child_session_aes_ctr_key_size_int_array";
     field public static final String KEY_DIFFIE_HELLMAN_GROUPS_INT_ARRAY = "iwlan.diffie_hellman_groups_int_array";
     field public static final String KEY_DPD_TIMER_SEC_INT = "iwlan.dpd_timer_sec_int";
+    field public static final String KEY_ENABLE_SUPPORT_FOR_EAP_AKA_FAST_REAUTH_BOOL = "iwlan.enable_support_for_eap_aka_fast_reauth_bool";
     field public static final String KEY_EPDG_ADDRESS_PRIORITY_INT_ARRAY = "iwlan.epdg_address_priority_int_array";
     field public static final String KEY_EPDG_AUTHENTICATION_METHOD_INT = "iwlan.epdg_authentication_method_int";
     field public static final String KEY_EPDG_PCO_ID_IPV4_INT = "iwlan.epdg_pco_id_ipv4_int";
@@ -44645,6 +45101,7 @@ package android.text {
   public class BoringLayout extends android.text.Layout implements android.text.TextUtils.EllipsizeCallback {
     ctor public BoringLayout(CharSequence, android.text.TextPaint, int, android.text.Layout.Alignment, float, float, android.text.BoringLayout.Metrics, boolean);
     ctor public BoringLayout(CharSequence, android.text.TextPaint, int, android.text.Layout.Alignment, float, float, android.text.BoringLayout.Metrics, boolean, android.text.TextUtils.TruncateAt, int);
+    ctor public BoringLayout(@NonNull CharSequence, @NonNull android.text.TextPaint, @IntRange(from=0) int, @NonNull android.text.Layout.Alignment, float, float, @NonNull android.text.BoringLayout.Metrics, boolean, @NonNull android.text.TextUtils.TruncateAt, @IntRange(from=0) int, boolean);
     method public void ellipsized(int, int);
     method public int getBottomPadding();
     method public int getEllipsisCount(int);
@@ -44659,9 +45116,12 @@ package android.text {
     method public int getTopPadding();
     method public static android.text.BoringLayout.Metrics isBoring(CharSequence, android.text.TextPaint);
     method public static android.text.BoringLayout.Metrics isBoring(CharSequence, android.text.TextPaint, android.text.BoringLayout.Metrics);
+    method @Nullable public static android.text.BoringLayout.Metrics isBoring(@NonNull CharSequence, @NonNull android.text.TextPaint, @NonNull android.text.TextDirectionHeuristic, boolean, @Nullable android.text.BoringLayout.Metrics);
     method public static android.text.BoringLayout make(CharSequence, android.text.TextPaint, int, android.text.Layout.Alignment, float, float, android.text.BoringLayout.Metrics, boolean);
     method public static android.text.BoringLayout make(CharSequence, android.text.TextPaint, int, android.text.Layout.Alignment, float, float, android.text.BoringLayout.Metrics, boolean, android.text.TextUtils.TruncateAt, int);
+    method @NonNull public static android.text.BoringLayout make(@NonNull CharSequence, @NonNull android.text.TextPaint, @IntRange(from=0) int, @NonNull android.text.Layout.Alignment, @NonNull android.text.BoringLayout.Metrics, boolean, @NonNull android.text.TextUtils.TruncateAt, @IntRange(from=0) int, boolean);
     method public android.text.BoringLayout replaceOrMake(CharSequence, android.text.TextPaint, int, android.text.Layout.Alignment, float, float, android.text.BoringLayout.Metrics, boolean);
+    method @NonNull public android.text.BoringLayout replaceOrMake(@NonNull CharSequence, @NonNull android.text.TextPaint, @IntRange(from=0) int, @NonNull android.text.Layout.Alignment, @NonNull android.text.BoringLayout.Metrics, boolean, @NonNull android.text.TextUtils.TruncateAt, @IntRange(from=0) int, boolean);
     method public android.text.BoringLayout replaceOrMake(CharSequence, android.text.TextPaint, int, android.text.Layout.Alignment, float, float, android.text.BoringLayout.Metrics, boolean, android.text.TextUtils.TruncateAt, int);
   }
 
@@ -44870,6 +45330,7 @@ package android.text {
     method public abstract int getTopPadding();
     method public final int getWidth();
     method public final void increaseWidthTo(int);
+    method public boolean isFallbackLineSpacingEnabled();
     method public boolean isRtlCharAt(int);
     method protected final boolean isSpanned();
     field public static final int BREAK_STRATEGY_BALANCED = 2; // 0x2
@@ -46840,6 +47301,15 @@ package android.util {
     field public float ydpi;
   }
 
+  public interface Dumpable {
+    method public void dump(@NonNull java.io.PrintWriter, @Nullable String[]);
+    method @NonNull public default String getDumpableName();
+  }
+
+  public interface DumpableContainer {
+    method public boolean addDumpable(@NonNull android.util.Dumpable);
+  }
+
   public class EventLog {
     method public static int getTagCode(String);
     method public static String getTagName(int);
@@ -47593,13 +48063,31 @@ package android.view {
 
   public final class Choreographer {
     method public static android.view.Choreographer getInstance();
+    method public void postExtendedFrameCallback(@NonNull android.view.Choreographer.ExtendedFrameCallback);
     method public void postFrameCallback(android.view.Choreographer.FrameCallback);
     method public void postFrameCallbackDelayed(android.view.Choreographer.FrameCallback, long);
+    method public void removeExtendedFrameCallback(@Nullable android.view.Choreographer.ExtendedFrameCallback);
     method public void removeFrameCallback(android.view.Choreographer.FrameCallback);
+  }
+
+  public static interface Choreographer.ExtendedFrameCallback {
+    method public void onVsync(@NonNull android.view.Choreographer.FrameData);
   }
 
   public static interface Choreographer.FrameCallback {
     method public void doFrame(long);
+  }
+
+  public static class Choreographer.FrameData {
+    method public long getFrameTimeNanos();
+    method @NonNull public android.view.Choreographer.FrameTimeline[] getFrameTimelines();
+    method @NonNull public android.view.Choreographer.FrameTimeline getPreferredFrameTimeline();
+  }
+
+  public static class Choreographer.FrameTimeline {
+    method public long getDeadlineNanos();
+    method public long getExpectedPresentTimeNanos();
+    method public long getVsyncId();
   }
 
   public interface CollapsibleActionView {
@@ -47745,6 +48233,18 @@ package android.view {
     method public int getSafeInsetRight();
     method public int getSafeInsetTop();
     method @NonNull public android.graphics.Insets getWaterfallInsets();
+  }
+
+  public static final class DisplayCutout.Builder {
+    ctor public DisplayCutout.Builder();
+    method @NonNull public android.view.DisplayCutout build();
+    method @NonNull public android.view.DisplayCutout.Builder setBoundingRectBottom(@NonNull android.graphics.Rect);
+    method @NonNull public android.view.DisplayCutout.Builder setBoundingRectLeft(@NonNull android.graphics.Rect);
+    method @NonNull public android.view.DisplayCutout.Builder setBoundingRectRight(@NonNull android.graphics.Rect);
+    method @NonNull public android.view.DisplayCutout.Builder setBoundingRectTop(@NonNull android.graphics.Rect);
+    method @NonNull public android.view.DisplayCutout.Builder setCutoutPath(@NonNull android.graphics.Path);
+    method @NonNull public android.view.DisplayCutout.Builder setSafeInsets(@NonNull android.graphics.Insets);
+    method @NonNull public android.view.DisplayCutout.Builder setWaterfallInsets(@NonNull android.graphics.Insets);
   }
 
   public final class DragAndDropPermissions implements android.os.Parcelable {
@@ -48839,6 +49339,7 @@ package android.view {
     field public static final int EDGE_LEFT = 4; // 0x4
     field public static final int EDGE_RIGHT = 8; // 0x8
     field public static final int EDGE_TOP = 1; // 0x1
+    field public static final int FLAG_CANCELED = 32; // 0x20
     field public static final int FLAG_WINDOW_IS_OBSCURED = 1; // 0x1
     field public static final int FLAG_WINDOW_IS_PARTIALLY_OBSCURED = 2; // 0x2
     field public static final int INVALID_POINTER_ID = -1; // 0xffffffff
@@ -51931,6 +52432,7 @@ package android.view.accessibility {
     field public static final int TYPE_ACCESSIBILITY_OVERLAY = 4; // 0x4
     field public static final int TYPE_APPLICATION = 1; // 0x1
     field public static final int TYPE_INPUT_METHOD = 2; // 0x2
+    field public static final int TYPE_MAGNIFICATION_OVERLAY = 6; // 0x6
     field public static final int TYPE_SPLIT_SCREEN_DIVIDER = 5; // 0x5
     field public static final int TYPE_SYSTEM = 3; // 0x3
   }
@@ -51940,6 +52442,7 @@ package android.view.accessibility {
     method public final float getFontScale();
     method @Nullable public final java.util.Locale getLocale();
     method @NonNull public android.view.accessibility.CaptioningManager.CaptionStyle getUserStyle();
+    method public boolean isCallCaptioningEnabled();
     method public final boolean isEnabled();
     method public void removeCaptioningChangeListener(@NonNull android.view.accessibility.CaptioningManager.CaptioningChangeListener);
   }
@@ -52011,6 +52514,7 @@ package android.view.animation {
     method public int getRepeatCount();
     method public int getRepeatMode();
     method protected float getScaleFactor();
+    method public boolean getShowBackground();
     method public long getStartOffset();
     method public long getStartTime();
     method public boolean getTransformation(long, android.view.animation.Transformation);
@@ -52036,6 +52540,7 @@ package android.view.animation {
     method public void setInterpolator(android.view.animation.Interpolator);
     method public void setRepeatCount(int);
     method public void setRepeatMode(int);
+    method public void setShowBackground(boolean);
     method public void setStartOffset(long);
     method public void setStartTime(long);
     method public void setZAdjustment(int);
@@ -52541,6 +53046,7 @@ package android.view.inputmethod {
     method public int getCharacterBoundsFlags(int);
     method public CharSequence getComposingText();
     method public int getComposingTextStart();
+    method @Nullable public android.view.inputmethod.EditorBoundsInfo getEditorBoundsInfo();
     method public float getInsertionMarkerBaseline();
     method public float getInsertionMarkerBottom();
     method public int getInsertionMarkerFlags();
@@ -52562,9 +53068,25 @@ package android.view.inputmethod {
     method public android.view.inputmethod.CursorAnchorInfo build();
     method public void reset();
     method public android.view.inputmethod.CursorAnchorInfo.Builder setComposingText(int, CharSequence);
+    method @NonNull public android.view.inputmethod.CursorAnchorInfo.Builder setEditorBoundsInfo(@Nullable android.view.inputmethod.EditorBoundsInfo);
     method public android.view.inputmethod.CursorAnchorInfo.Builder setInsertionMarkerLocation(float, float, float, float, int);
     method public android.view.inputmethod.CursorAnchorInfo.Builder setMatrix(android.graphics.Matrix);
     method public android.view.inputmethod.CursorAnchorInfo.Builder setSelectionRange(int, int);
+  }
+
+  public final class EditorBoundsInfo implements android.os.Parcelable {
+    method public int describeContents();
+    method @Nullable public android.graphics.RectF getEditorBounds();
+    method @Nullable public android.graphics.RectF getHandwritingBounds();
+    method public void writeToParcel(@NonNull android.os.Parcel, int);
+    field @NonNull public static final android.os.Parcelable.Creator<android.view.inputmethod.EditorBoundsInfo> CREATOR;
+  }
+
+  public static final class EditorBoundsInfo.Builder {
+    ctor public EditorBoundsInfo.Builder();
+    method @NonNull public android.view.inputmethod.EditorBoundsInfo build();
+    method @NonNull public android.view.inputmethod.EditorBoundsInfo.Builder setEditorBounds(@Nullable android.graphics.RectF);
+    method @NonNull public android.view.inputmethod.EditorBoundsInfo.Builder setHandwritingBounds(@Nullable android.graphics.RectF);
   }
 
   public class EditorInfo implements android.text.InputType android.os.Parcelable {
@@ -52876,6 +53398,7 @@ package android.view.inputmethod {
     method public boolean showSoftInput(android.view.View, int, android.os.ResultReceiver);
     method @Deprecated public void showSoftInputFromInputMethod(android.os.IBinder, int);
     method @Deprecated public void showStatusIcon(android.os.IBinder, String, @DrawableRes int);
+    method public void startStylusHandwriting(@NonNull android.view.View);
     method @Deprecated public boolean switchToLastInputMethod(android.os.IBinder);
     method @Deprecated public boolean switchToNextInputMethod(android.os.IBinder, boolean);
     method @Deprecated public void toggleSoftInput(int, int);
