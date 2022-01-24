@@ -44,6 +44,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.PowerManager;
@@ -120,6 +121,7 @@ public class JobThrottlingTest {
     private boolean mInitialAirplaneModeState;
     private String mInitialDisplayTimeout;
     private String mInitialRestrictedBucketEnabled;
+    private String mInitialLocationMode;
     private boolean mAutomotiveDevice;
     private boolean mLeanbackOnly;
 
@@ -174,6 +176,8 @@ public class JobThrottlingTest {
         mInitialAirplaneModeState = isAirplaneModeOn();
         mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET);
+        mInitialLocationMode = Settings.Secure.getString(mContext.getContentResolver(),
+                Settings.Secure.LOCATION_MODE);
         // Make sure test jobs can run regardless of bucket.
         mDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
@@ -1091,6 +1095,7 @@ public class JobThrottlingTest {
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {
             setAirplaneMode(mInitialAirplaneModeState);
         }
+        setLocationMode(mInitialLocationMode);
         mUiDevice.executeShellCommand(
                 "cmd jobscheduler reset-execution-quota -u " + UserHandle.myUserId()
                         + " " + TEST_APP_PACKAGE);
@@ -1291,12 +1296,23 @@ public class JobThrottlingTest {
         }
     }
 
-    private String getWifiSSID() {
+    private String getWifiSSID() throws Exception {
+        // Location needs to be enabled to get the WiFi information.
+        setLocationMode(String.valueOf(Settings.Secure.LOCATION_MODE_ON));
         final AtomicReference<String> ssid = new AtomicReference<>();
         SystemUtil.runWithShellPermissionIdentity(() -> {
             ssid.set(mWifiManager.getConnectionInfo().getSSID());
         }, Manifest.permission.ACCESS_FINE_LOCATION);
         return unquoteSSID(ssid.get());
+    }
+
+    private void setLocationMode(String mode) throws Exception {
+        Settings.Secure.putString(mContext.getContentResolver(),
+                Settings.Secure.LOCATION_MODE, mode);
+        final LocationManager locationManager = mContext.getSystemService(LocationManager.class);
+        final boolean wantEnabled = !String.valueOf(Settings.Secure.LOCATION_MODE_OFF).equals(mode);
+        waitUntil("Location " + (wantEnabled ? "not enabled" : "still enabled"),
+                () -> wantEnabled == locationManager.isLocationEnabled());
     }
 
     // Returns "true", "false" or "none"
