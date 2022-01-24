@@ -144,7 +144,7 @@ public class InputHidTestCase extends InputTestCase {
     }
 
     /** Gets an input device with specific capability */
-    private InputDevice getInputDevice(Capability capability) {
+    protected InputDevice getInputDevice(Capability capability) {
         final InputManager inputManager =
                 mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         final int[] inputDeviceIds = inputManager.getInputDeviceIds();
@@ -477,5 +477,4 @@ public class InputHidTestCase extends InputTestCase {
             }
         }
     }
-
 }
