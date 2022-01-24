@@ -22,8 +22,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 
+import static java.util.stream.Collectors.joining;
+
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.os.Environment;
@@ -68,6 +69,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -91,7 +93,7 @@ public class StorageManagerTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mStorageManager = (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        mStorageManager = mContext.getSystemService(StorageManager.class);
     }
 
     @AppModeFull(reason = "Instant apps cannot access external storage")
@@ -295,6 +297,7 @@ public class StorageManagerTest extends AndroidTestCase {
                 mStorageManager.getStorageVolume(Environment.getStorageDirectory()));
 
         final File root = Environment.getExternalStorageDirectory();
+        Log.d("StorageManagerTest", "root: " + root);
         final StorageVolume primary = mStorageManager.getPrimaryStorageVolume();
         final StorageVolume rootVolume = mStorageManager.getStorageVolume(root);
         assertNotNull("No volume for root (" + root + ")", rootVolume);
@@ -303,7 +306,32 @@ public class StorageManagerTest extends AndroidTestCase {
         final File child = new File(root, "child");
         StorageVolume childVolume = mStorageManager.getStorageVolume(child);
         assertNotNull("No volume for child (" + child + ")", childVolume);
+        Log.d("StorageManagerTest", "child: " + childVolume.getPath());
         assertStorageVolumesEquals(primary, childVolume);
+    }
+
+    @AppModeFull(reason = "Instant apps cannot access external storage")
+    public void testGetStorageVolumeUSB() throws Exception {
+        String volumeName = StorageManagerHelper.createUSBVirtualDisk();
+        Log.d(TAG, "testGetStorageVolumeUSB#volumeName: " + volumeName);
+        List<StorageVolume> storageVolumes = mStorageManager.getStorageVolumes();
+        Optional<StorageVolume> usbStorageVolume =
+                storageVolumes.stream().filter(sv->sv.getPath().contains(volumeName)).findFirst();
+        assertTrue("The USB storage volume mounted on the main user is not present in "
+                + storageVolumes.stream().map(StorageVolume::getPath)
+                .collect(joining("\n")), usbStorageVolume.isPresent());
+    }
+
+    @AppModeFull(reason = "Instant apps cannot access external storage")
+    public void testGetStorageVolumeSDCard() throws Exception {
+        String volumeName = StorageManagerHelper.createSDCardVirtualDisk();
+        Log.d(TAG, "testGetStorageVolumeSDCard#volumeName: " + volumeName);
+        List<StorageVolume> storageVolumes = mStorageManager.getStorageVolumes();
+        Optional<StorageVolume> sdCardStorageVolume =
+                storageVolumes.stream().filter(sv->sv.getPath().contains(volumeName)).findFirst();
+        assertTrue("The SdCard storage volume mounted on the main user is not present in "
+                        + storageVolumes.stream().map(StorageVolume::getPath)
+                        .collect(joining("\n")), sdCardStorageVolume.isPresent());
     }
 
     private void assertNoUuid(File file) {
