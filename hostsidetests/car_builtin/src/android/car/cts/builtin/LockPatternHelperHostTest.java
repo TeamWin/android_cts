@@ -22,13 +22,12 @@ import static com.google.common.truth.Truth.assertThat;
 import android.car.cts.builtin.widget.CheckLockIsSecureCommand;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class LockPatternHelperHostTest extends BaseHostJUnit4Test {
+public final class LockPatternHelperHostTest extends CarBuiltinApiHostCtsBase {
 
     @Test
     public void testIsSecureApi() throws Exception {
