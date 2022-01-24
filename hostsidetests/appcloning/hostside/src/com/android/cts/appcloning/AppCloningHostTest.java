@@ -41,7 +41,6 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
 
-    private static final String APP_A = "CtsAppCloningTestApp.apk";
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
     private static final String IMAGE_NAME_TO_BE_DISPLAYED_KEY = "imageNameToBeDisplayed";
     private static final String IMAGE_NAME_TO_BE_VERIFIED_IN_OWNER_PROFILE_KEY =
@@ -58,25 +57,15 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
         mContentProviderHandler = new ContentProviderHandler(getDevice());
         mContentProviderHandler.setUp();
-
-        // Install the app in both the user spaces
-        installAppAsUser(APP_A, getCurrentUserId());
-        installAppAsUser(APP_A, Integer.valueOf(mCloneUserId));
     }
 
     @After
     public void tearDown() throws Exception {
-        if (isHeadlessSystemUserMode() || !isAtLeastS() || usesSdcardFs()) return;
+        super.baseHostTeardown();
 
         if (mContentProviderHandler != null) {
             mContentProviderHandler.tearDown();
         }
-
-        // Uninstall the app
-        uninstallPackage(APP_A_PACKAGE);
-
-        // remove the clone user
-        executeShellCommand("pm remove-user %s", mCloneUserId);
     }
 
     @Test
