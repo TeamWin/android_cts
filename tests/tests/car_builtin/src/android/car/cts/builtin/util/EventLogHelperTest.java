@@ -229,6 +229,20 @@ public final class EventLogHelperTest {
     }
 
     @Test
+    public void testWriteCarUserServiceLogoutUserReq() {
+        EventLogHelper.writeCarUserServiceLogoutUserReq(101, 102);
+
+        assertLogMessage("I car_user_svc_logout_user_req: [101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserServiceLogoutUserResp() {
+        EventLogHelper.writeCarUserServiceLogoutUserResp(101, 102, "string");
+
+        assertLogMessage("I car_user_svc_logout_user_resp: [101,102,string]");
+    }
+
+    @Test
     public void testWriteCarUserServiceGetUserAuthResp() {
         EventLogHelper.writeCarUserServiceGetUserAuthResp(101);
 
@@ -513,6 +527,20 @@ public final class EventLogHelperTest {
         EventLogHelper.writeCarUserManagerSwitchUserResp(101, 102, "string");
 
         assertLogMessage("I car_user_mgr_switch_user_resp: [101,102,string]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerLogoutUserReq() {
+        EventLogHelper.writeCarUserManagerLogoutUserReq(42108);
+
+        assertLogMessage("I car_user_mgr_logout_user_req: [42108]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerLogoutUserResp() {
+        EventLogHelper.writeCarUserManagerLogoutUserResp(42108, 1, "D'OH!");
+
+        assertLogMessage("I car_user_mgr_logout_user_resp: [42108,1,D'OH!]");
     }
 
     @Test

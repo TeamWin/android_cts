@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -33,6 +34,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public final class LogcatHelper {
+
+    private static final String TAG = LogcatHelper.class.getSimpleName();
+
+    private static final boolean VERBOSE = false;
 
     private LogcatHelper() {}
 
@@ -64,23 +69,32 @@ public final class LogcatHelper {
     public static void assertLogcatMessage(String match, Buffer buffer, int timeout) {
         long startTime = SystemClock.elapsedRealtime();
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ParcelFileDescriptor output = automation
-                .executeShellCommand("logcat -b " + buffer.name().toLowerCase());
+        String command = "logcat -b " + buffer.name().toLowerCase();
+        ParcelFileDescriptor output = automation.executeShellCommand(command);
+        if (VERBOSE) {
+            Log.v(TAG, "ran '" + command + "'; will now look for '" + match + "'");
+        }
         FileDescriptor fd = output.getFileDescriptor();
         FileInputStream fileInputStream = new FileInputStream(fd);
         try (BufferedReader bufferedReader = new BufferedReader(
                 new InputStreamReader(fileInputStream))) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
+                if (VERBOSE) {
+                    Log.v(TAG, "Checking line '" + line + "'");
+                }
                 if (line.contains(match)) {
+                    if (VERBOSE) {
+                        Log.v(TAG, "Found match, returning");
+                    }
                     return;
                 }
                 if ((SystemClock.elapsedRealtime() - startTime) > timeout) {
-                    fail("match" + match + " was not found, Timeout: " + timeout + " ms");
+                    fail("match '" + match + "' was not found, Timeout: " + timeout + " ms");
                 }
             }
         } catch (IOException e) {
-            fail("match was not found, IO exception: " + e);
+            fail("match '" + match + "' was not found, IO exception: " + e);
         }
     }
 
