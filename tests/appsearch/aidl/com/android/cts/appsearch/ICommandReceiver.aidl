@@ -20,6 +20,8 @@ import java.util.List;
 interface ICommandReceiver {
     List<String> globalSearch(String queryExpression);
 
+    List<String> globalGet(String packageName, String databaseName, String id);
+
     boolean indexGloballySearchableDocument();
 
     boolean indexNotGloballySearchableDocument();
