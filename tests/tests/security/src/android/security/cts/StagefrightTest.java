@@ -2359,6 +2359,12 @@ public class StagefrightTest {
                 try {
                     MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                     if (caps != null) {
+                        /* Add mainline skip to decoders in mainline module */
+                        if (isCodecInMainlineModule(info.getName())) {
+                            Log.i(TAG, "Skipping codec " + info.getName() +
+                                        " as it is part of mainline");
+                            continue;
+                        }
                         matchingCodecs.add(info.getName());
                         Log.i(TAG, "Found matching codec " + info.getName() + " for track " + t);
                     }
@@ -2653,6 +2659,20 @@ public class StagefrightTest {
         }, 5000);
     }
 
+    private boolean isCodecInMainlineModule(String codecName) {
+        boolean value = false;
+        if (codecName.startsWith("c2.android.")) {
+            try {
+                value = ModuleDetector.moduleIsPlayManaged(
+                        getInstrumentation().getContext().getPackageManager(),
+                        MainlineModule.MEDIA_SOFTWARE_CODEC);
+            } catch (Exception e) {
+                Log.e(TAG, "Exception caught " + e.toString());
+            }
+        }
+        return value;
+    }
+
     private void doStagefrightTestRawBlob(
             int rid, String mime, int initWidth, int initHeight) throws Exception {
         doStagefrightTestRawBlob(rid, mime, initWidth, initHeight, new CrashUtils.Config());
@@ -2716,6 +2736,12 @@ public class StagefrightTest {
             try {
                 MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                 if (caps != null) {
+                    /* Add mainline skip to decoders in mainline module */
+                    if (isCodecInMainlineModule(info.getName())) {
+                        Log.i(TAG, "Skipping codec " + info.getName() +
+                                    " as it is part of mainline");
+                        continue;
+                    }
                     matchingCodecs.add(info.getName());
                 }
             } catch (IllegalArgumentException e) {
@@ -2847,6 +2873,12 @@ public class StagefrightTest {
             try {
                 MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                 if (caps != null) {
+                    /* Add mainline skip to decoders in mainline module */
+                    if (isCodecInMainlineModule(info.getName())) {
+                        Log.i(TAG, "Skipping codec " + info.getName() +
+                                    " as it is part of mainline");
+                        continue;
+                    }
                     matchingCodecs.add(info.getName());
                 }
             } catch (IllegalArgumentException e) {
@@ -2992,6 +3024,12 @@ public class StagefrightTest {
             try {
                 MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
                 if (caps != null) {
+                    /* Add mainline skip to decoders in mainline module */
+                    if (isCodecInMainlineModule(info.getName())) {
+                        Log.i(TAG, "Skipping codec " + info.getName() +
+                                    " as it is part of mainline");
+                        continue;
+                    }
                     matchingCodecs.add(info.getName());
                 }
             } catch (IllegalArgumentException e) {
