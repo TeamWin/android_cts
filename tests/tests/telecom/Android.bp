@@ -32,6 +32,7 @@ filegroup {
     ],
     path: "aidl/",
 }
+
 filegroup {
     name: "third-pty-dialer-app-srcs",
     srcs: [
@@ -41,6 +42,7 @@ filegroup {
     ],
     path: "ThirdPtyInCallServiceTestApp/",
 }
+
 filegroup {
     name: "third-pty-dialer-app-aidl",
     srcs: [
@@ -77,6 +79,8 @@ android_test {
         "ThirdPtyDialerTestApp/**/*.java",
         "ThirdPtyDialerTestAppTwo/**/*.java",
         "CarModeTestAppTwo/**/*.java",
+        "CallStreamingServiceTestApp/**/*.java",
+        "CallStreamingServiceTestApp/**/I*.aidl",
     ],
     exclude_srcs: [
         "src/android/telecom/cts/SelfManagedConnection.java",
@@ -88,6 +92,7 @@ android_test {
             "ThirdPtyInCallServiceTestApp/aidl/",
             "CallRedirectionServiceTestApp/aidl/",
             "CallScreeningServiceTestApp/aidl/",
+            "CallStreamingServiceTestApp/aidl/",
             "aidl/",
         ],
     },
