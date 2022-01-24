@@ -814,7 +814,19 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Launch to docked stack and record size.
         separateTestJournal();
-        launchActivityInSplitScreenWithRecents(activityName);
+
+        // Launching the activity in fullscreen first so that the activity can receive the
+        // onMultiWindowModeChanged() callback when entering split even on the freeform-first
+        // display.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(activityName)
+                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                .setWaitForLaunched(true)
+                .execute();
+
+        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
+        moveTaskToPrimarySplitScreen(taskId);
         final SizeInfo initialDockedSizes = getActivityDisplaySize(activityName);
         mWmState.computeState(
                 new WaitForValidActivityState.Builder(activityName).build());
