@@ -110,6 +110,7 @@ import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1211,7 +1212,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         Set<WifiSsid> ssids = new ArraySet<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setSsidsDoNotBlocklist(ssids));
 
@@ -1294,7 +1295,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -1327,9 +1328,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_2\""));
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_3\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_2".getBytes(StandardCharsets.UTF_8)));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_3".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         try {
@@ -1355,7 +1356,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestExecutor executor = new TestExecutor();
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         try {
@@ -1700,14 +1701,16 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     private SoftApConfiguration.Builder generateSoftApConfigBuilderWithSsid(String ssid) {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            return new SoftApConfiguration.Builder().setWifiSsid(WifiSsid.fromUtf8Text(ssid));
+            return new SoftApConfiguration.Builder().setWifiSsid(
+                    WifiSsid.fromBytes(ssid.getBytes(StandardCharsets.UTF_8)));
         }
         return new SoftApConfiguration.Builder().setSsid(ssid);
     }
 
     private void assertSsidEquals(SoftApConfiguration config, String expectedSsid) {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            assertEquals(expectedSsid, config.getWifiSsid().getUtf8Text());
+            assertEquals(WifiSsid.fromBytes(expectedSsid.getBytes(StandardCharsets.UTF_8)),
+                    config.getWifiSsid().getBytes());
         } else {
             assertEquals(expectedSsid, config.getSsid());
         }
@@ -1761,7 +1764,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 assertTrue(callback.onStartedCalled);
                 assertNotNull(callback.reservation);
                 SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
-                assertEquals(TEST_SSID_UNQUOTED, softApConfig.getWifiSsid().getUtf8Text());
+                assertEquals(
+                        WifiSsid.fromBytes(TEST_SSID_UNQUOTED.getBytes(StandardCharsets.UTF_8)),
+                        softApConfig.getWifiSsid());
                 assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
                 assertEquals(testBand, softApConfig.getBand());
                 assertTrue(lohsSoftApCallback.getCurrentSoftApInfo().getFrequency() > 0);
