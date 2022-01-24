@@ -27,6 +27,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -35,12 +36,14 @@ import android.media.AudioRecordingConfiguration;
 import android.media.AudioSystem;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
+import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.media.MediaSyncEvent;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioHelper;
 import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.StreamUtils;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.RecordingSession;
@@ -81,6 +84,7 @@ public class AudioRecordTest {
     private final static String TAG = "AudioRecordTest";
     private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";
     private AudioRecord mAudioRecord;
+    private AudioManager mAudioManager;
     private static final int SAMPLING_RATE_HZ = 44100;
     private boolean mIsOnMarkerReachedCalled;
     private boolean mIsOnPeriodicNotificationCalled;
@@ -104,7 +108,8 @@ public class AudioRecordTest {
         if (!hasMicrophone()) {
             return;
         }
-
+        mAudioManager = InstrumentationRegistry .getInstrumentation()
+                                               .getContext().getSystemService(AudioManager.class);
         /*
          * InstrumentationTestRunner.onStart() calls Looper.prepare(), which creates a looper
          * for the current thread. However, since we don't actually call loop() in the test,
@@ -1803,6 +1808,82 @@ public class AudioRecordTest {
             audioRecord.stop();
 
             // Also can check the mediametrics dumpsys to validate logs generated.
+        } finally {
+            if (audioRecord != null) {
+                audioRecord.release();
+            }
+        }
+    }
+
+    @Test
+    public void testCompressedCaptureAAC() throws Exception {
+        final int ENCODING = AudioFormat.ENCODING_AAC_LC;
+        final String MIMETYPE = MediaFormat.MIMETYPE_AUDIO_AAC;
+        final int BUFFER_SIZE = 16000;
+        if (!hasMicrophone()) {
+            return;
+        }
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+        // TODO test multiple supporting devices if available
+        AudioDeviceInfo supportingDevice = null;
+        for (AudioDeviceInfo device : devices) {
+            for (int encoding : device.getEncodings()) {
+                if (encoding == ENCODING) {
+                    supportingDevice = device;
+                    break;
+                }
+            }
+            if (supportingDevice != null) break;
+        }
+        if (supportingDevice == null) {
+            Log.i(TAG, "Compressed audio (AAC) not supported");
+            return; // Compressed Audio is not supported
+        }
+        Log.i(TAG, "Compressed audio (AAC) supported");
+        AudioRecord audioRecord = null;
+        try {
+            audioRecord = new AudioRecord.Builder()
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(ENCODING)
+                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                            .build())
+                    .build();
+            audioRecord.setPreferredDevice(supportingDevice);
+            class ByteBufferImpl extends StreamUtils.ByteBufferStream {
+                @Override
+                public ByteBuffer read() throws IOException {
+                    if (mCount < 1 /* only one buffer */) {
+                        ++mCount;
+                        return mByteBuffer;
+                    }
+                    return null;
+                }
+                public ByteBuffer mByteBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+                private int mCount = 0;
+            }
+
+            ByteBufferImpl byteBufferImpl = new ByteBufferImpl();
+            audioRecord.startRecording();
+            audioRecord.read(byteBufferImpl.mByteBuffer, BUFFER_SIZE);
+            audioRecord.stop();
+            // Attempt to decode compressed data
+            //sample rate/ch count not needed
+            final MediaFormat format = MediaFormat.createAudioFormat(MIMETYPE, 0, 0);
+            final StreamUtils.MediaCodecStream decodingStream
+                = new StreamUtils.MediaCodecStream(byteBufferImpl, format, false);
+            ByteBuffer decoded =  decodingStream.read();
+            int totalDecoded = 0;
+            while (decoded != null) {
+                // TODO validate actual data
+                totalDecoded += decoded.remaining();
+                decoded = decodingStream.read();
+            }
+            Log.i(TAG, "Decoded size:" + String.valueOf(totalDecoded));
+        // TODO rethrow following exceptions on verification
+        } catch (UnsupportedOperationException e) {
+            Log.w(TAG, "Compressed AudioRecord unable to be built");
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "Compressed AudioRecord unable to be started");
         } finally {
             if (audioRecord != null) {
                 audioRecord.release();
