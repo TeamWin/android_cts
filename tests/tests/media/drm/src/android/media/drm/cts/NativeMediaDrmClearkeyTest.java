@@ -42,7 +42,7 @@ import static org.junit.matchers.JUnitMatchers.containsString;
  * this test only tests the APIs that are supported by ClearKey system.
  */
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
+public class NativeMediaDrmClearkeyTest extends MediaPlayerDrmTestBase {
     private static final String TAG = NativeMediaDrmClearkeyTest.class.getSimpleName();
 
     private static final int CONNECTION_RETRIES = 10;
