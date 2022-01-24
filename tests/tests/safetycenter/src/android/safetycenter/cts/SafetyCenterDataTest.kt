@@ -26,6 +26,8 @@ import android.safetycenter.SafetyCenterEntryGroup
 import android.safetycenter.SafetyCenterEntryOrGroup
 import android.safetycenter.SafetyCenterIssue
 import android.safetycenter.SafetyCenterStatus
+import android.safetycenter.SafetyCenterStaticEntry
+import android.safetycenter.SafetyCenterStaticEntryGroup
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
@@ -84,8 +86,24 @@ class SafetyCenterDataTest {
     val entryOrGroup1 = SafetyCenterEntryOrGroup(entry1)
     val entryOrGroup2 = SafetyCenterEntryOrGroup(entryGroup1)
 
-    val data1 = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup1))
-    val data2 = SafetyCenterData(status2, listOf(issue2), listOf(entryOrGroup2))
+    val staticEntry1 = SafetyCenterStaticEntry(
+            "A static entry title",
+            "A static entry summary",
+            pendingIntent)
+    val staticEntry2 = SafetyCenterStaticEntry(
+            "Another static entry title",
+            "Another static entry summary",
+            pendingIntent)
+
+    val staticEntryGroup1 = SafetyCenterStaticEntryGroup(
+            "A static entry group title", listOf(staticEntry1))
+    val staticEntryGroup2 = SafetyCenterStaticEntryGroup(
+            "Another static entry group title", listOf(staticEntry2))
+
+    val data1 = SafetyCenterData(
+            status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
+    val data2 = SafetyCenterData(
+            status2, listOf(issue2), listOf(entryOrGroup2), listOf(staticEntryGroup2))
 
     @Test
     fun getStatus_returnsStatus() {
@@ -103,6 +121,13 @@ class SafetyCenterDataTest {
     fun getEntriesOrGroups_returnsEntriesOrGroups() {
         assertThat(data1.entriesOrGroups).containsExactly(entryOrGroup1)
         assertThat(data2.entriesOrGroups).containsExactly(entryOrGroup2)
+    }
+
+    @Test
+    fun getStaticEntryGroups_returnsStaticEntryGroups() {
+        assertThat(data1.staticEntryGroups).containsExactly(staticEntryGroup1)
+
+        assertThat(data2.staticEntryGroups).containsExactly(staticEntryGroup2)
     }
 
     @Test
@@ -131,8 +156,10 @@ class SafetyCenterDataTest {
 
     @Test
     fun equals_hashCode_toString_equalByValue_areEqual() {
-        val data = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup1))
-        val equivalentData = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup1))
+        val data = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
+        val equivalentData = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
 
         assertThat(data).isEqualTo(equivalentData)
         assertThat(data.hashCode()).isEqualTo(equivalentData.hashCode())
@@ -141,8 +168,8 @@ class SafetyCenterDataTest {
 
     @Test
     fun equals_hashCode_toString_withEmptyLists_equalByValue_areEqual() {
-        val data = SafetyCenterData(status1, listOf(), listOf())
-        val equivalentData = SafetyCenterData(status1, listOf(), listOf())
+        val data = SafetyCenterData(status1, listOf(), listOf(), listOf())
+        val equivalentData = SafetyCenterData(status1, listOf(), listOf(), listOf())
 
         assertThat(data).isEqualTo(equivalentData)
         assertThat(data.hashCode()).isEqualTo(equivalentData.hashCode())
@@ -151,8 +178,10 @@ class SafetyCenterDataTest {
 
     @Test
     fun equals_toString_withDifferentStatuses_areNotEqual() {
-        val data = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup1))
-        val differentData = SafetyCenterData(status2, listOf(issue1), listOf(entryOrGroup1))
+        val data = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
+        val differentData = SafetyCenterData(
+                status2, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
 
         assertThat(data).isNotEqualTo(differentData)
         assertThat(data.toString()).isNotEqualTo(differentData.toString())
@@ -160,8 +189,10 @@ class SafetyCenterDataTest {
 
     @Test
     fun equals_toString_withDifferentIssues_areNotEqual() {
-        val data = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup1))
-        val differentData = SafetyCenterData(status1, listOf(issue2), listOf(entryOrGroup1))
+        val data = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
+        val differentData = SafetyCenterData(
+                status1, listOf(issue2), listOf(entryOrGroup1), listOf(staticEntryGroup1))
 
         assertThat(data).isNotEqualTo(differentData)
         assertThat(data.toString()).isNotEqualTo(differentData.toString())
@@ -169,8 +200,21 @@ class SafetyCenterDataTest {
 
     @Test
     fun equals_toString_withDifferentEntriesOrGroups_areNotEqual() {
-        val data = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup1))
-        val differentData = SafetyCenterData(status1, listOf(issue1), listOf(entryOrGroup2))
+        val data = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
+        val differentData = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup2), listOf(staticEntryGroup1))
+
+        assertThat(data).isNotEqualTo(differentData)
+        assertThat(data.toString()).isNotEqualTo(differentData.toString())
+    }
+
+    @Test
+    fun equals_toString_withDifferentStaticEntryGroups_areNotEqual() {
+        val data = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup1))
+        val differentData = SafetyCenterData(
+                status1, listOf(issue1), listOf(entryOrGroup1), listOf(staticEntryGroup2))
 
         assertThat(data).isNotEqualTo(differentData)
         assertThat(data.toString()).isNotEqualTo(differentData.toString())
