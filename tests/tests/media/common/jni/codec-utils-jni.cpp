@@ -420,9 +420,9 @@ void getRawStats(NativeImage *img, jlong rawStats[10])
         for (size_t x = img->plane[0].cropWidth; x; --x) {
             uint64_t Y = 0, U = 0, V = 0;
             if (img->format == gFields.YCBCR_P010) {
-                Y = ((uint16_t)(*(ycol + 1)) << 2) || (*ycol >> 6);
-                U = ((uint16_t)(*(ucol + 1)) << 2) || (*ucol >> 6);
-                V = ((uint16_t)(*(vcol + 1)) << 2) || (*vcol >> 6);
+                Y = ((uint16_t)(*(ycol + 1)) << 2) | (*ycol >> 6);
+                U = ((uint16_t)(*(ucol + 1)) << 2) | (*ucol >> 6);
+                V = ((uint16_t)(*(vcol + 1)) << 2) | (*vcol >> 6);
             } else {
                 Y = *ycol;
                 U = *ucol;
