@@ -26,13 +26,24 @@ import android.hdmicec.cts.LogicalAddress;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.runner.RunWith;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import java.util.concurrent.TimeUnit;
 
 /** Tests that check Standby behaviour of playback devices */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecStandbyTest extends BaseHdmiCecCtsTest {
+
+    @Rule
+    public RuleChain ruleChain =
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(
+                            CecRules.requiresDeviceType(
+                                    this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
+                    .around(hdmiCecClient);
 
     private void sendStandbyAndCheckNoStandbySent(LogicalAddress destAddress) throws Exception {
         hdmiCecClient.broadcastActiveSource(LogicalAddress.TV);
