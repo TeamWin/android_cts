@@ -27,7 +27,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
 import android.os.ParcelFileDescriptor;
@@ -64,7 +64,7 @@ import java.util.zip.Adler32;
 @RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
-public class NativeDecoderTest extends MediaPlayerTestBase {
+public class NativeDecoderTest extends MediaTestBase {
     private static final String TAG = "NativeDecoderTest";
 
     private static final int RESET_MODE_NONE = 0;

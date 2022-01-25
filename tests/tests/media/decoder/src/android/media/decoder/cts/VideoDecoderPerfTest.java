@@ -26,7 +26,7 @@ import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -56,7 +56,7 @@ import java.util.LinkedList;
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
-public class VideoDecoderPerfTest extends MediaPlayerTestBase {
+public class VideoDecoderPerfTest extends MediaTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static final int TOTAL_FRAMES = 30000;
