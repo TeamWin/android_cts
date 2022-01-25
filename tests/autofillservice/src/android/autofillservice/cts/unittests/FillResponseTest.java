@@ -76,12 +76,12 @@ public class FillResponseTest {
                 () -> mBuilder.setAuthentication(mIds, null, mPresentation));
         // null presentation
         assertThrows(IllegalArgumentException.class,
-                () -> mBuilder.setAuthentication(mIds, mIntentSender, null));
+                () -> mBuilder.setAuthentication(mIds, mIntentSender, (RemoteViews) null));
     }
 
     @Test
     public void testBuilder_setAuthentication_valid() {
-        new FillResponse.Builder().setAuthentication(mIds, null, null);
+        new FillResponse.Builder().setAuthentication(mIds, null, (RemoteViews) null);
         new FillResponse.Builder().setAuthentication(mIds, mIntentSender, mPresentation);
     }
 
