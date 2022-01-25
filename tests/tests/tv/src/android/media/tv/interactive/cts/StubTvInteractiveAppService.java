@@ -28,6 +28,7 @@ import android.view.Surface;
 public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
     public static StubSessionImpl sSession;
+    public static int sType;
 
     @Override
     public Session onCreateSession(String iAppServiceId, int type) {
@@ -35,16 +36,64 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         return sSession;
     }
 
+    @Override
+    public void onPrepare(int type) {
+        sType = type;
+        notifyStateChanged(
+                sType,
+                TvInteractiveAppManager.SERVICE_STATE_PREPARING,
+                TvInteractiveAppManager.ERROR_NONE);
+    }
+
     public static class StubSessionImpl extends Session {
+        public int mSetSurfaceCount;
+        public int mSurfaceChangedCount;
+        public int mStartInteractiveAppCount;
+        public int mStopInteractiveAppCount;
+        public int mKeyDownCount;
+        public int mKeyUpCount;
+        public int mKeyMultipleCount;
+
+        public Integer mKeyDownCode;
+        public Integer mKeyUpCode;
+        public Integer mKeyMultipleCode;
+        public KeyEvent mKeyDownEvent;
+        public KeyEvent mKeyUpEvent;
+        public KeyEvent mKeyMultipleEvent;
+
+
         StubSessionImpl(Context context) {
             super(context);
         }
 
+        public void resetValues() {
+            mSetSurfaceCount = 0;
+            mSurfaceChangedCount = 0;
+            mStartInteractiveAppCount = 0;
+            mStopInteractiveAppCount = 0;
+            mKeyDownCount = 0;
+            mKeyUpCount = 0;
+            mKeyMultipleCount = 0;
+
+            mKeyDownCode = null;
+            mKeyUpCode = null;
+            mKeyMultipleCode = null;
+            mKeyDownEvent = null;
+            mKeyUpEvent = null;
+            mKeyMultipleEvent = null;
+        }
+
         @Override
         public void onStartInteractiveApp() {
+            mStartInteractiveAppCount++;
             notifySessionStateChanged(
-                    TvInteractiveAppManager.SERVICE_STATE_READY,
+                    TvInteractiveAppManager.INTERACTIVE_APP_STATE_RUNNING,
                     TvInteractiveAppManager.ERROR_NONE);
+        }
+
+        @Override
+        public void onStopInteractiveApp() {
+            mStopInteractiveAppCount++;
         }
 
         @Override
@@ -53,11 +102,20 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public boolean onSetSurface(Surface surface) {
+            mSetSurfaceCount++;
             return false;
         }
 
         @Override
+        public void onSurfaceChanged(int format, int width, int height) {
+            mSurfaceChangedCount++;
+        }
+
+        @Override
         public boolean onKeyDown(int keyCode, KeyEvent event) {
+            mKeyDownCount++;
+            mKeyDownCode = keyCode;
+            mKeyDownEvent = event;
             return false;
         }
 
@@ -68,11 +126,17 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public boolean onKeyUp(int keyCode, KeyEvent event) {
+            mKeyUpCount++;
+            mKeyUpCode = keyCode;
+            mKeyUpEvent = event;
             return false;
         }
 
         @Override
         public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
+            mKeyMultipleCount++;
+            mKeyMultipleCode = keyCode;
+            mKeyMultipleEvent = event;
             return false;
         }
     }
