@@ -106,6 +106,25 @@ class SafetyCenterEntryTest {
     }
 
     @Test
+    fun isEnabled_returnsIsEnabled() {
+        assertThat(SafetyCenterEntry.Builder(entry1).setEnabled(true).build().isEnabled)
+                .isTrue()
+        assertThat(SafetyCenterEntry.Builder(entry1).setEnabled(false).build().isEnabled)
+                .isFalse()
+    }
+
+    @Test
+    fun isEnabled_defaultTrue() {
+        assertThat(SafetyCenterEntry.Builder("eNtRy_iD")
+                .setTitle("a title")
+                .setPendingIntent(pendingIntent1)
+                .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_UNKNOWN)
+                .build()
+                .isEnabled)
+                .isTrue()
+    }
+
+    @Test
     fun getPendingIntent_returnsPendingIntent() {
         assertThat(SafetyCenterEntry.Builder(entry1)
                 .setPendingIntent(pendingIntent1)
@@ -179,6 +198,15 @@ class SafetyCenterEntryTest {
     }
 
     @Test
+    fun equals_hashCode_toString_fromCopyBuilder_areEqual() {
+        val copyOfEntry1 = SafetyCenterEntry.Builder(entry1).build()
+
+        assertThat(copyOfEntry1).isEqualTo(entry1)
+        assertThat(copyOfEntry1.hashCode()).isEqualTo(entry1.hashCode())
+        assertThat(copyOfEntry1.toString()).isEqualTo(entry1.toString())
+    }
+
+    @Test
     fun equals_toString_withDifferentIds_areNotEqual() {
         val differentFromEntry1 = SafetyCenterEntry.Builder(entry1)
                 .setId("a different id")
@@ -222,6 +250,16 @@ class SafetyCenterEntryTest {
     fun equals_toString_withDifferentStatelessIconTypes_areNotEqual() {
         val differentFromEntry1 = SafetyCenterEntry.Builder(entry1)
                 .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .build()
+
+        assertThat(differentFromEntry1).isNotEqualTo(entry1)
+        assertThat(differentFromEntry1.toString()).isNotEqualTo(entry1.toString())
+    }
+
+    @Test
+    fun equals_toString_withDifferentEnabledValues_areNotEqual() {
+        val differentFromEntry1 = SafetyCenterEntry.Builder(entry1)
+                .setEnabled(false)
                 .build()
 
         assertThat(differentFromEntry1).isNotEqualTo(entry1)
