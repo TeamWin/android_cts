@@ -41,9 +41,13 @@ import java.util.Map;
 public class MediaCodecTunneledPlayer implements MediaTimeProvider {
     private static final String TAG = MediaCodecTunneledPlayer.class.getSimpleName();
 
+    /** State the player starts in, before configuration. */
     private static final int STATE_IDLE = 1;
+    /** State of the player during initial configuration. */
     private static final int STATE_PREPARING = 2;
+    /** State of the player during playback. */
     private static final int STATE_PLAYING = 3;
+    /** State of the player when configured but not playing. */
     private static final int STATE_PAUSED = 4;
 
     private Boolean mThreadStarted = false;
@@ -398,16 +402,36 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
 
     /**
      * Flushes all the video codecs when the player is in stand-by.
+     *
+     * @throws IllegalStateException  if the player is not paused
      */
     public void videoFlush() {
         Log.d(TAG, "videoFlush");
         synchronized (mState) {
-            if (mState == STATE_PLAYING || mState == STATE_PREPARING) {
-                return;
+            if (mState != STATE_PAUSED) {
+                throw new IllegalStateException("Expected STATE_PAUSED, got " + mState);
             }
 
             for (CodecState state : mVideoCodecStates.values()) {
                 state.flush();
+            }
+        }
+    }
+
+    /** Seek all video tracks to their very beginning.
+     *
+     * @param  shouldContinuePts      a boolean that controls whether timestamps keep increasing
+     * @throws IllegalStateException  if the player is not paused
+     */
+    public void videoSeekToBeginning(boolean shouldContinuePts) {
+        Log.d(TAG, "videoSeekToBeginning");
+        synchronized (mState) {
+            if (mState != STATE_PAUSED) {
+                throw new IllegalStateException("Expected STATE_PAUSED, got " + mState);
+            }
+
+            for (CodecState state : mVideoCodecStates.values()) {
+                state.seekToBeginning(shouldContinuePts);
             }
         }
     }
