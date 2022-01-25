@@ -108,7 +108,8 @@ class AspectRatioTestsBase extends ActivityManagerTestBase {
 
     int getMinimalTaskSize(ComponentName componentName) {
         final int displayId = mWmState.getDisplayByActivity(componentName);
-        return mWmState.defaultMinimalTaskSize(displayId);
+        final WindowManagerState.DisplayContent displayContent = mWmState.getDisplay(displayId);
+        return displayContent.mMinSizeOfResizeableTaskDp;
     }
 
     static float getDefaultDisplayAspectRatio() {
