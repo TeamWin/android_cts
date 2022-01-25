@@ -29,6 +29,7 @@ import android.os.Process
 import android.os.UserHandle
 import android.provider.Settings
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -49,7 +50,9 @@ const val DELAY_MS = 2000L
 
 class NotificationPermissionTest : BaseUsePermissionTest() {
 
-    private val cr = context.createContextAsUser(UserHandle.SYSTEM, 0).contentResolver
+    private val cr = callWithShellPermissionIdentity {
+        context.createContextAsUser(UserHandle.SYSTEM, 0).contentResolver
+    }
     private var previousEnableState = 0
     private var countDown: CountDownLatch = CountDownLatch(1)
     private var allowedGroups = listOf<String>()
