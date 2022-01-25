@@ -29,6 +29,7 @@ import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
+import android.app.usage.NetworkStatsManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -63,6 +64,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.Process;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -984,6 +986,23 @@ public class AtomTests {
     public void testGenerateMobileTraffic() throws Exception {
         final Context context = InstrumentationRegistry.getContext();
         doGenerateNetworkTraffic(context, NetworkCapabilities.TRANSPORT_CELLULAR);
+    }
+
+    /**
+     * Force poll NetworkStatsService to get most updated network stats from lower layer.
+     */
+    @Test
+    public void testForcePollNetworkStats() throws Exception {
+        final Context context = InstrumentationRegistry.getContext();
+        final NetworkStatsManager nsm = context.getSystemService(NetworkStatsManager.class);
+        try {
+            nsm.setPollForce(true);
+            // This query is for triggering force poll NetworkStatsService.
+            nsm.querySummaryForUser(ConnectivityManager.TYPE_WIFI, null, Long.MIN_VALUE,
+                    Long.MAX_VALUE);
+        } catch (RemoteException e) {
+            Log.e(TAG, "doPollNetworkStats failed with " + e);
+        }
     }
 
     // Constants which are locally used by doGenerateNetworkTraffic.
