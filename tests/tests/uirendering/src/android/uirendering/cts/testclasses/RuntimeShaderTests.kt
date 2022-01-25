@@ -375,6 +375,33 @@ class RuntimeShaderTests : ActivityTestBase() {
     }
 
     @Test
+    fun testLinearColorIntrinsic() {
+        val colorA = Color.valueOf(0.75f, 0.25f, 0.0f, 1.0f)
+        val colorB = Color.valueOf(0.0f, 0.75f, 0.25f, 1.0f)
+        val shader = RuntimeShader(linearMixShader)
+        shader.setColorUniform("inputColorA", colorA)
+        shader.setColorUniform("inputColorB", colorB)
+
+        val linearExtendedSRGB = ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)
+        val linearColorA = colorA.convert(linearExtendedSRGB)
+        val linearColorB = colorB.convert(linearExtendedSRGB)
+        val linearColorMix = Color.valueOf((linearColorA.red() + linearColorB.red()) / 2.0f,
+                (linearColorA.green() + linearColorB.green()) / 2.0f,
+                (linearColorA.blue() + linearColorB.blue()) / 2.0f,
+                (linearColorA.alpha() + linearColorB.alpha()) / 2.0f,
+                linearExtendedSRGB)
+
+        val paint = Paint()
+        paint.shader = shader
+
+        val rect = Rect(10, 10, 80, 80)
+
+        createTest().addCanvasClient(CanvasClient
+        { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
+                true).runWithVerifier(RectVerifier(Color.WHITE, linearColorMix.toArgb(), rect, 4))
+    }
+
+    @Test
     fun testOpaqueConstructor() {
         val shader = RuntimeShader(simpleColorShader, true)
         Assert.assertTrue(shader.isForceOpaque)
@@ -471,6 +498,21 @@ class RuntimeShaderTests : ActivityTestBase() {
             outputColor = inputNonColor;
           }
           return outputColor;
+       }"""
+    val linearMixShader = """
+        layout(color) uniform vec4 inputColorA;
+        layout(color) uniform vec4 inputColorB;
+       vec4 main(vec2 coord) {
+          vec3 linColorA = toLinearSrgb(inputColorA.rgb);
+          vec3 linColorB = toLinearSrgb(inputColorB.rgb);
+          if (linColorA == inputColorA.rgb) {
+            return vec4(1.0, 0.0, 0.0, 1.0);
+          }
+          if (linColorB == inputColorB.rgb) {
+            return vec4(0.0, 0.0, 0.0, 1.0);
+          }
+          vec3 linMixedColor = mix(linColorA, linColorB, 0.5);
+          return fromLinearSrgb(linMixedColor).rgb1;
        }"""
     val samplingShader = """
         uniform shader inputShader;
