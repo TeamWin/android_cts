@@ -146,8 +146,12 @@ public final class HdmiCecConstants {
     public static final File CEC_MAP_FOLDER =
             new File(System.getProperty("java.io.tmpdir"), "cec-cts-temp");
 
+
     // Power Control Modes for source devices
     public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";
     public static final String POWER_CONTROL_MODE_NONE = "none";
     public static final String POWER_CONTROL_MODE_TV = "to_tv";
+
+    // CEC 2.0 Report Feature Bits
+    public static final int FEATURES_SINK_SUPPORTS_ARC_TX_BIT = 0x4;
 }
