@@ -38,7 +38,7 @@ import android.media.MediaMuxer;
 import android.media.cts.CodecUtils;
 import android.media.cts.InputSurface;
 import android.media.cts.MediaHeavyPresubmitTest;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
@@ -78,7 +78,7 @@ import java.util.Set;
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 @RunWith(AndroidJUnit4.class)
-public class VideoEncoderTest extends MediaPlayerTestBase {
+public class VideoEncoderTest extends MediaTestBase {
     private static final int MAX_SAMPLE_SIZE = 256 * 1024;
     private static final String TAG = "VideoEncoderTest";
     private static final long FRAME_TIMEOUT_MS = 1000;

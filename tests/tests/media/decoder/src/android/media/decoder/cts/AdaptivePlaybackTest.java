@@ -27,7 +27,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
 import android.os.Build;
@@ -60,7 +60,7 @@ import java.util.zip.CRC32;
 @MediaHeavyPresubmitTest
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class AdaptivePlaybackTest extends MediaPlayerTestBase {
+public class AdaptivePlaybackTest extends MediaTestBase {
 
     private static final boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
