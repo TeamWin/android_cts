@@ -251,7 +251,7 @@ public class ASurfaceControlTestActivity extends Activity {
             for (int x = boundsToCheck.left; x < boundsToCheck.right; x++) {
                 for (int y = boundsToCheck.top; y < boundsToCheck.bottom; y++) {
                     int color = bitmap.getPixel(x + OFFSET_X, y + OFFSET_Y);
-                    if (matchesColor(getExpectedColor(x, y), color)) {
+                    if (getExpectedColor(x, y).matchesColor(color)) {
                         numMatchingPixels++;
                     } else if (DEBUG && mLogWhenNoMatch && numErrorsLogged < 100) {
                         // We don't want to spam the logcat with errors if something is really
@@ -267,22 +267,6 @@ public class ASurfaceControlTestActivity extends Activity {
                 }
             }
             return numMatchingPixels;
-        }
-
-        boolean matchesColor(PixelColor expectedColor, int color) {
-            final float red = Color.red(color);
-            final float green = Color.green(color);
-            final float blue = Color.blue(color);
-            final float alpha = Color.alpha(color);
-
-            return alpha <= expectedColor.mMaxAlpha
-                    && alpha >= expectedColor.mMinAlpha
-                    && red <= expectedColor.mMaxRed
-                    && red >= expectedColor.mMinRed
-                    && green <= expectedColor.mMaxGreen
-                    && green >= expectedColor.mMinGreen
-                    && blue <= expectedColor.mMaxBlue
-                    && blue >= expectedColor.mMinBlue;
         }
 
         public abstract boolean checkPixels(int matchingPixelCount, int width, int height);
