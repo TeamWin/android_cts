@@ -59,7 +59,6 @@ import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Preconditions;
 import android.media.cts.SdkMediaCodec;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -4348,9 +4347,13 @@ public class DecoderTest extends MediaPlayerTestBase {
                 mMediaCodecPlayer.getCurrentPosition());
         mMediaCodecPlayer.pause();
         Thread.sleep(50);
-        assertTrue("Video is ahead of audio", mMediaCodecPlayer.getCurrentPosition() <=
-                mMediaCodecPlayer.getAudioTrackPositionUs());
+        final long audioPositionUs = mMediaCodecPlayer.getAudioTrackPositionUs();
+        final long videoPositionUs = mMediaCodecPlayer.getCurrentPosition();
+        assertTrue(String.format("Video pts (%d) is ahead of audio pts (%d)",
+                        videoPositionUs, audioPositionUs),
+                videoPositionUs <= audioPositionUs);
         mMediaCodecPlayer.videoFlush();
+        mMediaCodecPlayer.videoSeekToBeginning(true /* shouldContinuePts */);
         Thread.sleep(50);
         assertEquals("Video frame rendered after flush", CodecState.UNINITIALIZED_TIMESTAMP,
                 mMediaCodecPlayer.getCurrentPosition());
