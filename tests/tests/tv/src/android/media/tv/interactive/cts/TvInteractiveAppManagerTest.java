@@ -222,8 +222,8 @@ public class TvInteractiveAppManagerTest {
         assertNotNull(stubInfo);
 
         Bundle bundle = new Bundle();
-        bundle.putString(TvInteractiveAppManager.KEY_PACKAGE_NAME, "pkg_name");
-        bundle.putString(TvInteractiveAppManager.KEY_CLASS_NAME, "clazz_name");
+        bundle.putString(TvInteractiveAppManager.APP_LINK_KEY_PACKAGE_NAME, "pkg_name");
+        bundle.putString(TvInteractiveAppManager.APP_LINK_KEY_CLASS_NAME, "clazz_name");
 
         mManager.sendAppLinkCommand(stubInfo.getId(), bundle);
         PollingCheck.waitFor(
