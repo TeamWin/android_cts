@@ -28,6 +28,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Process
 import android.os.UserHandle
 import android.provider.Settings
+import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import org.junit.After
@@ -58,9 +59,9 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     private var allowedGroups = listOf<String>()
     private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            countDown.countDown()
             allowedGroups = intent?.getStringArrayListExtra(
                 PackageManager.EXTRA_REQUEST_PERMISSIONS_RESULTS) ?: emptyList()
+            countDown.countDown()
         }
     }
 
@@ -220,9 +221,11 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     }
 
     private fun assertAppPermissionGrantedState(permission: String, granted: Boolean) {
-        runWithShellPermissionIdentity {
-            Assert.assertEquals("Expected $permission to be granted", context.packageManager
-                .checkPermission(permission, APP_PACKAGE_NAME), PERMISSION_GRANTED)
+        SystemUtil.eventually {
+            runWithShellPermissionIdentity {
+                Assert.assertEquals("Expected $permission to be granted", context.packageManager
+                        .checkPermission(permission, APP_PACKAGE_NAME), PERMISSION_GRANTED)
+            }
         }
     }
 
