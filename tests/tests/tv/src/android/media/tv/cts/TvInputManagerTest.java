@@ -53,6 +53,7 @@ import androidx.test.InstrumentationRegistry;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,12 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             "android.permission.TV_INPUT_HARDWARE";
     private static final String PERMISSION_TUNER_RESOURCE_ACCESS =
             "android.permission.TUNER_RESOURCE_ACCESS";
+    private static final String[] BASE_SHELL_PERMISSIONS = {
+            PERMISSION_ACCESS_WATCHED_PROGRAMS,
+            PERMISSION_WRITE_EPG_DATA,
+            PERMISSION_ACCESS_TUNED_INFO,
+            PERMISSION_TUNER_RESOURCE_ACCESS
+    };
 
     private String mStubId;
     private TvInputManager mManager;
@@ -132,8 +139,11 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     private String prepareStubHardwareTvInputService() {
+        String[] newPermissions = Arrays.copyOf(
+                BASE_SHELL_PERMISSIONS, BASE_SHELL_PERMISSIONS.length + 1);
+        newPermissions[BASE_SHELL_PERMISSIONS.length] = PERMISSION_TV_INPUT_HARDWARE;
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.TV_INPUT_HARDWARE");
+                .adoptShellPermissionIdentity(newPermissions);
 
         // Use the test api to add an HDMI hardware device
         mManager.addHardwareDevice(DUMMY_DEVICE_ID);
@@ -159,8 +169,9 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     private void cleanupStubHardwareTvInputService() {
+        // Restore the base shell permissions
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
+                .adoptShellPermissionIdentity(BASE_SHELL_PERMISSIONS);
 
         PackageManager pm = getActivity().getPackageManager();
         ComponentName component =
@@ -190,14 +201,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             return;
         }
 
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .adoptShellPermissionIdentity(
-                        PERMISSION_ACCESS_WATCHED_PROGRAMS,
-                        PERMISSION_WRITE_EPG_DATA,
-                        PERMISSION_ACCESS_TUNED_INFO,
-                        PERMISSION_TUNER_RESOURCE_ACCESS);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(BASE_SHELL_PERMISSIONS);
 
         mInstrumentation = getInstrumentation();
         mTvView = findTvViewById(R.id.tvview);
@@ -495,12 +500,11 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             return;
         }
 
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .adoptShellPermissionIdentity(
-                        PERMISSION_WRITE_EPG_DATA,
-                        PERMISSION_TV_INPUT_HARDWARE);
+        String[] newPermissions = Arrays.copyOf(
+                BASE_SHELL_PERMISSIONS, BASE_SHELL_PERMISSIONS.length + 1);
+        newPermissions[BASE_SHELL_PERMISSIONS.length] = PERMISSION_TV_INPUT_HARDWARE;
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(newPermissions);
 
         // Update hardware device list
         int deviceId = 0;
@@ -541,6 +545,9 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         if (hardwareDeviceAdded) {
             mManager.removeHardwareDevice(deviceId);
         }
+        // Restore the base shell permissions
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(BASE_SHELL_PERMISSIONS);
     }
 
     public void testTvInputHardwareOverrideAudioSink() {
