@@ -58,29 +58,47 @@ class SafetySourceDataTest {
                             Intent("IconAction PendingIntent 2"), FLAG_IMMUTABLE)))
             .build()
     private val issue1 = SafetySourceIssue.Builder(
-            "Issue id 1",
-            "Issue summary 1",
-            "Issue summary 1",
-            SafetySourceIssue.SEVERITY_LEVEL_INFORMATION)
-            .setSubtitle("Issue subtitle 1")
-            .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
-            .addAction(SafetySourceIssue.Action.Builder("Action label 1",
-                    PendingIntent.getActivity(context, 0 /* requestCode= */,
-                            Intent("Issue PendingIntent 1"), FLAG_IMMUTABLE))
-                    .build())
-            .build()
+        "Issue id 1",
+        "Issue summary 1",
+        "Issue summary 1",
+        SafetySourceIssue.SEVERITY_LEVEL_INFORMATION, "issue_type_id"
+    )
+        .setSubtitle("Issue subtitle 1")
+        .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
+        .addAction(
+            SafetySourceIssue.Action.Builder(
+                "Action label 1",
+                PendingIntent.getActivity(
+                    context, 0 /* requestCode= */,
+                    Intent("Issue PendingIntent 1"), FLAG_IMMUTABLE
+                )
+            )
+                .build()
+        )
+        .build()
     private val issue2 = SafetySourceIssue.Builder(
-            "Issue id 2",
-            "Issue title 2",
-            "Issue summary 2",
-            SafetySourceIssue.SEVERITY_LEVEL_RECOMMENDATION)
-            .addAction(SafetySourceIssue.Action.Builder("Action label 2",
-                    PendingIntent.getService(context, 0 /* requestCode= */,
-                            Intent("Issue PendingIntent 2"), FLAG_IMMUTABLE)).build())
-            .setOnDismissPendingIntent(PendingIntent.getService(context,
-                    0 /* requestCode= */,
-                    Intent("Issue OnDismissPendingIntent 2"), FLAG_IMMUTABLE))
-            .build()
+        "Issue id 2",
+        "Issue title 2",
+        "Issue summary 2",
+        SafetySourceIssue.SEVERITY_LEVEL_RECOMMENDATION, "issue_type_id"
+    )
+        .addAction(
+            SafetySourceIssue.Action.Builder(
+                "Action label 2",
+                PendingIntent.getService(
+                    context, 0 /* requestCode= */,
+                    Intent("Issue PendingIntent 2"), FLAG_IMMUTABLE
+                )
+            ).build()
+        )
+        .setOnDismissPendingIntent(
+            PendingIntent.getService(
+                context,
+                0 /* requestCode= */,
+                Intent("Issue OnDismissPendingIntent 2"), FLAG_IMMUTABLE
+            )
+        )
+        .build()
 
     @Test
     fun getId_returnsId() {
