@@ -103,4 +103,21 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         runShellCommand(String.format(
                 "cmd companiondevice disassociate %d %s %s", userId, packageName, deviceAddress));
     }
+
+    public void test_getIdentityAddress() {
+        if (!mHasBluetooth || !mHasCompanionDevice) {
+            // Skip the test if bluetooth or companion device are not present.
+            return;
+        }
+        String deviceAddress = "00:11:22:AA:BB:CC";
+        String identityAddress = null;
+        BluetoothDevice device = mAdapter.getRemoteDevice(deviceAddress);
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        try {
+            identityAddress = device.getIdentityAddress();
+            fail("No BLUETOOTH_PRIVILEGED permission");
+        } catch (SecurityException ex) {
+            assertNull(identityAddress);
+        }
+    }
 }
