@@ -16,7 +16,12 @@
 
 package android.hdmicec.cts.common;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
+import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RemoteControlPassthrough;
 
@@ -51,5 +56,104 @@ public final class HdmiCecGeneralProtocolTest extends BaseHdmiCecCtsTest {
         setCec20();
         RemoteControlPassthrough.checkUserControlPressAndReleaseWithAdditionalParams(
                 hdmiCecClient, getDevice(), LogicalAddress.RECORDER_1, getTargetLogicalAddress());
+    }
+
+    /**
+     * Test HF4-2-15 (CEC 2.0)
+     *
+     * <p>Tests that the DUT responds to mandatory messages in both on and standby states
+     */
+    @Test
+    public void cect_hf_4_2_15() throws Exception {
+        setCec20();
+        int cecVersion = HdmiCecConstants.CEC_VERSION_2_0;
+        int physicalAddressParams;
+        int features = 0;
+        String osdName;
+
+        sendDeviceToSleep();
+        try {
+            // Check POLL message response
+            hdmiCecClient.sendPoll();
+            if (!hdmiCecClient.checkConsoleOutput(HdmiCecConstants.POLL_SUCCESS)) {
+                throw new Exception("Device did not respond to Poll");
+            }
+
+            // Check CEC version
+            hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+            String message =
+                    hdmiCecClient.checkExpectedOutput(
+                            hdmiCecClient.getSelfDevice(), CecOperand.CEC_VERSION);
+            assertThat(CecMessage.getParams(message)).isEqualTo(cecVersion);
+
+            // Give physical address
+            hdmiCecClient.sendCecMessage(
+                    hdmiCecClient.getSelfDevice(), CecOperand.GIVE_PHYSICAL_ADDRESS);
+            message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
+            physicalAddressParams = CecMessage.getParams(message);
+
+            // Give features
+            hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_FEATURES);
+            message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+            features = CecMessage.getParams(message);
+
+            // Give power status
+            hdmiCecClient.sendCecMessage(
+                    hdmiCecClient.getSelfDevice(), CecOperand.GIVE_POWER_STATUS);
+            message =
+                    hdmiCecClient.checkExpectedOutput(
+                            hdmiCecClient.getSelfDevice(), CecOperand.REPORT_POWER_STATUS);
+            assertThat(CecMessage.getParams(message))
+                    .isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Give OSD name
+            hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_OSD_NAME);
+            message =
+                    hdmiCecClient.checkExpectedOutput(
+                            hdmiCecClient.getSelfDevice(), CecOperand.SET_OSD_NAME);
+            osdName = CecMessage.getParamsAsString(message);
+        } finally {
+            wakeUpDevice();
+        }
+
+        // Repeat the above with DUT not in standby, and verify that the responses are the same,
+        // except the <Report Power Status> message
+        // Check POLL message response
+        hdmiCecClient.sendPoll();
+        if (!hdmiCecClient.checkConsoleOutput(HdmiCecConstants.POLL_SUCCESS)) {
+            throw new Exception("Device did not respond to Poll");
+        }
+
+        // Check CEC version
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String message =
+                hdmiCecClient.checkExpectedOutput(
+                        hdmiCecClient.getSelfDevice(), CecOperand.CEC_VERSION);
+        assertThat(CecMessage.getParams(message)).isEqualTo(cecVersion);
+
+        // Give physical address
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(), CecOperand.GIVE_PHYSICAL_ADDRESS);
+        message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
+        assertThat(CecMessage.getParams(message)).isEqualTo(physicalAddressParams);
+
+        // Give features
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_FEATURES);
+        message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+        assertThat(CecMessage.getParams(message)).isEqualTo(features);
+
+        // Give power status
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_POWER_STATUS);
+        message =
+                hdmiCecClient.checkExpectedOutput(
+                        hdmiCecClient.getSelfDevice(), CecOperand.REPORT_POWER_STATUS);
+        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+        // Give OSD name
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_OSD_NAME);
+        message =
+                hdmiCecClient.checkExpectedOutput(
+                        hdmiCecClient.getSelfDevice(), CecOperand.SET_OSD_NAME);
+        assertThat(CecMessage.getParamsAsString(message)).isEqualTo(osdName);
     }
 }
