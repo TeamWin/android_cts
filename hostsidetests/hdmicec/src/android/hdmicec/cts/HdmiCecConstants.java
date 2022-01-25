@@ -130,6 +130,9 @@ public final class HdmiCecConstants {
     public static final int CEC_POWER_STATUS_IN_TRANSITION_TO_ON = 0x2;
     public static final int CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY = 0x3;
 
+    /** Poll Message Success */
+    public static final String POLL_SUCCESS = "POLL message sent";
+
     // CEC Device feature list
     public static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
     public static final String LEANBACK_FEATURE = "feature:android.software.leanback";
