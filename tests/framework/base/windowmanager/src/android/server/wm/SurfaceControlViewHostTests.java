@@ -35,9 +35,12 @@ import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.Region;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -572,4 +575,73 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
+
+    class MotionRecordingSurfaceView extends SurfaceView {
+        boolean mGotEvent = false;
+        MotionRecordingSurfaceView(Context c) {
+            super(c);
+        }
+        public boolean onTouchEvent(MotionEvent e) {
+            super.onTouchEvent(e);
+            synchronized (this) {
+                mGotEvent = true;
+            }
+            return true;
+        }
+        boolean gotEvent() {
+            synchronized (this) {
+                return mGotEvent;
+            }
+        }
+        void reset() {
+            synchronized (this) {
+                mGotEvent = false;
+            }
+        }
+    }
+
+    class TouchPunchingView extends View {
+        public TouchPunchingView(Context context) {
+            super(context);
+        }
+
+        void punchHoleInTouchableRegion() {
+            getRootSurfaceControl().setTouchableRegion(new Region());
+        }
+    }
+
+    private void addMotionRecordingSurfaceView(int width, int height) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new MotionRecordingSurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                width, height, Gravity.LEFT | Gravity.TOP));
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
+            mSurfaceView.getHolder().addCallback(this);
+        });
+    }
+
+    @Test
+    public void testEmbeddedViewCanSetTouchableRegion() throws Throwable {
+        TouchPunchingView tpv;
+        mEmbeddedView = tpv = new TouchPunchingView(mActivity);
+
+        addMotionRecordingSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+
+        MotionRecordingSurfaceView mrsv = (MotionRecordingSurfaceView)mSurfaceView;
+        assertFalse(mrsv.gotEvent());
+        mActivityRule.runOnUiThread(() -> {
+            tpv.punchHoleInTouchableRegion();
+        });
+        mInstrumentation.waitForIdleSync();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mrsv.gotEvent());
+    }
+
 }
