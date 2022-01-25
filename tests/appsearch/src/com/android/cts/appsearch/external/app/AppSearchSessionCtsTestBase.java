@@ -72,6 +72,8 @@ public abstract class AppSearchSessionCtsTestBase {
     static final String DB_NAME_1 = "";
     static final String DB_NAME_2 = "testDb2";
 
+    private final Context mContext = ApplicationProvider.getApplicationContext();
+
     private AppSearchSessionShim mDb1;
     private AppSearchSessionShim mDb2;
 
@@ -83,8 +85,6 @@ public abstract class AppSearchSessionCtsTestBase {
 
     @Before
     public void setUp() throws Exception {
-        Context context = ApplicationProvider.getApplicationContext();
-
         mDb1 = createSearchSession(DB_NAME_1).get();
         mDb2 = createSearchSession(DB_NAME_2).get();
 
@@ -579,7 +579,9 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(failResult2.isSuccess()).isFalse();
         assertThat(failResult2.getFailures().get("email2").getErrorMessage())
                 .isEqualTo(
-                        "Schema type config 'com.android.cts.appsearch$"
+                        "Schema type config '"
+                                + mContext.getPackageName()
+                                + "$"
                                 + DB_NAME_1
                                 + "/builtin:Email' not found");
     }
@@ -661,7 +663,9 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(failResult2.isSuccess()).isFalse();
         assertThat(failResult2.getFailures().get("email3").getErrorMessage())
                 .isEqualTo(
-                        "Schema type config 'com.android.cts.appsearch$"
+                        "Schema type config '"
+                                + mContext.getPackageName()
+                                + "$"
                                 + DB_NAME_1
                                 + "/builtin:Email' not found");
 
@@ -2090,8 +2094,8 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(matchInfo.getSnippet()).isEqualTo("is foo.");
 
         if (!mDb1.getFeatures().isFeatureSupported(Features.SEARCH_RESULT_MATCH_INFO_SUBMATCH)) {
-            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatchRange());
-            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatch());
+            assertThrows(UnsupportedOperationException.class, matchInfo::getSubmatchRange);
+            assertThrows(UnsupportedOperationException.class, matchInfo::getSubmatch);
         } else {
             assertThat(matchInfo.getSubmatchRange())
                     .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 29, /*upper=*/ 31));
@@ -2237,8 +2241,8 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(matchInfo.getExactMatch()).isEqualTo("は");
 
         if (!mDb1.getFeatures().isFeatureSupported(Features.SEARCH_RESULT_MATCH_INFO_SUBMATCH)) {
-            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatchRange());
-            assertThrows(UnsupportedOperationException.class, () -> matchInfo.getSubmatch());
+            assertThrows(UnsupportedOperationException.class, matchInfo::getSubmatchRange);
+            assertThrows(UnsupportedOperationException.class, matchInfo::getSubmatch);
         } else {
             assertThat(matchInfo.getSubmatchRange())
                     .isEqualTo(new SearchResult.MatchRange(/*lower=*/ 44, /*upper=*/ 45));

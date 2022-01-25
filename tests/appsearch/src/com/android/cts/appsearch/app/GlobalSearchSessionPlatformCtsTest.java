@@ -32,9 +32,12 @@ import android.app.appsearch.SearchResult;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.observer.DocumentChangeInfo;
+import android.app.appsearch.observer.ObserverSpec;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
+import android.app.appsearch.testutil.TestObserverCallback;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -50,6 +53,7 @@ import com.android.cts.appsearch.ICommandReceiver;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,6 +62,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -509,6 +514,87 @@ public class GlobalSearchSessionPlatformCtsTest {
             assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
             assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id2");
         }
+    }
+
+    @Test
+    public void testRemoveObserver_otherPackagesNotRemoved() throws Exception {
+        final String fakePackage = "com.android.appsearch.fake.package";
+        TestObserverCallback observer = new TestObserverCallback();
+
+        // Set up schema
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+        mDb.setSchema(new SetSchemaRequest.Builder()
+                .addSchemas(AppSearchEmail.SCHEMA).build()).get();
+
+        // Register this observer twice, on different packages.
+        Executor executor = MoreExecutors.directExecutor();
+        mGlobalSearchSession.addObserver(
+                mContext.getPackageName(),
+                new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
+                executor,
+                observer);
+        mGlobalSearchSession.addObserver(
+                /*observedPackage=*/fakePackage,
+                new ObserverSpec.Builder().addFilterSchemas("Gift").build(),
+                executor,
+                observer);
+
+        // Make sure everything is empty
+        assertThat(observer.getSchemaChanges()).isEmpty();
+        assertThat(observer.getDocumentChanges()).isEmpty();
+
+        // Index some documents
+        AppSearchEmail email1 = new AppSearchEmail.Builder("namespace", "id1").build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("namespace", "id2").setBody("caterpillar").build();
+        AppSearchEmail email3 =
+                new AppSearchEmail.Builder("namespace", "id3").setBody("foo").build();
+
+        checkIsBatchResultSuccess(
+                mDb.put(new PutDocumentsRequest.Builder()
+                        .addGenericDocuments(email1).build()));
+
+        // Make sure the notifications were received.
+        observer.waitForNotificationCount(1);
+
+        assertThat(observer.getSchemaChanges()).isEmpty();
+        assertThat(observer.getDocumentChanges()).containsExactly(
+                new DocumentChangeInfo(
+                        mContext.getPackageName(),
+                        DB_NAME,
+                        "namespace",
+                        AppSearchEmail.SCHEMA_TYPE));
+        observer.clear();
+
+        // Unregister observer from com.example.package
+        mGlobalSearchSession.removeObserver("com.example.package", observer);
+
+        // Index some more documents
+        assertThat(observer.getDocumentChanges()).isEmpty();
+        checkIsBatchResultSuccess(
+                mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
+
+        // Make sure data was still received
+        observer.waitForNotificationCount(1);
+        assertThat(observer.getDocumentChanges()).containsExactly(
+                new DocumentChangeInfo(
+                        mContext.getPackageName(),
+                        DB_NAME,
+                        "namespace",
+                        AppSearchEmail.SCHEMA_TYPE));
+        observer.clear();
+
+        // Unregister the final observer
+        mGlobalSearchSession.removeObserver(mContext.getPackageName(), observer);
+
+        // Index some more documents
+        assertThat(observer.getDocumentChanges()).isEmpty();
+        checkIsBatchResultSuccess(
+                mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(email3).build()));
+
+        // Make sure there have been no further notifications
+        assertThat(observer.getDocumentChanges()).isEmpty();
     }
 
     private void assertPackageCannotAccess(String pkg) throws Exception {
