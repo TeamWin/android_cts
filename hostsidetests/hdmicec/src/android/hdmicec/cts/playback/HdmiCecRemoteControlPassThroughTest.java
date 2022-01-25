@@ -17,6 +17,8 @@
 package android.hdmicec.cts.playback;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
+import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RemoteControlPassthrough;
@@ -73,5 +75,70 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
         LogicalAddress dutLogicalAddress = getTargetLogicalAddress(getDevice(), DUT_DEVICE_TYPE);
         RemoteControlPassthrough.checkUserControlPressAndHold(
                 hdmiCecClient, getDevice(), LogicalAddress.TV, dutLogicalAddress);
+    }
+
+    /**
+     * HF 4-8-4
+     *
+     * <p>Verify that the device that support cec version 2.0 accepts {@code <USER_CONTROL_PRESSED>}
+     * messages and maps to appropriate internal action.
+     *
+     * No Android keycode defined for {@code <CEC_KEYCODE_FAVORITE_MENU>},
+     * {@code <CEC_KEYCODE_STOP_RECORD>} and {@code <CEC_KEYCODE_PAUSE_RECORD>}
+     *
+     * The UI commands Audio Description, internet and 3D mode are introduced in CEC 2.0 devices but
+     * they haven't been implemented yet.
+     * TODO: Add these UI commands once they are implemented.
+     */
+    @Test
+    public void cect_4_8_4_UserControlPressAndRelease_20() throws Exception {
+        setCec20();
+        LogicalAddress dutLogicalAddress = getTargetLogicalAddress(getDevice(), DUT_DEVICE_TYPE);
+        RemoteControlPassthrough.checkUserControlPressAndRelease_20(
+                hdmiCecClient, getDevice(), LogicalAddress.TV, dutLogicalAddress);
+    }
+
+    /**
+     * Test HF4-8-12
+     *
+     * <p>Tests that device sends the UCP Commands related to menus (Device Root Menu, Device Setup
+     * Menu, Contents Menu, Media Top Menu, Media Context-Sensitive Menu) in the operand [RC Profile
+     * Source] that is sent in the <Report Features> message and verifies that device reacts to sent
+     * UCP commands.
+     */
+    @Test
+    public void cect_hf4_8_12_UCPForRcProfileSearchOperand() throws Exception {
+        setCec20();
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_FEATURES);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+        int remoteControlProfileSource = CecMessage.getParams(message, 4, 6);
+        if ((remoteControlProfileSource & 0x01) == 0x01) {
+            sendUcpMenuCommand(
+                    HdmiCecConstants.CEC_KEYCODE_MEDIA_CONTEXT_SENSITIVE_MENU,
+                    "TV_MEDIA_CONTEXT_MENU");
+        }
+        if ((remoteControlProfileSource & 0x02) == 0x02) {
+            sendUcpMenuCommand(HdmiCecConstants.CEC_KEYCODE_MEDIA_TOP_MENU, "MEDIA_TOP_MENU");
+        }
+        if ((remoteControlProfileSource & 0x04) == 0x04) {
+            sendUcpMenuCommand(HdmiCecConstants.CEC_KEYCODE_CONTENTS_MENU, "TV_CONTENTS_MENU");
+        }
+        if ((remoteControlProfileSource & 0x08) == 0x08) {
+            sendUcpMenuCommand(HdmiCecConstants.CEC_KEYCODE_SETUP_MENU, "SETTINGS");
+        }
+        if ((remoteControlProfileSource & 0x10) == 0x10) {
+            sendUcpMenuCommand(HdmiCecConstants.CEC_KEYCODE_ROOT_MENU, "MENU");
+        }
+    }
+
+    private void sendUcpMenuCommand(int cecKeycode, String androidKeycode) throws Exception {
+        LogicalAddress dutLogicalAddress = getTargetLogicalAddress(getDevice(), DUT_DEVICE_TYPE);
+        RemoteControlPassthrough.checkUserControlPressAndRelease(
+                hdmiCecClient,
+                getDevice(),
+                LogicalAddress.TV,
+                dutLogicalAddress,
+                cecKeycode,
+                androidKeycode);
     }
 }
