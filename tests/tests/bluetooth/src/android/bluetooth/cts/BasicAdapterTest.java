@@ -25,6 +25,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.os.SystemProperties;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -261,6 +263,31 @@ public class BasicAdapterTest extends AndroidTestCase {
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
         assertNotSame(BluetoothStatusCodes.ERROR_UNKNOWN, adapter.isLeAudioBroadcastAssistantSupported());
+    }
+
+    public void test_getMaxConnectedAudioDevices() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
+        int maxConnectedAudioDevicesConfig = 0;
+        try {
+            Resources bluetoothRes = mContext.getPackageManager()
+                    .getResourcesForApplication("com.android.bluetooth");
+            maxConnectedAudioDevicesConfig = bluetoothRes.getInteger(
+                    bluetoothRes.getIdentifier("config_bluetooth_max_connected_audio_devices",
+                    "integer", "com.android.bluetooth"));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        maxConnectedAudioDevicesConfig =
+                SystemProperties.getInt("persist.bluetooth.maxconnectedaudiodevices",
+                        maxConnectedAudioDevicesConfig);
+        assertEquals(maxConnectedAudioDevicesConfig, adapter.getMaxConnectedAudioDevices());
     }
 
     public void test_listenUsingRfcommWithServiceRecord() throws IOException {
