@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.clearInvocations;
@@ -34,6 +36,7 @@ import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
+import android.os.vibrator.VibratorFrequencyProfile;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -69,6 +72,12 @@ public class VibratorTest {
 
     @Rule
     public final MockitoRule mMockitoRule = MockitoJUnit.rule();
+
+    private static final float TEST_TOLERANCE = 1e-5f;
+
+    private static final float MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY = 1f;
+    private static final float MINIMUM_ACCEPTED_FREQUENCY = 1f;
+    private static final float MAXIMUM_ACCEPTED_FREQUENCY = 2_000f;
 
     private static final AudioAttributes AUDIO_ATTRIBUTES =
             new AudioAttributes.Builder()
@@ -111,7 +120,6 @@ public class VibratorTest {
             VibrationAttributes.USAGE_RINGTONE,
             VibrationAttributes.USAGE_TOUCH,
     };
-
 
     /**
      * This listener is used for test helper methods like asserting it starts/stops vibrating.
@@ -317,6 +325,13 @@ public class VibratorTest {
     }
 
     @Test
+    public void testVibratorHasFrequencyControl() {
+        // Just make sure it doesn't crash when this is called; we don't really have a way to test
+        // if the frequency control works or not.
+        mVibrator.hasFrequencyControl();
+    }
+
+    @Test
     public void testVibratorEffectsAreSupported() {
         // Just make sure it doesn't crash when this is called and that it returns all queries;
         // We don't really have a way to test if the device supports each effect or not.
@@ -365,10 +380,87 @@ public class VibratorTest {
     }
 
     @Test
-    public void testVibratorIsVibrating() {
-        if (!mVibrator.hasVibrator()) {
-            return;
+    public void testVibratorResonantFrequency() {
+        // Check that the resonant frequency provided is NaN, or if it's a reasonable value.
+        float resonantFrequency = mVibrator.getResonantFrequency();
+        assertTrue(Float.isNaN(resonantFrequency)
+                || (resonantFrequency > 0 && resonantFrequency < MAXIMUM_ACCEPTED_FREQUENCY));
+    }
+
+    @Test
+    public void testVibratorQFactor() {
+        // Just make sure it doesn't crash when this is called;
+        // We don't really have a way to test if the device provides the Q-factor or not.
+        mVibrator.getQFactor();
+    }
+
+    @Test
+    public void testVibratorVibratorFrequencyProfileFrequencyControl() {
+        assumeNotNull(mVibrator.getFrequencyProfile());
+
+        // If the frequency profile is present then the vibrator must have frequency control.
+        // The other implication is not true if the default vibrator represents multiple vibrators.
+        assertTrue(mVibrator.hasFrequencyControl());
+    }
+
+    @Test
+    public void testVibratorFrequencyProfileMeasurementInterval() {
+        VibratorFrequencyProfile frequencyProfile = mVibrator.getFrequencyProfile();
+        assumeNotNull(frequencyProfile);
+
+        float measurementIntervalHz = frequencyProfile.getMaxAmplitudeMeasurementInterval();
+        assertTrue(measurementIntervalHz >= MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY);
+    }
+
+    @Test
+    public void testVibratorFrequencyProfileSupportedFrequencyRange() {
+        VibratorFrequencyProfile frequencyProfile = mVibrator.getFrequencyProfile();
+        assumeNotNull(frequencyProfile);
+
+        float resonantFrequency = mVibrator.getResonantFrequency();
+        float minFrequencyHz = frequencyProfile.getMinFrequency();
+        float maxFrequencyHz = frequencyProfile.getMaxFrequency();
+
+        assertTrue(minFrequencyHz >= MINIMUM_ACCEPTED_FREQUENCY);
+        assertTrue(maxFrequencyHz > minFrequencyHz);
+        assertTrue(maxFrequencyHz <= MAXIMUM_ACCEPTED_FREQUENCY);
+
+        if (!Float.isNaN(resonantFrequency)) {
+            // If the device has a resonant frequency, then it should be within the supported
+            // frequency range described by the profile.
+            assertTrue(resonantFrequency >= minFrequencyHz);
+            assertTrue(resonantFrequency <= maxFrequencyHz);
         }
+    }
+
+    @Test
+    public void testVibratorFrequencyProfileOutputAccelerationMeasurements() {
+        VibratorFrequencyProfile frequencyProfile = mVibrator.getFrequencyProfile();
+        assumeNotNull(frequencyProfile);
+
+        float minFrequencyHz = frequencyProfile.getMinFrequency();
+        float maxFrequencyHz = frequencyProfile.getMaxFrequency();
+        float measurementIntervalHz = frequencyProfile.getMaxAmplitudeMeasurementInterval();
+        float[] measurements = frequencyProfile.getMaxAmplitudeMeasurements();
+
+        // There should be at least 3 points for a valid profile: min, center and max frequencies.
+        assertTrue(measurements.length > 2);
+        assertEquals(maxFrequencyHz,
+                minFrequencyHz + ((measurements.length - 1) * measurementIntervalHz),
+                TEST_TOLERANCE);
+
+        boolean hasPositiveMeasurement = false;
+        for (float measurement : measurements) {
+            assertTrue(measurement >= 0);
+            assertTrue(measurement <= 1);
+            hasPositiveMeasurement |= measurement > 0;
+        }
+        assertTrue(hasPositiveMeasurement);
+    }
+
+    @Test
+    public void testVibratorIsVibrating() {
+        assumeTrue(mVibrator.hasVibrator());
 
         assertFalse(mVibrator.isVibrating());
 
@@ -384,9 +476,7 @@ public class VibratorTest {
     @LargeTest
     @Test
     public void testVibratorVibratesNoLongerThanDuration() {
-        if (!mVibrator.hasVibrator()) {
-            return;
-        }
+        assumeTrue(mVibrator.hasVibrator());
 
         mVibrator.vibrate(1000);
         assertStartsVibrating();
@@ -398,9 +488,7 @@ public class VibratorTest {
     @LargeTest
     @Test
     public void testVibratorStateCallback() {
-        if (!mVibrator.hasVibrator()) {
-            return;
-        }
+        assumeTrue(mVibrator.hasVibrator());
 
         OnVibratorStateChangedListener listener1 = newMockStateListener();
         OnVibratorStateChangedListener listener2 = newMockStateListener();
@@ -424,9 +512,7 @@ public class VibratorTest {
     @LargeTest
     @Test
     public void testVibratorStateCallbackRemoval() {
-        if (!mVibrator.hasVibrator()) {
-            return;
-        }
+        assumeTrue(mVibrator.hasVibrator());
 
         OnVibratorStateChangedListener listener1 = newMockStateListener();
         OnVibratorStateChangedListener listener2 = newMockStateListener();

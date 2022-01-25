@@ -1234,6 +1234,138 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    class TestPnoScanResultsCallback implements WifiManager.PnoScanResultsCallback {
+        public CountDownLatch latch = new CountDownLatch(1);
+        private boolean mRegisterSuccess;
+        private int mRegisterFailedReason = -1;
+        private int mRemovedReason = -1;
+        private List<ScanResult> mScanResults;
+
+        @Override
+        public void onScanResultsAvailable(List<ScanResult> scanResults) {
+            latch.countDown();
+            mScanResults = scanResults;
+        }
+
+        @Override
+        public void onRegisterSuccess() {
+            latch.countDown();
+            mRegisterSuccess = true;
+        }
+
+        @Override
+        public void onRegisterFailed(int reason) {
+            latch.countDown();
+            mRegisterFailedReason = reason;
+        }
+
+        @Override
+        public void onRemoved(int reason) {
+            latch.countDown();
+            mRemovedReason = reason;
+        }
+
+        public boolean isRegisterSuccess() {
+            return mRegisterSuccess;
+        }
+
+        public int getRemovedReason() {
+            return mRemovedReason;
+        }
+
+        public int getRegisterFailedReason() {
+            return mRegisterFailedReason;
+        }
+
+        public List<ScanResult> getScanResults() {
+            return mScanResults;
+        }
+    }
+
+    /**
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List,
+     * WifiManager.PnoScanResultsCallback)} can be called with proper permissions.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetExternalPnoScanRequestSuccess() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
+        List<WifiSsid> ssids = new ArrayList<>();
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+
+        assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
+                        ssids, callback));
+
+        callback.latch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS);
+        if (mWifiManager.isPreferredNetworkOffloadSupported()) {
+            assertTrue("Expect register success or failed due to resource busy",
+                    callback.isRegisterSuccess()
+                    || callback.getRegisterFailedReason() == WifiManager.PnoScanResultsCallback
+                            .REGISTER_PNO_CALLBACK_RESOURCE_BUSY);
+        } else {
+            assertEquals("Expect register fail due to not supported.",
+                    WifiManager.PnoScanResultsCallback.REGISTER_PNO_CALLBACK_PNO_NOT_SUPPORTED,
+                    callback.getRegisterFailedReason());
+        }
+        mWifiManager.clearExternalPnoScanRequest();
+    }
+
+    /**
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List,
+     * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many SSIDs.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetExternalPnoScanRequestTooManySsidsException() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
+        List<WifiSsid> ssids = new ArrayList<>();
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_2\""));
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_3\""));
+
+        assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
+        try {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setExternalPnoScanRequest(
+                            Executors.newSingleThreadExecutor(), ssids, callback));
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
+    }
+
+    /**
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List,
+     * WifiManager.PnoScanResultsCallback)} cannot be called without permission.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetExternalPnoScanRequestNoPermission() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        TestExecutor executor = new TestExecutor();
+        TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
+        List<WifiSsid> ssids = new ArrayList<>();
+        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+
+        assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
+        try {
+            mWifiManager.setExternalPnoScanRequest(executor, ssids, callback);
+            fail("Expected SecurityException");
+        } catch (SecurityException e) {
+            // pass
+        }
+    }
+
     /**
      * Verify that {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} throws a
      * SecurityException when called by a normal app.

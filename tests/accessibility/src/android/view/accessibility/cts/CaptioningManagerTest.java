@@ -169,7 +169,13 @@ public class CaptioningManagerTest {
         int resourceId = resources.getIdentifier(
                 "config_systemCaptionsServiceCallsEnabled", "bool", "android");
 
-        boolean expected = resources.getBoolean(resourceId);
+        boolean expected = false;
+
+        try {
+            expected = resources.getBoolean(resourceId);
+        } catch (Resources.NotFoundException e) {
+            // If the resource isn't defined then the return value should be false
+        }
 
         boolean actual = mManager.isCallCaptioningEnabled();
 

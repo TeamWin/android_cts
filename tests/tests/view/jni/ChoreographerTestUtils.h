@@ -74,7 +74,7 @@ struct ExtendedCallback : Callback {
                 deadline(AChoreographerFrameCallbackData_getFrameTimelineDeadlineNanos(callbackData,
                                                                                        index)) {}
 
-        const int64_t vsyncId{-1};
+        const AVsyncId vsyncId{-1};
         const int64_t expectedPresentTime{-1};
         const int64_t deadline{-1};
     };

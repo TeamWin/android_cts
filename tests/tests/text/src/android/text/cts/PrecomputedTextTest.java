@@ -98,6 +98,14 @@ public class PrecomputedTextTest {
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
                 .setLineBreakConfig(lineBreakConfig)
                 .setTextDirection(LTR).build());
+
+        LineBreakConfig lineBreakConfig2 = new LineBreakConfig();
+        lineBreakConfig.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        assertNotNull(new Params.Builder(PAINT)
+                .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
+                .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
+                .setLineBreakConfig(lineBreakConfig2)
+                .setTextDirection(LTR).build());
     }
 
     @Test
@@ -112,6 +120,7 @@ public class PrecomputedTextTest {
 
         LineBreakConfig lineBreakConfig = new LineBreakConfig();
         lineBreakConfig.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+        lineBreakConfig.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
         assertTrue(lineBreakConfig.equals(new Params.Builder(PAINT)
                 .setLineBreakConfig(lineBreakConfig).build().getLineBreakConfig()));
     }
@@ -133,6 +142,7 @@ public class PrecomputedTextTest {
     public void testParams_equals() {
         LineBreakConfig config = new LineBreakConfig();
         config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+        config.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
 
         final Params base = new Params.Builder(PAINT)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)

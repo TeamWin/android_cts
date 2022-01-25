@@ -1,0 +1,3 @@
+# These atom tests are owned by the NNAPI team.
+# Bug component: 195575
+include platform/packages/modules/NeuralNetworks:/NNAPI_OWNERS  # Neuralnetworks team

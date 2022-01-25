@@ -65,6 +65,7 @@ public class MeasuredTextTest {
 
         LineBreakConfig config = new LineBreakConfig();
         config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
+        config.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
         new MeasuredText.Builder(text.toCharArray())
                 .appendStyleRun(sPaint, config, text.length(), false /* isRtl */).build();
     }
