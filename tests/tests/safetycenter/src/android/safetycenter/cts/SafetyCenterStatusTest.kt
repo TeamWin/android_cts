@@ -30,6 +30,7 @@ class SafetyCenterStatusTest {
             .setTitle("This is my title")
             .setSummary("This is my summary")
             .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_RECOMMENDATION)
+            .setRefreshStatus(SafetyCenterStatus.REFRESH_STATUS_DATA_FETCH_IN_PROGRESS)
             .build()
 
     @Test
@@ -70,6 +71,45 @@ class SafetyCenterStatusTest {
                         .build()
                         .severityLevel)
                 .isEqualTo(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_CRITICAL_WARNING)
+    }
+
+    @Test
+    fun getSeverityLevel_defaultUnknown() {
+        assertThat(
+                SafetyCenterStatus.Builder()
+                        .setTitle("This is my title")
+                        .setSummary("This is my summary")
+                        .build()
+                        .severityLevel)
+                .isEqualTo(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_UNKNOWN)
+    }
+
+    @Test
+    fun getRefreshStatus_returnsRefreshStatus() {
+        assertThat(
+                SafetyCenterStatus.Builder(baseStatus)
+                        .setRefreshStatus(SafetyCenterStatus.REFRESH_STATUS_NONE)
+                        .build()
+                        .refreshStatus)
+                .isEqualTo(SafetyCenterStatus.REFRESH_STATUS_NONE)
+
+        assertThat(
+                SafetyCenterStatus.Builder(baseStatus)
+                        .setRefreshStatus(SafetyCenterStatus.REFRESH_STATUS_FULL_RESCAN_IN_PROGRESS)
+                        .build()
+                        .refreshStatus)
+                .isEqualTo(SafetyCenterStatus.REFRESH_STATUS_FULL_RESCAN_IN_PROGRESS)
+    }
+
+    @Test
+    fun getRefreshStatus_defaultNone() {
+        assertThat(
+                SafetyCenterStatus.Builder()
+                        .setTitle("This is my title")
+                        .setSummary("This is my summary")
+                        .build()
+                        .refreshStatus)
+                .isEqualTo(SafetyCenterStatus.REFRESH_STATUS_NONE)
     }
 
     @Test
@@ -137,6 +177,16 @@ class SafetyCenterStatusTest {
     fun equals_toString_withDifferentSeverityLevels_arNotEqual() {
         val unequalStatus = SafetyCenterStatus.Builder(baseStatus)
                 .setSeverityLevel(SafetyCenterStatus.OVERALL_SEVERITY_LEVEL_OK)
+                .build()
+
+        assertThat(unequalStatus).isNotEqualTo(baseStatus)
+        assertThat(unequalStatus.toString()).isNotEqualTo(baseStatus.toString())
+    }
+
+    @Test
+    fun equals_toString_withDifferentRefreshStatuses_areNotEqual() {
+        val unequalStatus = SafetyCenterStatus.Builder(baseStatus)
+                .setRefreshStatus(SafetyCenterStatus.REFRESH_STATUS_NONE)
                 .build()
 
         assertThat(unequalStatus).isNotEqualTo(baseStatus)
