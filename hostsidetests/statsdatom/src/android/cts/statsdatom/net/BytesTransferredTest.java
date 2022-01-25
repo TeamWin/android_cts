@@ -174,10 +174,10 @@ public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiv
                 "testGenerateMobileTraffic");
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Force poll NetworkStatsService to get most updated network stats from lower layer.
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "PollNetworkStatsActivity",
-                /*actionKey=*/null, /*actionValue=*/null);
+        DeviceUtils.runDeviceTests(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG, ".AtomTests",
+                "testForcePollNetworkStats");
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+
         // Trigger atom pull.
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
