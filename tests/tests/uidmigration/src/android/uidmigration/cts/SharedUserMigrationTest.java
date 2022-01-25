@@ -22,6 +22,7 @@ import static android.permission.cts.PermissionUtils.isPermissionGranted;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -47,6 +48,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.Signature;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +65,7 @@ public class SharedUserMigrationTest {
     private static final String PERM_TEST_PKG = "android.uidmigration.cts.PermissionTestApp";
     private static final String DATA_TEST_PKG = "android.uidmigration.cts.DataTestApp";
     private static final String ACTION_COUNTDOWN = "android.uidmigration.cts.ACTION_COUNTDOWN";
+    private static final String RESULT_KEY = "result";
 
     private static final Throwable NOT_AN_ERROR = new Throwable();
 
@@ -85,26 +93,26 @@ public class SharedUserMigrationTest {
         assertTrue(installPackage(apk + ".apk"));
         assertTrue(installPackage(apk + "2.apk"));
 
-        // Both app should share the same UID
+        // Both app should share the same UID.
         int uid = mPm.getPackageUid(INSTALL_TEST_PKG, PackageInfoFlags.of(0));
         String[] pkgs = mPm.getPackagesForUid(uid);
         assertNotNull(pkgs);
         assertEquals(2, pkgs.length);
 
-        // Leave shared UID by removing sharedUserId
+        // Leave shared UID by removing sharedUserId.
         assertTrue(installPackage(apk + "Rm.apk"));
         pkgs = mPm.getPackagesForUid(uid);
         assertNotNull(pkgs);
         assertEquals(1, pkgs.length);
 
-        // Uninstall and reinstall the old app
+        // Uninstall and reinstall the old app.
         uninstallPackage(INSTALL_TEST_PKG);
         assertTrue(installPackage(apk + ".apk"));
         pkgs = mPm.getPackagesForUid(uid);
         assertNotNull(pkgs);
         assertEquals(2, pkgs.length);
 
-        // Leave shared UID with sharedUserMaxSdkVersion
+        // Leave shared UID with sharedUserMaxSdkVersion.
         assertTrue(installPackage(apk + "Max.apk"));
         pkgs = mPm.getPackagesForUid(uid);
         assertNotNull(pkgs);
@@ -122,26 +130,26 @@ public class SharedUserMigrationTest {
 
         String secondaryPkg = PERM_TEST_PKG + ".secondary";
 
-        // Runtime permissions are not granted by default
+        // Runtime permissions are not granted by default.
         assertFalse(isPermissionGranted(secondaryPkg, WRITE_EXTERNAL_STORAGE));
 
-        // Grant a runtime permission
+        // Grant a runtime permission.
         grantPermission(secondaryPkg, WRITE_EXTERNAL_STORAGE);
 
-        // All apps in the UID group should have the same permissions
+        // All apps in the UID group should have the same permissions.
         assertTrue(isPermissionGranted(PERM_TEST_PKG, INTERNET));
         assertTrue(isPermissionGranted(PERM_TEST_PKG, WRITE_EXTERNAL_STORAGE));
         assertTrue(isPermissionGranted(secondaryPkg, INTERNET));
         assertTrue(isPermissionGranted(secondaryPkg, WRITE_EXTERNAL_STORAGE));
 
-        // Upgrade and leave shared UID
+        // Upgrade and leave shared UID.
         assertTrue(installPackage(apk + "3.apk"));
 
-        // The app in the original UID group should no longer have the permissions
+        // The app in the original UID group should no longer have the permissions.
         assertFalse(isPermissionGranted(PERM_TEST_PKG, INTERNET));
         assertFalse(isPermissionGranted(PERM_TEST_PKG, WRITE_EXTERNAL_STORAGE));
 
-        // The upgraded app should still have the permissions
+        // The upgraded app should still have the permissions.
         assertTrue(isPermissionGranted(secondaryPkg, INTERNET));
         assertTrue(isPermissionGranted(secondaryPkg, WRITE_EXTERNAL_STORAGE));
 
@@ -158,13 +166,13 @@ public class SharedUserMigrationTest {
         String authority = DATA_TEST_PKG + ".provider";
         ContentResolver resolver = mContext.getContentResolver();
 
-        // Ask the app to generate a new random UUID and persist in data
-        Bundle result = resolver.call(authority, "", null, null);
+        // Ask the app to generate a new random UUID and persist in data.
+        Bundle result = resolver.call(authority, "data", null, null);
         assertNotNull(result);
-        String oldUUID = result.getString("uuid");
+        String oldUUID = result.getString(RESULT_KEY);
         assertNotNull(oldUUID);
 
-        // Need 2 receivers because the intent filters are not compatible
+        // Need 2 receivers because the intent filters are not compatible.
         PackageBroadcastVerifier verifier = new PackageBroadcastVerifier(oldUid);
         BroadcastReceiver r1 = new BroadcastReceiver() {
             @Override
@@ -190,12 +198,12 @@ public class SharedUserMigrationTest {
         filter.addAction(ACTION_COUNTDOWN);
         mContext.registerReceiver(r2, filter);
 
-        // Update the data test APK and make sure UID changed
+        // Update the data test APK and make sure UID changed.
         assertTrue(installPackage(apk + "2.apk"));
         int newUid = mPm.getPackageUid(DATA_TEST_PKG, PackageInfoFlags.of(0));
         assertNotEquals(oldUid, newUid);
 
-        // Ensure system broadcasts are delivered properly
+        // Ensure system broadcasts are delivered properly.
         try {
             final Throwable e = verifier.poll(5, TimeUnit.SECONDS);
             if (e != NOT_AN_ERROR) {
@@ -209,11 +217,69 @@ public class SharedUserMigrationTest {
         mContext.unregisterReceiver(r1);
         mContext.unregisterReceiver(r2);
 
-        // Ask the app again for a UUID. If data migration is working, it shall be the same
-        result = resolver.call(authority, "", null, null);
+        // Ask the app again for a UUID. If data migration is working, it shall be the same.
+        result = resolver.call(authority, "data", null, null);
         assertNotNull(result);
-        String newUUID = result.getString("uuid");
+        String newUUID = result.getString(RESULT_KEY);
         assertEquals(oldUUID, newUUID);
+
+        uninstallPackage(DATA_TEST_PKG);
+    }
+
+    @Test
+    public void testKeyMigration() throws Exception {
+        String apk = TMP_APK_PATH + "/DataTestApp";
+        assertTrue(installPackage(apk + "1.apk"));
+        int oldUid = mPm.getPackageUid(DATA_TEST_PKG, PackageInfoFlags.of(0));
+
+        String authority = DATA_TEST_PKG + ".provider";
+        ContentResolver resolver = mContext.getContentResolver();
+
+        final String secret = UUID.randomUUID().toString();
+
+        // Ask the app to encrypt secret with AES.
+        Bundle result = resolver.call(authority, "encryptAES", secret, null);
+        assertNotNull(result);
+        assertNotNull(result.get(RESULT_KEY));
+        assertNotNull(result.get("iv"));
+        final Bundle encResult = result;
+
+        // Ask the app to generate a new EC keypair and sign our data.
+        result = resolver.call(authority, "signEC", secret, null);
+        assertNotNull(result);
+        byte[] signature = result.getByteArray(RESULT_KEY);
+        assertNotNull(signature);
+        byte[] oldCertChain = result.getByteArray("certChain");
+        assertNotNull(oldCertChain);
+
+        // Update the data test APK and make sure UID changed.
+        assertTrue(installPackage(apk + "2.apk"));
+        int newUid = mPm.getPackageUid(DATA_TEST_PKG, PackageInfoFlags.of(0));
+        assertNotEquals(oldUid, newUid);
+
+        // Ask the app to decrypt our secret.
+        result = resolver.call(authority, "decryptAES", null, encResult);
+        assertNotNull(result);
+        String decSecret = result.getString(RESULT_KEY);
+        assertEquals(secret, decSecret);
+
+        // Ask the app to return the previously generated EC certificate.
+        result = resolver.call(authority, "getECCert", null, null);
+        assertNotNull(result);
+        byte[] rawCert = result.getByteArray(RESULT_KEY);
+        assertNotNull(rawCert);
+        byte[] newCertChain = result.getByteArray("certChain");
+        assertNotNull(newCertChain);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate cert =
+                (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(rawCert));
+
+        // Verify the signature and cert.
+        assertArrayEquals(oldCertChain, newCertChain);
+        Signature s = Signature.getInstance("SHA256withECDSA");
+        s.initVerify(cert);
+        s.update(secret.getBytes(StandardCharsets.UTF_8));
+        assertTrue(s.verify(signature));
 
         uninstallPackage(DATA_TEST_PKG);
     }
@@ -251,7 +317,7 @@ public class SharedUserMigrationTest {
             assertNotNull(action);
 
             if (action.equals(Intent.ACTION_UID_REMOVED)) {
-                // Not the test package, none of our business
+                // Not the test package, none of our business.
                 if (intent.getIntExtra(Intent.EXTRA_UID, -1) != mPreviousUid) {
                     return;
                 }
@@ -262,7 +328,7 @@ public class SharedUserMigrationTest {
                 assertEquals("package", data.getScheme());
                 String pkg = data.getSchemeSpecificPart();
                 assertNotNull(pkg);
-                // Not the test package, none of our business
+                // Not the test package, none of our business.
                 if (!DATA_TEST_PKG.equals(pkg)) {
                     return;
                 }
