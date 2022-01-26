@@ -288,9 +288,15 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                             assertTrue(log + " pts is not strictly increasing",
                                     ref.isPtsStrictlyIncreasing(mPrevOutputPts));
                         } else {
-                            assertTrue(
-                                    log + " input pts list and output pts list are not identical",
-                                    ref.isOutPtsListIdenticalToInpPtsList(false));
+                            // TODO: Timestamps for deinterlaced content are under review.
+                            // (E.g. can decoders produce multiple progressive frames?)
+                            // For now, do not verify timestamps.
+                            if (!mIsInterlaced) {
+                                    assertTrue(
+                                        log +
+                                        " input pts list and output pts list are not identical",
+                                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                            }
                         }
                     }
                     if (validateFormat) {
@@ -364,8 +370,12 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 assertTrue("reference output pts is not strictly increasing",
                         ref.isPtsStrictlyIncreasing(mPrevOutputPts));
             } else {
-                assertTrue("input pts list and output pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+                // produce multiple progressive frames?) For now, do not verify timestamps.
+                if (!mIsInterlaced) {
+                    assertTrue("input pts list and output pts list are not identical",
+                            ref.isOutPtsListIdenticalToInpPtsList(false));
+                }
             }
             mOutputBuff = test;
             setUpSource(mTestFile);
@@ -398,8 +408,10 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 mExtractor.seekTo(0, mode);
                 test.reset();
                 doWork(23);
-                assertTrue(log + " pts is not strictly increasing",
-                        test.isPtsStrictlyIncreasing(mPrevOutputPts));
+                if (!mIsInterlaced) {
+                    assertTrue(log + " pts is not strictly increasing",
+                                test.isPtsStrictlyIncreasing(mPrevOutputPts));
+                }
 
                 boolean checkMetrics = (mOutputCount != 0);
 
@@ -496,10 +508,14 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 assertTrue("config reference output pts is not strictly increasing",
                         configRef.isPtsStrictlyIncreasing(mPrevOutputPts));
             } else {
-                assertTrue("input pts list and reference pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
-                assertTrue("input pts list and reconfig ref output pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+                // produce multiple progressive frames?) For now, do not verify timestamps.
+                if (!mIsInterlaced) {
+                    assertTrue("input pts list and reference pts list are not identical",
+                            ref.isOutPtsListIdenticalToInpPtsList(false));
+                    assertTrue("input pts list and reconfig ref output pts list are not identical",
+                            ref.isOutPtsListIdenticalToInpPtsList(false));
+                }
             }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(decoder);
@@ -670,9 +686,14 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                         assertTrue(log + " pts is not strictly increasing",
                                 ref.isPtsStrictlyIncreasing(mPrevOutputPts));
                     } else {
-                        assertTrue(
-                                log + " input pts list and output pts list are not identical",
-                                ref.isOutPtsListIdenticalToInpPtsList(false));
+                        // TODO: Timestamps for deinterlaced content are under review.
+                        // (E.g. can decoders produce multiple progressive frames?)
+                        // For now, do not verify timestamps.
+                        if (!mIsInterlaced) {
+                            assertTrue(
+                                    log + " input pts list and output pts list are not identical",
+                                    ref.isOutPtsListIdenticalToInpPtsList(false));
+                        }
                     }
                 }
                 loopCounter++;
@@ -763,9 +784,15 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                                 assertTrue(log + " pts is not strictly increasing",
                                         ref.isPtsStrictlyIncreasing(mPrevOutputPts));
                             } else {
-                                assertTrue(
-                                        log + " input pts list and output pts list are not identical",
-                                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                                // TODO: Timestamps for deinterlaced content are under review.
+                                // (E.g. can decoders produce multiple progressive frames?)
+                                // For now, do not verify timestamps.
+                                if (!mIsInterlaced) {
+                                    assertTrue(
+                                           log +
+                                           " input pts list and output pts list are not identical",
+                                           ref.isOutPtsListIdenticalToInpPtsList(false));
+                                }
                             }
                         }
                         if (validateFormat) {
@@ -825,8 +852,12 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 assertTrue("reference output pts is not strictly increasing",
                         ref.isPtsStrictlyIncreasing(mPrevOutputPts));
             } else {
-                assertTrue("input pts list and output pts list are not identical",
-                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+                // produce multiple progressive frames?) For now, do not verify timestamps.
+                if (!mIsInterlaced) {
+                    assertTrue("input pts list and output pts list are not identical",
+                            ref.isOutPtsListIdenticalToInpPtsList(false));
+                }
             }
             mSaveToMem = true;
             mOutputBuff = test;
