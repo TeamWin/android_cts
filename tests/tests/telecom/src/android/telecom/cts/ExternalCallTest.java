@@ -16,14 +16,14 @@
 
 package android.telecom.cts;
 
-import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.PhoneAccountHandle;
+
+import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 /**
  * Tests which verify functionality related to {@link android.telecom.Connection}s and
@@ -66,7 +66,7 @@ public class ExternalCallTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Tests that a request to pull an external call via {@link Call#pullCall()} is
+     * Tests that a request to pull an external call via {@link Call#pullExternalCall()} is
      * communicated to the {@link Connection} via {@link Connection#onPullExternalCall()}.
      */
     public void testPullExternalCall() {
@@ -77,12 +77,12 @@ public class ExternalCallTest extends BaseTelecomTestWithMockServices {
 
         final TestUtils.InvokeCounter counter = mExternalConnection.getInvokeCounter(
                 MockConnection.ON_PULL_EXTERNAL_CALL);
-        call.pullCall();
+        call.pullExternalCall();
         counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
     }
 
     /**
-     * Tests that a request to pull an external call via {@link Call#pullCall()} is
+     * Tests that a request to pull an external call via {@link Call#pullExternalCall()} is
      * not completed when {@link Call.Details#CAPABILITY_CAN_PULL_CALL} is not on the call.
      */
     public void testNonPullableExternalCall() throws Exception {
@@ -99,10 +99,11 @@ public class ExternalCallTest extends BaseTelecomTestWithMockServices {
         final TestUtils.InvokeCounter counter = mExternalConnection.getInvokeCounter(
                 MockConnection.ON_PULL_EXTERNAL_CALL);
         // Try to pull -- we expect Telecom to absorb the request since the call is not pullable.
-        call.pullCall();
+        call.pullExternalCall();
         counter.waitForCount(5000L/*mS*/);
         assertEquals(0, counter.getInvokeCount());
     }
+
 
     /**
      * Tests that when there is an external call and an emergency call is placed, the
