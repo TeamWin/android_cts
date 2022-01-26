@@ -110,7 +110,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     // used to store any WifiAwareSession allocated during tests - will clean-up after tests
     private List<WifiAwareSession> mSessions = new ArrayList<>();
 
-    private class WifiAwareBroadcastReceiver extends BroadcastReceiver {
+    private class WifiAwareStateBroadcastReceiver extends BroadcastReceiver {
         private final Object mLock = new Object();
         private CountDownLatch mBlocker = new CountDownLatch(1);
         private int mCountNumber = 0;
@@ -136,6 +136,41 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 blocker = mBlocker;
             }
             return blocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+        }
+    }
+
+    private class WifiAwareResourcesBroadcastReceiver extends BroadcastReceiver {
+        private final Object mLock = new Object();
+        private CountDownLatch mBlocker = new CountDownLatch(1);
+        private int mCountNumber = 0;
+        private AwareResources mResources = null;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (WifiAwareManager.ACTION_WIFI_AWARE_RESOURCE_CHANGED.equals(intent.getAction())) {
+                synchronized (mLock) {
+                    mCountNumber += 1;
+                    mBlocker.countDown();
+                    mBlocker = new CountDownLatch(1);
+                    mResources = intent.getParcelableExtra(WifiAwareManager.EXTRA_AWARE_RESOURCES);
+                }
+            }
+        }
+
+        boolean waitForStateChange() throws InterruptedException {
+            CountDownLatch blocker;
+            synchronized (mLock) {
+                mCountNumber--;
+                if (mCountNumber >= 0) {
+                    return true;
+                }
+                blocker = mBlocker;
+            }
+            return blocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+        }
+
+        public AwareResources getResources() {
+            return mResources;
         }
     }
 
@@ -449,7 +484,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED);
-        WifiAwareBroadcastReceiver receiver = new WifiAwareBroadcastReceiver();
+        WifiAwareStateBroadcastReceiver receiver = new WifiAwareStateBroadcastReceiver();
         mContext.registerReceiver(receiver, intentFilter);
         if (!mWifiAwareManager.isAvailable()) {
             assertTrue("Timeout waiting for Wi-Fi Aware to change status",
@@ -543,7 +578,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         intentFilter.addAction(WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED);
 
         // 1. Disable Wi-Fi
-        WifiAwareBroadcastReceiver receiver1 = new WifiAwareBroadcastReceiver();
+        WifiAwareStateBroadcastReceiver receiver1 = new WifiAwareStateBroadcastReceiver();
         mContext.registerReceiver(receiver1, intentFilter);
         SystemUtil.runShellCommand("svc wifi disable");
 
@@ -558,7 +593,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertFalse("Wi-Fi Aware is available (should not be)", mWifiAwareManager.isAvailable());
 
         // 2. Enable Wi-Fi
-        WifiAwareBroadcastReceiver receiver2 = new WifiAwareBroadcastReceiver();
+        WifiAwareStateBroadcastReceiver receiver2 = new WifiAwareStateBroadcastReceiver();
         mContext.registerReceiver(receiver2, intentFilter);
         SystemUtil.runShellCommand("svc wifi enable");
 
@@ -625,11 +660,14 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate a successful publish discovery session lifetime: publish, update publish, destroy.
      */
-    public void testPublishDiscoverySuccess() {
+    public void testPublishDiscoverySuccess() throws Exception {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
-
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiAwareManager.ACTION_WIFI_AWARE_RESOURCE_CHANGED);
+        WifiAwareResourcesBroadcastReceiver receiver = new WifiAwareResourcesBroadcastReceiver();
+        mContext.registerReceiver(receiver, intentFilter);
         final String serviceName = "ValidName";
 
         WifiAwareSession session = attachAndGetSession();
@@ -637,11 +675,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         PublishConfig publishConfig = new PublishConfig.Builder().setServiceName(
                 serviceName).build();
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
-        int numOfAllPublishSessions = 0;
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            numOfAllPublishSessions = mWifiAwareManager
-                    .getAvailableAwareResources().getAvailablePublishSessionsCount();
-        }
+        int numOfAllPublishSessions = mWifiAwareManager
+                .getAvailableAwareResources().getAvailablePublishSessionsCount();
 
         // 1. publish
         session.publish(publishConfig, discoveryCb, mHandler);
@@ -653,10 +688,15 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
         assertFalse(discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            assertEquals(numOfAllPublishSessions - 1, mWifiAwareManager
+        assertEquals(numOfAllPublishSessions - 1, mWifiAwareManager
                     .getAvailableAwareResources().getAvailablePublishSessionsCount());
+        //TODO(211696926): Change to isAtLeast() when SDK finalize.
+        if (ApiLevelUtil.codenameStartsWith("T")) {
+            assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
+            assertEquals(numOfAllPublishSessions - 1, receiver.getResources()
+                    .getAvailablePublishSessionsCount());
         }
+
         // 2. update-publish
         publishConfig = new PublishConfig.Builder().setServiceName(
                 serviceName).setServiceSpecificInfo("extras".getBytes()).build();
@@ -673,11 +713,15 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         discoverySession.updatePublish(publishConfig);
         assertFalse("Publish update post destroy", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            assertEquals(numOfAllPublishSessions, mWifiAwareManager
-                    .getAvailableAwareResources().getAvailablePublishSessionsCount());
+        assertEquals(numOfAllPublishSessions, mWifiAwareManager
+                .getAvailableAwareResources().getAvailablePublishSessionsCount());
+        //TODO(211696926): Change to isAtLeast() when SDK finalize.
+        if (ApiLevelUtil.codenameStartsWith("T")) {
+            assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
+            assertEquals(numOfAllPublishSessions, receiver.getResources()
+                    .getAvailablePublishSessionsCount());
+            session.close();
         }
-        session.close();
     }
 
     /**
@@ -825,11 +869,14 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate a successful subscribe discovery session lifetime: subscribe, update subscribe,
      * destroy.
      */
-    public void testSubscribeDiscoverySuccess() {
+    public void testSubscribeDiscoverySuccess() throws Exception {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
-
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiAwareManager.ACTION_WIFI_AWARE_RESOURCE_CHANGED);
+        WifiAwareResourcesBroadcastReceiver receiver = new WifiAwareResourcesBroadcastReceiver();
+        mContext.registerReceiver(receiver, intentFilter);
         final String serviceName = "ValidName";
 
         WifiAwareSession session = attachAndGetSession();
@@ -837,11 +884,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         SubscribeConfig subscribeConfig = new SubscribeConfig.Builder().setServiceName(
                 serviceName).build();
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
-        int numOfAllSubscribeSessions = 0;
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            numOfAllSubscribeSessions = mWifiAwareManager
-                    .getAvailableAwareResources().getAvailableSubscribeSessionsCount();
-        }
+        int numOfAllSubscribeSessions = mWifiAwareManager
+                .getAvailableAwareResources().getAvailableSubscribeSessionsCount();
         // 1. subscribe
         session.subscribe(subscribeConfig, discoveryCb, mHandler);
         assertTrue("Subscribe started",
@@ -852,9 +896,13 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
         assertFalse(discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            assertEquals(numOfAllSubscribeSessions - 1, mWifiAwareManager
-                    .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
+        assertEquals(numOfAllSubscribeSessions - 1, mWifiAwareManager
+                .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
+        //TODO(211696926): Change to isAtLeast() when SDK finalize.
+        if (ApiLevelUtil.codenameStartsWith("T")) {
+            assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
+            assertEquals(numOfAllSubscribeSessions - 1, receiver.getResources()
+                    .getAvailableSubscribeSessionsCount());
         }
 
         // 2. update-subscribe
@@ -881,10 +929,15 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         discoverySession.updateSubscribe(subscribeConfig);
         assertFalse("Subscribe update post destroy", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            assertEquals(numOfAllSubscribeSessions, mWifiAwareManager
-                    .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
+        assertEquals(numOfAllSubscribeSessions, mWifiAwareManager
+                .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
+        //TODO(211696926): Change to isAtLeast() when SDK finalize.
+        if (ApiLevelUtil.codenameStartsWith("T")) {
+            assertTrue("Time out waiting for resource change", receiver.waitForStateChange());
+            assertEquals(numOfAllSubscribeSessions, receiver.getResources()
+                    .getAvailableSubscribeSessionsCount());
         }
+
         session.close();
     }
 
