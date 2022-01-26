@@ -31,7 +31,7 @@ android_test {
         "testng",
     ],
     jni_libs: [
-        "libctsmediacodec_jni",
+        "libctsmediacommon_jni",
     ],
     aaptflags: [
         // Do not compress these files:
