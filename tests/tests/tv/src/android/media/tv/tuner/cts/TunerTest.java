@@ -270,12 +270,6 @@ public class TunerTest {
         InstrumentationRegistry
                 .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
         mTuner = new Tuner(mContext, null, 100);
-
-        mConnection = new TestServiceConnection();
-        mContext.bindService(new Intent(mContext, SharedFilterTestService.class), mConnection,
-                Context.BIND_AUTO_CREATE);
-        mSharedFilterTestServer =
-                ISharedFilterTestServer.Stub.asInterface(mConnection.getService());
     }
 
     @After
@@ -284,7 +278,6 @@ public class TunerTest {
           mTuner.close();
           mTuner = null;
         }
-        mContext.unbindService(mConnection);
     }
 
     @Test
@@ -2230,6 +2223,12 @@ public class TunerTest {
 
     @Test
     public void testSharedFilterTwoProcessesCloseInSharedFilter() throws Exception {
+        mConnection = new TestServiceConnection();
+        mContext.bindService(new Intent(mContext, SharedFilterTestService.class), mConnection,
+                Context.BIND_AUTO_CREATE);
+        mSharedFilterTestServer =
+                ISharedFilterTestServer.Stub.asInterface(mConnection.getService());
+
         String token = mSharedFilterTestServer.acquireSharedFilterToken();
         assertTrue(token != null);
         SharedFilter f =
@@ -2248,10 +2247,18 @@ public class TunerTest {
         Thread.sleep(2000);
         assertEquals(mLockLatch.getCount(), 1);
         mLockLatch = null;
+
+        mContext.unbindService(mConnection);
     }
 
     @Test
     public void testSharedFilterTwoProcessesCloseInFilter() throws Exception {
+        mConnection = new TestServiceConnection();
+        mContext.bindService(new Intent(mContext, SharedFilterTestService.class), mConnection,
+                Context.BIND_AUTO_CREATE);
+        mSharedFilterTestServer =
+                ISharedFilterTestServer.Stub.asInterface(mConnection.getService());
+
         String token = mSharedFilterTestServer.acquireSharedFilterToken();
         assertTrue(token != null);
 
@@ -2270,10 +2277,18 @@ public class TunerTest {
         mLockLatch = null;
         f.close();
         f = null;
+
+        mContext.unbindService(mConnection);
     }
 
     @Test
     public void testSharedFilterTwoProcessesReleaseInFilter() throws Exception {
+        mConnection = new TestServiceConnection();
+        mContext.bindService(new Intent(mContext, SharedFilterTestService.class), mConnection,
+                Context.BIND_AUTO_CREATE);
+        mSharedFilterTestServer =
+                ISharedFilterTestServer.Stub.asInterface(mConnection.getService());
+
         String token = mSharedFilterTestServer.acquireSharedFilterToken();
         assertTrue(token != null);
 
@@ -2294,10 +2309,18 @@ public class TunerTest {
         mSharedFilterTestServer.closeFilter();
         f.close();
         f = null;
+
+        mContext.unbindService(mConnection);
     }
 
     @Test
     public void testSharedFilterTwoProcessesVerifySharedFilter() throws Exception {
+        mConnection = new TestServiceConnection();
+        mContext.bindService(new Intent(mContext, SharedFilterTestService.class), mConnection,
+                Context.BIND_AUTO_CREATE);
+        mSharedFilterTestServer =
+                ISharedFilterTestServer.Stub.asInterface(mConnection.getService());
+
         Filter f = createTsSectionFilter(mTuner, getExecutor(), getFilterCallback());
         assertTrue(f != null);
 
@@ -2319,6 +2342,8 @@ public class TunerTest {
         f.freeSharedFilterToken(token);
         f.close();
         f = null;
+
+        mContext.unbindService(mConnection);
     }
 
     @Test
