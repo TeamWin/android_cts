@@ -26,6 +26,8 @@ import static android.app.appsearch.testutil.AppSearchTestUtils.retrieveAllSearc
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
@@ -38,6 +40,7 @@ import android.app.appsearch.Features;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GetSchemaResponse;
+import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.RemoveByDocumentIdRequest;
 import android.app.appsearch.ReportUsageRequest;
@@ -53,6 +56,7 @@ import android.content.Context;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -61,6 +65,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -326,6 +331,106 @@ public abstract class AppSearchSessionCtsTestBase {
                         ((AppSearchSchema.DocumentPropertyConfig) properties.get(5))
                                 .shouldIndexNestedProperties())
                 .isEqualTo(true);
+    }
+
+    @Test
+    public void testGetSchema_visibilitySetting() throws Exception {
+        assumeTrue(mDb1.getFeatures().isFeatureSupported(Features.GET_SCHEMA_RESPONSE_VISIBILITY));
+        AppSearchSchema emailSchema =
+                new AppSearchSchema.Builder("Email1")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("subject")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .addProperty(
+                                new StringPropertyConfig.Builder("body")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .build();
+
+        byte[] shar256Cert1 = new byte[32];
+        Arrays.fill(shar256Cert1, (byte) 1);
+        byte[] shar256Cert2 = new byte[32];
+        Arrays.fill(shar256Cert2, (byte) 2);
+        PackageIdentifier packageIdentifier1 = new PackageIdentifier("pkgFoo", shar256Cert1);
+        PackageIdentifier packageIdentifier2 = new PackageIdentifier("pkgBar", shar256Cert2);
+        SetSchemaRequest request =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(emailSchema)
+                        .setSchemaTypeDisplayedBySystem("Email1", /*displayed=*/ false)
+                        .setSchemaTypeVisibilityForPackage(
+                                "Email1", /*visible=*/ true, packageIdentifier1)
+                        .setSchemaTypeVisibilityForPackage(
+                                "Email1", /*visible=*/ true, packageIdentifier2)
+                        .build();
+
+        mDb1.setSchema(request).get();
+
+        GetSchemaResponse getSchemaResponse = mDb1.getSchema().get();
+        Set<AppSearchSchema> actual = getSchemaResponse.getSchemas();
+        assertThat(actual).hasSize(1);
+        assertThat(actual).isEqualTo(request.getSchemas());
+        assertThat(getSchemaResponse.getSchemaTypesNotDisplayedBySystem())
+                .containsExactly("Email1");
+        assertThat(getSchemaResponse.getSchemaTypesVisibleToPackages())
+                .containsExactly("Email1", ImmutableSet.of(packageIdentifier1, packageIdentifier2));
+    }
+
+    @Test
+    public void testGetSchema_visibilitySetting_notSupported() throws Exception {
+        assumeFalse(mDb1.getFeatures().isFeatureSupported(Features.GET_SCHEMA_RESPONSE_VISIBILITY));
+        AppSearchSchema emailSchema =
+                new AppSearchSchema.Builder("Email1")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("subject")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .addProperty(
+                                new StringPropertyConfig.Builder("body")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .build();
+
+        byte[] shar256Cert1 = new byte[32];
+        Arrays.fill(shar256Cert1, (byte) 1);
+        byte[] shar256Cert2 = new byte[32];
+        Arrays.fill(shar256Cert2, (byte) 2);
+        PackageIdentifier packageIdentifier1 = new PackageIdentifier("pkgFoo", shar256Cert1);
+        PackageIdentifier packageIdentifier2 = new PackageIdentifier("pkgBar", shar256Cert2);
+        SetSchemaRequest request =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(emailSchema)
+                        .setSchemaTypeDisplayedBySystem("Email1", /*displayed=*/ false)
+                        .setSchemaTypeVisibilityForPackage(
+                                "Email1", /*visible=*/ true, packageIdentifier1)
+                        .setSchemaTypeVisibilityForPackage(
+                                "Email1", /*visible=*/ true, packageIdentifier2)
+                        .build();
+
+        mDb1.setSchema(request).get();
+
+        GetSchemaResponse getSchemaResponse = mDb1.getSchema().get();
+        Set<AppSearchSchema> actual = getSchemaResponse.getSchemas();
+        assertThat(actual).hasSize(1);
+        assertThat(actual).isEqualTo(request.getSchemas());
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> getSchemaResponse.getSchemaTypesNotDisplayedBySystem());
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> getSchemaResponse.getSchemaTypesVisibleToPackages());
     }
 
     @Test
