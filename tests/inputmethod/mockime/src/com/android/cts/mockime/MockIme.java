@@ -101,6 +101,8 @@ public final class MockIme extends InputMethodService {
 
     private static final String PACKAGE_NAME = "com.android.cts.mockime";
 
+    private View mExtractView;
+
     static ComponentName getComponentName() {
         return new ComponentName(PACKAGE_NAME, MockIme.class.getName());
     }
@@ -406,6 +408,17 @@ public final class MockIme extends InputMethodService {
                     case "setInlineSuggestionsExtras":
                         mInlineSuggestionsExtras = command.getExtras();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    case "verifyExtractViewNotNull":
+                        if (mExtractView == null) {
+                            return false;
+                        } else {
+                            return mExtractView.findViewById(android.R.id.inputExtractAction)
+                                    != null
+                                    && mExtractView.findViewById(
+                                            android.R.id.inputExtractAccessories) != null
+                                    && mExtractView.findViewById(
+                                            android.R.id.inputExtractEditText) != null;
+                        }
                     case "verifyGetDisplay":
                         try {
                             return verifyGetDisplay();
@@ -654,6 +667,12 @@ public final class MockIme extends InputMethodService {
                     return false;
             }
         });
+    }
+
+    @Override
+    public View onCreateExtractTextView() {
+        mExtractView =  super.onCreateExtractTextView();
+        return mExtractView;
     }
 
     private static final class KeyboardLayoutView extends LinearLayout {
