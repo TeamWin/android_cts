@@ -1202,10 +1202,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setSsidsDoNotBlocklist(Set)} can be called with sufficient
+     * Verify {@link WifiManager#setSsidsAllowlist(Set)} can be called with sufficient
      * privilege.
      */
-    public void testGetAndSetSsidsDoNotBlocklist() {
+    public void testGetAndSetSsidsAllowlist() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -1213,21 +1213,21 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         Set<WifiSsid> ssids = new ArraySet<>();
         ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setSsidsDoNotBlocklist(ssids));
+                () -> mWifiManager.setSsidsAllowlist(ssids));
 
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> assertEquals("Ssids should match", ssids,
-                        mWifiManager.getSsidsDoNotBlocklist()));
+                        mWifiManager.getSsidsAllowlist()));
 
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET));
+                () -> mWifiManager.setSsidsAllowlist(Collections.EMPTY_SET));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> assertEquals("Should equal to empty set",
                         Collections.EMPTY_SET,
-                        mWifiManager.getSsidsDoNotBlocklist()));
+                        mWifiManager.getSsidsAllowlist()));
 
         try {
-            mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET);
+            mWifiManager.setSsidsAllowlist(Collections.EMPTY_SET);
             fail("Expected SecurityException when called without permission");
         } catch (SecurityException e) {
             // expect the exception
