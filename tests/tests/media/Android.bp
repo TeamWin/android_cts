@@ -46,6 +46,32 @@ java_library {
     target_sdk_version: "31",
 }
 
+cc_test_library {
+    name: "libctsmediacommon_jni",
+    srcs: [
+        "common/jni/NdkInputSurface-jni.cpp",
+        "common/jni/NdkMediaCodec-jni.cpp",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libnativehelper_compat_libc++",
+        "liblog",
+        "libmediandk",
+        "libEGL",
+    ],
+    header_libs: ["liblog_headers"],
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-DEGL_EGLEXT_PROTOTYPES",
+    ],
+    gtest: false,
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.
+    sdk_version: "29",
+}
+
 android_library {
     name: "cts-media-common",
     srcs: [
@@ -96,6 +122,7 @@ android_test {
         "libctscodecutils_jni",
         "libctsimagereader_jni",
         "libctsmediacodec_jni",
+        "libctsmediacommon_jni",
         "libnativehelper_compat_libc++",
     ],
     asset_dirs: ["assets"],
