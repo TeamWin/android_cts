@@ -19,7 +19,6 @@ package android.security.cts;
 import com.android.compatibility.common.util.MetricsReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -50,7 +49,7 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.*;
 import static org.hamcrest.core.Is.is;
 
-public class SecurityTestCase extends StsExtraBusinessLogicHostTestBase {
+public class SecurityTestCase extends BaseHostJUnit4Test {
 
     private static final String LOG_TAG = "SecurityTestCase";
     private static final int RADIX_HEX = 16;
@@ -59,7 +58,7 @@ public class SecurityTestCase extends StsExtraBusinessLogicHostTestBase {
     // account for the poc timer of 5 minutes (+15 seconds for safety)
     protected static final int TIMEOUT_NONDETERMINISTIC = 315;
 
-    private long kernelStartTime = -1;
+    private long kernelStartTime;
 
     private HostsideMainlineModuleDetector mainlineModuleDetector = new HostsideMainlineModuleDetector(this);
 
@@ -120,13 +119,9 @@ public class SecurityTestCase extends StsExtraBusinessLogicHostTestBase {
             getDevice().waitForDeviceAvailable(30 * 1000);
         }
 
-        if (kernelStartTime != -1) {
-            // only fail when the kernel start time is valid
-            long deviceTime = getDeviceUptime() + kernelStartTime;
-            long hostTime = System.currentTimeMillis() / 1000;
-            assertTrue("Phone has had a hard reset", (hostTime - deviceTime) < 2);
-            kernelStartTime = -1;
-        }
+        long deviceTime = getDeviceUptime() + kernelStartTime;
+        long hostTime = System.currentTimeMillis() / 1000;
+        assertTrue("Phone has had a hard reset", (hostTime - deviceTime) < 2);
 
         // TODO(badash@): add ability to catch runtime restart
     }

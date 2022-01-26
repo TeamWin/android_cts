@@ -22,7 +22,6 @@
  */
 package android.security.cts;
 
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -101,13 +100,19 @@ import static org.junit.Assert.*;
  */
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class StagefrightTest extends StsExtraBusinessLogicTestCase {
+public class StagefrightTest {
     static final String TAG = "StagefrightTest";
+    private Instrumentation mInstrumentation;
 
     private final long TIMEOUT_NS = 10000000000L;  // 10 seconds.
     private final static long CHECK_INTERVAL = 50;
 
     @Rule public TestName name = new TestName();
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    }
 
     class CodecConfig {
         boolean isAudio;
@@ -3258,5 +3263,9 @@ public class StagefrightTest extends StsExtraBusinessLogicTestCase {
         }
 
         assertFalse(hung);
+    }
+
+    private Instrumentation getInstrumentation() {
+        return mInstrumentation;
     }
 }
