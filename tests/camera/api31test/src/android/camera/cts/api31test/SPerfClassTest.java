@@ -206,9 +206,9 @@ public class SPerfClassTest extends AndroidTestCase {
     }
 
     /**
-     * Check JPEG size overrides for devices claiming S Performance class requirement via
-     * Version.MEDIA_PERFORMANCE_CLASS
+     * Check camera S Performance class requirement for JPEG sizes.
      */
+    @CddTest(requirement="7.5/H-1-8")
     public void testSPerfClassJpegSizes() throws Exception {
         boolean isSPerfClass = CameraTestUtils.isSPerfClass();
         if (!isSPerfClass) {
