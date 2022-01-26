@@ -18,6 +18,7 @@ package android.companion.cts.uiautomation
 
 import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
+import android.companion.AssociationRequest.DEVICE_PROFILE_COMPUTER
 import android.platform.test.annotations.AppModeFull
 import org.junit.Assume.assumeFalse
 import org.junit.Test
@@ -40,8 +41,9 @@ class AssociationEndToEndTest(
     override fun setUp() {
         super.setUp()
 
-        // TODO(b/211590680): Add support for APP_STREAMING and AUTOMOTIVE_PROJECTION in the
-        // confirmation UI (the "multiple devices" flow variant).
+        // TODO(b/211590680): Add support for APP_STREAMING, AUTOMOTIVE_PROJECTION and COMPUTER
+        // in the confirmation UI (the "multiple devices" flow variant).
+        assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
         assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
     }
