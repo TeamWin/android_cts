@@ -32,6 +32,7 @@ import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.Features;
 import android.app.appsearch.GenericDocument;
+import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.RemoveByDocumentIdRequest;
@@ -1360,5 +1361,59 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assertThat(temporaryObserver.getSchemaChanges()).isEmpty();
         assertThat(temporaryObserver.getDocumentChanges())
                 .containsExactlyElementsIn(expectedChangesOrig);
+    }
+
+    @Test
+    public void testGlobalGetSchema() throws Exception {
+        assumeTrue(
+                mGlobalSearchSession
+                        .getFeatures()
+                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_GET_SCHEMA));
+
+        // One schema should be set with global access and the other should be set with local
+        // access.
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        mDb2.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .setSchemaTypeDisplayedBySystem(
+                                        AppSearchEmail.SCHEMA_TYPE, /*displayed=*/ false)
+                                .build())
+                .get();
+
+        GetSchemaResponse response =
+                mGlobalSearchSession.getSchema(mContext.getPackageName(), DB_NAME_1).get();
+        assertThat(response.getSchemas()).containsExactly(AppSearchEmail.SCHEMA);
+
+        response = mGlobalSearchSession.getSchema(mContext.getPackageName(), DB_NAME_2).get();
+        assertThat(response.getSchemas()).containsExactly(AppSearchEmail.SCHEMA);
+
+        // A request for a db that doesn't exist should return a response with no schemas.
+        response = mGlobalSearchSession.getSchema(mContext.getPackageName(), "NonexistentDb").get();
+        assertThat(response.getSchemas()).isEmpty();
+    }
+
+    @Test
+    public void testGlobalGetSchema_notSupported() throws Exception {
+        assumeFalse(
+                mGlobalSearchSession
+                        .getFeatures()
+                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_GET_SCHEMA));
+
+        // One schema should be set with global access and the other should be set with local
+        // access.
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        UnsupportedOperationException e =
+                assertThrows(
+                        UnsupportedOperationException.class,
+                        () -> mGlobalSearchSession.getSchema(mContext.getPackageName(), DB_NAME_1));
+        assertThat(e)
+                .hasMessageThat()
+                .isEqualTo(
+                        Features.GLOBAL_SEARCH_SESSION_GET_SCHEMA
+                                + " is not supported on this AppSearch implementation.");
     }
 }
