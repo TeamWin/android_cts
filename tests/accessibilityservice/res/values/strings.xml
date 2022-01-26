@@ -190,6 +190,10 @@
 
     <string name="stub_focus_indicator_service_description">com.android.accessibilityservice.cts.StubFocusIndicatorService</string>
 
+    <string name="stub_ime_accessibility_service_description">com.android.accessibilityservice.cts.StubImeAccessibilityService</string>
+
+    <string name="stub_non_ime_accessibility_service_description">com.android.accessibilityservice.cts.StubNonImeAccessibilityService</string>
+
     <!-- AccessibilityWindowQueryTest and AccessibilityReportingTest -->
 
     <!-- String title of embedded display activity -->
