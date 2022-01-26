@@ -810,6 +810,14 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBytesField().getExperimentIdList())
                 .containsExactly(1L, 2L, 3L).inOrder();
 
+        assertThat(atom.getRepeatedIntFieldList()).containsExactly(3, 6).inOrder();
+        assertThat(atom.getRepeatedLongFieldList()).containsExactly(1000L, 1002L).inOrder();
+        assertThat(atom.getRepeatedFloatFieldList()).containsExactly(0.3f, 0.09f).inOrder();
+        assertThat(atom.getRepeatedStringFieldList()).containsExactly("str1", "str2").inOrder();
+        assertThat(atom.getRepeatedBooleanFieldList()).containsExactly(true, false).inOrder();
+        assertThat(atom.getRepeatedEnumFieldList())
+                .containsExactly(TestAtomReported.State.OFF, TestAtomReported.State.ON)
+                .inOrder();
 
         atom = data.get(1).getAtom().getTestAtomReported();
         attrChain = atom.getAttributionNodeList();
@@ -829,6 +837,15 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBytesField().getExperimentIdList())
                 .containsExactly(1L, 2L, 3L).inOrder();
 
+        assertThat(atom.getRepeatedIntFieldList()).containsExactly(3, 6).inOrder();
+        assertThat(atom.getRepeatedLongFieldList()).containsExactly(1000L, 1002L).inOrder();
+        assertThat(atom.getRepeatedFloatFieldList()).containsExactly(0.3f, 0.09f).inOrder();
+        assertThat(atom.getRepeatedStringFieldList()).containsExactly("str1", "str2").inOrder();
+        assertThat(atom.getRepeatedBooleanFieldList()).containsExactly(true, false).inOrder();
+        assertThat(atom.getRepeatedEnumFieldList())
+                .containsExactly(TestAtomReported.State.OFF, TestAtomReported.State.ON)
+                .inOrder();
+
         atom = data.get(2).getAtom().getTestAtomReported();
         attrChain = atom.getAttributionNodeList();
         assertThat(attrChain).hasSize(1);
@@ -845,6 +862,13 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBytesField().getExperimentIdList())
                 .containsExactly(1L, 2L, 3L).inOrder();
 
+        assertThat(atom.getRepeatedIntFieldList()).isEmpty();
+        assertThat(atom.getRepeatedLongFieldList()).isEmpty();
+        assertThat(atom.getRepeatedFloatFieldList()).isEmpty();
+        assertThat(atom.getRepeatedStringFieldList()).isEmpty();
+        assertThat(atom.getRepeatedBooleanFieldList()).isEmpty();
+        assertThat(atom.getRepeatedEnumFieldList()).isEmpty();
+
         atom = data.get(3).getAtom().getTestAtomReported();
         attrChain = atom.getAttributionNodeList();
         assertThat(attrChain).hasSize(1);
@@ -859,6 +883,13 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBooleanField()).isTrue();
         assertThat(atom.getState().getNumber()).isEqualTo(TestAtomReported.State.OFF_VALUE);
         assertThat(atom.getBytesField().getExperimentIdList()).isEmpty();
+
+        assertThat(atom.getRepeatedIntFieldList()).isEmpty();
+        assertThat(atom.getRepeatedLongFieldList()).isEmpty();
+        assertThat(atom.getRepeatedFloatFieldList()).isEmpty();
+        assertThat(atom.getRepeatedStringFieldList()).isEmpty();
+        assertThat(atom.getRepeatedBooleanFieldList()).isEmpty();
+        assertThat(atom.getRepeatedEnumFieldList()).isEmpty();
     }
 
     public void testAppForegroundBackground() throws Exception {
