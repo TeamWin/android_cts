@@ -998,7 +998,6 @@
                 android:permissionGroup="android.permission-group.UNDEFINED"
                 android:label="@string/permlab_readMediaAudio"
                 android:description="@string/permdesc_readMediaAudio"
-                android:permissionFlags="softRestricted|immutablyRestricted"
                 android:protectionLevel="dangerous" />
 
     <!-- Required to be able to read image and video files from shared storage.
@@ -1029,7 +1028,6 @@
                 android:permissionGroup="android.permission-group.UNDEFINED"
                 android:label="@string/permlab_readMediaVideo"
                 android:description="@string/permdesc_readMediaVideo"
-                android:permissionFlags="softRestricted|immutablyRestricted"
                 android:protectionLevel="dangerous" />
 
     <!-- Allows an application to read image files from external storage.
@@ -1052,7 +1050,6 @@
                 android:permissionGroup="android.permission-group.UNDEFINED"
                 android:label="@string/permlab_readMediaImage"
                 android:description="@string/permdesc_readMediaImage"
-                android:permissionFlags="softRestricted|immutablyRestricted"
                 android:protectionLevel="dangerous" />
 
     <!-- Allows an application to write to external storage.
