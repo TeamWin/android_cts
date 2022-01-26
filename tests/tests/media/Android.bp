@@ -47,6 +47,29 @@ java_library {
 }
 
 cc_test_library {
+    name: "libctscodecutils_jni",
+    srcs: [
+        "common/jni/codec-utils-jni.cpp",
+        "common/jni/md5_utils.cpp",
+    ],
+    shared_libs: [
+        "libnativehelper_compat_libc++",
+        "liblog",
+    ],
+    header_libs: ["liblog_headers"],
+    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
+    // (revisit if/when we add features to this library that require newer sdk.
+    sdk_version: "29",
+    cflags: [
+        "-Werror",
+        "-Wall",
+        "-DEGL_EGLEXT_PROTOTYPES",
+    ],
+    stl: "libc++_static",
+    gtest: false,
+}
+
+cc_test_library {
     name: "libctsmediacommon_jni",
     srcs: [
         "common/jni/NdkInputSurface-jni.cpp",
