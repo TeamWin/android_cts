@@ -270,6 +270,20 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     /**
+     * Tests creating a user using the DevicePolicyManager's createAndManageUser method, affiliates
+     * the user and starts the user in background to test APIs on that user.
+     *
+     * <p>{@link android.app.admin.DevicePolicyManager#logoutUser} (system API version) is tested.
+     */
+    @Test
+    public void testCreateAndManageUser_LogoutUser_systemApi() throws Exception {
+        assumeCanStartNewUser();
+
+        executeCreateAndManageUserTest("testCreateAndManageUser_LogoutUser_systemApi");
+        assertNewUserStopped();
+    }
+
+    /**
      * Test creating an user using the DevicePolicyManager's createAndManageUser method, affiliate
      * the user and start the user in background to test APIs on that user.
      * {@link android.app.admin.DevicePolicyManager#isAffiliatedUser} is tested.
