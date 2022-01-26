@@ -372,6 +372,12 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     public void testNightModeCustomTypeBedtimeNotPersistedInCarMode() throws InterruptedException {
+        if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeCustomTypeBedtimeNotPersistedInCarMode skipped: night mode is "
+                    + "locked");
+            return;
+        }
+
         acquireModifyNightModePermission();
         mUiModeManager.setNightMode(UiModeManager.MODE_NIGHT_NO);
         mUiModeManager.enableCarMode(0);
