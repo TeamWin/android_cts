@@ -32,10 +32,6 @@ import java.time.Duration
 
 /** Broadcast receiver to be used for testing broadcasts sent to safety source apps. */
 class SafetySourceBroadcastReceiver : BroadcastReceiver() {
-    var safetySourceDataOnPageOpen: SafetySourceData? = null
-    var safetySourceDataOnRescanClick: SafetySourceData? = null
-    private val updateChannel = Channel<Unit>()
-
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent == null) {
             throw IllegalArgumentException("Received null intent")
@@ -59,10 +55,17 @@ class SafetySourceBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-    fun waitTillOnReceiveComplete(duration: Duration) {
-        runBlocking {
-            withTimeout(duration.toMillis()) {
-                updateChannel.receive()
+    companion object {
+        private val updateChannel = Channel<Unit>()
+
+        var safetySourceDataOnPageOpen: SafetySourceData? = null
+        var safetySourceDataOnRescanClick: SafetySourceData? = null
+
+        fun waitTillOnReceiveComplete(duration: Duration) {
+            runBlocking {
+                withTimeout(duration.toMillis()) {
+                    updateChannel.receive()
+                }
             }
         }
     }
