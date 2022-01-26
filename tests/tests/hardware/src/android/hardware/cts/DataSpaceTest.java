@@ -243,6 +243,7 @@ public class DataSpaceTest {
         try {
             outputImage = mWriter.dequeueInputImage();
             outputImage.setDataSpace(dataSpace);
+            assertEquals(dataSpace, outputImage.getDataSpace());
 
             mWriter.queueInputImage(outputImage);
 
