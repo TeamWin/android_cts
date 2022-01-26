@@ -60,9 +60,9 @@ public class EnterpriseResourcesTests {
     private static final DevicePolicyManager sDpm =
             sContext.getSystemService(DevicePolicyManager.class);
 
-    private static final int UPDATABLE_DRAWABLE_ID_1 = 0;
-    private static final int UPDATABLE_DRAWABLE_ID_2 = 1;
-    private static final int DRAWABLE_STYLE_1 = 0;
+    private static final String UPDATABLE_DRAWABLE_ID_1 = "UPDATABLE_DRAWABLE_ID_1";
+    private static final String UPDATABLE_DRAWABLE_ID_2 = "UPDATABLE_DRAWABLE_ID_2";
+    private static final String DRAWABLE_STYLE_1 = "DRAWABLE_STYLE_1";
 
     private static final String UPDATABLE_STRING_ID_1 = "UPDATABLE_STRING_ID_1";
     private static final String UPDATABLE_STRING_ID_2 = "UPDATABLE_STRING_ID_2";
@@ -87,7 +87,7 @@ public class EnterpriseResourcesTests {
         try (PermissionContext p = TestApis.permissions().withPermission(
                 UPDATE_DEVICE_MANAGEMENT_RESOURCES)) {
             sDpm.resetDrawables(
-                    new int[]{
+                    new String[]{
                             UPDATABLE_DRAWABLE_ID_1,
                             UPDATABLE_DRAWABLE_ID_2});
             sDpm.resetStrings(
@@ -150,7 +150,7 @@ public class EnterpriseResourcesTests {
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void setDrawables_doesNotUpdateOtherUpdatableDrawables() {
         Drawable defaultDrawable = sContext.getDrawable(R.drawable.test_drawable_2);
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_2});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_2});
 
         sDpm.setDrawables(createDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
@@ -164,7 +164,7 @@ public class EnterpriseResourcesTests {
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void setDrawables_drawableChangedFromNull_sendsBroadcast() {
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 DevicePolicyManager.ACTION_DEVICE_POLICY_RESOURCE_UPDATED);
 
@@ -210,14 +210,14 @@ public class EnterpriseResourcesTests {
     @EnsureDoesNotHavePermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void resetDrawables_withoutRequiredPermission_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> sDpm.resetDrawables(
-                new int[]{UPDATABLE_DRAWABLE_ID_1}));
+                new String[]{UPDATABLE_DRAWABLE_ID_1}));
     }
 
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void resetDrawables_withRequiredPermission_doesNotThrowSecurityException() {
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
     }
 
     @Test
@@ -228,7 +228,7 @@ public class EnterpriseResourcesTests {
         sDpm.setDrawables(createDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
 
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         Drawable drawable = sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ () -> defaultDrawable);
@@ -244,7 +244,7 @@ public class EnterpriseResourcesTests {
         sDpm.setDrawables(createDrawable(
                 UPDATABLE_DRAWABLE_ID_2, DRAWABLE_STYLE_1, R.drawable.test_drawable_2));
 
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         Drawable drawable = sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_2, DRAWABLE_STYLE_1, /* default= */ () -> null);
@@ -261,7 +261,7 @@ public class EnterpriseResourcesTests {
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 DevicePolicyManager.ACTION_DEVICE_POLICY_RESOURCE_UPDATED);
 
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         broadcastReceiver.awaitForBroadcastOrFail();
     }
@@ -271,11 +271,11 @@ public class EnterpriseResourcesTests {
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     @Ignore("b/208237942")
     public void resetDrawables_drawableNotChanged_doesNotSendBroadcast() {
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
                 DevicePolicyManager.ACTION_DEVICE_POLICY_RESOURCE_UPDATED);
 
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         assertThat(broadcastReceiver.awaitForBroadcast()).isNull();
     }
@@ -299,7 +299,7 @@ public class EnterpriseResourcesTests {
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void getDrawable_drawableIsNotSet_returnsDefaultDrawable() {
         Drawable defaultDrawable = sContext.getDrawable(R.drawable.test_drawable_1);
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         Drawable drawable = sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ () -> defaultDrawable);
@@ -311,7 +311,7 @@ public class EnterpriseResourcesTests {
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void getDrawable_defaultLoaderIsNull_throwsException() {
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         assertThrows(NullPointerException.class, () -> sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ null));
@@ -321,7 +321,7 @@ public class EnterpriseResourcesTests {
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
     public void getDrawable_defaultIsNull_throwsException() {
-        sDpm.resetDrawables(new int[]{UPDATABLE_DRAWABLE_ID_1});
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         assertThrows(NullPointerException.class, () -> sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ () -> null));
@@ -366,7 +366,7 @@ public class EnterpriseResourcesTests {
     }
 
     private Set<DevicePolicyDrawableResource> createDrawable(
-            int updatableDrawableId, int style, int resourceId) {
+            String updatableDrawableId, String style, int resourceId) {
         return Set.of(new DevicePolicyDrawableResource(
                 sContext, updatableDrawableId, style, resourceId));
     }

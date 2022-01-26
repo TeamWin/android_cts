@@ -19,6 +19,8 @@ package android.media.tv.interactive.cts;
 import android.content.Context;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
+import android.net.Uri;
+import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Surface;
 
@@ -28,6 +30,7 @@ import android.view.Surface;
 public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
     public static StubSessionImpl sSession;
+    public static int sType;
 
     @Override
     public Session onCreateSession(String iAppServiceId, int type) {
@@ -35,16 +38,80 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         return sSession;
     }
 
+    @Override
+    public void onPrepare(int type) {
+        sType = type;
+        notifyStateChanged(
+                sType,
+                TvInteractiveAppManager.SERVICE_STATE_PREPARING,
+                TvInteractiveAppManager.ERROR_NONE);
+    }
+
     public static class StubSessionImpl extends Session {
+        public int mSetSurfaceCount;
+        public int mSurfaceChangedCount;
+        public int mStartInteractiveAppCount;
+        public int mStopInteractiveAppCount;
+        public int mKeyDownCount;
+        public int mKeyUpCount;
+        public int mKeyMultipleCount;
+        public int mVideoAvailableCount;
+        public int mTunedCount;
+        public int mCreateBiIAppCount;
+        public int mDestroyBiIAppCount;
+
+        public Integer mKeyDownCode;
+        public Integer mKeyUpCode;
+        public Integer mKeyMultipleCode;
+        public KeyEvent mKeyDownEvent;
+        public KeyEvent mKeyUpEvent;
+        public KeyEvent mKeyMultipleEvent;
+        public Uri mTunedUri;
+        public Uri mCreateBiIAppUri;
+        public Bundle mCreateBiIAppParams;
+        public String mDestroyBiIAppId;
+
+
         StubSessionImpl(Context context) {
             super(context);
         }
 
+        public void resetValues() {
+            mSetSurfaceCount = 0;
+            mSurfaceChangedCount = 0;
+            mStartInteractiveAppCount = 0;
+            mStopInteractiveAppCount = 0;
+            mKeyDownCount = 0;
+            mKeyUpCount = 0;
+            mKeyMultipleCount = 0;
+            mVideoAvailableCount = 0;
+            mTunedCount = 0;
+            mCreateBiIAppCount = 0;
+            mDestroyBiIAppCount = 0;
+
+            mKeyDownCode = null;
+            mKeyUpCode = null;
+            mKeyMultipleCode = null;
+            mKeyDownEvent = null;
+            mKeyUpEvent = null;
+            mKeyMultipleEvent = null;
+            mTunedUri = null;
+            mCreateBiIAppUri = null;
+            mCreateBiIAppParams = null;
+            mDestroyBiIAppId = null;
+        }
+
         @Override
         public void onStartInteractiveApp() {
+            mStartInteractiveAppCount++;
             notifySessionStateChanged(
-                    TvInteractiveAppManager.SERVICE_STATE_READY,
+                    TvInteractiveAppManager.INTERACTIVE_APP_STATE_RUNNING,
                     TvInteractiveAppManager.ERROR_NONE);
+        }
+
+        @Override
+        public void onStopInteractiveApp() {
+            mStopInteractiveAppCount++;
         }
 
         @Override
@@ -53,11 +120,20 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public boolean onSetSurface(Surface surface) {
+            mSetSurfaceCount++;
             return false;
         }
 
         @Override
+        public void onSurfaceChanged(int format, int width, int height) {
+            mSurfaceChangedCount++;
+        }
+
+        @Override
         public boolean onKeyDown(int keyCode, KeyEvent event) {
+            mKeyDownCount++;
+            mKeyDownCode = keyCode;
+            mKeyDownEvent = event;
             return false;
         }
 
@@ -68,12 +144,43 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public boolean onKeyUp(int keyCode, KeyEvent event) {
+            mKeyUpCount++;
+            mKeyUpCode = keyCode;
+            mKeyUpEvent = event;
             return false;
         }
 
         @Override
         public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
+            mKeyMultipleCount++;
+            mKeyMultipleCode = keyCode;
+            mKeyMultipleEvent = event;
             return false;
+        }
+
+        @Override
+        public void onCreateBiInteractiveApp(Uri biIAppUri, Bundle params) {
+            mCreateBiIAppCount++;
+            mCreateBiIAppUri = biIAppUri;
+            mCreateBiIAppParams = params;
+            notifyBiInteractiveAppCreated(biIAppUri, "biIAppId");
+        }
+
+        @Override
+        public void onDestroyBiInteractiveApp(String biIAppId) {
+            mDestroyBiIAppCount++;
+            mDestroyBiIAppId = biIAppId;
+        }
+
+        @Override
+        public void onTuned(Uri uri) {
+            mTunedCount++;
+            mTunedUri = uri;
+        }
+
+        @Override
+        public void onVideoAvailable() {
+            mVideoAvailableCount++;
         }
     }
 }

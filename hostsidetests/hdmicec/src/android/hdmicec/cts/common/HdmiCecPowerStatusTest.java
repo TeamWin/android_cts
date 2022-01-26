@@ -392,4 +392,75 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
             setPowerControlMode(previousPowerControlMode);
         }
     }
+
+    /*
+     * Test HF4-6-28
+     *
+     * <p>Tests that the DUT handles {@code <User Control Pressed>} of any power related buttons
+     * correctly
+     */
+    @Test
+    public void cect_hf_4_6_28_testPowerUcpHandling() throws Exception {
+        setCec20();
+        int waitSeconds = 10;
+        ITestDevice device = getDevice();
+        // Ensure device is awake.
+        wakeUpDevice();
+
+        // Acquire the wakelock.
+        WakeLockHelper.acquirePartialWakeLock(device);
+        try {
+            // All <UCP> commands will be sent from TV.
+            LogicalAddress source = LogicalAddress.TV;
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Toggle power again, DUT should wakeup.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            // Send <UCP>[Power On]. DUT should remain in ON state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            // Send <UCP>[Power Off]. DUT should got to OFF state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Send <UCP>[Power Off] again. DUT should stay in OFF state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Send <UCP>[Power On]. DUT should go to ON state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            // Send <UCP> [Power]. DUT should go to standby.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Send <UCP> [Power]. DUT should wakeup.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+        } finally {
+            // Wake up the device. This will also release the wakelock.
+            wakeUpDevice();
+        }
+    }
 }

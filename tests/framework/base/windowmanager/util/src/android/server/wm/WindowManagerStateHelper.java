@@ -665,7 +665,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     /**
-     * Asserts that the device default display minimim width is larger than the minimum task width.
+     * Asserts that the device default display minimum width is larger than the minimum task width.
      */
     void assertDeviceDefaultDisplaySizeForMultiWindow(String errorMessage) {
         computeState();

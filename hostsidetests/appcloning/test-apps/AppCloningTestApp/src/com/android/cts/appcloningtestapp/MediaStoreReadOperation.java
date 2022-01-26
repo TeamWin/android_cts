@@ -19,7 +19,6 @@ package com.android.cts.appcloningtestapp;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.MediaStore;
 
 import java.util.ArrayList;
@@ -34,10 +33,7 @@ public class MediaStoreReadOperation {
     public static List<Image> getImageFilesFromMediaStore(Context context) {
         List<Image> imageList = new ArrayList<>();
 
-        // Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q is always true
-        Uri collection = Build.VERSION.SDK_INT >= ANDROID_Q
-                ? MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL) :
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
 
         String[] projection = new String[] {
                 MediaStore.Images.Media.DATA,

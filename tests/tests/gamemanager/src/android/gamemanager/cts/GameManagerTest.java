@@ -193,14 +193,14 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeInfo() {
-        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
-
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_BATTERY));
 
-        GameModeInfo gameModeInfo = mGameManager.getGameModeInfo(mActivity.getPackageName());
+        GameModeInfo gameModeInfo =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                        (gameManager) -> gameManager.getGameModeInfo(mActivity.getPackageName()),
+                        "android.permission.MANAGE_GAME_MODE");
         assertEquals("GameManager#getGameModeInfo returned incorrect available game modes.",
                 3, gameModeInfo.getAvailableGameModes().length);
         assertEquals("GameManager#getGameModeInfo returned incorrect active game mode.",

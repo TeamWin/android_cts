@@ -98,7 +98,7 @@ public final class SlogfTest {
     public void testV_msg3() {
         Slogf.v(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(VERBOSE, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(VERBOSE, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -116,7 +116,7 @@ public final class SlogfTest {
 
         Slogf.v(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertNoLogcatMessage(VERBOSE, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertNoLogcatMessage(VERBOSE, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -140,7 +140,7 @@ public final class SlogfTest {
     public void testD_msg3() {
         Slogf.d(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(DEBUG, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(DEBUG, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -158,7 +158,7 @@ public final class SlogfTest {
 
         Slogf.d(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertNoLogcatMessage(DEBUG, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertNoLogcatMessage(DEBUG, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -184,7 +184,7 @@ public final class SlogfTest {
     public void testI_msg3() {
         Slogf.i(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(INFO, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(INFO, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -202,7 +202,7 @@ public final class SlogfTest {
 
         Slogf.i(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertNoLogcatMessage(INFO, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertNoLogcatMessage(INFO, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -228,7 +228,7 @@ public final class SlogfTest {
     public void testW_msg3() {
         Slogf.w(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(WARN, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(WARN, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -247,7 +247,7 @@ public final class SlogfTest {
 
         Slogf.w(TAG, exception, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(WARN, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(WARN, FORMATTED_MSG, "input1", "input2");
         assertLogcatMessage(WARN, "java.lang.Exception: " + EXCEPTION_MSG);
         assertLogcatStackTrace(WARN, exception);
     }
@@ -267,7 +267,7 @@ public final class SlogfTest {
 
         Slogf.w(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertNoLogcatMessage(WARN, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertNoLogcatMessage(WARN, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -293,7 +293,7 @@ public final class SlogfTest {
     public void testE_msg3() {
         Slogf.e(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(ERROR, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(ERROR, FORMATTED_MSG, "input1", "input2");
     }
 
     @Test
@@ -302,7 +302,7 @@ public final class SlogfTest {
 
         Slogf.e(TAG, exception, FORMATTED_MSG, "input1", "input2");
 
-        assertLogcatMessage(ERROR, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertLogcatMessage(ERROR, FORMATTED_MSG, "input1", "input2");
         assertLogcatMessage(ERROR, "java.lang.Exception: " + EXCEPTION_MSG);
         assertLogcatStackTrace(ERROR, exception);
     }
@@ -322,7 +322,59 @@ public final class SlogfTest {
 
         Slogf.e(TAG, FORMATTED_MSG, "input1", "input2");
 
-        assertNoLogcatMessage(ERROR, String.format(FORMATTED_MSG, "input1", "input2"));
+        assertNoLogcatMessage(ERROR, FORMATTED_MSG, "input1", "input2");
+    }
+
+    @Test
+    public void testWTF_msg1() {
+        Slogf.wtf(TAG, LOGGED_MSG);
+
+        // WTF is logged as ERROR
+        assertLogcatMessage(ERROR, LOGGED_MSG);
+    }
+
+    @Test
+    public void testWTF_msg2() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+
+        Slogf.wtf(TAG, LOGGED_MSG, throwable);
+
+        // WTF is logged as ERROR
+        assertLogcatMessage(ERROR, LOGGED_MSG);
+        assertLogcatMessage(ERROR, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(ERROR, throwable);
+
+    }
+
+    @Test
+    public void testWTF_msg3() {
+        Slogf.wtf(TAG, FORMATTED_MSG, "input1", "input2");
+
+        // WTF is logged as ERROR
+        assertLogcatMessage(ERROR, FORMATTED_MSG, "input1", "input2");
+    }
+
+    @Test
+    public void testWTF_msg4() throws Exception {
+        Throwable throwable = new Throwable(EXCEPTION_MSG);
+
+        Slogf.wtf(TAG, throwable);
+
+        // WTF is logged as ERROR
+        assertLogcatMessage(ERROR, "java.lang.Throwable: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(ERROR, throwable);
+    }
+
+    @Test
+    public void testWTF_msg5() {
+        Exception exception = new Exception(EXCEPTION_MSG);
+
+        Slogf.wtf(TAG, exception, FORMATTED_MSG, "input1", "input2");
+
+        // WTF is logged as ERROR
+        assertLogcatMessage(ERROR, FORMATTED_MSG, "input1", "input2");
+        assertLogcatMessage(ERROR, "java.lang.Exception: " + EXCEPTION_MSG);
+        assertLogcatStackTrace(ERROR, exception);
     }
 
     @Test
@@ -347,13 +399,16 @@ public final class SlogfTest {
         SystemUtil.runShellCommand("setprop log.tag.SlogfTest " + level.getValue());
     }
 
-    private void assertNoLogcatMessage(Level level, String msg) throws Exception {
-        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG, msg);
+    private void assertNoLogcatMessage(Level level, String format, Object... args)
+            throws Exception {
+        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG,
+                String.format(format, args));
         LogcatHelper.assertNoLogcatMessage(match, NOT_LOGGED_WAIT_TIME_MS);
     }
 
-    private void assertLogcatMessage(Level level, String msg) {
-        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG, msg);
+    private void assertLogcatMessage(Level level, String format, Object... args) {
+        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG,
+                String.format(format, args));
         LogcatHelper.assertLogcatMessage(match, BUFFER, TIMEOUT_MS);
     }
 

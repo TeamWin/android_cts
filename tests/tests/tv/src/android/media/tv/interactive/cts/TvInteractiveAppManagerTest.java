@@ -16,6 +16,8 @@
 
 package android.media.tv.interactive.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
@@ -32,6 +34,7 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import junit.framework.AssertionFailedError;
@@ -50,7 +53,7 @@ import java.util.concurrent.Executor;
  */
 @RunWith(AndroidJUnit4.class)
 public class TvInteractiveAppManagerTest {
-    private static final long TIME_OUT_MS = 20000L;
+    private static final long TIME_OUT_MS = 200000L;
 
     private Instrumentation mInstrumentation;
     private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
@@ -60,7 +63,19 @@ public class TvInteractiveAppManagerTest {
 
     private final MockCallback mCallback = new MockCallback();
 
-    public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
+    public static class MockCallback extends TvInteractiveAppManager.TvInteractiveAppCallback {
+        private String mIAppServiceId;
+        private int mType;
+        private int mState;
+        private int mErr;
+
+        public void onTvInteractiveAppServiceStateChanged(
+                String iAppServiceId, int type, int state, int err) {
+            mIAppServiceId = iAppServiceId;
+            mType = type;
+            mState = state;
+            mErr = err;
+        }
     }
 
     @Rule
@@ -116,8 +131,12 @@ public class TvInteractiveAppManagerTest {
         mManager = (TvInteractiveAppManager) mActivity.getSystemService(
                 Context.TV_INTERACTIVE_APP_SERVICE);
         assertNotNull("Failed to get TvInteractiveAppManager.", mManager);
-
-        mTvInteractiveAppView.setCallback(getExecutor(), mCallback);
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mManager.registerCallback(mCallback, getExecutor());
+            }
+        });
     }
 
     @After
@@ -144,5 +163,29 @@ public class TvInteractiveAppManagerTest {
         throw new AssertionFailedError(
                 "getTvInteractiveAppServiceList() doesn't contain valid TvInteractiveAppInfo: "
                         + StubTvInteractiveAppService.class.getName());
+    }
+
+    @Test
+    public void testPrepare() throws Exception {
+        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+
+        TvInteractiveAppInfo stubInfo = null;
+        for (TvInteractiveAppInfo info : list) {
+            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
+                stubInfo = info;
+                break;
+            }
+        }
+        assertNotNull(stubInfo);
+
+        mManager.prepare(stubInfo.getId(), TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mIAppServiceId != null);
+        assertThat(mCallback.mIAppServiceId).isEqualTo(stubInfo.getId());
+        assertThat(mCallback.mType).isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+        assertThat(StubTvInteractiveAppService.sType)
+                .isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+        assertThat(mCallback.mState)
+                .isEqualTo(TvInteractiveAppManager.SERVICE_STATE_PREPARING);
+        assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_NONE);
     }
 }

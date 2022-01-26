@@ -23,13 +23,12 @@ import static com.google.common.truth.Truth.assertThat;
 import android.car.cts.builtin.os.GetInitialUserInfoCommand;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class BinderHelperHostTest extends BaseHostJUnit4Test {
+public final class BinderHelperHostTest extends CarBuiltinApiHostCtsBase {
 
     // When a car shell command (such as, "cmd car_service get-do-activities") is called, it
     // triggers both BinderHelper.onTransactForCmd and

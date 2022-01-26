@@ -32,13 +32,12 @@ import android.os.Bundle;
 import android.os.SystemClock;
 
 /**
- * Used by NotificationManagerTest for testing policy around bubbles, this activity is able to
+ * Used by NotificationManagerBubbleTest for testing policy around bubbles, this activity is able to
  * send a bubble.
  */
 public class SendBubbleActivity extends Activity {
-    final String TAG = SendBubbleActivity.class.getSimpleName();
 
-    // Should be same as what NotificationManagerTest is using
+    // Should be same as what NotificationManagerBubbleTest is using
     private static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
     private static final String SHARE_SHORTCUT_ID = "shareShortcut";
 

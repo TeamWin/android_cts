@@ -24,11 +24,20 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.tv.TvContract;
+import android.media.tv.TvInputInfo;
+import android.media.tv.TvInputManager;
+import android.media.tv.TvView;
 import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppView;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
+import android.view.KeyEvent;
+import android.view.SurfaceView;
+import android.view.View;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -51,36 +60,82 @@ import java.util.concurrent.Executor;
 @RunWith(AndroidJUnit4.class)
 public class TvInteractiveAppServiceTest {
     private static final long TIME_OUT_MS = 20000L;
+    private static final Uri CHANNEL_0 = TvContract.buildChannelUri(0);
 
     private Instrumentation mInstrumentation;
     private ActivityScenario<TvInteractiveAppViewStubActivity> mActivityScenario;
     private TvInteractiveAppViewStubActivity mActivity;
     private TvInteractiveAppView mTvIAppView;
+    private TvView mTvView;
     private TvInteractiveAppManager mManager;
     private TvInteractiveAppInfo mStubInfo;
     private StubTvInteractiveAppService.StubSessionImpl mSession;
+    private TvInputManager mTvInputManager;
+    private TvInputInfo mTvInputInfo;
+    private StubTvInputService2.StubSessionImpl2 mInputSession;
 
     @Rule
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
             PackageManager.FEATURE_LIVE_TV);
 
     private final MockCallback mCallback = new MockCallback();
+    private final MockTvInputCallback mTvInputCallback = new MockTvInputCallback();
 
     public static class MockCallback extends TvInteractiveAppView.TvInteractiveAppCallback {
         private int mRequestCurrentChannelUriCount = 0;
+        private int mStateChangedCount = 0;
+        private int mBiIAppCreatedCount = 0;
 
-        private void resetCounts() {
+        private String mIAppServiceId = null;
+        private Integer mState = null;
+        private Integer mErr = null;
+        private Uri mBiIAppUri = null;
+        private String mBiIAppId = null;
+
+        private void resetValues() {
             mRequestCurrentChannelUriCount = 0;
+            mStateChangedCount = 0;
+            mBiIAppCreatedCount = 0;
+
+            mIAppServiceId = null;
+            mState = null;
+            mErr = null;
+            mBiIAppUri = null;
+            mBiIAppId = null;
         }
 
         @Override
         public void onRequestCurrentChannelUri(String iAppServiceId) {
             mRequestCurrentChannelUriCount++;
         }
+
+        @Override
+        public void onStateChanged(String iAppServiceId, int state, int err) {
+            mStateChangedCount++;
+            mIAppServiceId = iAppServiceId;
+            mState = state;
+            mErr = err;
+        }
+
+        @Override
+        public void onBiInteractiveAppCreated(String iAppServiceId, Uri biIAppUri,
+                String biIAppId) {
+            mBiIAppCreatedCount++;
+            mIAppServiceId = iAppServiceId;
+            mBiIAppUri = biIAppUri;
+            mBiIAppId = biIAppId;
+        }
+    }
+
+    public static class MockTvInputCallback extends TvView.TvInputCallback {
     }
 
     private TvInteractiveAppView findTvInteractiveAppViewById(int id) {
         return (TvInteractiveAppView) mActivity.findViewById(id);
+    }
+
+    private TvView findTvViewById(int id) {
+        return (TvView) mActivity.findViewById(id);
     }
 
     private void runTestOnUiThread(final Runnable r) throws Throwable {
@@ -103,6 +158,16 @@ public class TvInteractiveAppServiceTest {
         return Runnable::run;
     }
 
+    private static Bundle createTestBundle() {
+        Bundle b = new Bundle();
+        b.putString("stringKey", new String("Test String"));
+        return b;
+    }
+
+    private static Uri createTestUri() {
+        return Uri.parse("content://com.example/");
+    }
+
     @Before
     public void setUp() throws Throwable {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -123,6 +188,8 @@ public class TvInteractiveAppServiceTest {
         assertNotNull("Failed to acquire activity reference.", mActivity);
         mTvIAppView = findTvInteractiveAppViewById(R.id.tviappview);
         assertNotNull("Failed to find TvInteractiveAppView.", mTvIAppView);
+        mTvView = findTvViewById(R.id.tviapp_tvview);
+        assertNotNull("Failed to find TvView.", mTvView);
 
         mManager = (TvInteractiveAppManager) mActivity.getSystemService(
                 Context.TV_INTERACTIVE_APP_SERVICE);
@@ -139,6 +206,16 @@ public class TvInteractiveAppServiceTest {
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mTvIAppView.getInteractiveAppSession() != null);
         mSession = StubTvInteractiveAppService.sSession;
+
+        mTvInputManager = (TvInputManager) mActivity.getSystemService(Context.TV_INPUT_SERVICE);
+        assertNotNull("Failed to get TvInputManager.", mTvInputManager);
+
+        for (TvInputInfo info : mTvInputManager.getTvInputList()) {
+            if (info.getServiceInfo().name.equals(StubTvInputService2.class.getName())) {
+                mTvInputInfo = info;
+            }
+        }
+        assertNotNull(mTvInputInfo);
     }
 
     @After
@@ -146,6 +223,7 @@ public class TvInteractiveAppServiceTest {
         runTestOnUiThread(new Runnable() {
             public void run() {
                 mTvIAppView.reset();
+                mTvView.reset();
             }
         });
         mInstrumentation.waitForIdleSync();
@@ -156,10 +234,224 @@ public class TvInteractiveAppServiceTest {
     @Test
     public void testRequestCurrentChannelUri() throws Throwable {
         assertNotNull(mSession);
-        mCallback.resetCounts();
+        mCallback.resetValues();
         mSession.requestCurrentChannelUri();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mRequestCurrentChannelUriCount > 0);
 
         assertThat(mCallback.mRequestCurrentChannelUriCount).isEqualTo(1);
     }
+
+    @Test
+    public void testSetSurface() throws Throwable {
+        assertNotNull(mSession);
+
+        assertThat(mSession.mSetSurfaceCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testLayoutSurface() throws Throwable {
+        assertNotNull(mSession);
+
+        final int left = 10;
+        final int top = 20;
+        final int right = 30;
+        final int bottom = 40;
+
+        mSession.layoutSurface(left, top, right, bottom);
+
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                int childCount = mTvIAppView.getChildCount();
+                for (int i = 0; i < childCount; ++i) {
+                    View v = mTvIAppView.getChildAt(i);
+                    if (v instanceof SurfaceView) {
+                        return v.getLeft() == left
+                            && v.getTop() == top
+                            && v.getRight() == right
+                            && v.getBottom() == bottom;
+                    }
+                }
+                return false;
+            }
+        }.run();
+        assertThat(mSession.mSurfaceChangedCount > 0).isTrue();
+    }
+
+    @Test
+    public void testSessionStateChanged() throws Throwable {
+        assertNotNull(mSession);
+        mCallback.resetValues();
+        mSession.notifySessionStateChanged(
+                TvInteractiveAppManager.INTERACTIVE_APP_STATE_ERROR,
+                TvInteractiveAppManager.ERROR_UNKNOWN);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mStateChangedCount > 0);
+
+        assertThat(mCallback.mStateChangedCount).isEqualTo(1);
+        assertThat(mCallback.mIAppServiceId).isEqualTo(mStubInfo.getId());
+        assertThat(mCallback.mState)
+                .isEqualTo(TvInteractiveAppManager.INTERACTIVE_APP_STATE_ERROR);
+        assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_UNKNOWN);
+    }
+
+    @Test
+    public void testStartStopInteractiveApp() throws Throwable {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.startInteractiveApp();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mStartInteractiveAppCount > 0);
+        assertThat(mSession.mStartInteractiveAppCount).isEqualTo(1);
+
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvIAppView.stopInteractiveApp();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mStopInteractiveAppCount > 0);
+        assertThat(mSession.mStopInteractiveAppCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testDispatchKeyDown() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final int keyCode = KeyEvent.KEYCODE_Q;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
+
+        mTvIAppView.dispatchKeyEvent(event);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mKeyDownCount > 0);
+
+        assertThat(mSession.mKeyDownCount).isEqualTo(1);
+        assertThat(mSession.mKeyDownCode).isEqualTo(keyCode);
+        assertKeyEventEquals(mSession.mKeyDownEvent, event);
+    }
+
+    @Test
+    public void testDispatchKeyUp() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final int keyCode = KeyEvent.KEYCODE_I;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_UP, keyCode);
+
+        mTvIAppView.dispatchKeyEvent(event);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mKeyUpCount > 0);
+
+        assertThat(mSession.mKeyUpCount).isEqualTo(1);
+        assertThat(mSession.mKeyUpCode).isEqualTo(keyCode);
+        assertKeyEventEquals(mSession.mKeyUpEvent, event);
+    }
+
+    @Test
+    public void testDispatchKeyMultiple() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        final int keyCode = KeyEvent.KEYCODE_L;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_MULTIPLE, keyCode);
+
+        mTvIAppView.dispatchKeyEvent(event);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mKeyMultipleCount > 0);
+
+        assertThat(mSession.mKeyMultipleCount).isEqualTo(1);
+        assertThat(mSession.mKeyMultipleCode).isEqualTo(keyCode);
+        assertKeyEventEquals(mSession.mKeyMultipleEvent, event);
+    }
+
+    @Test
+    public void testCreateBiInteractiveApp() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mCallback.resetValues();
+        final Bundle bundle = createTestBundle();
+        final Uri uri = createTestUri();
+        final String biIAppId = "biIAppId";
+
+        mTvIAppView.createBiInteractiveApp(uri, bundle);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mBiIAppCreatedCount > 0);
+
+        assertThat(mSession.mCreateBiIAppCount).isEqualTo(1);
+        assertThat(mSession.mCreateBiIAppUri).isEqualTo(uri);
+        assertBundlesAreEqual(mSession.mCreateBiIAppParams, bundle);
+
+        assertThat(mCallback.mIAppServiceId).isEqualTo(mStubInfo.getId());
+        assertThat(mCallback.mBiIAppUri).isEqualTo(uri);
+        assertThat(mCallback.mBiIAppId).isEqualTo(biIAppId);
+
+        mTvIAppView.destroyBiInteractiveApp(biIAppId);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mDestroyBiIAppCount > 0);
+
+        assertThat(mSession.mDestroyBiIAppCount).isEqualTo(1);
+        assertThat(mSession.mDestroyBiIAppId).isEqualTo(biIAppId);
+    }
+
+    @Test
+    public void testTuned() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvView.setCallback(mTvInputCallback);
+        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
+        mInputSession = StubTvInputService2.sStubSessionImpl2;
+        assertNotNull(mInputSession);
+
+        mTvIAppView.setTvView(mTvView);
+        mTvView.setInteractiveAppNotificationEnabled(true);
+        mInputSession.notifyTuned(CHANNEL_0);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTunedCount > 0);
+
+        assertThat(mSession.mTunedCount).isEqualTo(1);
+        assertThat(mSession.mTunedUri).isEqualTo(CHANNEL_0);
+    }
+
+    @Test
+    public void testVideoAvailable() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvView.setCallback(mTvInputCallback);
+        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
+        mInputSession = StubTvInputService2.sStubSessionImpl2;
+        assertNotNull(mInputSession);
+
+        mTvIAppView.setTvView(mTvView);
+        mTvView.setInteractiveAppNotificationEnabled(true);
+        mInputSession.notifyVideoAvailable();
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mVideoAvailableCount > 0);
+
+        assertThat(mSession.mVideoAvailableCount).isEqualTo(1);
+    }
+
+    public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
+        if (expected != null && actual != null) {
+            assertThat(actual.getDownTime()).isEqualTo(expected.getDownTime());
+            assertThat(actual.getEventTime()).isEqualTo(expected.getEventTime());
+            assertThat(actual.getAction()).isEqualTo(expected.getAction());
+            assertThat(actual.getKeyCode()).isEqualTo(expected.getKeyCode());
+            assertThat(actual.getRepeatCount()).isEqualTo(expected.getRepeatCount());
+            assertThat(actual.getMetaState()).isEqualTo(expected.getMetaState());
+            assertThat(actual.getDeviceId()).isEqualTo(expected.getDeviceId());
+            assertThat(actual.getScanCode()).isEqualTo(expected.getScanCode());
+            assertThat(actual.getFlags()).isEqualTo(expected.getFlags());
+            assertThat(actual.getSource()).isEqualTo(expected.getSource());
+            assertThat(actual.getCharacters()).isEqualTo(expected.getCharacters());
+        } else {
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    private static void assertBundlesAreEqual(Bundle actual, Bundle expected) {
+        if (expected != null && actual != null) {
+            assertThat(actual.keySet()).isEqualTo(expected.keySet());
+            for (String key : expected.keySet()) {
+                assertThat(actual.get(key)).isEqualTo(expected.get(key));
+            }
+        } else {
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
 }

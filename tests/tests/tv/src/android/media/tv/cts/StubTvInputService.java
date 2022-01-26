@@ -31,7 +31,7 @@ public class StubTvInputService extends TvInputService {
     }
 
     public static class StubSessionImpl extends Session {
-        StubSessionImpl(Context context) {
+        public StubSessionImpl(Context context) {
             super(context);
         }
 
