@@ -2427,6 +2427,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 assertEquals(currentConfig.getBridgedModeOpportunisticShutdownTimeoutMillis(),
                         testSoftApConfig.getBridgedModeOpportunisticShutdownTimeoutMillis());
+                assertEquals(currentConfig.isIeee80211beEnabled(),
+                        testSoftApConfig.isIeee80211beEnabled());
             }
         }
     }
@@ -2702,6 +2704,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_AX)) {
                 softApConfigBuilder.setIeee80211axEnabled(true);
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
+            }
+
+            // Test 11 BE control config
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                if (callback.getCurrentSoftApCapability()
+                        .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_BE)) {
+                    softApConfigBuilder.setIeee80211beEnabled(true);
+                    verifySetGetSoftApConfig(softApConfigBuilder.build());
+                }
             }
 
             if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
@@ -4002,6 +4013,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11AC);
         boolean is11axSupportedEnabled =
                 mWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11AX);
+        boolean is11beSupportedEnabled =
+                mWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11BE);
 
         // Check for WiFi standards support with wifi disabled
         setWifiEnabled(false);
@@ -4018,6 +4031,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11AC);
         boolean is11axSupportedDisabled =
                 mWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11AX);
+        boolean is11beSupportedDisabled =
+                mWifiManager.isWifiStandardSupported(ScanResult.WIFI_STANDARD_11BE);
 
         if (isLegacySupportedDisabled) {
             assertTrue(isLegacySupportedEnabled);
@@ -4033,6 +4048,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         if (is11axSupportedDisabled) {
             assertTrue(is11axSupportedEnabled);
+        }
+
+        if (is11beSupportedDisabled) {
+            assertTrue(is11beSupportedEnabled);
         }
     }
 
