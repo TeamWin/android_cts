@@ -74,8 +74,6 @@ import org.json.JSONObject;
  * Base class for tests which use MediaPlayer to play audio or video.
  */
 public class MediaPlayerDrmTestBase extends ActivityInstrumentationTestCase2<MediaStubActivity> {
-    private static final Logger LOG = Logger.getLogger(MediaPlayerTestBase.class.getName());
-
     protected static final int STREAM_RETRIES = 3;
 
     protected Monitor mOnVideoSizeChangedCalled = new Monitor();
