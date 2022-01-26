@@ -141,6 +141,17 @@ class SafetySourceDataTest {
     }
 
     @Test
+    fun clearIssues_removesAllIssues() {
+        val safetySourceData = SafetySourceData.Builder("Safety source id")
+            .addIssue(issue1)
+            .addIssue(issue2)
+            .clearIssues()
+            .build()
+
+        assertThat(safetySourceData.issues).isEmpty()
+    }
+
+    @Test
     fun describeContents_returns0() {
         val safetySourceData = SafetySourceData.Builder("Safety source id")
                 .setStatus(status1)

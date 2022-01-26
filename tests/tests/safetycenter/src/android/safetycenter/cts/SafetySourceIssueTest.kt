@@ -53,6 +53,7 @@ class SafetySourceIssueTest {
         0 /* requestCode= */, Intent("PendingIntent 2"), FLAG_IMMUTABLE
     )
     private val action2 = Action.Builder("Action label 2", pendingIntent2).build()
+    private val action3 = Action.Builder("Action label 3", pendingIntent1).build()
 
     @Test
     fun action_getLabel_returnsLabel() {
@@ -338,6 +339,23 @@ class SafetySourceIssueTest {
             .build()
 
         assertThat(safetySourceIssue.actions).containsExactly(action1, action2).inOrder()
+    }
+
+    @Test
+    fun clearActions_removesAllActions() {
+        val safetySourceIssue = SafetySourceIssue.Builder(
+            "Issue id",
+            "Issue title",
+            "Issue summary",
+            SEVERITY_LEVEL_INFORMATION,
+            "issue_type_id"
+        ).addAction(action1)
+            .addAction(action2)
+            .clearActions()
+            .addAction(action3)
+            .build()
+
+        assertThat(safetySourceIssue.actions).containsExactly(action3)
     }
 
     @Test
