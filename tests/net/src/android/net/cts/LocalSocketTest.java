@@ -17,6 +17,14 @@
 package android.net.cts;
 
 import static com.android.testutils.DevSdkIgnoreRuleKt.SC_V2;
+import static com.android.testutils.MiscAsserts.assertThrows;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.net.Credentials;
 import android.net.LocalServerSocket;
@@ -29,9 +37,10 @@ import android.system.OsConstants;
 import android.system.StructTimeval;
 import android.system.UnixSocketAddress;
 
-import com.android.modules.utils.build.SdkLevel;
+import androidx.test.runner.AndroidJUnit4;
 
-import junit.framework.TestCase;
+import com.android.testutils.DevSdkIgnoreRule;
+import com.android.testutils.DevSdkIgnoreRule.IgnoreUpTo;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -47,9 +56,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class LocalSocketTest extends TestCase {
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class LocalSocketTest {
     private final static String ADDRESS_PREFIX = "com.android.net.LocalSocketTest";
 
+    @Rule
+    public final DevSdkIgnoreRule mIgnoreRule = new DevSdkIgnoreRule();
+
+    @Test
     public void testLocalConnections() throws IOException {
         String address = ADDRESS_PREFIX + "_testLocalConnections";
         // create client and server socket
@@ -65,16 +83,12 @@ public class LocalSocketTest extends TestCase {
         LocalSocket serverSocket = localServerSocket.accept();
         assertTrue(serverSocket.isConnected());
         assertTrue(serverSocket.isBound());
-        try {
+        assertThrows(IOException.class, () -> {
             serverSocket.bind(localServerSocket.getLocalSocketAddress());
-            fail("Cannot bind a LocalSocket from accept()");
-        } catch (IOException expected) {
-        }
-        try {
+        });
+        assertThrows(IOException.class, () -> {
             serverSocket.connect(locSockAddr);
-            fail("Cannot connect a LocalSocket from accept()");
-        } catch (IOException expected) {
-        }
+        });
 
         Credentials credent = clientSocket.getPeerCredentials();
         assertTrue(0 != credent.getPid());
@@ -107,12 +121,9 @@ public class LocalSocketTest extends TestCase {
 
         //shutdown output stream of client
         clientSocket.shutdownOutput();
-        try {
+        assertThrows(IOException.class, () -> {
             clientOutStream.write(10);
-            fail("testLocalSocket shouldn't come to here");
-        } catch (IOException e) {
-            // expected
-        }
+        });
 
         //shutdown input stream of server
         serverSocket.shutdownInput();
@@ -120,32 +131,24 @@ public class LocalSocketTest extends TestCase {
 
         //shutdown output stream of server
         serverSocket.shutdownOutput();
-        try {
+        assertThrows(IOException.class, () -> {
             serverOutStream.write(10);
-            fail("testLocalSocket shouldn't come to here");
-        } catch (IOException e) {
-            // expected
-        }
+        });
 
         //close client socket
         clientSocket.close();
-        try {
+        assertThrows(IOException.class, () -> {
             clientInStream.read();
-            fail("testLocalSocket shouldn't come to here");
-        } catch (IOException e) {
-            // expected
-        }
+        });
 
         //close server socket
         serverSocket.close();
-        try {
+        assertThrows(IOException.class, () -> {
             serverInStream.read();
-            fail("testLocalSocket shouldn't come to here");
-        } catch (IOException e) {
-            // expected
-        }
+        });
     }
 
+    @Test
     public void testAccessors() throws IOException {
         String address = ADDRESS_PREFIX + "_testAccessors";
         LocalSocket socket = new LocalSocket();
@@ -169,45 +172,31 @@ public class LocalSocketTest extends TestCase {
         socket.setSoTimeout(1996);
         assertTrue(socket.getSoTimeout() > 0);
 
-        try {
+        assertThrows(UnsupportedOperationException.class, () -> {
             socket.getRemoteSocketAddress();
-            fail("testLocalSocketSecondary shouldn't come to here");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
+        });
 
-        try {
+        assertThrows(UnsupportedOperationException.class, () -> {
             socket.isClosed();
-            fail("testLocalSocketSecondary shouldn't come to here");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
+        });
 
-        try {
+        assertThrows(UnsupportedOperationException.class, () -> {
             socket.isInputShutdown();
-            fail("testLocalSocketSecondary shouldn't come to here");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
+        });
 
-        try {
+        assertThrows(UnsupportedOperationException.class, () -> {
             socket.isOutputShutdown();
-            fail("testLocalSocketSecondary shouldn't come to here");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
+        });
 
-        try {
+        assertThrows(UnsupportedOperationException.class, () -> {
             socket.connect(addr, 2005);
-            fail("testLocalSocketSecondary shouldn't come to here");
-        } catch (UnsupportedOperationException e) {
-            // expected
-        }
+        });
 
         socket.close();
     }
 
     // http://b/31205169
+    @Test
     public void testSetSoTimeout_readTimeout() throws Exception {
         String address = ADDRESS_PREFIX + "_testSetSoTimeout_readTimeout";
 
@@ -238,6 +227,7 @@ public class LocalSocketTest extends TestCase {
     }
 
     // http://b/31205169
+    @Test
     public void testSetSoTimeout_writeTimeout() throws Exception {
         String address = ADDRESS_PREFIX + "_testSetSoTimeout_writeTimeout";
 
@@ -273,6 +263,7 @@ public class LocalSocketTest extends TestCase {
         }
     }
 
+    @Test
     public void testAvailable() throws Exception {
         String address = ADDRESS_PREFIX + "_testAvailable";
 
@@ -299,10 +290,8 @@ public class LocalSocketTest extends TestCase {
     }
 
     // http://b/34095140
+    @Test @IgnoreUpTo(SC_V2)
     public void testLocalSocketCreatedFromFileDescriptor() throws Exception {
-        // TODO: switch to a more recent runner and use DevSdkIgnoreRule.
-        if (!SdkLevel.isAtLeastT()) return;
-
         String address = ADDRESS_PREFIX + "_testLocalSocketCreatedFromFileDescriptor";
 
         // Establish connection between a local client and server to get a valid client socket file
@@ -336,6 +325,7 @@ public class LocalSocketTest extends TestCase {
         }
     }
 
+    @Test
     public void testFlush() throws Exception {
         String address = ADDRESS_PREFIX + "_testFlush";
 
@@ -390,7 +380,7 @@ public class LocalSocketTest extends TestCase {
         assertEquals(numBytes, is.read(recvBytes, 0, recvBytes.length));
 
         final byte[] received = Arrays.copyOfRange(recvBytes, 0, numBytes);
-        assertEquals(Arrays.toString(received), Arrays.toString(sendBytes));
+        assertArrayEquals(received, sendBytes);
     }
 
     /**
@@ -416,10 +406,8 @@ public class LocalSocketTest extends TestCase {
         }
     }
 
+    @Test @IgnoreUpTo(SC_V2)
     public void testCreateFromFd() throws Exception {
-        // TODO: switch to a more recent runner and use DevSdkIgnoreRule.
-        if (!SdkLevel.isAtLeastT()) return;
-
         String address = ADDRESS_PREFIX + "_testClosingConnectedSocket";
         LocalServerSocket server = new LocalServerSocket(address);
 
@@ -472,28 +460,20 @@ public class LocalSocketTest extends TestCase {
             fdsConsumed < NUM_ITERATIONS / 2);
     }
 
+    @Test @IgnoreUpTo(SC_V2)
     public void testCreateFromFd_notConnected() throws Exception {
-        // TODO: switch to a more recent runner and use DevSdkIgnoreRule.
-        if (!SdkLevel.isAtLeastT()) return;
-
         FileDescriptor fd = Os.socket(OsConstants.AF_UNIX, OsConstants.SOCK_STREAM, 0);
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             LocalSocket ls = new LocalSocket(fd);
-            fail("creating LocalSocket from unconnected fd should throw");
-        } catch (IllegalArgumentException expected) {
-        }
+        });
     }
 
+    @Test @IgnoreUpTo(SC_V2)
     public void testCreateFromFd_notSocket() throws Exception {
-        // TODO: switch to a more recent runner and use DevSdkIgnoreRule.
-        if (!SdkLevel.isAtLeastT()) return;
-
         FileDescriptor fd = Os.open("/dev/null", 0 /* flags */, OsConstants.O_WRONLY);
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             LocalSocket ls = new LocalSocket(fd);
-            fail("creating LocalSocket from regular file should throw");
-        } catch (IllegalArgumentException expected) {
-        }
+        });
     }
 
     private static class StreamReader extends Thread {
