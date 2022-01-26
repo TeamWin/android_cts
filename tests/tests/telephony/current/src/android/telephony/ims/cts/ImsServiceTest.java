@@ -1365,6 +1365,23 @@ public class ImsServiceTest {
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
         publishStateQueue.clear();
 
+        // Setup the operation of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 999;
+            String reason = "";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING, waitForIntResult(publishStateQueue));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
         // Trigger RcsFeature is unavailable
         sServiceConnector.getCarrierService().getRcsFeature()
                 .setFeatureState(ImsFeature.STATE_UNAVAILABLE);
