@@ -24,9 +24,13 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
+import android.media.tv.AdRequest;
+import android.media.tv.AdResponse;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
+import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
 import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
@@ -34,6 +38,7 @@ import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ConditionVariable;
+import android.os.ParcelFileDescriptor;
 import android.tv.cts.R;
 import android.view.KeyEvent;
 import android.view.SurfaceView;
@@ -52,6 +57,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.concurrent.Executor;
 
 /**
@@ -125,6 +132,35 @@ public class TvInteractiveAppServiceTest {
             mBiIAppUri = biIAppUri;
             mBiIAppId = biIAppId;
         }
+
+        @Override
+        public void onPlaybackCommandRequest(String id, String type, Bundle bundle) {
+        }
+
+        @Override
+        public void onRequestCurrentChannelLcn(String id) {
+        }
+
+        @Override
+        public void onRequestCurrentTvInputId(String id) {
+        }
+
+        @Override
+        public void onRequestStreamVolume(String id) {
+        }
+
+        @Override
+        public void onRequestTrackInfoList(String id) {
+        }
+
+        @Override
+        public void onSetVideoBounds(String id, Rect rect) {
+        }
+
+        @Override
+        public void onTeletextAppStateChanged(String id, int state) {
+        }
+
     }
 
     public static class MockTvInputCallback extends TvView.TvInputCallback {
@@ -152,6 +188,20 @@ public class TvInteractiveAppServiceTest {
         if (exceptions[0] != null) {
             throw exceptions[0];
         }
+    }
+
+    private void linkTvView() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+        mTvView.setCallback(mTvInputCallback);
+        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
+        mInputSession = StubTvInputService2.sStubSessionImpl2;
+        assertNotNull(mInputSession);
+        mInputSession.resetValues();
+
+        mTvIAppView.setTvView(mTvView);
+        mTvView.setInteractiveAppNotificationEnabled(true);
     }
 
     private Executor getExecutor() {
@@ -388,16 +438,8 @@ public class TvInteractiveAppServiceTest {
 
     @Test
     public void testTuned() {
-        assertNotNull(mSession);
-        mSession.resetValues();
-        mTvView.setCallback(mTvInputCallback);
-        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
-        mInputSession = StubTvInputService2.sStubSessionImpl2;
-        assertNotNull(mInputSession);
+        linkTvView();
 
-        mTvIAppView.setTvView(mTvView);
-        mTvView.setInteractiveAppNotificationEnabled(true);
         mInputSession.notifyTuned(CHANNEL_0);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mTunedCount > 0);
@@ -408,21 +450,155 @@ public class TvInteractiveAppServiceTest {
 
     @Test
     public void testVideoAvailable() {
-        assertNotNull(mSession);
-        mSession.resetValues();
-        mTvView.setCallback(mTvInputCallback);
-        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
-        mInputSession = StubTvInputService2.sStubSessionImpl2;
-        assertNotNull(mInputSession);
+        linkTvView();
 
-        mTvIAppView.setTvView(mTvView);
-        mTvView.setInteractiveAppNotificationEnabled(true);
         mInputSession.notifyVideoAvailable();
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mVideoAvailableCount > 0);
 
         assertThat(mSession.mVideoAvailableCount).isEqualTo(1);
+    }
+
+    @Test
+    public void testAdRequest() throws Throwable {
+        linkTvView();
+
+        File tmpFile = File.createTempFile("cts_tv_interactive_app", "tias_test");
+        ParcelFileDescriptor fd =
+                ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_WRITE);
+        AdRequest adRequest = new AdRequest(
+                567, AdRequest.REQUEST_TYPE_START, fd, 787L, 989L, 100L, "MMM", new Bundle());
+        mSession.requestAd(adRequest);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mAdRequestCount > 0);
+
+        assertThat(mInputSession.mAdRequestCount).isEqualTo(1);
+        assertThat(mInputSession.mAdRequest.getId()).isEqualTo(567);
+        assertThat(mInputSession.mAdRequest.getRequestType())
+                .isEqualTo(AdRequest.REQUEST_TYPE_START);
+        assertNotNull(mInputSession.mAdRequest.getFileDescriptor());
+        assertThat(mInputSession.mAdRequest.getStartTimeMillis()).isEqualTo(787L);
+        assertThat(mInputSession.mAdRequest.getStopTimeMillis()).isEqualTo(989L);
+        assertThat(mInputSession.mAdRequest.getEchoIntervalMillis()).isEqualTo(100L);
+        assertThat(mInputSession.mAdRequest.getMediaFileType()).isEqualTo("MMM");
+        assertNotNull(mInputSession.mAdRequest.getMetadata());
+
+        fd.close();
+        tmpFile.delete();
+    }
+
+    @Test
+    public void testAdResponse() throws Throwable {
+        linkTvView();
+
+        AdResponse adResponse = new AdResponse(767, AdResponse.RESPONSE_TYPE_PLAYING, 909L);
+        mInputSession.notifyAdResponse(adResponse);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mAdResponseCount > 0);
+
+        assertThat(mSession.mAdResponseCount).isEqualTo(1);
+        assertThat(mSession.mAdResponse.getResponseType())
+                .isEqualTo(AdResponse.RESPONSE_TYPE_PLAYING);
+        assertThat(mSession.mAdResponse.getElapsedTimeMillis()).isEqualTo(909L);
+    }
+
+    // TODO: check the counts and values
+    @Test
+    public void testSignalStrength() throws Throwable {
+        linkTvView();
+
+        mInputSession.notifySignalStrength(TvInputManager.SIGNAL_STRENGTH_STRONG);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testTeletextAppState() throws Throwable {
+        mSession.notifyTeletextAppStateChanged(TvInteractiveAppManager.TELETEXT_APP_STATE_HIDE);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testRequestCurrentChannelLcn() throws Throwable {
+        mSession.requestCurrentChannelLcn();
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testRequestCurrentTvInputId() throws Throwable {
+        mSession.requestCurrentTvInputId();
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testRequestStreamVolume() throws Throwable {
+        mSession.requestStreamVolume();
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testRequestTrackInfoList() throws Throwable {
+        mSession.requestTrackInfoList();
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendPlaybackCommandRequest() throws Throwable {
+        mSession.sendPlaybackCommandRequest(mStubInfo.getId(), createTestBundle());
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSetMediaViewEnabled() throws Throwable {
+        mSession.setMediaViewEnabled(false);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSetVideoBounds() throws Throwable {
+        mSession.setVideoBounds(new Rect());
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testResetInteractiveApp() throws Throwable {
+        mTvIAppView.resetInteractiveApp();
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendCurrentChannelLcn() throws Throwable {
+        mTvIAppView.sendCurrentChannelLcn(1);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendCurrentChannelUri() throws Throwable {
+        mTvIAppView.sendCurrentChannelUri(createTestUri());
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendCurrentTvInputId() throws Throwable {
+        mTvIAppView.sendCurrentTvInputId("input_id");
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendStreamVolume() throws Throwable {
+        mTvIAppView.sendStreamVolume(0.1f);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSendTrackInfoList() throws Throwable {
+        mTvIAppView.sendTrackInfoList(new ArrayList<TvTrackInfo>());
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testSetTeletextAppEnabled() throws Throwable {
+        mTvIAppView.setTeletextAppEnabled(false);
+        mInstrumentation.waitForIdleSync();
     }
 
     public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
