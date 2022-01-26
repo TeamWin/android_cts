@@ -170,6 +170,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final int WAIT_MSEC = 60;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
+    private static final int DURATION_SOFTAP_START_MS = 6_000;
     private static final int WIFI_SCAN_TEST_CACHE_DELAY_MILLIS = 3 * 60 * 1000;
 
     private static final int ENFORCED_NUM_NETWORK_SUGGESTIONS_PER_APP = 50;
@@ -1753,7 +1754,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 customConfigBuilder.setBand(testBand);
                 mWifiManager.startLocalOnlyHotspot(customConfigBuilder.build(), executor, callback);
                 // now wait for callback
-                Thread.sleep(TEST_WAIT_DURATION_MS);
+                Thread.sleep(DURATION_SOFTAP_START_MS);
 
                 // Verify callback is run on the supplied executor
                 assertFalse(callback.onStartedCalled);
