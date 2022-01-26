@@ -29,9 +29,10 @@ java_test_host {
     ],
     // Must match the package name in CtsTestCaseList.mk
     libs: [
-        "cts-tradefed",
-        "tradefed",
         "compatibility-host-util",
+        "cts-tradefed",
+        "sts-host-util",
+        "tradefed",
     ],
 }
 
