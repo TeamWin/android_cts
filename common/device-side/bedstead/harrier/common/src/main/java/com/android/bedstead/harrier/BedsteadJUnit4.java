@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
@@ -288,6 +289,17 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
                     expandedMethods = expandedMethods.flatMap(
                             i -> applyIntTestParameter(i, intTestParameter));
+                } else if (annotation instanceof EnumTestParameter) {
+                    if (hasParameterised) {
+                        throw new IllegalStateException(
+                                "Each parameter can only have a single parameterised annotation");
+                    }
+                    hasParameterised = true;
+
+                    EnumTestParameter enumTestParameter = (EnumTestParameter) annotation;
+
+                    expandedMethods = expandedMethods.flatMap(
+                            i -> applyEnumTestParameter(i, enumTestParameter));
                 }
             }
 
@@ -310,6 +322,13 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     private static Stream<FrameworkMethod> applyIntTestParameter(FrameworkMethod frameworkMethod,
             IntTestParameter intTestParameter) {
         return Arrays.stream(intTestParameter.value()).mapToObj(
+                (i) -> new FrameworkMethodWithParameter(frameworkMethod, i)
+        );
+    }
+
+    private static Stream<FrameworkMethod> applyEnumTestParameter(FrameworkMethod frameworkMethod,
+            EnumTestParameter enumTestParameter) {
+        return Arrays.stream(enumTestParameter.value().getEnumConstants()).map(
                 (i) -> new FrameworkMethodWithParameter(frameworkMethod, i)
         );
     }
