@@ -74,8 +74,9 @@ public final class UserManagerHelperTest {
                 /* excludePreCreated= */ false);
         for (UserHandle userHandle : allUsersHandles) {
             if (UserManagerHelper.isPreCreatedUser(mUserManager, userHandle)) {
-                mUserManager.removeUser(userHandle);
-                Log.v(TAG, "Removed pre-craeted user " + userHandle);
+                Log.v(TAG, "Removing pre-craeted user " + userHandle);
+                boolean result = mUserManager.removeUser(userHandle);
+                Log.v(TAG, "Pre-created user: " + userHandle + " Removed: " + result);
             }
         }
     }
@@ -84,13 +85,15 @@ public final class UserManagerHelperTest {
     public void cleanUp() throws Exception {
         try {
             if (mUserToRemove != null) {
-                mUserManager.removeUser(mUserToRemove);
-                Log.v(TAG, "Removed user created during test. User " + mUserToRemove);
+                Log.v(TAG, "Removing user created during test. User " + mUserToRemove);
+                boolean result = mUserManager.removeUser(mUserToRemove);
+                Log.v(TAG, "User: " + mUserToRemove + " Removed: " + result);
             }
+        } catch (Exception e) {
+            Log.v(TAG, "Cannot remove User:" + mUserToRemove + ". Exception: " + e);
         } finally {
             mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
-
     }
 
     @Test
