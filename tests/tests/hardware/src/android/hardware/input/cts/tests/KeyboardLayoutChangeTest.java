@@ -21,10 +21,15 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.Manifest;
 import android.hardware.cts.R;
 import android.hardware.input.InputManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 
@@ -35,15 +40,33 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class KeyboardLayoutChangeTest extends InputHidTestCase {
 
+    private static final long KEYBOARD_LAYOUT_CHANGE_TIMEOUT = 500;
+
+    private InputManager mInputManager;
+    @Mock private InputManager.InputDeviceListener mInputDeviceChangedListener;
+
+
     // this test needs any physical keyboard to test the keyboard layout change
     public KeyboardLayoutChangeTest() {
         super(R.raw.microsoft_designer_keyboard_register);
+    }
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        MockitoAnnotations.initMocks(this);
+        mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
+        assertNotNull(mInputManager);
+        mInputManager.registerInputDeviceListener(mInputDeviceChangedListener,
+                new Handler(Looper.getMainLooper()));
     }
 
     @Test
@@ -51,18 +74,15 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
         final InputDevice device = getInputDevice(
                 (d) -> d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC);
         assertNotNull(device);
-        final InputManager inputManager =
-                mInstrumentation.getTargetContext().getSystemService(InputManager.class);
-        assertNotNull(inputManager);
-        final String germanLayoutId = getKeyboardLayoutId(inputManager, device, "german");
-        final String englishLayoutId = getKeyboardLayoutId(inputManager, device, "english_us");
-        final String frenchLayoutId = getKeyboardLayoutId(inputManager, device, "french");
+        final String germanLayoutId = getKeyboardLayoutId(device, "german");
+        final String englishLayoutId = getKeyboardLayoutId(device, "english_us");
+        final String frenchLayoutId = getKeyboardLayoutId(device, "french");
         final String layoutError = "The %s layout descriptor is non-existent / empty.";
         assertNotEquals(String.format(layoutError, "German"), "", germanLayoutId);
         assertNotEquals(String.format(layoutError, "English (US)"), "", englishLayoutId);
         assertNotEquals(String.format(layoutError, "French"), "", frenchLayoutId);
         try {
-            setCurrentKeyboardLayout(inputManager, device, germanLayoutId);
+            setCurrentKeyboardLayout(device, germanLayoutId);
             assertEquals("Key location KEYCODE_Q should map to KEYCODE_Q on a German layout.",
                     KeyEvent.KEYCODE_Q, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
             assertEquals("Key location KEYCODE_W should map to KEYCODE_W on a German layout.",
@@ -76,7 +96,7 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
             assertEquals("Key location KEYCODE_Y should map to KEYCODE_Z on a German layout.",
                     KeyEvent.KEYCODE_Z, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
 
-            setCurrentKeyboardLayout(inputManager, device, englishLayoutId);
+            setCurrentKeyboardLayout(device, englishLayoutId);
             assertEquals(
                     "Key location KEYCODE_Q should map to KEYCODE_Q on an English (US) layout.",
                     KeyEvent.KEYCODE_Q, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
@@ -96,7 +116,7 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
                     "Key location KEYCODE_Y should map to KEYCODE_Y on an English (US) layout.",
                     KeyEvent.KEYCODE_Y, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
 
-            setCurrentKeyboardLayout(inputManager, device, frenchLayoutId);
+            setCurrentKeyboardLayout(device, frenchLayoutId);
             assertEquals("Key location KEYCODE_Q should map to KEYCODE_A on a French layout.",
                     KeyEvent.KEYCODE_A, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
             assertEquals("Key location KEYCODE_W should map to KEYCODE_Z on a French layout.",
@@ -111,10 +131,11 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
                     KeyEvent.KEYCODE_Y, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
         } finally {
             // clean up to make sure this test doesn't affect other test cases
-            removeKeyboardLayout(inputManager, device, germanLayoutId);
-            removeKeyboardLayout(inputManager, device, englishLayoutId);
-            removeKeyboardLayout(inputManager, device, frenchLayoutId);
-            assertNull(inputManager.getCurrentKeyboardLayoutForInputDevice(device.getIdentifier()));
+            removeKeyboardLayout(device, germanLayoutId);
+            removeKeyboardLayout(device, englishLayoutId);
+            removeKeyboardLayout(device, frenchLayoutId);
+            assertNull(
+                    mInputManager.getCurrentKeyboardLayoutForInputDevice(device.getIdentifier()));
         }
     }
 
@@ -131,14 +152,12 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
     /**
      * Removes the specified keyboard layout for the given input device.
      *
-     * @param inputManager An instance of the input manager.
      * @param device The input device for which the specified keyboard layout shall be removed.
      * @param layoutDescriptor the layout descriptor.
      */
-    private void removeKeyboardLayout(InputManager inputManager, InputDevice device,
-            String layoutDescriptor) {
+    private void removeKeyboardLayout(InputDevice device, String layoutDescriptor) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            inputManager.removeKeyboardLayoutForInputDevice(device.getIdentifier(),
+            mInputManager.removeKeyboardLayoutForInputDevice(device.getIdentifier(),
                     layoutDescriptor);
         }, Manifest.permission.SET_KEYBOARD_LAYOUT);
     }
@@ -147,14 +166,12 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
      * Returns the first matching keyboard layout id that is supported by the provided input device
      * and matches the provided language.
      *
-     * @param inputManager An instance of the input manager
      * @param device The input device for which to query the keyboard layouts.
      * @param language The language to query for.
      * @return The first matching keyboard layout descriptor or an empty string if none was found.
      */
-    private String getKeyboardLayoutId(InputManager im, InputDevice device,
-            String language) {
-        for (String kl : im.getKeyboardLayoutDescriptorsForInputDevice(device)) {
+    private String getKeyboardLayoutId(InputDevice device, String language) {
+        for (String kl : mInputManager.getKeyboardLayoutDescriptorsForInputDevice(device)) {
             if (kl.endsWith(language)) {
                 return kl;
             }
@@ -166,17 +183,18 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
     /**
      * Sets the current keyboard layout for the given input device.
      *
-     * @param inputManager An instance of the input manager.
      * @param device The input device for which the current keyboard layout is changed.
      * @param layoutDescriptor The layout to which the current keyboard layout is set to.
      */
-    private void setCurrentKeyboardLayout(InputManager inputManager, InputDevice device,
-            String layoutDescriptor) {
+    private void setCurrentKeyboardLayout(InputDevice device, String layoutDescriptor) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            inputManager.setCurrentKeyboardLayoutForInputDevice(device.getIdentifier(),
+            mInputManager.setCurrentKeyboardLayoutForInputDevice(device.getIdentifier(),
                     layoutDescriptor);
         }, Manifest.permission.SET_KEYBOARD_LAYOUT);
-        assertEquals("Keyboard layout has not been changed to requested layout.", layoutDescriptor,
-                inputManager.getCurrentKeyboardLayoutForInputDevice(device.getIdentifier()));
+        // The input devices will be reconfigured (async) after changing the keyboard layout.
+        // Once the device state is updated, the callback should be called
+        verify(mInputDeviceChangedListener,
+                timeout(KEYBOARD_LAYOUT_CHANGE_TIMEOUT).atLeastOnce()).onInputDeviceChanged(
+                eq(device.getId()));
     }
 }
