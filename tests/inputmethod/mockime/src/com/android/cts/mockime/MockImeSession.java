@@ -1336,6 +1336,11 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callVerifyExtractViewNotNull() {
+        return callCommandInternal("verifyExtractViewNotNull", new Bundle());
+    }
+
+    @NonNull
     public ImeCommand callVerifyGetDisplay() {
         return callCommandInternal("verifyGetDisplay", new Bundle());
     }
