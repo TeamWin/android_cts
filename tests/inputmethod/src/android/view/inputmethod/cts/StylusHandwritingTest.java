@@ -89,6 +89,10 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             // Handwriting should start
             expectEvent(
                     stream,
+                    event -> "onPrepareStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+            expectEvent(
+                    stream,
                     event -> "onStartStylusHandwriting".equals(event.getEventName()),
                     TIMEOUT);
 

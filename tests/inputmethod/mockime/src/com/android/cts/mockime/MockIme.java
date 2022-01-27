@@ -871,6 +871,12 @@ public final class MockIme extends InputMethodService {
                 () -> super.onStartInputView(editorInfo, restarting));
     }
 
+
+    @Override
+    public void onPrepareStylusHandwriting() {
+        getTracer().onPrepareStylusHandwriting(() -> super.onPrepareStylusHandwriting());
+    }
+
     @Override
     public boolean onStartStylusHandwriting() {
         getTracer().onStartStylusHandwriting(() -> super.onStartStylusHandwriting());
@@ -1248,6 +1254,10 @@ public final class MockIme extends InputMethodService {
             arguments.putParcelable("editorInfo", editorInfo);
             arguments.putBoolean("restarting", restarting);
             recordEventInternal("onStartInputView", runnable, arguments);
+        }
+
+        void onPrepareStylusHandwriting(@NonNull Runnable runnable) {
+            recordEventInternal("onPrepareStylusHandwriting", runnable);
         }
 
         void onStartStylusHandwriting(@NonNull Runnable runnable) {
