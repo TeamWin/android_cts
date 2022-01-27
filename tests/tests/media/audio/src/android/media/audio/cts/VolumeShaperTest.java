@@ -747,7 +747,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
 
                 Log.d(TAG, " we join several LINEAR_RAMPS together "
                         + " this effectively is one LINEAR_RAMP (volume increasing).");
-                final long durationMs = 10000;
+                final long durationMs = 5000;
                 final long incrementMs = 1000;
                 for (long i = 0; i < durationMs; i += incrementMs) {
                     Log.d(TAG, testName + " Play - join " + i);
