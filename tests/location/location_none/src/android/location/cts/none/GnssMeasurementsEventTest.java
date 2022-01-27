@@ -37,6 +37,15 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class GnssMeasurementsEventTest {
 
+    private static final  GnssAutomaticGainControl AGC_1 =
+            new GnssAutomaticGainControl.Builder().setCarrierFrequencyHz(
+                    1575420000).setConstellationType(
+                    GnssStatus.CONSTELLATION_GPS).setLevelDb(3.5).build();
+    private static final GnssAutomaticGainControl AGC_2 =
+            new GnssAutomaticGainControl.Builder().setCarrierFrequencyHz(
+                    1602000000).setConstellationType(
+                    GnssStatus.CONSTELLATION_GLONASS).setLevelDb(-2.8).build();
+
     @Test
     public void testDescribeContents() {
         GnssClock clock = new GnssClock();
@@ -51,23 +60,7 @@ public class GnssMeasurementsEventTest {
 
     @Test
     public void testWriteToParcel() {
-        GnssClock clock = new GnssClock();
-        clock.setLeapSecond(100);
-        GnssMeasurement m1 = new GnssMeasurement();
-        m1.setConstellationType(GnssStatus.CONSTELLATION_GLONASS);
-        GnssMeasurement m2 = new GnssMeasurement();
-        m2.setReceivedSvTimeNanos(43999);
-        GnssAutomaticGainControl agc1 =
-                new GnssAutomaticGainControl.Builder().setCarrierFrequencyHz(
-                        1575420000).setConstellationType(
-                        GnssStatus.CONSTELLATION_GPS).setLevelDb(3.5).build();
-        GnssAutomaticGainControl agc2 =
-                new GnssAutomaticGainControl.Builder().setCarrierFrequencyHz(
-                        1602000000).setConstellationType(
-                        GnssStatus.CONSTELLATION_GLONASS).setLevelDb(-2.8).build();
-        GnssMeasurementsEvent event = new GnssMeasurementsEvent.Builder().setClock(clock)
-                .setMeasurements(List.of(m1, m2))
-                .setGnssAutomaticGainControls(List.of(agc1, agc2)).build();
+        GnssMeasurementsEvent event = getTestEvent();
         Parcel parcel = Parcel.obtain();
         event.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -86,8 +79,27 @@ public class GnssMeasurementsEventTest {
         assertEquals(2, agcs.size());
         Iterator<GnssAutomaticGainControl> gnssAgcIterator = agcs.iterator();
         GnssAutomaticGainControl newAgc1 = gnssAgcIterator.next();
-        assertEquals(newAgc1, agc1);
+        assertEquals(newAgc1, AGC_1);
         GnssAutomaticGainControl newAgc2 = gnssAgcIterator.next();
-        assertEquals(newAgc2, agc2);
+        assertEquals(newAgc2, AGC_2);
+    }
+
+    @Test
+    public void testBuilder() {
+        GnssMeasurementsEvent event1 = getTestEvent();
+        GnssMeasurementsEvent event2 = new GnssMeasurementsEvent.Builder(event1).build();
+        assertEquals(event1.toString(), event2.toString());
+    }
+
+    private GnssMeasurementsEvent getTestEvent() {
+        GnssClock clock = new GnssClock();
+        clock.setLeapSecond(100);
+        GnssMeasurement m1 = new GnssMeasurement();
+        m1.setConstellationType(GnssStatus.CONSTELLATION_GLONASS);
+        GnssMeasurement m2 = new GnssMeasurement();
+        m2.setReceivedSvTimeNanos(43999);
+        return new GnssMeasurementsEvent.Builder().setClock(clock)
+                .setMeasurements(List.of(m1, m2))
+                .setGnssAutomaticGainControls(List.of(AGC_1, AGC_2)).build();
     }
 }
