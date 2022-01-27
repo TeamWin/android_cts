@@ -48,6 +48,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 
 import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 /**
  * VolumeShaperTest is automated using VolumeShaper.getVolume() to verify that a ramp
@@ -631,31 +632,58 @@ public class VolumeShaperTest {
         }
     }
 
-    @LargeTest
+    private VolumeShaper.Configuration[] getAllStandardRamps() {
+        return ALL_STANDARD_RAMPS;
+    }
+
+    // Parameters are indices to ALL_STANDARD_RAMPS configuration array.
     @Test
-    public void testPlayerRamp() throws Exception {
-        final String TEST_NAME = "testPlayerRamp";
+    @Parameters(method = "getAllStandardRamps")
+    public void testRampAudioTrack(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestRampPlayer("testRampAudioTrack", player, configuration);
+        }
+    }
+
+    // Parameters are indices to ALL_STANDARD_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getAllStandardRamps")
+    public void testRampMediaPlayerNonOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestRampPlayer("testRampMediaPlayerNonOffloaded", player, configuration);
+        }
+    }
+
+    // Parameters are indices to ALL_STANDARD_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getAllStandardRamps")
+    public void testRampMediaPlayerOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestRampPlayer("testRampMediaPlayerOffloaded", player, configuration);
+        }
+    }
+
+    private void runTestRampPlayer(
+            String testName, Player player, VolumeShaper.Configuration configuration)
+            throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
+        try (VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE)) {
+            Log.d(TAG, testName + " starting");
+            player.start();
+            Thread.sleep(WARMUP_TIME_MS);
 
-                Log.d(TAG, testName + " starting");
-                player.start();
-                Thread.sleep(WARMUP_TIME_MS);
-
-                runRampTest(testName, volumeShaper);
-                runCloseTest(testName, volumeShaper);
-            }
+            runRampTest(testName, volumeShaper, configuration);
+            runCloseTest(testName, volumeShaper);
         }
-    } // testPlayerRamp
+    }
 
     @FlakyTest
     @Test
@@ -1228,55 +1256,55 @@ public class VolumeShaperTest {
     } // testPlayerRunDuringPauseStop
 
     // Player should be started before calling (as it is not an argument to method).
-    private void runRampTest(String testName, VolumeShaper volumeShaper) throws Exception {
-        for (VolumeShaper.Configuration config : ALL_STANDARD_RAMPS) {
-            // This replaces with play.
-            Log.d(TAG, testName + " Replace + Play (volume should increase)");
-            volumeShaper.replace(config, VolumeShaper.Operation.PLAY, false /* join */);
-            Thread.sleep(RAMP_TIME_MS / 2);
+    private void runRampTest(
+            String testName, VolumeShaper volumeShaper, VolumeShaper.Configuration config)
+            throws Exception {
+        // This replaces with play.
+        Log.d(TAG, testName + " Replace + Play (volume should increase)");
+        volumeShaper.replace(config, VolumeShaper.Operation.PLAY, false /* join */);
+        Thread.sleep(RAMP_TIME_MS / 2);
 
-            // Reverse the direction of the volume shaper curve
-            Log.d(TAG, testName + " Reverse (volume should decrease)");
-            volumeShaper.apply(VolumeShaper.Operation.REVERSE);
-            Thread.sleep(RAMP_TIME_MS / 2 + 1000);
+        // Reverse the direction of the volume shaper curve
+        Log.d(TAG, testName + " Reverse (volume should decrease)");
+        volumeShaper.apply(VolumeShaper.Operation.REVERSE);
+        Thread.sleep(RAMP_TIME_MS / 2 + 1000);
 
-            Log.d(TAG, testName + " Check Volume (silent)");
-            assertEquals(testName + " volume should be 0.f",
-                    0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (silent)");
+        assertEquals(testName + " volume should be 0.f",
+                0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            // Forwards
-            Log.d(TAG, testName + " Play (volume should increase)");
-            volumeShaper.apply(VolumeShaper.Operation.PLAY);
-            Thread.sleep(RAMP_TIME_MS + 1000);
+        // Forwards
+        Log.d(TAG, testName + " Play (volume should increase)");
+        volumeShaper.apply(VolumeShaper.Operation.PLAY);
+        Thread.sleep(RAMP_TIME_MS + 1000);
 
-            Log.d(TAG, testName + " Check Volume (volume at max)");
-            assertEquals(testName + " volume should be 1.f",
-                    1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (volume at max)");
+        assertEquals(testName + " volume should be 1.f",
+                1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            // Reverse
-            Log.d(TAG, testName + " Reverse (volume should decrease)");
-            volumeShaper.apply(VolumeShaper.Operation.REVERSE);
-            Thread.sleep(RAMP_TIME_MS + 1000);
+        // Reverse
+        Log.d(TAG, testName + " Reverse (volume should decrease)");
+        volumeShaper.apply(VolumeShaper.Operation.REVERSE);
+        Thread.sleep(RAMP_TIME_MS + 1000);
 
-            Log.d(TAG, testName + " Check Volume (volume should be silent)");
-            assertEquals(testName + " volume should be 0.f",
-                    0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (volume should be silent)");
+        assertEquals(testName + " volume should be 0.f",
+                0.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            // Forwards
-            Log.d(TAG, testName + " Play (volume should increase)");
-            volumeShaper.apply(VolumeShaper.Operation.PLAY);
-            Thread.sleep(RAMP_TIME_MS + 1000);
+        // Forwards
+        Log.d(TAG, testName + " Play (volume should increase)");
+        volumeShaper.apply(VolumeShaper.Operation.PLAY);
+        Thread.sleep(RAMP_TIME_MS + 1000);
 
-            // Comment out for headset plug/unplug test
-            // Log.d(TAG, testName + " headset check"); Thread.sleep(10000 /* millis */);
-            //
+        // Comment out for headset plug/unplug test
+        // Log.d(TAG, testName + " headset check"); Thread.sleep(10000 /* millis */);
+        //
 
-            Log.d(TAG, testName + " Check Volume (volume at max)");
-            assertEquals(testName + " volume should be 1.f",
-                    1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+        Log.d(TAG, testName + " Check Volume (volume at max)");
+        assertEquals(testName + " volume should be 1.f",
+                1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
 
-            Log.d(TAG, testName + " done");
-        }
+        Log.d(TAG, testName + " done");
     } // runRampTest
 
     // Player should be started before calling (as it is not an argument to method).
