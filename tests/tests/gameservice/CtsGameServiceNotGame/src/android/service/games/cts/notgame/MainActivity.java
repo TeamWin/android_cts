@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.service.games.cts.game;
+package android.service.games.cts.notgame;
 
 import android.os.Bundle;
 import android.widget.TextView;
