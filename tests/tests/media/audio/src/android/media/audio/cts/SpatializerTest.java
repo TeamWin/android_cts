@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.audio.cts;
 
 import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
-import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.Spatializer;
+import android.media.cts.NonMediaMainlineTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
-import com.android.internal.annotations.GuardedBy;
 
 import org.junit.Assert;
 
@@ -156,7 +155,7 @@ public class SpatializerTest extends CtsAndroidTestCase {
         spat.setEnabled(true);
         List<Integer> supportedModes = spat.getSupportedHeadTrackingModes();
         Assert.assertNotNull("Invalid null list of tracking modes", supportedModes);
-        Log.i(TAG, "Reported supported head tracking modes:"+ supportedModes);
+        Log.i(TAG, "Reported supported head tracking modes:" + supportedModes);
         if (!supportedModes.contains(Spatializer.HEAD_TRACKING_MODE_RELATIVE_DEVICE)
                 && !supportedModes.contains(Spatializer.HEAD_TRACKING_MODE_RELATIVE_WORLD)
                 && !supportedModes.contains(Spatializer.HEAD_TRACKING_MODE_OTHER)) {
@@ -311,7 +310,7 @@ public class SpatializerTest extends CtsAndroidTestCase {
         assertThrows("null listener allowed in addOnSpatializerStateChangedListener",
                 NullPointerException.class,
                 () -> spat.addOnSpatializerStateChangedListener(
-                        Executors.newSingleThreadExecutor(),null));
+                        Executors.newSingleThreadExecutor(), null));
 
         spat.addOnSpatializerStateChangedListener(Executors.newSingleThreadExecutor(),
                 stateListener);
@@ -419,8 +418,8 @@ public class SpatializerTest extends CtsAndroidTestCase {
         }
     }
 
-    static class MyHeadTrackingModeListener implements Spatializer.OnHeadTrackingModeChangedListener
-    {
+    static class MyHeadTrackingModeListener
+            implements Spatializer.OnHeadTrackingModeChangedListener {
         private final LinkedBlockingQueue<Integer> mDesiredQueue =
                 new LinkedBlockingQueue<Integer>(1);
         private final LinkedBlockingQueue<Integer> mRealQueue =
@@ -443,16 +442,16 @@ public class SpatializerTest extends CtsAndroidTestCase {
         }
     }
 
-    static class MyOutputChangedListener implements Spatializer.OnSpatializerOutputChangedListener
-    {
+    static class MyOutputChangedListener
+            implements Spatializer.OnSpatializerOutputChangedListener {
         @Override
         public void onSpatializerOutputChanged(Spatializer spatializer, int output) {
             Log.i(TAG, "onSpatializerOutputChanged:" + output);
         }
     }
 
-    static class MyPoseUpdatedListener implements Spatializer.OnHeadToSoundstagePoseUpdatedListener
-    {
+    static class MyPoseUpdatedListener
+            implements Spatializer.OnHeadToSoundstagePoseUpdatedListener {
         @Override
         public void onHeadToSoundstagePoseUpdated(Spatializer spatializer, float[] pose) {
             Log.i(TAG, "onHeadToSoundstagePoseUpdated:" + Arrays.toString(pose));

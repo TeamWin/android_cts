@@ -24,7 +24,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.MediaPlayerTestBase;
+import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
@@ -63,7 +63,7 @@ import java.util.HashMap;
  */
 @AppModeFull(reason = "There should be no instant apps specific behavior related to conformance")
 @RunWith(AndroidJUnit4.class)
-public class DecoderConformanceTest extends MediaPlayerTestBase {
+public class DecoderConformanceTest extends MediaTestBase {
     private enum Status {
         FAIL,
         PASS,

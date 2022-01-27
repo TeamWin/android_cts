@@ -35,7 +35,7 @@
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer">
         <option name="push-all" value="true" />
-        <option name="media-folder-name" value="CtsMediaTestCases-1.4" />
+        <option name="media-folder-name" value="CtsMediaExtractorTestCases-1.0" />
         <option name="dynamic-config-module" value="CtsMediaExtractorTestCases" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

@@ -360,8 +360,9 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
         // Using an apex in hopes that pre-reboot verification will take longer to complete
         // and we will manage to abandon it before session becomes ready.
-        int sessionId = stageMultipleApks(TestApp.A1, TestApp.Apex2).assertSuccessful()
-                .getSessionId();
+        int sessionId = Install.multi(TestApp.A1, TestApp.Apex2).setStaged().createSession();
+        LocalIntentSender sender = new LocalIntentSender();
+        InstallUtils.openPackageInstallerSession(sessionId).commit(sender.getIntentSender());
         abandonSession(sessionId);
         InstallUtils.assertStagedSessionIsAbandoned(sessionId);
         counter.assertNoBroadcastReceived();
@@ -435,7 +436,7 @@ public class StagedInstallTest {
     public void testStagedInstallDowngrade_DowngradeNotRequested_Fails_Commit()  throws Exception {
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         Install.single(TestApp.A2).commit();
-        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.A1).assertFailure().getSessionId();
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
@@ -539,7 +540,7 @@ public class StagedInstallTest {
     @Test
     public void testInstallStagedNonPreInstalledApex_Fails() throws Exception {
         assertThat(getInstalledVersion(NOT_PRE_INSTALL_APEX_PACKAGE_NAME)).isEqualTo(-1);
-        int sessionId = stageSingleApk(ApexNotPreInstalled).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(ApexNotPreInstalled).assertFailure().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
     }
@@ -548,7 +549,7 @@ public class StagedInstallTest {
     public void testInstallStagedDifferentPackageNameWithInstalledApex_Fails() throws Exception {
         assertThat(getInstalledVersion(DIFFERENT_APEX_PACKAGE_NAME)).isEqualTo(-1);
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(Apex2DifferentPackageName).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(Apex2DifferentPackageName).assertFailure().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo.getStagedSessionErrorMessage()).contains(
                 "Attempting to install new APEX package");
@@ -644,7 +645,7 @@ public class StagedInstallTest {
     public void testStagedInstallDowngradeApex_DowngradeNotRequested_Fails_Commit()
             throws Exception {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
-        int sessionId = stageSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.Apex2).assertFailure().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
         // Also verify that correct session info is reported by PackageManager.
@@ -730,7 +731,7 @@ public class StagedInstallTest {
     @Test
     public void testFailsInvalidApexInstall_Commit() throws Exception {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(ApexWrongSha2).assertSuccessful()
+        int sessionId = stageSingleApk(ApexWrongSha2).assertFailure()
                 .getSessionId();
         waitForIsFailedBroadcast(sessionId);
         assertSessionFailed(sessionId);
@@ -816,7 +817,7 @@ public class StagedInstallTest {
     @Test
     public void testRejectsApexDifferentCertificate() throws Exception {
         int sessionId = stageSingleApk(Apex2DifferentCertificate)
-                .assertSuccessful().getSessionId();
+                .assertFailure().getSessionId();
         PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
         assertThat(info.getSessionId()).isEqualTo(sessionId);
         assertThat(info).isStagedSessionFailed();
@@ -835,7 +836,7 @@ public class StagedInstallTest {
     // The update should fail if it is signed with a different non-rotated key
     @Test
     public void testUpdateWithDifferentKeyButNoRotation() throws Exception {
-        int sessionId = stageSingleApk(Apex2SignedBob).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(Apex2SignedBob).assertFailure().getSessionId();
         waitForIsFailedBroadcast(sessionId);
     }
 
@@ -855,7 +856,7 @@ public class StagedInstallTest {
     @Test
     public void testUntrustedOldKeyIsRejected() throws Exception {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
-        int sessionId = stageSingleApk(TestApp.Apex3).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.Apex3).assertFailure().getSessionId();
         waitForIsFailedBroadcast(sessionId);
     }
 
@@ -921,7 +922,7 @@ public class StagedInstallTest {
         int stagedSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(stagedSessionId);
 
-        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(TestApp.A1).assertFailure().getSessionId();
         PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
         assertThat(info).isStagedSessionFailed();
         assertThat(info.getStagedSessionErrorMessage()).contains(
@@ -939,7 +940,7 @@ public class StagedInstallTest {
     public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
         int id = stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful().getSessionId();
         waitForIsReadyBroadcast(id);
-        int sessionId = stageMultipleApks(TestApp.A2, TestApp.C1).assertSuccessful().getSessionId();
+        int sessionId = stageMultipleApks(TestApp.A2, TestApp.C1).assertFailure().getSessionId();
         PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
         assertThat(info).isStagedSessionFailed();
         assertThat(info.getStagedSessionErrorMessage()).contains(
@@ -1168,7 +1169,7 @@ public class StagedInstallTest {
 
     @Test
     public void testCorruptedApexFailsVerification_b146895998() throws Exception {
-        int sessionId = stageSingleApk(CorruptedApex_b146895998).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(CorruptedApex_b146895998).assertFailure().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
     }
@@ -1187,7 +1188,7 @@ public class StagedInstallTest {
      */
     @Test
     public void testApexWithUnsignedPayloadFailsVerification() throws Exception {
-        int sessionId = stageSingleApk(Apex2UnsignedPayload).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(Apex2UnsignedPayload).assertFailure().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
         assertThat(sessionInfo.getStagedSessionErrorMessage())
@@ -1200,7 +1201,7 @@ public class StagedInstallTest {
     @Test
     public void testApexSignPayloadWithDifferentKeyFailsVerification() throws Exception {
         int sessionId = stageSingleApk(
-                Apex2SignPayloadWithDifferentKey).assertSuccessful().getSessionId();
+                Apex2SignPayloadWithDifferentKey).assertFailure().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
         assertThat(sessionInfo.getStagedSessionErrorMessage())

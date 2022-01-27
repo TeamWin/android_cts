@@ -15,15 +15,11 @@
  */
 package android.media.audio.cts;
 
-import android.app.ActivityManager;
-import android.content.ContentResolver;
-import android.content.res.AssetFileDescriptor;
-import android.media.audio.cts.R;
-
-import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.Ringtone;
@@ -33,7 +29,6 @@ import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
-import android.util.Log;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -219,5 +214,9 @@ public class RingtoneManagerTest
                 mContext.getPackageName() + "/raw/";
         assertTrue(RingtoneManager.hasHapticChannels(Uri.parse(uriPrefix + "a_4_haptic")));
         assertFalse(RingtoneManager.hasHapticChannels(Uri.parse(uriPrefix + "a_4")));
+
+        assertTrue(RingtoneManager.hasHapticChannels(
+                mContext, Uri.parse(uriPrefix + "a_4_haptic")));
+        assertFalse(RingtoneManager.hasHapticChannels(mContext, Uri.parse(uriPrefix + "a_4")));
     }
 }

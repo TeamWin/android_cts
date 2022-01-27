@@ -15,7 +15,8 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.uidmigration.cts.DataTestApp" >
+    package="android.uidmigration.cts.DataTestApp"
+    android:inheritKeyStoreKeys="true" >
 
     <queries>
         <package android:name="android.uidmigration.cts" />

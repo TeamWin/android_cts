@@ -16,6 +16,9 @@
 
 package android.os.cts;
 
+import static android.os.VibrationEffect.VibrationParameter.targetAmplitude;
+import static android.os.VibrationEffect.VibrationParameter.targetFrequency;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,6 +55,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.time.Duration;
 import java.util.Arrays;
 
 @RunWith(AndroidJUnit4.class)
@@ -73,7 +77,7 @@ public class VibratorManagerTest {
 
     private static final float MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY = 1f;
     private static final float MINIMUM_ACCEPTED_FREQUENCY = 1f;
-    private static final float MAXIMUM_ACCEPTED_FREQUENCY = 2_000f;
+    private static final float MAXIMUM_ACCEPTED_FREQUENCY = 1_000f;
 
     private static final long CALLBACK_TIMEOUT_MILLIS = 5_000;
     private static final VibrationAttributes VIBRATION_ATTRIBUTES =
@@ -193,6 +197,51 @@ public class VibratorManagerTest {
 
         mVibratorManager.cancel();
         assertStopsVibrating();
+    }
+
+
+    @LargeTest
+    @Test
+    public void testVibrateWaveformWithFrequencyStartsAndFinishesVibration() {
+        int[] vibratorIds = mVibratorManager.getVibratorIds();
+        for (int vibratorId : vibratorIds) {
+            Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
+            if (!vibrator.hasFrequencyControl()) {
+                continue;
+            }
+            VibratorFrequencyProfile frequencyProfile = vibrator.getFrequencyProfile();
+
+            float minFrequency = frequencyProfile.getMinFrequency();
+            float maxFrequency = frequencyProfile.getMaxFrequency();
+            float resonantFrequency = vibrator.getResonantFrequency();
+            float sustainFrequency = Float.isNaN(resonantFrequency)
+                    ? (maxFrequency + minFrequency) / 2
+                    : resonantFrequency;
+
+            // Then ramp to zero amplitude at fixed frequency.
+            VibrationEffect waveform =
+                    VibrationEffect.startWaveform(targetAmplitude(0), targetFrequency(minFrequency))
+                            // Ramp from min to max frequency and from zero to max amplitude.
+                            .addTransition(Duration.ofMillis(10),
+                                    targetAmplitude(1), targetFrequency(maxFrequency))
+                            // Ramp back to min frequency and zero amplitude.
+                            .addTransition(Duration.ofMillis(10),
+                                    targetAmplitude(0), targetFrequency(minFrequency))
+                            // Then sustain at a fixed frequency and half amplitude.
+                            .addTransition(Duration.ZERO,
+                                    targetAmplitude(0.5f), targetFrequency(sustainFrequency))
+                            .addSustain(Duration.ofMillis(20))
+                            // Ramp from min to max frequency and at max amplitude.
+                            .addTransition(Duration.ZERO,
+                                    targetAmplitude(1), targetFrequency(minFrequency))
+                            .addTransition(Duration.ofMillis(10), targetFrequency(maxFrequency))
+                            // Ramp from max to min amplitude at max frequency.
+                            .addTransition(Duration.ofMillis(10), targetAmplitude(0))
+                            .build();
+            vibrator.vibrate(waveform);
+            assertStartsVibrating(vibratorId);
+            assertStopsVibrating();
+        }
     }
 
     @Test

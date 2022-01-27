@@ -103,6 +103,7 @@ public class SidecarTest extends WindowManagerJetpackTestBase {
     /**
      * Test adding and removing a sidecar interface window layout change listener.
      */
+    @FlakyTest(bugId = 206697963)
     @Test
     public void testSidecarInterface_onWindowLayoutChangeListener() {
         // Set activity to portrait

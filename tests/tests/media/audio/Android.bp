@@ -89,7 +89,6 @@ android_test {
     srcs: [
         "src/**/*.java",
         "src/**/*.kt",
-        "aidl/**/*.aidl",
     ],
     platform_apis: true,
     jni_uses_sdk_apis: true,

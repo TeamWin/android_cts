@@ -30,6 +30,7 @@ import android.net.MacAddress;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiScanner;
 import android.net.wifi.aware.AttachCallback;
 import android.net.wifi.aware.AwareResources;
 import android.net.wifi.aware.Characteristics;
@@ -40,8 +41,10 @@ import android.net.wifi.aware.ParcelablePeerHandle;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishConfig;
 import android.net.wifi.aware.PublishDiscoverySession;
+import android.net.wifi.aware.ServiceDiscoveryInfo;
 import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
+import android.net.wifi.aware.WifiAwareDataPathSecurityConfig;
 import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
@@ -52,6 +55,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
+
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -283,6 +288,11 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         @Override
         public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo,
                 List<byte[]> matchFilter) {
+            processCallback(ON_SERVICE_DISCOVERED);
+        }
+
+        @Override
+        public void onServiceDiscovered(ServiceDiscoveryInfo info) {
             processCallback(ON_SERVICE_DISCOVERED);
         }
 
@@ -709,6 +719,107 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Validate successful publish session with security config.
+     */
+    public void testPublishWithSecurityConfig() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+
+        final String serviceName = "ValidName";
+        final String passphrase = "SomePassword";
+        final byte[] pmk = "01234567890123456789012345678901".getBytes();
+        final byte[] pmkId = "0123456789012345".getBytes();
+
+
+        WifiAwareSession session = attachAndGetSession();
+        WifiAwareDataPathSecurityConfig securityConfig = new WifiAwareDataPathSecurityConfig
+                .Builder(Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_SK_128)
+                .setPskPassphrase(passphrase)
+                .build();
+
+        PublishConfig.Builder builder = new PublishConfig.Builder()
+                .setServiceName(serviceName)
+                .setDataPathSecurityConfig(securityConfig);
+        PublishConfig publishConfig = builder.build();
+        DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+
+        // 1. publish
+        session.publish(publishConfig, discoveryCb, mHandler);
+        assertTrue("Publish started",
+                discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        PublishDiscoverySession discoverySession = discoveryCb.getPublishDiscoverySession();
+        assertNotNull("Publish session", discoverySession);
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
+
+        // 2. update to PK cipher suite
+        if ((mWifiAwareManager.getCharacteristics().getSupportedCipherSuites()
+                & Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_128) != 0) {
+            securityConfig = new WifiAwareDataPathSecurityConfig
+                    .Builder(Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_128)
+                    .setPmk(pmk)
+                    .setPmkId(pmkId)
+                    .build();
+            publishConfig = new PublishConfig.Builder()
+                    .setServiceName(serviceName)
+                    .setDataPathSecurityConfig(securityConfig)
+                    .build();
+            discoverySession.updatePublish(publishConfig);
+            assertTrue("Publish update", discoveryCb.waitForCallback(
+                    DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
+        }
+
+        // 3. destroy
+        assertFalse("Publish not terminated", discoveryCb.hasCallbackAlreadyHappened(
+                DiscoverySessionCallbackTest.ON_SESSION_TERMINATED));
+        discoverySession.close();
+        session.close();
+    }
+
+    /**
+     * Validate success publish with instant communacation enabled.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testPublishWithInstantCommunicationModeSuccess() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        Characteristics characteristics = mWifiAwareManager.getCharacteristics();
+        if (!characteristics.isInstantCommunicationModeSupported()) {
+            return;
+        }
+        final String serviceName = "ValidName";
+        WifiAwareSession session = attachAndGetSession();
+
+        PublishConfig publishConfig = new PublishConfig.Builder()
+                .setServiceName(serviceName)
+                .setInstantCommunicationModeEnabled(true, WifiScanner.WIFI_BAND_24_GHZ)
+                .build();
+
+        DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+
+        // 1. publish
+        session.publish(publishConfig, discoveryCb, mHandler);
+        assertTrue("Publish started",
+                discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        PublishDiscoverySession discoverySession = discoveryCb.getPublishDiscoverySession();
+        assertNotNull("Publish session", discoverySession);
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
+
+        // 2. destroy
+        assertFalse("Publish not terminated", discoveryCb.hasCallbackAlreadyHappened(
+                DiscoverySessionCallbackTest.ON_SESSION_TERMINATED));
+        discoverySession.close();
+        session.close();
+    }
+
+    /**
      * Validate a successful subscribe discovery session lifetime: subscribe, update subscribe,
      * destroy.
      */
@@ -772,6 +883,46 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             assertEquals(numOfAllSubscribeSessions, mWifiAwareManager
                     .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
         }
+        session.close();
+    }
+
+    /**
+     * Validate success subscribe with instant communication enabled.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSubscribeWithInstantCommunicationModeSuccess() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        Characteristics characteristics = mWifiAwareManager.getCharacteristics();
+        if (!characteristics.isInstantCommunicationModeSupported()) {
+            return;
+        }
+        final String serviceName = "ValidName";
+        WifiAwareSession session = attachAndGetSession();
+
+        SubscribeConfig subscribeConfig = new SubscribeConfig.Builder()
+                .setServiceName(serviceName)
+                .setInstantCommunicationModeEnabled(true, WifiScanner.WIFI_BAND_24_GHZ)
+                .build();
+
+        DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+
+        // 1. subscribe
+        session.subscribe(subscribeConfig, discoveryCb, mHandler);
+        assertTrue("Subscribe started",
+                discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_SUBSCRIBE_STARTED));
+        SubscribeDiscoverySession discoverySession = discoveryCb.getSubscribeDiscoverySession();
+        assertNotNull("Subscribe session", discoverySession);
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
+
+        // 3. destroy
+        assertFalse("Subscribe not terminated", discoveryCb.hasCallbackAlreadyHappened(
+                DiscoverySessionCallbackTest.ON_SESSION_TERMINATED));
+        discoverySession.close();
         session.close();
     }
 

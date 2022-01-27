@@ -85,10 +85,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         toggleListenerAccess(false);
 
         // delay between tests so notifications aren't dropped by the rate limiter
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-        }
+        sleep();
     }
 
     @Override
@@ -99,32 +96,22 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         setBubblesGlobal(mBubblesEnabledSettingToRestore);
     }
 
+    private boolean isBubblesFeatureSupported() {
+        // These do not support bubbles.
+        return (!mActivityManager.isLowRamDevice() || FeatureUtil.isWatch())
+                && !FeatureUtil.isAutomotive() && !FeatureUtil.isTV();
+    }
+
+    private void sleep() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ignored) {
+        }
+    }
+
     private void sendAndVerifyBubble(final int id, Notification.Builder builder,
-            Notification.BubbleMetadata data, boolean shouldBeBubble) {
+            boolean shouldBeBubble) {
         setUpNotifListener();
-
-        final Intent intent = new Intent(mContext, BubbledActivity.class);
-
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        intent.setAction(Intent.ACTION_MAIN);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent,
-                PendingIntent.FLAG_MUTABLE_UNAUDITED);
-
-        if (data == null) {
-            data = new Notification.BubbleMetadata.Builder(pendingIntent,
-                    Icon.createWithResource(mContext, R.drawable.black))
-                    .build();
-        }
-        if (builder == null) {
-            builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.black)
-                    .setWhen(System.currentTimeMillis())
-                    .setContentTitle("notify#" + id)
-                    .setContentText("This is #" + id + "notification  ")
-                    .setContentIntent(pendingIntent);
-        }
-        builder.setBubbleMetadata(data);
 
         Notification notif = builder.build();
         mNotificationManager.notify(id, notif);
@@ -132,16 +119,39 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         verifyNotificationBubbleState(id, shouldBeBubble);
     }
 
+    private Notification.Builder getDefaultNotifBuilder(int id) {
+        return new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.black)
+                .setWhen(System.currentTimeMillis())
+                .setContentTitle("notify#" + id)
+                .setContentText("This is #" + id + "notification  ")
+                .setContentIntent(getDefaultNotifPendingIntent());
+    }
+
+    private PendingIntent getDefaultNotifPendingIntent() {
+        final Intent intent = new Intent(mContext, BubbledActivity.class);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setAction(Intent.ACTION_MAIN);
+        return PendingIntent.getActivity(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE_UNAUDITED);
+    }
+
+    private Notification.BubbleMetadata getDefaultBubbleMetadata() {
+        return new Notification.BubbleMetadata.Builder(
+                getDefaultNotifPendingIntent(),
+                Icon.createWithResource(mContext, R.drawable.black))
+                .build();
+    }
+
     /**
      * Make sure {@link #setUpNotifListener()} is called prior to sending the notif and verifying
      * in this method.
      */
     private void verifyNotificationBubbleState(int id, boolean shouldBeBubble) {
-        try {
-            // FLAG_BUBBLE relies on notification being posted, wait for notification listener
-            Thread.sleep(500);
-        } catch (InterruptedException ex) {
-        }
+        // FLAG_BUBBLE relies on notification being posted, wait for notification listener
+        sleep();
 
         for (StatusBarNotification sbn : mListener.mPosted) {
             if (sbn.getId() == id) {
@@ -160,12 +170,10 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         fail("Couldn't find posted notification with id= " + id);
     }
 
-    private void setBubblesGlobal(boolean enabled)
-            throws InterruptedException {
+    private void setBubblesGlobal(boolean enabled) {
         SystemUtil.runWithShellPermissionIdentity(() ->
                 Settings.Secure.putInt(mContext.getContentResolver(),
                         Settings.Secure.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
-        Thread.sleep(500); // wait for ranking update
     }
 
     private void setBubblesAppPref(int pref) throws Exception {
@@ -175,7 +183,6 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
                 + " " + Integer.toString(pref)
                 + " " + userId;
         runCommand(command, InstrumentationRegistry.getInstrumentation());
-        Thread.sleep(500); // wait for ranking update
     }
 
     private void setBubblesChannelAllowed(boolean allowed) throws Exception {
@@ -183,10 +190,16 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         String pkg = mContext.getPackageName();
         String command = " cmd notification set_bubbles_channel " + pkg
                 + " " + NOTIFICATION_CHANNEL_ID
-                + " " + Boolean.toString(allowed)
+                + " " + allowed
                 + " " + userId;
         runCommand(command, InstrumentationRegistry.getInstrumentation());
-        Thread.sleep(500); // wait for ranking update
+    }
+
+    private void allowAllNotificationsToBubble() throws Exception {
+        setBubblesGlobal(true);
+        setBubblesAppPref(1 /* all */);
+        setBubblesChannelAllowed(true);
+        sleep(); // wait for ranking update
     }
 
     /**
@@ -240,30 +253,40 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         return sendBubbleActivity;
     }
 
+    private Instrumentation.ActivityMonitor startBubbledActivityMonitor() {
+        Class<BubbledActivity> clazz = BubbledActivity.class;
+        Instrumentation.ActivityResult result =
+                new Instrumentation.ActivityResult(0, new Intent());
+        Instrumentation.ActivityMonitor monitor =
+                new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+        InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+        return monitor;
+    }
+
     private void cleanupSendBubbleActivity() {
         mContext.unregisterReceiver(mBubbleBroadcastReceiver);
     }
 
     public void testCanBubble_ranking() throws Exception {
-        if ((mActivityManager.isLowRamDevice() && !FeatureUtil.isWatch())
-                || FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+        if (!isBubblesFeatureSupported()) {
             return;
         }
 
         // turn on bubbles globally
         setBubblesGlobal(true);
+        sleep();
 
         assertEquals(1, Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BUBBLES));
 
         toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
+        sleep(); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        sleep(); // wait for notification listener to receive notification
         NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
         NotificationListenerService.Ranking outRanking =
                 new NotificationListenerService.Ranking();
@@ -277,6 +300,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
         // turn off bubbles globally
         setBubblesGlobal(false);
+        sleep();
 
         rankingMap = mListener.mRankingMap;
         outRanking = new NotificationListenerService.Ranking();
@@ -291,60 +315,90 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     public void testAreBubblesAllowed_appNone() throws Exception {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesAppPref(BUBBLE_PREFERENCE_NONE);
+        sleep();
         assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
     public void testAreBubblesAllowed_appSelected() throws Exception {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesAppPref(BUBBLE_PREFERENCE_SELECTED);
+        sleep();
         assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
     public void testAreBubblesAllowed_appAll() throws Exception {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesAppPref(BUBBLE_PREFERENCE_ALL);
+        sleep();
         assertTrue(mNotificationManager.areBubblesAllowed());
     }
 
     public void testGetBubblePreference_appNone() throws Exception {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesAppPref(BUBBLE_PREFERENCE_NONE);
+        sleep();
         assertEquals(BUBBLE_PREFERENCE_NONE, mNotificationManager.getBubblePreference());
     }
 
     public void testGetBubblePreference_appSelected() throws Exception {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesAppPref(BUBBLE_PREFERENCE_SELECTED);
+        sleep();
         assertEquals(BUBBLE_PREFERENCE_SELECTED, mNotificationManager.getBubblePreference());
     }
 
     public void testGetBubblePreference_appAll() throws Exception {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesAppPref(BUBBLE_PREFERENCE_ALL);
+        sleep();
         assertEquals(BUBBLE_PREFERENCE_ALL, mNotificationManager.getBubblePreference());
     }
 
-    public void testAreBubblesEnabled() throws Exception {
+    public void testAreBubblesEnabled() {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesGlobal(true);
+        sleep();
         assertTrue(mNotificationManager.areBubblesEnabled());
     }
 
-    public void testAreBubblesEnabled_false() throws Exception {
+    public void testAreBubblesEnabled_false() {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         setBubblesGlobal(false);
+        sleep();
         assertFalse(mNotificationManager.areBubblesEnabled());
     }
 
     public void testNotificationManagerBubblePolicy_flag_intentBubble()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
             createDynamicShortcut();
 
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(getDefaultBubbleMetadata());
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
+            sendAndVerifyBubble(1, nb, shouldBeBubble);
         } finally {
             deleteShortcuts();
         }
@@ -352,16 +406,13 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubblePolicy_noFlag_service()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_MESSAGING);
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -378,17 +429,14 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubblePolicy_noFlag_phonecall()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_CALL);
 
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -404,14 +452,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationManagerBubblePolicy_noFlag_foreground() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -431,15 +476,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubble_checkActivityFlagsDocumentLaunchMode()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -448,12 +489,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             SendBubbleActivity a = startSendBubbleActivity();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             a.sendBubble(BUBBLE_NOTIF_ID, true /* autoExpand */, false /* suppressNotif */);
 
@@ -476,24 +512,20 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubblePolicy_flag_shortcutBubble()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
 
             Notification.Builder nb = getConversationNotification();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
+            nb.setBubbleMetadata(
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID).build());
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+            sendAndVerifyBubble(1, nb, shouldBeBubble);
         } finally {
             deleteShortcuts();
         }
@@ -501,24 +533,19 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubblePolicy_noFlag_invalidShortcut()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
 
             Notification.Builder nb = getConversationNotification();
             nb.setShortcutId("invalid");
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder("invalid")
-                            .build();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder("invalid").build());
 
-            sendAndVerifyBubble(1, nb, data, false);
+            sendAndVerifyBubble(1, nb, false);
         } finally {
             deleteShortcuts();
         }
@@ -526,157 +553,145 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubblePolicy_noFlag_invalidNotif()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
 
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
+            int id = 1;
+            Notification.Builder nb = getDefaultNotifBuilder(id);
+            nb.setBubbleMetadata(
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID).build());
 
-            sendAndVerifyBubble(1, null /* use default notif builder */, data,
-                    false /* shouldBeBubble */);
+            sendAndVerifyBubble(id, nb, false /* shouldBeBubble */);
         } finally {
             deleteShortcuts();
         }
     }
 
     public void testNotificationManagerBubblePolicy_appAll_globalOn() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID).build());
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+            sendAndVerifyBubble(1, nb, shouldBeBubble);
         } finally {
             deleteShortcuts();
         }
     }
 
     public void testNotificationManagerBubblePolicy_appAll_globalOff() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
             setBubblesGlobal(false);
             setBubblesAppPref(1 /* all */);
             setBubblesChannelAllowed(true);
+            sleep();
 
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .build());
 
-            sendAndVerifyBubble(1, nb, data, false);
+            sendAndVerifyBubble(1, nb, false);
         } finally {
             deleteShortcuts();
         }
     }
 
     public void testNotificationManagerBubblePolicy_appAll_channelNo() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
             setBubblesChannelAllowed(false);
+            sleep();
 
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .build());
 
-            sendAndVerifyBubble(1, nb, data, false);
+            sendAndVerifyBubble(1, nb, false);
         } finally {
             deleteShortcuts();
         }
     }
 
     public void testNotificationManagerBubblePolicy_appSelected_channelNo() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(2 /* selected */);
             setBubblesChannelAllowed(false);
+            sleep();
 
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .build());
 
-            sendAndVerifyBubble(1, nb, data, false);
+            sendAndVerifyBubble(1, nb, false);
         } finally {
             deleteShortcuts();
         }
     }
 
     public void testNotificationManagerBubblePolicy_appSelected_channelYes() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(2 /* selected */);
             setBubblesChannelAllowed(true);
+            sleep();
 
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .build());
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+            sendAndVerifyBubble(1, nb, shouldBeBubble);
         } finally {
             deleteShortcuts();
         }
     }
 
     public void testNotificationManagerBubblePolicy_appNone_channelNo() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(0 /* none */);
             setBubblesChannelAllowed(false);
+            sleep();
 
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .build());
 
-            sendAndVerifyBubble(1, nb, data, false);
+            sendAndVerifyBubble(1, nb, false);
         } finally {
             deleteShortcuts();
         }
@@ -684,23 +699,18 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubblePolicy_noFlag_shortcutRemoved()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
 
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
             createDynamicShortcut();
-            Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
-                            .build();
             Notification.Builder nb = getConversationNotification();
+            nb.setBubbleMetadata(new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .build());
 
-            sendAndVerifyBubble(42, nb, data, true /* shouldBeBubble */);
+            sendAndVerifyBubble(42, nb, true /* shouldBeBubble */);
             mListener.resetData();
 
             deleteShortcuts();
@@ -711,15 +721,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationManagerBubbleNotificationSuppression() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -761,15 +767,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubble_checkIsBubbled_pendingIntent()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -777,12 +779,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             SendBubbleActivity a = startSendBubbleActivity();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             a.sendBubble(BUBBLE_NOTIF_ID, true /* autoExpand */, false /* suppressNotif */);
 
@@ -798,15 +795,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
     public void testNotificationManagerBubble_checkIsBubbled_shortcut()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -814,12 +807,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             SendBubbleActivity a = startSendBubbleActivity();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             a.sendBubble(BUBBLE_NOTIF_ID, true /* autoExpand */,
                     false /* suppressNotif */,
@@ -840,15 +828,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     /** Verifies the bubble is suppressed when it should be. */
     public void testNotificationManagerBubble_setSuppressBubble()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -866,12 +850,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             mListener.resetData();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             // Launch same activity as whats in the bubble
             a.startBubbleActivity(notifId);
@@ -899,15 +878,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     /** Verifies the bubble is not suppressed if dev didn't specify suppressable */
     public void testNotificationManagerBubble_setSuppressBubble_notSuppressable()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -923,12 +898,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             mListener.resetData();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             // Launch same activity as whats in the bubble
             a.startBubbleActivity(BUBBLE_NOTIF_ID);
@@ -940,10 +910,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
                     activity.getLocusId());
 
             // Wait a little (if it wrongly updates it'd be a new post so wait for that))
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ex) {
-            }
+            sleep();
             assertTrue(mListener.mPosted.isEmpty());
 
             // Bubble should not be suppressed
@@ -959,15 +926,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     /** Verifies the bubble is not suppressed if the activity doesn't have a locusId. */
     public void testNotificationManagerBubble_setSuppressBubble_activityNoLocusId()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -983,12 +946,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             mListener.resetData();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             // Launch same activity as whats in the bubble
             a.startBubbleActivity(BUBBLE_NOTIF_ID, false /* addLocusId */);
@@ -999,10 +957,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             assertNull(activity.getLocusId());
 
             // Wait a little (if it wrongly updates it'd be a new post so wait for that))
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ex) {
-            }
+            sleep();
             assertTrue(mListener.mPosted.isEmpty());
 
             // Bubble should not be suppressed
@@ -1018,15 +973,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     /** Verifies the bubble is not suppressed if the notification doesn't have a locusId. */
     public void testNotificationManagerBubble_setSuppressBubble_notificationNoLocusId()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -1044,12 +995,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             mListener.resetData();
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             // Launch same activity as whats in the bubble
             a.startBubbleActivity(BUBBLE_NOTIF_ID, true /* addLocusId */);
@@ -1060,10 +1006,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             assertNotNull(activity.getLocusId());
 
             // Wait a little (if it wrongly updates it'd be a new post so wait for that))
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ex) {
-            }
+            sleep();
             assertTrue(mListener.mPosted.isEmpty());
 
             // Bubble should not be suppressed & not have a locusId
@@ -1080,15 +1023,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     /** Verifies the bubble is unsuppressed when the locus activity is hidden. */
     public void testNotificationManagerBubble_setSuppressBubble_dismissLocusActivity()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
-                || mActivityManager.isLowRamDevice()) {
-            // These do not support bubbles.
+        if (!isBubblesFeatureSupported()) {
             return;
         }
         try {
-            setBubblesGlobal(true);
-            setBubblesAppPref(1 /* all */);
-            setBubblesChannelAllowed(true);
+            allowAllNotificationsToBubble();
 
             createDynamicShortcut();
             setUpNotifListener();
@@ -1110,12 +1049,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
 
             // Prep to find bubbled activity
-            Class clazz = BubbledActivity.class;
-            Instrumentation.ActivityResult result =
-                    new Instrumentation.ActivityResult(0, new Intent());
-            Instrumentation.ActivityMonitor monitor =
-                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
-            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+            Instrumentation.ActivityMonitor monitor = startBubbledActivityMonitor();
 
             // Launch same activity as whats in the bubble
             a.startBubbleActivity(notifId);
@@ -1151,8 +1085,10 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
     }
 
     /** Verifies that a regular activity can't specify a bubble in ActivityOptions */
-    public void testNotificationManagerBubble_launchBubble_activityOptions_fails()
-            throws Exception {
+    public void testNotificationManagerBubble_launchBubble_activityOptions_fails() {
+        if (!isBubblesFeatureSupported()) {
+            return;
+        }
         try {
             // Start test activity
             SendBubbleActivity activity = startSendBubbleActivity();

@@ -48,16 +48,14 @@ import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.After;
+import org.junit.Before;
+
 /**
  * Base class for tests which use MediaPlayer to play audio or video.
  */
-public class MediaPlayerTestBase {
+public class MediaPlayerTestBase extends MediaTestBase {
     private static final Logger LOG = Logger.getLogger(MediaPlayerTestBase.class.getName());
-
-    protected static final int SLEEP_TIME = 1000;
-    protected static final int LONG_SLEEP_TIME = 6000;
-    protected static final int STREAM_RETRIES = 20;
-    protected static boolean sUseScaleToFitMode = false;
 
     protected Monitor mOnVideoSizeChangedCalled = new Monitor();
     protected Monitor mOnVideoRenderingStartCalled = new Monitor();
@@ -68,34 +66,21 @@ public class MediaPlayerTestBase {
     protected Monitor mOnInfoCalled = new Monitor();
     protected Monitor mOnErrorCalled = new Monitor();
 
-    protected Context mContext;
-
     protected MediaPlayer mMediaPlayer = null;
     protected MediaPlayer mMediaPlayer2 = null;
-    protected ActivityScenario<MediaStubActivity> mActivityScenario;
-    protected MediaStubActivity mActivity;
 
-    @CallSuper
-    protected void setUp() throws Throwable {
-        mActivityScenario = ActivityScenario.launch(MediaStubActivity.class);
-        ConditionVariable activityReferenceObtained = new ConditionVariable();
-        mActivityScenario.onActivity(activity -> {
-            mActivity = activity;
-            activityReferenceObtained.open();
-        });
-        activityReferenceObtained.block(/* timeoutMs= */ 10000);
-        assertNotNull("Failed to acquire activity reference.", mActivity);
-
-        mContext = getInstrumentation().getTargetContext();
-        getInstrumentation().waitForIdleSync();
+    @Before
+    @Override
+    public void setUp() throws Throwable {
+        super.setUp();
         runOnUiThread(() -> {
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer2 = new MediaPlayer();
         });
     }
-
-    @CallSuper
-    protected void tearDown() {
+    @After
+    @Override
+    public void tearDown() {
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
@@ -104,15 +89,7 @@ public class MediaPlayerTestBase {
             mMediaPlayer2.release();
             mMediaPlayer2 = null;
         }
-        mActivity = null;
-    }
-
-    protected Instrumentation getInstrumentation() {
-        return InstrumentationRegistry.getInstrumentation();
-    }
-
-    protected MediaStubActivity getActivity() {
-        return mActivity;
+        super.tearDown();
     }
 
     protected void runOnUiThread(Runnable runnable) throws Throwable {
@@ -306,16 +283,6 @@ public class MediaPlayerTestBase {
     }
 
     private static class PrepareFailedException extends Exception {}
-
-    public boolean isTv() {
-        PackageManager pm = getInstrumentation().getTargetContext().getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                && pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
-    }
-
-    public boolean checkTv() {
-        return MediaUtils.check(isTv(), "not a TV");
-    }
 
     protected void setOnErrorListener() {
         mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
