@@ -30,12 +30,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,6 +70,7 @@ public class BackgroundRestrictedAlarmsTest {
     private ComponentName mAlarmScheduler;
     private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
     private UiDevice mUiDevice;
+    private DeviceConfigStateHelper mDeviceConfigStateHelper;
     private volatile int mAlarmCount;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
@@ -86,6 +90,9 @@ public class BackgroundRestrictedAlarmsTest {
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
         updateAlarmManagerConstants();
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
+        mDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted", "false");
         setAppOpsMode(APP_OP_MODE_IGNORED);
         makeUidIdle();
         final IntentFilter intentFilter = new IntentFilter();
@@ -138,6 +145,25 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     @Test
+    public void testRepeatingAlarmAllowedWhenAutoRestrictedBucketFeatureOn() throws Exception {
+        final long interval = MIN_REPEATING_INTERVAL;
+        final long triggerElapsed = SystemClock.elapsedRealtime() + interval;
+        toggleAutoRestrictedBucketOnBgRestricted(false);
+        scheduleAlarm(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed, interval);
+        Thread.sleep(DEFAULT_WAIT);
+        Thread.sleep(2 * interval);
+        assertFalse("Alarm got triggered even under restrictions", waitForAlarms(1, DEFAULT_WAIT));
+        Thread.sleep(interval);
+        toggleAutoRestrictedBucketOnBgRestricted(true);
+        // The alarm is due to go off about 3 times by now. Adding some tolerance just in case
+        // an expiration is due right about now.
+        final int minCount = getMinExpectedExpirations(SystemClock.elapsedRealtime(),
+                triggerElapsed, interval);
+        assertTrue("Alarm should have expired at least " + minCount
+                + " times when restrictions were lifted", waitForAlarms(minCount, DEFAULT_WAIT));
+    }
+
+    @Test
     public void testAlarmClockNotBlocked() throws Exception {
         final long nowRTC = System.currentTimeMillis();
         final long waitInterval = 3_000;
@@ -152,6 +178,7 @@ public class BackgroundRestrictedAlarmsTest {
     public void tearDown() throws Exception {
         deleteAlarmManagerConstants();
         setAppOpsMode(APP_OP_MODE_ALLOWED);
+        mDeviceConfigStateHelper.restoreOriginalValues();
         // Cancel any leftover alarms
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
         cancelAlarmsIntent.setComponent(mAlarmScheduler);
@@ -187,8 +214,13 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void makeUidIdle() throws IOException {
-        mUiDevice.executeShellCommand("cmd devideidle tempwhitelist -r " + TEST_APP_PACKAGE);
+        mUiDevice.executeShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
         mUiDevice.executeShellCommand("am make-uid-idle " + TEST_APP_PACKAGE);
+    }
+
+    private void toggleAutoRestrictedBucketOnBgRestricted(boolean enable) {
+        mDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted",
+                Boolean.toString(enable));
     }
 
     private boolean waitForAlarms(int expectedAlarms, long timeout) throws InterruptedException {
