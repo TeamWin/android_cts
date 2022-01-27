@@ -554,12 +554,12 @@ public class TunerTest {
         // Test w/o active frontend
         try {
             int[] caps = {0};
-            FrontendStatusReadiness[] readiness = mTuner.getFrontendStatusReadiness(caps);
+            List<FrontendStatusReadiness> readiness = mTuner.getFrontendStatusReadiness(caps);
             if (TunerVersionChecker.isHigherOrEqualVersionTo(
                         TunerVersionChecker.TUNER_VERSION_2_0)) {
                 fail("Get Frontend Status Readiness should throw IllegalStateException.");
             } else {
-                assertNull(readiness);
+                assertFalse(readiness.isEmpty());
             }
         } catch (IllegalStateException e) {
             // pass
@@ -577,15 +577,14 @@ public class TunerTest {
 
             int[] statusCapabilities = info.getStatusCapabilities();
             assertNotNull(statusCapabilities);
-            FrontendStatusReadiness[] readiness =
+            List<FrontendStatusReadiness> readiness =
                     tuner.getFrontendStatusReadiness(statusCapabilities);
             if (TunerVersionChecker.isHigherOrEqualVersionTo(
                         TunerVersionChecker.TUNER_VERSION_2_0)) {
-                assertNotNull(readiness);
-                assertEquals(readiness.length, statusCapabilities.length);
-                for (int i = 0; i < readiness.length; i++) {
-                    assertEquals(readiness[i].getStatusType(), statusCapabilities[i]);
-                    int r = readiness[i].getStatusReadiness();
+                assertEquals(readiness.size(), statusCapabilities.length);
+                for (int i = 0; i < readiness.size(); i++) {
+                    assertEquals(readiness.get(i).getStatusType(), statusCapabilities[i]);
+                    int r = readiness.get(i).getStatusReadiness();
                     if (r == FrontendStatusReadiness.FRONTEND_STATUS_READINESS_UNAVAILABLE
                             || r == FrontendStatusReadiness.FRONTEND_STATUS_READINESS_UNSTABLE
                             || r == FrontendStatusReadiness.FRONTEND_STATUS_READINESS_STABLE) {
