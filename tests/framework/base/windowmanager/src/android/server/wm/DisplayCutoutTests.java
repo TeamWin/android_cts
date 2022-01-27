@@ -25,6 +25,7 @@ import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_CUTOUT_MOD
 import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_ORIENTATION;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.DISPATCHED;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.ROOT;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
@@ -54,7 +55,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
@@ -527,14 +527,9 @@ public class DisplayCutoutTests {
                 new Intent().putExtra(EXTRA_CUTOUT_MODE, cutoutMode)
                         .putExtra(EXTRA_ORIENTATION, orientation));
         PollingCheck.waitFor(activity::hasWindowFocus);
-        PollingCheck.waitFor(() -> {
-            final Rect appBounds = getAppBounds(activity);
-            final Point displaySize = new Point();
-            activity.getDisplay().getRealSize(displaySize);
-            // During app launch into a different rotation, we have temporarily have the display
-            // in a different rotation than the app itself. Wait for this to settle.
-            return (appBounds.width() > appBounds.height()) == (displaySize.x > displaySize.y);
-        });
+        final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
+        wmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        wmState.waitForDisplayUnfrozen();
         return activity;
     }
 
