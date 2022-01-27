@@ -337,6 +337,39 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         }
     }
 
+    @Test
+    public void testGetFence() throws Exception {
+        try (
+            ImageReader reader = new ImageReader
+                .Builder(20, 45)
+                .setMaxImages(2)
+                .setImageFormat(ImageFormat.YUV_420_888)
+                .build();
+            ImageWriter writer = new ImageWriter
+                .Builder(reader.getSurface())
+                .build();
+            Image outputImage = writer.dequeueInputImage()
+        ) {
+            assertEquals(false, outputImage.getFence().isValid());
+        }
+    }
+
+    @Test
+    public void testGetPlanesAndFence() throws Exception {
+        try (
+            ImageReader reader = new ImageReader
+                    .Builder(BUFFER_WIDTH, BUFFER_HEIGHT)
+                    .build();
+            ImageWriter writer = new ImageWriter
+                    .Builder(reader.getSurface())
+                    .build();
+            Image outputImage = writer.dequeueInputImage();
+        ) {
+            outputImage.getPlanes();
+            assertEquals(false, outputImage.getFence().isValid());
+        }
+    }
+
     private void readerWriterFormatTestByCamera(int format, boolean altFactoryMethod)
             throws Exception {
         List<Size> sizes = getSortedSizesForFormat(mCamera.getId(), mCameraManager, format, null);
