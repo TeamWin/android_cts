@@ -110,6 +110,8 @@ public class ImageReaderDecoderTest {
     public String mCodecName;
     public MediaAsset mMediaAsset;
     public int mMode;
+    MediaCodec mDecoder = null;
+    MediaExtractor mExtractor = null;
 
     public ImageReaderDecoderTest(String mime, String codecName, MediaAsset asset, int mode,
                                   String testId) {
@@ -128,6 +130,7 @@ public class ImageReaderDecoderTest {
             for (String decoder: decoders) {
                 for (MediaAsset asset : assets.getAssets()) {
                     String id = asset.getWidth() + "x" + asset.getHeight();
+                    id += "_" + asset.getBitDepth() + "bit";
                     if (asset.getIsSwirl()) {
                         id += "_swirl";
                         argsList.add(new Object[]{mime, decoder, asset, MODE_IMAGE, id + "_image"});
@@ -140,28 +143,28 @@ public class ImageReaderDecoderTest {
         return argsList;
     }
 
-    @Test
-    public void decodeTest()   {
-        Decoder decoder = new Decoder(mMime, mCodecName, mMediaAsset);
-        try {
-            decoder.videoDecode(mMode);
-        } finally {
-            closeImageReader();
-        }
-    }
-
     @Before
     public void setUp() throws Exception {
         mHandlerThread = new HandlerThread(TAG);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
         mImageListener = new ImageListener();
+
+        mDecoder = MediaCodec.createByCodecName(mCodecName);
+        mExtractor = new MediaExtractor();
     }
 
     @After
     public void tearDown() throws Exception {
+        closeImageReader();
         mHandlerThread.quitSafely();
         mHandler = null;
+        if (mExtractor != null) {
+            mExtractor.release();
+        }
+        if (mDecoder != null) {
+            mDecoder.release();
+        }
     }
 
     static class MediaAsset {
@@ -180,6 +183,10 @@ public class ImageReaderDecoderTest {
 
         public MediaAsset(String resource, int width, int height, boolean isSwirl) {
             this(resource, width, height, isSwirl, 8);
+        }
+
+        public MediaAsset(String resource, int width, int height, int bitDepth) {
+            this(resource, width, height, true, bitDepth);
         }
 
         public int getWidth() {
@@ -277,94 +284,77 @@ public class ImageReaderDecoderTest {
             new MediaAsset("swirl_132x130_vp9.webm", 132, 130),
             new MediaAsset("swirl_130x132_vp9.webm", 130, 132));
 
+    private static MediaAssets AV1_ASSETS = new MediaAssets(
+            MediaFormat.MIMETYPE_VIDEO_AV1,
+            new MediaAsset("swirl_128x128_av1.webm", 128, 128),
+            new MediaAsset("swirl_144x136_av1.webm", 144, 136),
+            new MediaAsset("swirl_136x144_av1.webm", 136, 144),
+            new MediaAsset("swirl_132x130_av1.webm", 132, 130),
+            new MediaAsset("swirl_130x132_av1.webm", 130, 132));
+
     static final float SWIRL_FPS = 12.f;
 
     private static MediaAssets[] ASSETS = {H263_ASSETS, MPEG4_ASSETS, H264_ASSETS, H265_ASSETS,
-            VP8_ASSETS, VP9_ASSETS};
+            VP8_ASSETS, VP9_ASSETS, AV1_ASSETS};
 
-    class Decoder {
-        final private String mName;
-        final private String mMime;
-        final private MediaAsset mAsset;
-
-        boolean isColorFormatSupported(CodecCapabilities caps, int colorFormat) {
-            for (int c : caps.colorFormats) {
-                if (c == colorFormat) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        Decoder(String mime, String name, MediaAsset asset) {
-            mMime = mime;
-            mName = name;
-            mAsset = asset;
-        }
-
-        private void videoDecode(int mode) {
-            int imageFormat = ImageFormat.YUV_420_888;
-            int colorFormat = COLOR_FormatYUV420Flexible;
-            String video = mMediaAsset.getResource();
-            int width = mMediaAsset.getWidth();
-            int height = mMediaAsset.getHeight();
-
-            if (8 == mMediaAsset.getBitDepth()) {
-                imageFormat = ImageFormat.YUV_420_888;
-                colorFormat = COLOR_FormatYUV420Flexible;
-            } else {
-                imageFormat = ImageFormat.YCBCR_P010;
-                colorFormat = COLOR_FormatYUVP010;
-            }
-
-            if (DEBUG) {
-                Log.d(TAG, "videoDecode " + mName + " " + width + "x" + height + " bit depth " +
-                        mMediaAsset.getBitDepth());
-            }
-
-            MediaCodec decoder = null;
-
-            MediaExtractor extractor = null;
-            MediaFormat mediaFormat = null;
-            try {
-                extractor = new MediaExtractor();
-                Preconditions.assertTestFileExists(mInpPrefix + video);
-                extractor.setDataSource(mInpPrefix + video);
-
-                mediaFormat = extractor.getTrackFormat(0);
-                mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);
-
-                // Create decoder
-                decoder = MediaCodec.createByCodecName(mName);
-                assertNotNull("couldn't create decoder" + mName, decoder);
-                MediaCodecInfo info = decoder.getCodecInfo();
-                CodecCapabilities caps = info.getCapabilitiesForType(mMime);
-                VideoCapabilities videoCaps = caps.getVideoCapabilities();
-
-                assumeTrue(mMediaAsset.getWidth() + "x" + mMediaAsset.getHeight() + " @ " +
-                        SWIRL_FPS + " fps is not supported by " + mName,
-                        videoCaps.areSizeAndRateSupported(mMediaAsset.getWidth(),
-                        mMediaAsset.getHeight(), SWIRL_FPS));
-                assumeTrue("Color format " + colorFormat + " is not supported by " + mName,
-                        isColorFormatSupported(caps, colorFormat));
-
-                decodeFramesToImage(
-                        decoder, extractor, mediaFormat,
-                        width, height, imageFormat, mode, mMediaAsset.getIsSwirl());
-
-                decoder.stop();
-            } catch (Throwable e) {
-                throw new RuntimeException(
-                        "while " + mName + " decoding " + video + ": " + mediaFormat, e);
-            } finally {
-                if (decoder != null) {
-                    decoder.release();
-                }
-                if (extractor != null) {
-                    extractor.release();
-                }
+   boolean isColorFormatSupported(CodecCapabilities caps, int colorFormat) {
+        for (int c : caps.colorFormats) {
+            if (c == colorFormat) {
+                return true;
             }
         }
+        return false;
+    }
+
+    @Test
+    public void decodeTest() throws Exception {
+        int imageFormat = ImageFormat.YUV_420_888;
+        int colorFormat = COLOR_FormatYUV420Flexible;
+        String video = mMediaAsset.getResource();
+        int width = mMediaAsset.getWidth();
+        int height = mMediaAsset.getHeight();
+
+        if (8 == mMediaAsset.getBitDepth()) {
+            imageFormat = ImageFormat.YUV_420_888;
+            colorFormat = COLOR_FormatYUV420Flexible;
+        } else {
+            imageFormat = ImageFormat.YCBCR_P010;
+            colorFormat = COLOR_FormatYUVP010;
+        }
+
+        if (DEBUG) {
+            Log.d(TAG, "videoDecode " + mCodecName + " " + width + "x" + height + " bit depth " +
+                    mMediaAsset.getBitDepth());
+        }
+
+        MediaFormat mediaFormat = null;
+
+        Preconditions.assertTestFileExists(mInpPrefix + video);
+        mExtractor.setDataSource(mInpPrefix + video);
+
+        mediaFormat = mExtractor.getTrackFormat(0);
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);
+
+
+        MediaCodecInfo info = mDecoder.getCodecInfo();
+        CodecCapabilities caps = info.getCapabilitiesForType(mMime);
+        VideoCapabilities videoCaps = caps.getVideoCapabilities();
+
+        assumeTrue("Media format " + mediaFormat + " is not supported by " + mCodecName,
+                caps.isFormatSupported(mediaFormat));
+        assumeTrue(mMediaAsset.getWidth() + "x" + mMediaAsset.getHeight() + " @ " +
+                SWIRL_FPS + " fps is not supported by " + mCodecName,
+                videoCaps.areSizeAndRateSupported(mMediaAsset.getWidth(),
+                mMediaAsset.getHeight(), SWIRL_FPS));
+        assumeTrue("Color format " + colorFormat + " is not supported by " + mCodecName,
+                isColorFormatSupported(caps, colorFormat));
+
+        decodeFramesToImage(
+                mDecoder, mExtractor, mediaFormat,
+                width, height, imageFormat, mMode, mMediaAsset.getIsSwirl());
+
+        mDecoder.stop();
+
     }
 
     private static class ImageListener implements ImageReader.OnImageAvailableListener {
@@ -567,9 +557,19 @@ public class ImageReaderDecoderTest {
         final int NUM_SIDES = 4;
         final int step = 8;      // the width of the layers
         long[][] rawStats = new long[NUM_SIDES][10];
+        // expected colors for YUV 4:2:0 bit-depth 8
         int[][] colors = new int[][] {
             { 111, 96, 204 }, { 178, 27, 174 }, { 100, 192, 92 }, { 106, 117, 62 }
         };
+
+        // For P010 multiply expected colors by 4 to account for bit-depth 10
+        if (image.getFormat() == ImageFormat.YCBCR_P010) {
+            for (int i = 0; i < colors.length; i++) {
+                for (int j = 0; j < colors[0].length; j++) {
+                    colors[i][j] = colors[i][j] << 2;
+                }
+            }
+        }
 
         // successively accumulate statistics for each layer of the swirl
         // by using overlapping rectangles, and the observation that
@@ -656,7 +656,7 @@ public class ImageReaderDecoderTest {
     /**
      * <p>Check android image format validity for an image, only support below formats:</p>
      *
-     * <p>Valid formats are YUV_420_888/NV21/YV12 for video decoder</p>
+     * <p>Valid formats are YUV_420_888/NV21/YV12/P010 for video decoder</p>
      */
     private static void checkAndroidImageFormat(Image image) {
         int format = image.getFormat();
@@ -665,6 +665,7 @@ public class ImageReaderDecoderTest {
             case ImageFormat.YUV_420_888:
             case ImageFormat.NV21:
             case ImageFormat.YV12:
+            case ImageFormat.YCBCR_P010:
                 assertEquals("YUV420 format Images should have 3 planes", 3, planes.length);
                 break;
             default:
@@ -677,7 +678,7 @@ public class ImageReaderDecoderTest {
      * <p>
      * Read data from all planes of an Image into a contiguous unpadded,
      * unpacked 1-D linear byte array, such that it can be write into disk, or
-     * accessed by software conveniently. It supports YUV_420_888/NV21/YV12
+     * accessed by software conveniently. It supports YUV_420_888/NV21/YV12/P010
      * input Image format.
      * </p>
      * <p>
@@ -727,7 +728,9 @@ public class ImageReaderDecoderTest {
             buffer.position(rowStride * (crop.top >> shift) + pixelStride * (crop.left >> shift));
             assertTrue("rowStride " + rowStride + " should be >= width " + w , rowStride >= w);
             for (int row = 0; row < h; row++) {
-                int bytesPerPixel = ImageFormat.getBitsPerPixel(format) / 8;
+                // ImageFormat.getBitsPerPixel() returns total bits per pixel, which is 12 for
+                // YUV 4:2:0 8-bit, whereas bytesPerPixel is for Y plane only
+                int bytesPerPixel = (ImageFormat.getBitsPerPixel(format) * 2) / (8 * 3);
                 int length;
                 if (pixelStride == bytesPerPixel) {
                     // Special case: optimized read of the entire row
@@ -741,7 +744,9 @@ public class ImageReaderDecoderTest {
                     length = (w - 1) * pixelStride + bytesPerPixel;
                     buffer.get(rowData, 0, length);
                     for (int col = 0; col < w; col++) {
-                        data[offset++] = rowData[col * pixelStride];
+                        for (int bytePos = 0; bytePos < bytesPerPixel; ++bytePos) {
+                            data[offset++] = rowData[col * pixelStride + bytePos];
+                        }
                     }
                 }
                 // Advance buffer the remainder of the row stride
