@@ -16,16 +16,16 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.ambientaudioevent.cts">
+    package="android.ambientcontext.cts">
 
     <application>
         <uses-library android:name="android.test.runner" />
         <service
             android:exported="true"
-            android:name=".CtsTestAmbientSignalProviderService"
+            android:name=".CtsAmbientContextDetectionService"
             android:permission="android.permission.BIND_AMBIENT_SIGNAL_SERVICE">
             <intent-filter>
-                <action android:name="android.service.ambientsignal.AmbientSignalProviderService"/>
+                <action android:name="android.service.ambientcontext.AmbientContextDetectionService"/>
             </intent-filter>
         </service>
     </application>
@@ -33,7 +33,7 @@
     <!--  self-instrumenting test package. -->
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:label="CTS tests for the Ambient Signal Service APIs."
-        android:targetPackage="android.ambientaudioevent.cts" >
+        android:label="CTS tests for the Ambient Context Service APIs."
+        android:targetPackage="android.ambientcontext.cts" >
     </instrumentation>
 </manifest>
