@@ -41,6 +41,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
@@ -125,6 +126,7 @@ public class BluetoothLeBroadcastAssistantTest {
         }
     }
 
+    @Test
     public void testGetConnectedDevices() {
         if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
 
@@ -139,6 +141,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void testGetDevicesMatchingConnectionStates() {
         if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
 
@@ -153,6 +156,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @Test
     public void testGetConnectionState() {
         if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
 
@@ -172,6 +176,7 @@ public class BluetoothLeBroadcastAssistantTest {
                 mBluetoothLeBroadcastAssistant.getConnectionState(testDevice));
     }
 
+    @Test
     public void testProfileSupportLogic() {
         if (!mHasBluetooth) {
             return;
