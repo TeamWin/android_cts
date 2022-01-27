@@ -59,7 +59,7 @@ public class RevokeOwnPermissionTest {
     private static final String APK =
             "/data/local/tmp/cts/permissions/CtsAppToTestRevokeOwnPermission.apk";
     private static final long ONE_TIME_TIMEOUT_MILLIS = 500;
-    private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 1000;
+    private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 5000;
 
     private final Instrumentation mInstrumentation =
             InstrumentationRegistry.getInstrumentation();
@@ -68,10 +68,18 @@ public class RevokeOwnPermissionTest {
             mContext.getSystemService(ActivityManager.class);
     private final UiDevice mUiDevice = UiDevice.getInstance(mInstrumentation);
     private String mOldOneTimePermissionTimeoutValue;
+    private String mOldScreenOffTimeoutValue;
+    private String mOldSleepTimeoutValue;
 
     @Before
     public void wakeUpScreen() {
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
+        SystemUtil.runShellCommand("input keyevent 82");
+        mOldScreenOffTimeoutValue = SystemUtil.runShellCommand(
+                "settings get system screen_off_timeout");
+        mOldSleepTimeoutValue = SystemUtil.runShellCommand("settings get secure sleep_timeout");
+        SystemUtil.runShellCommand("settings put system screen_off_timeout -1");
+        SystemUtil.runShellCommand("settings put secure sleep_timeout -1");
     }
 
     @Before
@@ -95,6 +103,9 @@ public class RevokeOwnPermissionTest {
             DeviceConfig.setProperty("permissions", "one_time_permissions_timeout_millis",
                     mOldOneTimePermissionTimeoutValue, false);
         });
+        SystemUtil.runShellCommand("settings put system screen_off_timeout "
+                + mOldScreenOffTimeoutValue);
+        SystemUtil.runShellCommand("settings put secure sleep_timeout " + mOldSleepTimeoutValue);
     }
 
     @Test
@@ -102,7 +113,8 @@ public class RevokeOwnPermissionTest {
         // Trying to revoke multiple permissions including some from the same permission group
         // should work.
         installApp();
-        String[] permissions = new String[] {ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, CAMERA};
+        String[] permissions = new String[] {ACCESS_COARSE_LOCATION, ACCESS_BACKGROUND_LOCATION,
+                CAMERA};
         for (String permission : permissions) {
             grantPermission(APP_PKG_NAME, permission);
             assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, permission);
