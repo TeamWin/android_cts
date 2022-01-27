@@ -158,6 +158,13 @@ public class VolumeShaperTest {
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_CUBIC)
                 .build();
 
+    private static final VolumeShaper.Configuration[] MONOTONIC_RAMPS = {
+            MONOTONIC_TEST,
+            CUBIC_RAMP,
+            SCURVE_RAMP,
+            SINE_RAMP,
+    };
+
     private static final VolumeShaper.Operation[] ALL_STANDARD_OPERATIONS = {
         VolumeShaper.Operation.PLAY,
         VolumeShaper.Operation.REVERSE,
@@ -831,130 +838,151 @@ public class VolumeShaperTest {
         }
     } // testPlayerJoin
 
-    @LargeTest
+    private VolumeShaper.Configuration[] getMonotonicRamps() {
+        return MONOTONIC_RAMPS;
+    }
+
+    // Parameters are indices to MONOTONIC_RAMPS configuration array.
     @Test
-    public void testPlayerCubicMonotonic() throws Exception {
-        final String TEST_NAME = "testPlayerCubicMonotonic";
+    @Parameters(method = "getMonotonicRamps")
+    public void testCubicMonotonicAudioTrack(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_AUDIO_TRACK)) {
+            runTestCubicMonotonicPlayer(
+                    "testCubicMonotonicAudioTrack", player, configuration);
+        }
+    }
+
+    // Parameters are indices to MONOTONIC_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getMonotonicRamps")
+    public void testCubicMonotonicMediaPlayerNonOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_NON_OFFLOADED)) {
+            runTestCubicMonotonicPlayer(
+                    "testCubicMonotonicMediaPlayerNonOffloaded", player, configuration);
+        }
+    }
+
+    // Parameters are indices to MONOTONIC_RAMPS configuration array.
+    @Test
+    @Parameters(method = "getMonotonicRamps")
+    public void testCubicMonotonicMediaPlayerOffloaded(
+            VolumeShaper.Configuration configuration) throws Exception {
+        try (Player player = createPlayer(PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED)) {
+            runTestCubicMonotonicPlayer(
+                    "testCubicMonotonicMediaPlayerOffloaded", player, configuration);
+        }
+    }
+
+    private void runTestCubicMonotonicPlayer(
+            String testName, Player player, VolumeShaper.Configuration configuration)
+            throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
 
-        final VolumeShaper.Configuration configurations[] =
-                new VolumeShaper.Configuration[] {
-                MONOTONIC_TEST,
-                CUBIC_RAMP,
-                SCURVE_RAMP,
-                SINE_RAMP,
-        };
+        try (VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE)) {
+            volumeShaper.apply(VolumeShaper.Operation.PLAY);
+            player.start();
+            Thread.sleep(WARMUP_TIME_MS);
 
-        for (int p = 0; p < PLAYER_TYPES; ++p) {
-            try (   Player player = createPlayer(p);
-                    VolumeShaper volumeShaper = player.createVolumeShaper(SILENCE);
-                    ) {
-                final String testName = TEST_NAME + " " + player.name();
-                volumeShaper.apply(VolumeShaper.Operation.PLAY);
-                player.start();
-                Thread.sleep(WARMUP_TIME_MS);
+            // test configurations known monotonic
+            Log.d(TAG, testName + " starting test");
 
-                for (VolumeShaper.Configuration configuration : configurations) {
-                    // test configurations known monotonic
-                    Log.d(TAG, testName + " starting test");
+            float lastVolume = 0;
+            final long incrementMs = 100;
 
-                    float lastVolume = 0;
-                    final long incrementMs = 100;
-
-                    volumeShaper.replace(configuration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should increase "
-                                + volume + " >= " + lastVolume,
-                                (volume >= lastVolume));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 1.f, but is " + lastVolume,
-                            1.f, lastVolume, VOLUME_TOLERANCE);
-
-                    Log.d(TAG, "invert");
-                    // invert
-                    VolumeShaper.Configuration newConfiguration =
-                            new VolumeShaper.Configuration.Builder(configuration)
-                    .invertVolumes()
-                    .build();
-                    volumeShaper.replace(newConfiguration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should decrease "
-                                + volume + " <= " + lastVolume,
-                                (volume <= lastVolume));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 0.f, but is " + lastVolume,
-                            0.f, lastVolume, VOLUME_TOLERANCE);
-
-                    // invert + reflect
-                    Log.d(TAG, "invert and reflect");
-                    newConfiguration =
-                            new VolumeShaper.Configuration.Builder(configuration)
-                    .invertVolumes()
-                    .reflectTimes()
-                    .build();
-                    volumeShaper.replace(newConfiguration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should increase "
-                                + volume + " >= " + lastVolume,
-                                (volume >= lastVolume - VOLUME_TOLERANCE));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 1.f, but is " + lastVolume,
-                            1.f, lastVolume, VOLUME_TOLERANCE);
-
-                    // reflect
-                    Log.d(TAG, "reflect");
-                    newConfiguration =
-                            new VolumeShaper.Configuration.Builder(configuration)
-                    .reflectTimes()
-                    .build();
-                    volumeShaper.replace(newConfiguration,
-                            VolumeShaper.Operation.PLAY, true /* join */);
-                    // monotonicity test
-                    for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
-                        final float volume = volumeShaper.getVolume();
-                        assertTrue(testName + " montonic volume should decrease "
-                                + volume + " <= " + lastVolume,
-                                (volume <= lastVolume));
-                        lastVolume = volume;
-                        Thread.sleep(incrementMs);
-                    }
-                    Thread.sleep(WARMUP_TIME_MS);
-                    lastVolume = volumeShaper.getVolume();
-                    assertEquals(testName
-                            + " final monotonic value should be 0.f, but is " + lastVolume,
-                            0.f, lastVolume, VOLUME_TOLERANCE);
-                }
+            volumeShaper.replace(configuration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should increase "
+                        + volume + " >= " + lastVolume,
+                        (volume >= lastVolume));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
             }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
+
+            Log.d(TAG, "invert");
+            // invert
+            VolumeShaper.Configuration newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+                    .invertVolumes()
+                    .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should decrease "
+                        + volume + " <= " + lastVolume,
+                        (volume <= lastVolume));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
+            }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
+
+            // invert + reflect
+            Log.d(TAG, "invert and reflect");
+            newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+            .invertVolumes()
+            .reflectTimes()
+            .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should increase "
+                        + volume + " >= " + lastVolume,
+                        (volume >= lastVolume - VOLUME_TOLERANCE));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
+            }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 1.f, but is " + lastVolume,
+                    1.f, lastVolume, VOLUME_TOLERANCE);
+
+            // reflect
+            Log.d(TAG, "reflect");
+            newConfiguration =
+                    new VolumeShaper.Configuration.Builder(configuration)
+            .reflectTimes()
+            .build();
+            volumeShaper.replace(newConfiguration,
+                    VolumeShaper.Operation.PLAY, true /* join */);
+            // monotonicity test
+            for (long i = 0; i < RAMP_TIME_MS; i += incrementMs) {
+                final float volume = volumeShaper.getVolume();
+                assertTrue(testName + " montonic volume should decrease "
+                        + volume + " <= " + lastVolume,
+                        (volume <= lastVolume));
+                lastVolume = volume;
+                Thread.sleep(incrementMs);
+            }
+            Thread.sleep(WARMUP_TIME_MS);
+            lastVolume = volumeShaper.getVolume();
+            assertEquals(testName
+                    + " final monotonic value should be 0.f, but is " + lastVolume,
+                    0.f, lastVolume, VOLUME_TOLERANCE);
         }
-    } // testPlayerCubicMonotonic
+    } // runTestCubicMonotonicPlayer
 
     @Test
     public void testStepRampAudioTrack() throws Exception {
