@@ -157,6 +157,14 @@ public class CamcorderProfileTest extends AndroidTestCase {
                 assertEquals(profile.videoBitRate, videoProfile.getBitrate());
                 assertEquals(profile.videoFrameRate, videoProfile.getFrameRate());
                 first = false;
+
+                // The first video profile must be a basic profile: YUV 4:2:0 8-bit SDR.
+                // This is to ensure backward compatibility with the corresponding
+                // CamcorderProfile, which is always a basic profile.
+                assertEquals(EncoderProfiles.VideoProfile.YUV_420,
+                             videoProfile.getChromaSubsampling());
+                assertEquals(EncoderProfiles.VideoProfile.HDR_NONE, videoProfile.getHdrFormat());
+                assertEquals(8, videoProfile.getBitDepth());
             }
             // all profiles must be the same size
             assertEquals(profile.videoFrameWidth, videoProfile.getWidth());
@@ -179,10 +187,21 @@ public class CamcorderProfileTest extends AndroidTestCase {
             case MediaRecorder.VideoEncoder.HEVC:
                   assertEquals(MediaFormat.MIMETYPE_VIDEO_HEVC, videoProfile.getMediaType());
                   break;
+            case MediaRecorder.VideoEncoder.VP9:
+                  assertEquals(MediaFormat.MIMETYPE_VIDEO_VP9, videoProfile.getMediaType());
+                  break;
+            case MediaRecorder.VideoEncoder.DOLBY_VISION:
+                  assertEquals(MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION, videoProfile.getMediaType());
+                  break;
+            case MediaRecorder.VideoEncoder.AV1:
+                  assertEquals(MediaFormat.MIMETYPE_VIDEO_AV1, videoProfile.getMediaType());
+                  break;
             }
             // Cannot validate profile as vendors may use vendor specific profile. Just read it.
             int codecProfile = videoProfile.getProfile();
         }
+        // there must have been at least one video profile
+        assertFalse("no video profiles in getAll()", first);
         first = true;
         for (EncoderProfiles.AudioProfile audioProfile : allProfiles.getAudioProfiles()) {
             if (first) {
