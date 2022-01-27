@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,20 @@ public final class ActivityManagerHelperTest {
         assertComponentPermissionGranted(GRANTED_PERMISSION_INTERACT_ACROSS_USERS);
     }
 
-    //TODO(b/201005730): add as many as feasible test cases to cover more
-    // ActivityManagerHelper APIs.
+    @Test
+    public void testSetFocusedRootTask() throws Exception {
+        //TODO(b/201005730): implement the test case to test setFocusedRootTask API.
+    }
+
+    @Test
+    public void testRemoveTask() throws Exception {
+        //TODO(b/201005730): implement the test case to test setRemoveTask API.
+    }
+
+    @Test
+    public void testProcessObserverCallback() throws Exception {
+        //TODO(b/201005730): implement the test case to test processObserverCallback API.
+    }
 
     private void assertComponentPermissionGranted(String permission) throws Exception {
         assertThat(ActivityManagerHelper.checkComponentPermission(permission,
