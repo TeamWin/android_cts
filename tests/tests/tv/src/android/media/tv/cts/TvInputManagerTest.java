@@ -108,11 +108,14 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             "android.permission.TV_INPUT_HARDWARE";
     private static final String PERMISSION_TUNER_RESOURCE_ACCESS =
             "android.permission.TUNER_RESOURCE_ACCESS";
+    private static final String PERMISSION_TIS_EXTENSION_INTERFACE =
+            "android.permission.TIS_EXTENSION_INTERFACE";
     private static final String[] BASE_SHELL_PERMISSIONS = {
             PERMISSION_ACCESS_WATCHED_PROGRAMS,
             PERMISSION_WRITE_EPG_DATA,
             PERMISSION_ACCESS_TUNED_INFO,
-            PERMISSION_TUNER_RESOURCE_ACCESS
+            PERMISSION_TUNER_RESOURCE_ACCESS,
+            PERMISSION_TIS_EXTENSION_INTERFACE
     };
 
     private String mStubId;
@@ -867,16 +870,19 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
         @Override
         public List<String> getAvailableExtensionInterfaceNames() {
+            super.getAvailableExtensionInterfaceNames();
             return new ArrayList<>(sAvailableExtensionInterfaceMap.keySet());
         }
 
         @Override
         public String getExtensionInterfacePermission(String name) {
+            super.getExtensionInterfacePermission(name);
             return sAvailableExtensionInterfaceMap.get(name);
         }
 
         @Override
         public IBinder getExtensionInterface(String name) {
+            super.getExtensionInterface(name);
             if (sAvailableExtensionInterfaceMap.containsKey(name)) {
                 return new Binder();
             } else {
