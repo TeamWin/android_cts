@@ -5178,4 +5178,68 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Tests {@link WifiConfiguration#setBssidAllowlist(List)}.
+     */
+    public void testBssidAllowlist() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<WifiConfiguration> savedNetworks = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+
+            WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+            String connectedBssid = wifiInfo.getBSSID();
+            int networkId = wifiInfo.getNetworkId();
+
+            // Set empty BSSID allow list to block all APs
+            savedNetworks = mWifiManager.getConfiguredNetworks();
+            for (WifiConfiguration network : savedNetworks) {
+                network.setBssidAllowlist(Collections.emptyList());
+                mWifiManager.updateNetwork(network);
+            }
+            // trigger a disconnect and wait for disconnect.
+            mWifiManager.disconnect();
+            waitForDisconnection();
+
+            // Now trigger scan and ensure that the device does not connect to any networks.
+            mWifiManager.startScan();
+            ensureNotConnected();
+
+            // Set the previous connected BSSID on that network. Other network set with a fake
+            // (not visible) BSSID only
+            for (WifiConfiguration network : savedNetworks) {
+                if (network.networkId == networkId) {
+                    network.setBssidAllowlist(List.of(MacAddress.fromString(connectedBssid)));
+                    mWifiManager.updateNetwork(network);
+                } else {
+                    network.setBssidAllowlist(List.of(MacAddress.fromString(TEST_BSSID)));
+                    mWifiManager.updateNetwork(network);
+                }
+            }
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+            wifiInfo = mWifiManager.getConnectionInfo();
+            assertEquals(networkId, wifiInfo.getNetworkId());
+            assertEquals(connectedBssid, wifiInfo.getBSSID());
+        } finally {
+            // Reset BSSID allow list to accept all APs
+            for (WifiConfiguration network : savedNetworks) {
+                assertNotNull(network.getBssidAllowlist());
+                network.setBssidAllowlist(null);
+                mWifiManager.updateNetwork(network);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
 }
