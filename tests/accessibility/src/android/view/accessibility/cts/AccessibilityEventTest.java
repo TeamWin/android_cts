@@ -632,6 +632,7 @@ public class AccessibilityEventTest {
         sentEvent.setAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
         sentEvent.setMovementGranularity(AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE);
         sentEvent.setDisplayId(Display.DEFAULT_DISPLAY);
+        sentEvent.setSpeechStateChangeTypes(AccessibilityEvent.SPEECH_STATE_SPEAKING_START);
 
         AccessibilityRecord record = AccessibilityRecord.obtain();
         AccessibilityRecordTest.fullyPopulateAccessibilityRecord(record);
@@ -738,6 +739,10 @@ public class AccessibilityEventTest {
                 "windowChangeTypes has incorrect value",
                 expectedEvent.getWindowChanges(),
                 receivedEvent.getWindowChanges());
+        assertEquals(
+                "speechStateChangeTypes has incorrect value,",
+                expectedEvent.getSpeechStateChangeTypes(),
+                receivedEvent.getSpeechStateChangeTypes());
 
         AccessibilityRecordTest.assertEqualsText(expectedEvent.getText(), receivedEvent.getText());
         AccessibilityRecordTest.assertEqualAccessibilityRecord(expectedEvent, receivedEvent);
