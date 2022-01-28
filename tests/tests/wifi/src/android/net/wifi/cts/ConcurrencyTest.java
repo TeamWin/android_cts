@@ -814,4 +814,123 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
     }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testDiscoverPeersOnSpecificFreq() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.requestDiscoveryState(
+                mWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
+                    @Override
+                    public void onDiscoveryStateAvailable(int state) {
+                        synchronized (mMyResponse) {
+                            mMyResponse.valid = true;
+                            mMyResponse.discoveryState = state;
+                            mMyResponse.notify();
+                        }
+                    }
+                });
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, mMyResponse.discoveryState);
+
+        // If there is any saved network and this device is connecting to this saved network,
+        // p2p discovery might be blocked during DHCP provision.
+        int retryCount = 3;
+        while (retryCount > 0) {
+            resetResponse(mMyResponse);
+            mWifiP2pManager.discoverPeersOnSpecificFrequency(mWifiP2pChannel,
+                    2412, mActionListener);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            if (mMyResponse.success
+                    || mMyResponse.failureReason != WifiP2pManager.BUSY) {
+                break;
+            }
+            Log.w(TAG, "Discovery is blocked, try again!");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) { }
+            retryCount--;
+        }
+        assertTrue(mMyResponse.success);
+        assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.requestDiscoveryState(mWifiP2pChannel,
+                new WifiP2pManager.DiscoveryStateListener() {
+                    @Override
+                    public void onDiscoveryStateAvailable(int state) {
+                        synchronized (mMyResponse) {
+                            mMyResponse.valid = true;
+                            mMyResponse.discoveryState = state;
+                            mMyResponse.notify();
+                        }
+                    }
+                });
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
+
+        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testDiscoverPeersOnSocialChannelsOnly() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.requestDiscoveryState(
+                mWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
+                    @Override
+                    public void onDiscoveryStateAvailable(int state) {
+                        synchronized (mMyResponse) {
+                            mMyResponse.valid = true;
+                            mMyResponse.discoveryState = state;
+                            mMyResponse.notify();
+                        }
+                    }
+                });
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED, mMyResponse.discoveryState);
+
+        // If there is any saved network and this device is connecting to this saved network,
+        // p2p discovery might be blocked during DHCP provision.
+        int retryCount = 3;
+        while (retryCount > 0) {
+            resetResponse(mMyResponse);
+            mWifiP2pManager.discoverPeersOnSocialChannels(mWifiP2pChannel, mActionListener);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            if (mMyResponse.success
+                    || mMyResponse.failureReason != WifiP2pManager.BUSY) {
+                break;
+            }
+            Log.w(TAG, "Discovery is blocked, try again!");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) { }
+            retryCount--;
+        }
+        assertTrue(mMyResponse.success);
+        assertTrue(waitForBroadcasts(MySync.DISCOVERY_STATE));
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.requestDiscoveryState(mWifiP2pChannel,
+                new WifiP2pManager.DiscoveryStateListener() {
+                    @Override
+                    public void onDiscoveryStateAvailable(int state) {
+                        synchronized (mMyResponse) {
+                            mMyResponse.valid = true;
+                            mMyResponse.discoveryState = state;
+                            mMyResponse.notify();
+                        }
+                    }
+                });
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
+
+        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+    }
 }
