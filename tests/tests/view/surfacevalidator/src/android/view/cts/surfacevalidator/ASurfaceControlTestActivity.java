@@ -76,6 +76,7 @@ public class ASurfaceControlTestActivity extends Activity {
     private Instrumentation mInstrumentation;
 
     private final CountDownLatch mReadyToStart = new CountDownLatch(1);
+    private CountDownLatch mTransactionCommittedLatch;
 
     @Override
     public void onEnterAnimationComplete() {
@@ -118,12 +119,25 @@ public class ASurfaceControlTestActivity extends Activity {
 
     public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
             PixelChecker pixelChecker, TestName name) {
+        verifyTest(surfaceHolderCallback, pixelChecker, name, 0);
+    }
+
+    public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
+            PixelChecker pixelChecker, TestName name, int numOfTransactionToListen) {
+        final boolean waitForTransactionLatch = numOfTransactionToListen > 0;
         final CountDownLatch readyFence = new CountDownLatch(1);
+        if (waitForTransactionLatch) {
+            mTransactionCommittedLatch = new CountDownLatch(numOfTransactionToListen);
+        }
         SurfaceHolderCallback surfaceHolderCallbackWrapper = new SurfaceHolderCallback(
                 surfaceHolderCallback,
                 readyFence, mParent.getViewTreeObserver());
         createSurface(surfaceHolderCallbackWrapper);
         try {
+            if (waitForTransactionLatch) {
+                assertTrue("timeout",
+                        mTransactionCommittedLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+            }
             assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             Assert.fail("interrupted");
@@ -191,6 +205,10 @@ public class ASurfaceControlTestActivity extends Activity {
 
     public FrameLayout getParentFrameLayout() {
         return mParent;
+    }
+
+    public void transactionCommitted() {
+        mTransactionCommittedLatch.countDown();
     }
 
     public abstract static class MultiRectChecker extends RectChecker {
