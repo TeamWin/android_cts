@@ -100,6 +100,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -1695,13 +1696,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     }
 
     public void testServiceDoneLRUPosition() throws Exception {
-        ApplicationInfo ai = mTargetContext.getPackageManager()
-                .getApplicationInfo(PACKAGE_NAME_APP1, 0);
-        final WatchUidRunner watcher1 = new WatchUidRunner(mInstrumentation, ai.uid, WAITFOR_MSEC);
-        ai = mTargetContext.getPackageManager().getApplicationInfo(PACKAGE_NAME_APP2, 0);
-        final WatchUidRunner watcher2 = new WatchUidRunner(mInstrumentation, ai.uid, WAITFOR_MSEC);
-        ai = mTargetContext.getPackageManager().getApplicationInfo(PACKAGE_NAME_APP3, 0);
-        final WatchUidRunner watcher3 = new WatchUidRunner(mInstrumentation, ai.uid, WAITFOR_MSEC);
+        final String[] packageNames = {PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3};
+        final WatchUidRunner[] watchers = initWatchUidRunners(packageNames, WAITFOR_MSEC);
         final HandlerThread handlerThread = new HandlerThread("worker");
         final Messenger[] controllerHolder = new Messenger[1];
         final CountDownLatch[] countDownLatchHolder = new CountDownLatch[1];
@@ -1718,12 +1714,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         try {
             // Make sure we could start activity from background
-            SystemUtil.runShellCommand(mInstrumentation,
-                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
-            SystemUtil.runShellCommand(mInstrumentation,
-                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP2);
-            SystemUtil.runShellCommand(mInstrumentation,
-                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP3);
+            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + packageName));
 
             // Keep the device awake
             toggleScreenOn(true);
@@ -1736,30 +1728,28 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
 
-            watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE, null);
+            watchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
+                    null);
 
             assertTrue("Failed to get the controller interface",
                     countDownLatchHolder[0].await(WAITFOR_MSEC, TimeUnit.MILLISECONDS));
 
+            final String[] otherPackages = {PACKAGE_NAME_APP2, PACKAGE_NAME_APP3};
+            final WatchUidRunner[] otherWatchers = {watchers[1], watchers[2]};
             // Start an activity in another package
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
-                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
-
-            watcher2.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
-
-            // Start another activity in another package
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
-                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
-
-            watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+            forBiEach(otherPackages, otherWatchers, (packageName, watcher) -> {
+                CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                        packageName, packageName, 0, null);
+                watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+            });
 
             // Stop both of these activities
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
-            watcher2.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
-            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
-                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
-            watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
+            forBiEach(otherPackages, otherWatchers, (packageName, watcher) -> {
+                CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                        packageName, packageName, 0, null);
+                watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+                        null);
+            });
 
             // Launch home so we'd have cleared these the above test activities from recents.
             launchHome();
@@ -1773,43 +1763,176 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 fail("Unable to stop test package");
             }
             msg.recycle();
-            watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
+            watchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+                    null);
 
-            final List<String> lru = getCachedAppsLru();
-
-            assertTrue("Failed to get cached app list", lru.size() > 0);
-            final int app1LruPos = lru.indexOf(PACKAGE_NAME_APP1);
-            final int app2LruPos = lru.indexOf(PACKAGE_NAME_APP2);
-            final int app3LruPos = lru.indexOf(PACKAGE_NAME_APP3);
-            if (app1LruPos != -1) {
-                assertTrue(PACKAGE_NAME_APP1 + " should be newer than " + PACKAGE_NAME_APP2,
-                        app1LruPos > app2LruPos);
-                assertTrue(PACKAGE_NAME_APP1 + " should be newer than " + PACKAGE_NAME_APP3,
-                        app1LruPos > app3LruPos);
-            } else {
-                assertEquals(PACKAGE_NAME_APP2 + " should have gone", -1, app2LruPos);
-                assertEquals(PACKAGE_NAME_APP3 + " should have gone", -1, app3LruPos);
-            }
+            verifyLruOrders(packageNames, 0, true, (a, b) -> a > b, "%s should be newer than %s");
         } finally {
             handlerThread.quitSafely();
 
-            SystemUtil.runShellCommand(mInstrumentation,
-                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
-            SystemUtil.runShellCommand(mInstrumentation,
-                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP2);
-            SystemUtil.runShellCommand(mInstrumentation,
-                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP3);
+            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + packageName));
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                // force stop test package, where the whole test process group will be killed.
-                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
-                mActivityManager.forceStopPackage(PACKAGE_NAME_APP2);
-                mActivityManager.forceStopPackage(PACKAGE_NAME_APP3);
+            // force stop test package, where the whole test process group will be killed.
+            forEach(packageNames, packageName -> SystemUtil.runWithShellPermissionIdentity(
+                    () -> mActivityManager.forceStopPackage(packageName)));
+
+            forEach(watchers, watcher -> watcher.finish());
+        }
+    }
+
+    public void testBroadcastReceiverLRUPosition() throws Exception {
+        final String[] packageNames = {PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3};
+        final WatchUidRunner[] watchers = initWatchUidRunners(packageNames, WAITFOR_MSEC);
+        final long shortTimeout = 2_000;
+
+        try {
+            // Set the PACKAGE_NAME_APP1 into rare bucket
+            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+                    + PACKAGE_NAME_APP1 + " rare");
+
+            // Make sure we could start activity from background
+            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + packageName));
+
+            // Keep the device awake
+            toggleScreenOn(true);
+
+            // Start activities in these packages.
+            forBiEach(packageNames, watchers, (packageName, watcher) -> {
+                CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                        packageName, packageName, 0, null);
+                watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
             });
 
-            watcher1.finish();
-            watcher2.finish();
-            watcher3.finish();
+            // Stop all of these activities
+            forBiEach(packageNames, watchers, (packageName, watcher) -> {
+                CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                        packageName, packageName, 0, null);
+                watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY,
+                        null);
+            });
+
+            // Launch home so we'd have cleared these the above test activities from recents.
+            launchHome();
+
+            // Verify the LRU position.
+            verifyLruOrders(packageNames, 0, false, (a, b) -> a < b, "%s should be older than %s");
+
+            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + packageName));
+            // Restrict the PACKAGE_NAME_APP1
+            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+                    + PACKAGE_NAME_APP1 + " restricted");
+            // Sleep a while to let it take effect.
+            Thread.sleep(shortTimeout);
+
+            final Intent intent = new Intent();
+            final CountDownLatch[] latch = new CountDownLatch[] {new CountDownLatch(1)};
+            final BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    latch[0].countDown();
+                }
+            };
+            // Send a broadcast to PACKAGE_NAME_APP1
+            CommandReceiver.sendCommandWithResultReceiver(mTargetContext,
+                    CommandReceiver.COMMAND_EMPTY, PACKAGE_NAME_APP1, PACKAGE_NAME_APP1,
+                    0, null, receiver);
+
+            assertTrue("Failed to get the broadcast",
+                    latch[0].await(WAITFOR_MSEC * 2, TimeUnit.MILLISECONDS));
+
+            // Now check the LRU position again, it should remain the same because it's restricted.
+            verifyLruOrders(packageNames, 0, false, (a, b) -> a < b, "%s should be older than %s");
+
+            // Set the PACKAGE_NAME_APP1 into rare bucket again.
+            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+                    + PACKAGE_NAME_APP1 + " rare");
+
+            latch[0] = new CountDownLatch(1);
+            // Send a broadcast to PACKAGE_NAME_APP1 again.
+            CommandReceiver.sendCommandWithResultReceiver(mTargetContext,
+                    CommandReceiver.COMMAND_EMPTY, PACKAGE_NAME_APP1, PACKAGE_NAME_APP1,
+                    0, null, receiver);
+
+            // Now its LRU posistion should have been bumped.
+            verifyLruOrders(packageNames, 0, true, (a, b) -> a > b, "%s should be newer than %s");
+        } finally {
+            forEach(packageNames, packageName -> SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + packageName));
+
+            SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
+                    + PACKAGE_NAME_APP1 + " rare");
+
+            // force stop test package, where the whole test process group will be killed.
+            forEach(packageNames, packageName -> SystemUtil.runWithShellPermissionIdentity(
+                    () -> mActivityManager.forceStopPackage(packageName)));
+
+            forEach(watchers, watcher -> watcher.finish());
+        }
+    }
+
+    private int[] getLruPositions(String[] packageNames) throws Exception {
+        final List<String> lru = getCachedAppsLru();
+        assertTrue("Failed to get cached app list", lru.size() > 0);
+        final int[] pos = new int[packageNames.length];
+        for (int i = 0; i < packageNames.length; i++) {
+            pos[i] = lru.indexOf(packageNames[i]);
+        }
+        return pos;
+    }
+
+    private void verifyLruOrders(String[] packageNames, int testIndex, boolean newest,
+            BiPredicate<Integer, Integer> predicate, String msg) throws Exception {
+        final List<String> lru = getCachedAppsLru();
+
+        assertTrue("Failed to get cached app list", lru.size() > 0);
+        final int[] pos = getLruPositions(packageNames);
+        if (pos[testIndex] != -1) {
+            for (int i = 0; i < pos.length; i++) {
+                if (i == testIndex || pos[i] == -1) {
+                    continue;
+                }
+                assertTrue(String.format(msg, packageNames[testIndex], packageNames[i]),
+                        predicate.test(pos[testIndex], pos[i]));
+            }
+        } else if (newest) {
+            for (int i = 0; i < pos.length; i++) {
+                assertEquals(packageNames[i] + " should have gone", -1, pos[i]);
+            }
+        }
+    }
+
+    private WatchUidRunner[] initWatchUidRunners(String[] packageNames, long waitFormMs)
+            throws Exception {
+        final WatchUidRunner[] watchers = new WatchUidRunner[packageNames.length];
+        for (int i = 0; i < packageNames.length; i++) {
+            final ApplicationInfo ai = mTargetContext.getPackageManager()
+                    .getApplicationInfo(packageNames[i], 0);
+            watchers[i] = new WatchUidRunner(mInstrumentation, ai.uid, waitFormMs);
+        }
+        return watchers;
+    }
+
+    private interface ConsumerWithException<T> {
+        void accept(T t) throws Exception;
+    }
+
+    private interface BiConsumerWithException<T, U> {
+        void accept(T t, U u) throws Exception;
+    }
+
+    private <T> void forEach(T[] items, ConsumerWithException<T> consumer) throws Exception {
+        for (T item: items) {
+            consumer.accept(item);
+        }
+    }
+
+    private <T, U> void forBiEach(T[] itemsA, U[] itemsB, BiConsumerWithException<T, U> consumer)
+            throws Exception {
+        for (int i = 0; i < itemsA.length; i++) {
+            consumer.accept(itemsA[i], itemsB[i]);
         }
     }
 

@@ -1381,6 +1381,16 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callSetStylusHandwritingWindowTouchListener() {
+        return callCommandInternal("setStylusHandwritingWindowTouchListener", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callGetStylusHandwritingWindowEvents() {
+        return callCommandInternal("getStylusHandwritingWindowEvents", new Bundle());
+    }
+
+    @NonNull
     public ImeCommand callFinishStylusHandwriting() {
         return callCommandInternal("finishStylusHandwriting", new Bundle());
     }

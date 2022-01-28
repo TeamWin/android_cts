@@ -20,6 +20,7 @@ import static android.car.cts.builtin.os.GetInitialUserInfoCommand.OK_STATUS_RET
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.car.cts.builtin.os.DumpDrivingStateServiceCommand;
 import android.car.cts.builtin.os.GetInitialUserInfoCommand;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -41,5 +42,17 @@ public final class BinderHelperHostTest extends CarBuiltinApiHostCtsBase {
         // execution and assertion
         infoCmd.executeWith();
         assertThat(infoCmd.returnStartsWith(OK_STATUS_RETURN_HEADER)).isTrue();
+    }
+
+    // When the "dumpsys car_service --services CarDrivingStateService" shell command is called,
+    // it triggers the BinderHelper.dumpRemoteCallbackList() builtin API.
+    @Test
+    public void testDumpRemoteCallbackList() throws Exception {
+        // setup
+        DumpDrivingStateServiceCommand dumpCmd = new DumpDrivingStateServiceCommand(getDevice());
+
+        // execution and assertion
+        dumpCmd.executeWith();
+        assertThat(dumpCmd.hasRemoteCallbackListDump()).isTrue();
     }
 }

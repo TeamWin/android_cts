@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
@@ -44,12 +45,17 @@ public class BedsteadJUnit4Test {
 
     }
 
+    private enum EnumWithThreeValues {
+        ONE, TWO, THREE
+    }
+
     private static int sSimpleParameterizedCalls = 0;
     private static int sMultipleSimpleParameterizedCalls = 0;
     private static int sBedsteadParameterizedCalls = 0;
     private static int sBedsteadPlusSimpleParameterizedCalls = 0;
     private static int sIndirectParameterizedCalls = 0;
     private static int sIntParameterizedCalls = 0;
+    private static int sEnumParameterizedCalls = 0;
 
     @AfterClass
     public static void afterClass() {
@@ -59,6 +65,7 @@ public class BedsteadJUnit4Test {
         assertThat(sBedsteadPlusSimpleParameterizedCalls).isEqualTo(4);
         assertThat(sIndirectParameterizedCalls).isEqualTo(2);
         assertThat(sIntParameterizedCalls).isEqualTo(2);
+        assertThat(sEnumParameterizedCalls).isEqualTo(3);
     }
 
     @Test
@@ -95,5 +102,11 @@ public class BedsteadJUnit4Test {
     @Test
     public void intParameterized(@IntTestParameter({1, 2}) int argument) {
         sIntParameterizedCalls += 1;
+    }
+
+    @Test
+    public void enumParameterized(
+            @EnumTestParameter(EnumWithThreeValues.class) EnumWithThreeValues argument) {
+        sEnumParameterizedCalls += 1;
     }
 }

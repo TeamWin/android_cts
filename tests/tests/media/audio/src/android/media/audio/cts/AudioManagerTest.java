@@ -1691,6 +1691,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
         Log.i(TAG, "isHapticPlaybackSupported: " + AudioManager.isHapticPlaybackSupported());
     }
 
+    public void testIsUltrasoundSupported() {
+        // Calling the API to make sure it doesn't crash.
+        Log.i(TAG, "isUltrasoundSupported: " + AudioManager.isUltrasoundSupported());
+    }
+
     public void testGetAudioHwSyncForSession() {
         // AudioManager.getAudioHwSyncForSession is not supported before S
         if (ApiLevelUtil.isAtMost(Build.VERSION_CODES.R)) {

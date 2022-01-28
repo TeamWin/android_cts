@@ -47,6 +47,7 @@ import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
@@ -100,6 +101,7 @@ public final class MockIme extends InputMethodService {
     private static final String TAG = "MockIme";
 
     private static final String PACKAGE_NAME = "com.android.cts.mockime";
+    private ArrayList<MotionEvent> mEvents;
 
     static ComponentName getComponentName() {
         return new ComponentName(PACKAGE_NAME, MockIme.class.getName());
@@ -470,6 +472,19 @@ public final class MockIme extends InputMethodService {
                     case "getStylusHandwritingWindowVisibility": {
                         View decorView = getStylusHandwritingWindow().getDecorView();
                         return decorView != null && decorView.getVisibility() == View.VISIBLE;
+                    }
+                    case "setStylusHandwritingWindowTouchListener": {
+                        View decorView = getStylusHandwritingWindow().getDecorView();
+                        if (decorView != null && decorView.getVisibility() == View.VISIBLE) {
+                            mEvents = new ArrayList<>();
+                            decorView.setOnTouchListener((view, event) ->
+                                    mEvents.add(MotionEvent.obtain(event)));
+                            return true;
+                        }
+                        return false;
+                    }
+                    case "getStylusHandwritingWindowEvents": {
+                        return mEvents;
                     }
                     case "finishStylusHandwriting": {
                         finishStylusHandwriting();
@@ -856,6 +871,12 @@ public final class MockIme extends InputMethodService {
                 () -> super.onStartInputView(editorInfo, restarting));
     }
 
+
+    @Override
+    public void onPrepareStylusHandwriting() {
+        getTracer().onPrepareStylusHandwriting(() -> super.onPrepareStylusHandwriting());
+    }
+
     @Override
     public boolean onStartStylusHandwriting() {
         getTracer().onStartStylusHandwriting(() -> super.onStartStylusHandwriting());
@@ -1233,6 +1254,10 @@ public final class MockIme extends InputMethodService {
             arguments.putParcelable("editorInfo", editorInfo);
             arguments.putBoolean("restarting", restarting);
             recordEventInternal("onStartInputView", runnable, arguments);
+        }
+
+        void onPrepareStylusHandwriting(@NonNull Runnable runnable) {
+            recordEventInternal("onPrepareStylusHandwriting", runnable);
         }
 
         void onStartStylusHandwriting(@NonNull Runnable runnable) {

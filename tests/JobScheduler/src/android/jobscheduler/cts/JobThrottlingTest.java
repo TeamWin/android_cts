@@ -127,6 +127,7 @@ public class JobThrottlingTest {
 
     private TestAppInterface mTestAppInterface;
     private DeviceConfigStateHelper mDeviceConfigStateHelper;
+    private DeviceConfigStateHelper mActivityManagerDeviceConfigStateHelper;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -184,6 +185,9 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                         .setInt("min_ready_non_active_jobs_count", 0).build());
+        mActivityManagerDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
+        toggleAutoRestrictedBucketOnBgRestricted(false);
         // Make sure the screen doesn't turn off when the test turns it on.
         mInitialDisplayTimeout =
                 Settings.System.getString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT);
@@ -269,7 +273,11 @@ public class JobThrottlingTest {
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        toggleAutoRestrictedBucketOnBgRestricted(true);
         setTestPackageRestricted(true);
+        assertFalse("Job stopped after test app was restricted with auto-restricted-bucket on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        toggleAutoRestrictedBucketOnBgRestricted(false);
         assertTrue("Job did not stop after test app was restricted",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         assertEquals(JobParameters.STOP_REASON_BACKGROUND_RESTRICTION,
@@ -310,12 +318,27 @@ public class JobThrottlingTest {
     }
 
     @Test
+    public void testRestrictedJobAllowedWhenAutoRestrictedBucketFeatureOn() throws Exception {
+        setTestPackageRestricted(true);
+        sendScheduleJobBroadcast(false);
+        assertFalse("Job started for restricted app",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        toggleAutoRestrictedBucketOnBgRestricted(true);
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
     public void testEJStoppedWhenRestricted() throws Exception {
         mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        toggleAutoRestrictedBucketOnBgRestricted(true);
         setTestPackageRestricted(true);
+        assertFalse("Job stopped after test app was restricted with auto-restricted-bucket on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        toggleAutoRestrictedBucketOnBgRestricted(false);
         assertTrue("Job did not stop after test app was restricted",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         assertEquals(JobParameters.STOP_REASON_BACKGROUND_RESTRICTION,
@@ -353,6 +376,18 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(15_000L));
         assertEquals(JobParameters.STOP_REASON_BACKGROUND_RESTRICTION,
                 mTestAppInterface.getLastParams().getStopReason());
+    }
+
+    @Test
+    public void testRestrictedEJAllowedWhenAutoRestrictedBucketFeatureOn() throws Exception {
+        setTestPackageRestricted(true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
+        assertFalse("Job started for restricted app",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        toggleAutoRestrictedBucketOnBgRestricted(true);
+        assertTrue("Job did not start when app was background unrestricted",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
@@ -1090,6 +1125,7 @@ public class JobThrottlingTest {
             }
         }
         mDeviceConfigStateHelper.restoreOriginalValues();
+        mActivityManagerDeviceConfigStateHelper.restoreOriginalValues();
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {
@@ -1112,6 +1148,11 @@ public class JobThrottlingTest {
     private void setRestrictedBucketEnabled(boolean enabled) {
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET, enabled ? "1" : "0");
+    }
+
+    private void toggleAutoRestrictedBucketOnBgRestricted(boolean enable) {
+        mActivityManagerDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted",
+                Boolean.toString(enable));
     }
 
     private boolean isTestAppTempWhitelisted() throws Exception {

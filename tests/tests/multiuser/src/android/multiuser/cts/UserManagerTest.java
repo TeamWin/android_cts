@@ -18,11 +18,13 @@ package android.multiuser.cts;
 
 import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.Manifest.permission.QUERY_USERS;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
+import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -59,6 +61,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -292,5 +295,63 @@ public final class UserManagerTest {
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
     public void getProfileParent_returnsNullForNonProfile() {
         assertThat(mUserManager.getProfileParent(TestApis.users().system().userHandle())).isNull();
+    }
+
+    @Test
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testGetRemainingCreatableUserCount() {
+        final int maxAllowedIterations = 15;
+        final String userType = USER_TYPE_FULL_SECONDARY;
+        final NewUserRequest request = new NewUserRequest.Builder().build();
+        final ArrayDeque<UserHandle> usersCreated = new ArrayDeque<>();
+
+        try {
+            final int initialRemainingCount = mUserManager.getRemainingCreatableUserCount(userType);
+            assertThat(initialRemainingCount).isAtLeast(0);
+
+            final int numUsersToAdd = Math.min(maxAllowedIterations, initialRemainingCount);
+
+            for (int i = 0; i < numUsersToAdd; i++) {
+                usersCreated.push(mUserManager.createUser(request).getUser());
+                assertThat(mUserManager.getRemainingCreatableUserCount(userType))
+                        .isEqualTo(initialRemainingCount - usersCreated.size());
+            }
+            for (int i = 0; i < numUsersToAdd; i++) {
+                mUserManager.removeUser(usersCreated.pop());
+                assertThat(mUserManager.getRemainingCreatableUserCount(userType))
+                        .isEqualTo(initialRemainingCount - usersCreated.size());
+            }
+        } finally {
+            usersCreated.forEach(this::removeUser);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testGetRemainingCreatableProfileCount() {
+        final int maxAllowedIterations = 15;
+        final String type = USER_TYPE_PROFILE_MANAGED;
+        final ArrayDeque<UserHandle> profilesCreated = new ArrayDeque<>();
+        final Set<String> disallowedPackages = new HashSet<>();
+        try {
+            final int initialRemainingCount =
+                    mUserManager.getRemainingCreatableProfileCount(type, false);
+            assertThat(initialRemainingCount).isAtLeast(0);
+
+            final int numUsersToAdd = Math.min(maxAllowedIterations, initialRemainingCount);
+
+            for (int i = 0; i < numUsersToAdd; i++) {
+                profilesCreated.push(mUserManager.createProfile(null, type, disallowedPackages));
+                assertThat(mUserManager.getRemainingCreatableProfileCount(type, false))
+                        .isEqualTo(initialRemainingCount - profilesCreated.size());
+            }
+            for (int i = 0; i < numUsersToAdd; i++) {
+                mUserManager.removeUser(profilesCreated.pop());
+                assertThat(mUserManager.getRemainingCreatableProfileCount(type, false))
+                        .isEqualTo(initialRemainingCount - profilesCreated.size());
+            }
+        } finally {
+            profilesCreated.forEach(this::removeUser);
+        }
     }
 }

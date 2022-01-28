@@ -118,6 +118,7 @@ class DeviceProfilesTest : CoreTestBase() {
                 // Other arbitrarily Strings should not be supported either.
                 "watch",
                 "auto",
+                "computer",
                 "companion_device",
                 ""
         )
