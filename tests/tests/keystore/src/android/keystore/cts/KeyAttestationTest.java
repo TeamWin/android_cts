@@ -115,7 +115,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for Android KeysStore attestation.
+ * Tests for Android Keystore attestation.
  */
 @RunWith(AndroidJUnit4.class)
 public class KeyAttestationTest {
@@ -1106,9 +1106,9 @@ public class KeyAttestationTest {
 
     @SuppressWarnings("unchecked")
     private void checkAttestationSecurityLevelDependentParams(Attestation attestation) {
-        assertThat("Attestation version must be 1, 2, 3, 4 or 100",
+        assertThat("Attestation version must be one of: {1, 2, 3, 4, 100, 200}",
                 attestation.getAttestationVersion(),
-                either(is(1)).or(is(2)).or(is(3)).or(is(4)).or(is(100)));
+                either(is(1)).or(is(2)).or(is(3)).or(is(4)).or(is(100)).or(is(200)));
 
         AuthorizationList teeEnforced = attestation.getTeeEnforced();
         AuthorizationList softwareEnforced = attestation.getSoftwareEnforced();
@@ -1122,7 +1122,7 @@ public class KeyAttestationTest {
                         attestation.getKeymasterSecurityLevel(),
                         is(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT));
                 assertThat(attestation.getKeymasterVersion(),
-                        either(is(2)).or(is(3)).or(is(4)).or(is(41)).or(is(100)));
+                        either(is(2)).or(is(3)).or(is(4)).or(is(41)).or(is(100)).or(is(200)));
 
                 checkRootOfTrust(attestation, false /* requireLocked */);
                 assertThat(teeEnforced.getOsVersion(), is(systemOsVersion));
