@@ -1722,7 +1722,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testStartLocalOnlyHotspotWithSupportedBand() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -3694,7 +3694,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testActiveCountryCodeChangedCallback() throws Exception {
         TestActiveCountryCodeChangedCallback testCountryCodeChangedCallback =
                 new TestActiveCountryCodeChangedCallback();
