@@ -18,7 +18,34 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.gameservice.cts">
 
-    <application>
+    <uses-permission android:name="android.permission.MANAGE_GAME_ACTIVITY"/>
+    <uses-permission android:name="android.service.games.cts.TEST_START_ACTIVITY"/>
+
+    <application android:label="CtsGameServiceTestApp">
+
+        <service
+            android:name="android.service.games.TestGameService"
+            android:exported="true"
+            android:permission="android.permission.BIND_GAME_SERVICE">
+            <meta-data android:name="android.game_service" android:resource="@xml/game_service"/>
+            <intent-filter>
+                <action android:name="android.service.games.action.GAME_SERVICE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="android.service.games.TestGameSessionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_GAME_SERVICE"/>
+
+        <service
+            android:name="android.service.games.GameServiceTestService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.service.games.action.TEST_SERVICE"/>
+            </intent-filter>
+        </service>
+
         <uses-library android:name="android.test.runner" />
     </application>
 

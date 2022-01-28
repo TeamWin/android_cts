@@ -17,14 +17,12 @@ package {
 }
 
 android_test_helper_app {
-    name: "CtsGameServiceTestApp",
+    name: "CtsGameServiceStartActivityVerifier",
     srcs: [
         "src/**/*.java",
     ],
     static_libs: [
-        "androidx.annotation_annotation",
-        "CtsGameServiceAidls",
-        "guava",
+        "androidx.appcompat_appcompat",
     ],
     defaults: ["cts_support_defaults"],
     min_sdk_version: "current",
