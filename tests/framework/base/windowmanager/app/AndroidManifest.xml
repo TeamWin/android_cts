@@ -619,7 +619,8 @@
             android:exported="true"
             android:colorMode="wideColorGamut"/>
         <activity android:name=".KeepClearRectsActivity"
-            android:exported="true"/>
+            android:exported="true"
+            android:theme="@style/NoInsetsTheme"/>
 
         <!-- Splash Screen Test Activities -->
         <activity android:name=".HandleSplashScreenExitActivity"
