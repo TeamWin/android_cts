@@ -83,9 +83,9 @@ public class LowPowerStandbyTest {
     @Test
     @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
     public void testSetLowPowerStandbyEnabled_reflectedByIsLowPowerStandbyEnabled() {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
-
         SystemUtil.runWithShellPermissionIdentity(() -> {
+            assumeTrue(mPowerManager.isLowPowerStandbySupported());
+
             mPowerManager.setLowPowerStandbyEnabled(true);
             assertTrue(mPowerManager.isLowPowerStandbyEnabled());
 
@@ -97,9 +97,9 @@ public class LowPowerStandbyTest {
     @Test
     @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
     public void testSetLowPowerStandbyEnabled_sendsBroadcast() {
-        assumeTrue(mPowerManager.isLowPowerStandbySupported());
-
         SystemUtil.runWithShellPermissionIdentity(() -> {
+            assumeTrue(mPowerManager.isLowPowerStandbySupported());
+
             mPowerManager.setLowPowerStandbyEnabled(false);
 
             CallbackAsserter broadcastAsserter = CallbackAsserter.forBroadcast(
