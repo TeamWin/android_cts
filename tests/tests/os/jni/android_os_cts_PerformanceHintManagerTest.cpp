@@ -28,23 +28,24 @@ static jstring toJString(JNIEnv *env, const char* c_str) {
 constexpr int64_t DEFAULT_TARGET_NS = 16666666L;
 
 class SessionWrapper {
- public:
-  explicit SessionWrapper(APerformanceHintSession* session) : session_(session) {}
-  SessionWrapper(SessionWrapper&& other) : session_(other.session_) {
-      other.session_ = nullptr;
-  }
-  ~SessionWrapper() {
-    if (session_)
-      APerformanceHint_closeSession(session_);
-  }
+public:
+    explicit SessionWrapper(APerformanceHintSession* session) : mSession(session) {}
+    SessionWrapper(SessionWrapper&& other) : mSession(other.mSession) {
+        other.mSession = nullptr;
+    }
+    ~SessionWrapper() {
+        if (mSession) {
+            APerformanceHint_closeSession(mSession);
+        }
+    }
 
-  SessionWrapper(const SessionWrapper&) = delete;
-  SessionWrapper& operator=(const SessionWrapper&) = delete;
+    SessionWrapper(const SessionWrapper&) = delete;
+    SessionWrapper& operator=(const SessionWrapper&) = delete;
 
-  APerformanceHintSession* session() const { return session_; }
+    APerformanceHintSession* session() const { return mSession; }
 
- private:
-  APerformanceHintSession* session_;
+private:
+    APerformanceHintSession* mSession;
 };
 
 static SessionWrapper createSession(APerformanceHintManager* manager) {
@@ -60,6 +61,10 @@ static jstring nativeTestCreateHintSession(JNIEnv *env, jobject) {
     if (a.session() == nullptr) {
         if (b.session() != nullptr) {
             return toJString(env, "b is not null");
+        }
+    } else if (b.session() == nullptr) {
+        if (a.session() != nullptr) {
+            return toJString(env, "a is not null");
         }
     } else if (a.session() == b.session()) {
         return toJString(env, "a and b matches");
@@ -166,8 +171,7 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeReportActualWorkDurationWithIllegalArgument},
 };
 
-int register_android_os_cts_PerformanceHintManagerTest(JNIEnv *env)
-{
+int register_android_os_cts_PerformanceHintManagerTest(JNIEnv *env) {
     jclass clazz = env->FindClass("android/os/cts/PerformanceHintManagerTest");
 
     return env->RegisterNatives(clazz, gMethods,
