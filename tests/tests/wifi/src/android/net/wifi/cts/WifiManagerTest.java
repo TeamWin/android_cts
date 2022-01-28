@@ -1701,7 +1701,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private SoftApConfiguration.Builder generateSoftApConfigBuilderWithSsid(String ssid) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             return new SoftApConfiguration.Builder().setWifiSsid(
                     WifiSsid.fromBytes(ssid.getBytes(StandardCharsets.UTF_8)));
         }
@@ -1718,7 +1719,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private void unregisterLocalOnlyHotspotSoftApCallback(TestSoftApCallback lohsSoftApCallback) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
         } else {
             mWifiManager.unregisterSoftApCallback(lohsSoftApCallback);
@@ -2360,7 +2362,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private void verifyLohsRegisterSoftApCallback(TestExecutor executor,
             TestSoftApCallback callback) throws Exception {
         // Register callback to get SoftApCapability
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             mWifiManager.registerLocalOnlyHotspotSoftApCallback(executor, callback);
         } else {
             mWifiManager.registerSoftApCallback(executor, callback);
@@ -2386,7 +2389,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertTrue(currentConfig.isUserConfiguration());
         }
 
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             // Verify set/get with the deprecated set/getSsid()
             SoftApConfiguration oldSsidConfig = new SoftApConfiguration.Builder(targetConfig)
                     .setWifiSsid(null)
@@ -2399,7 +2403,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
         SoftApConfiguration testSoftApConfig) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             assertEquals(currentConfig.getWifiSsid(), testSoftApConfig.getWifiSsid());
         }
         assertEquals(currentConfig.getSsid(), testSoftApConfig.getSsid());
@@ -2430,7 +2435,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     testSoftApConfig.isBridgedModeOpportunisticShutdownEnabled());
             assertEquals(currentConfig.isIeee80211axEnabled(),
                     testSoftApConfig.isIeee80211axEnabled());
-            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                    || ApiLevelUtil.codenameStartsWith("T")) {
                 assertEquals(currentConfig.getBridgedModeOpportunisticShutdownTimeoutMillis(),
                         testSoftApConfig.getBridgedModeOpportunisticShutdownTimeoutMillis());
                 assertEquals(currentConfig.isIeee80211beEnabled(),
@@ -2660,7 +2666,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                             callback.getCurrentSoftApCapability()).keyAt(0))
                     .setHiddenSsid(false);
 
-            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                    || ApiLevelUtil.codenameStartsWith("T")) {
                 softApConfigBuilder.setBridgedModeOpportunisticShutdownTimeoutMillis(30_000);
             }
 
@@ -2713,7 +2720,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
 
             // Test 11 BE control config
-            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                    || ApiLevelUtil.codenameStartsWith("T")) {
                 if (callback.getCurrentSoftApCapability()
                         .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_BE)) {
                     softApConfigBuilder.setIeee80211beEnabled(true);
