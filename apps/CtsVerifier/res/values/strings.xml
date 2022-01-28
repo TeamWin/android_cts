@@ -395,6 +395,7 @@
     <string name="bt_le">Bluetooth LE</string>
     <string name="bt_hid">Bluetooth HID</string>
     <string name="bt_le_coc">Bluetooth LE CoC</string>
+    <string name="bt_background_rfcomm">Bluetooth Background RFCOMM</string>
 
     <string name="bt_toggle_bluetooth">Toggle Bluetooth</string>
     <string name="bt_toggle_instructions">Disable and enable Bluetooth to successfully complete this test.</string>
@@ -440,6 +441,19 @@
         \n\nTap \"01 Bluetooth LE CoC Server Test\" on this device, then tap \"01 Bluetooth LE CoC Client Test\" on the other device.
         \nWhen the test is complete, move to the next item. You must complete all tests.
     </string>
+    <string name="bt_background_rfcomm_test_name">Bluetooth Background RFCOMM Test</string>
+    <string name="bt_background_rfcomm_test_info">
+        This test verifies that system applications can register RFCOMM listeners via the
+        BluetoothAdapter without needing a foreground service.
+    </string>
+    <string name="bt_background_rfcomm_test_client_name">Bluetooth Background RFCOMM Test Client</string>
+    <string name="bt_background_rfcomm_test_client_info">
+        Run by a second phone which acts as the RFCOMM client to connect to the rfcomm listener.
+        This phone should be paired with the primary phone which runs the Bluetooth Background
+        RFCOMM Test.
+    </string>
+    <string name="bt_background_rfcomm_test_uuid">1bd18454-462a-4117-bd58-77cb4d81ddbe</string>
+    <string name="bt_background_rfcomm_test_message">Test Message</string>
 
     <!-- BLE CoC client side strings -->
     <string name="ble_coc_client_test_name">01 Bluetooth LE CoC Client Test</string>
@@ -557,6 +571,13 @@
     <string name="bt_scanning">Scanning...</string>
     <string name="bt_unpair">Device must be unpaired via Bluetooth settings before completing the test.\n\nUnpair the device in settings, make the server discoverable, and rescan to pick this device.</string>
     <string name="bt_settings">Bluetooth Settings</string>
+
+    <string name="bt_background_rfcomm_test_start_client">On the client device: enable (or toggle) Bluetooth and connect to this device, then start the client test.</string>
+    <string name="bt_background_rfcomm_test_socket_received">Received client connection.</string>
+    <string name="bt_background_rfcomm_test_sending_message">Sending test message.</string>
+    <string name="bt_background_rfcomm_test_waiting_for_message">Waiting for message.</string>
+    <string name="bt_background_rfcomm_test_connecting_to_server">Connecting to server.</string>
+    <string name="bt_background_rfcomm_test_doing_sdp">Doing service discovery of server.</string>
 
     <!-- BLE client side strings -->
     <string name="ble_client_service_name">Bluetooth LE GATT Client Handler Service</string>
