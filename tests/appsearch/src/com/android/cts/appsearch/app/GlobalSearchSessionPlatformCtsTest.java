@@ -20,9 +20,11 @@ import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResu
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
+import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
@@ -301,6 +303,39 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
         assertPackageCannotAccess(PKG_A);
+    }
+
+    @Test
+    public void testGlobalGetById_withAccess() throws Exception {
+        indexGloballySearchableDocument(PKG_A);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+
+                    assertThat(result.getSuccesses()).hasSize(1);
+
+                    // Can't get non existent document
+                    AppSearchBatchResult<String, GenericDocument> nonExistent = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id2")
+                                            .build()).get();
+
+                    assertThat(nonExistent.isSuccess()).isFalse();
+                    assertThat(nonExistent.getSuccesses()).hasSize(0);
+
+                    // TODO(b/203809101) : Test Can't get document without permission
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
     }
 
     @Test
