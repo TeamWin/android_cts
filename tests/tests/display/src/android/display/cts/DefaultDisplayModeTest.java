@@ -17,6 +17,7 @@
 package android.display.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -44,8 +45,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 @RunWith(AndroidJUnit4.class)
 public class DefaultDisplayModeTest {
@@ -53,7 +59,8 @@ public class DefaultDisplayModeTest {
 
     private DisplayManager mDisplayManager;
     private Display mDefaultDisplay;
-    private Display.Mode mOriginalDisplayModeSettings;
+    private Display.Mode mOriginalGlobalDisplayModeSettings;
+    private Display.Mode mOriginalDisplaySpecificModeSettings;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -71,6 +78,7 @@ public class DefaultDisplayModeTest {
         mDefaultDisplay = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
         cacheOriginalUserPreferredModeSetting();
         mDisplayManager.clearGlobalUserPreferredDisplayMode();
+        mDefaultDisplay.clearUserPreferredDisplayMode();
     }
 
     @After
@@ -237,9 +245,64 @@ public class DefaultDisplayModeTest {
         assertNull(mDisplayManager.getGlobalUserPreferredDisplayMode());
     }
 
+    @Test
+    public void testSetUserPreferredDisplayModePrioritizesDisplaySpecificMode()
+            throws InterruptedException {
+        Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
+        assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
+
+        // Set the global display mode which is different from default display mode
+        Display.Mode globalDefaultMode = findNonDefaultMode(mDefaultDisplay);
+        assertNotNull(globalDefaultMode);
+        mDisplayManager.setGlobalUserPreferredDisplayMode(globalDefaultMode);
+        waitUntil(mDefaultDisplay,
+                mDefaultDisplay -> mDefaultDisplay.getDefaultMode().getModeId()
+                        == globalDefaultMode.getModeId(),
+                Duration.ofSeconds(5));
+        assertTrue(mDefaultDisplay.getDefaultMode()
+                .matches(globalDefaultMode.getPhysicalWidth(),
+                        globalDefaultMode.getPhysicalHeight(),
+                        globalDefaultMode.getRefreshRate()));
+
+        // Set a display mode, only for a specific display which is different from default display
+        // mode
+        Display.Mode displaySpecificMode = findNonDefaultMode(mDefaultDisplay);
+        assertNotNull(displaySpecificMode);
+        mDefaultDisplay.setUserPreferredDisplayMode(displaySpecificMode);
+        waitUntil(mDefaultDisplay,
+                mDefaultDisplay -> mDefaultDisplay.getDefaultMode().getModeId()
+                        == displaySpecificMode.getModeId(),
+                Duration.ofSeconds(5));
+        assertTrue(mDefaultDisplay.getDefaultMode()
+                .matches(displaySpecificMode.getPhysicalWidth(),
+                        displaySpecificMode.getPhysicalHeight(),
+                        displaySpecificMode.getRefreshRate()));
+        assertFalse(mDefaultDisplay.getDefaultMode()
+                .matches(globalDefaultMode.getPhysicalWidth(),
+                        globalDefaultMode.getPhysicalHeight(),
+                        globalDefaultMode.getRefreshRate()));
+
+        mDisplayManager.setGlobalUserPreferredDisplayMode(globalDefaultMode);
+        // This should never happen. The display specific mode has priority over global
+        // display mode.
+        waitUntil(mDefaultDisplay,
+                mDefaultDisplay -> mDefaultDisplay.getDefaultMode().getModeId()
+                        == globalDefaultMode.getModeId(),
+                Duration.ofSeconds(5));
+        assertTrue(mDefaultDisplay.getDefaultMode()
+                .matches(displaySpecificMode.getPhysicalWidth(),
+                        displaySpecificMode.getPhysicalHeight(),
+                        displaySpecificMode.getRefreshRate()));
+        assertFalse(mDefaultDisplay.getDefaultMode()
+                .matches(globalDefaultMode.getPhysicalWidth(),
+                        globalDefaultMode.getPhysicalHeight(),
+                        globalDefaultMode.getRefreshRate()));
+    }
+
     private void cacheOriginalUserPreferredModeSetting() {
-        mOriginalDisplayModeSettings =
+        mOriginalGlobalDisplayModeSettings =
                 mDisplayManager.getGlobalUserPreferredDisplayMode();
+        mOriginalDisplaySpecificModeSettings = mDefaultDisplay.getUserPreferredDisplayMode();
     }
 
     private void restoreOriginalDisplayModeSettings() {
@@ -247,10 +310,15 @@ public class DefaultDisplayModeTest {
         if (mDisplayManager == null) {
             return;
         }
-        if (mOriginalDisplayModeSettings == null) {
+        if (mOriginalGlobalDisplayModeSettings == null) {
             mDisplayManager.clearGlobalUserPreferredDisplayMode();
         } else {
-            mDisplayManager.setGlobalUserPreferredDisplayMode(mOriginalDisplayModeSettings);
+            mDisplayManager.setGlobalUserPreferredDisplayMode(mOriginalGlobalDisplayModeSettings);
+        }
+        if (mOriginalDisplaySpecificModeSettings == null) {
+            mDefaultDisplay.clearUserPreferredDisplayMode();
+        } else {
+            mDefaultDisplay.setUserPreferredDisplayMode(mOriginalDisplaySpecificModeSettings);
         }
     }
 
@@ -314,4 +382,43 @@ public class DefaultDisplayModeTest {
             return mLatch.await(DISPLAY_CHANGE_TIMEOUT_SECS, TimeUnit.SECONDS);
         }
     };
+
+    private void waitUntil(Display display, Predicate<Display> pred, Duration maxWait)
+            throws InterruptedException {
+        final int id = display.getDisplayId();
+        final Lock lock = new ReentrantLock();
+        final Condition displayChanged = lock.newCondition();
+        DisplayManager.DisplayListener listener = new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayChanged(int displayId) {
+                if (displayId != id) {
+                    return;
+                }
+                lock.lock();
+                try {
+                    displayChanged.signal();
+                } finally {
+                    lock.unlock();
+                }
+            }
+            @Override
+            public void onDisplayAdded(int displayId) {}
+            @Override
+            public void onDisplayRemoved(int displayId) {}
+        };
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(listener, handler);
+        long remainingNanos = maxWait.toNanos();
+        lock.lock();
+        try {
+            while (!pred.test(display)) {
+                if (remainingNanos <= 0L) {
+                    return;
+                }
+                remainingNanos = displayChanged.awaitNanos(remainingNanos);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
 }
