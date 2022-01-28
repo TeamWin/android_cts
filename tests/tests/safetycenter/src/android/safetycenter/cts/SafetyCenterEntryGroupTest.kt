@@ -121,6 +121,15 @@ class SafetyCenterEntryGroupTest {
     }
 
     @Test
+    fun getEntries_mutationsAreNotReflected() {
+        val mutatedEntries = entryGroup1.entries
+        mutatedEntries.add(entry2)
+
+        assertThat(mutatedEntries).containsExactly(entry1, entry2)
+        assertThat(entryGroup1.entries).doesNotContain(entry2)
+    }
+
+    @Test
     fun describeContents_returns0() {
         assertThat(entryGroup1.describeContents()).isEqualTo(0)
     }
@@ -147,6 +156,26 @@ class SafetyCenterEntryGroupTest {
 
     @Test
     fun equals_hashCode_toString_equalByValue_areEqual() {
+        val entry = SafetyCenterEntryGroup.Builder(groupId1)
+                .setTitle("A group title")
+                .setSummary("A group summary")
+                .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
+                .setEntries(listOf(entry1))
+                .build()
+        val equivalentEntry = SafetyCenterEntryGroup.Builder(groupId1)
+                .setTitle("A group title")
+                .setSummary("A group summary")
+                .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
+                .setEntries(listOf(entry1))
+                .build()
+
+        assertThat(entry).isEqualTo(equivalentEntry)
+        assertThat(entry.hashCode()).isEqualTo(equivalentEntry.hashCode())
+        assertThat(entry.toString()).isEqualTo(equivalentEntry.toString())
+    }
+
+    @Test
+    fun equals_hashCode_toString_fromCopyBuilder_areEqual() {
         val equivalentToEntryGroup1 = SafetyCenterEntryGroup.Builder(entryGroup1).build()
 
         assertThat(equivalentToEntryGroup1).isEqualTo(entryGroup1)

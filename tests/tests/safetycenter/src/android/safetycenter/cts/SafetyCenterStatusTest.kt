@@ -114,6 +114,15 @@ class SafetyCenterStatusTest {
     }
 
     @Test
+    fun equals_hashCode_toString_fromCopyBuilder_areEqual() {
+        val copyOfBaseStatus = SafetyCenterStatus.Builder(baseStatus).build()
+
+        assertThat(copyOfBaseStatus).isEqualTo(baseStatus)
+        assertThat(copyOfBaseStatus.hashCode()).isEqualTo(baseStatus.hashCode())
+        assertThat(copyOfBaseStatus.toString()).isEqualTo(baseStatus.toString())
+    }
+
+    @Test
     fun equals_toString_withDifferentTitles_areNotEqual() {
         val unequalStatus = SafetyCenterStatus.Builder(baseStatus)
                 .setTitle("that's discarsting")
