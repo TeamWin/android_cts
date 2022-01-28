@@ -17,6 +17,7 @@
 package android.net.wifi.aware.cts;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 
 import android.content.BroadcastReceiver;
@@ -32,6 +33,7 @@ import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiScanner;
 import android.net.wifi.aware.AttachCallback;
+import android.net.wifi.aware.AwareParams;
 import android.net.wifi.aware.AwareResources;
 import android.net.wifi.aware.Characteristics;
 import android.net.wifi.aware.DiscoverySession;
@@ -1145,9 +1147,6 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Test AwareResources constructor function.
      */
     public void testAwareResourcesConstructor() {
-        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            return;
-        }
         AwareResources awareResources = new AwareResources(AVAILABLE_DATA_PATH_COUNT,
                 AVAILABLE_PUBLISH_SESSION_COUNT, AVAILABLE_SUBSCRIBE_SESSION_COUNT);
         assertEquals(AVAILABLE_DATA_PATH_COUNT, awareResources.getAvailableDataPathsCount());
@@ -1155,6 +1154,44 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 .getAvailablePublishSessionsCount());
         assertEquals(AVAILABLE_SUBSCRIBE_SESSION_COUNT, awareResources
                 .getAvailableSubscribeSessionsCount());
+    }
+
+    /**
+     * Verify setAwareParams works when have permission
+     */
+    public void testAwareParams() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        AwareParams params = new AwareParams();
+        params.setDiscoveryWindowWakeInterval24Ghz(5);
+        params.setDiscoveryWindowWakeInterval5Ghz(5);
+        params.setDiscoveryBeaconIntervalMills(50);
+        params.setDwEarlyTerminationEnabled(true);
+        params.setMacRandomizationIntervalSeconds(1000);
+        params.setNumSpatialStreamsInDiscovery(1);
+        assertEquals(5, params.getDiscoveryWindowWakeInterval24Ghz());
+        assertEquals(5, params.getDiscoveryWindowWakeInterval5Ghz());
+        assertEquals(50, params.getDiscoveryBeaconIntervalMills());
+        assertEquals(1000, params.getMacRandomizationIntervalSeconds());
+        assertEquals(1, params.getNumSpatialStreamsInDiscovery());
+        assertTrue(params.isDwEarlyTerminationEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiAwareManager.setAwareParams(params)
+        );
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiAwareManager.setAwareParams(null)
+        );
+    }
+
+    /**
+     * Verify setAwareParams throw exception without permission
+     */
+    public void testAwareParamsWithoutPermission() {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        assertThrows(SecurityException.class, () -> mWifiAwareManager.setAwareParams(null));
     }
 
     // local utilities
