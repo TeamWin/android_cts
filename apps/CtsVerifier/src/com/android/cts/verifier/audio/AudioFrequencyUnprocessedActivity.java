@@ -18,6 +18,7 @@ package com.android.cts.verifier.audio;
 
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.soundio.SoundPlayerObject;
 import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
