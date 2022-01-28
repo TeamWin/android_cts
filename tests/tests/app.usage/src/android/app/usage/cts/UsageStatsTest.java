@@ -83,6 +83,7 @@ import android.util.SparseLongArray;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
@@ -165,6 +166,8 @@ public class UsageStatsTest {
             "notification_seen_duration";
     private static final String KEY_NOTIFICATION_SEEN_PROMOTED_BUCKET =
             "notification_seen_promoted_bucket";
+    private static final String KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS =
+            "broadcast_response_window_timeout_ms";
 
     private static final int DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -1522,6 +1525,120 @@ public class UsageStatsTest {
                     0 /* notificationCancelledCount */);
         } finally {
             connection.unbind();
+        }
+    }
+
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @MediumTest
+    @Test
+    public void testBroadcastResponseStats_changeResponseWindowDuration() throws Exception {
+        final long broadcastResponseWindowDurationMs = TimeUnit.MINUTES.toMillis(2);
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS,
+                    String.valueOf(broadcastResponseWindowDurationMs));
+
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            try {
+                ITestReceiver testReceiver = connection.getITestReceiver();
+
+                // Send a broadcast with a request to record response and verify broadcast-sent
+                // count gets incremented.
+                final Intent intent = new Intent().setComponent(new ComponentName(
+                        TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Trigger a notification from test app and verify notification-posted count gets
+                // incremented.
+                testReceiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                        TEST_NOTIFICATION_CHANNEL_NAME,
+                        TEST_NOTIFICATION_CHANNEL_DESC);
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        1 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                testReceiver.cancelNotification(TEST_NOTIFICATION_ID_1);
+                mUsageStatsManager.clearBroadcastResponseStats(TEST_APP_PKG,
+                        TEST_RESPONSE_STATS_ID_1);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                SystemClock.sleep(broadcastResponseWindowDurationMs);
+                // Trigger a notification from test app but verify counts do not get
+                // incremented as the notification is posted after the window durations is expired.
+                testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                        buildNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                                TEST_NOTIFICATION_TEXT_1));
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+            } finally {
+                connection.unbind();
+            }
         }
     }
 
