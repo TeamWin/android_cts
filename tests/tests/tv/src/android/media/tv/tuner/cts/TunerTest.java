@@ -369,25 +369,21 @@ public class TunerTest {
 
     @Test
     public void testScanning() throws Exception {
+        // Use the same test approach as testTune since it is not possible to test all frontends on
+        // one signal source
         List<Integer> ids = mTuner.getFrontendIds();
         if (ids == null) return;
         assertFalse(ids.isEmpty());
-        for (int id : ids) {
-            FrontendInfo info = mTuner.getFrontendInfoById(id);
-            if (info != null) {
-                mLockLatch = new CountDownLatch(1);
-                int res = mTuner.scan(
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.scan(
                         createFrontendSettings(info),
                         Tuner.SCAN_TYPE_AUTO,
                         getExecutor(),
                         getScanCallback());
-               assertEquals(Tuner.RESULT_SUCCESS, res);
-               assertTrue(mLockLatch.await(SCAN_TIMEOUT_MS, TimeUnit.MILLISECONDS));
-               res = mTuner.cancelScanning();
-               assertEquals(Tuner.RESULT_SUCCESS, res);
-            }
-        }
-        mLockLatch = null;
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        res = mTuner.cancelScanning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
     }
 
     @Test
