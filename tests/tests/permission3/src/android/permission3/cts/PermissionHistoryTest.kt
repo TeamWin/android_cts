@@ -101,7 +101,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
 
         openPermissionDashboard()
         waitFindObject(By.res("android:id/title").textContains("Microphone")).click()
-        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL_1))
         pressBack()
         pressBack()
@@ -117,16 +117,24 @@ class PermissionHistoryTest : BasePermissionHubTest() {
         waitFindObject(By.textContains(APP_LABEL_1))
 
         openMicrophoneTimeline()
-        val menuView = waitFindObject(By.descContains(MORE_OPTIONS))
-        menuView.click()
+        // Auto doesn't show the "Show system" action when it is disabled. If a system app ends up
+        // being installed for this test, then the Auto logic should be tested too.
+        if (!isAutomotive) {
+            val menuView = waitFindObject(By.descContains(MORE_OPTIONS))
+            menuView.click()
 
-        waitFindObject(By.text(SHOW_SYSTEM))
+            waitFindObject(By.text(SHOW_SYSTEM))
+        }
+
         pressBack()
         pressBack()
     }
 
     @Test
     fun testToggleFrom24HoursTo7Days() {
+        // Auto doesn't support the 7 day view
+        assumeFalse(isAutomotive)
+
         openMicrophoneApp(INTENT_ACTION_1)
         waitFindObject(By.textContains(APP_LABEL_1))
 
@@ -151,6 +159,9 @@ class PermissionHistoryTest : BasePermissionHubTest() {
 
     @Test
     fun testToggleFrom24HoursTo7DaysInTimeline() {
+        // Auto doesn't support the 7 day view
+        assumeFalse(isAutomotive)
+
         openMicrophoneApp(INTENT_ACTION_1)
         waitFindObject(By.textContains(APP_LABEL_1))
 
@@ -181,7 +192,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
         waitFindObject(By.textContains(APP_LABEL_1))
 
         openMicrophoneTimeline()
-        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL_1))
         waitFindObject(By.res(
                 PERMISSION_CONTROLLER_PACKAGE_ID_PREFIX + HISTORY_PREFERENCE_ICON))
@@ -199,7 +210,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
         waitFindObject(By.textContains(APP_LABEL_2))
 
         openMicrophoneTimeline()
-        waitFindObject(By.descContains(micLabel))
+        waitFindObject(By.textContains(micLabel))
         waitFindObject(By.textContains(APP_LABEL_1))
         waitFindObject(By.textContains(APP_LABEL_2))
         pressBack()
