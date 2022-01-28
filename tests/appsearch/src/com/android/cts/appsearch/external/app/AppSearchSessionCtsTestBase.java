@@ -335,7 +335,9 @@ public abstract class AppSearchSessionCtsTestBase {
 
     @Test
     public void testGetSchema_visibilitySetting() throws Exception {
-        assumeTrue(mDb1.getFeatures().isFeatureSupported(Features.GET_SCHEMA_RESPONSE_VISIBILITY));
+        assumeTrue(
+                mDb1.getFeatures()
+                        .isFeatureSupported(Features.ROLE_AND_PERMISSION_WITH_GET_VISIBILITY));
         AppSearchSchema emailSchema =
                 new AppSearchSchema.Builder("Email1")
                         .addProperty(
@@ -368,6 +370,13 @@ public abstract class AppSearchSessionCtsTestBase {
                                 "Email1", /*visible=*/ true, packageIdentifier1)
                         .setSchemaTypeVisibilityForPackage(
                                 "Email1", /*visible=*/ true, packageIdentifier2)
+                        .addAllowedRoleForSchemaTypeVisibility("Email1", SetSchemaRequest.ROLE_HOME)
+                        .addAllowedRoleForSchemaTypeVisibility(
+                                "Email1", SetSchemaRequest.ROLE_ASSISTANT)
+                        .setRequiredPermissionsForSchemaTypeVisibility(
+                                "Email1",
+                                ImmutableSet.of(
+                                        SetSchemaRequest.READ_SMS, SetSchemaRequest.READ_CALENDAR))
                         .build();
 
         mDb1.setSchema(request).get();
@@ -380,11 +389,22 @@ public abstract class AppSearchSessionCtsTestBase {
                 .containsExactly("Email1");
         assertThat(getSchemaResponse.getSchemaTypesVisibleToPackages())
                 .containsExactly("Email1", ImmutableSet.of(packageIdentifier1, packageIdentifier2));
+        assertThat(getSchemaResponse.getAllowedRolesForSchemaTypeVisibility())
+                .containsExactly(
+                        "Email1",
+                        ImmutableSet.of(
+                                SetSchemaRequest.ROLE_HOME, SetSchemaRequest.ROLE_ASSISTANT));
+        assertThat(getSchemaResponse.getRequiredPermissionsForSchemaTypeVisibility())
+                .containsExactly(
+                        "Email1",
+                        ImmutableSet.of(SetSchemaRequest.READ_SMS, SetSchemaRequest.READ_CALENDAR));
     }
 
     @Test
     public void testGetSchema_visibilitySetting_notSupported() throws Exception {
-        assumeFalse(mDb1.getFeatures().isFeatureSupported(Features.GET_SCHEMA_RESPONSE_VISIBILITY));
+        assumeFalse(
+                mDb1.getFeatures()
+                        .isFeatureSupported(Features.ROLE_AND_PERMISSION_WITH_GET_VISIBILITY));
         AppSearchSchema emailSchema =
                 new AppSearchSchema.Builder("Email1")
                         .addProperty(
@@ -431,6 +451,47 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThrows(
                 UnsupportedOperationException.class,
                 () -> getSchemaResponse.getSchemaTypesVisibleToPackages());
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> getSchemaResponse.getAllowedRolesForSchemaTypeVisibility());
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> getSchemaResponse.getRequiredPermissionsForSchemaTypeVisibility());
+    }
+
+    @Test
+    public void testSetSchema_visibilitySettingRole_notSupported() {
+        assumeFalse(
+                mDb1.getFeatures()
+                        .isFeatureSupported(Features.ROLE_AND_PERMISSION_WITH_GET_VISIBILITY));
+        AppSearchSchema emailSchema = new AppSearchSchema.Builder("Email1").build();
+
+        SetSchemaRequest request =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(emailSchema)
+                        .setSchemaTypeDisplayedBySystem("Email1", /*displayed=*/ false)
+                        .addAllowedRoleForSchemaTypeVisibility("Email1", SetSchemaRequest.ROLE_HOME)
+                        .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> mDb1.setSchema(request).get());
+    }
+
+    @Test
+    public void testSetSchema_visibilitySettingPermission_notSupported() {
+        assumeFalse(
+                mDb1.getFeatures()
+                        .isFeatureSupported(Features.ROLE_AND_PERMISSION_WITH_GET_VISIBILITY));
+        AppSearchSchema emailSchema = new AppSearchSchema.Builder("Email1").build();
+
+        SetSchemaRequest request =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(emailSchema)
+                        .setSchemaTypeDisplayedBySystem("Email1", /*displayed=*/ false)
+                        .setRequiredPermissionsForSchemaTypeVisibility(
+                                "Email1", ImmutableSet.of(SetSchemaRequest.READ_SMS))
+                        .build();
+
+        assertThrows(UnsupportedOperationException.class, () -> mDb1.setSchema(request).get());
     }
 
     @Test
@@ -548,6 +609,80 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build()));
         assertThat(result.getSuccesses()).containsExactly("id1", null);
         assertThat(result.getFailures()).isEmpty();
+    }
+
+    @Test
+    public void testPutDocuments_emptyProperties() throws Exception {
+        // Schema registration
+        AppSearchSchema schema =
+                new AppSearchSchema.Builder("testSchema")
+                        .addProperty(
+                                new StringPropertyConfig.Builder("string")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_EXACT_TERMS)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.LongPropertyConfig.Builder("long")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.DoublePropertyConfig.Builder("double")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.BooleanPropertyConfig.Builder("boolean")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.BytesPropertyConfig.Builder("bytes")
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .build())
+                        .addProperty(
+                                new AppSearchSchema.DocumentPropertyConfig.Builder(
+                                                "document", AppSearchEmail.SCHEMA_TYPE)
+                                        .setCardinality(PropertyConfig.CARDINALITY_REPEATED)
+                                        .setShouldIndexNestedProperties(true)
+                                        .build())
+                        .build();
+        mDb1.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(schema, AppSearchEmail.SCHEMA)
+                                .build())
+                .get();
+
+        // Index a document
+        GenericDocument document =
+                new GenericDocument.Builder<>("namespace", "id1", "testSchema")
+                        .setPropertyBoolean("boolean")
+                        .setPropertyString("string")
+                        .setPropertyBytes("bytes")
+                        .setPropertyDouble("double")
+                        .setPropertyDocument("document")
+                        .setPropertyLong("long")
+                        .build();
+
+        AppSearchBatchResult<String, Void> result =
+                checkIsBatchResultSuccess(
+                        mDb1.put(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(document)
+                                        .build()));
+        assertThat(result.getSuccesses()).containsExactly("id1", null);
+        assertThat(result.getFailures()).isEmpty();
+
+        GetByDocumentIdRequest request =
+                new GetByDocumentIdRequest.Builder("namespace").addIds("id1").build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+        assertThat(outDocuments).hasSize(1);
+        GenericDocument outDocument = outDocuments.get(0);
+        assertThat(outDocument.getPropertyBooleanArray("boolean")).isEmpty();
+        assertThat(outDocument.getPropertyStringArray("string")).isEmpty();
+        assertThat(outDocument.getPropertyBytesArray("bytes")).isEmpty();
+        assertThat(outDocument.getPropertyDoubleArray("double")).isEmpty();
+        assertThat(outDocument.getPropertyDocumentArray("document")).isEmpty();
+        assertThat(outDocument.getPropertyLongArray("long")).isEmpty();
     }
 
     @Test
