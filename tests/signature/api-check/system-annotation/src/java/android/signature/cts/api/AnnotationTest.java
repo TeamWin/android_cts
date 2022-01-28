@@ -50,10 +50,6 @@ public class AnnotationTest extends AbstractApiTest {
         mExpectedApiFiles = getCommaSeparatedListRequired(instrumentationArgs, "expected-api-files");
         mAnnotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
 
-        // Make sure that the Instrumentation provided to this test is registered so it can be
-        // retrieved by the DynamicConfigDeviceSide below.
-        InstrumentationRegistry.registerInstance(getInstrumentation(), new Bundle());
-
         // Get the DynamicConfig.xml contents and extract the expected failures list.
         DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(MODULE_NAME);
         List<String> expectedFailures = dcds.getValues("expected_failures");
