@@ -938,7 +938,7 @@ public class WindowUntrustedTouchTest {
             @AnimRes int enterAnim, @AnimRes int exitAnim) {
         ConditionVariable animationsStarted = new ConditionVariable(false);
         ActivityOptions options = ActivityOptions.makeCustomAnimation(mContext, enterAnim, exitAnim,
-                mMainHandler, animationsStarted::open, /* finishedListener */ null);
+                0, mMainHandler, animationsStarted::open, /* finishedListener */ null);
         // We're testing the opacity coming from the animation here, not the one declared in the
         // activity, so we set its opacity to 1
         addActivityOverlay(packageName, /* opacity */ 1, touchable, options.toBundle());
