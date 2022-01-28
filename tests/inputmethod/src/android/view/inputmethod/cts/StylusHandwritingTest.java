@@ -22,6 +22,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -224,6 +225,89 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         }
     }
 
+    @Test
+    /**
+     * Inject stylus events to a focused EditText that disables autoHandwriting.
+     * {@link InputMethodManager#startStylusHandwriting(View)} should not be called.
+     */
+    public void testAutoHandwritingDisabled() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+            editText.setAutoHandwritingEnabled(false);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            TestUtils.injectStylusEvents(editText);
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should not start
+            notExpectEvent(
+                    stream,
+                    event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+
+            // Verify Stylus Handwriting window is not shown
+            assertFalse(expectCommand(
+                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
+                    .getReturnBooleanValue());
+        }
+    }
+
+    @Test
+    /**
+     * Inject stylus events out of a focused editor's view bound.
+     * {@link InputMethodManager#startStylusHandwriting(View)} should not be called for this editor.
+     */
+    public void testAutoHandwritingOutOfBound() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+            editText.setAutoHandwritingEnabled(false);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Inject stylus events out of the editor boundary.
+            TestUtils.injectStylusEvents(editText, 50, -50);
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should not start
+            notExpectEvent(
+                    stream,
+                    event -> "onStartStylusHandwriting".equals(event.getEventName()),
+                    TIMEOUT);
+
+            // Verify Stylus Handwriting window is not shown
+            assertFalse(expectCommand(
+                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
+                    .getReturnBooleanValue());
+        }
+    }
+
     private EditText launchTestActivity(@NonNull String marker) {
         return launchTestActivity(marker, getTestMarker()).first;
     }
@@ -239,6 +323,8 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
+            // Adding some top padding tests that inject stylus event out of the view boundary.
+            layout.setPadding(0, 100, 0, 0);
 
             final EditText focusedEditText = new EditText(activity);
             focusedEditText.setHint("focused editText");
