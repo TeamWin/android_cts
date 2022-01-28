@@ -63,8 +63,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     private static final float BAD_LONGITUDE = -181.0f;
     private static final float TOLERANCE = 0.0002f;
     private static final long OFFSET_TIME_US = 29 * 60 * 1000000L; // 29 minutes
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
 
-    private final String mInpPrefix = WorkDir.getMediaDirString();
     private final boolean mAndroid11 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
 
     @Override
@@ -74,8 +74,8 @@ public class MediaMuxerTest extends AndroidTestCase {
 
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(MEDIA_DIR + res);
+        File inpFile = new File(MEDIA_DIR + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
