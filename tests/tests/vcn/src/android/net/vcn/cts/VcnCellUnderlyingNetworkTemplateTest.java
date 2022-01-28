@@ -20,6 +20,7 @@ import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_FORBIDDEN;
 import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_REQUIRED;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.net.vcn.VcnCellUnderlyingNetworkTemplate;
 
@@ -28,7 +29,7 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-public class VcnCellUnderlyingNetworkTemplateTest {
+public class VcnCellUnderlyingNetworkTemplateTest extends VcnUnderlyingNetworkTemplateTestBase {
     private static final Set<String> ALLOWED_PLMN_IDS = Set.of("123456", "234567");
     private static final Set<Integer> ALLOWED_CARRIER_IDS = Set.of(100, 101);
 
@@ -40,6 +41,10 @@ public class VcnCellUnderlyingNetworkTemplateTest {
                 .setOpportunistic(MATCH_FORBIDDEN)
                 .setOperatorPlmnIds(ALLOWED_PLMN_IDS)
                 .setSimSpecificCarrierIds(ALLOWED_CARRIER_IDS)
+                .setMinDownstreamBandwidthKbps(
+                        MIN_ENTRY_DOWN_BANDWIDTH_KBPS, MIN_EXIT_DOWN_BANDWIDTH_KBPS)
+                .setMinUpstreamBandwidthKbps(
+                        MIN_ENTRY_UP_BANDWIDTH_KBPS, MIN_EXIT_UP_BANDWIDTH_KBPS)
                 .build();
     }
 
@@ -51,6 +56,7 @@ public class VcnCellUnderlyingNetworkTemplateTest {
         assertEquals(MATCH_FORBIDDEN, networkTemplate.getOpportunistic());
         assertEquals(ALLOWED_PLMN_IDS, networkTemplate.getOperatorPlmnIds());
         assertEquals(ALLOWED_CARRIER_IDS, networkTemplate.getSimSpecificCarrierIds());
+        verifyBandwidthsWithTestValues(networkTemplate);
     }
 
     @Test
@@ -62,6 +68,7 @@ public class VcnCellUnderlyingNetworkTemplateTest {
         assertEquals(MATCH_ANY, networkTemplate.getOpportunistic());
         assertEquals(new HashSet<String>(), networkTemplate.getOperatorPlmnIds());
         assertEquals(new HashSet<Integer>(), networkTemplate.getSimSpecificCarrierIds());
+        verifyBandwidthsWithDefaultValues(networkTemplate);
     }
 
     @Test
@@ -73,5 +80,27 @@ public class VcnCellUnderlyingNetworkTemplateTest {
                         .build();
         assertEquals(new HashSet<String>(), networkTemplate.getOperatorPlmnIds());
         assertEquals(new HashSet<Integer>(), networkTemplate.getSimSpecificCarrierIds());
+    }
+
+    @Test
+    public void testBuildWithInvalidDownstreamBandwidth() {
+        try {
+            new VcnCellUnderlyingNetworkTemplate.Builder()
+                    .setMinDownstreamBandwidthKbps(
+                            MIN_ENTRY_DOWN_BANDWIDTH_KBPS, MIN_ENTRY_DOWN_BANDWIDTH_KBPS + 1);
+            fail("Expect to fail because entry bandwidth is smaller than exit bandwidth");
+        } catch (Exception expected) {
+        }
+    }
+
+    @Test
+    public void testBuildWithInvalidUpstreamBandwidth() {
+        try {
+            new VcnCellUnderlyingNetworkTemplate.Builder()
+                    .setMinUpstreamBandwidthKbps(
+                            MIN_ENTRY_UP_BANDWIDTH_KBPS, MIN_ENTRY_UP_BANDWIDTH_KBPS + 1);
+            fail("Expect to fail because entry bandwidth is smaller than exit bandwidth");
+        } catch (Exception expected) {
+        }
     }
 }
