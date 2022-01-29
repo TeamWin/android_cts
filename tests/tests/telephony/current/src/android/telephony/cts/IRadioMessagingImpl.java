@@ -87,18 +87,6 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
     }
 
     @Override
-    public void cancelPendingUssd(int serial) {
-        Log.d(TAG, "cancelPendingUssd");
-
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
-        try {
-            mRadioMessagingResponse.cancelPendingUssdResponse(rsp);
-        } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to cancelPendingUssd from AIDL. Exception" + ex);
-        }
-    }
-
-    @Override
     public void deleteSmsOnRuim(int serial, int index) {
         Log.d(TAG, "deleteSmsOnRuim");
 
@@ -236,18 +224,6 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
             mRadioMessagingResponse.sendSmsExpectMoreResponse(rsp, null);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to sendSmsExpectMore from AIDL. Exception" + ex);
-        }
-    }
-
-    @Override
-    public void sendUssd(int serial, String ussd) {
-        Log.d(TAG, "sendUssd");
-
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
-        try {
-            mRadioMessagingResponse.sendUssdResponse(rsp);
-        } catch (RemoteException ex) {
-            Log.e(TAG, "Failed to sendUssd from AIDL. Exception" + ex);
         }
     }
 
@@ -420,20 +396,6 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
                 mRadioMessagingIndication.newSmsStatusReport(RadioIndicationType.UNSOLICITED, pdu);
             } catch (RemoteException ex) {
                 Log.e(TAG, "Failed to newSmsStatusReport indication from AIDL. Exception" + ex);
-            }
-        } else {
-            Log.e(TAG, "null mRadioMessagingIndication");
-        }
-    }
-
-    public void onUssd(int modeType, String msg) {
-        Log.d(TAG, "onUssd");
-
-        if (mRadioMessagingIndication != null) {
-            try {
-                mRadioMessagingIndication.onUssd(RadioIndicationType.UNSOLICITED, modeType, msg);
-            } catch (RemoteException ex) {
-                Log.e(TAG, "Failed to onUssd indication from AIDL. Exception" + ex);
             }
         } else {
             Log.e(TAG, "null mRadioMessagingIndication");
