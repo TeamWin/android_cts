@@ -168,6 +168,8 @@ public class UsageStatsTest {
             "notification_seen_promoted_bucket";
     private static final String KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS =
             "broadcast_response_window_timeout_ms";
+    private static final String KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE =
+            "broadcast_response_fg_threshold_state";
 
     private static final int DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -1671,46 +1673,87 @@ public class UsageStatsTest {
                 0 /* notificationUpdatedCount */,
                 0 /* notificationCancelledCount */);
 
-        final TestServiceConnection connection = bindToTestServiceAndGetConnection();
-        try {
-            ITestReceiver testReceiver = connection.getITestReceiver();
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            try {
+                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                        String.valueOf(ActivityManager.PROCESS_STATE_TOP));
 
-            // Send a broadcast with a request to record response and verify broadcast-sent
-            // count gets incremented.
-            final Intent intent = new Intent().setComponent(new ComponentName(
-                    TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
-            final BroadcastOptions options = BroadcastOptions.makeBasic();
-            options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
-            sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                ITestReceiver testReceiver = connection.getITestReceiver();
 
-            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
-                    1 /* broadcastCount */,
-                    0 /* notificationPostedCount */,
-                    0 /* notificationUpdatedCount */,
-                    0 /* notificationCancelledCount */);
-            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
-                    0 /* broadcastCount */,
-                    0 /* notificationPostedCount */,
-                    0 /* notificationUpdatedCount */,
-                    0 /* notificationCancelledCount */);
+                // Send a broadcast with a request to record response and verify broadcast-sent
+                // count gets incremented.
+                final Intent intent = new Intent().setComponent(new ComponentName(
+                        TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
 
-            // Bring the test app to the foreground, send the broadcast again and verify that
-            // counts do not change.
-            launchTestActivityAndWaitToBeResumed(TEST_APP_PKG, TEST_APP_CLASS);
-            sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
 
-            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
-                    1 /* broadcastCount */,
-                    0 /* notificationPostedCount */,
-                    0 /* notificationUpdatedCount */,
-                    0 /* notificationCancelledCount */);
-            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
-                    0 /* broadcastCount */,
-                    0 /* notificationPostedCount */,
-                    0 /* notificationUpdatedCount */,
-                    0 /* notificationCancelledCount */);
-        } finally {
-            connection.unbind();
+                // Bring the test app to the foreground, send the broadcast again and verify that
+                // counts do not change.
+                launchTestActivityAndWaitToBeResumed(TEST_APP_PKG, TEST_APP_CLASS);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Change the threshold to something lower than TOP, send the broadcast again
+                // and verify that counts get incremented.
+                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                        String.valueOf(ActivityManager.PROCESS_STATE_PERSISTENT));
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                mUiDevice.pressHome();
+                // Change the threshold to a process state higher than RECEIVER, send the
+                // broadcast again and verify that counts do not change.
+                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                        String.valueOf(ActivityManager.PROCESS_STATE_HOME));
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+            } finally {
+                connection.unbind();
+            }
         }
     }
 
