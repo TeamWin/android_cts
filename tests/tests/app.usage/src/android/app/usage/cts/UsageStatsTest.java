@@ -319,6 +319,21 @@ public class UsageStatsTest {
         mUiDevice.wait(Until.hasObject(By.clazz(pkgName, className)), TIMEOUT);
     }
 
+    private void launchTestActivityAndWaitToBeResumed(String pkgName, String className)
+            throws Exception {
+        // Make sure the screen is awake and unlocked. Otherwise, the app activity won't be resumed.
+        mUiDevice.wakeUp();
+        dismissKeyguard();
+
+        final Intent intent = createTestActivityIntent(pkgName, className);
+        final CountDownLatch latch = new CountDownLatch(1);
+        intent.putExtra(EXTRA_REMOTE_CALLBACK, new RemoteCallback(result -> latch.countDown()));
+        mContext.startActivity(intent);
+        if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.SECONDS)) {
+            fail("Timed out waiting for the test app activity to be resumed");
+        }
+    }
+
     private void launchSubActivities(Class<? extends Activity>[] activityClasses) {
         for (Class<? extends Activity> clazz : activityClasses) {
             launchSubActivity(clazz);
@@ -1639,6 +1654,63 @@ public class UsageStatsTest {
             } finally {
                 connection.unbind();
             }
+        }
+    }
+
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testBroadcastResponseStats_appNotInForeground() throws Exception {
+        assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                0 /* broadcastCount */,
+                0 /* notificationPostedCount */,
+                0 /* notificationUpdatedCount */,
+                0 /* notificationCancelledCount */);
+        assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                0 /* broadcastCount */,
+                0 /* notificationPostedCount */,
+                0 /* notificationUpdatedCount */,
+                0 /* notificationCancelledCount */);
+
+        final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+        try {
+            ITestReceiver testReceiver = connection.getITestReceiver();
+
+            // Send a broadcast with a request to record response and verify broadcast-sent
+            // count gets incremented.
+            final Intent intent = new Intent().setComponent(new ComponentName(
+                    TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+            final BroadcastOptions options = BroadcastOptions.makeBasic();
+            options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+            sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                    1 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+
+            // Bring the test app to the foreground, send the broadcast again and verify that
+            // counts do not change.
+            launchTestActivityAndWaitToBeResumed(TEST_APP_PKG, TEST_APP_CLASS);
+            sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                    1 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                    0 /* broadcastCount */,
+                    0 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+        } finally {
+            connection.unbind();
         }
     }
 
