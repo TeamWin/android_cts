@@ -599,7 +599,8 @@ public class GlobalSearchSessionPlatformCtsTest {
                         mContext.getPackageName(),
                         DB_NAME,
                         "namespace",
-                        AppSearchEmail.SCHEMA_TYPE));
+                        AppSearchEmail.SCHEMA_TYPE,
+                        ImmutableSet.of("id1")));
         observer.clear();
 
         // Unregister observer from com.example.package
@@ -617,7 +618,8 @@ public class GlobalSearchSessionPlatformCtsTest {
                         mContext.getPackageName(),
                         DB_NAME,
                         "namespace",
-                        AppSearchEmail.SCHEMA_TYPE));
+                        AppSearchEmail.SCHEMA_TYPE,
+                        ImmutableSet.of("id2")));
         observer.clear();
 
         // Unregister the final observer
