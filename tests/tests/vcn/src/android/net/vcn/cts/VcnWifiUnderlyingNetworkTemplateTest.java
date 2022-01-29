@@ -70,6 +70,15 @@ public class VcnWifiUnderlyingNetworkTemplateTest extends VcnUnderlyingNetworkTe
     }
 
     @Test
+    public void testBuildWithNullSsids() {
+        try {
+            new VcnWifiUnderlyingNetworkTemplate.Builder().setSsids(null);
+            fail("Expect to fail due to the null argument");
+        } catch (Exception expected) {
+        }
+    }
+
+    @Test
     public void testBuildWithInvalidDownstreamBandwidth() {
         try {
             new VcnWifiUnderlyingNetworkTemplate.Builder()

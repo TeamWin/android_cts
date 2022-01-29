@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VcnCellUnderlyingNetworkTemplateTest extends VcnUnderlyingNetworkTemplateTestBase {
-    private static final Set<String> ALLOWED_PLMN_IDS = Set.of("123456", "234567");
+    private static final Set<String> ALLOWED_PLMN_IDS = Set.of("123456", "12345");
     private static final Set<Integer> ALLOWED_CARRIER_IDS = Set.of(100, 101);
 
     // Package private for use in VcnGatewayConnectionConfigTest
@@ -80,6 +80,39 @@ public class VcnCellUnderlyingNetworkTemplateTest extends VcnUnderlyingNetworkTe
                         .build();
         assertEquals(new HashSet<String>(), networkTemplate.getOperatorPlmnIds());
         assertEquals(new HashSet<Integer>(), networkTemplate.getSimSpecificCarrierIds());
+    }
+
+    @Test
+    public void testBuildWithNullOperatorPlmnIds() {
+        try {
+            new VcnCellUnderlyingNetworkTemplate.Builder().setOperatorPlmnIds(null);
+            fail("Expect to fail due to the null argument");
+        } catch (Exception expected) {
+        }
+    }
+
+    private static void verifyBuildWithInvalidOperatorPlmnIds(String plmnId) {
+        try {
+            new VcnCellUnderlyingNetworkTemplate.Builder().setOperatorPlmnIds(Set.of(plmnId));
+            fail("Expect to fail due to the invalid PLMN ID");
+        } catch (Exception expected) {
+        }
+    }
+
+    @Test
+    public void testBuildWithInvalidOperatorPlmnIds() {
+        verifyBuildWithInvalidOperatorPlmnIds("1234567");
+        verifyBuildWithInvalidOperatorPlmnIds("1234");
+        verifyBuildWithInvalidOperatorPlmnIds("abcde");
+    }
+
+    @Test
+    public void testBuildWithNullCarrierIds() {
+        try {
+            new VcnCellUnderlyingNetworkTemplate.Builder().setSimSpecificCarrierIds(null);
+            fail("Expect to fail due to the null argument");
+        } catch (Exception expected) {
+        }
     }
 
     @Test
