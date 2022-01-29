@@ -89,7 +89,7 @@ public class PrivappPermissionsTest {
                 "com.android.ext.services",
                 "com.android.providers.media.module",
                 "com.android.permissioncontroller",
-                "com.android.cellbroadcastreceiver",
+                "com.android.cellbroadcastreceiver.module",
                 "com.android.cellbroadcastservice"
             );
 

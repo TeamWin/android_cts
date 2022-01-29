@@ -86,8 +86,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
                 (LauncherActivity) instrumentation.startActivitySync(intent);
 
         final Bundle bundle = ActivityOptions.makeCustomAnimation(mContext,
-                R.anim.alpha, 0, new Handler(Looper.getMainLooper()), startedListener,
-                finishedListener).toBundle();
+                R.anim.alpha, 0 /* exitResId */, 0 /* backgroundColor */,
+                new Handler(Looper.getMainLooper()), startedListener, finishedListener).toBundle();
         launcherActivity.startTransitionActivity(bundle);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertTopResumedActivity(new ComponentName(mContext, TransitionActivity.class),
@@ -122,8 +122,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         // Overriding task transit animation is disabled, so default wallpaper close animation
         // is played.
         final Bundle bundle = ActivityOptions.makeCustomAnimation(mContext,
-                R.anim.alpha, 0, new Handler(Looper.getMainLooper()), startedListener,
-                finishedListener).toBundle();
+                R.anim.alpha, 0 /* exitResId */, 0 /* backgroundColor */,
+                new Handler(Looper.getMainLooper()), startedListener, finishedListener).toBundle();
         final Intent intent = new Intent().setComponent(TEST_ACTIVITY)
                 .addFlags(FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent, bundle);

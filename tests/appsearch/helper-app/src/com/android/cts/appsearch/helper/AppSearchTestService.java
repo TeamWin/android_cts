@@ -19,9 +19,11 @@ import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResu
 import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchResultsToDocuments;
 
 import android.app.Service;
+import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
+import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SearchResultsShim;
@@ -93,6 +95,30 @@ public class AppSearchTestService extends Service {
                 return resultStrings;
             } catch (Exception e) {
                 Log.e(TAG, "Error issuing global search.", e);
+                return Collections.emptyList();
+            }
+        }
+
+        @Override
+        public List<String> globalGet(String packageName, String databaseName, String id) {
+            try {
+                AppSearchBatchResult<String, GenericDocument> getResult =
+                        mGlobalSearchSessionShim.getByDocumentId(
+                                packageName,
+                                databaseName,
+                                new GetByDocumentIdRequest.Builder("namespace")
+                                        .addIds(id)
+                                        .build())
+                                .get();
+
+                List<String> resultStrings = new ArrayList<>();
+                for (String docKey : getResult.getSuccesses().keySet()) {
+                    resultStrings.add(getResult.getSuccesses().get(docKey).toString());
+                }
+
+                return resultStrings;
+            } catch (Exception e) {
+                Log.e(TAG, "Error issuing global get.", e);
                 return Collections.emptyList();
             }
         }

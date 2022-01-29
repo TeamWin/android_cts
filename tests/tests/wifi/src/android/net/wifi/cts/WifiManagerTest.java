@@ -110,6 +110,7 @@ import java.lang.reflect.Constructor;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1203,32 +1204,32 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setSsidsDoNotBlocklist(Set)} can be called with sufficient
+     * Verify {@link WifiManager#setSsidsAllowlist(Set)} can be called with sufficient
      * privilege.
      */
-    public void testGetAndSetSsidsDoNotBlocklist() {
+    public void testGetAndSetSsidsAllowlist() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
         Set<WifiSsid> ssids = new ArraySet<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setSsidsDoNotBlocklist(ssids));
+                () -> mWifiManager.setSsidsAllowlist(ssids));
 
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> assertEquals("Ssids should match", ssids,
-                        mWifiManager.getSsidsDoNotBlocklist()));
+                        mWifiManager.getSsidsAllowlist()));
 
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET));
+                () -> mWifiManager.setSsidsAllowlist(Collections.EMPTY_SET));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> assertEquals("Should equal to empty set",
                         Collections.EMPTY_SET,
-                        mWifiManager.getSsidsDoNotBlocklist()));
+                        mWifiManager.getSsidsAllowlist()));
 
         try {
-            mWifiManager.setSsidsDoNotBlocklist(Collections.EMPTY_SET);
+            mWifiManager.setSsidsAllowlist(Collections.EMPTY_SET);
             fail("Expected SecurityException when called without permission");
         } catch (SecurityException e) {
             // expect the exception
@@ -1295,7 +1296,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -1328,9 +1329,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_2\""));
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_3\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_2".getBytes(StandardCharsets.UTF_8)));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_3".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         try {
@@ -1356,7 +1357,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestExecutor executor = new TestExecutor();
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
-        ssids.add(WifiSsid.fromString("\"TEST_SSID_1\""));
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         try {
@@ -1701,14 +1702,16 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     private SoftApConfiguration.Builder generateSoftApConfigBuilderWithSsid(String ssid) {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            return new SoftApConfiguration.Builder().setWifiSsid(WifiSsid.fromUtf8Text(ssid));
+            return new SoftApConfiguration.Builder().setWifiSsid(
+                    WifiSsid.fromBytes(ssid.getBytes(StandardCharsets.UTF_8)));
         }
         return new SoftApConfiguration.Builder().setSsid(ssid);
     }
 
     private void assertSsidEquals(SoftApConfiguration config, String expectedSsid) {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
-            assertEquals(expectedSsid, config.getWifiSsid().getUtf8Text());
+            assertEquals(WifiSsid.fromBytes(expectedSsid.getBytes(StandardCharsets.UTF_8)),
+                    config.getWifiSsid().getBytes());
         } else {
             assertEquals(expectedSsid, config.getSsid());
         }
@@ -1762,7 +1765,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 assertTrue(callback.onStartedCalled);
                 assertNotNull(callback.reservation);
                 SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
-                assertEquals(TEST_SSID_UNQUOTED, softApConfig.getWifiSsid().getUtf8Text());
+                assertEquals(
+                        WifiSsid.fromBytes(TEST_SSID_UNQUOTED.getBytes(StandardCharsets.UTF_8)),
+                        softApConfig.getWifiSsid());
                 assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
                 assertEquals(testBand, softApConfig.getBand());
                 assertTrue(lohsSoftApCallback.getCurrentSoftApInfo().getFrequency() > 0);
@@ -5175,6 +5180,70 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     () -> mWifiManager.getStaConcurrencyForMultiInternetMode()
                             == WifiManager.WIFI_MULTI_INTERNET_MODE_MULTI_AP);
         } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiConfiguration#setBssidAllowlist(List)}.
+     */
+    public void testBssidAllowlist() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // Trigger a scan & wait for connection to one of the saved networks.
+        mWifiManager.startScan();
+        waitForConnection();
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<WifiConfiguration> savedNetworks = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+
+            WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+            String connectedBssid = wifiInfo.getBSSID();
+            int networkId = wifiInfo.getNetworkId();
+
+            // Set empty BSSID allow list to block all APs
+            savedNetworks = mWifiManager.getConfiguredNetworks();
+            for (WifiConfiguration network : savedNetworks) {
+                network.setBssidAllowlist(Collections.emptyList());
+                mWifiManager.updateNetwork(network);
+            }
+            // trigger a disconnect and wait for disconnect.
+            mWifiManager.disconnect();
+            waitForDisconnection();
+
+            // Now trigger scan and ensure that the device does not connect to any networks.
+            mWifiManager.startScan();
+            ensureNotConnected();
+
+            // Set the previous connected BSSID on that network. Other network set with a fake
+            // (not visible) BSSID only
+            for (WifiConfiguration network : savedNetworks) {
+                if (network.networkId == networkId) {
+                    network.setBssidAllowlist(List.of(MacAddress.fromString(connectedBssid)));
+                    mWifiManager.updateNetwork(network);
+                } else {
+                    network.setBssidAllowlist(List.of(MacAddress.fromString(TEST_BSSID)));
+                    mWifiManager.updateNetwork(network);
+                }
+            }
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+            wifiInfo = mWifiManager.getConnectionInfo();
+            assertEquals(networkId, wifiInfo.getNetworkId());
+            assertEquals(connectedBssid, wifiInfo.getBSSID());
+        } finally {
+            // Reset BSSID allow list to accept all APs
+            for (WifiConfiguration network : savedNetworks) {
+                assertNotNull(network.getBssidAllowlist());
+                network.setBssidAllowlist(null);
+                mWifiManager.updateNetwork(network);
+            }
             uiAutomation.dropShellPermissionIdentity();
         }
     }

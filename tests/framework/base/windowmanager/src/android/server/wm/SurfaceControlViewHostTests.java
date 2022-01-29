@@ -16,9 +16,6 @@
 
 package android.server.wm;
 
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
-import static android.server.wm.UiDeviceUtils.pressUnlockButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -32,13 +29,18 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
+import android.server.wm.ActivityManagerTestBase;
+import android.util.ArrayMap;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.SurfaceControlViewHost;
@@ -72,12 +74,14 @@ import java.util.concurrent.atomic.AtomicReference;
  *     atest CtsWindowManagerDeviceTestCases:SurfaceControlViewHostTests
  */
 @Presubmit
-public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
-    private final ActivityTestRule<Activity> mActivityRule = new ActivityTestRule<>(Activity.class);
+public class SurfaceControlViewHostTests extends ActivityManagerTestBase implements SurfaceHolder.Callback {
+    private final ActivityTestRule<ConfigChangeHandlingActivity> mActivityRule =
+        new ActivityTestRule<>(ConfigChangeHandlingActivity.class);
 
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private SurfaceView mSurfaceView;
+    private ViewGroup mViewParent;
 
     private SurfaceControlViewHost mVr;
     private View mEmbeddedView;
@@ -96,11 +100,8 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     private static final int DEFAULT_SURFACE_VIEW_HEIGHT = 100;
 
     @Before
-    public void setUp() {
-        pressWakeupButton();
-        pressUnlockButton();
-        pressHomeButton();
-
+    public void setUp() throws Exception {
+        super.setUp();
         mClicked = false;
         mEmbeddedLayoutParams = null;
 
@@ -116,6 +117,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
             mSurfaceView.setZOrderOnTop(true);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
                 width, height, Gravity.LEFT | Gravity.TOP));
+            mViewParent = content;
             mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
             mSurfaceView.getHolder().addCallback(this);
         });
@@ -617,6 +619,67 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
             mSurfaceView.setZOrderOnTop(true);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
                 width, height, Gravity.LEFT | Gravity.TOP));
+            });
+    }
+
+    class ForwardingSurfaceView extends SurfaceView {
+        SurfaceControlViewHost.SurfacePackage mPackage;
+
+        ForwardingSurfaceView(Context c) {
+            super(c);
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            mPackage.notifyDetachedFromWindow();
+        }
+
+        @Override
+        protected void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            mPackage.notifyConfigurationChanged(newConfig);
+        }
+
+        @Override
+        public void setChildSurfacePackage(SurfaceControlViewHost.SurfacePackage p) {
+            super.setChildSurfacePackage(p);
+            mPackage = p;
+        }
+    }
+
+    class DetachRecordingView extends View {
+        boolean mDetached = false;
+        DetachRecordingView(Context c) {
+            super(c);
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            mDetached = true;
+        }
+    }
+
+    class ConfigRecordingView extends View {
+        CountDownLatch mLatch;
+        ConfigRecordingView(Context c, CountDownLatch latch) {
+            super(c);
+            mLatch = latch;
+        }
+
+        @Override
+        protected void onConfigurationChanged(Configuration newConfig) {
+            mLatch.countDown();
+        }
+    }
+
+    private void addForwardingSurfaceView(int width, int height) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new ForwardingSurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                width, height, Gravity.LEFT | Gravity.TOP));
+            mViewParent = content;
             mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
             mSurfaceView.getHolder().addCallback(this);
         });
@@ -644,4 +707,48 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         assertTrue(mrsv.gotEvent());
     }
 
+    @Test
+    public void forwardDetachedFromWindow() throws Throwable {
+        DetachRecordingView drv = new DetachRecordingView(mActivity);
+        mEmbeddedView = drv;
+        addForwardingSurfaceView(100, 100);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        
+        assertFalse(drv.mDetached);
+        mActivityRule.runOnUiThread(() -> {
+            mViewParent.removeView(mSurfaceView);
+        });
+        mInstrumentation.waitForIdleSync();
+        assertTrue(drv.mDetached);
+    }
+
+    @Test
+    public void forwardConfigurationChange() throws Throwable {
+        if (!supportsOrientationRequest()) {
+            return;
+        }
+        final CountDownLatch embeddedConfigLatch = new CountDownLatch(1);
+        ConfigRecordingView crv = new ConfigRecordingView(mActivity, embeddedConfigLatch);
+        mEmbeddedView = crv;
+        addForwardingSurfaceView(100, 100);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        mActivityRule.runOnUiThread(() -> {
+            int orientation = mActivity.getResources().getConfiguration().orientation;
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            } else {
+                orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            }
+            mActivity.setRequestedOrientation(orientation);
+        });
+        embeddedConfigLatch.await(3, TimeUnit.SECONDS);
+        mInstrumentation.waitForIdleSync();
+        mActivityRule.runOnUiThread(() -> {
+                assertEquals(mEmbeddedView.getResources().getConfiguration().orientation,
+                             mSurfaceView.getResources().getConfiguration().orientation);
+        });
+    }
 }
+

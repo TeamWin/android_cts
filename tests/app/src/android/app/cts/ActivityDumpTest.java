@@ -22,6 +22,7 @@ import android.content.Context;
 import android.util.Dumpable;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.core.app.ApplicationProvider;
 
@@ -31,10 +32,14 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 public final class ActivityDumpTest {
 
     private static final String TAG = ActivityDumpTest.class.getSimpleName();
+
+    private static final String DEFAULT_NAME = "DUMPABLE";
+    private static final String DEFAULT_CONTENT = "The name is Able, Dump Able!";
 
     private CustomActivity mActivity;
 
@@ -47,16 +52,14 @@ public final class ActivityDumpTest {
     @Test
     public void testAddDumpable_oneOnly() throws Exception {
         String baselineDump = dump(mActivity);
-        assertWithMessage("baseline dump()").that(baselineDump).isNotNull();
 
-        mActivity.addDumpable(new CustomDumpable("Dump Able", "The name is Able, DumpAble!"));
+        mActivity.addDumpable(new CustomDumpable(DEFAULT_NAME, DEFAULT_CONTENT));
 
         String dump = dump(mActivity);
 
         assertWithMessage("dump() (expected to have baseline)").that(dump).contains(baselineDump);
-        assertWithMessage("dump() (expected to have name)").that(dump).contains("Dump Able");
-        assertWithMessage("dump() (expected to have content)").that(dump)
-                .contains("The name is Able, DumpAble!");
+        assertWithMessage("dump() (expected to have name)").that(dump).contains(DEFAULT_NAME);
+        assertWithMessage("dump() (expected to have content)").that(dump).contains(DEFAULT_CONTENT);
     }
 
     @Test
@@ -85,13 +88,80 @@ public final class ActivityDumpTest {
                 .doesNotContain("able2");
     }
 
+    @Test
+    public void testDump_autofill() throws Exception {
+        specialArgDumpTest("--autofill");
+    }
+
+    @Test
+    public void testDump_contentCapture() throws Exception {
+        specialArgDumpTest("--contentcapture");
+    }
+
+    @Test
+    public void testDump_translation() throws Exception {
+        specialArgDumpTest("--translation");
+    }
+
+    private void specialArgDumpTest(String arg) throws IOException {
+        String baselineDump = dump(mActivity);
+
+        String specialArgDump = dump(mActivity, arg);
+
+        assertWithMessage("dump([%s])", arg).that(specialArgDump).isNotEqualTo(baselineDump);
+        assertWithMessage("dump([%s])", arg).that(baselineDump).contains(specialArgDump);
+    }
+
+    @Test
+    public void testDump_listDumpables() throws Exception {
+        String baselineDump = dump(mActivity);
+
+        mActivity.addDumpable(new CustomDumpable(DEFAULT_NAME, DEFAULT_CONTENT));
+
+        String listDumpables = dump(mActivity, "--list-dumpables");
+
+        assertWithMessage("dump(--list-dumpables)").that(listDumpables).contains(DEFAULT_NAME);
+        assertWithMessage("dump(--list-dumpables)").that(listDumpables)
+                .doesNotContain(DEFAULT_CONTENT);
+        assertWithMessage("dump(--list-dumpables)").that(listDumpables)
+                .doesNotContain(baselineDump);
+    }
+
+    @Test
+    public void testDump_dumpDumpable() throws Exception {
+        String prefix = "123";
+        mActivity.addDumpable(new CustomDumpable(DEFAULT_NAME, DEFAULT_CONTENT));
+
+        String dumpDumpable = dumpInternal(mActivity, prefix, "--dump-dumpable", DEFAULT_NAME);
+
+        assertWithMessage("dump(--dump-dumpable %s)", DEFAULT_NAME).that(dumpDumpable)
+                .isEqualTo(String.format("%s%s:\n%s%s%s\n",
+                        prefix, DEFAULT_NAME, // line 1
+                        prefix, prefix, DEFAULT_CONTENT)); // line 2
+    }
+
     private String dump(Activity activity) throws IOException {
-        Log.d(TAG, "dumping " + activity);
+        return dumpInternal(activity, /* prefix= */ "", /* args= */ (String[]) null);
+    }
+
+    private String dump(Activity activity, String... args) throws IOException {
+        return dumpInternal(activity, /* prefix= */ "", args);
+    }
+
+    private String dumpInternal(Activity activity, String prefix, @Nullable String... args)
+            throws IOException {
+        String argsString = "";
+        if (args != null) {
+            argsString = " with args " + Arrays.toString(args);
+        }
+        Log.d(TAG, "dumping " + activity + argsString);
         String dump;
         try (StringWriter sw = new StringWriter(); PrintWriter writer = new PrintWriter(sw)) {
-            activity.dump(/* prefix= */ "", /* fd= */ null, writer, /* args = */ null);
+            // Must call dumpInternal() (instad of dump()) so special args are handled
+            activity.dumpInternal(prefix, /* fd= */ null, writer, args);
             dump = sw.toString();
         }
+        assertWithMessage("dump(%s)", argsString).that(dump).isNotEmpty();
         Log.v(TAG, "result (" + dump.length() + " chars):\n" + dump);
         return dump;
     }

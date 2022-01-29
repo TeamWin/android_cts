@@ -39,6 +39,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
@@ -293,7 +294,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
 
         ScanResult scanResult = new ScanResult();
         scanResult.SSID = TEST_SSID;
-        scanResult.setWifiSsid(WifiSsid.fromUtf8Text(TEST_SSID));
+        scanResult.setWifiSsid(WifiSsid.fromBytes(TEST_SSID.getBytes(StandardCharsets.UTF_8)));
         scanResult.BSSID = TEST_BSSID;
         scanResult.capabilities = TEST_CAPS;
         scanResult.level = TEST_LEVEL;

@@ -23,11 +23,13 @@ import android.bluetooth.BluetoothLeBroadcastMetadata;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class BluetoothLeBroadcastMetadataTest {
+    @Test
     public void testCreateMetadataFromBuilder() {
         BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder();
         BluetoothLeBroadcastMetadata metadata =
@@ -37,7 +39,7 @@ public class BluetoothLeBroadcastMetadataTest {
                         .setBroadcastId(3)
                         .build();
         assertEquals(1, metadata.getPaSyncInterval());
-        assertEquals(2, metadata.getPaSyncInterval());
+        assertEquals(2, metadata.getPresentationDelayMicros());
         assertEquals(3, metadata.getBroadcastId());
     }
 }

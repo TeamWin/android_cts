@@ -19,19 +19,14 @@ package android.app.usage.cts.test1;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.app.usage.UsageStatsManager;
 import android.app.usage.cts.ITestReceiver;
 import android.content.Intent;
 import android.os.IBinder;
-import android.provider.Settings;
+import android.os.SystemClock;
 
 public class TestService extends Service {
-    private static final String TEST_CHANNEL_ID = "test_channel_id";
-    private static final String TEST_CHANNEL_NAME = "test_channel_name";
-    private static final String TEST_CHANNEL_DESC = "Test channel";
-    private static final int TEST_NOTIFICATION_ID = 11;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -46,23 +41,28 @@ public class TestService extends Service {
         }
 
         @Override
-        public void generateAndSendNotification() {
-            final NotificationManager notificationManager =
-                    getSystemService(NotificationManager.class);
-            final NotificationChannel mChannel = new NotificationChannel(TEST_CHANNEL_ID,
-                    TEST_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-            // Configure the notification channel.
-            mChannel.setDescription(TEST_CHANNEL_DESC);
-            notificationManager.createNotificationChannel(mChannel);
-            final Notification.Builder mBuilder =
-                    new Notification.Builder(getApplicationContext(), TEST_CHANNEL_ID)
-                            .setSmallIcon(android.R.drawable.ic_info)
-                            .setContentTitle("My notification")
-                            .setContentText("Hello World!");
-            final PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 1,
-                    new Intent(Settings.ACTION_SETTINGS), PendingIntent.FLAG_IMMUTABLE);
-            mBuilder.setContentIntent(pi);
-            notificationManager.notify(TEST_NOTIFICATION_ID, mBuilder.build());
+        public void createNotificationChannel(String channelId, String channelName,
+                String channelDescription) {
+            final NotificationChannel channel = new NotificationChannel(channelId, channelName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(channelDescription);
+            getNotificationManager().createNotificationChannel(channel);
+        }
+
+        @Override
+        public void postNotification(int notificationId, Notification notification) {
+            getNotificationManager().notify(notificationId, notification);
+            // TODO: Remove this after making create/update notification times more accurate.
+            SystemClock.sleep(500);
+        }
+
+        @Override
+        public void cancelNotification(int notificationId) {
+            getNotificationManager().cancel(notificationId);
+        }
+
+        private NotificationManager getNotificationManager() {
+            return getSystemService(NotificationManager.class);
         }
     }
 }

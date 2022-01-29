@@ -41,6 +41,7 @@ import android.content.res.Configuration;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 
@@ -372,6 +373,12 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     public void testNightModeCustomTypeBedtimeNotPersistedInCarMode() throws InterruptedException {
+        if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeCustomTypeBedtimeNotPersistedInCarMode skipped: night mode is "
+                    + "locked");
+            return;
+        }
+
         acquireModifyNightModePermission();
         mUiModeManager.setNightMode(UiModeManager.MODE_NIGHT_NO);
         mUiModeManager.enableCarMode(0);
@@ -842,7 +849,9 @@ public class UiModeManagerTest extends AndroidTestCase {
         // Settings.Secure.UI_NIGHT_MODE
         for (int i = 0; i < MAX_WAIT_TIME_MS; i += WAIT_TIME_INCR_MS) {
             String storedMode = getUiNightModeFromSetting();
-            storedModeInt = Integer.parseInt(storedMode);
+            if (!TextUtils.isEmpty(storedMode)) {
+                storedModeInt = Integer.parseInt(storedMode);
+            }
             if (mode == storedModeInt) break;
             try {
                 Thread.sleep(WAIT_TIME_INCR_MS);

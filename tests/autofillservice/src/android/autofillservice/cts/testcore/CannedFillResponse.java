@@ -26,10 +26,12 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.Dataset;
+import android.service.autofill.Field;
 import android.service.autofill.FillCallback;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillResponse;
 import android.service.autofill.InlinePresentation;
+import android.service.autofill.Presentations;
 import android.service.autofill.SaveInfo;
 import android.service.autofill.UserData;
 import android.util.Log;
@@ -642,16 +644,26 @@ public final class CannedFillResponse {
          */
         public Dataset asDatasetWithAutofillIdResolver(
                 Function<String, AutofillId> autofillIdResolver) {
-            final Dataset.Builder builder = mPresentation != null
-                    ? new Dataset.Builder(mPresentation)
-                    : new Dataset.Builder();
-            if (mInlinePresentation != null) {
-                if (mInlineTooltipPresentation != null) {
-                    builder.setInlinePresentation(mInlinePresentation, mInlineTooltipPresentation);
-                } else {
-                    builder.setInlinePresentation(mInlinePresentation);
-                }
+            final Presentations.Builder presentationsBuilder = new Presentations.Builder();
+            if (mPresentation != null) {
+                presentationsBuilder.setMenuPresentation(mPresentation);
             }
+            if (mInlinePresentation != null) {
+                presentationsBuilder.setInlinePresentation(mInlinePresentation);
+            }
+            if (mInlineTooltipPresentation != null) {
+                presentationsBuilder.setInlineTooltipPresentation(mInlineTooltipPresentation);
+            }
+
+            Presentations presentations = null;
+            try {
+                presentations = presentationsBuilder.build();
+            } catch (IllegalStateException e) {
+                // No presentation in presentationsBuilder, do nothing.
+            }
+            final Dataset.Builder builder = presentations != null
+                    ? new Dataset.Builder(presentations)
+                    : new Dataset.Builder();
 
             if (mFieldValues != null) {
                 for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
@@ -661,54 +673,37 @@ public final class CannedFillResponse {
                     if (autofillId == null) {
                         throw new AssertionError("No node with resource id " + id);
                     }
+                    final Field.Builder fieldBuilder = new Field.Builder();
                     final AutofillValue value = entry.getValue();
+                    if (value != null) {
+                        fieldBuilder.setValue(value);
+                    }
+
+                    final Presentations.Builder fieldPresentationsBuilder =
+                            new Presentations.Builder();
                     final RemoteViews presentation = mFieldPresentations.get(id);
+                    if (presentation != null) {
+                        fieldPresentationsBuilder.setMenuPresentation(presentation);
+                    }
                     final InlinePresentation inlinePresentation = mFieldInlinePresentations.get(id);
+                    if (inlinePresentation != null) {
+                        fieldPresentationsBuilder.setInlinePresentation(inlinePresentation);
+                    }
                     final InlinePresentation tooltipPresentation =
                             mFieldInlineTooltipPresentations.get(id);
-                    final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
-                    if (presentation != null) {
-                        if (filter == null) {
-                            if (inlinePresentation != null) {
-                                if (tooltipPresentation != null) {
-                                    builder.setValue(autofillId, value, presentation,
-                                            inlinePresentation, tooltipPresentation);
-                                } else {
-                                    builder.setValue(autofillId, value, presentation,
-                                            inlinePresentation);
-                                }
-                            } else {
-                                builder.setValue(autofillId, value, presentation);
-                            }
-                        } else {
-                            if (inlinePresentation != null) {
-                                if (tooltipPresentation != null) {
-                                    builder.setValue(autofillId, value, filter.second, presentation,
-                                            inlinePresentation, tooltipPresentation);
-                                } else {
-                                    builder.setValue(autofillId, value, filter.second, presentation,
-                                            inlinePresentation);
-                                }
-                            } else {
-                                builder.setValue(autofillId, value, filter.second, presentation);
-                            }
-                        }
-                    } else {
-                        if (inlinePresentation != null) {
-                            if (tooltipPresentation != null) {
-                                throw new IllegalStateException("presentation can not be null");
-                            } else {
-                                builder.setFieldInlinePresentation(autofillId, value,
-                                        filter != null ? filter.second : null, inlinePresentation);
-                            }
-                        } else {
-                            if (filter == null) {
-                                builder.setValue(autofillId, value);
-                            } else {
-                                builder.setValue(autofillId, value, filter.second);
-                            }
-                        }
+                    if (tooltipPresentation != null) {
+                        fieldPresentationsBuilder.setInlineTooltipPresentation(tooltipPresentation);
                     }
+                    try {
+                        fieldBuilder.setPresentations(fieldPresentationsBuilder.build());
+                    } catch (IllegalStateException e) {
+                        // no presentation in fieldPresentationsBuilder, nothing
+                    }
+                    final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
+                    if (filter != null) {
+                        fieldBuilder.setFilter(filter.second);
+                    }
+                    builder.setField(autofillId, fieldBuilder.build());
                 }
             }
             builder.setId(mId).setAuthentication(mAuthentication);

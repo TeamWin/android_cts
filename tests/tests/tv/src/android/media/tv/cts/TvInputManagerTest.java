@@ -723,6 +723,26 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         assertTrue(priority == bgDefaultPriority);
     }
 
+    public void testGetClientPid() {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        final SessionCallback sessionCallback = new SessionCallback();
+        mManager.createSession(mStubId, sessionCallback, handler);
+        PollingCheck.waitFor(TIME_OUT_MS, () -> sessionCallback.getSession() != null);
+        Session session = sessionCallback.getSession();
+        String sessionId = StubTvInputService2.getSessionId();
+        assertNotNull(sessionId);
+
+        int pid = mManager.getClientPid(sessionId);
+        assertTrue(pid == android.os.Process.myPid());
+
+        session.release();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> StubTvInputService2.getSessionId() == null);
+    }
+
     private static class LoggingCallback extends TvInputManager.TvInputCallback {
         private final List<String> mAddedInputs = new ArrayList<>();
         private final List<String> mRemovedInputs = new ArrayList<>();

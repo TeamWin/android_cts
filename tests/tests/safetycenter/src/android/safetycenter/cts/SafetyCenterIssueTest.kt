@@ -142,6 +142,15 @@ class SafetyCenterIssueTest {
     }
 
     @Test
+    fun getActions_mutationsAreNotReflected() {
+        val mutatedActions = issue1.actions
+        mutatedActions.add(action2)
+
+        assertThat(mutatedActions).containsExactly(action1, action2)
+        assertThat(issue1.actions).doesNotContain(action2)
+    }
+
+    @Test
     fun describeContents_returns0() {
         assertThat(issue1.describeContents()).isEqualTo(0)
     }
@@ -175,6 +184,26 @@ class SafetyCenterIssueTest {
                 .setSeverityLevel(SafetyCenterIssue.ISSUE_SEVERITY_LEVEL_OK)
                 .setActions(listOf(action1))
                 .build()
+        val equivalentIssue = SafetyCenterIssue.Builder("an id")
+                .setTitle("a title")
+                .setSubtitle("In the neighborhood")
+                .setSummary("Please acknowledge this")
+                .setSeverityLevel(SafetyCenterIssue.ISSUE_SEVERITY_LEVEL_OK)
+                .setActions(listOf(action1))
+                .build()
+
+        assertThat(issue).isEqualTo(equivalentIssue)
+        assertThat(issue.hashCode()).isEqualTo(equivalentIssue.hashCode())
+        assertThat(issue.toString()).isEqualTo(equivalentIssue.toString())
+    }
+
+    @Test
+    fun equals_hashCode_toString_fromCopyBuilder() {
+        val copyOfIssue1 = SafetyCenterIssue.Builder(issue1).build()
+
+        assertThat(copyOfIssue1).isEqualTo(issue1)
+        assertThat(copyOfIssue1.hashCode()).isEqualTo(issue1.hashCode())
+        assertThat(copyOfIssue1.toString()).isEqualTo(issue1.toString())
     }
 
     @Test

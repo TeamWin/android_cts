@@ -524,10 +524,10 @@
         </activity>
         <activity android:name="android.server.wm.KeepClearRectsTests$TestActivity"
                   android:exported="true"
-                  android:theme="@android:style/Theme.NoTitleBar" />
+                  android:theme="@style/NoInsetsTheme" />
         <activity android:name="android.server.wm.KeepClearRectsTests$TranslucentTestActivity"
                   android:exported="true"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+                  android:theme="@style/NoInsetsTheme.Translucent" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

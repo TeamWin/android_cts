@@ -25,9 +25,9 @@ import android.safetycenter.SafetyCenterEntry
 import android.safetycenter.SafetyCenterEntryGroup
 import android.safetycenter.SafetyCenterEntryOrGroup
 import android.safetycenter.SafetyCenterIssue
-import android.safetycenter.SafetyCenterStatus
 import android.safetycenter.SafetyCenterStaticEntry
 import android.safetycenter.SafetyCenterStaticEntryGroup
+import android.safetycenter.SafetyCenterStatus
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
@@ -118,16 +118,42 @@ class SafetyCenterDataTest {
     }
 
     @Test
+    fun getIssues_mutationsAreNotReflected() {
+        val mutatedIssues = data1.issues
+        mutatedIssues.add(issue2)
+
+        assertThat(mutatedIssues).containsExactly(issue1, issue2)
+        assertThat(data1.issues).doesNotContain(issue2)
+    }
+
+    @Test
     fun getEntriesOrGroups_returnsEntriesOrGroups() {
         assertThat(data1.entriesOrGroups).containsExactly(entryOrGroup1)
         assertThat(data2.entriesOrGroups).containsExactly(entryOrGroup2)
     }
 
     @Test
+    fun getEntriesOrGroups_mutationsAreNotReflected() {
+        val mutatedEntriesOrGroups = data1.entriesOrGroups
+        mutatedEntriesOrGroups.add(entryOrGroup2)
+
+        assertThat(mutatedEntriesOrGroups).containsExactly(entryOrGroup1, entryOrGroup2)
+        assertThat(data1.entriesOrGroups).doesNotContain(entryOrGroup2)
+    }
+
+    @Test
     fun getStaticEntryGroups_returnsStaticEntryGroups() {
         assertThat(data1.staticEntryGroups).containsExactly(staticEntryGroup1)
-
         assertThat(data2.staticEntryGroups).containsExactly(staticEntryGroup2)
+    }
+
+    @Test
+    fun getStaticEntryGroups_mutationsAreNotReflected() {
+        val mutatedStaticEntryGroups = data1.staticEntryGroups
+        mutatedStaticEntryGroups.add(staticEntryGroup2)
+
+        assertThat(mutatedStaticEntryGroups).containsExactly(staticEntryGroup1, staticEntryGroup2)
+        assertThat(data1.staticEntryGroups).doesNotContain(staticEntryGroup2)
     }
 
     @Test
