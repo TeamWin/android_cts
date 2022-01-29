@@ -3694,6 +3694,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         @Override
         public void onCountryCodeInactive() {
+            Log.d(TAG, "Receive onCountryCodeInactive");
             mCurrentCountryCode = null;
             mIsOnCountryCodeInactiveCalled = true;
         }
@@ -3720,7 +3721,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         () -> {
                             executor.runAll();
                             return testCountryCodeChangedCallback
-                                        .isOnActiveCountryCodeChangedCalled()
+                                        .isOnCountryCodeInactiveCalled()
                                     && testCountryCodeChangedCallback.getCurrentDriverCountryCode()
                                             == null;
                         });
