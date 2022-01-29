@@ -64,6 +64,8 @@ public class PerformanceHintManagerTest {
         Session b = createSession();
         if (a == null) {
             assertNull(b);
+        } else if (b == null) {
+            assertNull(a);
         } else {
             assertNotEquals(a, b);
         }
