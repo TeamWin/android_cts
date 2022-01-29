@@ -2388,6 +2388,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertTrue(currentConfig.isUserConfiguration());
         }
+        assertNotNull(currentConfig.getPersistentRandomizedMacAddress());
 
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
                 || ApiLevelUtil.codenameStartsWith("T")) {
@@ -2507,6 +2508,35 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         return testBandsAndChannels;
     }
 
+    /**
+     * Test SoftApConfiguration#getPersistentRandomizedMacAddress(). There are two test cases in
+     * this test.
+     * 1. configure two different SoftApConfigurations (different SSID) and verify that randomized
+     * MAC address is different.
+     * 2. configure A then B then A (SSIDs) and verify that the 1st and 3rd MAC addresses are the
+     * same.
+     */
+    public void testSoftApConfigurationGetPersistentRandomizedMacAddress() throws Exception {
+        SoftApConfiguration currentConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSoftApConfiguration(new SoftApConfiguration.Builder()
+                .setSsid(currentConfig.getSsid() + "test").build()));
+        SoftApConfiguration changedSsidConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+        assertNotEquals(currentConfig.getPersistentRandomizedMacAddress(),
+                changedSsidConfig.getPersistentRandomizedMacAddress());
+
+        // set currentConfig
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSoftApConfiguration(currentConfig));
+
+        SoftApConfiguration changedSsidBackConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+
+        assertEquals(currentConfig.getPersistentRandomizedMacAddress(),
+                changedSsidBackConfig.getPersistentRandomizedMacAddress());
+    }
 
     /**
      * Test bridged AP enable succeeful when device supports it.
