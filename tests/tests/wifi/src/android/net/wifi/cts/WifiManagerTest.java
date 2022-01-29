@@ -1809,7 +1809,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
                     && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
             if (isSupportCustomizedMac) {
-                customConfigBuilder.setBssid(TEST_MAC);
+                customConfigBuilder.setBssid(TEST_MAC).setMacRandomizationSetting(
+                            SoftApConfiguration.RANDOMIZATION_NONE);
             }
             SoftApConfiguration customConfig = customConfigBuilder.build();
 
@@ -2813,7 +2814,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setChannel(testBandsAndChannels.valueAt(0), testBandsAndChannels.keyAt(0));
 
-            if (isSupportCustomizedMac) testSoftApConfigBuilder.setBssid(TEST_MAC);
+            if (isSupportCustomizedMac) {
+                testSoftApConfigBuilder.setBssid(TEST_MAC)
+                        .setMacRandomizationSetting(SoftApConfiguration.RANDOMIZATION_NONE);
+            }
 
             SoftApConfiguration testSoftApConfig = testSoftApConfigBuilder.build();
 
