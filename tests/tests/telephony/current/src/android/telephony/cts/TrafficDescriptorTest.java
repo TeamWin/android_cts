@@ -35,9 +35,21 @@ public class TrafficDescriptorTest {
     private static final String DNN = "DNN";
     // 97a498e3fc925c9489860333d06e4e470a454e5445525052495345.
     // [OsAppId.ANDROID_OS_ID, "ENTERPRISE", 1]
-    private static final byte[] OS_APP_ID = {-105, -92, -104, -29, -4, -110, 92,
+    private static final byte[] ENTERPRISE_OS_APP_ID = {-105, -92, -104, -29, -4, -110, 92,
             -108, -119, -122, 3, 51, -48, 110, 78, 71, 10, 69, 78, 84, 69,
             82, 80, 82, 73, 83, 69};
+
+    // 97a498e3fc925c9489860333d06e4e47125052494f524954495a455f4c4154454e4359.
+    // [OsAppId.ANDROID_OS_ID, "PRIORITIZE_LATENCY", 1]
+    private static final byte[] URLLC_OS_APP_ID = {-105, -92, -104, -29, -4, -110, 92,
+            -108, -119, -122, 3, 51, -48, 110, 78, 71, 18, 80, 82, 73, 79, 82, 73, 84, 73, 90, 69,
+            95, 76, 65, 84, 69, 78, 67, 89};
+
+    // 97a498e3fc925c9489860333d06e4e47145052494f524954495a455f42414e445749445448.
+    // [OsAppId.ANDROID_OS_ID, "PRIORITIZE_BANDWIDTH", 1]
+    private static final byte[] EMBB_OS_APP_ID = {-105, -92, -104, -29, -4, -110, 92,
+            -108, -119, -122, 3, 51, -48, 110, 78, 71, 20, 80, 82, 73, 79, 82, 73, 84, 73, 90, 69,
+            95, 66, 65, 78, 68, 87, 73, 68, 84, 72};
 
     private PackageManager mPackageManager;
 
@@ -49,29 +61,52 @@ public class TrafficDescriptorTest {
 
     @Test
     public void testConstructorAndGetters() {
-        TrafficDescriptor td = new TrafficDescriptor(DNN, OS_APP_ID);
+        TrafficDescriptor td = new TrafficDescriptor(DNN, ENTERPRISE_OS_APP_ID);
         assertThat(td.getDataNetworkName()).isEqualTo(DNN);
-        assertThat(td.getOsAppId()).isEqualTo(OS_APP_ID);
+        assertThat(td.getOsAppId()).isEqualTo(ENTERPRISE_OS_APP_ID);
+
+        td = new TrafficDescriptor(DNN, URLLC_OS_APP_ID);
+        assertThat(td.getDataNetworkName()).isEqualTo(DNN);
+        assertThat(td.getOsAppId()).isEqualTo(URLLC_OS_APP_ID);
+
+        td = new TrafficDescriptor(DNN, EMBB_OS_APP_ID);
+        assertThat(td.getDataNetworkName()).isEqualTo(DNN);
+        assertThat(td.getOsAppId()).isEqualTo(EMBB_OS_APP_ID);
     }
 
     @Test
     public void testEquals() {
-        TrafficDescriptor td = new TrafficDescriptor(DNN, OS_APP_ID);
-        TrafficDescriptor equalsTd = new TrafficDescriptor(DNN, OS_APP_ID);
-        assertThat(td).isEqualTo(equalsTd);
+        TrafficDescriptor enterpriseTd = new TrafficDescriptor(DNN, ENTERPRISE_OS_APP_ID);
+        TrafficDescriptor equalsTd = new TrafficDescriptor(DNN, ENTERPRISE_OS_APP_ID);
+        assertThat(enterpriseTd).isEqualTo(equalsTd);
+
+        TrafficDescriptor urllcTd = new TrafficDescriptor(DNN, URLLC_OS_APP_ID);
+        equalsTd = new TrafficDescriptor(DNN, URLLC_OS_APP_ID);
+        assertThat(urllcTd).isEqualTo(equalsTd);
+
+        TrafficDescriptor embbTd = new TrafficDescriptor(DNN, EMBB_OS_APP_ID);
+        equalsTd = new TrafficDescriptor(DNN, EMBB_OS_APP_ID);
+        assertThat(embbTd).isEqualTo(equalsTd);
+
+        assertThat(enterpriseTd).isNotEqualTo(urllcTd);
+        assertThat(enterpriseTd).isNotEqualTo(embbTd);
+        assertThat(urllcTd).isNotEqualTo(enterpriseTd);
+        assertThat(urllcTd).isNotEqualTo(embbTd);
+        assertThat(embbTd).isNotEqualTo(enterpriseTd);
+        assertThat(embbTd).isNotEqualTo(urllcTd);
     }
 
     @Test
     public void testNotEquals() {
-        TrafficDescriptor td = new TrafficDescriptor(DNN, OS_APP_ID);
-        TrafficDescriptor notEqualsTd = new TrafficDescriptor("NOT_DNN", OS_APP_ID);
+        TrafficDescriptor td = new TrafficDescriptor(DNN, ENTERPRISE_OS_APP_ID);
+        TrafficDescriptor notEqualsTd = new TrafficDescriptor("NOT_DNN", ENTERPRISE_OS_APP_ID);
         assertThat(td).isNotEqualTo(notEqualsTd);
         assertThat(td).isNotEqualTo(null);
     }
 
     @Test
     public void testParcel() {
-        TrafficDescriptor td = new TrafficDescriptor(DNN, OS_APP_ID);
+        TrafficDescriptor td = new TrafficDescriptor(DNN, ENTERPRISE_OS_APP_ID);
 
         Parcel parcel = Parcel.obtain();
         td.writeToParcel(parcel, 0);
@@ -79,16 +114,49 @@ public class TrafficDescriptorTest {
 
         TrafficDescriptor parcelTd = TrafficDescriptor.CREATOR.createFromParcel(parcel);
         assertThat(td).isEqualTo(parcelTd);
+        parcel.recycle();
+
+        td = new TrafficDescriptor(null, URLLC_OS_APP_ID);
+
+        parcel = Parcel.obtain();
+        td.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        parcelTd = TrafficDescriptor.CREATOR.createFromParcel(parcel);
+        assertThat(td).isEqualTo(parcelTd);
+        parcel.recycle();
+
+        td = new TrafficDescriptor(null, EMBB_OS_APP_ID);
+
+        parcel = Parcel.obtain();
+        td.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        parcelTd = TrafficDescriptor.CREATOR.createFromParcel(parcel);
+        assertThat(td).isEqualTo(parcelTd);
+        parcel.recycle();
     }
 
     @Test
     public void testBuilder() {
         TrafficDescriptor td = new TrafficDescriptor.Builder()
                 .setDataNetworkName(DNN)
-                .setOsAppId(OS_APP_ID)
+                .setOsAppId(ENTERPRISE_OS_APP_ID)
                 .build();
         assertThat(td.getDataNetworkName()).isEqualTo(DNN);
-        assertThat(td.getOsAppId()).isEqualTo(OS_APP_ID);
+        assertThat(td.getOsAppId()).isEqualTo(ENTERPRISE_OS_APP_ID);
+
+        td = new TrafficDescriptor.Builder()
+                .setOsAppId(URLLC_OS_APP_ID)
+                .build();
+        assertThat(td.getDataNetworkName()).isNull();
+        assertThat(td.getOsAppId()).isEqualTo(URLLC_OS_APP_ID);
+
+        td = new TrafficDescriptor.Builder()
+                .setOsAppId(EMBB_OS_APP_ID)
+                .build();
+        assertThat(td.getDataNetworkName()).isNull();
+        assertThat(td.getOsAppId()).isEqualTo(EMBB_OS_APP_ID);
     }
 
     // The purpose of this test is to ensure that no real package names are used as app id.
