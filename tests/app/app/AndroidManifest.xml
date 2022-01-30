@@ -549,7 +549,20 @@
             </intent-filter>
         </activity>
 
-    <service android:name="android.app.stubs.TrimMemService"
+        <service android:name=".HeartbeatService"
+            android:process=":hbsvc"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.stubs.HeartbeatService"/>
+            </intent-filter>
+        </service>
+        <activity android:name=".HeartbeatActivity"
+            android:label=":CountdownActivity"
+            android:process=":hbact"
+            android:launchMode="singleInstance"
+            android:exported="true"/>
+
+        <service android:name="android.app.stubs.TrimMemService"
             android:exported="true"
             android:isolatedProcess="true">
         </service>
