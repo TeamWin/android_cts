@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts.unittests;
 
+import static android.service.autofill.FillResponse.FLAG_DELAY_FILL;
 import static android.service.autofill.FillResponse.FLAG_DISABLE_ACTIVITY_ONLY;
 import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
 
@@ -132,6 +133,7 @@ public class FillResponseTest {
         mBuilder.setFlags(0);
         mBuilder.setFlags(FLAG_TRACK_CONTEXT_COMMITED);
         mBuilder.setFlags(FLAG_DISABLE_ACTIVITY_ONLY);
+        mBuilder.setFlags(FLAG_DELAY_FILL);
     }
 
     @Test

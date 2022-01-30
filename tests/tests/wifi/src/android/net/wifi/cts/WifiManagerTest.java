@@ -1701,7 +1701,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private SoftApConfiguration.Builder generateSoftApConfigBuilderWithSsid(String ssid) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             return new SoftApConfiguration.Builder().setWifiSsid(
                     WifiSsid.fromBytes(ssid.getBytes(StandardCharsets.UTF_8)));
         }
@@ -1718,14 +1719,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private void unregisterLocalOnlyHotspotSoftApCallback(TestSoftApCallback lohsSoftApCallback) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             mWifiManager.unregisterLocalOnlyHotspotSoftApCallback(lohsSoftApCallback);
         } else {
             mWifiManager.unregisterSoftApCallback(lohsSoftApCallback);
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testStartLocalOnlyHotspotWithSupportedBand() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -1807,7 +1809,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
                     && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
             if (isSupportCustomizedMac) {
-                customConfigBuilder.setBssid(TEST_MAC);
+                customConfigBuilder.setBssid(TEST_MAC).setMacRandomizationSetting(
+                            SoftApConfiguration.RANDOMIZATION_NONE);
             }
             SoftApConfiguration customConfig = customConfigBuilder.build();
 
@@ -2360,7 +2363,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private void verifyLohsRegisterSoftApCallback(TestExecutor executor,
             TestSoftApCallback callback) throws Exception {
         // Register callback to get SoftApCapability
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             mWifiManager.registerLocalOnlyHotspotSoftApCallback(executor, callback);
         } else {
             mWifiManager.registerSoftApCallback(executor, callback);
@@ -2385,8 +2389,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
             assertTrue(currentConfig.isUserConfiguration());
         }
+        assertNotNull(currentConfig.getPersistentRandomizedMacAddress());
 
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             // Verify set/get with the deprecated set/getSsid()
             SoftApConfiguration oldSsidConfig = new SoftApConfiguration.Builder(targetConfig)
                     .setWifiSsid(null)
@@ -2399,7 +2405,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
         SoftApConfiguration testSoftApConfig) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             assertEquals(currentConfig.getWifiSsid(), testSoftApConfig.getWifiSsid());
         }
         assertEquals(currentConfig.getSsid(), testSoftApConfig.getSsid());
@@ -2430,7 +2437,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     testSoftApConfig.isBridgedModeOpportunisticShutdownEnabled());
             assertEquals(currentConfig.isIeee80211axEnabled(),
                     testSoftApConfig.isIeee80211axEnabled());
-            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                    || ApiLevelUtil.codenameStartsWith("T")) {
                 assertEquals(currentConfig.getBridgedModeOpportunisticShutdownTimeoutMillis(),
                         testSoftApConfig.getBridgedModeOpportunisticShutdownTimeoutMillis());
                 assertEquals(currentConfig.isIeee80211beEnabled(),
@@ -2501,6 +2509,35 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         return testBandsAndChannels;
     }
 
+    /**
+     * Test SoftApConfiguration#getPersistentRandomizedMacAddress(). There are two test cases in
+     * this test.
+     * 1. configure two different SoftApConfigurations (different SSID) and verify that randomized
+     * MAC address is different.
+     * 2. configure A then B then A (SSIDs) and verify that the 1st and 3rd MAC addresses are the
+     * same.
+     */
+    public void testSoftApConfigurationGetPersistentRandomizedMacAddress() throws Exception {
+        SoftApConfiguration currentConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSoftApConfiguration(new SoftApConfiguration.Builder()
+                .setSsid(currentConfig.getSsid() + "test").build()));
+        SoftApConfiguration changedSsidConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+        assertNotEquals(currentConfig.getPersistentRandomizedMacAddress(),
+                changedSsidConfig.getPersistentRandomizedMacAddress());
+
+        // set currentConfig
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setSoftApConfiguration(currentConfig));
+
+        SoftApConfiguration changedSsidBackConfig = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getSoftApConfiguration);
+
+        assertEquals(currentConfig.getPersistentRandomizedMacAddress(),
+                changedSsidBackConfig.getPersistentRandomizedMacAddress());
+    }
 
     /**
      * Test bridged AP enable succeeful when device supports it.
@@ -2660,7 +2697,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                             callback.getCurrentSoftApCapability()).keyAt(0))
                     .setHiddenSsid(false);
 
-            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                    || ApiLevelUtil.codenameStartsWith("T")) {
                 softApConfigBuilder.setBridgedModeOpportunisticShutdownTimeoutMillis(30_000);
             }
 
@@ -2713,7 +2751,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
 
             // Test 11 BE control config
-            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                    || ApiLevelUtil.codenameStartsWith("T")) {
                 if (callback.getCurrentSoftApCapability()
                         .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_BE)) {
                     softApConfigBuilder.setIeee80211beEnabled(true);
@@ -2775,7 +2814,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setChannel(testBandsAndChannels.valueAt(0), testBandsAndChannels.keyAt(0));
 
-            if (isSupportCustomizedMac) testSoftApConfigBuilder.setBssid(TEST_MAC);
+            if (isSupportCustomizedMac) {
+                testSoftApConfigBuilder.setBssid(TEST_MAC)
+                        .setMacRandomizationSetting(SoftApConfiguration.RANDOMIZATION_NONE);
+            }
 
             SoftApConfiguration testSoftApConfig = testSoftApConfigBuilder.build();
 
@@ -3694,12 +3736,13 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         @Override
         public void onCountryCodeInactive() {
+            Log.d(TAG, "Receive onCountryCodeInactive");
             mCurrentCountryCode = null;
             mIsOnCountryCodeInactiveCalled = true;
         }
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testActiveCountryCodeChangedCallback() throws Exception {
         TestActiveCountryCodeChangedCallback testCountryCodeChangedCallback =
                 new TestActiveCountryCodeChangedCallback();
@@ -3720,7 +3763,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         () -> {
                             executor.runAll();
                             return testCountryCodeChangedCallback
-                                        .isOnActiveCountryCodeChangedCalled()
+                                        .isOnCountryCodeInactiveCalled()
                                     && testCountryCodeChangedCallback.getCurrentDriverCountryCode()
                                             == null;
                         });

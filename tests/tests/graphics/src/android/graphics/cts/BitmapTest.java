@@ -23,6 +23,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeNotNull;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -673,6 +675,26 @@ public class BitmapTest {
         try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
             HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE)) {
             Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.CIE_LAB));
+        }
+    }
+
+    @Test
+    public void testWrapHardwareBufferFor1010102BufferSucceeds() {
+        HardwareBuffer hwBufferMaybe = null;
+
+        try {
+            hwBufferMaybe = HardwareBuffer.create(128, 128, HardwareBuffer.RGBA_1010102, 1,
+                    HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        } catch (IllegalArgumentException e) {
+            assumeNoException("Creating a 1010102 HW buffer was not supported", e);
+        }
+
+        assumeNotNull(hwBufferMaybe);
+
+        try (HardwareBuffer buffer = hwBufferMaybe) {
+            Bitmap bitmap = Bitmap.wrapHardwareBuffer(buffer, ColorSpace.get(Named.SRGB));
+            assertNotNull(bitmap);
+            bitmap.recycle();
         }
     }
 
@@ -2530,6 +2552,10 @@ public class BitmapTest {
                 // In that case, it will fall back to ARGB_8888.
                 assertTrue(nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_8888
                         || nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_F16);
+            } else if (pair.config == Bitmap.Config.RGBA_1010102) {
+                // Devices not supporting RGBA_1010102 in hardware should fallback to ARGB_8888
+                assertTrue(nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_8888
+                        || nativeFormat == ANDROID_BITMAP_FORMAT_RGBA_1010102);
             } else {
                 assertEquals("Config: " + pair.config, pair.format, nativeFormat);
             }
@@ -2548,6 +2574,7 @@ public class BitmapTest {
             new Object[] { Config.ARGB_8888, ANDROID_BITMAP_FORMAT_RGBA_8888 },
             new Object[] { Config.RGB_565,   ANDROID_BITMAP_FORMAT_RGB_565 },
             new Object[] { Config.RGBA_F16,  ANDROID_BITMAP_FORMAT_RGBA_F16 },
+            new Object[] { Config.RGBA_1010102,  ANDROID_BITMAP_FORMAT_RGBA_1010102 },
         };
     }
 
@@ -2872,6 +2899,7 @@ public class BitmapTest {
     private static final int ANDROID_BITMAP_FORMAT_RGB_565 = 4;
     private static final int ANDROID_BITMAP_FORMAT_A_8 = 8;
     private static final int ANDROID_BITMAP_FORMAT_RGBA_F16 = 9;
+    private static final int ANDROID_BITMAP_FORMAT_RGBA_1010102 = 10;
 
     private static class ConfigToFormat {
         public final Config config;
@@ -2899,6 +2927,7 @@ public class BitmapTest {
         new ConfigToFormat(Bitmap.Config.RGB_565, ANDROID_BITMAP_FORMAT_RGB_565),
         new ConfigToFormat(Bitmap.Config.ALPHA_8, ANDROID_BITMAP_FORMAT_A_8),
         new ConfigToFormat(Bitmap.Config.RGBA_F16, ANDROID_BITMAP_FORMAT_RGBA_F16),
+        new ConfigToFormat(Bitmap.Config.RGBA_1010102, ANDROID_BITMAP_FORMAT_RGBA_1010102),
     };
 
     static native int nGetFormat(Bitmap bitmap);
