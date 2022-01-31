@@ -16,6 +16,7 @@
 package android.autofillservice.cts;
 
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 
@@ -104,6 +105,21 @@ public class MultiWindowLoginActivityTest
     @Test
     public void testSplitWindow() throws Exception {
         enableService();
+
+        // TODO: Rewrite this test with ActivityScenario and change the way to get the activity
+        // instance. Without depending on the callbacks, we probably don't need to set the windowing
+        // mode to fullscreen (Please check the behavior on freeform-first devices before removing
+        // the following block).
+        if (mActivity.isInMultiWindowMode()) {
+            // The activity can be in the freeform mode on freeform-first devices. Here we ensure
+            // the activity is in the fullscreen mode (i.e. non multi-window mode) so that the
+            // activity can receive callbacks after entering split mode. Otherwise, on some display
+            // sizes, the activity may not be relaunched after putting the activity into primary
+            // split because it's multi-window to multi-window transition.
+            mAtm.setTaskWindowingMode(mActivity.getTaskId(), WINDOWING_MODE_FULLSCREEN, true);
+            MultiWindowLoginActivity.expectNewInstance(/* waitWindowFocus= */false);
+            MultiWindowLoginActivity.waitNewInstance();
+        }
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
