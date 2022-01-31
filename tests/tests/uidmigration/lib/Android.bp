@@ -16,33 +16,7 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsSharedUserMigrationDataTestApp1",
-    defaults: ["cts_defaults"],
-    sdk_version: "current",
-    static_libs: [
-        "CtsSharedUserMigrationTestLibs",
-    ],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-    srcs: ["src/**/*.kt"],
-}
-
-android_test_helper_app {
-    name: "CtsSharedUserMigrationDataTestApp2",
-    defaults: ["cts_defaults"],
-    sdk_version: "current",
-    static_libs: [
-        "CtsSharedUserMigrationTestLibs",
-    ],
-    manifest: "AndroidManifest2.xml",
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
+java_library {
+    name: "CtsSharedUserMigrationTestLibs",
     srcs: ["src/**/*.kt"],
 }
