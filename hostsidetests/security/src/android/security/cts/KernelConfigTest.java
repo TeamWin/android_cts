@@ -436,4 +436,24 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
         assertTrue("The kernel's base address must be randomized",
                 configSet.contains("CONFIG_RANDOMIZE_BASE=y"));
     }
+
+    /**
+     * Test that CONFIG_VMAP_STACK is enabled on architectures that support it.
+     *
+     * @throws Exception
+     */
+    @CddTest(requirement="9.7")
+    @Test
+    public void testConfigVmapStack() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 33) {
+            return;
+        }
+
+        if (!configSet.contains("CONFIG_HAVE_ARCH_VMAP_STACK=y")) {
+            return;
+        }
+
+        assertTrue("CONFIG_VMAP_STACK must be enabled on architectures that support it.",
+                configSet.contains("CONFIG_VMAP_STACK=y"));
+    }
 }
