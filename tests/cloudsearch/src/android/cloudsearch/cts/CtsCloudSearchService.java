@@ -39,11 +39,12 @@ public class CtsCloudSearchService extends CloudSearchService {
     public void onCreate() {
         super.onCreate();
         if (DEBUG) Log.d(TAG, "onCreate");
-        sWatcher.created.countDown();
     }
 
     @Override
     public void onSearch(SearchRequest request) {
+        // Counting down created in onSearch because a mock search request is issued in setup().
+        sWatcher.created.countDown();
         sWatcher.queried.countDown();
         if (request.getQuery().equals("Successful")) {
             sWatcher.succeeded.countDown();

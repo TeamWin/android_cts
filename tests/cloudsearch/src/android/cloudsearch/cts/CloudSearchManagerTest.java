@@ -121,13 +121,13 @@ public class CloudSearchManagerTest implements CloudSearchManager.CallBack {
     }
 
     private void setService(String service) {
-        Log.d(TAG, "Setting cloudsearch_service service to " + service);
+        Log.d(TAG, "Setting cloudsearch service to " + service);
         int userId = Process.myUserHandle().getIdentifier();
         if (service != null) {
-            runShellCommand("cmd cloudsearch_service set temporary-service "
+            runShellCommand("cmd cloudsearch set temporary-service "
                     + userId + " " + service + " 60000");
         } else {
-            runShellCommand("cmd cloudsearch_service set temporary-service " + userId);
+            runShellCommand("cmd cloudsearch set temporary-service " + userId);
         }
     }
 
