@@ -320,11 +320,11 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getDrawable_defaultIsNull_throwsException() {
+    public void getDrawable_defaultIsNull_returnsNull() {
         sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
-        assertThrows(NullPointerException.class, () -> sDpm.getDrawable(
-                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ () -> null));
+        assertThat(sDpm.getDrawable(
+                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ () -> null)).isNull();
     }
 
     @Test
@@ -556,7 +556,7 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getString_defaultLoadedIsNull_throwsException() {
+    public void getString_defaultLoaderIsNull_throwsException() {
         sDpm.resetStrings(new String[]{UPDATABLE_STRING_ID_1});
 
         assertThrows(NullPointerException.class,
@@ -566,11 +566,10 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getString_defaultIsNull_throwsException() {
+    public void getString_defaultIsNull_returnsNull() {
         sDpm.resetStrings(new String[]{UPDATABLE_STRING_ID_1});
 
-        assertThrows(NullPointerException.class,
-                () -> sDpm.getString(UPDATABLE_STRING_ID_1, /* default= */ () -> null));
+        assertThat(sDpm.getString(UPDATABLE_STRING_ID_1, /* default= */ () -> null)).isNull();
     }
 
     @Test
