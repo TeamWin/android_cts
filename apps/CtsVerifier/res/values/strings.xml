@@ -5025,26 +5025,25 @@ You should be prompted to select credentials; choose the ones you just installed
     <!--  Pro Audio Tests -->
     <string name="pro_audio_latency_test">Pro Audio Test</string>
 
-    <string name="proAudioHasProAudiolbl">Has Pro Audio</string>
-    <string name="proAudioHasLLAlbl">Has Low-Latency Audio</string>
+    <string name="proAudioHasProAudiolbl">Has Pro Audio:</string>
+    <string name="proAudioHasLLAlbl">Has Low-Latency Audio:</string>
     <string name="audioLoopbackInputLbl">Audio Input:</string>
     <string name="audioLoopbackOutputLbl">Audio Output:</string>
-
-    <string name="proAudioMidiHasMIDILbl">Has MIDI Support</string>
-    <string name="proAudioMIDIInputLbl">MIDI Input:</string>
-    <string name="proAudioMIDIOutputLbl">MIDI Output:</string>
+    <string name="proAudioMidiHasMIDILbl">Has MIDI Support:</string>
     <string name="proAudioMidiHasUSBHostLbl">USB Host Mode:</string>
     <string name="proAudioMidiHasUSBPeripheralLbl">USB Peripheral Mode:</string>
     <string name="proAudioHDMISupportLbl">HDMI Support:</string>
     <string name="proAudioHasHDMICheckBox">Has HDMI Support</string>
-    <string name="proAudioLoopbackMoved">The latency measurement for Pro Audio has been moved to the Audio Loopback Latency Test</string>
 
     <string name="audio_proaudio_NA">N/A</string>
-    <string name="audio_proaudio_pending">pending...</string>
+    <string name="audio_proaudio_hdmiPending">pending...</string>
+    <string name="audio_proaudio_hdmiNotFound">No HDMI detected.</string>
 
     <string name="audio_proaudio_nopa_title">Pro Audio Test</string>
     <string name="audio_proaudio_nopa_message">This device does not set the FEATURE_AUDIO_PRO
         flag and therefore does not need to run this test.</string>
+
+    <string name="hdmi_insufficient">The Connected HDMI device does not meet CDD requirements</string>
 
     <!-- Various test status strings -->
     <string name="audio_proaudio_latencytoohigh">Latency is too high</string>
@@ -5052,7 +5051,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_proaudio_midinotreported">"No MIDI support reported"</string>
     <string name="audio_proaudio_usbhostnotreported">"No USB Host Mode support reported"</string>
     <string name="audio_proaudio_usbperipheralnotreported">"No USB Peripheral Mode support reported"</string>
-    <string name="audio_proaudio_hdminotvalid">HDMI support is reported by not valid.</string>
 
     <!--  MIDI Test -->
     <string name="midi_test">MIDI Test</string>
@@ -5631,9 +5629,18 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <!-- Pro Audio Test -->
     <string name="proaudio_test">Pro Audio Test</string>
-    <string name="proaudio_info">
-        This test will check for validity of the \"Pro Audio\" and subsidiary flags. Note
-        that this test no longer requires a loopback audio device.
+    <string name="proaudio_info">This tests that any device claiming \"Pro Audio\" meets the
+        requirements specified in the
+        <a href="https://source.android.com/compatibility/12/android-12-cdd#510_professional_audio">
+            CDD section 5.10. Professional Audio</a>
+        \n\nTo execute the test:
+        \n1. Note that all required flags report \"true\"
+        \n2. If the DUT supports HDMI:
+        \n  a. Click the \"Has HDMI Support\" checkbox
+        \n  b. Connect an HDMI device to the DUT
+        \n  c. Verify that the reported HDMI attributes meet the specification.
+        \n\nNote that the latency measurement for Pro Audio has been moved to the
+        Audio Loopback Latency Test
     </string>
     <string name="proaudio_hdmi_infotitle">HDMI Support</string>
     <string name="proaudio_hdmi_message">Please connect an HDMI peripheral to validate
