@@ -285,7 +285,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         final int imageWriterWidth = 20;
         final int imageWriterHeight = 50;
 
-        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
+        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
         try (
             ImageWriter writer = new ImageWriter
                 .Builder(surface)
