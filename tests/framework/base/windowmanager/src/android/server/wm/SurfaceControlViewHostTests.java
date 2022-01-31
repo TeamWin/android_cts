@@ -619,7 +619,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mSurfaceView.setZOrderOnTop(true);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
                 width, height, Gravity.LEFT | Gravity.TOP));
-            });
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
+            mSurfaceView.getHolder().addCallback(this);
+        });
     }
 
     class ForwardingSurfaceView extends SurfaceView {
