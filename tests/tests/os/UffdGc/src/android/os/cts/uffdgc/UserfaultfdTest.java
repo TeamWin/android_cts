@@ -39,8 +39,8 @@ public final class UserfaultfdTest {
   @Before
   public void setUp() {
       boolean mShouldRunTest = !(FeatureUtil.isAutomotive()
-              && ApiLevelUtil.isAtMost(VERSION_CODES.S));
-      Assume.assumeTrue("Skip userfaultfd tests on Automotive targets till S", mShouldRunTest);
+              && ApiLevelUtil.isAtMost(VERSION_CODES.S_V2));
+      Assume.assumeTrue("Skip userfaultfd tests on Automotive targets till S_V2", mShouldRunTest);
       Assume.assumeTrue("Skip userfaultfd tests on kernels lower than 5.4", confirmKernelVersion());
   }
 
