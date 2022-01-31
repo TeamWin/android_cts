@@ -122,6 +122,7 @@ public class JobThrottlingTest {
     private String mInitialDisplayTimeout;
     private String mInitialRestrictedBucketEnabled;
     private String mInitialLocationMode;
+    private String mInitialBatteryStatsConstants;
     private boolean mAutomotiveDevice;
     private boolean mLeanbackOnly;
 
@@ -177,6 +178,11 @@ public class JobThrottlingTest {
         mInitialAirplaneModeState = isAirplaneModeOn();
         mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET);
+        mInitialBatteryStatsConstants = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS);
+        // Make sure ACTION_CHARGING is sent immediately.
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS, "battery_charged_delay_ms=0");
         mInitialLocationMode = Settings.Secure.getString(mContext.getContentResolver(),
                 Settings.Secure.LOCATION_MODE);
         // Make sure test jobs can run regardless of bucket.
@@ -1113,6 +1119,8 @@ public class JobThrottlingTest {
         mUiDevice.executeShellCommand("cmd jobscheduler monitor-battery off");
         BatteryUtils.runDumpsysBatteryReset();
         BatteryUtils.enableBatterySaver(false);
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS, mInitialBatteryStatsConstants);
         removeTestAppFromTempWhitelist();
 
         // Ensure that we leave WiFi in its previous state.

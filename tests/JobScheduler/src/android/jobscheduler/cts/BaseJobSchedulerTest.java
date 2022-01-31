@@ -34,6 +34,7 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -76,6 +77,8 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
 
     boolean mStorageStateChanged;
 
+    private String mInitialBatteryStatsConstants;
+
     @Override
     public void injectInstrumentation(Instrumentation instrumentation) {
         super.injectInstrumentation(instrumentation);
@@ -115,12 +118,20 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         kTestEnvironment.setUp();
         kTriggerTestEnvironment.setUp();
         mJobScheduler.cancelAll();
+
+        mInitialBatteryStatsConstants = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS);
+        // Make sure ACTION_CHARGING is sent immediately.
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS, "battery_charged_delay_ms=0");
     }
 
     @CallSuper
     @Override
     public void tearDown() throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS, mInitialBatteryStatsConstants);
         if (mStorageStateChanged) {
             // Put storage service back in to normal operation.
             SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
