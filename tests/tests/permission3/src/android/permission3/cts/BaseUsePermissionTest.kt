@@ -473,8 +473,14 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     // Automotive doesn't support one time permissions, and thus
                     // won't show an "Ask every time" message
                     when (state) {
-                        PermissionState.ALLOWED ->By.text(
-                                getPermissionControllerString("app_permission_button_allow"))
+                        PermissionState.ALLOWED ->
+                            if (showsForegroundOnlyButton(permission)) {
+                                By.text(getPermissionControllerString(
+                                        "app_permission_button_allow_foreground"))
+                            } else {
+                                By.text(getPermissionControllerString(
+                                                "app_permission_button_allow"))
+                            }
                         PermissionState.DENIED -> By.text(
                                 getPermissionControllerString("app_permission_button_deny"))
                         PermissionState.DENIED_WITH_PREJUDICE -> By.text(
