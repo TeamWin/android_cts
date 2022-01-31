@@ -28,7 +28,6 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.support.test.uiautomator.UiDevice;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -46,8 +45,6 @@ import java.util.regex.Pattern;
 @RunWith(AndroidJUnit4.class)
 public class GameManagerTest {
     private static final String TAG = "GameManagerTest";
-    private static final String GAME_OVERLAY_FEATURE_NAME =
-            "com.google.android.feature.GAME_OVERLAY";
     private static final String POWER_DUMPSYS_CMD = "dumpsys android.hardware.power.IPower/default";
     private static final Pattern GAME_LOADING_REGEX =
             Pattern.compile("^GAME_LOADING\\t(\\d*)\\t\\d*$", Pattern.MULTILINE);
@@ -79,9 +76,6 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeUnsupported() {
-        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
-
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_UNSUPPORTED));
@@ -98,9 +92,6 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeStandard() {
-        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
-
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_STANDARD));
@@ -117,9 +108,6 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModePerformance() {
-        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
-
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_PERFORMANCE));
@@ -136,9 +124,6 @@ public class GameManagerTest {
      */
     @Test
     public void testGetGameModeBattery() {
-        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(GAME_OVERLAY_FEATURE_NAME));
-
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                         GameManager.GAME_MODE_BATTERY));
