@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
@@ -77,6 +78,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.text.format.DateUtils;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
@@ -1907,6 +1909,28 @@ public class UsageStatsTest {
         } finally {
             BatteryUtils.runDumpsysBatteryReset();
         }
+    }
+
+    @Test
+    public void testSetEstimatedLaunchTime_NotUsableByShell() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            try {
+                mUsageStatsManager.setEstimatedLaunchTimeMillis(TEST_APP_PKG,
+                        System.currentTimeMillis() + 1000);
+                fail("Shell was able to set an app's estimated launch time");
+            } catch (SecurityException expected) {
+                // Success
+            }
+
+            try {
+                Map<String, Long> estimatedLaunchTime = new ArrayMap<>();
+                estimatedLaunchTime.put(TEST_APP_PKG, System.currentTimeMillis() + 10_000);
+                mUsageStatsManager.setEstimatedLaunchTimesMillis(estimatedLaunchTime);
+                fail("Shell was able to set an app's estimated launch time");
+            } catch (SecurityException expected) {
+                // Success
+            }
+        }, Manifest.permission.CHANGE_APP_LAUNCH_TIME_ESTIMATE);
     }
 
     private static final int[] INTERACTIVE_EVENTS = new int[] {
