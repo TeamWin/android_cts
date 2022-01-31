@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.PowerManager;
@@ -83,9 +84,9 @@ public class LowPowerStandbyTest {
     @Test
     @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
     public void testSetLowPowerStandbyEnabled_reflectedByIsLowPowerStandbyEnabled() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            assumeTrue(mPowerManager.isLowPowerStandbySupported());
+        assumeLowPowerStandbySupported();
 
+        SystemUtil.runWithShellPermissionIdentity(() -> {
             mPowerManager.setLowPowerStandbyEnabled(true);
             assertTrue(mPowerManager.isLowPowerStandbyEnabled());
 
@@ -97,9 +98,9 @@ public class LowPowerStandbyTest {
     @Test
     @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
     public void testSetLowPowerStandbyEnabled_sendsBroadcast() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            assumeTrue(mPowerManager.isLowPowerStandbySupported());
+        assumeLowPowerStandbySupported();
 
+        SystemUtil.runWithShellPermissionIdentity(() -> {
             mPowerManager.setLowPowerStandbyEnabled(false);
 
             CallbackAsserter broadcastAsserter = CallbackAsserter.forBroadcast(
@@ -116,5 +117,15 @@ public class LowPowerStandbyTest {
                     "ACTION_LOW_POWER_STANDBY_ENABLED_CHANGED broadcast not received",
                     BROADCAST_TIMEOUT_SEC);
         }, Manifest.permission.MANAGE_LOW_POWER_STANDBY);
+    }
+
+    private void assumeLowPowerStandbySupported() {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        automan.adoptShellPermissionIdentity(Manifest.permission.MANAGE_LOW_POWER_STANDBY);
+        try {
+            assumeTrue(mPowerManager.isLowPowerStandbySupported());
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 }
