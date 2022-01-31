@@ -49,7 +49,7 @@ import java.util.logging.Logger;
 /**
  * Background task to generate a report and save it to external storage.
  */
-class ReportExporter extends AsyncTask<Void, Void, String> {
+public class ReportExporter extends AsyncTask<Void, Void, String> {
     private static final String TAG = ReportExporter.class.getSimpleName();
     private static final boolean DEBUG = true;
 

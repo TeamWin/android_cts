@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier;
 
+import static com.android.cts.verifier.ReportExporter.LOGS_DIRECTORY;
 import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
 import static com.android.cts.verifier.TestListActivity.sInitialLaunch;
 
@@ -25,6 +26,7 @@ import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,6 +39,7 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.cts.verifier.TestListActivity.DisplayMode;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
@@ -357,10 +360,27 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     class ClearTestResultsTask extends AsyncTask<Void, Void, Void> {
 
+        private void deleteDirectory(File file) {
+            for (File subfile : file.listFiles()) {
+                if (subfile.isDirectory()) {
+                    deleteDirectory(subfile);
+                }
+                subfile.delete();
+            }
+        }
+
         @Override
         protected Void doInBackground(Void... params) {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.delete(TestResultsProvider.getResultContentUri(mContext), "1", null);
+
+            // Apart from deleting metadata from content resolver database, need to delete
+            // files generated in LOGS_DIRECTORY. For example screenshots.
+            File resFolder = new File(
+                    Environment.getExternalStorageDirectory().getAbsolutePath()
+                            + File.separator + LOGS_DIRECTORY);
+            deleteDirectory(resFolder);
+
             return null;
         }
     }
