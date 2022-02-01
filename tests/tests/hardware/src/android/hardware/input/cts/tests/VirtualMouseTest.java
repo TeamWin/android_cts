@@ -27,6 +27,7 @@ import android.view.MotionEvent;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -52,6 +53,7 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    @Ignore
     public void sendButtonEvent() {
         final PointF startPosition = mVirtualMouse.getCursorPosition();
         mVirtualMouse.sendButtonEvent(new VirtualMouseButtonEvent.Builder()
@@ -87,6 +89,7 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    @Ignore
     public void sendRelativeEvent() {
         final PointF startPosition = mVirtualMouse.getCursorPosition();
         final float relativeChangeX = 25f;
@@ -116,6 +119,7 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    @Ignore
     public void sendScrollEvent() {
         final PointF startPosition = mVirtualMouse.getCursorPosition();
         final float moveX = 0f;
