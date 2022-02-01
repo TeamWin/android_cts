@@ -17,7 +17,7 @@
 package android.server.wm.app;
 
 import static android.server.wm.app.Components.BackgroundActivityTransition.TRANSITION_REQUESTED;
-import static android.server.wm.app.Components.CLEAR_BACKGROUND_TRANSITION_EXIT_ACTIVITY;
+import static android.server.wm.app.Components.CUSTOM_TRANSITION_EXIT_ACTIVITY;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -28,7 +28,9 @@ import android.server.wm.TestJournalProvider;
 /**
  * Activity to test that show background for activity transitions works
  */
-public class ClearBackgroundTransitionExitActivity extends Activity {
+public class CustomTransitionExitActivity extends Activity {
+
+    String mTransitionType;
     int mBackgroundColor = 0;
 
     @Override
@@ -38,6 +40,7 @@ public class ClearBackgroundTransitionExitActivity extends Activity {
 
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
+        mTransitionType = bundle.getString("transitionType");
         mBackgroundColor = bundle.getInt("backgroundColorOverride", 0);
 
         // Delay the starting the activity so we don't skip the transition.
@@ -48,13 +51,14 @@ public class ClearBackgroundTransitionExitActivity extends Activity {
         Runnable r = () -> {
             // Notify the test journal that we are starting the activity transition
             TestJournalProvider.putExtras(
-                    getBaseContext(), CLEAR_BACKGROUND_TRANSITION_EXIT_ACTIVITY, bundle -> {
+                    getBaseContext(), CUSTOM_TRANSITION_EXIT_ACTIVITY, bundle -> {
                         bundle.putBoolean(TRANSITION_REQUESTED,
                                 true);
                     });
             final Intent i = new Intent(
-                    ClearBackgroundTransitionExitActivity.this,
-                    ClearBackgroundTransitionEnterActivity.class);
+                    CustomTransitionExitActivity.this,
+                    CustomTransitionEnterActivity.class);
+            i.putExtra("transitionType", mTransitionType);
             i.putExtra("backgroundColorOverride", mBackgroundColor);
             startActivity(i);
         };

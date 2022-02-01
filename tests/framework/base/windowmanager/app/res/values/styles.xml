@@ -93,23 +93,7 @@
         <item name="android:windowSplashScreenBackground">@drawable/red</item>
     </style>
 
-    <style name="Animation.ClearActivityAnimation" parent="@android:style/Animation.Activity">
-        <item name="android:activityOpenEnterAnimation">
-            @anim/show_background_hide_window_animation
-        </item>
-        <item name="android:activityOpenExitAnimation">
-            @anim/show_background_hide_window_animation
-        </item>
-        <item name="android:activityCloseEnterAnimation">
-            @anim/show_background_hide_window_animation
-        </item>
-        <item name="android:activityCloseExitAnimation">
-            @anim/show_background_hide_window_animation
-        </item>
-    </style>
-
-    <style name="Theme.BackgroundColor" parent="android:Theme.Light">
-        <item name="android:windowAnimationStyle">@style/Animation.ClearActivityAnimation</item>
+    <style name="Theme.CustomTransitionTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:background">#ffffff</item>
         <item name="android:windowBackground">#ffffff</item>
         <item name="android:colorBackground">#ffffff</item>

@@ -16,16 +16,38 @@
   -->
 
 <set xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shareInterpolator="false"
-    android:showBackground="true">
+    android:shareInterpolator="false">
 
     <alpha
-        android:fromAlpha="0"
-        android:toAlpha="0"
+        android:fromAlpha="1.0"
+        android:toAlpha="1.0"
         android:fillEnabled="true"
         android:fillBefore="true"
         android:fillAfter="true"
         android:interpolator="@android:interpolator/linear"
         android:startOffset="0"
-        android:duration="5000"/>
+        android:duration="5000" />
+
+    <scale
+        android:fromXScale="1.0"
+        android:toXScale="1.0"
+        android:fromYScale="0.5"
+        android:toYScale="0.5"
+        android:interpolator="@android:interpolator/linear"
+        android:startOffset="0"
+        android:duration="5000" />
+
+    <extend
+        android:fromExtendLeft="0"
+        android:fromExtendTop="0"
+        android:fromExtendRight="0"
+        android:fromExtendBottom="100%"
+        android:toExtendLeft="0"
+        android:toExtendTop="0"
+        android:toExtendRight="0"
+        android:toExtendBottom="100%"
+        android:interpolator="@android:interpolator/linear"
+        android:startOffset="0"
+        android:duration="5000" />
+
 </set>
