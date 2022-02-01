@@ -38,10 +38,11 @@ java_test_host {
         "general-tests",
     ],
     static_libs: [
-    	"cts-statsd-atom-host-test-utils",
+        "cts-statsd-atom-host-test-utils",
     ],
     data: [
         ":CtsCarApp",
         ":CtsCarWatchdogSharedApp",
+        ":CtsCarWatchdogSecondSharedApp",
     ],
 }
