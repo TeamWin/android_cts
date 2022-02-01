@@ -416,6 +416,19 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
 
+    public void sendDeviceToSleepAndValidateUsingStandbyMessage(boolean directlyAddressed)
+            throws Exception {
+        ITestDevice device = getDevice();
+        WakeLockHelper.acquirePartialWakeLock(device);
+        if (directlyAddressed) {
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.STANDBY);
+        } else {
+            hdmiCecClient.sendCecMessage(
+                    LogicalAddress.TV, LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        }
+        waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+    }
+
     public void wakeUpDevice() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

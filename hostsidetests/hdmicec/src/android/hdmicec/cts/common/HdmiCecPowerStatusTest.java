@@ -375,6 +375,34 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         }
     }
 
+    /**
+     * Test HF4-6-27 (CEC 2.0)
+     *
+     * <p>Verify that action of a {@code <Standby>} message can only be used to send a device to
+     * the standby state.
+     */
+    @Test
+    public void cect_hf4_6_27_standby_action_20() throws Exception {
+        ITestDevice device = getDevice();
+        /* Make sure the device is not booting up/in standby */
+        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        setCec20();
+        try {
+            // Directly addressed standby message to DUT.
+            sendDeviceToSleepAndValidateUsingStandbyMessage(true);
+            // Resending Standby message and validate device stays in standby mode
+            sendDeviceToSleepAndValidateUsingStandbyMessage(true);
+            wakeUpDevice();
+
+            // Broadcast standby message.
+            sendDeviceToSleepAndValidateUsingStandbyMessage(false);
+            // Resending Standby message and validate device stays in standby mode
+            sendDeviceToSleepAndValidateUsingStandbyMessage(false);
+        } finally {
+            wakeUpDevice();
+        }
+    }
+
     /*
      * Test HF4-6-28
      *
