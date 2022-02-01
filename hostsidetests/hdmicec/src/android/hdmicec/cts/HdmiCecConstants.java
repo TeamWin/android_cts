@@ -130,6 +130,10 @@ public final class HdmiCecConstants {
     public static final int CEC_POWER_STATUS_IN_TRANSITION_TO_ON = 0x2;
     public static final int CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY = 0x3;
 
+    /** PowerManager wakefulness states */
+    public static final String WAKEFULNESS_AWAKE = "Awake";
+    public static final String WAKEFULNESS_ASLEEP = "Asleep";
+
     /** Poll Message Success */
     public static final String POLL_SUCCESS = "POLL message sent";
 
@@ -151,6 +155,10 @@ public final class HdmiCecConstants {
     public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";
     public static final String POWER_CONTROL_MODE_NONE = "none";
     public static final String POWER_CONTROL_MODE_TV = "to_tv";
+
+    // Power State Change on Active Source Lost Settings values
+    public static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_NONE = "none";
+    public static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_STANDBY_NOW = "standby_now";
 
     // CEC 2.0 Report Feature Bits
     public static final int FEATURES_SINK_SUPPORTS_ARC_TX_BIT = 0x4;
