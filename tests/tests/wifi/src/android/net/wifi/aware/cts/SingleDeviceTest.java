@@ -165,7 +165,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onShutDown() {
+        public void onAwareSessionTerminated() {
             synchronized (mLock) {
                 mSessions.remove(mSession);
             }
