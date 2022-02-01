@@ -22,13 +22,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_SAFETY_CENTER
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.IntentFilter
 import android.content.res.Resources
 import android.os.Build.VERSION_CODES.TIRAMISU
 import android.provider.DeviceConfig
 import android.safetycenter.SafetyCenterData
 import android.safetycenter.SafetyCenterManager
-import android.safetycenter.SafetyCenterManager.ACTION_REFRESH_SAFETY_SOURCES
 import android.safetycenter.SafetyCenterManager.REFRESH_REASON_PAGE_OPEN
 import android.safetycenter.SafetyCenterManager.REFRESH_REASON_RESCAN_BUTTON_CLICK
 import android.safetycenter.SafetyCenterManager.OnSafetyCenterDataChangedListener
@@ -42,7 +40,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.TimeoutCancellationException
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -55,7 +52,6 @@ import kotlin.test.assertFailsWith
 class SafetyCenterManagerTest {
     private val context: Context = getApplicationContext()
     private val safetyCenterManager = context.getSystemService(SafetyCenterManager::class.java)!!
-    private val safetySourceBroadcastReceiver = SafetySourceBroadcastReceiver()
     private val sourceId = "source_id"
     private val somePendingIntent = PendingIntent.getActivity(
         context, 0 /* requestCode */,
@@ -86,8 +82,10 @@ class SafetyCenterManagerTest {
 
     @Before
     @After
-    fun clearSafetyCenterDataBetweenTest() {
+    fun clearDataBetweenTest() {
         safetyCenterManager.clearDataWithPermission()
+        SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = null
+        SafetySourceBroadcastReceiver.safetySourceDataOnPageOpen = null
     }
 
     @Test
@@ -233,18 +231,14 @@ class SafetyCenterManagerTest {
 
     @Test
     fun refreshSafetySources_withoutManageSafetyCenterPermission_throwsSecurityException() {
-        registerBroadcastReceiver()
-
         assertFailsWith(SecurityException::class) {
             safetyCenterManager.refreshSafetySources(REFRESH_REASON_RESCAN_BUTTON_CLICK)
         }
-        unregisterBroadcastReceiver()
     }
 
     @Test
     fun refreshSafetySources_withRefreshReasonRescanButtonClick_sourceSendsRescanData() {
-        registerBroadcastReceiver()
-        safetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
+        SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
 
         safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(
             REFRESH_REASON_RESCAN_BUTTON_CLICK
@@ -253,45 +247,27 @@ class SafetyCenterManagerTest {
         val lastSafetyCenterUpdate =
             safetyCenterManager.getLastUpdateWithPermission(sourceId)
         assertThat(lastSafetyCenterUpdate).isEqualTo(safetySourceDataOnRescanClick)
-        unregisterBroadcastReceiver()
     }
 
     @Test
     fun refreshSafetySources_withRefreshReasonPageOpen_sourceSendsPageOpenData() {
-        registerBroadcastReceiver()
-        safetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
+        SafetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
 
         safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(REFRESH_REASON_PAGE_OPEN)
 
         val lastSafetyCenterUpdate =
             safetyCenterManager.getLastUpdateWithPermission(sourceId)
         assertThat(lastSafetyCenterUpdate).isEqualTo(safetySourceDataOnPageOpen)
-        unregisterBroadcastReceiver()
     }
 
     @Test
     fun refreshSafetySources_withInvalidRefreshSeason_throwsIllegalArgumentException() {
-        registerBroadcastReceiver()
-        safetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
-        safetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
+        SafetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
+        SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
 
         assertFailsWith(IllegalArgumentException::class) {
             safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(500)
         }
-        unregisterBroadcastReceiver()
-    }
-
-    @Test
-    fun refreshSafetySources_withUnregisteredReceiver_sourceDoesNotSendData() {
-        safetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
-        safetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
-
-        assertFailsWith(TimeoutCancellationException::class) {
-            safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(REFRESH_REASON_PAGE_OPEN)
-        }
-        val lastSafetyCenterUpdate =
-            safetyCenterManager.getLastUpdateWithPermission(sourceId)
-        assertThat(lastSafetyCenterUpdate).isNull()
     }
 
     @Test
@@ -341,18 +317,9 @@ class SafetyCenterManagerTest {
             )
         )
 
-    private fun registerBroadcastReceiver() =
-        context.registerReceiver(
-            safetySourceBroadcastReceiver,
-            IntentFilter(ACTION_REFRESH_SAFETY_SOURCES)
-        )
-
-    private fun unregisterBroadcastReceiver() =
-        context.unregisterReceiver(safetySourceBroadcastReceiver)
-
     private fun SafetyCenterManager.refreshSafetySourcesWithPermissionAndWait(refreshReason: Int) {
         refreshSafetySourcesWithPermission(refreshReason)
-        safetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT)
+        SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT)
     }
 
     companion object {
