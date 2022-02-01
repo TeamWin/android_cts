@@ -3928,6 +3928,55 @@ public class AccessibilityTextTraversalTest {
         assertSame(refreshedText.getTextSelectionEnd(), 4);
     }
 
+    @Test
+    public void testViewDoesNotHaveSelectableText() {
+        final TextView nonSelectableView = mActivity.findViewById(R.id.text);
+
+        sInstrumentation.runOnMainSync(new Runnable()  {
+            @Override
+            public void run() {
+                nonSelectableView.setVisibility(View.VISIBLE);
+                nonSelectableView.setText(getString(R.string.a_b));
+
+            }
+        });
+
+        final AccessibilityNodeInfo textNode = sUiAutomation
+                .getRootInActiveWindow().findAccessibilityNodeInfosByText(
+                        getString(R.string.a_b)).get(0);
+
+        assertFalse("Text node has selectable text.", textNode.isTextSelectable());
+    }
+
+    @Test
+    public void testViewDoesHaveSelectableText() {
+        final TextView selectableView = mActivity.findViewById(R.id.selectableText);
+        final EditText editText = mActivity.findViewById(R.id.editText);
+
+        sInstrumentation.runOnMainSync(new Runnable()  {
+            @Override
+            public void run() {
+                selectableView.setVisibility(View.VISIBLE);
+                selectableView.setText(getString(R.string.a_b));
+                editText.setVisibility(View.VISIBLE);
+                editText.setText(getString(R.string.foo_bar_baz));
+            }
+        });
+
+        final AccessibilityNodeInfo selectableTextNode = sUiAutomation
+                .getRootInActiveWindow().findAccessibilityNodeInfosByText(
+                        getString(R.string.a_b)).get(0);
+
+        final AccessibilityNodeInfo editTextNode = sUiAutomation
+                .getRootInActiveWindow().findAccessibilityNodeInfosByText(
+                        getString(R.string.foo_bar_baz)).get(0);
+
+        assertTrue("Text node does not have selectable text.",
+                selectableTextNode.isTextSelectable());
+
+        assertFalse("EditText node does have selectable text.", editTextNode.isTextSelectable());
+    }
+
     private AccessibilityEvent performMovementActionAndGetEvent(final AccessibilityNodeInfo target,
             final int action, final int granularity, final boolean extendSelection)
             throws Exception {
