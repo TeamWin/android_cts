@@ -49,6 +49,15 @@ public class PhotoPickerFilesUtils {
         }
     }
 
+    public static void createDNGVideos(int count, int userId, List<Uri> uriList)
+            throws Exception {
+        for (int i = 0; i < count; i++) {
+            final Uri uri = createDNGVideo(userId);
+            uriList.add(uri);
+            clearMediaOwner(uri, userId);
+        }
+    }
+
     public static void createVideos(int count, int userId, List<Uri> uriList)
             throws Exception {
         for (int i = 0; i < count; i++) {
@@ -69,8 +78,14 @@ public class PhotoPickerFilesUtils {
         ShellUtils.runShellCommand(cmd);
     }
 
+    private static Uri createDNGVideo(int userId) throws Exception {
+        final Uri uri = stageMedia(R.raw.test_video_dng,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "video/mp4", userId);
+        return uri;
+    }
+
     private static Uri createVideo(int userId) throws Exception {
-        final Uri uri = stageMedia(R.raw.testvideo_meta,
+        final Uri uri = stageMedia(R.raw.test_video,
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI, "video/mp4", userId);
         return uri;
     }
