@@ -24,7 +24,9 @@ import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFI
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
+import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
@@ -52,6 +54,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -854,6 +857,46 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 EXPECT_TIMEOUT);
         expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
                 EXPECT_TIMEOUT);
+    }
+
+    @Test
+    public void detachServed_withDifferentNextServed_b211105987() throws Exception {
+        final AtomicReference<ViewGroup> layoutRef = new AtomicReference<>();
+        final AtomicReference<EditText> firstEditorRef = new AtomicReference<>();
+        final AtomicReference<EditText> secondEditorRef = new AtomicReference<>();
+        final AtomicReference<InputMethodManager> imm = new AtomicReference<>();
+
+        TestActivity.startSync(activity -> {
+            final LinearLayout layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layoutRef.set(layout);
+
+            final EditText editText = new EditText(activity);
+            editText.requestFocus();
+            firstEditorRef.set(editText);
+            layout.addView(editText);
+            imm.set(activity.getSystemService(InputMethodManager.class));
+            return layout;
+        });
+
+        waitOnMainUntil(() -> imm.get().isActive(firstEditorRef.get()), TIMEOUT);
+
+        runOnMainSync(() -> {
+            final ViewGroup layout = layoutRef.get();
+
+            final EditText editText = new EditText(layout.getContext());
+            secondEditorRef.set(editText);
+            layout.addView(editText);
+        });
+
+        waitOnMainUntil(() -> secondEditorRef.get().isLaidOut(), TIMEOUT);
+
+        runOnMainSync(() -> {
+            secondEditorRef.get().requestFocus();
+            layoutRef.get().removeView(firstEditorRef.get());
+        });
+
+        assertTrue(getOnMainSync(() -> imm.get().isActive(secondEditorRef.get())));
     }
 
     private static void expectImeHidden(@NonNull ImeEventStream stream) throws TimeoutException {
