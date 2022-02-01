@@ -40,18 +40,26 @@ public final class WakeLockHelper {
     /** The command to clear the wake lock activity. */
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
+    private static boolean mWakelockAcquired = false;
+
     public static void acquirePartialWakeLock(ITestDevice device) throws Exception {
-        // Clear activity if any.
-        device.executeShellCommand(CLEAR_COMMAND);
-        // Start the APK to acquire the wake lock and wait for it to complete.
-        device.executeShellCommand(START_COMMAND + ACQUIRE_LOCK);
-        LogHelper.assumeLog(device, TAG, "Acquired wake lock.");
+        if (mWakelockAcquired == false) {
+            // Clear activity if any.
+            device.executeShellCommand(CLEAR_COMMAND);
+            // Start the APK to acquire the wake lock and wait for it to complete.
+            device.executeShellCommand(START_COMMAND + ACQUIRE_LOCK);
+            LogHelper.assumeLog(device, TAG, "Acquired wake lock.");
+            mWakelockAcquired = true;
+        }
     }
 
     public static void releasePartialWakeLock(ITestDevice device) throws Exception {
-        // Release the acquired wake lock.
-        device.executeShellCommand(START_COMMAND + RELEASE_LOCK);
-        // Clear activity
-        device.executeShellCommand(CLEAR_COMMAND);
+        if (mWakelockAcquired == true) {
+            // Release the acquired wake lock.
+            device.executeShellCommand(START_COMMAND + RELEASE_LOCK);
+            // Clear activity
+            device.executeShellCommand(CLEAR_COMMAND);
+            mWakelockAcquired = false;
+        }
     }
 }
