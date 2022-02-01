@@ -55,6 +55,14 @@
                 <action android:name="android.hdmicec.app.DEVICE_SELECT" />
             </intent-filter>
         </activity>
+        <activity android:name=".HdmiCecVendorCommandListener"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.hdmicec.app.VENDOR_LISTENER_WITH_ID"/>
+                <action android:name="android.hdmicec.app.VENDOR_LISTENER_WITHOUT_ID"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+        </activity>
 
         <uses-library android:name="android.test.runner" />
     </application>
