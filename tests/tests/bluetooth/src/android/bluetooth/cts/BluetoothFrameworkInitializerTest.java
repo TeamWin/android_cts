@@ -44,15 +44,6 @@ public class BluetoothFrameworkInitializerTest extends AndroidTestCase {
     }
 
     public void test_SetBinderCallsStatsInitializer() {
-        assertThrows(IllegalArgumentException.class,
-                () -> BluetoothFrameworkInitializer.setBinderCallsStatsInitializer(null));
-
-        BluetoothFrameworkInitializer.setBinderCallsStatsInitializer(new Consumer() {
-                @Override
-                public void accept(Object o) {
-                }
-            });
-
         assertThrows(IllegalStateException.class,
                 () -> BluetoothFrameworkInitializer.setBinderCallsStatsInitializer(new Consumer() {
                         @Override

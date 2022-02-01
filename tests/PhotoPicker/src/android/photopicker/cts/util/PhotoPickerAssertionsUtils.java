@@ -17,8 +17,7 @@
 package android.photopicker.cts.util;
 
 import static android.os.SystemProperties.getBoolean;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+import static android.provider.MediaStore.Files.FileColumns;
 import static android.provider.MediaStore.PickerMediaColumns;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -74,28 +73,19 @@ public class PhotoPickerAssertionsUtils {
             assertThat(c).isNotNull();
             assertThat(c.moveToFirst()).isTrue();
 
+            final String mimeType;
             if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
-                final String mimeType = c.getString(c.getColumnIndex(
-                                PickerMediaColumns.MIME_TYPE));
-                if (mimeType.startsWith("image")) {
-                    assertImageRedactedReadOnlyAccess(uri, resolver);
-                } else if (mimeType.startsWith("video")) {
-                    assertVideoRedactedReadOnlyAccess(uri, resolver);
-                } else {
-                    fail("The mime type is not as expected: " + mimeType);
-                }
+                mimeType = c.getString(c.getColumnIndex(PickerMediaColumns.MIME_TYPE));
             } else {
-                final int mediaType = c.getInt(1);
-                switch (mediaType) {
-                    case MEDIA_TYPE_IMAGE:
-                        assertImageRedactedReadOnlyAccess(uri, resolver);
-                        break;
-                    case MEDIA_TYPE_VIDEO:
-                        assertVideoRedactedReadOnlyAccess(uri, resolver);
-                        break;
-                    default:
-                        fail("The media type is not as expected: " + mediaType);
-                }
+                mimeType = c.getString(c.getColumnIndex(FileColumns.MIME_TYPE));
+            }
+
+            if (mimeType.startsWith("image")) {
+                assertImageRedactedReadOnlyAccess(uri, resolver);
+            } else if (mimeType.startsWith("video")) {
+                assertVideoRedactedReadOnlyAccess(uri, resolver);
+            } else {
+                fail("The mime type is not as expected: " + mimeType);
             }
         }
     }

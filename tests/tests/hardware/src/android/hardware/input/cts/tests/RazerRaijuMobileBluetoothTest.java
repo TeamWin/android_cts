@@ -52,7 +52,7 @@ public class RazerRaijuMobileBluetoothTest extends InputHidTestCase {
      */
     @Test
     public void testHomeKey() throws Exception {
-        mActivityRule.getActivity().addUnhandleKeyCode(KeyEvent.KEYCODE_BUTTON_MODE);
+        mTestActivity.addUnhandleKeyCode(KeyEvent.KEYCODE_BUTTON_MODE);
         testInputEvents(R.raw.razer_raiju_mobile_bluetooth_homekey);
 
         WindowManagerStateHelper wmStateHelper = new WindowManagerStateHelper();

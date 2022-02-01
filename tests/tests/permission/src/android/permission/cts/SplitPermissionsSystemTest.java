@@ -29,9 +29,6 @@ import static android.Manifest.permission.BODY_SENSORS_BACKGROUND;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
-import static android.Manifest.permission.READ_MEDIA_AUDIO;
-import static android.Manifest.permission.READ_MEDIA_IMAGE;
-import static android.Manifest.permission.READ_MEDIA_VIDEO;
 import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
 import static android.Manifest.permission.WRITE_CALL_LOG;
@@ -117,15 +114,7 @@ public class SplitPermissionsSystemTest {
                     assertSplit(split, Build.VERSION_CODES.Q, ACCESS_BACKGROUND_LOCATION);
                     break;
                 case READ_EXTERNAL_STORAGE:
-                    if (newPermissions.contains(ACCESS_MEDIA_LOCATION)) {
-                        assertSplit(split, Build.VERSION_CODES.Q, ACCESS_MEDIA_LOCATION);
-                    } else if (newPermissions.contains(READ_MEDIA_AUDIO)) {
-                        assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_AUDIO);
-                    } else if (newPermissions.contains(READ_MEDIA_VIDEO)) {
-                        assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_VIDEO);
-                    } else if (newPermissions.contains(READ_MEDIA_IMAGE)) {
-                        assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_IMAGE);
-                    }
+                    assertSplit(split, Build.VERSION_CODES.Q, ACCESS_MEDIA_LOCATION);
                     break;
                 case READ_PRIVILEGED_PHONE_STATE:
                     assertSplit(split, NO_TARGET, READ_PHONE_STATE);
@@ -144,7 +133,7 @@ public class SplitPermissionsSystemTest {
             }
         }
 
-        assertEquals(17, seenSplits.size());
+        assertEquals(14, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, int targetSdk, String... permission) {
