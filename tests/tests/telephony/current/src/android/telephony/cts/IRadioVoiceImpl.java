@@ -61,6 +61,18 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     }
 
     @Override
+    public void cancelPendingUssd(int serial) {
+        Log.d(TAG, "cancelPendingUssd");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioVoiceResponse.cancelPendingUssdResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to cancelPendingUssd from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
     public void conference(int serial) {
         Log.d(TAG, "conference");
 
@@ -365,6 +377,18 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
     }
 
     @Override
+    public void sendUssd(int serial, String ussd) {
+        Log.d(TAG, "sendUssd");
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        try {
+            mRadioVoiceResponse.sendUssdResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(TAG, "Failed to sendUssd from AIDL. Exception" + ex);
+        }
+    }
+
+    @Override
     public void separateConnection(int serial, int gsmIndex) {
         Log.d(TAG, "separateConnection");
 
@@ -647,6 +671,20 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
                         TAG,
                         "Failed to onSupplementaryServiceIndication indication from AIDL. Exception"
                                 + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioVoiceIndication");
+        }
+    }
+
+    public void onUssd(int modeType, String msg) {
+        Log.d(TAG, "onUssd");
+
+        if (mRadioVoiceIndication != null) {
+            try {
+                mRadioVoiceIndication.onUssd(RadioIndicationType.UNSOLICITED, modeType, msg);
+            } catch (RemoteException ex) {
+                Log.e(TAG, "Failed to onUssd indication from AIDL. Exception" + ex);
             }
         } else {
             Log.e(TAG, "null mRadioVoiceIndication");
