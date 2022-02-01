@@ -93,6 +93,8 @@ public class PhotoPickerAssertionsUtils {
     private static void assertVideoRedactedReadOnlyAccess(Uri uri, ContentResolver resolver)
             throws Exception {
         // The location is redacted
+        // TODO(b/201505595): Make this method work for test_video.mp4. Currently it works only for
+        //  test_video_dng.mp4
         try (InputStream in = resolver.openInputStream(uri);
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             FileUtils.copy(in, out);
