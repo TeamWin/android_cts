@@ -52,8 +52,10 @@ import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
+import android.os.BaseBundle;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -93,6 +95,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -157,6 +160,10 @@ public final class DevicePolicyManagerTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
+    private static final String TEST_KEY = "test_key";
+    private static final String TEST_VALUE = "test_value";
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
@@ -1210,5 +1217,141 @@ public final class DevicePolicyManagerTest {
 
         assertThat(sDevicePolicyManager.getUserProvisioningState())
                 .isEqualTo(DevicePolicyManager.STATE_USER_PROFILE_FINALIZED);
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_works() {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(ADMIN_EXTRAS_BUNDLE)
+                        .build();
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_modifyBundle_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        adminExtrasBundle.putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void getAdminExtras_managedProfileParams_modifyResult_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        params.getAdminExtras().putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_emptyBundle_works() {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(new PersistableBundle())
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_nullBundle_works() {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(null)
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_works() {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(ADMIN_EXTRAS_BUNDLE)
+                        .build();
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_modifyBundle_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        adminExtrasBundle.putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void getAdminExtras_fullyManagedParams_modifyResult_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        params.getAdminExtras().putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_emptyBundle_works() {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(new PersistableBundle())
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_nullBundle_works() {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(null)
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    private static PersistableBundle createAdminExtrasBundle() {
+        PersistableBundle result = new PersistableBundle();
+        result.putString("key1", "value1");
+        result.putInt("key2", 2);
+        result.putBoolean("key3", true);
+        return result;
+    }
+
+    private static void assertBundlesEqual(BaseBundle bundle1, BaseBundle bundle2) {
+        if (bundle1 != null) {
+            assertWithMessage("Intent bundles are not equal")
+                    .that(bundle2).isNotNull();
+            assertWithMessage("Intent bundles are not equal")
+                    .that(bundle1.keySet().size()).isEqualTo(bundle2.keySet().size());
+            for (String key : bundle1.keySet()) {
+                assertWithMessage("Intent bundles are not equal")
+                        .that(bundle1.get(key))
+                        .isEqualTo(bundle2.get(key));
+            }
+        } else {
+            assertWithMessage("Intent bundles are not equal").that(bundle2).isNull();
+        }
     }
 }
