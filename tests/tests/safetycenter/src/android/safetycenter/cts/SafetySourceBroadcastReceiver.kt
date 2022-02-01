@@ -56,10 +56,15 @@ class SafetySourceBroadcastReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        private val updateChannel = Channel<Unit>()
-
+        private var updateChannel = Channel<Unit>()
         var safetySourceDataOnPageOpen: SafetySourceData? = null
         var safetySourceDataOnRescanClick: SafetySourceData? = null
+
+        fun reset() {
+            safetySourceDataOnRescanClick = null
+            safetySourceDataOnPageOpen = null
+            updateChannel = Channel()
+        }
 
         fun waitTillOnReceiveComplete(duration: Duration) {
             runBlocking {
