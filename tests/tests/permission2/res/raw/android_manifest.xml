@@ -6125,6 +6125,11 @@
     <permission android:name="android.permission.SIGNAL_REBOOT_READINESS"
                 android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows an application to change the touch mode state.
+         @hide -->
+    <permission android:name="android.permission.MODIFY_TOUCH_MODE_STATE"
+        android:protectionLevel="signature" />
+
     <!-- @hide Allows an application to get a People Tile preview for a given shortcut. -->
     <permission android:name="android.permission.GET_PEOPLE_TILE_PREVIEW"
         android:protectionLevel="signature|recents" />
