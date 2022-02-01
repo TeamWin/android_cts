@@ -77,6 +77,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mCreateBiIAppCount;
         public int mDestroyBiIAppCount;
         public int mAdResponseCount;
+        public int mBroadcastInfoResponseCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -89,6 +90,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public Bundle mCreateBiIAppParams;
         public String mDestroyBiIAppId;
         public AdResponse mAdResponse;
+        public BroadcastInfoResponse mBroadcastInfoResponse;
 
         StubSessionImpl(Context context) {
             super(context);
@@ -107,6 +109,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mCreateBiIAppCount = 0;
             mDestroyBiIAppCount = 0;
             mAdResponseCount = 0;
+            mBroadcastInfoResponseCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -119,6 +122,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mCreateBiIAppParams = null;
             mDestroyBiIAppId = null;
             mAdResponse = null;
+            mBroadcastInfoResponse = null;
         }
 
         @Override
@@ -210,6 +214,12 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
+        public void onBroadcastInfoResponse(BroadcastInfoResponse response) {
+            mBroadcastInfoResponseCount++;
+            mBroadcastInfoResponse = response;
+        }
+
+        @Override
         public void onContentAllowed() {
         }
 
@@ -283,11 +293,6 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onVideoUnavailable(int reason) {
-        }
-
-        @Override
-        public void onBroadcastInfoResponse(BroadcastInfoResponse response) {
-            // TODO: pending implementation
         }
     }
 }
