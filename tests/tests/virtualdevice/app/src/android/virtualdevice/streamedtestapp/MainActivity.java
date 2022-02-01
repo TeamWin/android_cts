@@ -22,6 +22,7 @@ import static android.hardware.camera2.CameraAccessException.CAMERA_DISCONNECTED
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
@@ -38,13 +39,21 @@ import android.util.Log;
 public class MainActivity extends Activity {
 
     private static final String TAG = "StreamedTestApp";
+    static final String PACKAGE_NAME  = "android.virtualdevice.streamedtestapp";
 
     /**
      * Tell this activity to call the {@link #EXTRA_ACTIVITY_LAUNCHED_RECEIVER} with
      * {@link #RESULT_OK} when it is launched.
      */
     static final String ACTION_CALL_RESULT_RECEIVER =
-            "android.virtualdevice.streamedtestapp.CALL_RESULT_RECEIVER";
+            PACKAGE_NAME + ".CALL_RESULT_RECEIVER";
+
+    /**
+     * Tell this activity to call the API (KeyguardManager.isDeviceSecure) when launched.
+     */
+    static final String ACTION_CALL_IS_DEVICE_SECURE =
+            PACKAGE_NAME + ".ACTION_CALL_IS_DEVICE_SECURE";
+
     /**
      * Extra in the result data that contains the integer display ID when the receiver for
      * {@link #ACTION_CALL_RESULT_RECEIVER} is called.
@@ -71,9 +80,10 @@ public class MainActivity extends Activity {
      * the intent extra to the clipboard.
      */
     static final String ACTION_TEST_CLIPBOARD =
-            "android.virtualdevice.streamedtestapp.TEST_CLIPBOARD";
+            PACKAGE_NAME + ".TEST_CLIPBOARD";
     static final String EXTRA_ACTIVITY_LAUNCHED_RECEIVER = "activityLaunchedReceiver";
     static final String EXTRA_CLIPBOARD_STRING = "clipboardString";
+    static final String EXTRA_IS_DEVICE_SECURE = "isDeviceSecure";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -103,6 +113,15 @@ public class MainActivity extends Activity {
                 case ACTION_TEST_CAMERA:
                     Log.d(TAG, "Testing camera");
                     testCamera();
+                    break;
+                case ACTION_CALL_IS_DEVICE_SECURE:
+                    Log.d(TAG, "Handling ACTION_CALL_IS_DEVICE_SECURE");
+                    Intent resultData = new Intent();
+                    KeyguardManager km = getSystemService(KeyguardManager.class);
+                    boolean isDeviceSecure = km.isDeviceSecure();
+                    resultData.putExtra(EXTRA_IS_DEVICE_SECURE, isDeviceSecure);
+                    setResult(RESULT_OK, resultData);
+                    finish();
                     break;
                 default:
                     Log.w(TAG, "Unknown action: " + action);
@@ -175,4 +194,3 @@ public class MainActivity extends Activity {
         }
     }
 }
-
