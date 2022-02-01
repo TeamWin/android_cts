@@ -18,6 +18,7 @@ package android.media.tv.interactive.cts;
 
 import android.content.Context;
 import android.media.tv.AdRequest;
+import android.media.tv.BroadcastInfoRequest;
 import android.media.tv.cts.StubTvInputService;
 
 public class StubTvInputService2 extends StubTvInputService {
@@ -37,8 +38,10 @@ public class StubTvInputService2 extends StubTvInputService {
 
     public static class StubSessionImpl2 extends StubTvInputService.StubSessionImpl {
         public int mAdRequestCount;
+        public int mBroadcastInfoRequestCount;
 
         public AdRequest mAdRequest;
+        public BroadcastInfoRequest mBroadcastInfoRequest;
 
         StubSessionImpl2(Context context) {
             super(context);
@@ -46,8 +49,10 @@ public class StubTvInputService2 extends StubTvInputService {
 
         public void resetValues() {
             mAdRequestCount = 0;
+            mBroadcastInfoRequestCount = 0;
 
             mAdRequest = null;
+            mBroadcastInfoRequest = null;
         }
 
         @Override
@@ -59,6 +64,12 @@ public class StubTvInputService2 extends StubTvInputService {
         public void onRequestAd(AdRequest request) {
             mAdRequestCount++;
             mAdRequest = request;
+        }
+
+        @Override
+        public void onRequestBroadcastInfo(BroadcastInfoRequest request) {
+            mBroadcastInfoRequestCount++;
+            mBroadcastInfoRequest = request;
         }
     }
 }
