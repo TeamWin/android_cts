@@ -45,7 +45,10 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
 
     val sensorPrivacyManager = context.getSystemService(SensorPrivacyManager::class.java)!!
     val locationManager = context.getSystemService(LocationManager::class.java)!!
-    lateinit var originalEnabledValue: String
+    private val originalEnabledValue = callWithShellPermissionIdentity {
+        DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
+                WARNING_BANNER_ENABLED, false.toString())
+    }
 
     private val permToLabel = mapOf(CAMERA to "privdash_label_camera",
             MICROPHONE to "privdash_label_microphone",
@@ -58,10 +61,11 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     @Before
     fun setup() {
         Assume.assumeFalse(isTv)
+        // TODO(b/203784852) Auto will eventually support the blocked sensor banner, but there won't
+        // be support in T or below
+        Assume.assumeFalse(isAutomotive)
         installPackage(APP_APK_PATH_31)
         runWithShellPermissionIdentity {
-            originalEnabledValue = DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
-                WARNING_BANNER_ENABLED, false.toString())
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
                 WARNING_BANNER_ENABLED, true.toString(), false)
         }
