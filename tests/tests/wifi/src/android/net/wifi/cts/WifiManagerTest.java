@@ -1160,11 +1160,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // skip the test if WiFi is not supported
             return;
         }
+        List<WifiManager.ScreenOnScanSchedule> schedules = new ArrayList<>();
+        schedules.add(new WifiManager.ScreenOnScanSchedule(20,
+                WifiScanner.SCAN_TYPE_HIGH_ACCURACY));
+        schedules.add(new WifiManager.ScreenOnScanSchedule(40,
+                WifiScanner.SCAN_TYPE_LOW_LATENCY));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScreenOnScanSchedule(new int[] {20, 40}, new int[] {
-                        WifiScanner.SCAN_TYPE_HIGH_ACCURACY, WifiScanner.SCAN_TYPE_LOW_LATENCY}));
+                () -> mWifiManager.setScreenOnScanSchedule(schedules));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScreenOnScanSchedule(null, null));
+                () -> mWifiManager.setScreenOnScanSchedule(null));
     }
 
     /**
@@ -1177,7 +1181,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         try {
-            mWifiManager.setScreenOnScanSchedule(null, null);
+            mWifiManager.setScreenOnScanSchedule(null);
             fail("A normal app should not be able to call this API.");
         } catch (SecurityException e) {
         }
