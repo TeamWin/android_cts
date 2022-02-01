@@ -194,9 +194,9 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
             }
         }
         if (mForceChannel) {
-            nsBuilder.setChannelInMhz(CHANNEL_IN_MHZ, true);
+            nsBuilder.setChannelFrequencyMhz(CHANNEL_IN_MHZ, true);
             WifiAwareNetworkSpecifier ns = nsBuilder.build();
-            if (ns.getChannelInMhz() != CHANNEL_IN_MHZ || !ns.isChannelRequired()) {
+            if (ns.getChannelFrequencyMhz() != CHANNEL_IN_MHZ || !ns.isChannelRequired()) {
                 Log.e(TAG, "executeTestSubscriber: channel configure for data-path is not match");
                 return false;
             }
@@ -242,28 +242,28 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         WifiAwareNetworkInfo peerAwareInfo =
                 (WifiAwareNetworkInfo) info.second.getTransportInfo();
         StringBuilder builder = new StringBuilder();
-        for (WifiAwareChannelInfo channelInfo : peerAwareInfo.getChannelInfos()) {
+        for (WifiAwareChannelInfo channelInfo : peerAwareInfo.getChannelInfoList()) {
             builder.append(channelInfo.toString());
         }
         if (DBG) Log.d(TAG, "executeTestSubscriber: channelInfo:" + builder.toString());
 
         if (mForceChannel) {
-            if (peerAwareInfo.getChannelInfos().size() != 1) {
+            if (peerAwareInfo.getChannelInfoList().size() != 1) {
                 setFailureReason(mContext.getString(R.string.aware_status_network_failed));
                 Log.e(TAG, "executeTestSubscriber: number of channel info is incorrect");
                 return false;
             }
-            WifiAwareChannelInfo channelInfo = peerAwareInfo.getChannelInfos().get(0);
-            if (channelInfo.getChannelFreqInMhz() != CHANNEL_IN_MHZ) {
+            WifiAwareChannelInfo channelInfo = peerAwareInfo.getChannelInfoList().get(0);
+            if (channelInfo.getChannelFrequencyMhz() != CHANNEL_IN_MHZ) {
                 setFailureReason(mContext.getString(R.string.aware_status_network_failed));
                 Log.e(TAG, "executeTestSubscriber: channel freq is not match the request");
                 return false;
             }
             if (DBG) {
                 Log.d(TAG, "executeTestSubscriber: ChannelFreqInMhz="
-                        + channelInfo.getChannelFreqInMhz()
+                        + channelInfo.getChannelFrequencyMhz()
                         + " ChannelBandWidth=" + channelInfo.getChannelBandwidth()
-                        + " NumSpatialStreams=" + channelInfo.getNumSpatialStreams());
+                        + " NumSpatialStreams=" + channelInfo.getSpatialStreamCount());
             }
         }
 
@@ -432,9 +432,9 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
             nsBuilder.setPort(port).setTransportProtocol(6); // 6 == TCP
         }
         if (mForceChannel) {
-            nsBuilder.setChannelInMhz(CHANNEL_IN_MHZ, true);
+            nsBuilder.setChannelFrequencyMhz(CHANNEL_IN_MHZ, true);
             WifiAwareNetworkSpecifier ns = nsBuilder.build();
-            if (ns.getChannelInMhz() != CHANNEL_IN_MHZ || !ns.isChannelRequired()) {
+            if (ns.getChannelFrequencyMhz() != CHANNEL_IN_MHZ || !ns.isChannelRequired()) {
                 Log.e(TAG, "executeTestSubscriber: channel configure for data-path is not match");
                 return false;
             }
