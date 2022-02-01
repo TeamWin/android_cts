@@ -188,15 +188,32 @@ public final class TestUtils {
         });
     }
 
+
     /**
      * Inject Stylus move on the Display inside view coordinates so that initiation can happen.
      * @param view view on which stylus events should be overlapped.
      */
     public static void injectStylusEvents(@NonNull View view) {
+        int offsetX = view.getWidth() / 2;
+        int offsetY = view.getHeight() / 2;
+        injectStylusEvents(view, offsetX, offsetY);
+    }
+
+    /**
+     * Inject stylus move on the display at the given position defined in the given view's
+     * coordinates.
+     *
+     * @param view view whose coordinates are used to compute the stylus location.
+     * @param x the initial x coordinates of the injected stylus events in the view's
+     *          local coordinates.
+     * @param y the initial y coordinates of the injected stylus events in the view's
+     *          local coordinates.
+     */
+    public static void injectStylusEvents(@NonNull View view, int x, int y) {
         int[] xy = new int[2];
         view.getLocationOnScreen(xy);
-        int x = xy[0] + 150; // add some padding to avoid back gesture.
-        int y = xy[1] + 50;
+        x += xy[0];
+        y += xy[1];
 
         final int moveCount = 10;
         final float increment = (getTouchSlop(view.getContext()) * 5) / moveCount;

@@ -484,7 +484,8 @@ public final class MockIme extends InputMethodService {
                     }
                     case "getStylusHandwritingWindowVisibility": {
                         View decorView = getStylusHandwritingWindow().getDecorView();
-                        return decorView != null && decorView.getVisibility() == View.VISIBLE;
+                        return decorView != null && decorView.isAttachedToWindow()
+                                && decorView.getVisibility() == View.VISIBLE;
                     }
                     case "setStylusHandwritingWindowTouchListener": {
                         View decorView = getStylusHandwritingWindow().getDecorView();
