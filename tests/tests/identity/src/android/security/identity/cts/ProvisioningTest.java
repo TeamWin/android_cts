@@ -51,6 +51,7 @@ import java.security.KeyPair;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -74,6 +75,14 @@ import co.nstant.in.cbor.model.UnsignedInteger;
  */
 public class ProvisioningTest {
     private static final String TAG = "ProvisioningTest";
+
+    // An implementation must support challenges at least this big for
+    // IdentityCredential.proveOwnership().
+    private static final int PROVE_OWNERSHIP_MINIMUM_SUPPORTED_CHALLENGE_SIZE = 32;
+
+    // An implementation must support challenges at least this big
+    // for IdentityCredential.delete().
+    private static final int DELETE_MINIMUM_SUPPORTED_CHALLENGE_SIZE = 32;
 
     private static byte[] getExampleDrivingPrivilegesCbor() {
         // As per 7.4.4 of ISO 18013-5, driving privileges are defined with the following CDDL:
@@ -470,13 +479,25 @@ public class ProvisioningTest {
                 IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
         assertNotNull(credential);
 
-        byte[] challenge = new byte[]{0x20, 0x21};
+        StringBuilder sb = new StringBuilder("['ProofOfDeletion', 'org.iso.18013-5.2019.mdl', [");
+        byte[] challenge = new byte[DELETE_MINIMUM_SUPPORTED_CHALLENGE_SIZE];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(challenge);
+        for (int n = 0; n < challenge.length; n++) {
+            if (n > 0) {
+                sb.append(", ");
+            }
+            sb.append(String.format("0x%02x", (byte) (int) challenge[n]));
+        }
+        sb.append("], false]");
+        String expectedPrettyCbor = sb.toString();
+
         byte[] proofOfDeletionSignature = credential.delete(challenge);
         byte[] proofOfDeletion = Util.coseSign1GetData(proofOfDeletionSignature);
 
         // Check the returned CBOR is what is expected.
         String pretty = Util.cborPrettyPrint(proofOfDeletion);
-        assertEquals("['ProofOfDeletion', 'org.iso.18013-5.2019.mdl', [0x20, 0x21], false]", pretty);
+        assertEquals(expectedPrettyCbor, pretty);
 
         try {
             assertTrue(Util.coseSign1CheckSignature(
@@ -511,14 +532,25 @@ public class ProvisioningTest {
                 IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
         assertNotNull(credential);
 
-        byte[] challenge = new byte[]{0x12, 0x22};
+        StringBuilder sb = new StringBuilder("['ProofOfOwnership', 'org.iso.18013-5.2019.mdl', [");
+        byte[] challenge = new byte[PROVE_OWNERSHIP_MINIMUM_SUPPORTED_CHALLENGE_SIZE];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(challenge);
+        for (int n = 0; n < challenge.length; n++) {
+            int value = (int) challenge[n];
+            if (n > 0) {
+                sb.append(", ");
+            }
+            sb.append(String.format("0x%02x", (byte) value));
+        }
+        sb.append("], false]");
+        String expectedPrettyCbor = sb.toString();
         byte[] proofOfOwnershipSignature = credential.proveOwnership(challenge);
         byte[] proofOfOwnership = Util.coseSign1GetData(proofOfOwnershipSignature);
 
         // Check the returned CBOR is what is expected.
         String pretty = Util.cborPrettyPrint(proofOfOwnership);
-        assertEquals("['ProofOfOwnership', 'org.iso.18013-5.2019.mdl', [0x12, 0x22], false]",
-                pretty);
+        assertEquals(expectedPrettyCbor, pretty);
 
         try {
             assertTrue(Util.coseSign1CheckSignature(
