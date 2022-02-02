@@ -17,7 +17,6 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
@@ -315,17 +314,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         for (Integer operand : powerControlOperands) {
             try {
                 sendDeviceToSleep();
-                String wakeStateBefore = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
-
                 hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
-
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-                String wakeStateAfter = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertWithMessage("Device should wake up on <User Control Pressed> %s", operand)
-                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
+                assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_AWAKE);
             } finally {
                 wakeUpDevice();
             }
@@ -352,19 +343,10 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         for (Integer operand : powerControlOperands) {
             try {
                 wakeUpDevice();
-                String wakeStateBefore = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
-
                 WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
-
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-                String wakeStateAfter = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertWithMessage("Device should go to standby on <User Control Pressed> %s",
-                        operand)
-                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Asleep");
+                assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
             } finally {
                 wakeUpDevice();
             }

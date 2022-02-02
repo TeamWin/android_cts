@@ -16,6 +16,7 @@
 
 package android.media.audio.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -114,11 +115,21 @@ public class VolumeShaperTest {
             .setDuration(RAMP_TIME_MS)
             .build();
 
+    // This linear ramp VolumeShaper runs on media time, not clock time.
+    // Note: for direct or offloaded audio, media time is not supported, so clock time is used.
+    private static final VolumeShaper.Configuration LINEAR_RAMP_MEDIA_TIME =
+            new VolumeShaper.Configuration.Builder(VolumeShaper.Configuration.LINEAR_RAMP)
+                    .setDuration(RAMP_TIME_MS)
+                    .setOptionFlags(0) // clears flags, operates on media time.
+                    .build();
+
     // internal use only
     private static final VolumeShaper.Configuration LOG_RAMP =
             new VolumeShaper.Configuration.Builder()
                 .setInterpolatorType(VolumeShaper.Configuration.INTERPOLATOR_TYPE_LINEAR)
-                .setOptionFlags(VolumeShaper.Configuration.OPTION_FLAG_VOLUME_IN_DBFS)
+                .setOptionFlags(
+                        VolumeShaper.Configuration.OPTION_FLAG_VOLUME_IN_DBFS |
+                        VolumeShaper.Configuration.OPTION_FLAG_CLOCK_TIME)
                 .setCurve(new float[] { 0.f, 1.f } /* times */,
                         new float[] { -80.f, 0.f } /* volumes */)
                 .setDuration(RAMP_TIME_MS)
@@ -1227,18 +1238,32 @@ public class VolumeShaperTest {
         }
     } // runTestTwoShapersPlayer
 
-    // tests that shaper advances in the presence of pause and stop (time based after start).
+    // tests that shaper which is based on clocktime after start (default on builder)
+    // advances in the presence of pause and stop.
     @LargeTest
     @Test
     public void testPlayerRunDuringPauseStop() throws Exception {
-        final String TEST_NAME = "testPlayerRunDuringPauseStop";
+        runTestPlayerDuringPauseStop("testPlayerRunDuringPauseStop", false /* useMediaTime */);
+    }
+
+    // tests that shaper which is based on media time will freeze
+    // in the presence of pause and stop.
+    @LargeTest
+    @Test
+    public void testPlayerFreezeDuringPauseStop() throws Exception {
+        runTestPlayerDuringPauseStop("testPlayerFreezeDuringPauseStop", true /* useMediaTime */);
+    }
+
+    private void runTestPlayerDuringPauseStop(
+            String parentTestName, boolean useMediaTime) throws Exception {
         if (!hasAudioOutput()) {
             Log.w(TAG, "AUDIO_OUTPUT feature not found. This system might not have a valid "
                     + "audio output HAL");
             return;
         }
 
-        final VolumeShaper.Configuration config = LINEAR_RAMP;
+        final VolumeShaper.Configuration config =
+                useMediaTime ? LINEAR_RAMP_MEDIA_TIME : LINEAR_RAMP;
 
         for (int p = 0; p < PLAYER_TYPES; ++p) {
             for (int pause = 0; pause < 2; ++pause) {
@@ -1249,11 +1274,14 @@ public class VolumeShaperTest {
                     // MediaPlayer stop requires prepare before starting.
                     continue;
                 }
+                if (useMediaTime &&  p == PLAYER_TYPE_MEDIA_PLAYER_OFFLOADED) {
+                    continue;  // Offloaded media time not supported.
+                }
 
                 try (   Player player = createPlayer(p);
                         VolumeShaper volumeShaper = player.createVolumeShaper(config);
                         ) {
-                    final String testName = TEST_NAME + " " + player.name();
+                    final String testName = parentTestName + " " + player.name();
 
                     Log.d(TAG, testName + " starting volume, should ramp up");
                     volumeShaper.apply(VolumeShaper.Operation.PLAY);
@@ -1263,25 +1291,40 @@ public class VolumeShaperTest {
                     player.start();
                     Thread.sleep(WARMUP_TIME_MS * 2);
 
-                    Log.d(TAG, testName + " applying " + (pause != 0 ? "pause" : "stop"));
+                    String operation = pause != 0 ? "pause" : "stop";
+                    Log.d(TAG, testName + " applying " + operation);
                     if (pause == 1) {
                         player.pause();
                     } else {
                         player.stop();
                     }
+                    Log.d(TAG, testName + " volume right after " +
+                            operation + " is " + volumeShaper.getVolume());
+
                     Thread.sleep(RAMP_TIME_MS);
+
+                    Log.d(TAG, testName + " volume after " + operation +
+                            " and sleep is " + volumeShaper.getVolume());
 
                     Log.d(TAG, testName + " starting again");
                     player.start();
                     Thread.sleep(WARMUP_TIME_MS * 2);
 
-                    Log.d(TAG, testName + " should be full volume");
-                    assertEquals(testName + " volume should be 1.f",
-                            1.f, volumeShaper.getVolume(), VOLUME_TOLERANCE);
+                    final float finalVolume = volumeShaper.getVolume();
+                    if (useMediaTime) {
+                        Log.d(TAG, testName + " final volume after starting should be " +
+                                "less than full volume, actual is " + finalVolume);
+                        assertThat(finalVolume).isLessThan(1.f);
+                    } else {
+                        Log.d(TAG, testName + " final volume after starting should be " +
+                                "full volume, actual is " + finalVolume);
+                        assertEquals(testName + " volume should be 1.f",
+                                1.f, finalVolume, VOLUME_TOLERANCE);
+                    }
                 }
             }
         }
-    } // testPlayerRunDuringPauseStop
+    } // runTestPlayerDuringPauseStop
 
     // Player should be started before calling (as it is not an argument to method).
     private void runRampTest(

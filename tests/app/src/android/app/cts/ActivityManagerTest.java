@@ -30,6 +30,14 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -80,17 +88,24 @@ import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.UiDevice;
-import android.test.InstrumentationTestCase;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AmMonitor;
+import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,7 +120,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class ActivityManagerTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ActivityManagerTest {
     private static final String TAG = ActivityManagerTest.class.getSimpleName();
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
     private static final int WAITFOR_MSEC = 5000;
@@ -156,23 +172,27 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     private int mErrorProcessID;
     private Instrumentation mInstrumentation;
     private HomeActivitySession mTestHomeSession;
+    private boolean mAppStandbyEnabled;
+    private boolean mAutomotiveDevice;
+    private boolean mLeanbackOnly;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
+    @Before
+    public void setUp() throws Exception {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mTargetContext = mInstrumentation.getTargetContext();
         mActivityManager = (ActivityManager) mInstrumentation.getContext()
                 .getSystemService(Context.ACTIVITY_SERVICE);
         mPackageManager = mInstrumentation.getContext().getPackageManager();
         mStartedActivityList = new ArrayList<Activity>();
         mErrorProcessID = -1;
+        mAppStandbyEnabled = AppStandbyUtils.isAppStandbyEnabled();
+        mAutomotiveDevice = mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        mLeanbackOnly = mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
         startSubActivity(ScreenOnActivity.class);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         if (mTestHomeSession != null) {
             mTestHomeSession.close();
         }
@@ -187,6 +207,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetRecentTasks() throws Exception {
         int maxNum = 0;
         int flags = 0;
@@ -227,6 +248,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetRecentTasksLimitedToCurrentAPK() throws Exception {
         int maxNum = 0;
         int flags = 0;
@@ -313,6 +335,28 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         mStartedActivityList.add(monitor.waitForActivity());
     }
 
+    private <T extends Activity> T launchActivity(
+            String pkg,
+            Class<T> activityCls,
+            Bundle extras) {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        if (extras != null) {
+            intent.putExtras(extras);
+        }
+        return launchActivityWithIntent(pkg, activityCls, intent);
+    }
+
+    private <T extends Activity> T launchActivityWithIntent(
+            String pkg,
+            Class<T> activityCls,
+            Intent intent) {
+        intent.setClassName(pkg, activityCls.getName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        T activity = (T) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        return activity;
+    }
+
     private <T extends TaskInfo, S extends Activity> int getTaskInfoIndex(List<T> taskList,
             Class<S> activityClass) {
         int i = 0;
@@ -325,6 +369,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         return -1;
     }
 
+    @Test
     public void testGetRunningTasks() {
         // Test illegal parameter
         List<RunningTaskInfo> runningTaskList;
@@ -372,6 +417,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertTrue(runningTaskList.get(indexRecentTwo).isVisible());
     }
 
+    @Test
     public void testGetRunningServices() throws Exception {
         // Test illegal parameter
         List<RunningServiceInfo> runningServiceInfo;
@@ -424,6 +470,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         executeAndLogShellCommand(cmdBuilder.toString());
     }
 
+    @Test
     public void testIsBackgroundRestricted() throws IOException {
         // This instrumentation runs in the target package's uid.
         final Context targetContext = mInstrumentation.getTargetContext();
@@ -435,12 +482,14 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertFalse(am.isBackgroundRestricted());
     }
 
+    @Test
     public void testGetMemoryInfo() {
         ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
         mActivityManager.getMemoryInfo(outInfo);
         assertTrue(outInfo.lowMemory == (outInfo.availMem <= outInfo.threshold));
     }
 
+    @Test
     public void testGetRunningAppProcesses() throws Exception {
         List<RunningAppProcessInfo> list = mActivityManager.getRunningAppProcesses();
         assertNotNull(list);
@@ -488,6 +537,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         fail("android.app.stubs:remote process should be available");
     }
 
+    @Test
     public void testGetMyMemoryState() {
         final RunningAppProcessInfo ra = new RunningAppProcessInfo();
         ActivityManager.getMyMemoryState(ra);
@@ -498,6 +548,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertEquals(RunningAppProcessInfo.IMPORTANCE_FOREGROUND, ra.importance);
     }
 
+    @Test
     public void testGetProcessInErrorState() throws Exception {
         List<ActivityManager.ProcessErrorStateInfo> errList = null;
         errList = mActivityManager.getProcessesInErrorState();
@@ -635,11 +686,13 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertEquals(processName, info.processName);
     }
 
+    @Test
     public void testGetDeviceConfigurationInfo() {
         ConfigurationInfo conInf = mActivityManager.getDeviceConfigurationInfo();
         assertNotNull(conInf);
     }
 
+    @Test
     public void testUpdateMccMncConfiguration() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.i(TAG, "testUpdateMccMncConfiguration skipped: no telephony available");
@@ -695,6 +748,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      *
      * TODO: test positive case
      */
+    @Test
     public void testIsUserAMonkey() {
         assertFalse(ActivityManager.isUserAMonkey());
     }
@@ -703,6 +757,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that {@link ActivityManager#isRunningInTestHarness()} is false.
      */
     @RestrictedBuildTest
+    @Test
     public void testIsRunningInTestHarness() {
         assertFalse("isRunningInTestHarness must be false in production builds",
                 ActivityManager.isRunningInTestHarness());
@@ -722,23 +777,24 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
-   /**
-    * Gets the value of com.android.internal.R.bool.config_noHomeScreen.
-    * @return true if no home screen is supported, false otherwise.
-    */
-   private boolean noHomeScreen() {
-       try {
-           return getInstrumentation().getContext().getResources().getBoolean(
-                   Resources.getSystem().getIdentifier("config_noHomeScreen", "bool", "android"));
-       } catch (Resources.NotFoundException e) {
-           // Assume there's a home screen.
-           return false;
-       }
+    /**
+     * Gets the value of com.android.internal.R.bool.config_noHomeScreen.
+     * @return true if no home screen is supported, false otherwise.
+     */
+    private boolean noHomeScreen() {
+        try {
+            return mTargetContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier("config_noHomeScreen", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume there's a home screen.
+            return false;
+        }
     }
 
     /**
      * Verify that the TimeTrackingAPI works properly when starting and ending an activity.
      */
+    @Test
     public void testTimeTrackingAPI_SimpleStartExit() throws Exception {
         createManagedHomeActivitySession();
         launchHome();
@@ -794,6 +850,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertTrue(timeReceiver.mTimeUsed != 0);
     }
 
+    @Test
     public void testHomeVisibilityListener() throws Exception {
         LinkedBlockingQueue<Boolean> currentHomeScreenVisibility = new LinkedBlockingQueue<>(2);
         HomeVisibilityListener homeVisibilityListener = new HomeVisibilityListener() {
@@ -826,6 +883,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     /**
      * Verify that the TimeTrackingAPI works properly when switching away from the monitored task.
      */
+    @Test
     public void testTimeTrackingAPI_SwitchAwayTriggers() throws Exception {
         createManagedHomeActivitySession();
         launchHome();
@@ -875,6 +933,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that the TimeTrackingAPI works properly when handling an activity chain gets started
      * and ended.
      */
+    @Test
     public void testTimeTrackingAPI_ChainedActivityExit() throws Exception {
         createManagedHomeActivitySession();
         launchHome();
@@ -935,6 +994,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that after force-stopping a package which has a foreground task contains multiple
      * activities, the process of the package should not be alive (restarted).
      */
+    @Test
     public void testForceStopPackageWontRestartProcess() throws Exception {
         // Ensure that there are no remaining component records of the test app package.
         SystemUtil.runWithShellPermissionIdentity(
@@ -984,6 +1044,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     /**
      * This test is to verify that devices are patched with the fix in b/119327603 for b/115384617.
      */
+    @Test
     public void testIsAppForegroundRemoved() throws ClassNotFoundException {
        try {
            Class.forName("android.app.IActivityManager").getDeclaredMethod(
@@ -997,6 +1058,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     /**
      * This test verifies the self-induced ANR by ActivityManager.appNotResponding().
      */
+    @Test
     public void testAppNotResponding() throws Exception {
         // Setup the ANR monitor
         AmMonitor monitor = new AmMonitor(mInstrumentation,
@@ -1025,6 +1087,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     /*
      * Verifies the {@link android.app.ActivityManager#killProcessesWhenImperceptible}.
      */
+    @Test
     public void testKillingPidsOnImperceptible() throws Exception {
         // Start remote service process
         final String remoteProcessName = STUB_PACKAGE_NAME + ":remote";
@@ -1122,6 +1185,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
             });
+            executeAndLogShellCommand("am kill " + STUB_PACKAGE_NAME);
         }
     }
 
@@ -1129,6 +1193,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verifies the system will kill app's child processes if they are using excessive cpu
      */
     @LargeTest
+    @Test
     public void testKillingAppChildProcess() throws Exception {
         final long powerCheckInterval = 5 * 1000;
         final long processGoneTimeout = powerCheckInterval * 4;
@@ -1231,6 +1296,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verifies the system will trim app's child processes if there are too many
      */
     @LargeTest
+    @Test
     public void testTrimAppChildProcess() throws Exception {
         final long powerCheckInterval = 5 * 1000;
         final long processGoneTimeout = powerCheckInterval * 4;
@@ -1458,6 +1524,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         return stopLatch;
     }
 
+    @Test
     public void testTrimMemActivityFg() throws Exception {
         final int waitForSec = 5 * 1000;
         final ApplicationInfo ai1 = mTargetContext.getPackageManager()
@@ -1591,6 +1658,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testTrimMemActivityBg() throws Exception {
         final int minLru = 8;
         final int waitForSec = 30 * 1000;
@@ -1695,6 +1763,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testServiceDoneLRUPosition() throws Exception {
         final String[] packageNames = {PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3};
         final WatchUidRunner[] watchers = initWatchUidRunners(packageNames, WAITFOR_MSEC);
@@ -1781,7 +1850,12 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testBroadcastReceiverLRUPosition() throws Exception {
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
         final String[] packageNames = {PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3};
         final WatchUidRunner[] watchers = initWatchUidRunners(packageNames, WAITFOR_MSEC);
         final long shortTimeout = 2_000;

@@ -16,8 +16,6 @@
 
 package android.hdmicec.cts.tv;
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -65,10 +63,6 @@ public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
         try {
             sendDeviceToSleep();
             hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.STANDBY);
-            String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
-            assertWithMessage("Device is not in standby.")
-                    .that(wakeState.trim())
-                    .isEqualTo("mWakefulness=Asleep");
         } finally {
             wakeUpDevice();
             setSettingsValue(TV_SEND_STANDBY_ON_SLEEP, value);

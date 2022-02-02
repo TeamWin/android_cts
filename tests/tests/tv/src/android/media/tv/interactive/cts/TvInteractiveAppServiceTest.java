@@ -116,11 +116,13 @@ public class TvInteractiveAppServiceTest {
 
         @Override
         public void onRequestCurrentChannelUri(String iAppServiceId) {
+            super.onRequestCurrentChannelUri(iAppServiceId);
             mRequestCurrentChannelUriCount++;
         }
 
         @Override
         public void onStateChanged(String iAppServiceId, int state, int err) {
+            super.onStateChanged(iAppServiceId, state, err);
             mStateChangedCount++;
             mIAppServiceId = iAppServiceId;
             mState = state;
@@ -130,6 +132,7 @@ public class TvInteractiveAppServiceTest {
         @Override
         public void onBiInteractiveAppCreated(String iAppServiceId, Uri biIAppUri,
                 String biIAppId) {
+            super.onBiInteractiveAppCreated(iAppServiceId, biIAppUri, biIAppId);
             mBiIAppCreatedCount++;
             mIAppServiceId = iAppServiceId;
             mBiIAppUri = biIAppUri;
@@ -138,30 +141,37 @@ public class TvInteractiveAppServiceTest {
 
         @Override
         public void onPlaybackCommandRequest(String id, String type, Bundle bundle) {
+            super.onPlaybackCommandRequest(id, type, bundle);
         }
 
         @Override
         public void onRequestCurrentChannelLcn(String id) {
+            super.onRequestCurrentChannelLcn(id);
         }
 
         @Override
         public void onRequestCurrentTvInputId(String id) {
+            super.onRequestCurrentTvInputId(id);
         }
 
         @Override
         public void onRequestStreamVolume(String id) {
+            super.onRequestStreamVolume(id);
         }
 
         @Override
         public void onRequestTrackInfoList(String id) {
+            super.onRequestTrackInfoList(id);
         }
 
         @Override
         public void onSetVideoBounds(String id, Rect rect) {
+            super.onSetVideoBounds(id, rect);
         }
 
         @Override
         public void onTeletextAppStateChanged(String id, int state) {
+            super.onTeletextAppStateChanged(id, state);
         }
 
     }

@@ -23,6 +23,7 @@ import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.WakeLockHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -132,7 +133,6 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
-        ITestDevice device = getDevice();
         String previousPowerControlMode =
                 setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_NONE);
         try {
@@ -143,7 +143,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     CecOperand.SET_STREAM_PATH,
                     CecMessage.formatParams(dumpsysPhysicalAddress));
             TimeUnit.SECONDS.sleep(5);
-            sendDeviceToSleep();
+            sendDeviceToSleepWithoutWait();
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
             CecMessage.assertPhysicalAddressValid(message, dumpsysPhysicalAddress);
@@ -151,6 +151,56 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             /* Wake up the device */
             wakeUpDevice();
             setPowerControlMode(previousPowerControlMode);
+        }
+    }
+
+    /**
+     * Tests that if the device is configured to go to sleep when losing the active source status,
+     * it behaves as expected.
+     */
+    @Test
+    public void testPowerStateChangeOnActiveSourceLost_standby() throws Exception {
+        String previousActionOnActiveSourceLost = setPowerStateChangeOnActiveSourceLost(
+                HdmiCecConstants.POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_STANDBY_NOW);
+        try {
+            ITestDevice device = getDevice();
+            // Make sure that the DUT is the active source
+            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+            WakeLockHelper.acquirePartialWakeLock(device);
+            // Now make the TV the active source
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                    CecOperand.ACTIVE_SOURCE, CecMessage.formatParams("0000"));
+            assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
+        } finally {
+            /* Wake up the device */
+            wakeUpDevice();
+            setPowerStateChangeOnActiveSourceLost(previousActionOnActiveSourceLost);
+        }
+    }
+
+    /**
+     * Tests that if the device is configured not to go to sleep when losing the active source
+     * status, it behaves as expected.
+     */
+    @Test
+    public void testPowerStateChangeOnActiveSourceLost_none() throws Exception {
+        String previousActionOnActiveSourceLost = setPowerStateChangeOnActiveSourceLost(
+                HdmiCecConstants.POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_NONE);
+        try {
+            ITestDevice device = getDevice();
+            // Make sure that the DUT is the active source
+            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+            WakeLockHelper.acquirePartialWakeLock(device);
+            // Now make the TV the active source
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                    CecOperand.ACTIVE_SOURCE, CecMessage.formatParams("0000"));
+            assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_AWAKE);
+        } finally {
+            /* Wake up the device */
+            wakeUpDevice();
+            setPowerStateChangeOnActiveSourceLost(previousActionOnActiveSourceLost);
         }
     }
 }

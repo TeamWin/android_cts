@@ -446,6 +446,7 @@ public class TvInputServiceTest {
     }
 
     @Test
+    @Ignore("b/216866512")
     public void verifyCallbackDisconnected() {
         resetCounts();
 

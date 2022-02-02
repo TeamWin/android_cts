@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
@@ -77,6 +78,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.text.format.DateUtils;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
@@ -168,6 +170,8 @@ public class UsageStatsTest {
             "notification_seen_promoted_bucket";
     private static final String KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS =
             "broadcast_response_window_timeout_ms";
+    private static final String KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE =
+            "broadcast_response_fg_threshold_state";
 
     private static final int DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -317,6 +321,21 @@ public class UsageStatsTest {
     private void launchTestActivity(String pkgName, String className) {
         mContext.startActivity(createTestActivityIntent(pkgName, className));
         mUiDevice.wait(Until.hasObject(By.clazz(pkgName, className)), TIMEOUT);
+    }
+
+    private void launchTestActivityAndWaitToBeResumed(String pkgName, String className)
+            throws Exception {
+        // Make sure the screen is awake and unlocked. Otherwise, the app activity won't be resumed.
+        mUiDevice.wakeUp();
+        dismissKeyguard();
+
+        final Intent intent = createTestActivityIntent(pkgName, className);
+        final CountDownLatch latch = new CountDownLatch(1);
+        intent.putExtra(EXTRA_REMOTE_CALLBACK, new RemoteCallback(result -> latch.countDown()));
+        mContext.startActivity(intent);
+        if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.SECONDS)) {
+            fail("Timed out waiting for the test app activity to be resumed");
+        }
     }
 
     private void launchSubActivities(Class<? extends Activity>[] activityClasses) {
@@ -1642,6 +1661,104 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testBroadcastResponseStats_appNotInForeground() throws Exception {
+        assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                0 /* broadcastCount */,
+                0 /* notificationPostedCount */,
+                0 /* notificationUpdatedCount */,
+                0 /* notificationCancelledCount */);
+        assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                0 /* broadcastCount */,
+                0 /* notificationPostedCount */,
+                0 /* notificationUpdatedCount */,
+                0 /* notificationCancelledCount */);
+
+        try (DeviceConfigStateHelper deviceConfigStateHelper =
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+            final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+            try {
+                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                        String.valueOf(ActivityManager.PROCESS_STATE_TOP));
+
+                ITestReceiver testReceiver = connection.getITestReceiver();
+
+                // Send a broadcast with a request to record response and verify broadcast-sent
+                // count gets incremented.
+                final Intent intent = new Intent().setComponent(new ComponentName(
+                        TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+                final BroadcastOptions options = BroadcastOptions.makeBasic();
+                options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Bring the test app to the foreground, send the broadcast again and verify that
+                // counts do not change.
+                launchTestActivityAndWaitToBeResumed(TEST_APP_PKG, TEST_APP_CLASS);
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        1 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                // Change the threshold to something lower than TOP, send the broadcast again
+                // and verify that counts get incremented.
+                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                        String.valueOf(ActivityManager.PROCESS_STATE_PERSISTENT));
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+
+                mUiDevice.pressHome();
+                // Change the threshold to a process state higher than RECEIVER, send the
+                // broadcast again and verify that counts do not change.
+                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                        String.valueOf(ActivityManager.PROCESS_STATE_HOME));
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                        2 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+                assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_2,
+                        0 /* broadcastCount */,
+                        0 /* notificationPostedCount */,
+                        0 /* notificationUpdatedCount */,
+                        0 /* notificationCancelledCount */);
+            } finally {
+                connection.unbind();
+            }
+        }
+    }
+
     private Notification buildNotification(String channelId, int notificationId,
             String notificationText) {
         return new Notification.Builder(mContext, channelId)
@@ -1907,6 +2024,28 @@ public class UsageStatsTest {
         } finally {
             BatteryUtils.runDumpsysBatteryReset();
         }
+    }
+
+    @Test
+    public void testSetEstimatedLaunchTime_NotUsableByShell() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            try {
+                mUsageStatsManager.setEstimatedLaunchTimeMillis(TEST_APP_PKG,
+                        System.currentTimeMillis() + 1000);
+                fail("Shell was able to set an app's estimated launch time");
+            } catch (SecurityException expected) {
+                // Success
+            }
+
+            try {
+                Map<String, Long> estimatedLaunchTime = new ArrayMap<>();
+                estimatedLaunchTime.put(TEST_APP_PKG, System.currentTimeMillis() + 10_000);
+                mUsageStatsManager.setEstimatedLaunchTimesMillis(estimatedLaunchTime);
+                fail("Shell was able to set an app's estimated launch time");
+            } catch (SecurityException expected) {
+                // Success
+            }
+        }, Manifest.permission.CHANGE_APP_LAUNCH_TIME_ESTIMATE);
     }
 
     private static final int[] INTERACTIVE_EVENTS = new int[] {

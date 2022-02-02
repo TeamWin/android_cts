@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.trust
 
-import android.app.Activity
-import android.os.Bundle
+package android.virtualdevice.streamedtestapp;
 
 /**
- * A simple activity for testign the Trust API.
+ * Same as MainActivity, but without allowEmbedded="true" in the manifest.
  */
-class TrustTestActivity : Activity() {
-    public override fun onCreate(icicle: Bundle?) {
-        super.onCreate(icicle)
-    }
+public class NoEmbedActivity extends MainActivity {
 }

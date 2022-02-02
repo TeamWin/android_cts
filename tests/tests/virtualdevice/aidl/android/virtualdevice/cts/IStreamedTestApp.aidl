@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.virtualdevice.cts;
 
-package android.trust
+import android.app.PendingIntent;
+import android.os.ResultReceiver;
 
-import android.util.Log
-
-/** Trust agent for UserUnlockRequestTest. */
-class UserUnlockRequestTrustAgent : BaseTrustAgentService() {
-    var onUserRequestedUnlockCallCount: Long = 0
-        private set
-
-    override fun onUserRequestedUnlock() {
-        Log.i(TAG, "onUserRequestedUnlock")
-        onUserRequestedUnlockCallCount++
-    }
-
-    companion object {
-        private const val TAG = "UserUnlockRequestTrustAgent"
-        fun instance() = instance(UserUnlockRequestTrustAgent::class) as UserUnlockRequestTrustAgent
-    }
+interface IStreamedTestApp {
+    PendingIntent createActivityPendingIntent(in ResultReceiver resultReceiver);
+    PendingIntent createServicePendingIntent(boolean trampoline, in ResultReceiver resultReceiver);
 }

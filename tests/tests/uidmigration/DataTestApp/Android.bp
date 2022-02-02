@@ -20,23 +20,29 @@ android_test_helper_app {
     name: "CtsSharedUserMigrationDataTestApp1",
     defaults: ["cts_defaults"],
     sdk_version: "current",
+    static_libs: [
+        "CtsSharedUserMigrationTestLibs",
+    ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.kt"],
 }
 
 android_test_helper_app {
     name: "CtsSharedUserMigrationDataTestApp2",
     defaults: ["cts_defaults"],
     sdk_version: "current",
+    static_libs: [
+        "CtsSharedUserMigrationTestLibs",
+    ],
     manifest: "AndroidManifest2.xml",
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.kt"],
 }

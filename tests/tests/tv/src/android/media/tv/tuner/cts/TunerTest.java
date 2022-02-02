@@ -2869,6 +2869,7 @@ public class TunerTest {
 
             @Override
             public void onUnlocked() {
+                ScanCallback.super.onUnlocked();
                 if (mLockLatch != null) {
                     mLockLatch.countDown();
                 }

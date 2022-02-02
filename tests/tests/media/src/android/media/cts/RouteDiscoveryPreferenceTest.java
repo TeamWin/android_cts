@@ -67,11 +67,27 @@ public class RouteDiscoveryPreferenceTest {
     }
 
     @Test
+    public void testBuilderSetRequiredFeaturesWithNull() {
+        RouteDiscoveryPreference.Builder builder =
+                new RouteDiscoveryPreference.Builder(new ArrayList<>(), true);
+
+        assertThrows(NullPointerException.class, () -> builder.setRequiredFeatures(null));
+    }
+
+    @Test
     public void testBuilderSetAllowedPackagesWithNull() {
         RouteDiscoveryPreference.Builder builder =
                 new RouteDiscoveryPreference.Builder(new ArrayList<>(), true);
 
         assertThrows(NullPointerException.class, () -> builder.setAllowedPackages(null));
+    }
+
+    @Test
+    public void testBuilderSetDeduplicationPackageOrderWithNull() {
+        RouteDiscoveryPreference.Builder builder =
+                new RouteDiscoveryPreference.Builder(new ArrayList<>(), true);
+
+        assertThrows(NullPointerException.class, () -> builder.setDeduplicationPackageOrder(null));
     }
 
     @Test
