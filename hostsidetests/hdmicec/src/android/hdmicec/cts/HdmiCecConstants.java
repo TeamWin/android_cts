@@ -143,6 +143,7 @@ public final class HdmiCecConstants {
 
     // CEC Device property list
     public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
+    public static final String PROPERTY_ARC_SUPPORT = "persist.sys.hdmi.property_arc_support";
 
     /*
      * The default name of local directory into which the port to device mapping files are stored.
@@ -162,4 +163,5 @@ public final class HdmiCecConstants {
 
     // CEC 2.0 Report Feature Bits
     public static final int FEATURES_SINK_SUPPORTS_ARC_TX_BIT = 0x4;
+    public static final int FEATURES_SINK_SUPPORTS_ARC_RX_BIT = 0x2;
 }
