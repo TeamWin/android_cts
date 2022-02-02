@@ -109,6 +109,9 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 /* flags= */ 0,
                 /* handler= */ null,
                 /* callback= */ null);
+        if (mVirtualDisplay == null) {
+            fail("Could not create virtual display");
+        }
     }
 
     @Override
@@ -138,10 +141,8 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         mTestActivity.finish();
         mVirtualDisplay.release();
         mVirtualDevice.close();
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                () -> InstrumentationRegistry.getTargetContext().getSystemService(
-                                InputManager.class)
-                        .unregisterInputDeviceListener(mInputDeviceListener));
+        InstrumentationRegistry.getTargetContext().getSystemService(InputManager.class)
+                .unregisterInputDeviceListener(mInputDeviceListener);
         disassociateCompanionDevice();
     }
 
