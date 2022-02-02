@@ -169,4 +169,33 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         int params = CecMessage.getParams(message, 6, 8);
         assertThat(params & HdmiCecConstants.FEATURES_SINK_SUPPORTS_ARC_TX_BIT).isEqualTo(0);
     }
+
+    /**
+     * Test HF4-11-5 (CEC 2.0)
+     *
+     * <p>Tests that the DUT responds to {@code <Give Features>} with "Sink supports ARC Tx" bit not
+     * set and "Sink support ARC Rx" bit set/reset appropriately.
+     */
+    @Test
+    public void cect_hf_4_11_5_CheckArcTxRxBits() throws Exception {
+        setCec20();
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_FEATURES);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+        int params = CecMessage.getParams(message, 6, 8);
+        assertThat(params & HdmiCecConstants.FEATURES_SINK_SUPPORTS_ARC_TX_BIT).isEqualTo(0);
+
+        boolean hasAudioSystem =
+                getDevice()
+                        .getProperty(HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY)
+                        .contains(Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM));
+        boolean isArcSupported =
+                getDevice().getBooleanProperty(HdmiCecConstants.PROPERTY_ARC_SUPPORT, false);
+        if (hasAudioSystem && isArcSupported) {
+            // This has an Audio System as well, so ARC Rx bit has to be set.
+            assertThat(params & HdmiCecConstants.FEATURES_SINK_SUPPORTS_ARC_RX_BIT).isEqualTo(1);
+        } else {
+            // No Audio System, so ARC Rx bit has to be reset.
+            assertThat(params & HdmiCecConstants.FEATURES_SINK_SUPPORTS_ARC_RX_BIT).isEqualTo(0);
+        }
+    }
 }
