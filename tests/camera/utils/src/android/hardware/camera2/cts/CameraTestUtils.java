@@ -186,7 +186,7 @@ public class CameraTestUtils extends Assert {
                     /*gpsLocation*/ sTestLocation2,
                     /* orientation */270,
                     /* jpgQuality */(byte) 100,
-                    /* thumbQuality */(byte) 100)
+                    /* thumbQuality */(byte) 80)
     };
 
     /**
