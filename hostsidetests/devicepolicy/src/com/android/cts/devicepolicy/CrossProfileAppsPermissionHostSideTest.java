@@ -32,9 +32,6 @@ import java.util.Map;
  * {@link android.content.pm.crossprofile.CrossProfileApps#canInteractAcrossProfiles()}, and
  * {@link
  * android.content.pm.crossprofile.CrossProfileApps#createRequestInteractAcrossProfilesIntent()}.
- *
- * The rest of the tests for {@link android.content.pm.crossprofile.CrossProfileApps}
- * can be found in {@link CrossProfileAppsHostSideTest}.
  */
 @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest {

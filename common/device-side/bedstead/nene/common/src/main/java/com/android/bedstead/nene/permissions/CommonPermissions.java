@@ -620,6 +620,9 @@ public class CommonPermissions {
     /** See {@code Manifest#INTERACT_ACROSS_USERS_FULL} */
     public static final String INTERACT_ACROSS_USERS_FULL =
             "android.permission.INTERACT_ACROSS_USERS_FULL";
+    /** See {@code Manifest#START_CROSS_PROFILE_ACTIVITIES} */
+    public static final String START_CROSS_PROFILE_ACTIVITIES =
+            "android.permission.START_CROSS_PROFILE_ACTIVITIES";
     /** See {@code Manifest#INTERACT_ACROSS_PROFILES} */
     public static final String INTERACT_ACROSS_PROFILES = "android.permission"
             + ".INTERACT_ACROSS_PROFILES";
