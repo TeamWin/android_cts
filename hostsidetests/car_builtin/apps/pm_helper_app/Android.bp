@@ -16,27 +16,16 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsCarBuiltinApiHostTestCases",
+android_test_helper_app {
+    name: "CtsCarBuiltinPmHelperApp",
     defaults: ["cts_defaults"],
-    // Only compile source java files in this apk.
-    srcs: [
-        "src/**/*.java",
-    ],
-    libs: [
-        "tradefed",
-        "compatibility-host-util",
-        "truth-prebuilt",
-    ],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
+    srcs: ["src/**/*.java"],
+    sdk_version: "test_current",
+
+    enforce_uses_libs: false,
     static_libs: [
-        "cts-statsd-atom-host-test-utils",
+        "androidx.test.rules",
     ],
-    data: [
-        ":CtsCarBuiltinPmHelperApp",
-    ],
+
+    libs: ["android.car-test-stubs"],
 }
