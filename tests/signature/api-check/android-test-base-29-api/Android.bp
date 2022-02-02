@@ -17,14 +17,16 @@ package {
 }
 
 android_test {
-    name: "CtsAndroidTestBase28ApiSignatureTestCases",
+    name: "CtsAndroidTestBase29ApiSignatureTestCases",
     defaults: [
         "signature-api-check-defaults",
     ],
     java_resources: [
         ":cts-android-test-base-current-api-gz",
+        ":cts-android-test-mock-current-api-gz",
+        ":cts-android-test-runner-current-api-gz",
     ],
-    min_sdk_version: "27",
+    min_sdk_version: "29",
 
     use_embedded_native_libs: false,
     test_suites: [

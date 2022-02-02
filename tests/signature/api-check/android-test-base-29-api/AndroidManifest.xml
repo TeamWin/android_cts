@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,19 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.android_test_base_current"
+          package="android.signature.cts.api.android_test_base_29"
           android:targetSandboxVersion="2">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
+
+    <application android:debuggable="true"
+                 android:extractNativeLibs="true"
+                 android:largeHeap="true"/>
+
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.android_test_base_current"
-                     android:label="Android Test Base Current API Signature Test"/>
+                     android:targetPackage="android.signature.cts.api.android_test_base_29"
+                     android:label="Android Test Base 29 API Signature Test"/>
 
 </manifest>
