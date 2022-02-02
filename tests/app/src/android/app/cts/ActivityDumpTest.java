@@ -109,7 +109,12 @@ public final class ActivityDumpTest {
         String equivalentDumpableDump = dump(mActivity, "--dump-dumpable", dumpableName);
 
         assertWithMessage("dump([%s])", arg).that(legacyArgDump).isNotEqualTo(baselineDump);
-        assertWithMessage("dump([%s])", arg).that(legacyArgDump).isEqualTo(equivalentDumpableDump);
+        assertWithMessage("dump([%s])", arg).that(legacyArgDump)
+                .isNotEqualTo(equivalentDumpableDump);
+        assertWithMessage("dump([%s])", arg).that(legacyArgDump).contains(arg);
+        assertWithMessage("dump([%s])", arg).that(legacyArgDump).contains("deprecated");
+        assertWithMessage("dump([%s])", arg).that(legacyArgDump)
+                .contains("--dump-dumpable " + dumpableName);
     }
 
     @Test
