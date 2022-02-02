@@ -91,6 +91,7 @@
         <option name="push" value="CtsStorageEscalationApp28.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp28.apk" />
         <option name="push" value="CtsStorageEscalationApp29Full.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Full.apk" />
         <option name="push" value="CtsStorageEscalationApp29Scoped.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Scoped.apk" />
+        <option name="push" value="CtsAppThatHasNotificationListener.apk->/data/local/tmp/cts/permissions/CtsAppThatHasNotificationListener.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
@@ -102,6 +103,7 @@
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.userapp" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.runtimepermissiondefinerapp" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.runtimepermissionuserapp" />
+        <option name="teardown-command" value="pm uninstall android.permission.cts.appthathasnotificationlistener" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
