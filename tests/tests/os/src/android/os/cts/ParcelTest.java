@@ -4581,4 +4581,18 @@ public class ParcelTest extends AndroidTestCase {
                 p.readStrongBinder());
         p.recycle();
     }
+
+    public void testFlags() {
+        Parcel p;
+
+        p = Parcel.obtain();
+        assertEquals(0, p.getFlags());
+        p.setPropagateAllowBlocking();
+        assertEquals(Parcel.FLAG_PROPAGATE_ALLOW_BLOCKING, p.getFlags());
+
+        // recycle / obtain should clear the flag.
+        p.recycle();
+        p = Parcel.obtain();
+        assertEquals(0, p.getFlags());
+    }
 }
