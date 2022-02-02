@@ -103,6 +103,10 @@ public class SubscriptionManagerTest {
     private static final int SUBSCRIPTION_DISABLE_WAIT_MS = 5000;
     private static final int SUBSCRIPTION_ENABLE_WAIT_MS = 50000;
 
+    // time to wait for subscription plans to expire
+    private static final int SUBSCRIPTION_PLAN_EXPIRY_MS = 50;
+    private static final int SUBSCRIPTION_PLAN_CLEAR_WAIT_MS = 5000;
+
     private int mSubId;
     private int mDefaultVoiceSubId;
     private String mPackageName;
@@ -278,6 +282,12 @@ public class SubscriptionManagerTest {
         final SubscriptionPlan plan = buildValidSubscriptionPlan(System.currentTimeMillis());
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
         assertEquals(Arrays.asList(plan), mSm.getSubscriptionPlans(mSubId));
+
+        // Push plan with expiration time and verify that it expired
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan), SUBSCRIPTION_PLAN_EXPIRY_MS);
+        Thread.sleep(SUBSCRIPTION_PLAN_EXPIRY_MS);
+        Thread.sleep(SUBSCRIPTION_PLAN_CLEAR_WAIT_MS);
+        assertTrue(mSm.getSubscriptionPlans(mSubId).isEmpty());
 
         // Now revoke our access
         setSubPlanOwner(mSubId, null);
