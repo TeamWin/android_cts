@@ -348,6 +348,53 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         executeCreateAndManageUserTest("testCreateAndManageUser_RemoveRestrictionSet");
     }
 
+    @Test
+    public void testCreateAndManageUser_newUserDisclaimer() throws Exception {
+        assumeCanStartNewUser();
+
+        // TODO(b/217367529) - we need to grant INTERACT_ACROSS_USERS to the test app in the new
+        // user, so the test is retrying until it gets it, which is done in this thread - not the
+        // best approach, but given that the test cases are being migrated to the new infra,
+        // it's good enough enough...
+        int waitingTimeMs = 5_000;
+        final int maxAttempts = 10;
+        new Thread(() -> {
+            int attempt = 0;
+            boolean granted = false;
+            while (!granted && ++attempt <= maxAttempts) {
+                try {
+                    List<Integer> newUsers = getUsersCreatedByTests();
+                    if (!newUsers.isEmpty()) {
+                        for (int userId : newUsers) {
+                            CLog.i("Checking if user %d is current user", userId);
+                            int currentUser = getCurrentUser();
+                            if (currentUser != userId) continue;
+                            CLog.i("Checking if user %d has the package", userId);
+                            if (!isPackageInstalledForUser(DEVICE_OWNER_PKG, userId)) continue;
+                            grantPermission(DEVICE_OWNER_PKG, PERMISSION_INTERACT_ACROSS_USERS,
+                                    userId, "to call isNewUserDisclaimerAcknowledged() and "
+                                    + "acknowledgeNewUserDisclaimer()");
+                            granted = true;
+                        }
+                    }
+
+                    if (!granted) {
+                        CLog.i("Waiting %dms until new user is switched and package installed "
+                                + "to grant INTERACT_ACROSS_USERS", waitingTimeMs);
+                    }
+                    sleep(waitingTimeMs);
+                } catch (Exception e) {
+                    CLog.e(e);
+                    return;
+                }
+            }
+            CLog.i("%s says: Good Bye, and thanks for all the fish! BTW, granted=%b in %d attempts",
+                    Thread.currentThread(), granted, attempt);
+        }, "testCreateAndManageUser_newUserDisclaimer_Thread").start();
+
+        executeCreateAndManageUserTest("testCreateAndManageUser_newUserDisclaimer");
+    }
+
     @FlakyTest(bugId = 126955083)
     @Test
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
