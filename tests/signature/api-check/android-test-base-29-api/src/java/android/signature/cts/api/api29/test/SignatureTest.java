@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.signature.cts.api.api28.test;
+package android.signature.cts.api.api29.test;
 
 public class SignatureTest extends android.signature.cts.api.SignatureTest {
 }
