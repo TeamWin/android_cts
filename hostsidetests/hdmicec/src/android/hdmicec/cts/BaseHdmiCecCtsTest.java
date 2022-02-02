@@ -49,6 +49,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     private static final String POWER_CONTROL_MODE = "power_control_mode";
     private static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST =
             "power_state_change_on_active_source_lost";
+    private static final String SET_MENU_LANGUAGE = "set_menu_language";
+    private static final String SET_MENU_LANGUAGE_ENABLED = "1";
 
     /** Enum contains the list of possible address types. */
     private enum AddressType {
@@ -339,9 +341,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     public boolean isLanguageEditable() throws Exception {
-        String val = getDevice().executeShellCommand(
-                "getprop ro.hdmi.set_menu_language");
-        return val.trim().equals("true") ? true : false;
+        return getSettingsValue(SET_MENU_LANGUAGE).equals(SET_MENU_LANGUAGE_ENABLED);
     }
 
     public static String getSettingsValue(ITestDevice device, String setting) throws Exception {
