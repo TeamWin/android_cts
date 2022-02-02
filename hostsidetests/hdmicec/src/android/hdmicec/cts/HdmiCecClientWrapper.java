@@ -205,7 +205,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * through the output console of the cec-communication channel.
      */
     public void sendCecMessage(CecOperand message) throws CecClientWrapperException {
-        sendCecMessage(LogicalAddress.BROADCAST, targetDevice, message, "");
+        sendCecMessage(message, "");
+    }
+
+    /**
+     * Sends a CEC message with source marked as broadcast to the device passed in the constructor
+     * through the output console of the cec-communication channel.
+     */
+    public void sendCecMessage(CecOperand message, String params) throws CecClientWrapperException {
+        sendCecMessage(LogicalAddress.BROADCAST, targetDevice, message, params);
     }
 
     /**
@@ -785,6 +793,38 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             endTime = System.currentTimeMillis();
         }
         throw new CecClientWrapperException(ErrorCodes.CecMessageNotFound, expectedMessage.name());
+    }
+
+    public void checkNoMessagesSentFromDevice(int timeoutMillis)
+            throws CecClientWrapperException {
+        checkCecClient();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        Pattern pattern =
+                Pattern.compile("(.*>>)(.*?)("
+                                + targetDevice
+                                + "\\p{XDigit}):(.*)",
+                        Pattern.CASE_INSENSITIVE);
+        while ((endTime - startTime <= timeoutMillis)) {
+            try {
+                if (mInputConsole.ready()) {
+                    String line = mInputConsole.readLine();
+                    if (pattern.matcher(line).matches()) {
+                        CLog.v("Found unexpected message in " + line);
+                        throw new CecClientWrapperException(
+                                ErrorCodes.CecMessageFound,
+                                CecMessage.getOperand(line)
+                                        + " from "
+                                        + targetDevice
+                                        + " with params "
+                                        + CecMessage.getParamsAsString(line));
+                    }
+                }
+            } catch (IOException ioe) {
+                throw new CecClientWrapperException(ErrorCodes.ReadConsole, ioe);
+            }
+            endTime = System.currentTimeMillis();
+        }
     }
 
     /**
