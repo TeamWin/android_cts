@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -949,6 +950,57 @@ public class UsageStatsTest {
         final BroadcastResponseStats stats = mUsageStatsManager
                 .queryBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
         assertEquals(TEST_APP_PKG, stats.getPackageName());
+    }
+
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testBroadcastOptions_noPermission() throws Exception {
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+        options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+        final Intent intent = new Intent().setComponent(new ComponentName(
+                TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+        sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+        setAppOpsMode("ignore");
+        try {
+            assertThrows(SecurityException.class, () -> {
+                sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+            });
+        } finally {
+            resetAppOpsMode();
+        }
+    }
+
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testQueryBroadcastResponseStats_noPermission() throws Exception {
+        mUsageStatsManager.queryBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
+
+        setAppOpsMode("ignore");
+        try {
+            assertThrows(SecurityException.class, () -> {
+                mUsageStatsManager.queryBroadcastResponseStats(TEST_APP_PKG,
+                        TEST_RESPONSE_STATS_ID_1);
+            });
+        } finally {
+            resetAppOpsMode();
+        }
+    }
+
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testClearBroadcastResponseStats_noPermission() throws Exception {
+        mUsageStatsManager.clearBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
+
+        setAppOpsMode("ignore");
+        try {
+            assertThrows(SecurityException.class, () -> {
+                mUsageStatsManager.clearBroadcastResponseStats(TEST_APP_PKG,
+                        TEST_RESPONSE_STATS_ID_1);
+            });
+        } finally {
+            resetAppOpsMode();
+        }
     }
 
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
