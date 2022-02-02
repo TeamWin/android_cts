@@ -51,6 +51,7 @@ import android.util.SparseBooleanArray;
 
 import com.google.common.util.concurrent.AbstractFuture;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThrows;
 
 public class ParcelTest extends AndroidTestCase {
@@ -3642,6 +3643,61 @@ public class ParcelTest extends AndroidTestCase {
         p.recycle();
     }
 
+    public void testFixedArray() {
+        Parcel p = Parcel.obtain();
+
+        //  test int[2][3]
+        int[][] ints = new int[][] {{1,2,3}, {4,5,6}};
+        p.writeFixedArray(ints, 0, new int[]{2, 3});
+        p.setDataPosition(0);
+        assertArrayEquals(ints, p.createFixedArray(int[][].class, new int[]{2, 3}));
+
+        // test Parcelable[2][3]
+        p.setDataPosition(0);
+        Signature[][] signatures = {
+            {new Signature("1234"), new Signature("ABCD"), new Signature("abcd")},
+            {new Signature("5678"), new Signature("EFAB"), new Signature("efab")}};
+        p.writeFixedArray(signatures, 0, new int[]{2, 3});
+        p.setDataPosition(0);
+        assertArrayEquals(signatures, p.createFixedArray(Signature[][].class, Signature.CREATOR, new int[]{2, 3}));
+
+        // test IInterface[2][3]
+        p.setDataPosition(0);
+        MockIInterface[][] interfaces = {
+            {new MockIInterface(), new MockIInterface(), new MockIInterface()},
+            {new MockIInterface(), new MockIInterface(), new MockIInterface()}};
+        p.writeFixedArray(interfaces, 0, new int[]{2, 3});
+        p.setDataPosition(0);
+        MockIInterface[][] interfacesRead = p.createFixedArray(MockIInterface[][].class,
+            MockIInterface::asInterface, new int[]{2, 3});
+        assertEquals(2, interfacesRead.length);
+        assertEquals(3, interfacesRead[0].length);
+
+        // test null
+        p.setDataPosition(0);
+        int[][] nullInts = null;
+        p.writeFixedArray(nullInts, 0, new int[]{2, 3});
+        p.setDataPosition(0);
+        assertNull(p.createFixedArray(int[][].class, new int[]{2, 3}));
+
+        // reject wrong dimensions when writing
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class,
+            () -> p.writeFixedArray(new int[3][2], 0, new int[]{2, 2}));
+        assertThrows(BadParcelableException.class,
+            () -> p.writeFixedArray(new int[3], 0, new int[]{3, 2}));
+        assertThrows(BadParcelableException.class,
+            () -> p.writeFixedArray(new int[3][2], 0, new int[]{3}));
+
+        // reject wrong dimensions when reading
+        p.setDataPosition(0);
+        p.writeFixedArray(new int[2][3], 0, new int[]{2, 3});
+        p.setDataPosition(0);
+        assertThrows(BadParcelableException.class, () -> p.createFixedArray(int[][].class, 1, 3));
+        assertThrows(BadParcelableException.class, () -> p.createFixedArray(int[][].class, 2, 2));
+
+        p.recycle();
+    }
 
     @SuppressWarnings("unchecked")
     public void testWriteMap() {
