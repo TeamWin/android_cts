@@ -30,6 +30,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
@@ -1289,7 +1290,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List,
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
      * WifiManager.PnoScanResultsCallback)} can be called with proper permissions.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1301,11 +1302,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
         List<WifiSsid> ssids = new ArrayList<>();
         ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
+        int[] frequencies = new int[] {2412, 5180, 5805};
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
-                        ssids, callback));
+                        ssids, frequencies, callback));
 
         callback.latch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS);
         if (mWifiManager.isPreferredNetworkOffloadSupported()) {
@@ -1322,7 +1324,27 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List,
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * WifiManager.PnoScanResultsCallback)} can be called with null frequency.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetExternalPnoScanRequestSuccessNullFrequency() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
+        List<WifiSsid> ssids = new ArrayList<>();
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
+                        ssids, null, callback));
+        mWifiManager.clearExternalPnoScanRequest();
+    }
+
+    /**
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
      * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many SSIDs.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1338,18 +1360,39 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         ssids.add(WifiSsid.fromBytes("TEST_SSID_3".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
-        try {
+        assertThrows(IllegalArgumentException.class, () -> {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.setExternalPnoScanRequest(
-                            Executors.newSingleThreadExecutor(), ssids, callback));
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            // pass
-        }
+                            Executors.newSingleThreadExecutor(), ssids, null, callback));
+        });
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List,
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many frequencies.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testSetExternalPnoScanRequestTooManyFrequenciesException() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        TestPnoScanResultsCallback callback = new TestPnoScanResultsCallback();
+        List<WifiSsid> ssids = new ArrayList<>();
+        ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
+        int[] frequencies = new int[] {2412, 2417, 2422, 2427, 2432, 2437, 2447, 2452, 2457, 2462,
+                5180, 5200, 5220, 5240, 5745, 5765, 5785, 5805};
+
+        assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
+        assertThrows(IllegalArgumentException.class, () -> {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.setExternalPnoScanRequest(
+                            Executors.newSingleThreadExecutor(), ssids, frequencies, callback));
+        });
+    }
+
+    /**
+     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
      * WifiManager.PnoScanResultsCallback)} cannot be called without permission.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1364,12 +1407,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
-        try {
-            mWifiManager.setExternalPnoScanRequest(executor, ssids, callback);
-            fail("Expected SecurityException");
-        } catch (SecurityException e) {
-            // pass
-        }
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.setExternalPnoScanRequest(executor, ssids, null, callback));
     }
 
     /**
