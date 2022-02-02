@@ -752,6 +752,9 @@ public class PixelCopyTest {
     public void testVideoProducer() throws InterruptedException {
         PixelCopyVideoSourceActivity activity =
                 mVideoSourceActivityRule.launchActivity(null);
+
+        Thread.sleep(2000);
+
         if (!activity.canPlayVideo()) {
             Log.i(TAG, "Skipping testVideoProducer, video codec isn't supported");
             return;
