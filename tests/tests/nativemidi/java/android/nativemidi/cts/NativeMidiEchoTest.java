@@ -99,7 +99,7 @@ public class NativeMidiEchoTest {
         for(int buffIndex = 0; buffIndex < numMessages; buffIndex++) {
             messageLen = (int)(mRandom.nextFloat() * (maxMessageLen-1)) + 1;
             buffers[buffIndex] = generateRandomMessage(messageLen);
-            timestamps[buffIndex] = mRandom.nextLong();
+            timestamps[buffIndex] = Math.abs(mRandom.nextLong());
         }
     }
 
