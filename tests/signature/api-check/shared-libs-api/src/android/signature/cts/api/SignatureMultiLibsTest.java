@@ -23,6 +23,7 @@ import android.signature.cts.VirtualPath.LocalFilePath;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Stream;
+import org.junit.Test;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -43,6 +44,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
      * <p/>
      * Will check the entire API, and then report the complete list of failures
      */
+    @Test
     public void testSignature() {
         runWithTestResultObserver(mResultObserver -> {
 
