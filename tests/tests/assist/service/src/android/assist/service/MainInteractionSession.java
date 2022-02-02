@@ -205,13 +205,18 @@ public class MainInteractionSession extends VoiceInteractionSession {
     }
 
     private boolean compareScreenshot(Bitmap screenshot, int color) {
-        Point size = new Point(mDisplayWidth, mDisplayHeight);
+        // TODO(b/215668037): Uncomment when we find a reliable approach across different form
+        // factors.
+        // The current approach does not handle overridden screen sizes, and there's no clear way
+        // to handle that and multiple display areas at the same time.
+//        Point size = new Point(mDisplayWidth, mDisplayHeight);
 
-        if (screenshot.getWidth() != size.x || screenshot.getHeight() != size.y) {
-            Log.i(TAG, "width  or height didn't match: " + size + " vs " + screenshot.getWidth()
-                    + "," + screenshot.getHeight());
-            return false;
-        }
+//        if (screenshot.getWidth() != size.x || screenshot.getHeight() != size.y) {
+//            Log.i(TAG, "width  or height didn't match: " + size + " vs " + screenshot.getWidth()
+//                    + "," + screenshot.getHeight());
+//            return false;
+//        }
+        Point size = new Point(screenshot.getWidth(), screenshot.getHeight());
         int[] pixels = new int[size.x * size.y];
         screenshot.getPixels(pixels, 0, size.x, 0, 0, size.x, size.y);
 
