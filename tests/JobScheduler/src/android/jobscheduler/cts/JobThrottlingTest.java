@@ -1055,7 +1055,7 @@ public class JobThrottlingTest {
     @Test
     public void testRestrictingStopReason_Quota() throws Exception {
         // Reduce allowed time for testing.
-        mDeviceConfigStateHelper.set("qc_allowed_time_per_period_ms", "60000");
+        mDeviceConfigStateHelper.set("qc_allowed_time_per_period_rare_ms", "60000");
         setChargingState(false);
         setTestPackageStandbyBucket(Bucket.RARE);
 
