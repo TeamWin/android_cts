@@ -273,23 +273,5 @@ public class ActivityBlockingTest {
                         result.getInt(TestAppHelper.EXTRA_DISPLAY)
                                 == virtualDisplay.getDisplay().getDisplayId()));
     }
-
-    @Test
-    public void setAllowedAndBlockedActivities_shouldThrowException() {
-        VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
-        assertThrows(IllegalArgumentException.class, () -> {
-            paramsBuilder.setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT));
-            paramsBuilder.setBlockedActivities(Set.of());
-        });
-    }
-
-    @Test
-    public void setBlockedAndAllowedActivities_shouldThrowException() {
-        VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
-        assertThrows(IllegalArgumentException.class, () -> {
-            paramsBuilder.setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT));
-            paramsBuilder.setAllowedActivities(Set.of());
-        });
-    }
 }
 
