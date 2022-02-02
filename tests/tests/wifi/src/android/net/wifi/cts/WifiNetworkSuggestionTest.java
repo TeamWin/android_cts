@@ -24,10 +24,12 @@ import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -41,6 +43,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.net.wifi.WifiSsid;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
@@ -68,6 +71,7 @@ import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -1117,6 +1121,23 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         }
         fail("Did not receive expected IllegalStateException when tried to build a carrier merged "
                 + "network suggestion with unmetered config");
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with non-unicode ssid
+     */
+    @Test
+    public void testBuilderWithNonUnicodeSsid() {
+        byte[] ssid = "服務集識別碼".getBytes(Charset.forName("GBK"));
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setWifiSsid(WifiSsid.fromBytes(ssid))
+                .build();
+        assertArrayEquals(ssid, suggestion.getWifiSsid().getBytes());
+        assertNull(suggestion.getSsid());
+
+        // If WifiSsid is empty, will throw an exception.
+        assertThrows(IllegalArgumentException.class,
+                () -> new WifiNetworkSuggestion.Builder().setWifiSsid(WifiSsid.fromBytes(null)));
     }
 
     /**
