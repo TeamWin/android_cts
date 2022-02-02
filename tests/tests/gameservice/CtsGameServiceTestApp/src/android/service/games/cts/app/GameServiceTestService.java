@@ -31,8 +31,6 @@ import java.util.List;
  * TestGameSessionService}.
  */
 public final class GameServiceTestService extends Service {
-    public static final String TEST_SERVICE = "android.service.games.action.TEST_SERVICE";
-
     private final IGameServiceTestService.Stub mStub = new IGameServiceTestService.Stub() {
         @Override
         public boolean isGameServiceConnected() {

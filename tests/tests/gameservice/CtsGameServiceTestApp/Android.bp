@@ -19,14 +19,14 @@ package {
 android_test_helper_app {
     name: "CtsGameServiceTestApp",
     srcs: [
-        "src/**/*.aidl",
         "src/**/*.java",
     ],
     static_libs: [
         "androidx.annotation_annotation",
+        "CtsGameServiceAidls",
         "guava",
     ],
-    defaults: ["mts-target-sdk-version-current"],
+    defaults: ["cts_support_defaults"],
     min_sdk_version: "current",
     resource_dirs: ["res"],
 }

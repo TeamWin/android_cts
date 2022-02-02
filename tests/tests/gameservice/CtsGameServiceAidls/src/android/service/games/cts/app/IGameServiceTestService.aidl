@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.service.games.cts.app;
 
- package android.service.games.cts.app;
-
- interface IGameServiceTestService {
+interface IGameServiceTestService {
     boolean isGameServiceConnected();
 
     void setGamePackageNames(in List<String> packageNames);
 
     List<String> getActiveSessions();
- }
+}
