@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 The Android Open Source Project
+<!-- Copyright (C) 2021 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,7 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Android Test Base 28 API Signature test cases">
+<!--
+ ! Test that APKs which target the current sdk version (which is greater than 28) can access the
+ ! android.test.base by explicitly requesting it with a <uses-library../> entry in the
+ ! AndroidManifest.xml.
+ !-->
+<configuration description="Config for CTS Android Test Base Uses Library API Signature test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="systems" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
@@ -21,13 +26,14 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsAndroidTestBase28ApiSignatureTestCases.apk" />
+        <option name="test-file-name" value="CtsAndroidTestBaseUsesLibraryApiSignatureTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.signature.cts.api.android_test_base_28" />
+        <option name="package" value="android.signature.cts.api.android_test_base_uses_library" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="class" value="android.signature.cts.api.api28.test.SignatureTest" />
+        <option name="class" value="android.signature.cts.api.uses_library.test.base.SignatureTest" />
         <option name="instrumentation-arg" key="expected-api-files" value="android-test-base-current.api.gz" />
+        <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-runner-current.api.gz,android-test-mock-current.api.gz" />
         <option name="runtime-hint" value="5s" />
         <!-- Disable hidden API checks (http://b/171459260). -->
         <option name="hidden-api-checks" value="false" />
