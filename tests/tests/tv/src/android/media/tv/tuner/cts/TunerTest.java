@@ -453,7 +453,8 @@ public class TunerTest {
                         status.isLnaOn();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_LAYER_ERROR:
-                        status.getLayerErrors();
+                        boolean[] r = status.getLayerErrors();
+                        assertNotNull(r);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_MER:
                         status.getMer();
@@ -479,10 +480,12 @@ public class TunerTest {
                         }
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_BERS:
-                        status.getBers();
+                        int[] b = status.getBers();
+                        assertNotNull(b);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_CODERATES:
-                        status.getCodeRates();
+                        int[] c = status.getCodeRates();
+                        assertNotNull(c);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_BANDWIDTH:
                         status.getBandwidth();
@@ -500,16 +503,20 @@ public class TunerTest {
                         status.getSystemId();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_INTERLEAVINGS:
-                        status.getInterleaving();
+                        int[] l = status.getInterleaving();
+                        assertNotNull(l);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_SEGMENTS:
-                        status.getIsdbtSegment();
+                        int[] segment = status.getIsdbtSegment();
+                        assertNotNull(segment);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_TS_DATA_RATES:
-                        status.getTsDataRate();
+                        int[] rates = status.getTsDataRate();
+                        assertNotNull(rates);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATIONS_EXT:
-                        status.getExtendedModulations();
+                        int[] modulations = status.getExtendedModulations();
+                        assertNotNull(modulations);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_ROLL_OFF:
                         status.getRollOff();
@@ -530,13 +537,16 @@ public class TunerTest {
                         status.getIsdbtPartialReceptionFlag();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_STREAM_IDS:
-                        status.getStreamIds();
+                        int[] streamIds = status.getStreamIds();
+                        assertNotNull(streamIds);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_DVBT_CELL_IDS:
-                        status.getDvbtCellIds();
+                        int[] cellIds = status.getDvbtCellIds();
+                        assertNotNull(cellIds);
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_ALL_PLP_INFO:
-                        status.getAllAtsc3PlpInfo();
+                        List<Atsc3PlpInfo> plps = status.getAllAtsc3PlpInfo();
+                        assertFalse(plps.isEmpty());
                         break;
                 }
             }
