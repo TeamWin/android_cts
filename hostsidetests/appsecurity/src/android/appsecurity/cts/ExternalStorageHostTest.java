@@ -159,15 +159,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    // b/215212818 - certain tests fail with fuse-bpf, so temporarily disable
-    private boolean isFuseBpf() throws Exception {
-        return "true".equals(getDevice()
-            .executeShellCommand("getprop persist.sys.fuse.bpf.enable").trim());
-    }
-
     @Test
     public void testExternalStorageRename() throws Exception {
-        Assume.assumeFalse(isFuseBpf()); // b/215212818
         try {
             wipePrimaryExternalStorage();
 
@@ -190,7 +183,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageNone29() throws Exception {
-        Assume.assumeFalse(isFuseBpf()); // b/215212818
         try {
             wipePrimaryExternalStorage();
 
@@ -214,7 +206,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageRead29() throws Exception {
-        Assume.assumeFalse(isFuseBpf()); // b/215212818
         try {
             wipePrimaryExternalStorage();
 
@@ -238,7 +229,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testExternalStorageWrite() throws Exception {
-        Assume.assumeFalse(isFuseBpf()); // b/215212818
         try {
             wipePrimaryExternalStorage();
 
@@ -555,7 +545,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testOwningOneFileNotGrantPrefixUriPermission() throws Exception {
-        Assume.assumeFalse(isFuseBpf()); // b/215212818
         installPackage(MEDIA.apk);
 
         int user = getDevice().getCurrentUser();
@@ -825,7 +814,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testCreateRequest_userDenied() throws Exception {
-        Assume.assumeFalse(isFuseBpf());
         installPackage(MEDIA.apk);
 
         int user = getDevice().getCurrentUser();
