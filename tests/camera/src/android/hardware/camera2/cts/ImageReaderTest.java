@@ -45,6 +45,7 @@ import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils.ImageDropperListener;
@@ -58,6 +59,7 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.media.ImageWriter;
+import android.os.SystemClock;
 import android.os.ConditionVariable;
 import android.util.Log;
 import android.util.Size;
@@ -74,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>Basic test for ImageReader APIs. It uses CameraDevice as producer, camera
@@ -125,7 +128,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.YUV_420_888, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.YUV_420_888, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -138,7 +143,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.DEPTH16, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.DEPTH16, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -151,7 +158,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.DEPTH_POINT_CLOUD, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.DEPTH_POINT_CLOUD, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -163,8 +172,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIdsUnderTest) {
             try {
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.DEPTH_JPEG, /*repeating*/true,
-                        /*checkSession*/ true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.DEPTH_JPEG, /*repeating*/true);
+                params.mCheckSession = true;
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -177,7 +188,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.Y8, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.Y8, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -190,7 +203,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing jpeg capture for Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.JPEG, /*repeating*/false);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/false);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -203,8 +218,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing raw capture for camera " + id);
                 openDevice(id);
-
-                bufferFormatTestByCamera(ImageFormat.RAW_SENSOR, /*repeating*/false);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.RAW_SENSOR, /*repeating*/false);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -217,8 +233,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing raw capture for camera " + id);
                 openDevice(id);
-
-                bufferFormatTestByCamera(ImageFormat.RAW_PRIVATE, /*repeating*/false);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.RAW_PRIVATE, /*repeating*/false);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -241,8 +258,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 assertTrue("HLG10 not present in the available dynamic range profiles",
                         availableProfiles.contains(DynamicRangeProfiles.HLG10));
 
-                bufferFormatTestByCamera(ImageFormat.YCBCR_P010, /*repeating*/false,
-                    DynamicRangeProfiles.HLG10);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.YCBCR_P010, /*repeating*/false);
+                params.mDynamicRangeProfile = DynamicRangeProfiles.HLG10;
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -255,7 +274,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing heic capture for Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.HEIC, /*repeating*/false);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.HEIC, /*repeating*/false);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -268,7 +289,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing repeating jpeg capture for Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.JPEG, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.JPEG, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -281,8 +304,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing repeating raw capture for camera " + id);
                 openDevice(id);
-
-                bufferFormatTestByCamera(ImageFormat.RAW_SENSOR, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.RAW_SENSOR, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -295,8 +319,9 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing repeating raw capture for camera " + id);
                 openDevice(id);
-
-                bufferFormatTestByCamera(ImageFormat.RAW_PRIVATE, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.RAW_PRIVATE, /*repeating*/true);
+                bufferFormatTestByCamera(params);
             } finally {
                 closeDevice(id);
             }
@@ -309,7 +334,40 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             try {
                 Log.v(TAG, "Testing repeating heic capture for Camera " + id);
                 openDevice(id);
-                bufferFormatTestByCamera(ImageFormat.HEIC, /*repeating*/true);
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.HEIC, /*repeating*/true);
+                bufferFormatTestByCamera(params);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
+    public void testFlexibleYuvWithTimestampBase() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+                openDevice(id);
+
+                // Test TIMESTAMP_BASE_SENSOR with VIDEO_ENCDOER usage
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.YUV_420_888, /*repeating*/true);
+                params.mTimestampBase = OutputConfiguration.TIMESTAMP_BASE_SENSOR;
+                params.mValidateImageData = false;
+                params.mSetUsageFlag = true;
+                params.mUsageFlag = HardwareBuffer.USAGE_VIDEO_ENCODE;
+                bufferFormatTestByCamera(params);
+
+                params.mSetUsageFlag = false;
+
+                int[] otherTimeBases = {OutputConfiguration.TIMESTAMP_BASE_MONOTONIC,
+                        OutputConfiguration.TIMESTAMP_BASE_REALTIME,
+                        OutputConfiguration.TIMESTAMP_BASE_CHOREOGRAPHER_SYNCED};
+                for (int timeBase : otherTimeBases) {
+                    params.mTimestampBase = timeBase;
+                    bufferFormatTestByCamera(params);
+                }
             } finally {
                 closeDevice(id);
             }
@@ -551,11 +609,17 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 }
                 openDevice(id);
 
+
+                BufferFormatTestParam params = new BufferFormatTestParam(
+                        ImageFormat.PRIVATE, /*repeating*/true);
+                params.mSetUsageFlag = true;
+                params.mUsageFlag = HardwareBuffer.USAGE_PROTECTED_CONTENT;
+                params.mRepeating = true;
+                params.mCheckSession = true;
+                params.mValidateImageData = false;
                 for (String testCameraId : testCameraIds) {
-                    bufferFormatTestByCamera(ImageFormat.PRIVATE, /*setUsageFlag*/ true,
-                            HardwareBuffer.USAGE_PROTECTED_CONTENT, /*repeating*/ true,
-                            /*checkSession*/ true, /*validateImageData*/ false,
-                            testCameraId);
+                    params.mPhysicalId = testCameraId;
+                    bufferFormatTestByCamera(params);
                 }
             } finally {
                 closeDevice(id);
@@ -1159,45 +1223,33 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         validateImage(SIZE, FORMAT, /*captureCount*/1, SINGLE);
     }
 
-    private void bufferFormatTestByCamera(int format, boolean repeating) throws Exception {
-        bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
-                HardwareBuffer.USAGE_CPU_READ_OFTEN, repeating,
-                /*checkSession*/ false, /*validateImageData*/ true);
-    }
+    private class BufferFormatTestParam {
+        public int mFormat;
+        public boolean mRepeating;
+        public boolean mSetUsageFlag = false;
+        public long mUsageFlag = HardwareBuffer.USAGE_CPU_READ_OFTEN;
+        public boolean mCheckSession = false;
+        public boolean mValidateImageData = true;
+        public String mPhysicalId = null;
+        public int mDynamicRangeProfile = DynamicRangeProfiles.STANDARD;
+        public int mTimestampBase = OutputConfiguration.TIMESTAMP_BASE_DEFAULT;
 
-    private void bufferFormatTestByCamera(int format, boolean repeating, int dynamicRangeProfile)
+        BufferFormatTestParam(int format, boolean repeating) {
+            mFormat = format;
+            mRepeating = repeating;
+        }
+    };
+
+    private void bufferFormatTestByCamera(BufferFormatTestParam params)
             throws Exception {
-        bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
-                HardwareBuffer.USAGE_CPU_READ_OFTEN, repeating, /*checkSession*/ false,
-                /*validateImageData*/ true, /*physicalId*/null, dynamicRangeProfile);
-    }
+        int format = params.mFormat;
+        boolean setUsageFlag = params.mSetUsageFlag;
+        long usageFlag = params.mUsageFlag;
+        boolean repeating = params.mRepeating;
+        boolean validateImageData = params.mValidateImageData;
+        int timestampBase = params.mTimestampBase;
 
-    private void bufferFormatTestByCamera(int format, boolean repeating, boolean checkSession)
-            throws Exception {
-        bufferFormatTestByCamera(format, /*setUsageFlag*/ false,
-                HardwareBuffer.USAGE_CPU_READ_OFTEN,
-                repeating, checkSession, /*validateImageData*/true);
-    }
-
-    private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
-            boolean repeating, boolean checkSession, boolean validateImageData) throws Exception {
-        bufferFormatTestByCamera(format, setUsageFlag, usageFlag, repeating, checkSession,
-                validateImageData, /*physicalId*/null);
-    }
-
-    private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
-            boolean repeating, boolean checkSession, boolean validateImageData, String physicalId)
-            throws Exception {
-        bufferFormatTestByCamera(format, setUsageFlag, usageFlag, repeating, checkSession,
-                validateImageData, physicalId, DynamicRangeProfiles.STANDARD);
-    }
-
-    private void bufferFormatTestByCamera(int format, boolean setUsageFlag, long usageFlag,
-            // TODO: Consider having some sort of test configuration class passed to reduce the
-            //       proliferation of parameters ?
-            boolean repeating, boolean checkSession, boolean validateImageData, String physicalId,
-            int dynamicRangeProfile)
-            throws Exception {
+        String physicalId = params.mPhysicalId;
         StaticMetadata staticInfo;
         if (physicalId == null) {
             staticInfo = mStaticInfo;
@@ -1216,6 +1268,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     CameraCharacteristics.SCALER_DEFAULT_SECURE_IMAGE_SIZE);
         }
 
+        boolean validateTimestampBase = (timestampBase
+                != OutputConfiguration.TIMESTAMP_BASE_DEFAULT);
+        Integer deviceTimestampSource = staticInfo.getCharacteristics().get(
+                CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
         // for each resolution, test imageReader:
         for (Size sz : availableSizes) {
             try {
@@ -1238,12 +1294,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 }
 
                 // Don't queue up images if we won't validate them
-                if (!validateImageData) {
+                if (!validateImageData && !validateTimestampBase) {
                     ImageDropperListener imageDropperListener = new ImageDropperListener();
                     mReader.setOnImageAvailableListener(imageDropperListener, mHandler);
                 }
 
-                if (checkSession) {
+                if (params.mCheckSession) {
                     checkImageReaderSessionConfiguration(
                             "Camera capture session validation for format: " + format + "failed",
                             physicalId);
@@ -1251,10 +1307,13 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
 
                 ArrayList<OutputConfiguration> outputConfigs = new ArrayList<>();
                 OutputConfiguration config = new OutputConfiguration(mReader.getSurface());
+                assertTrue("Default timestamp source must be DEFAULT",
+                        config.getTimestampBase() == OutputConfiguration.TIMESTAMP_BASE_DEFAULT);
                 if (physicalId != null) {
                     config.setPhysicalCameraId(physicalId);
                 }
-                config.setDynamicRangeProfile(dynamicRangeProfile);
+                config.setDynamicRangeProfile(params.mDynamicRangeProfile);
+                config.setTimestampBase(params.mTimestampBase);
                 outputConfigs.add(config);
                 CaptureRequest request = prepareCaptureRequestForConfigs(
                         outputConfigs, CameraDevice.TEMPLATE_PREVIEW).build();
@@ -1263,6 +1322,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 startCapture(request, repeating, listener, mHandler);
 
                 int numFrameVerified = repeating ? NUM_FRAME_VERIFIED : 1;
+
+                if (validateTimestampBase) {
+                    validateTimestamps(deviceTimestampSource, timestampBase, numFrameVerified,
+                            listener, repeating);
+                }
 
                 if (validateImageData) {
                     // Validate images.
@@ -1278,6 +1342,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 closeDefaultImageReader();
             }
 
+            // Only test one size for non-default timestamp base.
+            if (timestampBase != OutputConfiguration.TIMESTAMP_BASE_DEFAULT) break;
         }
     }
 
@@ -1490,6 +1556,74 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             img.close();
             numImageVerified++;
             reTryCount = 0;
+        }
+
+        // Return all pending images to the ImageReader as the validateImage may
+        // take a while to return and there could be many images pending.
+        mListener.closePendingImages();
+    }
+
+    private void validateTimestamps(Integer deviceTimestampSource, int timestampBase,
+            int captureCount, SimpleCaptureCallback listener, boolean repeating) throws Exception {
+        Image img;
+        final int MAX_RETRY_COUNT = 20;
+        int numImageVerified = 0;
+        int retryCount = 0;
+        List<Long> imageTimestamps = new ArrayList<Long>();
+        assertNotNull("Image listener is null", mListener);
+        while (numImageVerified < captureCount) {
+            if (VERBOSE) Log.v(TAG, "Waiting for an Image");
+            mListener.waitForAnyImageAvailable(CAPTURE_WAIT_TIMEOUT_MS);
+            if (repeating) {
+                img = mReader.acquireLatestImage();
+                if (img == null && retryCount < MAX_RETRY_COUNT) {
+                    retryCount++;
+                    continue;
+                }
+            } else {
+                img = mReader.acquireNextImage();
+            }
+            assertNotNull("Unable to acquire the latest image", img);
+            if (VERBOSE) {
+                Log.v(TAG, "Got the latest image with timestamp " + img.getTimestamp());
+            }
+            imageTimestamps.add(img.getTimestamp());
+            img.close();
+            numImageVerified++;
+            retryCount = 0;
+        }
+
+        List<Long> captureStartTimestamps = listener.getCaptureStartTimestamps(captureCount);
+        if (VERBOSE) {
+            Log.v(TAG, "deviceTimestampSource: " + deviceTimestampSource
+                    + ", timestampBase: " + timestampBase + ", captureStartTimestamps: "
+                    + captureStartTimestamps + ", imageTimestamps: " + imageTimestamps);
+        }
+        if (timestampBase == OutputConfiguration.TIMESTAMP_BASE_SENSOR
+                || (timestampBase == OutputConfiguration.TIMESTAMP_BASE_MONOTONIC
+                && deviceTimestampSource == CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN)
+                || (timestampBase == OutputConfiguration.TIMESTAMP_BASE_REALTIME
+                && deviceTimestampSource == CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME)) {
+            // Makes sure image timestamps match capture started timestamp
+            for (Long timestamp : imageTimestamps) {
+                mCollector.expectTrue("Image timestamp " + timestamp
+                        + " should match one of onCaptureStarted timestamps "
+                        + captureStartTimestamps,
+                        captureStartTimestamps.contains(timestamp));
+            }
+        } else if (timestampBase == OutputConfiguration.TIMESTAMP_BASE_CHOREOGRAPHER_SYNCED) {
+            // Make sure that timestamp base is MONOTONIC. Do not strictly check against
+            // choreographer callback because there are cases camera framework doesn't use
+            // choreographer timestamp (when consumer is slower than camera for example).
+            final int TIMESTAMP_THRESHOLD_MILLIS = 3000; // 3 seconds
+            long monotonicTime = SystemClock.uptimeMillis();
+            for (Long timestamp : imageTimestamps) {
+                long timestampMs = TimeUnit.NANOSECONDS.toMillis(timestamp);
+                mCollector.expectTrue("Image timestamp " + timestampMs + " ms should be in the "
+                        + "same timebase as SystemClock.updateMillis " + monotonicTime
+                        + " ms when timestamp base is set to CHOREOGRAPHER synced",
+                        Math.abs(timestampMs - monotonicTime) < TIMESTAMP_THRESHOLD_MILLIS);
+            }
         }
 
         // Return all pending images to the ImageReader as the validateImage may
