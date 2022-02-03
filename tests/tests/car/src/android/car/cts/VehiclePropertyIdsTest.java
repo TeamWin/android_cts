@@ -291,6 +291,14 @@ public class VehiclePropertyIdsTest {
                 .isEqualTo("FOG_LIGHTS_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.FOG_LIGHTS_SWITCH))
                 .isEqualTo("FOG_LIGHTS_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.FRONT_FOG_LIGHTS_STATE))
+                .isEqualTo("FRONT_FOG_LIGHTS_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.FRONT_FOG_LIGHTS_SWITCH))
+                .isEqualTo("FRONT_FOG_LIGHTS_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.REAR_FOG_LIGHTS_STATE))
+                .isEqualTo("REAR_FOG_LIGHTS_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.REAR_FOG_LIGHTS_SWITCH))
+                .isEqualTo("REAR_FOG_LIGHTS_SWITCH");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HAZARD_LIGHTS_STATE))
                 .isEqualTo("HAZARD_LIGHTS_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HAZARD_LIGHTS_SWITCH))
