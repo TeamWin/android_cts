@@ -39,7 +39,7 @@ public class BluetoothLeBroadcastMetadataTest {
                         .setBroadcastId(3)
                         .build();
         assertEquals(1, metadata.getPaSyncInterval());
-        assertEquals(2, metadata.getPaSyncInterval());
+        assertEquals(2, metadata.getPresentationDelayMicros());
         assertEquals(3, metadata.getBroadcastId());
     }
 }
