@@ -27,6 +27,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
+import android.media.tv.BroadcastInfoRequest;
+import android.media.tv.BroadcastInfoResponse;
+import android.media.tv.CommandRequest;
+import android.media.tv.CommandResponse;
 import android.media.tv.TsRequest;
 import android.media.tv.TsResponse;
 import android.media.tv.TvContract;
@@ -615,35 +619,40 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
-    public void testBroadcastInfoRequest() {
-        assertNotNull(mSession);
-        mSession.resetValues();
-        mTvView.setCallback(mTvInputCallback);
-        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
-        mInputSession = StubTvInputService2.sStubSessionImpl2;
-        assertNotNull(mInputSession);
+    public void testTsRequest() throws Throwable {
+        linkTvView();
 
-        mTvIAppView.setTvView(mTvView);
-        mTvView.setInteractiveAppNotificationEnabled(true);
-        mSession.requestBroadcastInfo(new TsRequest(1, 1, 1));
+        TsRequest request = new TsRequest(1, BroadcastInfoRequest.REQUEST_OPTION_REPEAT, 1);
+        mSession.requestBroadcastInfo(request);
         mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (TsRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TS);
+        assertThat(request.getRequestId()).isEqualTo(1);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getTsPid()).isEqualTo(1);
     }
 
     @Test
-    public void testBroadcastInfoResponse() {
-        assertNotNull(mSession);
-        mSession.resetValues();
-        mTvView.setCallback(mTvInputCallback);
-        mTvView.tune(mTvInputInfo.getId(), CHANNEL_0);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvView.getInputSession() != null);
-        mInputSession = StubTvInputService2.sStubSessionImpl2;
-        assertNotNull(mInputSession);
+    public void testTsResponse() {
+        linkTvView();
 
-        mTvIAppView.setTvView(mTvView);
-        mTvView.setInteractiveAppNotificationEnabled(true);
-        mInputSession.notifyBroadcastInfoResponse(new TsResponse(1, 1, 1, null));
+        TsResponse response = new TsResponse(1, 1, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+                "TestToken");
+        mInputSession.notifyBroadcastInfoResponse(response);
         mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (TsResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TS);
+        assertThat(response.getRequestId()).isEqualTo(1);
+        assertThat(response.getSequence()).isEqualTo(1);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getSharedFilterToken()).isEqualTo("TestToken");
     }
 
     public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {

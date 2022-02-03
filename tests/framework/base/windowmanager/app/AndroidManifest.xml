@@ -610,12 +610,12 @@
              android:exported="true"
              android:colorMode="wideColorGamut"
              android:theme="@style/BadBlurryDialog"/>
-        <activity android:name=".ClearBackgroundTransitionExitActivity"
-            android:theme="@style/Theme.BackgroundColor"
+        <activity android:name=".CustomTransitionExitActivity"
+            android:theme="@style/Theme.CustomTransitionTheme"
             android:exported="true"
             android:colorMode="wideColorGamut"/>
-        <activity android:name=".ClearBackgroundTransitionEnterActivity"
-            android:theme="@style/Theme.BackgroundColor"
+        <activity android:name=".CustomTransitionEnterActivity"
+            android:theme="@style/Theme.CustomTransitionTheme"
             android:exported="true"
             android:colorMode="wideColorGamut"/>
         <activity android:name=".KeepClearRectsActivity"

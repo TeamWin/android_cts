@@ -1474,6 +1474,17 @@ public class PackageManagerShellCommandTest {
         assertTrue(broadcastReceiverForCurrentUser.isBroadcastReceived());
     }
 
+    @Test
+    public void testQuerySupplementalProcessPackageName() throws Exception {
+        final PackageManager pm = getPackageManager();
+        final String name = pm.getSupplementalProcessPackageName();
+        assertNotNull(name);
+        final ApplicationInfo info = pm.getApplicationInfo(
+                name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
+        assertEquals(ApplicationInfo.FLAG_SYSTEM, info.flags & ApplicationInfo.FLAG_SYSTEM);
+        assertTrue(info.sourceDir.startsWith("/apex/com.android.supplementalprocess"));
+    }
+
     private static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
         private final String mTargetPackage;
         private final int mTargetUserId;

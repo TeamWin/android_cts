@@ -18,7 +18,11 @@ package android.gamemanager.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
@@ -68,6 +72,21 @@ public class GameManagerTest {
         mContext = instrumentation.getContext();
         mGameManager = mContext.getSystemService(GameManager.class);
         mUiDevice = UiDevice.getInstance(instrumentation);
+    }
+
+    @Test
+    public void testIsAngleEnabled() throws Exception {
+        // enable Angle for BATTERY mode.
+        runShellCommand("device_config put game_overlay " + mActivity.getPackageName()
+                + " mode=3,useAngle=true");
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
+                        GameManager.GAME_MODE_BATTERY));
+        assertTrue(mGameManager.isAngleEnabled(mActivity.getPackageName()));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
+                        GameManager.GAME_MODE_PERFORMANCE));
+        assertFalse(mGameManager.isAngleEnabled(mActivity.getPackageName()));
     }
 
     /**
@@ -186,8 +205,9 @@ public class GameManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
                         (gameManager) -> gameManager.getGameModeInfo(mActivity.getPackageName()),
                         "android.permission.MANAGE_GAME_MODE");
+        // performance game mode is opted in through game mode config xml
         assertEquals("GameManager#getGameModeInfo returned incorrect available game modes.",
-                3, gameModeInfo.getAvailableGameModes().length);
+                2, gameModeInfo.getAvailableGameModes().length);
         assertEquals("GameManager#getGameModeInfo returned incorrect active game mode.",
                 GameManager.GAME_MODE_BATTERY, gameModeInfo.getActiveGameMode());
     }

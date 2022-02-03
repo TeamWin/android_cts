@@ -31,8 +31,8 @@ android_test {
     ],
     static_libs: [
         "androidx.test.core",
-        "CtsGameServiceTestApp",
         "compatibility-device-util-axt",
+        "CtsGameServiceAidls",
         "ctstestrunner-axt",
         "junit",
         "truth-prebuilt",

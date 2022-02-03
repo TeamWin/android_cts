@@ -24,6 +24,7 @@ import android.view.KeyEvent;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +49,7 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
     }
 
     @Test
+    @Ignore
     public void sendKeyEvent() {
         mVirtualKeyboard.sendKeyEvent(new VirtualKeyEvent.Builder()
                 .setKeyCode(KeyEvent.KEYCODE_A)

@@ -401,51 +401,53 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
 
-        mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
-        final TestActivity activity = mTestSession.getActivity();
-
-        final View v = createTestViewInActivity(activity);
-        mTestSession.runOnMainSyncAndWait(() -> v.setPreferKeepClearRects(TEST_KEEP_CLEAR_RECTS));
-
-        mWmState.assertVisibility(activity.getComponentName(), true);
-
-        assertSameElements(TEST_KEEP_CLEAR_RECTS, getKeepClearRectsOnDefaultDisplay());
-
-        putActivityInPrimarySplit(activity.getComponentName());
-        mWmState.waitForValidState(activity.getComponentName());
-
-        // Add second activity for splitscreen
         getLaunchActivityBuilder()
             .setUseInstrumentation()
             .setIntentExtra(extra -> {
                 extra.putParcelableArrayList(EXTRA_KEEP_CLEAR_RECTS,
-                        new ArrayList(TEST_KEEP_CLEAR_RECTS_2));
+                        new ArrayList(TEST_KEEP_CLEAR_RECTS));
             })
             .setTargetActivity(KEEP_CLEAR_RECTS_ACTIVITY)
             .execute();
 
         waitAndAssertResumedActivity(KEEP_CLEAR_RECTS_ACTIVITY, KEEP_CLEAR_RECTS_ACTIVITY
                 + " must be resumed");
-        assertSameElements(TEST_KEEP_CLEAR_RECTS_2,
-                getKeepClearRectsForActivityComponent(KEEP_CLEAR_RECTS_ACTIVITY));
+        assertSameElements(TEST_KEEP_CLEAR_RECTS, getKeepClearRectsOnDefaultDisplay());
 
-        putActivityInSecondarySplit(KEEP_CLEAR_RECTS_ACTIVITY);
-        mWmState.waitForValidState(KEEP_CLEAR_RECTS_ACTIVITY);
+        mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
+        final TestActivity activity = mTestSession.getActivity();
 
-        mWmState.computeState();
+        final View v = createTestViewInActivity(activity);
+        mTestSession.runOnMainSyncAndWait(() -> v.setPreferKeepClearRects(TEST_KEEP_CLEAR_RECTS_2));
+
+        mWmState.assertVisibility(activity.getComponentName(), true);
+
+        assertSameElements(TEST_KEEP_CLEAR_RECTS_2, getKeepClearRectsOnDefaultDisplay());
+
+        moveActivitiesToSplitScreen(activity.getComponentName(), KEEP_CLEAR_RECTS_ACTIVITY);
+
+        waitAndAssertResumedActivity(activity.getComponentName(), activity.getComponentName()
+                + " must be resumed");
+        waitAndAssertResumedActivity(KEEP_CLEAR_RECTS_ACTIVITY, KEEP_CLEAR_RECTS_ACTIVITY
+                + " must be resumed");
+
         mWmState.assertVisibility(activity.getComponentName(), true);
         mWmState.assertVisibility(KEEP_CLEAR_RECTS_ACTIVITY, true);
 
-        final List<Rect> expected = new ArrayList();
-        expected.addAll(TEST_KEEP_CLEAR_RECTS);
+        assertSameElements(TEST_KEEP_CLEAR_RECTS_2,
+                getKeepClearRectsForActivity(activity));
 
+        final List<Rect> expected = new ArrayList();
         final WindowManagerState.WindowState windowState =
                 mWmState.getWindowState(KEEP_CLEAR_RECTS_ACTIVITY);
-        for (Rect r : TEST_KEEP_CLEAR_RECTS_2) {
+        for (Rect r : TEST_KEEP_CLEAR_RECTS) {
             Rect rectInScreenSpace = new Rect(r);
             rectInScreenSpace.offset(windowState.getFrame().left, windowState.getFrame().top);
             expected.add(rectInScreenSpace);
         }
+        assertSameElements(expected,
+                getKeepClearRectsForActivityComponent(KEEP_CLEAR_RECTS_ACTIVITY));
+        expected.addAll(TEST_KEEP_CLEAR_RECTS_2);
         assertSameElements(expected, getKeepClearRectsOnDefaultDisplay());
     }
 

@@ -365,10 +365,11 @@ public class AccessibilityNodeInfoTest {
         info.setImportantForAccessibility(true);
         info.setScreenReaderFocusable(true);
 
-        // 3 Boolean properties
+        // 4 Boolean properties
         info.setShowingHintText(true);
         info.setHeading(true);
         info.setTextEntryKey(true);
+        info.setTextSelectable(true);
     }
 
     /**
@@ -607,6 +608,8 @@ public class AccessibilityNodeInfoTest {
                 expectedInfo.isHeading(), receivedInfo.isHeading());
         assertSame("isTextEntryKey has incorrect value",
                 expectedInfo.isTextEntryKey(), receivedInfo.isTextEntryKey());
+        assertSame("isTexSelectable has incorrect value",
+                expectedInfo.isTextSelectable(), receivedInfo.isTextSelectable());
     }
 
     /**
@@ -699,6 +702,8 @@ public class AccessibilityNodeInfoTest {
         assertFalse("isShowingHint not properly reset", info.isShowingHintText());
         assertFalse("isHeading not properly reset", info.isHeading());
         assertFalse("isTextEntryKey not properly reset", info.isTextEntryKey());
+        assertFalse("isTextSelectable not properly reset", info.isTextSelectable());
+
     }
 
     private static class MockBinder extends Binder {

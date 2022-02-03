@@ -29,8 +29,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -171,6 +171,61 @@ public class AccessibilityGlobalActionsTest {
                 AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT));
         // Ideally should verify that we actually have a screenshot, but it's also possible
         // for the screenshot to fail
+        waitForIdle();
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionDpadUp() throws Exception {
+        // Check whether the action succeeded.
+        assertTrue(sUiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_DPAD_UP));
+
+        // Sleep a bit so the UI is settled.
+        waitForIdle();
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionDpadDown() throws Exception {
+        // Check whether the action succeeded.
+        assertTrue(sUiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_DPAD_DOWN));
+
+        // Sleep a bit so the UI is settled.
+        waitForIdle();
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionDpadLeft() throws Exception {
+        // Check whether the action succeeded.
+        assertTrue(sUiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_DPAD_LEFT));
+
+        // Sleep a bit so the UI is settled.
+        waitForIdle();
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionDpadRight() throws Exception {
+        // Check whether the action succeeded.
+        assertTrue(sUiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_DPAD_RIGHT));
+
+        // Sleep a bit so the UI is settled.
+        waitForIdle();
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionDpadCenter() throws Exception {
+        // Check whether the action succeeded.
+        assertTrue(sUiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_DPAD_CENTER));
+
+        // Sleep a bit so the UI is settled.
         waitForIdle();
     }
 

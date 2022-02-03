@@ -28,13 +28,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
-import android.service.games.cts.app.GameServiceTestService;
 import android.service.games.cts.app.IGameServiceTestService;
 import android.support.test.uiautomator.By;
 
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.UiAutomatorUtils;
 
 import com.google.common.collect.ImmutableList;
@@ -70,7 +70,7 @@ public final class GameServiceTest {
         mServiceConnection = new ServiceConnection();
         assertThat(
                 getInstrumentation().getContext().bindService(
-                        new Intent(GameServiceTestService.TEST_SERVICE).setPackage(
+                        new Intent("android.service.games.action.TEST_SERVICE").setPackage(
                                 TEST_APP_PACKAGE_NAME),
                         mServiceConnection,
                         Context.BIND_AUTO_CREATE)).isTrue();
@@ -81,6 +81,10 @@ public final class GameServiceTest {
 
     @After
     public void tearDown() {
+        forceStop(GAME_PACKAGE_NAME);
+        forceStop(NOT_GAME_PACKAGE_NAME);
+        forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+
         GameManager gameManager =
                 getInstrumentation().getContext().getSystemService(GameManager.class);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
@@ -120,6 +124,10 @@ public final class GameServiceTest {
         getInstrumentation().getContext().startActivity(
                 packageManager.getLaunchIntentForPackage(packageName));
         UiAutomatorUtils.waitFindObject(By.pkg(packageName).depth(0));
+    }
+
+    private static void forceStop(String packageName) {
+        ShellUtils.runShellCommand("am force-stop %s", packageName);
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {

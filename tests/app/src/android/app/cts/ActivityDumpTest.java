@@ -51,13 +51,10 @@ public final class ActivityDumpTest {
 
     @Test
     public void testAddDumpable_oneOnly() throws Exception {
-        String baselineDump = dump(mActivity);
-
         mActivity.addDumpable(new CustomDumpable(DEFAULT_NAME, DEFAULT_CONTENT));
 
         String dump = dump(mActivity);
 
-        assertWithMessage("dump() (expected to have baseline)").that(dump).contains(baselineDump);
         assertWithMessage("dump() (expected to have name)").that(dump).contains(DEFAULT_NAME);
         assertWithMessage("dump() (expected to have content)").that(dump).contains(DEFAULT_CONTENT);
     }
