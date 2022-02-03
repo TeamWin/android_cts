@@ -3974,7 +3974,7 @@ public class AccessibilityTextTraversalTest {
         assertTrue("Text node does not have selectable text.",
                 selectableTextNode.isTextSelectable());
 
-        assertFalse("EditText node does have selectable text.", editTextNode.isTextSelectable());
+        assertTrue("EditText node does not have selectable text.", editTextNode.isTextSelectable());
     }
 
     private AccessibilityEvent performMovementActionAndGetEvent(final AccessibilityNodeInfo target,
