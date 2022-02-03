@@ -53,17 +53,16 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
-import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.appops.AppOps.AppOpsMode;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.ProcessReference;
-import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -389,24 +388,18 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
-    @EnsureDoesNotHavePermission({
+    @PermissionTest({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
-            INTERACT_ACROSS_USERS_FULL, START_CROSS_PROFILE_ACTIVITIES})
+            INTERACT_ACROSS_USERS_FULL})
     @Postsubmit(reason = "new test")
-    public void startActivity_byIntent_withPermission_startsActivity(
-            @StringTestParameter({
-                    INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
-                    INTERACT_ACROSS_USERS_FULL}) String permission)
-            throws Exception {
+    public void startActivity_byIntent_withPermission_startsActivity() throws Exception {
         Intent intent = new Intent();
         intent.setComponent(NOT_MAIN_ACTIVITY);
 
-        try (PermissionContext p = TestApis.permissions().withPermission(permission)) {
-            ActivityContext.runWithContext(activity -> {
-                sCrossProfileApps.startActivity(
-                        intent, sDeviceState.workProfile().userHandle(), activity);
-            });
-        }
+        ActivityContext.runWithContext(activity -> {
+            sCrossProfileApps.startActivity(
+                    intent, sDeviceState.workProfile().userHandle(), activity);
+        });
 
         assertThat(
                 ActivityEvents.forActivity(NOT_MAIN_ACTIVITY, sDeviceState.workProfile())
@@ -433,21 +426,16 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
-    @EnsureDoesNotHavePermission({
+    @PermissionTest({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
             INTERACT_ACROSS_USERS_FULL, START_CROSS_PROFILE_ACTIVITIES})
     @Postsubmit(reason = "new test")
-    public void startActivity_byComponent_withPermission_startsActivity(
-            @StringTestParameter({
-                    INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS,
-                    INTERACT_ACROSS_USERS_FULL, START_CROSS_PROFILE_ACTIVITIES}) String permission)
+    public void startActivity_byComponent_withPermission_startsActivity()
             throws Exception {
-        try (PermissionContext p = TestApis.permissions().withPermission(permission)) {
-            ActivityContext.runWithContext(activity -> {
-                sCrossProfileApps.startActivity(
-                        NOT_MAIN_ACTIVITY, sDeviceState.workProfile().userHandle());
-            });
-        }
+        ActivityContext.runWithContext(activity -> {
+            sCrossProfileApps.startActivity(
+                    NOT_MAIN_ACTIVITY, sDeviceState.workProfile().userHandle());
+        });
 
         assertThat(
                 ActivityEvents.forActivity(NOT_MAIN_ACTIVITY, sDeviceState.workProfile())
@@ -892,23 +880,20 @@ public final class CrossProfileAppsTest {
         }
     }
 
+
+
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
-    @EnsureDoesNotHavePermission({
+    @PermissionTest({
             INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL})
     // TODO(b/191637162): When we can adopt permissions for testapps, we can use testapps here
-    public void canInteractAcrossProfiles_permissionIsSet_returnsTrue(
-            @StringTestParameter({
-                    INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL})
-                    String permission) {
-        try (PermissionContext p = TestApis.permissions().withPermission(permission)) {
-            TestApis.packages().instrumented().appOps().set(
-                    sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
-                    AppOpsMode.ALLOWED);
+    public void canInteractAcrossProfiles_permissionIsSet_returnsTrue() {
+        TestApis.packages().instrumented().appOps().set(
+                sDeviceState.workProfile(), AppOpsManager.OPSTR_INTERACT_ACROSS_PROFILES,
+                AppOpsMode.ALLOWED);
 
-            assertThat(sCrossProfileApps.canInteractAcrossProfiles()).isTrue();
-        }
+        assertThat(sCrossProfileApps.canInteractAcrossProfiles()).isTrue();
     }
 
     @Test

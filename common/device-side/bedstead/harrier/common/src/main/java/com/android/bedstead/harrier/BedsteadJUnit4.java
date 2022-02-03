@@ -17,8 +17,11 @@
 package com.android.bedstead.harrier;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
+import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -28,8 +31,11 @@ import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.nene.annotations.Nullable;
 import com.android.bedstead.nene.exceptions.NeneException;
+
+import com.google.auto.value.AutoAnnotation;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -59,6 +65,16 @@ import java.util.stream.Stream;
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
     private static final String BEDSTEAD_PACKAGE_NAME = "com.android.bedstead";
+
+    @AutoAnnotation
+    private static EnsureHasPermission ensureHasPermission(String[] value) {
+        return new AutoAnnotation_BedsteadJUnit4_ensureHasPermission(value);
+    }
+
+    @AutoAnnotation
+    private static EnsureDoesNotHavePermission ensureDoesNotHavePermission(String[] value) {
+        return new AutoAnnotation_BedsteadJUnit4_ensureDoesNotHavePermission(value);
+    }
 
     // These are annotations which are not included indirectly
     private static final Set<String> sIgnoredAnnotationPackages = new HashSet<>();
@@ -391,8 +407,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         Set<Annotation> parameterizedAnnotations = new HashSet<>();
         List<Annotation> annotations = new ArrayList<>(Arrays.asList(method.getAnnotations()));
 
-        // TODO(scottjonathan): We're doing this twice... does it matter?
         parseEnterpriseAnnotations(annotations);
+        parsePermissionAnnotations(annotations);
 
         for (Annotation annotation : annotations) {
             if (isParameterizedAnnotation(annotation)) {
@@ -468,6 +484,49 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 index++;
             }
         }
+    }
+
+    /**
+     * Parse @PermissionTest annotations.
+     *
+     * <p>To be used before general annotation processing.
+     */
+    static void parsePermissionAnnotations(List<Annotation> annotations) {
+        int index = 0;
+        while (index < annotations.size()) {
+            Annotation annotation = annotations.get(index);
+            if (annotation instanceof PermissionTest) {
+                annotations.remove(index);
+
+                List<Annotation> replacementAnnotations = generatePermissionAnnotations(
+                        ((PermissionTest) annotation).value());
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
+
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
+            } else {
+                index++;
+            }
+        }
+    }
+
+    private static List<Annotation> generatePermissionAnnotations(String[] permissions) {
+        Set<String> allPermissions = new HashSet<>(Arrays.asList(permissions));
+        List<Annotation> replacementAnnotations = new ArrayList<>();
+
+        for (String permission : permissions) {
+            allPermissions.remove(permission);
+            replacementAnnotations.add(
+                    new DynamicParameterizedAnnotation(
+                            permission,
+                            new Annotation[]{
+                                    ensureHasPermission(new String[]{permission}),
+                                    ensureDoesNotHavePermission(allPermissions.toArray(new String[]{}))
+                            }));
+            allPermissions.add(permission);
+        }
+
+        return replacementAnnotations;
     }
 
     @Override

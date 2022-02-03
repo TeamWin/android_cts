@@ -16,11 +16,18 @@
 
 package com.android.bedstead.harrier;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
+
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.nene.TestApis;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
+import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerPrimaryUser;
@@ -108,5 +115,17 @@ public class BedsteadJUnit4Test {
     public void enumParameterized(
             @EnumTestParameter(EnumWithThreeValues.class) EnumWithThreeValues argument) {
         sEnumParameterizedCalls += 1;
+    }
+
+    @PermissionTest({INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS})
+    @EnsureHasPermission(INTERACT_ACROSS_USERS_FULL)
+    @Test
+    public void permissionTestAnnotation_generatesRunsWithOnePermissionOrOther() {
+        assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS_FULLC)).isTrue();
+        if (TestApis.permissions().hasPermission(INTERACT_ACROSS_PROFILES)) {
+            assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS)).isFalse();
+        } else {
+            assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS)).isTrue();
+        }
     }
 }
