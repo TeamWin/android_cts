@@ -54,16 +54,13 @@ fun SafetyCenterManager.isSafetyCenterEnabledWithPermission(): Boolean =
 
 /**
  * Call {@link SafetyCenterManager#refreshSafetySources} adopting Shell's
- * {@link MANAGE_SAFETY_CENTER} permission.
+ * {@link MANAGE_SAFETY_CENTER} permission (required for
+ * {@link SafetyCenterManager#refreshSafetySources}).
  */
 fun SafetyCenterManager.refreshSafetySourcesWithPermission(refreshReason: Int) =
-    try {
-        runWithShellPermissionIdentity({
-            refreshSafetySources(refreshReason)
-        }, MANAGE_SAFETY_CENTER)
-    } catch (e: RuntimeException) {
-        throw e.cause ?: e
-    }
+    runWithShellPermissionIdentity({
+        refreshSafetySources(refreshReason)
+    }, MANAGE_SAFETY_CENTER)
 
 /**
  * Call {@link SafetyCenterManager#clearSafetyCenterData} adopting Shell's

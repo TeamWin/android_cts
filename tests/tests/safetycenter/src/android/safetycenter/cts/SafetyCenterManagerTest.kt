@@ -16,6 +16,8 @@
 
 package android.safetycenter.cts
 
+import android.Manifest.permission.SEND_SAFETY_CENTER_UPDATE
+import android.Manifest.permission.MANAGE_SAFETY_CENTER
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Context
@@ -40,6 +42,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.TimeoutCancellationException
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -82,10 +85,14 @@ class SafetyCenterManagerTest {
 
     @Before
     @After
-    fun clearDataBetweenTest() {
+    fun clearSafetyCenterDataBetweenTest() {
         safetyCenterManager.clearDataWithPermission()
-        SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = null
-        SafetySourceBroadcastReceiver.safetySourceDataOnPageOpen = null
+    }
+
+    @Before
+    @After
+    fun resetBroadcastReceiver() {
+        SafetySourceBroadcastReceiver.reset()
     }
 
     @Test
@@ -237,10 +244,26 @@ class SafetyCenterManagerTest {
     }
 
     @Test
+    fun refreshSafetySources_whenReceiverDoesNotHaveSendingPermission_sourceDoesNotSendData() {
+        SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
+
+        safetyCenterManager.refreshSafetySourcesWithPermission(
+                REFRESH_REASON_RESCAN_BUTTON_CLICK
+        )
+
+        assertFailsWith(TimeoutCancellationException::class) {
+            SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT_SHORT)
+        }
+        val lastSafetyCenterUpdate =
+                safetyCenterManager.getLastUpdateWithPermission(sourceId)
+        assertThat(lastSafetyCenterUpdate).isNull()
+    }
+
+    @Test
     fun refreshSafetySources_withRefreshReasonRescanButtonClick_sourceSendsRescanData() {
         SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
 
-        safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(
+        safetyCenterManager.refreshSafetySourcesWithReceiverPermissionAndWait(
             REFRESH_REASON_RESCAN_BUTTON_CLICK
         )
 
@@ -253,7 +276,9 @@ class SafetyCenterManagerTest {
     fun refreshSafetySources_withRefreshReasonPageOpen_sourceSendsPageOpenData() {
         SafetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
 
-        safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(REFRESH_REASON_PAGE_OPEN)
+        safetyCenterManager.refreshSafetySourcesWithReceiverPermissionAndWait(
+                REFRESH_REASON_PAGE_OPEN
+        )
 
         val lastSafetyCenterUpdate =
             safetyCenterManager.getLastUpdateWithPermission(sourceId)
@@ -266,7 +291,7 @@ class SafetyCenterManagerTest {
         SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
 
         assertFailsWith(IllegalArgumentException::class) {
-            safetyCenterManager.refreshSafetySourcesWithPermissionAndWait(500)
+            safetyCenterManager.refreshSafetySourcesWithReceiverPermissionAndWait(500)
         }
     }
 
@@ -317,14 +342,23 @@ class SafetyCenterManagerTest {
             )
         )
 
-    private fun SafetyCenterManager.refreshSafetySourcesWithPermissionAndWait(refreshReason: Int) {
-        refreshSafetySourcesWithPermission(refreshReason)
-        SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT)
+    private fun SafetyCenterManager.refreshSafetySourcesWithReceiverPermissionAndWait(
+        refreshReason: Int
+    ) {
+        try {
+            runWithShellPermissionIdentity({
+                refreshSafetySources(refreshReason)
+                SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT_LONG)
+            }, SEND_SAFETY_CENTER_UPDATE, MANAGE_SAFETY_CENTER)
+        } catch (e: RuntimeException) {
+            throw e.cause ?: e
+        }
     }
 
     companion object {
         /** Name of the flag that determines whether SafetyCenter is enabled. */
         const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
-        private val BROADCAST_TIMEOUT: Duration = Duration.ofMillis(5000)
+        private val BROADCAST_TIMEOUT_LONG: Duration = Duration.ofMillis(5000)
+        private val BROADCAST_TIMEOUT_SHORT: Duration = Duration.ofMillis(1000)
     }
 }
