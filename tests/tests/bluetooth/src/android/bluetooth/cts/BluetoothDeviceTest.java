@@ -22,6 +22,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothStatusCodes;
+import android.content.AttributionSource;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
@@ -65,6 +66,9 @@ public class BluetoothDeviceTest extends AndroidTestCase {
         int userId = mContext.getUser().getIdentifier();
         String packageName = mContext.getOpPackageName();
         String deviceAddress = "00:11:22:AA:BB:CC";
+
+        AttributionSource source = AttributionSource.myAttributionSource();
+        assertEquals("android.bluetooth.cts", source.getPackageName());
 
         BluetoothDevice device = mAdapter.getRemoteDevice(deviceAddress);
         // Verifies that when there is no alias, we return the device name
