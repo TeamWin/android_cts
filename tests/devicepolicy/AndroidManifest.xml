@@ -19,6 +19,9 @@
           package="android.devicepolicy.cts"
           android:targetSandboxVersion="2">
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <!-- TODO(b/191637162): This is required for
+            canInteractAcrossProfiles_permissionIsSet_returnsTrue -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES"/>
 
     <!-- Add a network security config that trusts user added CAs for tests -->
     <application android:testOnly="true"
