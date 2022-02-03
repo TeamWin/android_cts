@@ -1753,9 +1753,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private void assertSsidEquals(SoftApConfiguration config, String expectedSsid) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             assertEquals(WifiSsid.fromBytes(expectedSsid.getBytes(StandardCharsets.UTF_8)),
-                    config.getWifiSsid().getBytes());
+                    config.getWifiSsid());
         } else {
             assertEquals(expectedSsid, config.getSsid());
         }
