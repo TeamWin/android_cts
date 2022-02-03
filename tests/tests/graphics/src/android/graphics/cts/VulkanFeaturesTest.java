@@ -246,6 +246,14 @@ public class VulkanFeaturesTest {
         assertNoVulkanDeviceExtension("VK_KHR_video_encode_queue");
     }
 
+    @CddTest(requirement = "7.1.4.2")
+    @Test
+    public void testVulkanVariantSupport() throws JSONException {
+        int expectedVariant = 0x0;
+        int actualVariant = (mVulkanHardwareVersion.version >> 29) & 0x7;
+        assertEquals(expectedVariant, actualVariant);
+    }
+
     private JSONObject getBestDevice() throws JSONException {
         JSONObject bestDevice = null;
         int bestDeviceLevel = -1;
