@@ -42,6 +42,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.WindowUtil;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -91,6 +93,9 @@ public class AccessibilityTextTraversalTest {
     public void setUp() throws Exception {
         mActivity = launchActivityAndWaitForItToBeOnscreen(
                 sInstrumentation, sUiAutomation, mActivityRule);
+        WindowUtil.waitForFocus(mActivity);
+        assertTrue(mActivity.hasWindowFocus());
+        sInstrumentation.setInTouchMode(false);
     }
 
     @MediumTest

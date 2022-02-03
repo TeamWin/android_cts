@@ -147,12 +147,10 @@ public class AutoCompleteTextViewTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         WindowUtil.waitForFocus(mActivity);
-
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mAutoCompleteTextView = (AutoCompleteTextView) mActivity
-                .findViewById(R.id.autocompletetv_edit);
-        mMockAutoCompleteTextView = (MockAutoCompleteTextView) mActivity
-                .findViewById(R.id.autocompletetv_custom);
+        mAutoCompleteTextView = mActivity.findViewById(R.id.autocompletetv_edit);
+        mAutoCompleteTextView.setFocusableInTouchMode(true);
+        mMockAutoCompleteTextView = mActivity.findViewById(R.id.autocompletetv_custom);
         mAdapter = new ArrayAdapter<>(mActivity,
                 android.R.layout.simple_dropdown_item_1line, WORDS);
         KeyCharacterMap keymap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);

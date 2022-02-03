@@ -52,6 +52,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -109,6 +110,8 @@ public class View_UsingViewsTest {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
+        mInstrumentation.setInTouchMode(false);
 
         mEditText = (EditText) mActivity.findViewById(R.id.entry);
         mButtonOk = (Button) mActivity.findViewById(R.id.ok);
