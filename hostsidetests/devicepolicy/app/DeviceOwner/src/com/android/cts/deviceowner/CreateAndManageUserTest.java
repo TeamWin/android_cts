@@ -192,14 +192,15 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
     private void clearLogoutUserIfNecessary() throws Exception {
         UserHandle userHandle = mDevicePolicyManager.getLogoutUser();
+        Log.d(TAG, "clearLogoutUserIfNecessary(): logoutUser=" + userHandle);
         if (userHandle == null) {
             Log.d(TAG, "clearLogoutUserIfNecessary(): Saul Goodman!");
             return;
         }
         Log.w(TAG, "test started with a logout user (" + userHandle + "); logging out");
-        logoutUserUsingSystemApiAndWaitForBroadcasts();
-        assertWithMessage("initial logout user").that(mDevicePolicyManager.getLogoutUser())
-                .isNull();
+        int result = SystemUtil
+                .callWithShellPermissionIdentity(() -> mDevicePolicyManager.logoutUser());
+        Log.d(TAG, "Result: " + userOperationResultToString(result));
     }
 
     public void testCreateAndManageUser_LogoutUser() throws Exception {
@@ -224,15 +225,16 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         UserHandle currentUser = getCurrentUser();
         UserHandle newUser = createAndManageUser();
-        switchUserAndWaitForBroadcasts(newUser);
-
+        List<UserHandle> usersOnBroadcasts = switchUserAndWaitForBroadcasts(newUser);
+        Log.d(TAG, "users on switch broadcast: " + usersOnBroadcasts);
+        assertWithMessage("user on broadcasts").that(usersOnBroadcasts).containsExactly(newUser,
+                newUser);
         assertWithMessage("logout user after switch").that(mDevicePolicyManager.getLogoutUser())
                 .isEqualTo(currentUser);
 
         List<UserHandle> users = logoutUserUsingSystemApiAndWaitForBroadcasts();
-        Log.d(TAG, "users on brodcast: " + users);
-        assertWithMessage("users on broadcast").that(users)
-                .containsExactly(currentUser, currentUser);
+        Log.d(TAG, "users on logout broadcast: " + users);
+        assertWithMessage("users on broadcast").that(users).containsExactly(currentUser);
         assertWithMessage("final logout user").that(mDevicePolicyManager.getLogoutUser())
                 .isNull();
     }
@@ -506,14 +508,14 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     /**
      * Logouts the current user using {@link DevicePolicyManager#logoutUser()}, or fails if the
      * user could not be logged out or if the expected broadcasts were not received in time.
+     *
      * @return users received in the broadcasts
      */
-    private List<UserHandle> logoutUserUsingSystemApiAndWaitForBroadcasts() throws Exception {
-        Log.d(TAG, "Logging out current user");
-
+    private List<UserHandle> logoutUserUsingSystemApiAndWaitForBroadcasts()
+            throws Exception {
         UserActionCallback callback = UserActionCallback.getCallbackForBroadcastActions(
-                getContext(),
-                BasicAdminReceiver.ACTION_USER_STARTED, BasicAdminReceiver.ACTION_USER_SWITCHED);
+                getContext(), BasicAdminReceiver.ACTION_USER_SWITCHED);
+        Log.d(TAG, "Logging out current user (" + getCurrentUser() + ") using system API");
 
         callback.runAndUnregisterSelf(() -> {
             int result = SystemUtil

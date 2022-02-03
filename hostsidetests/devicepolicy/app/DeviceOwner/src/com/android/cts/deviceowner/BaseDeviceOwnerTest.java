@@ -119,7 +119,9 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     }
 
     protected final UserHandle getCurrentUser() {
-        return UserHandle.of(ActivityManager.getCurrentUser());
+        UserHandle currentUser = UserHandle.of(ActivityManager.getCurrentUser());
+        Log.v(TAG, "getCurrentUser(): returning " + currentUser);
+        return currentUser;
     }
 
     protected final List<WifiConfiguration> getConfiguredNetworks() {
