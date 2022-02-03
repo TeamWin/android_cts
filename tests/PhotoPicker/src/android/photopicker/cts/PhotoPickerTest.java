@@ -19,12 +19,12 @@ package android.photopicker.cts;
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertMimeType;
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPickerUriFormat;
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertRedactedReadOnlyAccess;
+import static android.photopicker.cts.util.PhotoPickerFilesUtils.createDNGVideos;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImages;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createVideos;
-import static android.photopicker.cts.util.PhotoPickerFilesUtils.createDNGVideos;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
-import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddButton;
@@ -336,6 +336,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     public void testMultiSelect_PreviewVideoControlsVisibility() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
 
+        mDevice.waitForIdle();
+
         final UiObject playPauseButton = findPlayPauseButton();
         // Check that the player controls are visible
         assertPlayPauseVisible(playPauseButton);
@@ -479,8 +481,10 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     private void assertPlayPauseAutoHides(UiObject playPauseButton) {
+        // These buttons should auto hide in 1 second after the video playback start. Since we can't
+        // identify the video playback start time, we wait for 2 seconds instead.
         assertWithMessage("Timed out waiting for pause button to auto-hide")
-                .that(playPauseButton.waitUntilGone(1000)).isTrue();
+                .that(playPauseButton.waitUntilGone(2000)).isTrue();
     }
 
     private void assertPlayPauseDoesntAutoHide(UiObject playPauseButton) {
@@ -512,7 +516,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     private void swipeLeftAndWait() {
         final int width = mDevice.getDisplayWidth();
         final int height = mDevice.getDisplayHeight();
-        mDevice.swipe(width / 2, height / 2, width / 4, height / 2, 10);
+        mDevice.swipe(15 * width / 20, height / 2, width / 20, height / 2, 20);
         mDevice.waitForIdle();
     }
 }
