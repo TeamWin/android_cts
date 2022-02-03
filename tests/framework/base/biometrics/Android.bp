@@ -44,6 +44,7 @@ android_test {
     ],
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",
+    per_testcase_directory: true,
 }
 
 java_test_helper_library {
