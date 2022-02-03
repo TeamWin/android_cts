@@ -710,6 +710,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
     private Intent createSetRequiredPasswordComplexityIntent(int complexity) {
         return new Intent(this, CommandReceiverActivity.class)
+                .putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
                         CommandReceiverActivity.COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY)
                 .putExtra(CommandReceiverActivity.EXTRA_VALUE, complexity);
