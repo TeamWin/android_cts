@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.notification.legacy29.cts;
+package android.app.stubs;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -30,20 +30,20 @@ import java.util.Map;
 
 public class TestNotificationAssistant extends NotificationAssistantService {
     public static final String TAG = "TestNotificationAssistant";
-    public static final String PKG = "android.app.notification.legacy29.cts";
+    public static final String PKG = "android.app.stubs";
 
     private static TestNotificationAssistant sNotificationAssistantInstance = null;
-    boolean isConnected;
-    boolean isPanelOpen = false;
-    public List<String> currentCapabilities;
-    boolean notificationVisible = false;
-    int notificationId = 1357;
-    int notificationSeenCount = 0;
-    int notificationClickCount = 0;
-    int notificationRank = -1;
-    int notificationFeedback = 0;
-    String snoozedKey;
-    String snoozedUntilContext;
+    boolean mIsConnected;
+    boolean mIsPanelOpen = false;
+    public List<String> mCurrentCapabilities;
+    boolean mNotificationVisible = false;
+    int mNotificationId = 1357;
+    int mNotificationSeenCount = 0;
+    int mNotificationClickCount = 0;
+    int mNotificationRank = -1;
+    int mNotificationFeedback = 0;
+    String mSnoozedKey;
+    String mSnoozedUntilContext;
     private NotificationManager mNotificationManager;
 
     public Map<String, Integer> mRemoved = new HashMap<>();
@@ -68,12 +68,12 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     public void onListenerConnected() {
         super.onListenerConnected();
         sNotificationAssistantInstance = this;
-        isConnected = true;
+        mIsConnected = true;
     }
 
     @Override
     public void onListenerDisconnected() {
-        isConnected = false;
+        mIsConnected = false;
     }
 
     public static TestNotificationAssistant getInstance() {
@@ -83,8 +83,8 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     @Override
     public void onNotificationSnoozedUntilContext(StatusBarNotification statusBarNotification,
             String s) {
-        snoozedKey = statusBarNotification.getKey();
-        snoozedUntilContext = s;
+        mSnoozedKey = statusBarNotification.getKey();
+        mSnoozedUntilContext = s;
     }
 
     @Override
@@ -98,7 +98,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         Bundle signals = new Bundle();
         Ranking ranking = new Ranking();
         rankingMap.getRanking(sbn.getKey(), ranking);
-        notificationRank = ranking.getRank();
+        mNotificationRank = ranking.getRank();
         signals.putInt(Adjustment.KEY_USER_SENTIMENT, Ranking.USER_SENTIMENT_POSITIVE);
         return new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
                 sbn.getUser());
@@ -106,46 +106,48 @@ public class TestNotificationAssistant extends NotificationAssistantService {
 
     @Override
     public void onAllowedAdjustmentsChanged() {
-        currentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
+        mCurrentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
 
     void resetNotificationVisibilityCounts() {
-        notificationSeenCount = 0;
+        mNotificationSeenCount = 0;
     }
 
     @Override
     public void onNotificationVisibilityChanged(String key, boolean isVisible) {
         if (key.contains(TestNotificationAssistant.class.getPackage().getName()
-                + "|" + notificationId)) {
-            notificationVisible = isVisible;
+                + "|" + mNotificationId)) {
+            mNotificationVisible = isVisible;
         }
     }
 
     @Override
     public void onNotificationsSeen(List<String> keys) {
-        notificationSeenCount += keys.size();
+        mNotificationSeenCount += keys.size();
     }
 
     @Override
     public void onPanelHidden() {
-        isPanelOpen = false;
+        mIsPanelOpen = false;
     }
 
     @Override
     public void onPanelRevealed(int items) {
-        isPanelOpen = true;
+        mIsPanelOpen = true;
     }
 
     void resetNotificationClickCount() {
-        notificationClickCount = 0;
+        mNotificationClickCount = 0;
     }
 
     @Override
-    public void onNotificationClicked(String key) { notificationClickCount++; }
+    public void onNotificationClicked(String key) {
+        mNotificationClickCount++;
+    }
 
     @Override
     public void onNotificationFeedbackReceived(String key, RankingMap rankingMap, Bundle feedback) {
-        notificationFeedback = feedback.getInt(FEEDBACK_RATING, 0);
+        mNotificationFeedback = feedback.getInt(FEEDBACK_RATING, 0);
     }
 
     @Override

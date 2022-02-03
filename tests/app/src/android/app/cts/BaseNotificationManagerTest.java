@@ -20,6 +20,8 @@ import static android.app.Notification.CATEGORY_CALL;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
@@ -33,6 +35,7 @@ import android.app.cts.android.app.cts.tools.NotificationHelper;
 import android.app.role.RoleManager;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.R;
+import android.app.stubs.TestNotificationAssistant;
 import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.Context;
@@ -78,6 +81,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
     protected RoleManager mRoleManager;
     protected NotificationManager mNotificationManager;
     protected ActivityManager mActivityManager;
+    protected TestNotificationAssistant mAssistant;
     protected TestNotificationListener mListener;
     protected List<String> mRuleIds;
     protected Instrumentation mInstrumentation;
@@ -136,6 +140,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         // ensure listener access isn't allowed before test runs (other tests could put
         // TestListener in an unexpected state)
         toggleListenerAccess(false);
+        toggleAssistantAccess(false);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
         mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
@@ -222,6 +227,29 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
 
     protected void toggleListenerAccess(boolean on) throws IOException {
         toggleListenerAccess(mContext, on);
+    }
+
+    protected void toggleAssistantAccess(boolean on) throws IOException {
+        final ComponentName assistantComponent = TestNotificationAssistant.getComponentName();
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE",
+                    "android.permission.REQUEST_NOTIFICATION_ASSISTANT_SERVICE");
+        mNotificationManager.setNotificationAssistantAccessGranted(assistantComponent, on);
+
+        assertTrue(assistantComponent + " has not been " + (on ? "allowed" : "disallowed"),
+                mNotificationManager.isNotificationAssistantAccessGranted(assistantComponent)
+                        == on);
+        if (on) {
+            assertEquals(assistantComponent,
+                    mNotificationManager.getAllowedNotificationAssistant());
+        } else {
+            assertNotEquals(assistantComponent,
+                    mNotificationManager.getAllowedNotificationAssistant());
+        }
+
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().dropShellPermissionIdentity();
     }
 
     protected void assertExpectedDndState(int expectedState) {

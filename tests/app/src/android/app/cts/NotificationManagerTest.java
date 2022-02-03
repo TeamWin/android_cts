@@ -68,6 +68,7 @@ import android.app.role.RoleManager;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
+import android.app.stubs.TestNotificationAssistant;
 import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
@@ -424,6 +425,20 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         for (int tries = 3; tries-- > 0; ) {
             if (mListener.mRemoved.containsKey(key)) {
                 return mListener.mRemoved.get(key);
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return -1;
+    }
+
+    private int getAssistantCancellationReason(String key) {
+        for (int tries = 3; tries-- > 0; ) {
+            if (mAssistant.mRemoved.containsKey(key)) {
+                return mAssistant.mRemoved.get(key);
             }
             try {
                 Thread.sleep(1000);
@@ -2988,6 +3003,27 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         if (getCancellationReason(sbn.getKey())
                 != NotificationListenerService.REASON_LISTENER_CANCEL) {
             fail("Failed to cancel notification id=" + notificationId);
+        }
+    }
+
+    public void testNotificationAssistant_cancelNotifications() throws Exception {
+        toggleAssistantAccess(true);
+        Thread.sleep(500); // wait for assistant to be allowed
+
+        mAssistant = TestNotificationAssistant.getInstance();
+        assertNotNull(mAssistant);
+        final int notificationId = 1006;
+
+        sendNotification(notificationId, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn = findPostedNotification(notificationId, false);
+
+        mAssistant.cancelNotifications(new String[]{sbn.getKey()});
+        int gotReason = getAssistantCancellationReason(sbn.getKey());
+        if (gotReason != NotificationListenerService.REASON_ASSISTANT_CANCEL) {
+            fail("Failed cancellation from assistant, notification id=" + notificationId
+                    + "; got reason=" + gotReason);
         }
     }
 
