@@ -3477,6 +3477,37 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testGetSimApplicationStateWithPhysicalSlotIndexAndPortIndex() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+
+        try {
+            List<UiccCardInfo> cardInfoList =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                            (tm) -> tm.getUiccCardsInfo());
+            for (UiccCardInfo cardInfo : cardInfoList) {
+                int physicalSlotIndex = cardInfo.getPhysicalSlotIndex();
+                List<UiccPortInfo> portInfoList = (List<UiccPortInfo>) cardInfo.getPorts();
+                for (UiccPortInfo uiccPortInfo : portInfoList) {
+                    int portIndex = uiccPortInfo.getPortIndex();
+                    int simApplicationState =
+                            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                                    (tm) -> tm.getSimApplicationState(physicalSlotIndex,
+                                            portIndex));
+                    assertTrue(Arrays.asList(TelephonyManager.SIM_STATE_UNKNOWN,
+                            TelephonyManager.SIM_STATE_PIN_REQUIRED,
+                            TelephonyManager.SIM_STATE_PUK_REQUIRED,
+                            TelephonyManager.SIM_STATE_NETWORK_LOCKED,
+                            TelephonyManager.SIM_STATE_NOT_READY,
+                            TelephonyManager.SIM_STATE_PERM_DISABLED,
+                            TelephonyManager.SIM_STATE_LOADED).contains(simApplicationState));
+                }
+            }
+        } catch (SecurityException e) {
+            fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
+        }
+    }
+
+    @Test
     public void testGetSimCardState() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
