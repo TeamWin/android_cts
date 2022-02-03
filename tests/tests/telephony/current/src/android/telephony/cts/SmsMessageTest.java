@@ -161,6 +161,12 @@ public class SmsMessageTest {
         assertEquals(sms.getMessageBody().length(), result[1]);
         assertRemaining(sms.getMessageBody().length(), result[2], SmsMessage.MAX_USER_DATA_SEPTETS);
         assertEquals(SmsMessage.ENCODING_7BIT, result[3]);
+
+        // Test createFromPdu to test ENCODING_KSC5601
+        pdu = "07916164260220F0040B914151245584F600846060605130308A04D4F29C0E";
+        sms = SmsMessage.createFromPdu(hexStringToByteArray(pdu), SmsMessage.FORMAT_3GPP);
+        result = SmsMessage.calculateLength(sms.getMessageBody(), true);
+        assertEquals(SmsMessage.ENCODING_KSC5601, result[3]);
     }
 
     private void assertRemaining(int messageLength, int remaining, int maxChars) {
