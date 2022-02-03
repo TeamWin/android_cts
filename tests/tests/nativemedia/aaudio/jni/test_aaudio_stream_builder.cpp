@@ -23,40 +23,11 @@
 
 #include <aaudio/AAudio.h>
 #include <android/log.h>
+#include <android-base/properties.h>
 #include <gtest/gtest.h>
-#include <sys/system_properties.h>
 #include <system/audio.h> /* FCC_LIMIT */
 
 #include "utils.h"
-
-// This was copied from "system/core/libcutils/properties.cpp" because the linker says
-// "libnativeaaudiotest (native:ndk:libc++:static) should not link to libcutils (native:platform)"
-static int8_t my_property_get_bool(const char *key, int8_t default_value) {
-    if (!key) {
-        return default_value;
-    }
-
-    int8_t result = default_value;
-    char buf[PROP_VALUE_MAX] = {'\0'};
-
-    int len = __system_property_get(key, buf);
-    if (len == 1) {
-        char ch = buf[0];
-        if (ch == '0' || ch == 'n') {
-            result = false;
-        } else if (ch == '1' || ch == 'y') {
-            result = true;
-        }
-    } else if (len > 1) {
-        if (!strcmp(buf, "no") || !strcmp(buf, "false") || !strcmp(buf, "off")) {
-            result = false;
-        } else if (!strcmp(buf, "yes") || !strcmp(buf, "true") || !strcmp(buf, "on")) {
-            result = true;
-        }
-    }
-
-    return result;
-}
 
 /**
  * See https://source.android.com/devices/tech/perf/low-ram
@@ -65,7 +36,7 @@ static int8_t my_property_get_bool(const char *key, int8_t default_value) {
  * @return true if running on low memory device
  */
 static bool isLowRamDevice() {
-    return (bool) my_property_get_bool("ro.config.low_ram", false);
+    return android::base::GetBoolProperty("ro.config.low_ram", false);
 }
 
 // Creates a builder, the caller takes ownership
