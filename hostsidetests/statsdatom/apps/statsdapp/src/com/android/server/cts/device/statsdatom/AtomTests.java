@@ -977,30 +977,43 @@ public class AtomTests {
         int[] uids = {1234, appInfo.uid};
         String[] tags = {"tag1", "tag2"};
         byte[] experimentIds = {8, 1, 8, 2, 8, 3}; // Corresponds to 1, 2, 3.
+
+        int[] int32Array = {3, 6};
+        long[] int64Array = {1000L, 1002L};
+        float[] floatArray = {0.3f, 0.09f};
+        String[] stringArray = {"str1", "str2"};
+        boolean[] boolArray = {true, false};
+        int[] enumArray = {StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__OFF,
+                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__ON};
+
         StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_ATOM_REPORTED, uids, tags, 42,
                 Long.MAX_VALUE, 3.14f, "This is a basic test!", false,
-                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__ON, experimentIds);
+                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__ON, experimentIds, int32Array,
+                int64Array, floatArray, stringArray, boolArray, enumArray);
 
         // All nulls. Should get dropped since cts app is not in the attribution chain.
-        StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_ATOM_REPORTED, null, null, 0, 0,
-                0f, null, false, StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__ON, null);
+        StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_ATOM_REPORTED, null, null, 0, 0, 0f, null,
+                false, StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__ON, null, null, null, null,
+                null, null, null);
 
         // Null tag in attribution chain.
         int[] uids2 = {9999, appInfo.uid};
         String[] tags2 = {"tag9999", null};
         StatsLogStatsdCts.write(StatsLogStatsdCts.TEST_ATOM_REPORTED, uids2, tags2, 100,
                 Long.MIN_VALUE, -2.5f, "Test null uid", true,
-                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__UNKNOWN, experimentIds);
+                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__UNKNOWN, experimentIds, int32Array,
+                int64Array, floatArray, stringArray, boolArray, enumArray);
 
         // Non chained non-null
-        StatsLogStatsdCts.write_non_chained(StatsLogStatsdCts.TEST_ATOM_REPORTED,
-                appInfo.uid, "tag1", -256, -1234567890L, 42.01f, "Test non chained", true,
-                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__OFF, experimentIds);
+        StatsLogStatsdCts.write_non_chained(StatsLogStatsdCts.TEST_ATOM_REPORTED, appInfo.uid,
+                "tag1", -256, -1234567890L, 42.01f, "Test non chained", true,
+                StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__OFF, experimentIds, new int[0],
+                new long[0], new float[0], new String[0], new boolean[0], new int[0]);
 
         // Non chained all null
         StatsLogStatsdCts.write_non_chained(StatsLogStatsdCts.TEST_ATOM_REPORTED, appInfo.uid, null,
-                0, 0, 0f, null, true, StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__OFF, null);
-
+                0, 0, 0f, null, true, StatsLogStatsdCts.TEST_ATOM_REPORTED__STATE__OFF, null, null,
+                null, null, null, null, null);
     }
 
     /**
