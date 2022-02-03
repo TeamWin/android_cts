@@ -61,6 +61,12 @@ public final class AssistUtilsHelperTest {
         }
     }
 
+    @Test
+    public void testOnFailedCallback() throws Exception {
+        // TODO (b/200609382): setup a failure scenario to cover session failed case and
+        // call onFailed API
+    }
+
     private static class SessionShowCallbackHelperImpl implements
             AssistUtilsHelper.VoiceInteractionSessionShowCallbackHelper {
 

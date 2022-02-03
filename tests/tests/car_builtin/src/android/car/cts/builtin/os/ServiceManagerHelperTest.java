@@ -118,6 +118,12 @@ public class ServiceManagerHelperTest {
         assertNull(ServiceManagerHelper.getService(testServiceName));
     }
 
+    @Test
+    public void testCarServiceExistence() throws Exception {
+        // TODO (b/194743195): implement the test case to test waitForDeclaredService()
+        // and addService() builtin APIs.
+    }
+
     private void setUpService() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         Context context = mInstrumentation.getContext();
