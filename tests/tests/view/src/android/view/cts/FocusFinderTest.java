@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Instrumentation;
 import android.graphics.Rect;
 import android.view.FocusFinder;
 import android.view.LayoutInflater;
@@ -33,6 +34,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,13 +52,19 @@ public class FocusFinderTest {
     private Button mBottomLeft;
     private Button mBottomRight;
 
+    private Instrumentation mInstrumentation;
+
     @Rule
     public ActivityTestRule<FocusFinderCtsActivity> mActivityRule =
             new ActivityTestRule<>(FocusFinderCtsActivity.class);
 
     @Before
     public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         FocusFinderCtsActivity activity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(activity);
+        assertTrue(activity.hasWindowFocus());
+        mInstrumentation.setInTouchMode(false);
 
         mFocusFinder = FocusFinder.getInstance();
         mLayout = activity.layout;

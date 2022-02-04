@@ -170,6 +170,7 @@ public class ViewTest {
         mMockParent = new MockViewParent(mActivity);
         PollingCheck.waitFor(5 * DateUtils.SECOND_IN_MILLIS, mActivity::hasWindowFocus);
         assertTrue(mActivity.hasWindowFocus());
+        mInstrumentation.setInTouchMode(false);
     }
 
     @Test

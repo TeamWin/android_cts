@@ -50,11 +50,13 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.WidgetTestUtils;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -83,6 +85,9 @@ public class AdapterViewTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
+        assertTrue(mActivity.hasWindowFocus());
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
         mAdapterView = new ListView(mActivity);
     }
 

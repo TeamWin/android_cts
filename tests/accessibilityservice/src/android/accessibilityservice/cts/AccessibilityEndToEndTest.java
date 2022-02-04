@@ -99,9 +99,11 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsMouseUtil;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -164,6 +166,9 @@ public class AccessibilityEndToEndTest {
         sUiAutomation.adoptShellPermissionIdentity(POST_NOTIFICATIONS);
         mActivity = launchActivityAndWaitForItToBeOnscreen(
                 sInstrumentation, sUiAutomation, mActivityRule);
+        WindowUtil.waitForFocus(mActivity);
+        Assert.assertTrue(mActivity.hasWindowFocus());
+        sInstrumentation.setInTouchMode(false);
     }
 
     @After
