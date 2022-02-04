@@ -26,6 +26,12 @@ android_test {
         "truth-prebuilt",
     ],
 
+    data: [
+        ":CtsGameTestApp",
+        ":CtsLegacyGameTestApp",
+        ":CtsNotGameTestApp",
+    ],
+
     srcs: ["src/**/*.java"],
 
     sdk_version: "test_current",
