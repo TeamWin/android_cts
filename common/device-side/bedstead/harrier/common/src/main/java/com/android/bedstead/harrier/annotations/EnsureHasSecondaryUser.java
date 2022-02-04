@@ -17,7 +17,6 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
-import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import com.android.bedstead.harrier.OptionalBoolean;
@@ -42,7 +41,7 @@ import java.lang.annotation.Target;
 @EnsureHasUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface EnsureHasSecondaryUser {
     /** Whether the instrumented test app should be installed in the secondary user. */
-    OptionalBoolean installInstrumentedApp() default TRUE;
+    OptionalBoolean installInstrumentedApp() default ANY;
 
     /**
      * Should we ensure that we are switched to the given user

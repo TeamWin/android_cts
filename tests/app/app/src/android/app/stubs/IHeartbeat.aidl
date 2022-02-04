@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-package android.devicepolicy.cts;
+package android.app.stubs;
 
-import android.app.Activity;
+import android.app.stubs.ICallback;
+import android.os.Messenger;
 
-/** Activity used for Cross Profile Apps Tests */
-public final class NonExportedActivity extends Activity {
+interface IHeartbeat {
+    void trigger(int pid, int uid, String name, int countdown, long interval, in ICallback callback);
+    void monitor(in Messenger messenger);
+
+    const int DEFAULT_COUNTDOWN = 60;
+    const long DEFAULT_INTERVAL = 1000;
+    const String HEARTBEAT_DONE = "android.app.stubs.HEARTBEAT_DONE";
 }

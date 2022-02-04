@@ -216,7 +216,11 @@ public class DataProfileTest {
                 .setAlwaysOn(IS_ALWAYS_ON)
                 .build();
 
-        byte[] osAppId = {1, 2, 3, 4};
+        // 97a498e3fc925c9489860333d06e4e470a454e5445525052495345.
+        // [OsAppId.ANDROID_OS_ID, "ENTERPRISE", 1]
+        byte[] osAppId = {-105, -92, -104, -29, -4, -110, 92,
+                -108, -119, -122, 3, 51, -48, 110, 78, 71, 10, 69, 78, 84, 69,
+                82, 80, 82, 73, 83, 69};
         TrafficDescriptor td = new TrafficDescriptor.Builder()
                 .setDataNetworkName(APN)
                 .setOsAppId(osAppId)
@@ -267,7 +271,11 @@ public class DataProfileTest {
 
     @Test
     public void testGetTrafficDescriptor() {
-        byte[] osAppId = {1, 2, 3, 4};
+        // 97a498e3fc925c9489860333d06e4e470a454e5445525052495345.
+        // [OsAppId.ANDROID_OS_ID, "ENTERPRISE", 1]
+        byte[] osAppId = {-105, -92, -104, -29, -4, -110, 92,
+                -108, -119, -122, 3, 51, -48, 110, 78, 71, 10, 69, 78, 84, 69,
+                82, 80, 82, 73, 83, 69};
         TrafficDescriptor td = new TrafficDescriptor.Builder()
                 .setDataNetworkName(APN)
                 .setOsAppId(osAppId)
@@ -282,7 +290,11 @@ public class DataProfileTest {
 
     @Test
     public void testNullApnSetting() {
-        byte[] osAppId = {1, 2, 3, 4};
+        // 97a498e3fc925c9489860333d06e4e470a454e5445525052495345.
+        // [OsAppId.ANDROID_OS_ID, "ENTERPRISE", 1]
+        byte[] osAppId = {-105, -92, -104, -29, -4, -110, 92,
+                -108, -119, -122, 3, 51, -48, 110, 78, 71, 10, 69, 78, 84, 69,
+                82, 80, 82, 73, 83, 69};
         TrafficDescriptor td = new TrafficDescriptor.Builder()
                 .setDataNetworkName(APN)
                 .setOsAppId(osAppId)

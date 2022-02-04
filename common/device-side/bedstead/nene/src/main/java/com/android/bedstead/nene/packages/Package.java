@@ -395,7 +395,7 @@ public final class Package {
         }
     }
 
-    private void checkCanGrantOrRevokePermission(UserReference user, String permission) {
+    void checkCanGrantOrRevokePermission(UserReference user, String permission) {
         if (!installedOnUser(user)) {
             throw new NeneException("Attempting to grant " + permission + " to " + this
                     + " on user " + user + ". But it is not installed");

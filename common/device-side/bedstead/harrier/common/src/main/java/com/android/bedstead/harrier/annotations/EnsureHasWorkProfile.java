@@ -17,7 +17,6 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
-import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.UserType.CURRENT_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
@@ -51,7 +50,7 @@ public @interface EnsureHasWorkProfile {
     UserType forUser() default CURRENT_USER;
 
     /** Whether the instrumented test app should be installed in the work profile. */
-    OptionalBoolean installInstrumentedApp() default TRUE;
+    OptionalBoolean installInstrumentedApp() default ANY;
 
     /**
      * Whether the profile owner's DPC should be returned by calls to {@code Devicestate#dpc()}.

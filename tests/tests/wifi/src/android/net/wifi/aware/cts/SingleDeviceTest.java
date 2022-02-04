@@ -1166,13 +1166,13 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         AwareParams params = new AwareParams();
         params.setDiscoveryWindowWakeInterval24Ghz(5);
         params.setDiscoveryWindowWakeInterval5Ghz(5);
-        params.setDiscoveryBeaconIntervalMills(50);
+        params.setDiscoveryBeaconIntervalMillis(50);
         params.setDwEarlyTerminationEnabled(true);
         params.setMacRandomizationIntervalSeconds(1000);
         params.setNumSpatialStreamsInDiscovery(1);
         assertEquals(5, params.getDiscoveryWindowWakeInterval24Ghz());
         assertEquals(5, params.getDiscoveryWindowWakeInterval5Ghz());
-        assertEquals(50, params.getDiscoveryBeaconIntervalMills());
+        assertEquals(50, params.getDiscoveryBeaconIntervalMillis());
         assertEquals(1000, params.getMacRandomizationIntervalSeconds());
         assertEquals(1, params.getNumSpatialStreamsInDiscovery());
         assertTrue(params.isDwEarlyTerminationEnabled());

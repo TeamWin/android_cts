@@ -16,64 +16,50 @@
 
 package android.view.cts;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Dialog;
 import android.view.OnBackInvokedCallback;
 import android.view.OnBackInvokedDispatcher;
-import android.view.View;
 
+import androidx.lifecycle.Lifecycle;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.MediumTest;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Test {@link OnBackInvokedDispatcher}.
  */
 @MediumTest
-@RunWith(AndroidJUnit4.class)
 public class OnBackInvokedDispatcherTest {
-    private View mView;
     private OnBackInvokedDispatcherTestActivity mActivity;
     private Dialog mDialog;
-    private View mViewInDialog;
 
     @Rule
-    public ActivityTestRule<OnBackInvokedDispatcherTestActivity> mActivityRule =
-            new ActivityTestRule<>(OnBackInvokedDispatcherTestActivity.class);
+    public ActivityScenarioRule<OnBackInvokedDispatcherTestActivity> mActivityRule =
+            new ActivityScenarioRule<>(OnBackInvokedDispatcherTestActivity.class);
 
     @Before
     public void setUp() {
-        mActivity = mActivityRule.getActivity();
-        mView = mActivity.findViewById(R.id.test_view);
-        mDialog = mActivity.getDialog();
-        mViewInDialog = mDialog.findViewById(R.id.test_view_in_dialog);
-    }
-
-    @Test
-    public void testGetDispatcherOnView() {
-        OnBackInvokedDispatcher viewDispatcher = mView.getOnBackInvokedDispatcher();
-        assertEquals(viewDispatcher, mActivity.getOnBackInvokedDispatcher());
-        assertNotNull("OnBackInvokedDispatcher on View should not be null", viewDispatcher);
+        mActivityRule.getScenario().moveToState(Lifecycle.State.RESUMED);
+        mActivityRule.getScenario().onActivity(activity -> {
+            mActivity = activity;
+            mDialog = mActivity.getDialog();
+        });
     }
 
     @Test
     public void testGetDispatcherOnDialog() {
         OnBackInvokedDispatcher dialogDispatcher = mDialog.getOnBackInvokedDispatcher();
-        OnBackInvokedDispatcher dialogViewDispatcher = mViewInDialog.getOnBackInvokedDispatcher();
-        assertEquals(dialogDispatcher, dialogViewDispatcher);
         assertNotNull("OnBackInvokedDispatcher on Dialog should not be null", dialogDispatcher);
     }
 
     @Test
     public void testRegisterAndUnregisterCallbacks() {
-        OnBackInvokedDispatcher dispatcher = mView.getOnBackInvokedDispatcher();
+        OnBackInvokedDispatcher dispatcher = mActivity.getOnBackInvokedDispatcher();
         OnBackInvokedCallback callback1 = createBackCallback();
         OnBackInvokedCallback callback2 = createBackCallback();
         dispatcher.registerOnBackInvokedCallback(

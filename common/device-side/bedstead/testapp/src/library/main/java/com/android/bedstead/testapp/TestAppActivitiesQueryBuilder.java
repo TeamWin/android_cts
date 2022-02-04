@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import android.content.ComponentName;
+import android.util.Log;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.queryable.Queryable;
@@ -48,6 +49,8 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
         Iterator<com.android.queryable.info.ActivityInfo> activityIterator =
                 mTestAppActivities.activities().iterator();
 
+        Log.e("jonathan", "TesTApps: " + mTestAppActivities.activities());
+
         while (activityIterator.hasNext()) {
             com.android.queryable.info.ActivityInfo activity = activityIterator.next();
             if (ActivityQueryHelper.matches(mActivity, activity)) {
@@ -60,7 +63,9 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
             }
         }
 
-        throw new IllegalStateException("No matching unused activity for query");
+        throw new IllegalStateException(
+                "No matching unused activity for query. Found activities: "
+                        + mTestAppActivities.activities());
     }
 
     @Override

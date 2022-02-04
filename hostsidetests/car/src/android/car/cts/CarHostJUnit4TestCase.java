@@ -90,6 +90,10 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     private int mInitialUserId;
     private Integer mInitialMaximumNumberOfUsers;
 
+    // It is possible that during test initial user is deleted and it is not possible to switch
+    // to the initial User. This boolean controls if test should switch to initial user on clean up.
+    private boolean mSwitchToInitialUser = true;
+
     /**
      * Saves multi-user state so it can be restored after the test.
      */
@@ -109,7 +113,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         CLog.d("restoreUsersState(): initial user: %d, current user: %d, created users: %s "
                 + "max number of users: %d",
                 mInitialUserId, currentUserId, mUsersToBeRemoved, mInitialMaximumNumberOfUsers);
-        if (currentUserId != mInitialUserId) {
+        if (currentUserId != mInitialUserId && mSwitchToInitialUser) {
             CLog.i("Switching back from %d to %d", currentUserId, mInitialUserId);
             switchUser(mInitialUserId);
         }
@@ -128,6 +132,23 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
             CLog.i("Restoring max number of users to %d", mInitialMaximumNumberOfUsers);
             setMaxNumberUsers(mInitialMaximumNumberOfUsers);
         }
+    }
+
+    /**
+     * It is possible that during test initial user is deleted and it is not possible to switch to
+     * the initial User. This method controls if test should switch to initial user on clean up.
+     */
+    public void doNotSwitchToInitialUserAfterTest() {
+        mSwitchToInitialUser = false;
+    }
+
+    /**
+     * Returns whether device is in headless system user mode.
+     */
+    boolean isHeadlessSystemUserMode() throws Exception {
+        String result = getDevice()
+                .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
+        return Boolean.valueOf(result);
     }
 
     /**
@@ -435,6 +456,13 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         device.executeShellCommand("start");
         device.waitForDeviceAvailable();
         waitForCarServiceReady();
+    }
+
+    /**
+     * Reboots the device.
+     */
+    protected void reboot() throws Exception {
+        getDevice().reboot();
     }
 
     /**
