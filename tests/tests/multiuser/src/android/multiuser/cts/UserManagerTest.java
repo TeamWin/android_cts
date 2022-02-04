@@ -335,19 +335,19 @@ public final class UserManagerTest {
         final Set<String> disallowedPackages = new HashSet<>();
         try {
             final int initialRemainingCount =
-                    mUserManager.getRemainingCreatableProfileCount(type, false);
+                    mUserManager.getRemainingCreatableProfileCount(type);
             assertThat(initialRemainingCount).isAtLeast(0);
 
             final int numUsersToAdd = Math.min(maxAllowedIterations, initialRemainingCount);
 
             for (int i = 0; i < numUsersToAdd; i++) {
                 profilesCreated.push(mUserManager.createProfile(null, type, disallowedPackages));
-                assertThat(mUserManager.getRemainingCreatableProfileCount(type, false))
+                assertThat(mUserManager.getRemainingCreatableProfileCount(type))
                         .isEqualTo(initialRemainingCount - profilesCreated.size());
             }
             for (int i = 0; i < numUsersToAdd; i++) {
                 mUserManager.removeUser(profilesCreated.pop());
-                assertThat(mUserManager.getRemainingCreatableProfileCount(type, false))
+                assertThat(mUserManager.getRemainingCreatableProfileCount(type))
                         .isEqualTo(initialRemainingCount - profilesCreated.size());
             }
         } finally {
