@@ -2498,6 +2498,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         testSoftApConfig.isIeee80211beEnabled());
                 assertEquals(currentConfig.getVendorElements(),
                         testSoftApConfig.getVendorElements());
+                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ),
+                        testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ));
+                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ),
+                        testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ));
+                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ),
+                        testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ));
             }
         }
     }
@@ -2756,6 +2762,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     || ApiLevelUtil.codenameStartsWith("T")) {
                 softApConfigBuilder.setBridgedModeOpportunisticShutdownTimeoutMillis(30_000);
                 softApConfigBuilder.setVendorElements(TEST_VENDOR_ELEMENTS);
+                softApConfigBuilder.setAllowedAcsChannels(
+                        SoftApConfiguration.BAND_2GHZ, new int[] {1, 6, 11});
+                softApConfigBuilder.setAllowedAcsChannels(
+                        SoftApConfiguration.BAND_5GHZ, new int[] {149});
+                softApConfigBuilder.setAllowedAcsChannels(
+                        SoftApConfiguration.BAND_6GHZ, new int[] {});
             }
 
             // Test SoftApConfiguration set and get
