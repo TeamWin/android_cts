@@ -30,8 +30,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.annotation.Nullable;
 import android.app.Activity;
@@ -67,9 +69,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -130,6 +134,80 @@ public class ActivityManagementTest {
         if (mVirtualDevice != null) {
             mVirtualDevice.close();
         }
+    }
+
+    @Test
+    public void activityListener_shouldCallOnExecutor() {
+        Context context = getApplicationContext();
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        ActivityListener activityListener = mock(ActivityListener.class);
+        Executor mockExecutor = mock(Executor.class);
+        mVirtualDevice.addActivityListener(activityListener, mockExecutor);
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                /* width= */ 100,
+                /* height= */ 100,
+                /* densityDpi= */ 240,
+                /* surface= */ null,
+                /* flags= */ 0,
+                new Handler(Looper.getMainLooper()),
+                mVirtualDisplayCallback);
+        EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(
+                        new Intent(context, EmptyActivity.class)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        createActivityOptions(virtualDisplay));
+
+        // Callback should not be called yet since the executor is mocked
+        verify(activityListener, never()).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)));
+
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(mockExecutor).execute(runnableCaptor.capture());
+
+        runnableCaptor.getValue().run();
+        verify(activityListener).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)));
+    }
+
+    @Test
+    public void removeActivityListener_shouldStopCallbacks() {
+        Context context = getApplicationContext();
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        ActivityListener activityListener = mock(ActivityListener.class);
+        mVirtualDevice.addActivityListener(activityListener);
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                /* width= */ 100,
+                /* height= */ 100,
+                /* densityDpi= */ 240,
+                /* surface= */ null,
+                /* flags= */ 0,
+                new Handler(Looper.getMainLooper()),
+                mVirtualDisplayCallback);
+        EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(
+                        new Intent(context, EmptyActivity.class)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        createActivityOptions(virtualDisplay));
+
+        verify(activityListener).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)));
+
+
+        mVirtualDevice.removeActivityListener(activityListener);
+        emptyActivity.finish();
+
+        verifyNoMoreInteractions(activityListener);
     }
 
     @Test
