@@ -27,7 +27,7 @@
         <uses-library android:name="android.test.base" />
     </application>
 
-    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.signature.cts.api.android_test_base_uses_library"
                      android:label="Android Test Base Uses Library API Signature Test"/>
 

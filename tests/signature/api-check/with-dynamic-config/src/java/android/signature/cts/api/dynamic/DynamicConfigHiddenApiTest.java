@@ -39,10 +39,6 @@ public class DynamicConfigHiddenApiTest extends HiddenApiTest {
 
         String dynamicConfigName = instrumentationArgs.getString(DYNAMIC_CONFIG_NAME_OPTION);
         if (dynamicConfigName != null) {
-            // Make sure that the Instrumentation provided to this test is registered so it can be
-            // retrieved by the DynamicConfigDeviceSide below.
-            InstrumentationRegistry.registerInstance(getInstrumentation(), new Bundle());
-
             // Get the DynamicConfig.xml contents and extract the expected failures list.
             DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(dynamicConfigName);
             Collection<String> expectedFailures = dcds.getValues("expected_failures");
