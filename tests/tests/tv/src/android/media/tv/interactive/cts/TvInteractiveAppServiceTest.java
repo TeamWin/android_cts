@@ -31,6 +31,18 @@ import android.media.tv.BroadcastInfoRequest;
 import android.media.tv.BroadcastInfoResponse;
 import android.media.tv.CommandRequest;
 import android.media.tv.CommandResponse;
+import android.media.tv.DsmccRequest;
+import android.media.tv.DsmccResponse;
+import android.media.tv.PesRequest;
+import android.media.tv.PesResponse;
+import android.media.tv.SectionRequest;
+import android.media.tv.SectionResponse;
+import android.media.tv.StreamEventRequest;
+import android.media.tv.StreamEventResponse;
+import android.media.tv.TableRequest;
+import android.media.tv.TableResponse;
+import android.media.tv.TimelineRequest;
+import android.media.tv.TimelineResponse;
 import android.media.tv.TsRequest;
 import android.media.tv.TsResponse;
 import android.media.tv.TvContract;
@@ -65,7 +77,9 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Executor;
+import java.util.List;
 
 /**
  * Test {@link android.media.tv.interactive.TvInteractiveAppService}.
@@ -622,7 +636,7 @@ public class TvInteractiveAppServiceTest {
     public void testTsRequest() throws Throwable {
         linkTvView();
 
-        TsRequest request = new TsRequest(1, BroadcastInfoRequest.REQUEST_OPTION_REPEAT, 1);
+        TsRequest request = new TsRequest(1, BroadcastInfoRequest.REQUEST_OPTION_REPEAT, 11);
         mSession.requestBroadcastInfo(request);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
@@ -632,14 +646,149 @@ public class TvInteractiveAppServiceTest {
         assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TS);
         assertThat(request.getRequestId()).isEqualTo(1);
         assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
-        assertThat(request.getTsPid()).isEqualTo(1);
+        assertThat(request.getTsPid()).isEqualTo(11);
     }
 
     @Test
-    public void testTsResponse() {
+    public void testCommandRequest() throws Throwable {
         linkTvView();
 
-        TsResponse response = new TsResponse(1, 1, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+        CommandRequest request = new CommandRequest(2, BroadcastInfoRequest.REQUEST_OPTION_REPEAT,
+                "nameSpace1", "name2", "requestArgs");
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (CommandRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_COMMAND);
+        assertThat(request.getRequestId()).isEqualTo(2);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getNameSpace()).isEqualTo("nameSpace1");
+        assertThat(request.getName()).isEqualTo("name2");
+        assertThat(request.getArguments()).isEqualTo("requestArgs");
+    }
+
+    @Test
+    public void testDsmccRequest() throws Throwable {
+        linkTvView();
+
+        final Uri uri = createTestUri();
+        DsmccRequest request = new DsmccRequest(3, BroadcastInfoRequest.REQUEST_OPTION_REPEAT,
+                uri);
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (DsmccRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_DSMCC);
+        assertThat(request.getRequestId()).isEqualTo(3);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getUri()).isEqualTo(uri);
+    }
+
+    @Test
+    public void testPesRequest() throws Throwable {
+        linkTvView();
+
+        PesRequest request = new PesRequest(4, BroadcastInfoRequest.REQUEST_OPTION_REPEAT, 44, 444);
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (PesRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_PES);
+        assertThat(request.getRequestId()).isEqualTo(4);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getTsPid()).isEqualTo(44);
+        assertThat(request.getStreamId()).isEqualTo(444);
+    }
+
+    @Test
+    public void testSectionRequest() throws Throwable {
+        linkTvView();
+
+        SectionRequest request = new SectionRequest(5, BroadcastInfoRequest.REQUEST_OPTION_REPEAT,
+                55, 555, 5555);
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (SectionRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_SECTION);
+        assertThat(request.getRequestId()).isEqualTo(5);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getTsPid()).isEqualTo(55);
+        assertThat(request.getTableId()).isEqualTo(555);
+        assertThat(request.getVersion()).isEqualTo(5555);
+    }
+
+    @Test
+    public void testStreamEventRequest() throws Throwable {
+        linkTvView();
+
+        final Uri uri = createTestUri();
+        StreamEventRequest request = new StreamEventRequest(6,
+                BroadcastInfoRequest.REQUEST_OPTION_REPEAT, uri, "testName");
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (StreamEventRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_STREAM_EVENT);
+        assertThat(request.getRequestId()).isEqualTo(6);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getTargetUri()).isEqualTo(uri);
+        assertThat(request.getEventName()).isEqualTo("testName");
+    }
+
+    @Test
+    public void testTableRequest() throws Throwable {
+        linkTvView();
+
+        TableRequest request = new TableRequest(7, BroadcastInfoRequest.REQUEST_OPTION_REPEAT, 77,
+                TableRequest.TABLE_NAME_PMT, 777);
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (TableRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TABLE);
+        assertThat(request.getRequestId()).isEqualTo(7);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getTableId()).isEqualTo(77);
+        assertThat(request.getTableName()).isEqualTo(TableRequest.TABLE_NAME_PMT);
+        assertThat(request.getVersion()).isEqualTo(777);
+    }
+
+    @Test
+    public void testTimelineRequest() throws Throwable {
+        linkTvView();
+
+        TimelineRequest request = new TimelineRequest(8, BroadcastInfoRequest.REQUEST_OPTION_REPEAT,
+                8000);
+        mSession.requestBroadcastInfo(request);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
+
+        request = (TimelineRequest) mInputSession.mBroadcastInfoRequest;
+        assertThat(mInputSession.mBroadcastInfoRequestCount).isEqualTo(1);
+        assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TIMELINE);
+        assertThat(request.getRequestId()).isEqualTo(8);
+        assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
+        assertThat(request.getIntervalMillis()).isEqualTo(8000);
+    }
+
+    @Test
+    public void testTsResponse() throws Throwable {
+        linkTvView();
+
+        TsResponse response = new TsResponse(1, 11, BroadcastInfoResponse.RESPONSE_RESULT_OK,
                 "TestToken");
         mInputSession.notifyBroadcastInfoResponse(response);
         mInstrumentation.waitForIdleSync();
@@ -649,10 +798,197 @@ public class TvInteractiveAppServiceTest {
         assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
         assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TS);
         assertThat(response.getRequestId()).isEqualTo(1);
-        assertThat(response.getSequence()).isEqualTo(1);
+        assertThat(response.getSequence()).isEqualTo(11);
         assertThat(response.getResponseResult()).isEqualTo(
                 BroadcastInfoResponse.RESPONSE_RESULT_OK);
         assertThat(response.getSharedFilterToken()).isEqualTo("TestToken");
+    }
+
+    @Test
+    public void testCommandResponse() throws Throwable {
+        linkTvView();
+
+        CommandResponse response = new CommandResponse(2, 22,
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, "commandResponse");
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (CommandResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_COMMAND);
+        assertThat(response.getRequestId()).isEqualTo(2);
+        assertThat(response.getSequence()).isEqualTo(22);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getResponse()).isEqualTo("commandResponse");
+    }
+
+    @Test
+    public void testDsmccResponse() throws Throwable {
+        linkTvView();
+
+        File tmpFile = File.createTempFile("cts_tv_interactive_app", "tias_test");
+        ParcelFileDescriptor fd =
+                ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_WRITE);
+        final List<String> childList = new ArrayList(Arrays.asList("c1", "c2", "c3"));
+        final int[] eventIds = new int[] {1, 2, 3};
+        final String[] eventNames = new String[] {"event1", "event2", "event3"};
+        DsmccResponse response = new DsmccResponse(3, 3, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+                fd);
+
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (DsmccResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_DSMCC);
+        assertThat(response.getRequestId()).isEqualTo(3);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getBiopMessageType()).isEqualTo(DsmccResponse.BIOP_MESSAGE_TYPE_FILE);
+        assertNotNull(response.getFile());
+
+        response = new DsmccResponse(3, 3, BroadcastInfoResponse.RESPONSE_RESULT_OK, true,
+                childList);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 1);
+
+        response = (DsmccResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(2);
+        assertThat(response.getBiopMessageType()).isEqualTo(
+                DsmccResponse.BIOP_MESSAGE_TYPE_SERVICE_GATEWAY);
+        assertNotNull(response.getChildList());
+
+        response = new DsmccResponse(3, 3, BroadcastInfoResponse.RESPONSE_RESULT_OK, eventIds,
+                eventNames);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 2);
+
+        response = (DsmccResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(3);
+        assertThat(response.getBiopMessageType()).isEqualTo(DsmccResponse.BIOP_MESSAGE_TYPE_STREAM);
+        assertNotNull(response.getStreamEventIds());
+        assertNotNull(response.getStreamEventNames());
+
+        fd.close();
+        tmpFile.delete();
+    }
+
+    @Test
+    public void testPesResponse() throws Throwable {
+        linkTvView();
+
+        PesResponse response = new PesResponse(4, 44, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+                "testShardFilterToken");
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (PesResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_PES);
+        assertThat(response.getRequestId()).isEqualTo(4);
+        assertThat(response.getSequence()).isEqualTo(44);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getSharedFilterToken()).isEqualTo("testShardFilterToken");
+    }
+
+    @Test
+    public void testSectionResponse() throws Throwable {
+        linkTvView();
+
+        final Bundle bundle = createTestBundle();
+        SectionResponse response = new SectionResponse(5, 55,
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, 555, 5555, bundle);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (SectionResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_SECTION);
+        assertThat(response.getRequestId()).isEqualTo(5);
+        assertThat(response.getSequence()).isEqualTo(55);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getSessionId()).isEqualTo(555);
+        assertThat(response.getVersion()).isEqualTo(5555);
+        assertBundlesAreEqual(response.getSessionData(), bundle);
+    }
+
+    @Test
+    public void testStreamEventResponse() throws Throwable {
+        linkTvView();
+
+        final byte[] data = new byte[] {1, 2, 3};
+        StreamEventResponse response = new StreamEventResponse(6, 66,
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, 666, 6666, data);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (StreamEventResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_STREAM_EVENT);
+        assertThat(response.getRequestId()).isEqualTo(6);
+        assertThat(response.getSequence()).isEqualTo(66);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getEventId()).isEqualTo(666);
+        assertThat(response.getNpt()).isEqualTo(6666);
+        assertNotNull(response.getData());
+    }
+
+    @Test
+    public void testTableResponse() throws Throwable {
+        linkTvView();
+
+        final Uri uri = createTestUri();
+        TableResponse response = new TableResponse(7, 77, BroadcastInfoResponse.RESPONSE_RESULT_OK,
+                uri, 777, 7777);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (TableResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TABLE);
+        assertThat(response.getRequestId()).isEqualTo(7);
+        assertThat(response.getSequence()).isEqualTo(77);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getTableUri()).isEqualTo(uri);
+        assertThat(response.getVersion()).isEqualTo(777);
+        assertThat(response.getSize()).isEqualTo(7777);
+    }
+
+    @Test
+    public void testTimelineResponse() throws Throwable {
+        linkTvView();
+
+        TimelineResponse response = new TimelineResponse(8, 88,
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, "test_selector", 1, 10, 100, 1000);
+        mInputSession.notifyBroadcastInfoResponse(response);
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
+
+        response = (TimelineResponse) mSession.mBroadcastInfoResponse;
+        assertThat(mSession.mBroadcastInfoResponseCount).isEqualTo(1);
+        assertThat(response.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_TIMELINE);
+        assertThat(response.getRequestId()).isEqualTo(8);
+        assertThat(response.getSequence()).isEqualTo(88);
+        assertThat(response.getResponseResult()).isEqualTo(
+                BroadcastInfoResponse.RESPONSE_RESULT_OK);
+        assertThat(response.getSelector()).isEqualTo("test_selector");
+        assertThat(response.getUnitsPerTick()).isEqualTo(1);
+        assertThat(response.getUnitsPerSecond()).isEqualTo(10);
+        assertThat(response.getWallClock()).isEqualTo(100);
+        assertThat(response.getTicks()).isEqualTo(1000);
     }
 
     public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
