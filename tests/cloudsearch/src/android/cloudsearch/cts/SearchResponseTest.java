@@ -70,8 +70,8 @@ public class SearchResponseTest {
                 .setSnippet(snippetB).setScore(scoreB).build();
         results.add(resultB);
 
-        SearchResponse response = new SearchResponse.Builder(status)
-                .setSearchResults(results).build();
+        SearchResponse response = new SearchResponse.Builder(SearchResponse.SEARCH_STATUS_UNKNOWN)
+                .setSearchResults(results).setStatusCode(status).build();
 
         /** Checks the original response. */
         assertThat(response.getStatusCode()).isEqualTo(status);

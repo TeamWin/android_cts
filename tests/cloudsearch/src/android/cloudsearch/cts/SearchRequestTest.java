@@ -41,17 +41,19 @@ public class SearchRequestTest {
         final String query = "bo";
         final int rn = 20;
         final int offset = 0;
+        final float maxLatency = 100;
         Bundle constraints = new Bundle();
         constraints.putBoolean(SearchRequest.CONSTRAINT_IS_PRESUBMIT_SUGGESTION,
                 true);
 
-        SearchRequest request = new SearchRequest.Builder(query).setResultNumber(rn)
-                .setResultOffset(offset).setSearchConstraints(constraints).build();
+        SearchRequest request = new SearchRequest.Builder("").setResultNumber(rn)
+                .setResultOffset(offset).setSearchConstraints(constraints).setQuery(query)
+                .setMaxLatencyMillis(maxLatency).build();
 
         /** Check the original request. */
         assertThat(request.getQuery()).isEqualTo(query);
         assertThat(request.getResultNumber()).isEqualTo(rn);
-        assertThat(request.getMaxLatencyMillis()).isEqualTo(200);
+        assertThat(request.getMaxLatencyMillis()).isEqualTo(maxLatency);
         assertThat(request.getResultOffset()).isEqualTo(offset);
         final Bundle sc = request.getSearchConstraints();
         assertThat(sc.getBoolean(SearchRequest.CONSTRAINT_IS_PRESUBMIT_SUGGESTION))
@@ -65,7 +67,7 @@ public class SearchRequestTest {
         /** Check the copied request. */
         assertThat(copy.getQuery()).isEqualTo(query);
         assertThat(copy.getResultNumber()).isEqualTo(rn);
-        assertThat(copy.getMaxLatencyMillis()).isEqualTo(200);
+        assertThat(copy.getMaxLatencyMillis()).isEqualTo(maxLatency);
         assertThat(copy.getResultOffset()).isEqualTo(offset);
         final Bundle sccopy = request.getSearchConstraints();
         assertThat(sccopy.getBoolean(SearchRequest.CONSTRAINT_IS_PRESUBMIT_SUGGESTION))
