@@ -19,6 +19,7 @@ import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_ANY;
 import static android.net.vcn.VcnUnderlyingNetworkTemplate.MATCH_FORBIDDEN;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.net.vcn.VcnWifiUnderlyingNetworkTemplate;
 
@@ -27,7 +28,7 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-public class VcnWifiUnderlyingNetworkTemplateTest {
+public class VcnWifiUnderlyingNetworkTemplateTest extends VcnUnderlyingNetworkTemplateTestBase {
     private static final Set<String> SSIDS = Set.of("TestWifi");
 
     // Package private for use in VcnGatewayConnectionConfigTest
@@ -35,6 +36,10 @@ public class VcnWifiUnderlyingNetworkTemplateTest {
         return new VcnWifiUnderlyingNetworkTemplate.Builder()
                 .setMetered(MATCH_FORBIDDEN)
                 .setSsids(SSIDS)
+                .setMinDownstreamBandwidthKbps(
+                        MIN_ENTRY_DOWN_BANDWIDTH_KBPS, MIN_EXIT_DOWN_BANDWIDTH_KBPS)
+                .setMinUpstreamBandwidthKbps(
+                        MIN_ENTRY_UP_BANDWIDTH_KBPS, MIN_EXIT_UP_BANDWIDTH_KBPS)
                 .build();
     }
 
@@ -43,6 +48,7 @@ public class VcnWifiUnderlyingNetworkTemplateTest {
         final VcnWifiUnderlyingNetworkTemplate networkTemplate = getTestNetworkTemplate();
         assertEquals(MATCH_FORBIDDEN, networkTemplate.getMetered());
         assertEquals(SSIDS, networkTemplate.getSsids());
+        verifyBandwidthsWithTestValues(networkTemplate);
     }
 
     @Test
@@ -51,6 +57,7 @@ public class VcnWifiUnderlyingNetworkTemplateTest {
                 new VcnWifiUnderlyingNetworkTemplate.Builder().build();
         assertEquals(MATCH_ANY, networkTemplate.getMetered());
         assertEquals(new HashSet<String>(), networkTemplate.getSsids());
+        verifyBandwidthsWithDefaultValues(networkTemplate);
     }
 
     @Test
@@ -60,5 +67,36 @@ public class VcnWifiUnderlyingNetworkTemplateTest {
                         .setSsids(new HashSet<String>())
                         .build();
         assertEquals(new HashSet<String>(), networkTemplate.getSsids());
+    }
+
+    @Test
+    public void testBuildWithNullSsids() {
+        try {
+            new VcnWifiUnderlyingNetworkTemplate.Builder().setSsids(null);
+            fail("Expect to fail due to the null argument");
+        } catch (Exception expected) {
+        }
+    }
+
+    @Test
+    public void testBuildWithInvalidDownstreamBandwidth() {
+        try {
+            new VcnWifiUnderlyingNetworkTemplate.Builder()
+                    .setMinDownstreamBandwidthKbps(
+                            MIN_ENTRY_DOWN_BANDWIDTH_KBPS, MIN_ENTRY_DOWN_BANDWIDTH_KBPS + 1);
+            fail("Expect to fail because entry bandwidth is smaller than exit bandwidth");
+        } catch (Exception expected) {
+        }
+    }
+
+    @Test
+    public void testBuildWithInvalidUpstreamBandwidth() {
+        try {
+            new VcnWifiUnderlyingNetworkTemplate.Builder()
+                    .setMinUpstreamBandwidthKbps(
+                            MIN_ENTRY_UP_BANDWIDTH_KBPS, MIN_ENTRY_UP_BANDWIDTH_KBPS + 1);
+            fail("Expect to fail because entry bandwidth is smaller than exit bandwidth");
+        } catch (Exception expected) {
+        }
     }
 }
