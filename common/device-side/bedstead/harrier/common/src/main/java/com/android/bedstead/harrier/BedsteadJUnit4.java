@@ -17,12 +17,24 @@
 package com.android.bedstead.harrier;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
+import com.android.bedstead.harrier.annotations.CrossUserTest;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
+import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.PermissionTest;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
+import com.android.bedstead.harrier.annotations.UserPair;
+import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -31,7 +43,6 @@ import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.nene.annotations.Nullable;
 import com.android.bedstead.nene.exceptions.NeneException;
 
@@ -74,6 +85,51 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
     @AutoAnnotation
     private static EnsureDoesNotHavePermission ensureDoesNotHavePermission(String[] value) {
         return new AutoAnnotation_BedsteadJUnit4_ensureDoesNotHavePermission(value);
+    }
+
+    @AutoAnnotation
+    private static RequireRunOnSystemUser requireRunOnSystemUser() {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnSystemUser();
+    }
+
+    @AutoAnnotation
+    private static RequireRunOnPrimaryUser requireRunOnPrimaryUser() {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnPrimaryUser();
+    }
+
+    @AutoAnnotation
+    private static RequireRunOnSecondaryUser requireRunOnSecondaryUser() {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnSecondaryUser();
+    }
+
+    @AutoAnnotation
+    private static RequireRunOnWorkProfile requireRunOnWorkProfile() {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnWorkProfile();
+    }
+
+    @AutoAnnotation
+    private static RequireRunOnTvProfile requireRunOnTvProfile() {
+        return new AutoAnnotation_BedsteadJUnit4_requireRunOnTvProfile();
+    }
+
+    @AutoAnnotation
+    private static EnsureHasSecondaryUser ensureHasSecondaryUser() {
+        return new AutoAnnotation_BedsteadJUnit4_ensureHasSecondaryUser();
+    }
+
+    @AutoAnnotation
+    private static EnsureHasWorkProfile ensureHasWorkProfile() {
+        return new AutoAnnotation_BedsteadJUnit4_ensureHasWorkProfile();
+    }
+
+    @AutoAnnotation
+    private static EnsureHasTvProfile ensureHasTvProfile() {
+        return new AutoAnnotation_BedsteadJUnit4_ensureHasTvProfile();
+    }
+
+    @AutoAnnotation
+    private static OtherUser otherUser(UserType value) {
+        return new AutoAnnotation_BedsteadJUnit4_otherUser(value);
     }
 
     // These are annotations which are not included indirectly
@@ -409,6 +465,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
         parseEnterpriseAnnotations(annotations);
         parsePermissionAnnotations(annotations);
+        parseUserAnnotations(annotations);
 
         for (Annotation annotation : annotations) {
             if (isParameterizedAnnotation(annotation)) {
@@ -527,6 +584,118 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         }
 
         return replacementAnnotations;
+    }
+
+    /**
+     * Parse @UserTest and @CrossUserTest annotations.
+     *
+     * <p>To be used before general annotation processing.
+     */
+    static void parseUserAnnotations(List<Annotation> annotations) {
+        int index = 0;
+        while (index < annotations.size()) {
+            Annotation annotation = annotations.get(index);
+            if (annotation instanceof UserTest) {
+                annotations.remove(index);
+
+                List<Annotation> replacementAnnotations = generateUserAnnotations(
+                        ((UserTest) annotation).value());
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
+
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
+            } else if (annotation instanceof CrossUserTest) {
+                annotations.remove(index);
+
+                CrossUserTest crossUserTestAnnotation = (CrossUserTest) annotation;
+                List<Annotation> replacementAnnotations = generateCrossUserAnnotations(
+                        crossUserTestAnnotation.value());
+                replacementAnnotations.sort(BedsteadJUnit4::annotationSorter);
+
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
+            } else {
+                index++;
+            }
+        }
+    }
+
+    private static List<Annotation> generateUserAnnotations(UserType[] userTypes) {
+        List<Annotation> replacementAnnotations = new ArrayList<>();
+
+        for (UserType userType : userTypes) {
+            Annotation runOnUserAnnotation = getRunOnAnnotation(userType, "@UserTest");
+            replacementAnnotations.add(
+                    new DynamicParameterizedAnnotation(
+                            userType.name(),
+                            new Annotation[]{runOnUserAnnotation}));
+        }
+
+        return replacementAnnotations;
+    }
+
+    private static List<Annotation> generateCrossUserAnnotations(UserPair[] userPairs) {
+        List<Annotation> replacementAnnotations = new ArrayList<>();
+
+        for (UserPair userPair : userPairs) {
+            Annotation[] annotations = new Annotation[]{
+                    getRunOnAnnotation(userPair.from(), "@CrossUserTest"),
+                    otherUser(userPair.to())
+            };
+            if (userPair.from() != userPair.to()) {
+                Annotation hasUserAnnotation =
+                        getHasUserAnnotation(userPair.to(), "@CrossUserTest");
+                if (hasUserAnnotation != null) {
+                    annotations = new Annotation[]{
+                            annotations[0],
+                            annotations[1],
+                            hasUserAnnotation};
+                }
+            }
+
+            replacementAnnotations.add(
+                    new DynamicParameterizedAnnotation(
+                            userPair.from().name() + "_to_" + userPair.to().name(),
+                            annotations));
+        }
+
+        return replacementAnnotations;
+    }
+
+    private static Annotation getRunOnAnnotation(UserType userType, String annotationName) {
+        switch (userType) {
+            case SYSTEM_USER:
+                return requireRunOnSystemUser();
+            case PRIMARY_USER:
+                return requireRunOnPrimaryUser();
+            case SECONDARY_USER:
+                return requireRunOnSecondaryUser();
+            case WORK_PROFILE:
+                return requireRunOnWorkProfile();
+            case TV_PROFILE:
+                return requireRunOnTvProfile();
+            default:
+                throw new IllegalStateException(
+                        "UserType " + userType + " is not compatible with " + annotationName);
+        }
+    }
+
+    private static Annotation getHasUserAnnotation(UserType userType, String annotationName) {
+        switch (userType) {
+            case SYSTEM_USER:
+                return null; // We always have a system user
+            case PRIMARY_USER:
+                return null; // We assume we always have a primary user (this may change)
+            case SECONDARY_USER:
+                return ensureHasSecondaryUser();
+            case WORK_PROFILE:
+                return ensureHasWorkProfile();
+            case TV_PROFILE:
+                return ensureHasTvProfile();
+            default:
+                throw new IllegalStateException(
+                        "UserType " + userType + " is not compatible with " + annotationName);
+        }
     }
 
     @Override

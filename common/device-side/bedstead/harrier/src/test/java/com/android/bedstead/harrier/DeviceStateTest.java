@@ -27,6 +27,7 @@ import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
 import static com.android.bedstead.harrier.UserType.ANY;
 import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.DEVICE_OWNER;
@@ -56,6 +57,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -825,5 +827,17 @@ public class DeviceStateTest {
                     .setRequiredStrongAuthTimeout(
                             sDeviceState.dpc().componentName(), previousRequiredStrongAuthTimeout);
         }
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    @OtherUser(SECONDARY_USER)
+    public void otherUserAnnotation_otherUserReturnsCorrectType() {
+        assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.secondaryUser());
+    }
+
+    @Test
+    public void otherUser_noOtherUserSpecified_throwsException() {
+        assertThrows(IllegalStateException.class, () -> sDeviceState.otherUser());
     }
 }

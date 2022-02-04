@@ -52,6 +52,7 @@ import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
@@ -606,6 +607,12 @@ public final class DeviceState extends HarrierRule {
                 ensurePasswordNotSet(ensurePasswordNotSetAnnotation.forUser());
                 continue;
             }
+
+            if (annotation instanceof OtherUser) {
+                OtherUser otherUserAnnotation = (OtherUser) annotation;
+                mOtherUserType = otherUserAnnotation.value();
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
@@ -954,6 +961,7 @@ public final class DeviceState extends HarrierRule {
     private DevicePolicyController mDeviceOwner;
     private Map<UserReference, DevicePolicyController> mProfileOwners = new HashMap<>();
     private RemotePolicyManager mPrimaryPolicyManager;
+    private UserType mOtherUserType;
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
@@ -965,7 +973,7 @@ public final class DeviceState extends HarrierRule {
     private UserReference mOriginalSwitchedUser;
 
     /**
-     * Get the {@link UserReference} of the work profile for the current user.
+     * Get the {@link UserReference} of the work profile for the primary user.
      *
      * <p>If the current user is a work profile, then the current user will be returned.
      *
@@ -975,7 +983,8 @@ public final class DeviceState extends HarrierRule {
      * @throws IllegalStateException if there is no harrier-managed work profile
      */
     public UserReference workProfile() {
-        return workProfile(/* forUser= */ UserType.CURRENT_USER);
+        // Work profiles are currently only supported on the primary user
+        return workProfile(/* forUser= */ UserType.PRIMARY_USER);
     }
 
     /**
@@ -1136,6 +1145,19 @@ public final class DeviceState extends HarrierRule {
      */
     public UserReference secondaryUser() {
         return user(SECONDARY_USER_TYPE_NAME);
+    }
+
+    /**
+     * Get the user marked as "other" by use of the {@code @OtherUser} annotation.
+     *
+     * @throws IllegalStateException if there is no "other" user
+     */
+    public UserReference otherUser() {
+        if (mOtherUserType == null) {
+            throw new IllegalStateException("No other user specified. Use @OtherUser");
+        }
+
+        return resolveUserTypeToUser(mOtherUserType);
     }
 
     /**
@@ -1370,6 +1392,7 @@ public final class DeviceState extends HarrierRule {
         }
         mRegisteredBroadcastReceivers.clear();
         mPrimaryPolicyManager = null;
+        mOtherUserType = null;
     }
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
