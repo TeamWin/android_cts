@@ -30,9 +30,10 @@ java_library {
     srcs: ["src/java/**/*.java"],
     sdk_version: "test_current",
     static_libs: [
+        // androidx.test.runner depends on android.test classes from this library.
+        "android.test.base-minus-junit",
+        "androidx.test.runner",
         "cts-signature-common",
-        "repackaged.android.test.base",
-        "repackaged.android.test.runner",
     ],
 }
 
@@ -62,6 +63,16 @@ java_defaults {
     ],
     static_libs: [
         "cts-signature-with-dynamic-config",
+    ],
+}
+
+// Filegroup containing the jarjar rules that need to be applied to any test that checks for
+// accessibility (or inaccesibility) of android.test and junit classes from the android.test.base
+// and android.test.runner libraries.
+filegroup {
+    name: "cts-android-test-jarjar-rules",
+    srcs: [
+        "android-test-jarjar-rules.txt",
     ],
 }
 
