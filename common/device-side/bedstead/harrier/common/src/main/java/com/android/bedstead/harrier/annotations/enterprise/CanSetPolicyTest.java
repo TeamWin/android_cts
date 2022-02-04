@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  *
  * <p>This will generate parameterized runs for all matching states. Tests will only be run on
  * the same user as the DPC. If you wish to test that a policy applies across all relevant states,
- * use {@link PositivePolicyTest}.
+ * use {@link PolicyAppliesTest}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

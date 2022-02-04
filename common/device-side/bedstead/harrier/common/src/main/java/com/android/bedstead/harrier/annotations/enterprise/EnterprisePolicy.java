@@ -22,8 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to annotate an enterprise policy for use with {@link NegativePolicyTest} and
- * {@link PositivePolicyTest}.
+ * Used to annotate an enterprise policy for use with {@link PolicyDoesNotApplyTest} and
+ * {@link PolicyAppliesTest}.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -148,15 +148,15 @@ public @interface EnterprisePolicy {
 
     // Modifiers
     /** Internal use only. Do not use */
-    // This is to be used to mark specific annotations as not generating negative tests
-    int DO_NOT_APPLY_TO_NEGATIVE_TESTS = 1 << 16;
+    // This is to be used to mark specific annotations as not generating PolicyDoesNotApply tests
+    int DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS = 1 << 16;
 
     /**
      * A policy which applies even when the user is not in the foreground.
      *
      * <p>Note that lacking this flag does not mean a policy does not apply - to indicate that use
      * {@link DOES_NOT_APPLY_IN_BACKGROUND}. */
-    int APPLIES_IN_BACKGROUND = 1 << 17 | (DO_NOT_APPLY_TO_NEGATIVE_TESTS);
+    int APPLIES_IN_BACKGROUND = 1 << 17 | (DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS);
     /**
      * A policy which does not apply when the user is not in the foreground.
      *

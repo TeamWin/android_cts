@@ -33,8 +33,8 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DefaultSmsApplication;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
@@ -80,7 +80,7 @@ public final class DefaultSmsApplicationTest {
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = DefaultSmsApplication.class)
+    @PolicyAppliesTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_works() {
         assumeTrue(mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();
@@ -96,7 +96,7 @@ public final class DefaultSmsApplicationTest {
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
     @Test
     @Postsubmit(reason = "new test")
-    @NegativePolicyTest(policy = DefaultSmsApplication.class)
+    @PolicyDoesNotApplyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_unchanged() {
         assumeTrue(mTelephonyManager.isSmsCapable());
         String previousSmsAppName = getDefaultSmsPackage();

@@ -32,7 +32,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.WifiMinimumSecurity;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 
@@ -70,7 +70,7 @@ public class WifiMinimumSecurityTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = WifiMinimumSecurity.class)
+    @PolicyAppliesTest(policy = WifiMinimumSecurity.class)
     @Postsubmit(reason = "new test")
     public void setWifiMinimumSecurity_validLevel_works(
             @SettableWifiSecurityLevelTestParameter int flag) {

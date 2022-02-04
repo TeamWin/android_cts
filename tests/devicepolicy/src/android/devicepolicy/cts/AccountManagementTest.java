@@ -39,7 +39,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.AccountManagement;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
@@ -90,7 +90,7 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = AccountManagement.class)
+    @PolicyAppliesTest(policy = AccountManagement.class)
     public void getAccountTypesWithManagementDisabled_emptyByDefault() {
         assertThat(mDpm.getAccountTypesWithManagementDisabled()).isEmpty();
     }
@@ -114,7 +114,7 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = AccountManagement.class)
+    @PolicyAppliesTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_disableAccountType_works() {
         try {
             mDpm.setAccountManagementDisabled(mAdmin, FAKE_ACCOUNT_TYPE, /* disabled= */ true);
@@ -128,7 +128,7 @@ public final class AccountManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = AccountManagement.class)
+    @PolicyAppliesTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_addSameAccountTypeTwice_presentOnlyOnce() {
         try {
             mDpm.setAccountManagementDisabled(mAdmin, FAKE_ACCOUNT_TYPE, /* disabled= */ true);

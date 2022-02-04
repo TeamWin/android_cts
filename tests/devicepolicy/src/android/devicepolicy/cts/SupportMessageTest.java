@@ -28,7 +28,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.SupportMessage;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
@@ -79,7 +79,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_validText_works() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
@@ -89,7 +89,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_validText_works() {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
@@ -99,7 +99,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_emptyText_works() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, EMPTY_SUPPORT_MESSAGE);
@@ -109,7 +109,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_nullText_clearsOldText() {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
@@ -119,7 +119,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_nullText_clearsOldText() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
@@ -129,7 +129,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_emptyText_works() {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, EMPTY_SUPPORT_MESSAGE);
@@ -139,7 +139,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_tooLongText_isTruncated() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, SHORT_SUPPORT_MESSAGE_TOO_LONG);
@@ -149,7 +149,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_longText_notTruncated() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, LONG_SUPPORT_MESSAGE_REASONABLY_LONG);
@@ -159,7 +159,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
@@ -168,7 +168,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
@@ -177,7 +177,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void getShortSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
@@ -186,7 +186,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void getLongSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
@@ -231,7 +231,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_validText_logged() {
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
@@ -246,7 +246,7 @@ public final class SupportMessageTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SupportMessage.class)
+    @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_validText_logged() {
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {

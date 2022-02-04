@@ -29,7 +29,7 @@ import android.stats.devicepolicy.EventId;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.CaCertManagement;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.utils.Poll;
@@ -73,7 +73,7 @@ public final class CaCertManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = CaCertManagement.class)
+    @PolicyAppliesTest(policy = CaCertManagement.class)
     public void installCaCert_caCertIsInstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
@@ -90,7 +90,7 @@ public final class CaCertManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = CaCertManagement.class)
+    @PolicyAppliesTest(policy = CaCertManagement.class)
     public void installCaCert_logsEvent() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
@@ -111,7 +111,7 @@ public final class CaCertManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = CaCertManagement.class)
+    @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallCaCert_caCertIsNotInstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
@@ -127,7 +127,7 @@ public final class CaCertManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = CaCertManagement.class)
+    @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallCaCert_otherCaCertsAreNotUninstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
@@ -144,7 +144,7 @@ public final class CaCertManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = CaCertManagement.class)
+    @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallCaCert_logsEvent() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
         try {
@@ -168,7 +168,7 @@ public final class CaCertManagementTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = CaCertManagement.class)
+    @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallAllUserCaCerts_uninstallsAllCaCerts()
             throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
