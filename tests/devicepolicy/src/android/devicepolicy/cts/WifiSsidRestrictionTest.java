@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.WifiSsidPolicy;
+import android.net.wifi.WifiSsid;
 import android.util.ArraySet;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -40,8 +41,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
@@ -63,7 +64,10 @@ public class WifiSsidRestrictionTest {
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_validAllowlist_works() {
         try {
-            final Set<String> ssids = new ArraySet<>(Arrays.asList("ssid1", "ssid2", "ssid3"));
+            final Set<WifiSsid> ssids = new ArraySet<>(
+                    Arrays.asList(WifiSsid.fromBytes("ssid1".getBytes(StandardCharsets.UTF_8)),
+                            WifiSsid.fromBytes("ssid2".getBytes(StandardCharsets.UTF_8)),
+                            WifiSsid.fromBytes("ssid3".getBytes(StandardCharsets.UTF_8))));
             WifiSsidPolicy policy = WifiSsidPolicy.createAllowlistPolicy(ssids);
 
             mDevicePolicyManager.setWifiSsidPolicy(policy);
@@ -82,7 +86,10 @@ public class WifiSsidRestrictionTest {
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_validDenylist_works() {
         try {
-            final Set<String> ssids = new ArraySet<>(Arrays.asList("ssid1", "ssid2", "ssid3"));
+            final Set<WifiSsid> ssids = new ArraySet<>(
+                    Arrays.asList(WifiSsid.fromBytes("ssid1".getBytes(StandardCharsets.UTF_8)),
+                            WifiSsid.fromBytes("ssid2".getBytes(StandardCharsets.UTF_8)),
+                            WifiSsid.fromBytes("ssid3".getBytes(StandardCharsets.UTF_8))));
             WifiSsidPolicy policy = WifiSsidPolicy.createDenylistPolicy(ssids);
 
             mDevicePolicyManager.setWifiSsidPolicy(policy);
@@ -100,7 +107,8 @@ public class WifiSsidRestrictionTest {
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_validRemoveRestriction_works() {
         try {
-            final Set<String> ssids = Collections.singleton("ssid1");
+            final Set<WifiSsid> ssids = new ArraySet<>(
+                    Arrays.asList(WifiSsid.fromBytes("ssid1".getBytes(StandardCharsets.UTF_8))));
             WifiSsidPolicy policy = WifiSsidPolicy.createDenylistPolicy(ssids);
 
             mDevicePolicyManager.setWifiSsidPolicy(policy);
@@ -121,7 +129,7 @@ public class WifiSsidRestrictionTest {
     @PositivePolicyTest(policy = WifiSsidRestriction.class)
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_invalidPolicy_fails() {
-        final Set<String> ssids = new ArraySet<>();
+        final Set<WifiSsid> ssids = new ArraySet<>();
         Assert.assertThrows(IllegalArgumentException.class,
                 () -> WifiSsidPolicy.createAllowlistPolicy(ssids));
     }
@@ -131,7 +139,8 @@ public class WifiSsidRestrictionTest {
     @CannotSetPolicyTest(policy = WifiSsidRestriction.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_invalidAdmin_fails() {
-        final Set<String> ssids = Collections.singleton("ssid1");
+        final Set<WifiSsid> ssids = new ArraySet<>(
+                Arrays.asList(WifiSsid.fromBytes("ssid1".getBytes(StandardCharsets.UTF_8))));
         WifiSsidPolicy policy = WifiSsidPolicy.createDenylistPolicy(ssids);
 
         assertThrows(SecurityException.class, () -> mDevicePolicyManager.setWifiSsidPolicy(policy));
