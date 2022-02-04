@@ -353,14 +353,16 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         return getSettingsValue(getDevice(), setting);
     }
 
-    public static void setSettingsValue(ITestDevice device, String setting, String value)
+    public static String setSettingsValue(ITestDevice device, String setting, String value)
             throws Exception {
+        String val = getSettingsValue(device, setting);
         device.executeShellCommand("cmd hdmi_control cec_setting set " + setting + " " +
                 value);
+        return val;
     }
 
-    public void setSettingsValue(String setting, String value) throws Exception {
-        setSettingsValue(getDevice(), setting, value);
+    public String setSettingsValue(String setting, String value) throws Exception {
+        return setSettingsValue(getDevice(), setting, value);
     }
 
     public String getDeviceList() throws Exception {
@@ -470,16 +472,11 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     public String setPowerControlMode(String valToSet) throws Exception {
-        String val = getSettingsValue(POWER_CONTROL_MODE);
-        setSettingsValue(POWER_CONTROL_MODE, valToSet);
-        return val;
+        return setSettingsValue(POWER_CONTROL_MODE, valToSet);
     }
 
     public String setPowerStateChangeOnActiveSourceLost(String valToSet) throws Exception {
-        String previousPowerStateChange =
-                getSettingsValue(POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST);
-        setSettingsValue(POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST, valToSet);
-        return previousPowerStateChange;
+        return setSettingsValue(POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST, valToSet);
     }
 
     public boolean isDeviceActiveSource(ITestDevice device) throws DumpsysParseException {

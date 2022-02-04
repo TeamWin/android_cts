@@ -161,6 +161,45 @@ public final class HdmiCecConstants {
     public static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_NONE = "none";
     public static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_STANDBY_NOW = "standby_now";
 
+    // Short Audio Descriptors that can be queried
+    public static final String QUERY_SAD_LPCM = "query_sad_lpcm";
+    public static final String QUERY_SAD_DD = "query_sad_dd";
+    public static final String QUERY_SAD_MPEG1 = "query_sad_mpeg1";
+    public static final String QUERY_SAD_MP3 = "query_sad_mp3";
+    public static final String QUERY_SAD_MPEG2 = "query_sad_mpeg2";
+    public static final String QUERY_SAD_AAC = "query_sad_aac";
+    public static final String QUERY_SAD_DTS = "query_sad_dts";
+    public static final String QUERY_SAD_ATRAC = "query_sad_atrac";
+    public static final String QUERY_SAD_ONEBITAUDIO = "query_sad_onebitaudio";
+    public static final String QUERY_SAD_DDP = "query_sad_ddp";
+    public static final String QUERY_SAD_DTSHD = "query_sad_dtshd";
+    public static final String QUERY_SAD_TRUEHD = "query_sad_truehd";
+    public static final String QUERY_SAD_DST = "query_sad_dst";
+    public static final String QUERY_SAD_WMAPRO = "query_sad_wmapro";
+    public static final String QUERY_SAD_MAX = "query_sad_max";
+
+    // Whether to query an SAD or not
+    public static final String QUERY_SAD_DISABLED = "0";
+    public static final String QUERY_SAD_ENABLED = "1";
+
+    // Audio codecs
+    public static final int AUDIO_CODEC_NONE = 0x0;
+    public static final int AUDIO_CODEC_LPCM = 0x1; // Support LPCMs
+    public static final int AUDIO_CODEC_DD = 0x2; // Support DD
+    public static final int AUDIO_CODEC_MPEG1 = 0x3; // Support MPEG1
+    public static final int AUDIO_CODEC_MP3 = 0x4; // Support MP3
+    public static final int AUDIO_CODEC_MPEG2 = 0x5; // Support MPEG2
+    public static final int AUDIO_CODEC_AAC = 0x6; // Support AAC
+    public static final int AUDIO_CODEC_DTS = 0x7; // Support DTS
+    public static final int AUDIO_CODEC_ATRAC = 0x8; // Support ATRAC
+    public static final int AUDIO_CODEC_ONEBITAUDIO = 0x9; // Support One-Bit Audio
+    public static final int AUDIO_CODEC_DDP = 0xA; // Support DDP
+    public static final int AUDIO_CODEC_DTSHD = 0xB; // Support DTSHD
+    public static final int AUDIO_CODEC_TRUEHD = 0xC; // Support MLP/TRUE-HD
+    public static final int AUDIO_CODEC_DST = 0xD; // Support DST
+    public static final int AUDIO_CODEC_WMAPRO = 0xE; // Support WMA-Pro
+    public static final int AUDIO_CODEC_MAX = 0xF;
+
     // CEC 2.0 Report Feature Bits
     public static final int FEATURES_SINK_SUPPORTS_ARC_TX_BIT = 0x4;
     public static final int FEATURES_SINK_SUPPORTS_ARC_RX_BIT = 0x2;
