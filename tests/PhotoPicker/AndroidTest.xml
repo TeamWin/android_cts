@@ -23,6 +23,11 @@
         <option name="force-root" value="true" />
     </target_preparer>
 
+    <option
+        name="config-descriptor:metadata"
+        key="mainline-param"
+        value="com.google.android.mediaprovider.apex" />
+
     <option name="test-suite-tag" value="cts" />
     <option name="test-tag" value="PhotoPickerTests" />
     <!-- Instant apps cannot access external storage -->
