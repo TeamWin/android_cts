@@ -22,7 +22,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -522,12 +521,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                                 By.res(ALLOW_FOREGROUND_RADIO_BUTTON)
                             } else if (showsAlwaysButton(permission)) {
                                 By.res(ALLOW_ALWAYS_RADIO_BUTTON)
-                            } else if (isMediaStorageButton(permission, targetSdk)) {
-                                // Uses "allow_foreground_only_radio_button" as id
-                                byTextRes(R.string.allow_media_storage)
-                            } else if (isAllStorageButton(permission, targetSdk)) {
-                                // Uses "allow_always_radio_button" as id
-                                byTextRes(R.string.allow_external_storage)
                             } else {
                                 By.res(ALLOW_RADIO_BUTTON)
                             }
@@ -603,35 +596,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.ACCESS_BACKGROUND_LOCATION -> true
             else -> false
         }
-
-    private fun isMediaStorageButton(permission: String, targetSdk: Int): Boolean =
-            if (isTv || isWatch) {
-                false
-            } else {
-                when (permission) {
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
-                        // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
-                        targetSdk >= Build.VERSION_CODES.P
-                    else -> false
-                }
-            }
-
-    private fun isAllStorageButton(permission: String, targetSdk: Int): Boolean =
-            if (isTv || isWatch) {
-                false
-            } else {
-                when (permission) {
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
-                        // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
-                        targetSdk < Build.VERSION_CODES.P
-                    android.Manifest.permission.MANAGE_EXTERNAL_STORAGE -> true
-                    else -> false
-                }
-            }
 
     private fun scrollToBottom() {
         val scrollable = UiScrollable(UiSelector().scrollable(true)).apply {
