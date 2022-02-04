@@ -178,20 +178,31 @@ public class RevokeOwnPermissionTest {
     }
 
     @Test
-    public void testWhileInUseLocationPermission() throws Throwable {
-        // After revoking any location permission and leaving the app in background for a while, the
-        // location permission group should be revoked.
+    public void testRevokeLocationPermission() throws Throwable {
+        // Test behavior specific to location group: revoking fine location should not revoke coarse
+        // location, and background location should not be revoked as long as a foreground
+        // permission is still granted
         installApp();
         grantPermission(APP_PKG_NAME, ACCESS_COARSE_LOCATION);
         assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_COARSE_LOCATION);
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
         assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_FINE_LOCATION);
+        grantPermission(APP_PKG_NAME, ACCESS_BACKGROUND_LOCATION);
+        assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_BACKGROUND_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);
-        placeAppInBackground();
+        killApp();
         assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
                 ACCESS_FINE_LOCATION);
+        assertGranted(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
+                ACCESS_COARSE_LOCATION);
+        assertGranted(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
+                ACCESS_BACKGROUND_LOCATION);
+        revokePermission(ACCESS_COARSE_LOCATION);
+        killApp();
         assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
                 ACCESS_COARSE_LOCATION);
+        assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
+                ACCESS_BACKGROUND_LOCATION);
         uninstallApp();
     }
 
