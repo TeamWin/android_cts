@@ -42,6 +42,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     private static final int LATCH_MAX = 1;
     private static final int WAIT_FOR_STATE_CHANGE = 2000;
     private static final int WAIT_FOR_ESTABLISHING = 5000;
+
     private final String mCallId = String.valueOf(this.hashCode());
     private final Object mLock = new Object();
 
@@ -58,6 +59,12 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
             sLatches[i] = new CountDownLatch(1);
         }
     }
+
+    public static final int TEST_TYPE_NONE = 0x00000000;
+    public static final int TEST_TYPE_MO_ANSWER = 0x00000001;
+    public static final int TEST_TYPE_MO_FAILED = 0x00000002;
+
+    private int mTestType = TEST_TYPE_NONE;
 
     public boolean imsCallSessionLatchCountdown(int latchIndex, int waitMs) {
         boolean complete = false;
@@ -126,7 +133,15 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
             Log.d(LOG_TAG, "start :: Illegal state; callId= " + getCallId()
                     + ", state=" + getState());
         }
-        mCallExecutor.execute(()->startInternal());
+
+        mCallExecutor.execute(() -> {
+            imsCallSessionLatchCountdown(LATCH_WAIT, 500);
+            if (isTestType(TEST_TYPE_MO_FAILED)) {
+                startFailed();
+            } else {
+                startInternal();
+            }
+        });
     }
 
     void startInternal() {
@@ -196,6 +211,27 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         setState(ImsCallSessionImplBase.State.ESTABLISHED);
     }
 
+    void startFailed() {
+        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+                Log.d(LOG_TAG, "invokestartFailed mCallId = " + mCallId);
+                mListener.callSessionInitiatingFailed(getReasonInfo(
+                        ImsReasonInfo.CODE_LOCAL_INTERNAL_ERROR, ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+        setState(ImsCallSessionImplBase.State.TERMINATED);
+    }
+
     @Override
     public void accept(int callType, ImsStreamMediaProfile profile) {
         Log.i(LOG_TAG, "Accept Call");
@@ -263,6 +299,31 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
         setState(ImsCallSessionImplBase.State.TERMINATED);
     }
 
+    // End the Incoming Call from local side after accept.
+    public void terminateIncomingCall() {
+        int state = getState();
+        if (state == ImsCallSessionImplBase.State.ESTABLISHED) {
+            postAndRunTask(() -> {
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    Log.d(LOG_TAG, "invokeTerminated mCallId = " + mCallId);
+                    mListener.callSessionTerminated(getReasonInfo(
+                            ImsReasonInfo.CODE_USER_TERMINATED_BY_REMOTE,
+                            ImsReasonInfo.CODE_UNSPECIFIED));
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+            setState(ImsCallSessionImplBase.State.TERMINATED);
+        }
+    }
+
     private void setState(int state) {
         if (mState != state) {
             Log.d(LOG_TAG, "ImsCallSession :: " + mState + " >> " + state);
@@ -277,6 +338,22 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     private ImsReasonInfo getReasonInfo(int code, int extraCode) {
         ImsReasonInfo reasonInfo = new ImsReasonInfo(code, extraCode, "");
         return reasonInfo;
+    }
+
+    public void addTestType(int type) {
+        mTestType |= type;
+    }
+
+    public void removeTestType(int type) {
+        mTestType &= ~type;
+    }
+
+    public boolean isTestType(int type) {
+        return  ((mTestType & type) == type);
+    }
+
+    public Executor getExecutor() {
+        return mCallBackExecutor;
     }
 
     private void postAndRunTask(Runnable task) {

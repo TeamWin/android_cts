@@ -81,6 +81,7 @@ public class ImsCallingTest {
     public static final int WAIT_FOR_SERVICE_TO_UNBOUND = 40000;
     public static final int WAIT_FOR_CONDITION = 3000;
     public static final int WAIT_FOR_CALL_STATE = 10000;
+    public static final int WAIT_FOR_CALL_DISCONNECT = 5000;
     public static final int LATCH_WAIT = 0;
     public static final int LATCH_INCALL_SERVICE_BOUND = 1;
     public static final int LATCH_INCALL_SERVICE_UNBOUND = 2;
@@ -90,7 +91,8 @@ public class ImsCallingTest {
     public static final int LATCH_IS_CALL_ACTIVE = 6;
     public static final int LATCH_IS_CALL_DISCONNECTING = 7;
     public static final int LATCH_IS_CALL_DISCONNECTED = 8;
-    public static final int LATCH_MAX = 9;
+    public static final int LATCH_IS_CALL_RINGING = 9;
+    public static final int LATCH_MAX = 10;
 
     private static boolean sIsBound = false;
     private static int sCounter = 5553639;
@@ -382,25 +384,103 @@ public class ImsCallingTest {
         telecomManager.placeCall(imsUri, extras);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
 
-        Call call = null;
-        if (mCurrentCallId != null) {
-            call = getCall(mCurrentCallId);
+        Call call = getCall(mCurrentCallId);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        call.disconnect();
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testOutGoingCallStartFailed() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
         }
+
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
+                .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
+
+        final Uri imsUri = Uri.fromParts(PhoneAccount.SCHEME_TEL, String.valueOf(++sCounter), null);
+        Bundle extras = new Bundle();
+
+        // Place outgoing call
+        telecomManager.placeCall(imsUri, extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        TestMmTelFeature mmtelfeatue = sServiceConnector.getCarrierService()
+                                .getMmTelFeature();
+                        return (mmtelfeatue.isCallSessionCreated()) ? true : false;
+                    }
+                }, WAIT_FOR_CONDITION, "CallSession Created");
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+        assertNotNull("Unable to get callSession, its null", callSession);
+        callSession.addTestType(TestImsCallSessionImpl.TEST_TYPE_MO_FAILED);
 
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DIALING, WAIT_FOR_CALL_STATE));
-        TestImsCallSessionImpl mCallSession = mCallSession =
-                sServiceConnector.getCarrierService().getMmTelFeature().getImsCallsession();
-
-        if ((call != null) && (mCallSession != null)) {
-            isCallActive(call, mCallSession);
-        }
-        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
-
-        if ((call != null) && (mCallSession != null)) {
-            isCallDisconnected(call, mCallSession);
-        }
+        isCallDisconnected(call, callSession);
         assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
 
+    @Test
+    public void testIncomingCall() {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+
+        Bundle extras = new Bundle();
+        sServiceConnector.getCarrierService().getMmTelFeature().onIncomingCallReceived(extras);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+
+        Call call = getCall(mCurrentCallId);
+        if (call.getDetails().getState() == call.STATE_RINGING) {
+            callingTestLatchCountdown(LATCH_WAIT, 5000);
+            call.answer(0);
+        }
+
+        TestImsCallSessionImpl callSession = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getImsCallsession();
+
+        isCallActive(call, callSession);
+
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        callSession.terminateIncomingCall();
+
+        isCallDisconnected(call, callSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        waitForUnboundService();
+    }
+
+    public void waitForUnboundService() {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -418,6 +498,8 @@ public class ImsCallingTest {
 
     public void isCallActive(Call call, TestImsCallSessionImpl callsession) {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_ACTIVE, WAIT_FOR_CALL_STATE));
+        assertNotNull("Unable to get callSession, its null", callsession);
+
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -430,13 +512,12 @@ public class ImsCallingTest {
                         return (callsession.isInCall()) ? true : false;
                     }
                 }, WAIT_FOR_CONDITION, "Call Active");
-
-        callingTestLatchCountdown(LATCH_WAIT, 5000);
-        call.disconnect();
     }
 
     public void isCallDisconnected(Call call, TestImsCallSessionImpl callsession) {
         assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTED, WAIT_FOR_CALL_STATE));
+        assertNotNull("Unable to get callSession, its null", callsession);
+
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -452,6 +533,7 @@ public class ImsCallingTest {
     }
 
     private void setCallID(String callid) {
+        assertNotNull("Call Id is set to null", callid);
         mCurrentCallId = callid;
     }
 
@@ -479,7 +561,9 @@ public class ImsCallingTest {
 
             for (Map.Entry<String, Call> entry : mCalls.entrySet()) {
                 if (entry.getKey().equals(callId)) {
-                    return entry.getValue();
+                    Call call = entry.getValue();
+                    assertNotNull("Call is not added, its null", call);
+                    return call;
                 }
             }
         }
@@ -496,7 +580,7 @@ public class ImsCallingTest {
         for (Map.Entry<String, Call> entry : entries) {
             if (entry.getKey().equals(callid)) {
                 mCalls.remove(entry.getKey());
-                setCallID(null);
+                mCurrentCallId = null;
             }
         }
     }
@@ -537,6 +621,9 @@ public class ImsCallingTest {
                 case Call.STATE_DISCONNECTED : {
                     countDownLatch(LATCH_IS_CALL_DISCONNECTED);
                     break;
+                }
+                case Call.STATE_RINGING : {
+                    countDownLatch(LATCH_IS_CALL_RINGING);
                 }
                 default:
                     break;
