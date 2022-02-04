@@ -257,6 +257,11 @@ public class ImageReaderDecoderTest {
             new MediaAsset("swirl_136x144_h264.mp4", 136, 144),
             new MediaAsset("swirl_132x130_h264.mp4", 132, 130),
             new MediaAsset("swirl_130x132_h264.mp4", 130, 132),
+            new MediaAsset("swirl_128x128_h264_10bit.mp4", 128, 128, 10),
+            new MediaAsset("swirl_144x136_h264_10bit.mp4", 144, 136, 10),
+            new MediaAsset("swirl_136x144_h264_10bit.mp4", 136, 144, 10),
+            new MediaAsset("swirl_132x130_h264_10bit.mp4", 132, 130, 10),
+            new MediaAsset("swirl_130x132_h264_10bit.mp4", 130, 132, 10),
             new MediaAsset("video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
                     480, 360, false));
 
@@ -266,7 +271,12 @@ public class ImageReaderDecoderTest {
             new MediaAsset("swirl_144x136_h265.mp4", 144, 136),
             new MediaAsset("swirl_136x144_h265.mp4", 136, 144),
             new MediaAsset("swirl_132x130_h265.mp4", 132, 130),
-            new MediaAsset("swirl_130x132_h265.mp4", 130, 132));
+            new MediaAsset("swirl_130x132_h265.mp4", 130, 132),
+            new MediaAsset("swirl_128x128_h265_10bit.mp4", 128, 128, 10),
+            new MediaAsset("swirl_144x136_h265_10bit.mp4", 144, 136, 10),
+            new MediaAsset("swirl_136x144_h265_10bit.mp4", 136, 144, 10),
+            new MediaAsset("swirl_132x130_h265_10bit.mp4", 132, 130, 10),
+            new MediaAsset("swirl_130x132_h265_10bit.mp4", 130, 132, 10));
 
     private static MediaAssets VP8_ASSETS = new MediaAssets(
             MediaFormat.MIMETYPE_VIDEO_VP8,
@@ -282,7 +292,12 @@ public class ImageReaderDecoderTest {
             new MediaAsset("swirl_144x136_vp9.webm", 144, 136),
             new MediaAsset("swirl_136x144_vp9.webm", 136, 144),
             new MediaAsset("swirl_132x130_vp9.webm", 132, 130),
-            new MediaAsset("swirl_130x132_vp9.webm", 130, 132));
+            new MediaAsset("swirl_130x132_vp9.webm", 130, 132),
+            new MediaAsset("swirl_128x128_vp9_10bit.webm", 128, 128, 10),
+            new MediaAsset("swirl_144x136_vp9_10bit.webm", 144, 136, 10),
+            new MediaAsset("swirl_136x144_vp9_10bit.webm", 136, 144, 10),
+            new MediaAsset("swirl_132x130_vp9_10bit.webm", 132, 130, 10),
+            new MediaAsset("swirl_130x132_vp9_10bit.webm", 130, 132, 10));
 
     private static MediaAssets AV1_ASSETS = new MediaAssets(
             MediaFormat.MIMETYPE_VIDEO_AV1,
@@ -290,7 +305,12 @@ public class ImageReaderDecoderTest {
             new MediaAsset("swirl_144x136_av1.webm", 144, 136),
             new MediaAsset("swirl_136x144_av1.webm", 136, 144),
             new MediaAsset("swirl_132x130_av1.webm", 132, 130),
-            new MediaAsset("swirl_130x132_av1.webm", 130, 132));
+            new MediaAsset("swirl_130x132_av1.webm", 130, 132),
+            new MediaAsset("swirl_128x128_av1_10bit.webm", 128, 128, 10),
+            new MediaAsset("swirl_144x136_av1_10bit.webm", 144, 136, 10),
+            new MediaAsset("swirl_136x144_av1_10bit.webm", 136, 144, 10),
+            new MediaAsset("swirl_132x130_av1_10bit.webm", 132, 130, 10),
+            new MediaAsset("swirl_130x132_av1_10bit.webm", 130, 132, 10));
 
     static final float SWIRL_FPS = 12.f;
 
