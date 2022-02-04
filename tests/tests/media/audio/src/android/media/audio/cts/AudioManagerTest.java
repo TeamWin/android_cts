@@ -69,7 +69,6 @@ import android.media.audio.cts.R;
 import android.media.audiopolicy.AudioProductStrategy;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Utils;
-
 import android.os.Build;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -1984,6 +1983,38 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     }
                 }
             }
+        }
+    }
+
+    public void testAssistantUidRouting() {
+        try {
+            mAudioManager.addAssistantServicesUids(new ArrayList<>(0));
+            fail("addAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            mAudioManager.removeAssistantServicesUids(new ArrayList<>(0));
+            fail("removeAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            List<Integer> uids = mAudioManager.getAssistantServicesUids();
+            fail("getAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            mAudioManager.setActiveAssistantServiceUids(new ArrayList<>(0));
+            fail("setActiveAssistantServiceUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            List<Integer> uids = mAudioManager.getActiveAssistantServicesUids();
+            fail("getActiveAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
         }
     }
 
