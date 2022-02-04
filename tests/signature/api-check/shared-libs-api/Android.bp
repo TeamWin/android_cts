@@ -30,6 +30,11 @@ java_library {
 android_test {
     name: "CtsSharedLibsApiSignatureTestCases",
     defaults: ["cts_defaults"],
+
+    // Ensure that any android.test and junit classes embedded within this test do not conflict with
+    // the classes provided by the android.test.base or android.test.runner shared libraries.
+    jarjar_rules: ":cts-android-test-jarjar-rules",
+
     java_resources: [
         ":CtsSharedLibsApiSignatureTestCases_cts-shared-libs-all.api",
     ],
