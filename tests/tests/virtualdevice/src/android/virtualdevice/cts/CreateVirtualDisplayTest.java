@@ -38,6 +38,7 @@ import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Handler;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 import android.virtualdevice.cts.util.FakeAssociationRule;
 
@@ -56,6 +57,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = " cannot be accessed by instant apps")
 public class CreateVirtualDisplayTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =

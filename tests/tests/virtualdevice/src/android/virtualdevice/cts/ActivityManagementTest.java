@@ -49,6 +49,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ResultReceiver;
+import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
 import android.virtualdevice.cts.util.FakeAssociationRule;
 import android.virtualdevice.cts.util.TestAppHelper;
@@ -76,6 +77,7 @@ import java.util.concurrent.TimeUnit;
  * virtual device.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class ActivityManagementTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =

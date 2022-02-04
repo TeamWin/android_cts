@@ -33,6 +33,7 @@ import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -48,6 +49,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualDeviceManagerBasicTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
