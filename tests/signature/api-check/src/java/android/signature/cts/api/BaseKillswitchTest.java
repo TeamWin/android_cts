@@ -23,7 +23,6 @@ import android.signature.cts.DexMember;
 import android.signature.cts.DexMemberChecker;
 import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
-import repackaged.android.test.InstrumentationTestRunner;
 
 public abstract class BaseKillswitchTest extends AbstractApiTest {
 
