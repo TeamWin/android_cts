@@ -86,10 +86,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
         return sPc == Build.VERSION_CODES.S;
     }
 
+    public static boolean isTPerfClass() {
+        return sPc == Build.VERSION_CODES.TIRAMISU;
+    }
+
     /**
      * Latest defined media performance class.
      */
-    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.S;
+    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.TIRAMISU;
 
     public static boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
