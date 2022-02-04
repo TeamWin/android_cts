@@ -39,7 +39,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 
-import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
@@ -55,7 +54,6 @@ import java.util.List;
  * Photo Picker Device only tests for common flows.
  */
 @RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class PhotoPickerTest extends PhotoPickerBaseTest {
     private List<Uri> mUriList = new ArrayList<>();
 
