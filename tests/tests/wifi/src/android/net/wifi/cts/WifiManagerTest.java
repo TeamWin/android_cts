@@ -2504,6 +2504,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ));
                 assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ));
+                assertEquals(currentConfig.getMaxChannelBandwidth(),
+                        testSoftApConfig.getMaxChannelBandwidth());
             }
         }
     }
@@ -2768,6 +2770,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         SoftApConfiguration.BAND_5GHZ, new int[] {149});
                 softApConfigBuilder.setAllowedAcsChannels(
                         SoftApConfiguration.BAND_6GHZ, new int[] {});
+                softApConfigBuilder.setMaxChannelBandwidth(SoftApInfo.CHANNEL_WIDTH_80MHZ);
             }
 
             // Test SoftApConfiguration set and get
