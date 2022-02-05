@@ -27,6 +27,8 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.Capability;
+import android.content.pm.CapabilityParams;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.BitmapFactory;
@@ -599,16 +601,24 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     makeShortcutBuilder("s1")
                             .setShortLabel("title1")
                             .setIntent(new Intent("main").putExtra("k1", "yyy"))
-                            .addCapabilityBinding("action.intent.START_EXERCISE",
-                                    "exercise.type", list("running", "jogging"))
-                            .addCapabilityBinding("action.intent.START_EXERCISE",
-                                    "exercise.duration", list("10m"))
+                            .addCapabilityBinding(
+                                    new Capability.Builder("action.intent.START_EXERCISE").build(),
+                                    new CapabilityParams.Builder("exercise.type", "running")
+                                            .addAlias("jogging")
+                                            .build())
+                            .addCapabilityBinding(
+                                    new Capability.Builder("action.intent.START_EXERCISE").build(),
+                                    new CapabilityParams.Builder("exercise.duration", "10m")
+                                            .build())
                             .build(),
                     makeShortcutBuilder("s2")
                             .setShortLabel("title2")
                             .setIntent(new Intent("main").putExtra("k1", "yyy"))
-                            .addCapabilityBinding("action.intent.STOP_EXERCISE",
-                                    "exercise.type", list("running", "jogging"))
+                            .addCapabilityBinding(
+                                    new Capability.Builder("action.intent.STOP_EXERCISE").build(),
+                                    new CapabilityParams.Builder("exercise.type", "running")
+                                            .addAlias("jogging")
+                                            .build())
                             .build(),
                     makeShortcut("s3", "title3"))));
         });
@@ -619,21 +629,24 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .areAllDynamic()
                     .haveIds("s1", "s2", "s3")
                     .forShortcutWithId("s1", si -> {
-                        assertTrue(si.hasCapability("action.intent.START_EXERCISE"));
-                        assertFalse(si.hasCapability("action.intent.STOP_EXERCISE"));
-                        assertEquals(list("running", "jogging"),
-                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
-                                "exercise.type"));
-                        assertEquals(list("10m"),
-                                si.getCapabilityParameterValues("action.intent.START_EXERCISE",
-                                        "exercise.duration"));
+                        assertEquals(list(new Capability.Builder(
+                                "action.intent.START_EXERCISE").build()), si.getCapabilities());
+                        assertEquals(list(
+                                        new CapabilityParams.Builder("exercise.type", "running")
+                                                .addAlias("jogging").build(),
+                                        new CapabilityParams.Builder("exercise.duration", "10m")
+                                                .build()),
+                                si.getCapabilityParams(new Capability.Builder(
+                                        "action.intent.START_EXERCISE").build()));
                     })
                     .forShortcutWithId("s2", si -> {
-                        assertFalse(si.hasCapability("action.intent.START_EXERCISE"));
-                        assertTrue(si.hasCapability("action.intent.STOP_EXERCISE"));
-                        assertEquals(list("running", "jogging"),
-                                si.getCapabilityParameterValues("action.intent.STOP_EXERCISE",
-                                        "exercise.type"));
+                        assertEquals(list(new Capability.Builder(
+                                "action.intent.STOP_EXERCISE").build()), si.getCapabilities());
+                        assertEquals(list(
+                                new CapabilityParams.Builder("exercise.type", "running")
+                                        .addAlias("jogging").build()),
+                                si.getCapabilityParams(new Capability.Builder(
+                                        "action.intent.STOP_EXERCISE").build()));
                     })
                     .forShortcutWithId("s3", si -> {
                         assertEquals("title3", si.getShortLabel());
