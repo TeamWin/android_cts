@@ -294,7 +294,7 @@ public class CameraTestUtils extends Assert {
             int format, Size targetSize, int numBuffers, String overridePhysicalCameraId,
             MultiResolutionStreamConfigurationMap multiResStreamConfig,
             boolean createMultiResiStreamConfig, ImageDropperListener listener, Handler handler,
-            int dynamicRangeProfile) {
+            int dynamicRangeProfile, int streamUseCase) {
         if (createMultiResiStreamConfig) {
             Collection<MultiResolutionStreamInfo> multiResolutionStreams =
                     multiResStreamConfig.getOutputInfo(format);
@@ -330,6 +330,7 @@ public class CameraTestUtils extends Assert {
                     config.setPhysicalCameraId(overridePhysicalCameraId);
                 }
                 config.setDynamicRangeProfile(dynamicRangeProfile);
+                config.setStreamUseCase(streamUseCase);
                 outputConfigs.add(config);
                 outputSurfaces.add(config.getSurface());
                 targets.mPrivTargets.add(target);
@@ -342,6 +343,7 @@ public class CameraTestUtils extends Assert {
                     config.setPhysicalCameraId(overridePhysicalCameraId);
                 }
                 config.setDynamicRangeProfile(dynamicRangeProfile);
+                config.setStreamUseCase(streamUseCase);
                 outputConfigs.add(config);
                 outputSurfaces.add(config.getSurface());
 
@@ -463,7 +465,7 @@ public class CameraTestUtils extends Assert {
                     configureTarget(targets, outputConfigs, chosenSurfaces, format,
                             targetSize, numBuffers, overridePhysicalCameraId, multiResStreamConfig,
                             createMultiResReader, imageDropperListener, handler,
-                            dynamicRangeProfile);
+                            dynamicRangeProfile, streamInfo.getStreamUseCase());
                     break;
                 }
                 case ImageFormat.RAW_SENSOR: {
@@ -473,7 +475,7 @@ public class CameraTestUtils extends Assert {
                         configureTarget(targets, outputConfigs, chosenSurfaces, format,
                                 targetSize, numBuffers, overridePhysicalCameraId,
                                 multiResStreamConfig, createMultiResReader, imageDropperListener,
-                                handler, dynamicRangeProfile);
+                                handler, dynamicRangeProfile, streamInfo.getStreamUseCase());
                     }
                     break;
                 }
