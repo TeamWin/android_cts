@@ -194,6 +194,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final String TEST_COUNTRY_CODE = "JP";
     private static final String TEST_DOM_SUBJECT_MATCH = "domSubjectMatch";
     private static final int TEST_SUB_ID = 2;
+    private static final int EID_VSA = 221; // Copied from ScanResult.InformationElement
+    private static final List<ScanResult.InformationElement> TEST_VENDOR_ELEMENTS =
+            new ArrayList<>(Arrays.asList(
+                    new ScanResult.InformationElement(221, 0, new byte[]{ 1, 2, 3, 4 }),
+                    new ScanResult.InformationElement(
+                            221,
+                            0,
+                            new byte[]{ (byte) 170, (byte) 187, (byte) 204, (byte) 221 })
+            ));
 
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -1753,9 +1762,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     private void assertSsidEquals(SoftApConfiguration config, String expectedSsid) {
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
             assertEquals(WifiSsid.fromBytes(expectedSsid.getBytes(StandardCharsets.UTF_8)),
-                    config.getWifiSsid().getBytes());
+                    config.getWifiSsid());
         } else {
             assertEquals(expectedSsid, config.getSsid());
         }
@@ -2486,6 +2496,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         testSoftApConfig.getBridgedModeOpportunisticShutdownTimeoutMillis());
                 assertEquals(currentConfig.isIeee80211beEnabled(),
                         testSoftApConfig.isIeee80211beEnabled());
+                assertEquals(currentConfig.getVendorElements(),
+                        testSoftApConfig.getVendorElements());
             }
         }
     }
@@ -2743,6 +2755,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
                     || ApiLevelUtil.codenameStartsWith("T")) {
                 softApConfigBuilder.setBridgedModeOpportunisticShutdownTimeoutMillis(30_000);
+                softApConfigBuilder.setVendorElements(TEST_VENDOR_ELEMENTS);
             }
 
             // Test SoftApConfiguration set and get

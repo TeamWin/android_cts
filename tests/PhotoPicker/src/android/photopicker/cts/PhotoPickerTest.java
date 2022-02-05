@@ -39,7 +39,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 
-import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
@@ -55,7 +54,6 @@ import java.util.List;
  * Photo Picker Device only tests for common flows.
  */
 @RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class PhotoPickerTest extends PhotoPickerBaseTest {
     private List<Uri> mUriList = new ArrayList<>();
 
@@ -76,8 +74,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         final UiObject item = findItemList(itemCount).get(0);
-        item.click();
-        mDevice.waitForIdle();
+        clickAndWait(item);
 
         final Uri uri = mActivity.getResult().data.getData();
         assertPickerUriFormat(uri, mContext.getUserId());
@@ -98,8 +95,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
         final UiObject addButton = findPreviewAddOrSelectButton();
         assertThat(addButton.waitForExists(1000)).isTrue();
-        addButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(addButton);
 
         final Uri uri = mActivity.getResult().data.getData();
         assertPickerUriFormat(uri, mContext.getUserId());
@@ -139,9 +135,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertThat(itemCount).isEqualTo(imageCount);
         // Select maxCount + 1 item
         for (int i = 0; i < itemCount; i++) {
-            final UiObject item = itemList.get(i);
-            item.click();
-            mDevice.waitForIdle();
+            clickAndWait(itemList.get(i));
         }
 
         UiObject snackbarTextView = mDevice.findObject(new UiSelector().text(
@@ -152,9 +146,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertWithMessage("Timed out waiting for snackbar to disappear").that(
                 snackbarTextView.waitUntilGone(SHORT_TIMEOUT)).isTrue();
 
-        final UiObject addButton = findAddButton();
-        addButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findAddButton());
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
@@ -173,9 +165,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final int itemCount = itemList.size();
         assertThat(itemCount).isEqualTo(imageCount);
         // Select 1 item
-        final UiObject item = itemList.get(0);
-        item.click();
-        mDevice.waitForIdle();
+        clickAndWait(itemList.get(0));
 
         final Uri uri = mActivity.getResult().data.getData();
         assertPickerUriFormat(uri, mContext.getUserId());
@@ -195,14 +185,10 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final int itemCount = itemList.size();
         assertThat(itemCount).isEqualTo(imageCount);
         for (int i = 0; i < itemCount; i++) {
-            final UiObject item = itemList.get(i);
-            item.click();
-            mDevice.waitForIdle();
+            clickAndWait(itemList.get(i));
         }
 
-        final UiObject addButton = findAddButton();
-        addButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findAddButton());
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
@@ -229,27 +215,26 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertThat(itemCount).isEqualTo(videoCount);
 
         // Select one item from Photo grid
-        itemList.get(0).click();
-        mDevice.waitForIdle();
+        clickAndWait(itemList.get(0));
 
+        // Preview the item
         UiObject item = itemList.get(1);
         item.longClick();
         mDevice.waitForIdle();
 
+        final UiObject addOrSelectButton = findPreviewAddOrSelectButton();
+        assertWithMessage("Timed out waiting for AddOrSelectButton to appear")
+                .that(addOrSelectButton.waitForExists(1000)).isTrue();
+
         // Select the item from Preview
-        final UiObject selectButton = findPreviewAddOrSelectButton();
-        selectButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(addOrSelectButton);
 
         mDevice.pressBack();
 
         // Select one more item from Photo grid
-        itemList.get(2).click();
-        mDevice.waitForIdle();
+        clickAndWait(itemList.get(2));
 
-        final UiObject addButton = findAddButton();
-        addButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findAddButton());
 
         // Verify that all 3 items are returned
         final ClipData clipData = mActivity.getResult().data.getClipData();
@@ -275,14 +260,10 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final int itemCount = itemList.size();
         assertThat(itemCount).isEqualTo(imageCount);
         for (int i = 0; i < itemCount; i++) {
-            final UiObject item = itemList.get(i);
-            item.click();
-            mDevice.waitForIdle();
+            clickAndWait(itemList.get(i));
         }
 
-        final UiObject viewSelectedButton = findViewSelectedButton();
-        viewSelectedButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findViewSelectedButton());
 
         // Swipe left three times
         swipeLeftAndWait();
@@ -290,13 +271,10 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         swipeLeftAndWait();
 
         // Deselect one item
-        final UiObject selectCheckButton = findPreviewSelectCheckButton();
-        selectCheckButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findPreviewSelectCheckButton());
 
-        final UiObject addButton = findPreviewAddButton();
-        addButton.click();
-        mDevice.waitForIdle();
+        // Return selected items
+        clickAndWait(findPreviewAddButton());
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
@@ -333,48 +311,107 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    public void testMultiSelect_PreviewVideoMuteButton() throws Exception {
+        launchPreviewMultipleWithVideos(/* videoCount */ 4);
+
+        final UiObject playPauseButton = findPlayPauseButton();
+        final UiObject muteButton = findMuteButton();
+        final UiObject playerView = findPlayerView();
+
+        // set-up and wait for player controls to be sticky
+        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+
+        // Test 1: Initial state of the mute Button
+        // Check that initial state of mute button is `selected`, i.e., volume off
+        assertThat(muteButton.isSelected()).isTrue();
+
+        // Test 2: Click Mute Button
+        // Click to unmute the audio
+        clickAndWait(muteButton);
+        // Check that mute button state is `not selected`, i.e., it shows `volume up` icon
+        assertThat(muteButton.isSelected()).isFalse();
+        // Click on the muteButton and check that mute button status is now `selected`
+        clickAndWait(muteButton);
+        assertThat(muteButton.isSelected()).isTrue();
+
+        // Test 3: Swipe resumes mute state, with state of mute button = `not selected`
+        // Click muteButton again to check the next video resumes the previous video's mute state
+        clickAndWait(muteButton);
+        assertThat(muteButton.isSelected()).isFalse();
+        // check that next video resumed previous video's mute state
+        swipeLeftAndWait();
+        // set-up and wait for player controls to be sticky
+        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+        assertThat(muteButton.isSelected()).isFalse();
+
+        // Test 4: Swipe resumes mute state, with state of the button = `selected`
+        // Click muteButton again to check the next video resumes the previous video's mute state
+        clickAndWait(muteButton);
+        assertThat(muteButton.isSelected()).isTrue();
+        // Swipe to next page and check that muteButton is selected
+        swipeLeftAndWait();
+        // set-up and wait for player controls to be sticky
+        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+        assertThat(muteButton.isSelected()).isTrue();
+
+        // Test 5: Next preview resumes mute state
+        // Click muteButton again to check if next Preview launch resumes the muteButton state
+        clickAndWait(muteButton);
+        assertThat(muteButton.isSelected()).isFalse();
+        // Go back and launch preview again
+        mDevice.pressBack();
+        // set-up and wait for player controls to be sticky
+        clickAndWait(findViewSelectedButton());
+        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+        assertThat(muteButton.isSelected()).isFalse();
+
+        clickAndWait(findPreviewAddButton());
+        // We don't test the result of the picker here because the intention of the test is only to
+        // test the video controls
+    }
+
+    @Test
     public void testMultiSelect_PreviewVideoControlsVisibility() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
 
         mDevice.waitForIdle();
 
         final UiObject playPauseButton = findPlayPauseButton();
+        final UiObject muteButton = findMuteButton();
         // Check that the player controls are visible
-        assertPlayPauseVisible(playPauseButton);
+        assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Check that buttons auto hide.
-        assertPlayPauseAutoHides(playPauseButton);
+        assertPlayerControlsAutoHide(playPauseButton, muteButton);
 
         final UiObject playerView = findPlayerView();
         // Click on StyledPlayerView to make the video controls visible
-        playerView.click();
-        mDevice.waitForIdle();
-        assertPlayPauseVisible(playPauseButton);
+        clickAndWait(playerView);
+        assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Wait for 1s and check that controls are still visible
-        assertPlayPauseDoesntAutoHide(playPauseButton);
+        assertPlayerControlsDontAutoHide(playPauseButton, muteButton);
 
         // Click on StyledPlayerView and check that controls are no longer visible. Don't click in
         // the center, clicking in the center may pause the video.
         playerView.clickBottomRight();
         mDevice.waitForIdle();
-        assertPlayPauseHidden(playPauseButton);
+        assertPlayerControlsHidden(playPauseButton, muteButton);
 
         // Swipe left and check that controls are not visible
         swipeLeftAndWait();
-        assertPlayPauseHidden(playPauseButton);
+        assertPlayerControlsHidden(playPauseButton, muteButton);
 
         // Click on the StyledPlayerView and check that controls appear
-        playerView.click();
-        mDevice.waitForIdle();
-        assertPlayPauseVisible(playPauseButton);
+        clickAndWait(playerView);
+        assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Swipe left to check that controls are now visible on swipe
         swipeLeftAndWait();
-        assertPlayPauseVisible(playPauseButton);
+        assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Check that the player controls are auto hidden in 1s
-        assertPlayPauseAutoHides(playPauseButton);
+        assertPlayerControlsAutoHide(playPauseButton, muteButton);
 
         final UiObject addButton = findPreviewAddButton();
         addButton.click();
@@ -402,14 +439,10 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final int itemCount = itemList.size();
         assertThat(itemCount).isAtLeast(videoCount);
         for (int i = 0; i < itemCount; i++) {
-            final UiObject item = itemList.get(i);
-            item.click();
-            mDevice.waitForIdle();
+            clickAndWait(itemList.get(i));
         }
 
-        final UiObject addButton = findAddButton();
-        addButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findAddButton());
 
         final ClipData clipData = mActivity.getResult().data.getClipData();
         final int count = clipData.getItemCount();
@@ -424,26 +457,24 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
     private void testVideoPreviewPlayPause() throws Exception {
         final UiObject playPauseButton = findPlayPauseButton();
+        final UiObject muteButton = findMuteButton();
+
         // Wait for buttons to auto hide.
-        assertPlayPauseAutoHides(playPauseButton);
+        assertPlayerControlsAutoHide(playPauseButton, muteButton);
 
         // Click on StyledPlayerView to make the video controls visible
-        final UiObject playerView = findPlayerView();
-        playerView.click();
-        mDevice.waitForIdle();
+        clickAndWait(findPlayerView());
 
         // PlayPause button is now pause button, click the button to pause the video.
-        playPauseButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(playPauseButton);
 
         // Wait for 1s and check that play button is not auto hidden
-        assertPlayPauseDoesntAutoHide(playPauseButton);
+        assertPlayerControlsDontAutoHide(playPauseButton, muteButton);
 
         // PlayPause button is now play button, click the button to play the video.
-        playPauseButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(playPauseButton);
         // Check that pause button auto-hides in 1s.
-        assertPlayPauseAutoHides(playPauseButton);
+        assertPlayerControlsAutoHide(playPauseButton, muteButton);
     }
 
     private void launchPreviewMultipleWithVideos(int videoCount) throws  Exception {
@@ -460,36 +491,51 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertThat(itemCount).isEqualTo(videoCount);
 
         for (int i = 0; i < itemCount; i++) {
-            final UiObject item = itemList.get(i);
-            item.click();
-            mDevice.waitForIdle();
+            clickAndWait(itemList.get(i));
         }
 
-        final UiObject viewSelectedButton = findViewSelectedButton();
-        viewSelectedButton.click();
-        mDevice.waitForIdle();
+        clickAndWait(findViewSelectedButton());
     }
 
-    private void assertPlayPauseVisible(UiObject playPauseButton) {
-        assertWithMessage("Expected play/pause buttons to be visible")
-                .that(playPauseButton.exists()).isTrue();
+    private void setUpAndAssertStickyPlayerControls(UiObject playerView, UiObject playPauseButton,
+            UiObject muteButton) throws Exception {
+        // Check that buttons auto hide.
+        assertPlayerControlsAutoHide(playPauseButton, muteButton);
+        // Click on StyledPlayerView to make the video controls visible
+        clickAndWait(playerView);
+        assertPlayerControlsVisible(playPauseButton, muteButton);
     }
 
-    private void assertPlayPauseHidden(UiObject playPauseButton) {
-        assertWithMessage("Expected play/pause button to be hidden")
-                .that(playPauseButton.exists()).isFalse();
+    private void assertPlayerControlsVisible(UiObject playPauseButton, UiObject muteButton) {
+        assertVisible(playPauseButton, "Expected play/pause button to be visible");
+        assertVisible(muteButton, "Expected mute button to be visible");
     }
 
-    private void assertPlayPauseAutoHides(UiObject playPauseButton) {
+    private void assertPlayerControlsHidden(UiObject playPauseButton, UiObject muteButton) {
+        assertHidden(playPauseButton, "Expected play/pause button to be hidden");
+        assertHidden(muteButton, "Expected mute button to be hidden");
+    }
+
+    private void assertPlayerControlsAutoHide(UiObject playPauseButton, UiObject muteButton) {
         // These buttons should auto hide in 1 second after the video playback start. Since we can't
         // identify the video playback start time, we wait for 2 seconds instead.
-        assertWithMessage("Timed out waiting for pause button to auto-hide")
+        assertWithMessage("Expected play/pause button to auto hide in 2s")
                 .that(playPauseButton.waitUntilGone(2000)).isTrue();
+        assertHidden(muteButton, "Expected mute button to hide after 2s");
     }
 
-    private void assertPlayPauseDoesntAutoHide(UiObject playPauseButton) {
-        assertWithMessage("Expected play/pause buttons to not hide")
+    private void assertPlayerControlsDontAutoHide(UiObject playPauseButton, UiObject muteButton) {
+        assertWithMessage("Expected play/pause button to not auto hide in 1s")
                 .that(playPauseButton.waitUntilGone(1100)).isFalse();
+        assertVisible(muteButton, "Expected mute button to be still visible after 1s");
+    }
+
+    private void assertVisible(UiObject button, String message) {
+        assertWithMessage(message).that(button.exists()).isTrue();
+    }
+
+    private void assertHidden(UiObject button, String message) {
+        assertWithMessage(message).that(button.exists()).isFalse();
     }
 
     private static UiObject findViewSelectedButton() {
@@ -508,9 +554,19 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
                 REGEX_PACKAGE_NAME + ":id/preview_player_view"));
     }
 
+    private static UiObject findMuteButton() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/preview_mute"));
+    }
+
     private static UiObject findPlayPauseButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/exo_play_pause"));
+    }
+
+    private void clickAndWait(UiObject uiObject) throws Exception {
+        uiObject.click();
+        mDevice.waitForIdle();
     }
 
     private void swipeLeftAndWait() {

@@ -381,7 +381,8 @@ public class SystemFeaturesTest {
                 Sensor.TYPE_RELATIVE_HUMIDITY);
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HINGE_ANGLE,
                 Sensor.TYPE_HINGE_ANGLE);
-
+        assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER,
+                Sensor.TYPE_HEAD_TRACKER);
 
         /*
          * We have three cases to test for :

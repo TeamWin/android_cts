@@ -15,6 +15,7 @@
  */
 package android.signature.cts.api;
 
+import android.app.Instrumentation;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.signature.cts.ApiDocumentParser;
@@ -29,6 +30,8 @@ import android.signature.cts.VirtualPath.LocalFilePath;
 import android.signature.cts.VirtualPath.ResourcePath;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -40,12 +43,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
-import repackaged.android.test.InstrumentationTestCase;
-import repackaged.android.test.InstrumentationTestRunner;
+import junit.framework.TestCase;
 
 /**
  */
-public class AbstractApiTest extends InstrumentationTestCase {
+public class AbstractApiTest extends TestCase {
 
     private static final String TAG = "SignatureTest";
 
@@ -57,6 +59,10 @@ public class AbstractApiTest extends InstrumentationTestCase {
      * The list of expected failures.
      */
     private Collection<String> expectedFailures = Collections.emptyList();
+
+    public Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
 
     protected String getGlobalExemptions() {
         return Settings.Global.getString(
@@ -76,8 +82,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
         mResultObserver = new TestResultObserver();
 
         // Get the arguments passed to the instrumentation.
-        Bundle instrumentationArgs =
-                ((InstrumentationTestRunner) getInstrumentation()).getArguments();
+        Bundle instrumentationArgs = InstrumentationRegistry.getArguments();
 
         // Check that the device is in the correct state for running this test.
         assertEquals(

@@ -129,13 +129,15 @@ class SafetyCenterManagerTest {
         ).addIssue(
             SafetySourceIssue.Builder(
                 "Issue id", "Issue title", "Summary of the issue",
-                SEVERITY_LEVEL_CRITICAL_WARNING
-            ).addAction(
-                SafetySourceIssue.Action.Builder(
-                    "Solve issue",
-                    somePendingIntent
+                SEVERITY_LEVEL_CRITICAL_WARNING,
+                "issue_type_id"
+            )
+                .addAction(
+                    SafetySourceIssue.Action.Builder(
+                        "Solve issue",
+                        somePendingIntent
+                    ).build()
                 ).build()
-            ).build()
         ).build()
         safetyCenterManager.sendUpdateWithPermission(secondSafetyCenterUpdate)
 

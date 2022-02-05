@@ -49,7 +49,8 @@ public class SearchResultTest {
                 "best_app_developer");
 
         SearchResult result = new SearchResult.Builder(title, extraInfos)
-                .setSnippet(snippet).setScore(score).build();
+                .setSnippet(snippet).setTitle(title).setExtraInfos(extraInfos)
+                .setScore(score).build();
 
         /** Checks the original result. */
         assertThat(result.getTitle()).isEqualTo(title);

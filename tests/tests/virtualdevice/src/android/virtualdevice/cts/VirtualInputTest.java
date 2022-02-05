@@ -35,6 +35,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -50,6 +51,7 @@ import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualInputTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =

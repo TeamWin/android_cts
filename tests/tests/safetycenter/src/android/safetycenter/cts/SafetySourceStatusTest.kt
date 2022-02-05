@@ -27,7 +27,7 @@ import android.safetycenter.SafetySourceStatus.IconAction
 import android.safetycenter.SafetySourceStatus.IconAction.ICON_TYPE_GEAR
 import android.safetycenter.SafetySourceStatus.IconAction.ICON_TYPE_INFO
 import android.safetycenter.SafetySourceStatus.STATUS_LEVEL_CRITICAL_WARNING
-import android.safetycenter.SafetySourceStatus.STATUS_LEVEL_NO_ISSUES
+import android.safetycenter.SafetySourceStatus.STATUS_LEVEL_OK
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
@@ -41,11 +41,15 @@ import org.junit.runner.RunWith
 class SafetySourceStatusTest {
     private val context: Context = getApplicationContext()
 
-    private val pendingIntent1: PendingIntent = PendingIntent.getActivity(context,
-            0 /* requestCode= */, Intent("PendingIntent 1"), FLAG_IMMUTABLE)
+    private val pendingIntent1: PendingIntent = PendingIntent.getActivity(
+        context,
+        0 /* requestCode= */, Intent("PendingIntent 1"), FLAG_IMMUTABLE
+    )
     private val iconAction1 = IconAction(ICON_TYPE_INFO, pendingIntent1)
-    private val pendingIntent2: PendingIntent = PendingIntent.getActivity(context,
-            0 /* requestCode= */, Intent("PendingIntent 2"), FLAG_IMMUTABLE)
+    private val pendingIntent2: PendingIntent = PendingIntent.getActivity(
+        context,
+        0 /* requestCode= */, Intent("PendingIntent 2"), FLAG_IMMUTABLE
+    )
     private val iconAction2 = IconAction(ICON_TYPE_GEAR, pendingIntent2)
 
     @Test
@@ -126,11 +130,12 @@ class SafetySourceStatusTest {
     @Test
     fun getTitle_returnsTitle() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.title).isEqualTo("Status title")
     }
@@ -138,11 +143,12 @@ class SafetySourceStatusTest {
     @Test
     fun getSummary_returnsSummary() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.summary).isEqualTo("Status summary")
     }
@@ -150,23 +156,25 @@ class SafetySourceStatusTest {
     @Test
     fun getStatusLevel_returnsStatusLevel() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
-        assertThat(safetySourceStatus.statusLevel).isEqualTo(STATUS_LEVEL_NO_ISSUES)
+        assertThat(safetySourceStatus.statusLevel).isEqualTo(STATUS_LEVEL_OK)
     }
 
     @Test
     fun getPendingIntent_returnsPendingIntent() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.pendingIntent).isEqualTo(pendingIntent1)
     }
@@ -174,11 +182,12 @@ class SafetySourceStatusTest {
     @Test
     fun getIconAction_withDefaultBuilder_returnsNull() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.iconAction).isNull()
     }
@@ -186,12 +195,13 @@ class SafetySourceStatusTest {
     @Test
     fun getIconAction_whenSetExplicitly_returnsIconAction() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
 
         assertThat(safetySourceStatus.iconAction).isEqualTo(iconAction1)
     }
@@ -199,12 +209,13 @@ class SafetySourceStatusTest {
     @Test
     fun describeContents_returns0() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
 
         assertThat(safetySourceStatus.describeContents()).isEqualTo(0)
     }
@@ -212,18 +223,19 @@ class SafetySourceStatusTest {
     @Test
     fun createFromParcel_withWriteToParcel_returnsOriginalSafetySourceStatus() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
 
         val parcel: Parcel = Parcel.obtain()
         safetySourceStatus.writeToParcel(parcel, 0 /* flags */)
         parcel.setDataPosition(0)
         val safetySourceStatusFromParcel: SafetySourceStatus =
-                SafetySourceStatus.CREATOR.createFromParcel(parcel)
+            SafetySourceStatus.CREATOR.createFromParcel(parcel)
         parcel.recycle()
 
         assertThat(safetySourceStatusFromParcel).isEqualTo(safetySourceStatus)
@@ -233,12 +245,13 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withEqualByReferenceSafetySourceStatuses_areEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
         val otherSafetySourceStatus = safetySourceStatus
 
         assertThat(safetySourceStatus.hashCode()).isEqualTo(otherSafetySourceStatus.hashCode())
@@ -249,19 +262,21 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withAllFieldsEqual_areEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
 
         assertThat(safetySourceStatus.hashCode()).isEqualTo(otherSafetySourceStatus.hashCode())
         assertThat(safetySourceStatus).isEqualTo(otherSafetySourceStatus)
@@ -271,17 +286,19 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withDifferentTitles_areNotEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
-                "Other status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Other status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())
         assertThat(safetySourceStatus).isNotEqualTo(otherSafetySourceStatus)
@@ -291,17 +308,19 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withDifferentSummaries_areNotEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Other status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Other status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())
         assertThat(safetySourceStatus).isNotEqualTo(otherSafetySourceStatus)
@@ -311,17 +330,19 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withDifferentStatusLevels_areNotEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_CRITICAL_WARNING,
-                pendingIntent1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_CRITICAL_WARNING,
+            pendingIntent1
+        )
+            .build()
 
         assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())
         assertThat(safetySourceStatus).isNotEqualTo(otherSafetySourceStatus)
@@ -331,19 +352,25 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withDifferentPendingIntents_areNotEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_NO_ISSUES,
-                PendingIntent.getActivity(context, 0 /* requestCode= */,
-                        Intent("Status PendingIntent"), FLAG_IMMUTABLE))
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            PendingIntent.getActivity(
+                context, 0 /* requestCode= */,
+                Intent("Status PendingIntent"), FLAG_IMMUTABLE
+            )
+        )
+            .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_CRITICAL_WARNING,
-                PendingIntent.getActivity(context, 0 /* requestCode= */,
-                        Intent("Other status PendingIntent"), FLAG_IMMUTABLE))
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_CRITICAL_WARNING,
+            PendingIntent.getActivity(
+                context, 0 /* requestCode= */,
+                Intent("Other status PendingIntent"), FLAG_IMMUTABLE
+            )
+        )
+            .build()
 
         assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())
         assertThat(safetySourceStatus).isNotEqualTo(otherSafetySourceStatus)
@@ -353,19 +380,21 @@ class SafetySourceStatusTest {
     @Test
     fun hashCode_equals_toString_withDifferentIconActions_areNotEqual() {
         val safetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_CRITICAL_WARNING,
-                pendingIntent1)
-                .setIconAction(iconAction1)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_CRITICAL_WARNING,
+            pendingIntent1
+        )
+            .setIconAction(iconAction1)
+            .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
-                "Status title",
-                "Status summary",
-                STATUS_LEVEL_CRITICAL_WARNING,
-                pendingIntent1)
-                .setIconAction(iconAction2)
-                .build()
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_CRITICAL_WARNING,
+            pendingIntent1
+        )
+            .setIconAction(iconAction2)
+            .build()
 
         assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())
         assertThat(safetySourceStatus).isNotEqualTo(otherSafetySourceStatus)

@@ -71,8 +71,11 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.WindowUtil;
+
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -158,7 +161,11 @@ public class TouchInteractionControllerTest {
     public void setUp() throws Exception {
         ActivityLaunchUtils.homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
 
-        mActivityRule.launchActivity(null);
+        GestureDispatchActivity activity = mActivityRule.launchActivity(null);
+        WindowUtil.waitForFocus(activity);
+        Assert.assertTrue(activity.hasWindowFocus());
+        sInstrumentation.setInTouchMode(false);
+
         PackageManager pm = sInstrumentation.getContext().getPackageManager();
         mHasTouchscreen =
                 pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
@@ -202,7 +209,9 @@ public class TouchInteractionControllerTest {
 
     @After
     public void tearDown() {
-        mService.disableSelfAndRemove();
+        if (mService != null) {
+            mService.disableSelfAndRemove();
+        }
     }
 
     public void assertBasicConsistency() {
