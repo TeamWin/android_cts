@@ -18,6 +18,8 @@ package android.service.games.cts.touchverifier;
 
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -40,5 +42,11 @@ public final class MainActivity extends AppCompatActivity {
             mTimesClicked++;
             timesClickedView.setText(Integer.toString(mTimesClicked));
         });
+
+        WindowInsetsController windowInsetsController = rootView.getWindowInsetsController();
+        windowInsetsController.setSystemBarsBehavior(
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        );
+        windowInsetsController.hide(WindowInsets.Type.systemBars());
     }
 }

@@ -17,6 +17,8 @@
 package android.service.games.cts.game;
 
 import android.os.Bundle;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -29,5 +31,11 @@ public final class MainActivity extends AppCompatActivity {
         TextView textView = new TextView(this);
         textView.setText("This is a game");
         setContentView(textView);
+
+        WindowInsetsController windowInsetsController = textView.getWindowInsetsController();
+        windowInsetsController.setSystemBarsBehavior(
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        );
+        windowInsetsController.hide(WindowInsets.Type.systemBars());
     }
 }

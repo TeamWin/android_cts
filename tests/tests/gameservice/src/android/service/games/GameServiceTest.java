@@ -32,13 +32,16 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.service.games.testing.ActivityResult;
 import android.service.games.testing.IGameServiceTestService;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.UiAutomatorUtils;
@@ -150,8 +153,9 @@ public final class GameServiceTest {
         assumeGameServiceFeaturePresent();
 
         launchAndWaitForPackage(GAME_PACKAGE_NAME);
+        swipeToShowSystemBars();
 
-        Rect touchableBounds = getTestService().getTouchableOverlayBounds();
+        Rect touchableBounds = waitForTouchableOverlayBounds();
 
         Bitmap overlayScreenshot = Bitmap.createBitmap(
                 getInstrumentation().getUiAutomation().takeScreenshot(),
@@ -181,8 +185,9 @@ public final class GameServiceTest {
         assumeGameServiceFeaturePresent();
 
         launchAndWaitForPackage(TOUCH_VERIFIER_PACKAGE_NAME);
+        swipeToShowSystemBars();
 
-        Rect touchableBounds = getTestService().getTouchableOverlayBounds();
+        Rect touchableBounds = waitForTouchableOverlayBounds();
         UiAutomatorUtils.getUiDevice().click(touchableBounds.centerX(), touchableBounds.centerY());
 
         UiAutomatorUtils.waitFindObject(
@@ -320,6 +325,27 @@ public final class GameServiceTest {
     private static void click(String resourcePackage, String resourceId) throws Exception {
         UiAutomatorUtils.waitFindObject(By.res(resourcePackage, resourceId))
                 .click();
+    }
+
+    private static void swipeToShowSystemBars() {
+        UiDevice uiDevice = UiAutomatorUtils.getUiDevice();
+        uiDevice.swipe(
+                uiDevice.getDisplayWidth() / 2, 20,
+                uiDevice.getDisplayWidth() / 2, uiDevice.getDisplayHeight() / 2,
+                10);
+    }
+
+    private Rect waitForTouchableOverlayBounds() {
+        return PollingCheck.waitFor(
+                5_000L,
+                () -> {
+                    try {
+                        return getTestService().getTouchableOverlayBounds();
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                bounds -> !bounds.isEmpty());
     }
 
     private static void forceStop(String packageName) {

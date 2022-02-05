@@ -21,6 +21,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -67,11 +68,14 @@ public final class TestGameSessionService extends GameSessionService {
         private final String mPackageName;
         private final int mTaskId;
         private final Rect mTouchableBounds = new Rect();
+        private final FrameLayout mRootView;
 
         private TestGameSession(Context context, String packageName, int taskId) {
             mContext = context;
             mPackageName = packageName;
             mTaskId = taskId;
+            mRootView = new FrameLayout(context);
+            mRootView.setVisibility(View.GONE);
         }
 
         String getPackageName() {
@@ -92,9 +96,6 @@ public final class TestGameSessionService extends GameSessionService {
                 sActiveSessions.add(mPackageName);
             }
 
-            final FrameLayout rootView = new FrameLayout(mContext);
-            rootView.setFocusableInTouchMode(true);
-
             final TextView textView = new TextView(mContext);
             textView.setText("Overlay was rendered on: " + mPackageName);
             textView.setBackgroundColor(Color.MAGENTA);
@@ -104,18 +105,40 @@ public final class TestGameSessionService extends GameSessionService {
             textViewLayoutParams.leftMargin = 100;
             textViewLayoutParams.rightMargin = 100;
             textView.setLayoutParams(textViewLayoutParams);
-            rootView.addView(textView);
+            mRootView.addView(textView);
 
-            setTaskOverlayView(rootView,
+            setTaskOverlayView(mRootView,
                     new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
 
+            mRootView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    v.getRootSurfaceControl().setTouchableRegion(new Region());
+                    v.removeOnAttachStateChangeListener(this);
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View v) {}
+            });
             textView.addOnLayoutChangeListener(
                     (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-                        v.getGlobalVisibleRect(mTouchableBounds);
+                        boolean isViewVisible = v.getGlobalVisibleRect(mTouchableBounds);
+                        if (!isViewVisible) {
+                            mTouchableBounds.setEmpty();
+                        }
                         v.getRootSurfaceControl().setTouchableRegion(new Region(mTouchableBounds));
-                    }
-            );
+                    });
+        }
+
+        @Override
+        public void onTransientSystemBarVisibilityFromRevealGestureChanged(
+                boolean visibleDueToGesture) {
+            if (visibleDueToGesture) {
+                mRootView.setVisibility(View.VISIBLE);
+            } else {
+                mRootView.setVisibility(View.GONE);
+            }
         }
 
         @Override
