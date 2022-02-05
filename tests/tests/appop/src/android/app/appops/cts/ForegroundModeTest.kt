@@ -76,6 +76,7 @@ class ForegroundModeTest {
         uiDevice.wakeUp()
         uiDevice.executeShellCommand("wm dismiss-keyguard")
         uiDevice.executeShellCommand("input keyevent KEYCODE_HOME")
+        uiDevice.waitForIdle()
     }
 
     @Before
