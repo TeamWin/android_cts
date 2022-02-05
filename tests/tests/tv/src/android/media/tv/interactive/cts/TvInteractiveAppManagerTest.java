@@ -73,23 +73,28 @@ public class TvInteractiveAppManagerTest {
 
         @Override
         public void onInteractiveAppServiceAdded(String iAppServiceId) {
+            super.onInteractiveAppServiceAdded(iAppServiceId);
         }
 
         @Override
         public void onInteractiveAppServiceRemoved(String iAppServiceId) {
+            super.onInteractiveAppServiceRemoved(iAppServiceId);
         }
 
         @Override
         public void onInteractiveAppServiceUpdated(String iAppServiceId) {
+            super.onInteractiveAppServiceUpdated(iAppServiceId);
         }
 
         @Override
         public void onTvInteractiveAppInfoUpdated(TvInteractiveAppInfo iAppInfo) {
+            super.onTvInteractiveAppInfoUpdated(iAppInfo);
         }
 
         @Override
         public void onTvInteractiveAppServiceStateChanged(
                 String iAppServiceId, int type, int state, int err) {
+            super.onTvInteractiveAppServiceStateChanged(iAppServiceId, type, state, err);
             mIAppServiceId = iAppServiceId;
             mType = type;
             mState = state;
@@ -162,6 +167,7 @@ public class TvInteractiveAppManagerTest {
     public void tearDown() throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {
+                mManager.unregisterCallback(mCallback);
                 mTvInteractiveAppView.reset();
             }
         });
