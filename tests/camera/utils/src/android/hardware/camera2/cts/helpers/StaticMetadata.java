@@ -79,7 +79,7 @@ public class StaticMetadata {
 
     // Last defined capability enum, for iterating over all of them
     public static final int LAST_CAPABILITY_ENUM =
-            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT;
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE;
 
     // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {

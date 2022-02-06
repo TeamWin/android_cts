@@ -24,6 +24,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.SizeComparator;
 import static android.hardware.camera2.cts.CameraTestUtils.StreamCombinationTargets;
 import static android.hardware.camera2.cts.CameraTestUtils.assertEquals;
 import static android.hardware.camera2.cts.CameraTestUtils.assertNotNull;
+import static android.hardware.camera2.cts.CameraTestUtils.assertNull;
 import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationSupported;
 import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationWithSurfaces;
 import static android.hardware.camera2.cts.CameraTestUtils.configureReprocessableCameraSession;
@@ -330,6 +331,110 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     @Test
     public void testMandatoryMaximumResolutionOutputCombinations() throws Exception {
         testMandatoryOutputCombinations(/*maxResolution*/ true);
+    }
+
+    /**
+     * Test for making sure the mandatory use case stream combinations work as expected.
+     */
+    @Test
+    public void testMandatoryUseCaseOutputCombinations() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            StaticMetadata info = mAllStaticInfo.get(id);
+            CameraCharacteristics chars = info.getCharacteristics();
+            CameraCharacteristics.Key<MandatoryStreamCombination []> ck =
+                    CameraCharacteristics.SCALER_MANDATORY_USE_CASE_STREAM_COMBINATIONS;
+            MandatoryStreamCombination[] combinations = chars.get(ck);
+
+            if (!info.isCapabilitySupported(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE)) {
+                assertNull(combinations);
+                Log.i(TAG, "Camera id " + id + " doesn't support stream use case, skip test");
+                continue;
+            }
+
+            assertNotNull(combinations);
+            openDevice(id);
+
+            try {
+                for (MandatoryStreamCombination combination : combinations) {
+                    Log.i(TAG, "Testing fixed mandatory output combination with stream use case: " +
+                            combination.getDescription() + " on camera: " + id);
+                    testMandatoryUseCaseOutputCombination(id, combination);
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void testMandatoryUseCaseOutputCombination(String cameraId,
+            MandatoryStreamCombination combination) {
+        final int TIMEOUT_FOR_RESULT_MS = 1000;
+        final int MIN_RESULT_COUNT = 3;
+
+        // Setup outputs
+        List<OutputConfiguration> outputConfigs = new ArrayList<>();
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        List<Surface> uhOutputSurfaces = new ArrayList<Surface>();
+        StreamCombinationTargets targets = new StreamCombinationTargets();
+
+        CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(),
+                targets, outputConfigs, outputSurfaces, uhOutputSurfaces, MIN_RESULT_COUNT,
+                /*substituteY8*/ false, /*substituteHeic*/false,
+                /*physicalCameraId*/ null,
+                /*multiResStreamConfig*/null, mHandler,
+                /*dynamicRangeProfiles*/ null);
+
+        boolean haveSession = false;
+        try {
+            checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs,
+                    /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                    true/*defaultSupport*/,
+                    String.format("Session configuration query from combination: %s failed",
+                            combination.getDescription()));
+
+            createSessionByConfigs(outputConfigs);
+            haveSession = true;
+            CaptureRequest.Builder requestBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            for (Surface s : outputSurfaces) {
+                requestBuilder.addTarget(s);
+            }
+            CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                    mock(CameraCaptureSession.CaptureCallback.class);
+            CaptureRequest request = requestBuilder.build();
+
+            mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
+            verify(mockCaptureCallback,
+                    timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
+                    .onCaptureCompleted(
+                        eq(mCameraSession),
+                        eq(request),
+                        isA(TotalCaptureResult.class));
+            verify(mockCaptureCallback, never()).
+                    onCaptureFailed(
+                        eq(mCameraSession),
+                        eq(request),
+                        isA(CaptureFailure.class));
+        } catch (Throwable e) {
+            mCollector.addMessage(
+                    String.format("Closing down for combination: %s failed due to: %s",
+                            combination.getDescription(), e.getMessage()));
+        }
+
+        if (haveSession) {
+            try {
+                Log.i(TAG, String.format("Done with camera %s, combination: %s, closing session",
+                                cameraId, combination.getDescription()));
+                stopCapture(/*fast*/false);
+            } catch (Throwable e) {
+                mCollector.addMessage(
+                    String.format("Closing down for combination: %s failed due to: %s",
+                            combination.getDescription(), e.getMessage()));
+            }
+        }
+
+        targets.close();
     }
 
     private void testMandatoryStreamCombination(String cameraId, StaticMetadata staticInfo,

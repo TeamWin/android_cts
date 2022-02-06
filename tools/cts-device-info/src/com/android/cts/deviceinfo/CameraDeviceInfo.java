@@ -673,6 +673,8 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_MAXIMUM_RESOLUTION_STREAM_COMBINATIONS.getName());
         charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_TEN_BIT_OUTPUT_STREAM_COMBINATIONS.getName());
+        charsKeyNames.add(CameraCharacteristics.SCALER_AVAILABLE_STREAM_USE_CASES.getName());
+        charsKeyNames.add(CameraCharacteristics.SCALER_MANDATORY_USE_CASE_STREAM_COMBINATIONS.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2.getName());
         charsKeyNames.add(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1.getName());

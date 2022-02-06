@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class AdbManagerHostDeviceTest extends BaseHostJUnit4Test {
     private static final String FEATURE_WIFI = "android.hardware.wifi";
+    private static final String FEATURE_ETHERNET = "android.hardware.ethernet";
     private static final String FEATURE_CAMERA_ANY = "android.hardware.camera.any";
 
     private boolean hasFeature(String feature) throws Exception {
@@ -38,10 +39,11 @@ public class AdbManagerHostDeviceTest extends BaseHostJUnit4Test {
         return Boolean.parseBoolean(result.getStdout().trim());
     }
 
+    // TODO (b/217971269) Update the following test case name
     @Test
     @CddTest(requirement="6.1/C-1-1")
     public void test_isadbWifiSupported() throws Exception {
-        boolean expected = hasFeature(FEATURE_WIFI);
+        boolean expected = hasFeature(FEATURE_WIFI) || hasFeature(FEATURE_ETHERNET);
 
         CommandResult result = getDevice().executeShellV2Command("cmd adb is-wifi-supported");
 
@@ -49,10 +51,12 @@ public class AdbManagerHostDeviceTest extends BaseHostJUnit4Test {
         Assert.assertEquals(expected, Boolean.parseBoolean(result.getStdout().trim()));
     }
 
+    // TODO (b/217971269) Update the following test case name
     @Test
     @CddTest(requirement="6.1/C-1-2")
     public void test_isadbWifiQrSupported() throws Exception {
-        boolean expected = hasFeature(FEATURE_WIFI) && hasFeature(FEATURE_CAMERA_ANY);
+        boolean expected = (hasFeature(FEATURE_WIFI) || hasFeature(FEATURE_ETHERNET)) &&
+            hasFeature(FEATURE_CAMERA_ANY);
 
         CommandResult result = getDevice().executeShellV2Command("cmd adb is-wifi-qr-supported");
 
