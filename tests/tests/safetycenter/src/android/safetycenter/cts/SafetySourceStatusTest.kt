@@ -207,6 +207,33 @@ class SafetySourceStatusTest {
     }
 
     @Test
+    fun isEnabled_withDefaultBuilder_returnsTrue() {
+        val safetySourceStatus = SafetySourceStatus.Builder(
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .build()
+
+        assertThat(safetySourceStatus.isEnabled).isTrue()
+    }
+
+    @Test
+    fun isEnabled_whenSetExplicitly_returnsEnabled() {
+        val safetySourceStatus = SafetySourceStatus.Builder(
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_OK,
+            pendingIntent1
+        )
+            .setEnabled(false)
+            .build()
+
+        assertThat(safetySourceStatus.isEnabled).isFalse()
+    }
+
+    @Test
     fun describeContents_returns0() {
         val safetySourceStatus = SafetySourceStatus.Builder(
             "Status title",
@@ -229,6 +256,7 @@ class SafetySourceStatusTest {
             pendingIntent1
         )
             .setIconAction(iconAction1)
+            .setEnabled(true)
             .build()
 
         val parcel: Parcel = Parcel.obtain()
@@ -251,6 +279,7 @@ class SafetySourceStatusTest {
             pendingIntent1
         )
             .setIconAction(iconAction1)
+            .setEnabled(true)
             .build()
         val otherSafetySourceStatus = safetySourceStatus
 
@@ -268,6 +297,7 @@ class SafetySourceStatusTest {
             pendingIntent1
         )
             .setIconAction(iconAction1)
+            .setEnabled(true)
             .build()
         val otherSafetySourceStatus = SafetySourceStatus.Builder(
             "Status title",
@@ -276,6 +306,7 @@ class SafetySourceStatusTest {
             pendingIntent1
         )
             .setIconAction(iconAction1)
+            .setEnabled(true)
             .build()
 
         assertThat(safetySourceStatus.hashCode()).isEqualTo(otherSafetySourceStatus.hashCode())
@@ -394,6 +425,30 @@ class SafetySourceStatusTest {
             pendingIntent1
         )
             .setIconAction(iconAction2)
+            .build()
+
+        assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())
+        assertThat(safetySourceStatus).isNotEqualTo(otherSafetySourceStatus)
+        assertThat(safetySourceStatus.toString()).isNotEqualTo(otherSafetySourceStatus.toString())
+    }
+
+    @Test
+    fun hashCode_equals_toString_withDifferentEnabled_areNotEqual() {
+        val safetySourceStatus = SafetySourceStatus.Builder(
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_CRITICAL_WARNING,
+            pendingIntent1
+        )
+            .setEnabled(true)
+            .build()
+        val otherSafetySourceStatus = SafetySourceStatus.Builder(
+            "Status title",
+            "Status summary",
+            STATUS_LEVEL_CRITICAL_WARNING,
+            pendingIntent1
+        )
+            .setEnabled(false)
             .build()
 
         assertThat(safetySourceStatus.hashCode()).isNotEqualTo(otherSafetySourceStatus.hashCode())

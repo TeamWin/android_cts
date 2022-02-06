@@ -46,6 +46,7 @@ class SafetySourceDataTest {
             SafetySourceStatus.STATUS_LEVEL_NONE,
             PendingIntent.getActivity(context, 0 /* requestCode= */,
                     Intent("Status PendingIntent 1"), FLAG_IMMUTABLE))
+            .setEnabled(false)
             .build()
     private val status2 = SafetySourceStatus.Builder(
             "Status title 2",
