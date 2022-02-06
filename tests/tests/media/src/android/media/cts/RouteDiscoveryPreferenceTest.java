@@ -41,7 +41,6 @@ public class RouteDiscoveryPreferenceTest {
 
     private static final String TEST_FEATURE_1 = "TEST_FEATURE_1";
     private static final String TEST_FEATURE_2 = "TEST_FEATURE_2";
-    private static final String TEST_FEATURE_3 = "TEST_FEATURE_3";
 
     private static final String TEST_PACKAGE_1 = "TEST_PACKAGE_1";
     private static final String TEST_PACKAGE_2 = "TEST_PACKAGE_2";
@@ -64,14 +63,6 @@ public class RouteDiscoveryPreferenceTest {
                 new RouteDiscoveryPreference.Builder(new ArrayList<>(), true);
 
         assertThrows(NullPointerException.class, () -> builder.setPreferredFeatures(null));
-    }
-
-    @Test
-    public void testBuilderSetRequiredFeaturesWithNull() {
-        RouteDiscoveryPreference.Builder builder =
-                new RouteDiscoveryPreference.Builder(new ArrayList<>(), true);
-
-        assertThrows(NullPointerException.class, () -> builder.setRequiredFeatures(null));
     }
 
     @Test
@@ -100,7 +91,6 @@ public class RouteDiscoveryPreferenceTest {
         assertEquals(preferredFeatures, preference.getPreferredFeatures());
         assertTrue(preference.shouldPerformActiveScan());
 
-        assertTrue(preference.getRequiredFeatures().isEmpty());
         assertTrue(preference.getAllowedPackages().isEmpty());
         assertTrue(preference.getDeduplicationPackageOrder().isEmpty());
         assertFalse(preference.shouldRemoveDuplicates());
@@ -110,18 +100,15 @@ public class RouteDiscoveryPreferenceTest {
     @Test
     public void testGetters() {
         List<String> preferredFeatures = List.of(TEST_FEATURE_1, TEST_FEATURE_2);
-        List<String> requiredFeatures = List.of(TEST_FEATURE_3);
         List<String> allowedPackages = List.of(TEST_PACKAGE_1, TEST_PACKAGE_2, TEST_PACKAGE_3);
         List<String> packageOrder = List.of(TEST_PACKAGE_3, TEST_PACKAGE_1, TEST_PACKAGE_2);
 
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
         assertEquals(preferredFeatures, preference.getPreferredFeatures());
-        assertEquals(requiredFeatures, preference.getRequiredFeatures());
         assertTrue(preference.shouldPerformActiveScan());
         assertEquals(allowedPackages, preference.getAllowedPackages());
         assertTrue(preference.shouldRemoveDuplicates());
@@ -171,20 +158,17 @@ public class RouteDiscoveryPreferenceTest {
     @Test
     public void testEqualsCreatedWithSameArguments() {
         List<String> preferredFeatures = List.of(TEST_FEATURE_1, TEST_FEATURE_2);
-        List<String> requiredFeatures = List.of(TEST_FEATURE_3);
         List<String> allowedPackages = List.of(TEST_PACKAGE_1, TEST_PACKAGE_2, TEST_PACKAGE_3);
         List<String> packageOrder = List.of(TEST_PACKAGE_3, TEST_PACKAGE_1, TEST_PACKAGE_2);
 
         RouteDiscoveryPreference preference1 =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
 
         RouteDiscoveryPreference preference2 =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
@@ -195,14 +179,13 @@ public class RouteDiscoveryPreferenceTest {
     @Test
     public void testEqualsCreatedWithBuilderCopyConstructor() {
         List<String> preferredFeatures = List.of(TEST_FEATURE_1, TEST_FEATURE_2);
-        List<String> requiredFeatures = List.of(TEST_FEATURE_3);
         List<String> allowedPackages = List.of(TEST_PACKAGE_1, TEST_PACKAGE_2, TEST_PACKAGE_3);
         List<String> packageOrder = List.of(TEST_PACKAGE_3, TEST_PACKAGE_1, TEST_PACKAGE_2);
 
         RouteDiscoveryPreference preference1 =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
+                        .setDeduplicationPackageOrder(packageOrder)
                         .build();
 
         RouteDiscoveryPreference preference2 =
@@ -214,20 +197,17 @@ public class RouteDiscoveryPreferenceTest {
     @Test
     public void testEqualsReturnFalse() {
         List<String> preferredFeatures = List.of(TEST_FEATURE_1, TEST_FEATURE_2);
-        List<String> requiredFeatures = List.of(TEST_FEATURE_3);
         List<String> allowedPackages = List.of(TEST_PACKAGE_1, TEST_PACKAGE_2, TEST_PACKAGE_3);
         List<String> packageOrder = List.of(TEST_PACKAGE_3, TEST_PACKAGE_1, TEST_PACKAGE_2);
 
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
 
         RouteDiscoveryPreference preferenceWithDifferentFeatures =
                 new RouteDiscoveryPreference.Builder(new ArrayList<>(), true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
@@ -235,23 +215,13 @@ public class RouteDiscoveryPreferenceTest {
 
         RouteDiscoveryPreference preferenceWithDifferentActiveScan =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, false /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
         assertNotEquals(preference, preferenceWithDifferentActiveScan);
 
-        RouteDiscoveryPreference preferenceWithDifferentRequiredFeatures =
-                new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(List.of())
-                        .setAllowedPackages(allowedPackages)
-                        .setDeduplicationPackageOrder(packageOrder)
-                        .build();
-        assertNotEquals(preference, preferenceWithDifferentRequiredFeatures);
-
         RouteDiscoveryPreference preferenceWithDifferentAllowedPackages =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(List.of())
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
@@ -259,7 +229,6 @@ public class RouteDiscoveryPreferenceTest {
 
         RouteDiscoveryPreference preferenceWithDifferentPackageOrder1 =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(List.of())
                         .build();
@@ -267,7 +236,6 @@ public class RouteDiscoveryPreferenceTest {
 
         RouteDiscoveryPreference preferenceWithDifferentPackageOrder2 =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         // same size but different order
                         .setDeduplicationPackageOrder(allowedPackages)
@@ -278,13 +246,11 @@ public class RouteDiscoveryPreferenceTest {
     @Test
     public void testEqualsReturnFalseWithCopyConstructor() {
         List<String> preferredFeatures = List.of(TEST_FEATURE_1, TEST_FEATURE_2);
-        List<String> requiredFeatures = List.of(TEST_FEATURE_3);
         List<String> allowedPackages = List.of(TEST_PACKAGE_1, TEST_PACKAGE_2, TEST_PACKAGE_3);
         List<String> packageOrder = List.of(TEST_PACKAGE_3, TEST_PACKAGE_1, TEST_PACKAGE_2);
 
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
@@ -302,12 +268,6 @@ public class RouteDiscoveryPreferenceTest {
                         .setShouldPerformActiveScan(false)
                         .build();
         assertNotEquals(preference, preferenceWithDifferentActiveScan);
-
-        RouteDiscoveryPreference preferenceWithDifferentRequiredFeatures =
-                new RouteDiscoveryPreference.Builder(preference)
-                        .setRequiredFeatures(List.of())
-                        .build();
-        assertNotEquals(preference, preferenceWithDifferentRequiredFeatures);
 
         RouteDiscoveryPreference preferenceWithDifferentAllowedPackages =
                 new RouteDiscoveryPreference.Builder(preference)
@@ -332,13 +292,11 @@ public class RouteDiscoveryPreferenceTest {
     @Test
     public void testParcelingAndUnParceling() {
         List<String> preferredFeatures = List.of(TEST_FEATURE_1, TEST_FEATURE_2);
-        List<String> requiredFeatures = List.of(TEST_FEATURE_3);
         List<String> allowedPackages = List.of(TEST_PACKAGE_1, TEST_PACKAGE_2, TEST_PACKAGE_3);
         List<String> packageOrder = List.of(TEST_PACKAGE_3, TEST_PACKAGE_1, TEST_PACKAGE_2);
 
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(preferredFeatures, true /* isActiveScan */)
-                        .setRequiredFeatures(requiredFeatures)
                         .setAllowedPackages(allowedPackages)
                         .setDeduplicationPackageOrder(packageOrder)
                         .build();
