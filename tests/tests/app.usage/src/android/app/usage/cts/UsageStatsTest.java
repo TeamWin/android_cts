@@ -87,7 +87,6 @@ import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
@@ -129,10 +128,10 @@ import java.util.function.Supplier;
  *   along with the new time.
  * - Proper eviction of old data.
  */
-@RunWith(AndroidJUnit4.class)
+@RunWith(UsageStatsTestRunner.class)
 public class UsageStatsTest {
     private static final boolean DEBUG = false;
-    private static final String TAG = "UsageStatsTest";
+    static final String TAG = "UsageStatsTest";
 
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
