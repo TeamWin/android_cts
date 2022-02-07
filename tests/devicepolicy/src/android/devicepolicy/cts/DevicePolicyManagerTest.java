@@ -83,7 +83,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -96,8 +98,10 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -466,8 +470,17 @@ public final class DevicePolicyManagerTest {
     }
 
     private Set<String> getInstalledPackagesOnUser(Set<String> packages, UserHandle user) {
-        return packages.stream().filter(p -> isPackageInstalledOnUser(p, user))
-                .collect(Collectors.toSet());
+        Set<String> installedPackagesOnUser = new HashSet<>();
+
+        UserReference userRef = TestApis.users().find(user);
+        Collection<Package> packageInUser = TestApis.packages().installedForUser(userRef);
+        for (Package pkg : packageInUser) {
+            if (packages.contains(pkg.packageName())) {
+                installedPackagesOnUser.add(pkg.packageName());
+            }
+        }
+
+        return installedPackagesOnUser;
     }
 
     private boolean isPackageInstalledOnCurrentUser(String packageName) {
