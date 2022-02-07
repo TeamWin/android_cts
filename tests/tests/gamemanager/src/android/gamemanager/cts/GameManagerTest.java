@@ -30,6 +30,7 @@ import android.app.GameModeInfo;
 import android.app.GameState;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.os.Bundle;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -161,11 +162,11 @@ public class GameManagerTest {
     }
 
     /**
-     * Test that GameManager::setGameContext() with an 'isLoading' context does not invokes the mode
+     * Test that GameManager::setGameState() with an 'isLoading' state does not invokes the mode
      * on the PowerHAL when performance mode is not invoked.
      */
     @Test
-    public void testSetGameContextStandardMode() throws IOException, InterruptedException {
+    public void testSetGameStateStandardMode() throws IOException, InterruptedException {
         final int gameLoadingCountBefore = getGameLoadingCount();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
@@ -177,17 +178,35 @@ public class GameManagerTest {
     }
 
     /**
-     * Test that GameManager::setGameContext() with an 'isLoading' context actually invokes the mode
+     * Test that GameManager::setGameState() with an 'isLoading' state actually invokes the mode
      * on the PowerHAL when performance mode is invoked.
      */
     @Test
-    public void testSetGameContextPerformanceMode() throws IOException, InterruptedException {
+    public void testSetGameStatePerformanceMode() throws IOException, InterruptedException {
         final int gameLoadingCountBefore = getGameLoadingCount();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
                 (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
                 GameManager.GAME_MODE_PERFORMANCE));
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(new GameState(true, GameState.MODE_NONE)));
+        Thread.sleep(500);  // Wait for change to take effect.
+        assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
+    }
+
+    /**
+     * Test that GameManager::setGameState() with an 'isLoading' state and unmodifiable metadata
+     * actually invokes the mode on the PowerHAL when performance mode is invoked.
+     */
+    @Test
+    public void testSetGameStatePerformanceMode_unmodifiable()
+            throws IOException, InterruptedException {
+        final int gameLoadingCountBefore = getGameLoadingCount();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
+                        GameManager.GAME_MODE_PERFORMANCE));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
+                gameManager.setGameState(
+                        new GameState(true, GameState.MODE_NONE, "unmodifiable", Bundle.EMPTY)));
         Thread.sleep(500);  // Wait for change to take effect.
         assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
     }
