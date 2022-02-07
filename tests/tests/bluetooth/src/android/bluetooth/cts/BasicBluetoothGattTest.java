@@ -24,6 +24,8 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.test.AndroidTestCase;
 
+import androidx.test.InstrumentationRegistry;
+
 import java.util.List;
 
 /**
@@ -41,6 +43,8 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
 
         mBluetoothAdapter = mContext.getSystemService(BluetoothManager.class).getAdapter();
         if (!mBluetoothAdapter.isEnabled()) {
@@ -59,6 +63,8 @@ public class BasicBluetoothGattTest extends AndroidTestCase {
         }
         mBluetoothGatt.disconnect();
         assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            .dropShellPermissionIdentity();
     }
 
     public void testGetServices() throws Exception {
