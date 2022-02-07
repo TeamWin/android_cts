@@ -45,8 +45,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
-import android.os.Handler;
-import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
 import android.virtualdevice.cts.util.FakeAssociationRule;
@@ -123,7 +121,7 @@ public class StreamedAppBehaviorTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
         ClipboardManager clipboardManager = context.getSystemService(ClipboardManager.class);
         clipboardManager.setPrimaryClip(
