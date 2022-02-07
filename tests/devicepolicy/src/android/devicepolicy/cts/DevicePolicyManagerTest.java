@@ -27,6 +27,7 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASS
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
+import static android.app.admin.ProvisioningException.ERROR_PRE_CONDITION_FAILED;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
@@ -44,6 +45,7 @@ import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
+import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -394,6 +396,23 @@ public final class DevicePolicyManagerTest {
                 TestApis.users().find(profile).remove();
             }
         }
+    }
+
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Postsubmit(reason = "new test")
+    @Test
+    public void createAndProvisionManagedProfile_withExistingProfile_preconditionFails()
+            throws Exception {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder().build();
+
+        ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
+                provisionManagedProfile(params));
+        assertThat(exception.getProvisioningError()).isEqualTo(ERROR_PRE_CONDITION_FAILED);
     }
 
     private void assertIsCrossProfilePackageIfInstalled(String packageName) throws Exception {
