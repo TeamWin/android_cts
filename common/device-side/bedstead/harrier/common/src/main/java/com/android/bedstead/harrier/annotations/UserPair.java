@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier;
+package com.android.bedstead.harrier.annotations;
 
-public enum UserType {
-    /** Only to be used with annotations. */
-    ANY,
-    SYSTEM_USER,
-    CURRENT_USER,
-    PRIMARY_USER,
-    SECONDARY_USER,
-    WORK_PROFILE,
-    TV_PROFILE;
+import com.android.bedstead.harrier.UserType;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * A pair of users, for use with {@link CrossUserTest}.
+ */
+@Target({})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface UserPair {
+    UserType from();
+    UserType to();
 }
