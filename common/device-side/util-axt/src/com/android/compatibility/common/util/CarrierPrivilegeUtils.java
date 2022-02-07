@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package android.telephony.cts.util;
+package com.android.compatibility.common.util;
+
+import static android.telephony.TelephonyManager.CarrierPrivilegesListener;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-import static com.android.internal.util.FunctionalUtils.ThrowingRunnable;
-import static com.android.internal.util.FunctionalUtils.ThrowingSupplier;
 
-import android.content.BroadcastReceiver;
+import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.PersistableBundle;
@@ -32,9 +30,8 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.android.internal.telephony.uicc.IccUtils;
-
 import java.security.MessageDigest;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -45,73 +42,79 @@ import java.util.concurrent.TimeUnit;
  * task is completed.
  *
  * <p>Example:
- *
  * <pre>
  *   CarrierPrivilegeUtils.withCarrierPrivileges(c, subId, () -> telephonyManager.setFoo(bar));
  * </pre>
+ *
+ * @see {@link TelephonyManager#hasCarrierPrivileges()}
  */
-public class CarrierPrivilegeUtils {
+public final class CarrierPrivilegeUtils {
     private static final String TAG = CarrierPrivilegeUtils.class.getSimpleName();
 
-    private static class CarrierPrivilegeReceiver extends BroadcastReceiver
-            implements AutoCloseable {
-
+    private static class CarrierPrivilegeChangeMonitor implements AutoCloseable {
         private final CountDownLatch mLatch = new CountDownLatch(1);
         private final Context mContext;
         private final int mSubId;
         private final boolean mGain;
+        private final boolean mIsShell;
+        private final TelephonyManager mTelephonyManager;
+        private final CarrierPrivilegesListener mCarrierPrivilegesListener;
 
         /**
-         * Construct a listener that will wait for adding or removing carrier privileges.
-         *
-         * @param subId the subId to wait for.
-         * @param hash the package hash that indicate carrier privileges.
-         * @param gain if true, wait for the package to be added; if false, wait for the package to
-         *     be removed.
+         * Construct a {@link CarrierPrivilegesListener} to monitor carrier privileges change.
+         * @param c context
+         * @param subId subscriptionId to listen to
+         * @param gain true if wait to grant carrier privileges, false if wait to revoke
+         * @param isShell true if the caller is Shell
          */
-        CarrierPrivilegeReceiver(Context c, int subId, String hash, boolean gain) {
+        CarrierPrivilegeChangeMonitor(Context c, int subId, boolean gain, boolean isShell) {
             mContext = c;
             mSubId = subId;
             mGain = gain;
+            mIsShell = isShell;
+            mTelephonyManager = mContext.getSystemService(
+                    TelephonyManager.class).createForSubscriptionId(subId);
+            Objects.requireNonNull(mTelephonyManager);
 
-            mContext.registerReceiver(
-                    this, new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED));
+            mCarrierPrivilegesListener =
+                    (privilegedPackageNames, privilegedUids) -> {
+                        if (mTelephonyManager.hasCarrierPrivileges() == mGain) {
+                            mLatch.countDown();
+                        }
+                    };
+
+            // Run with shell identify only when caller is not Shell to avoid overriding current
+            // SHELL permissions
+            if (mIsShell) {
+                mTelephonyManager.addCarrierPrivilegesListener(
+                        SubscriptionManager.getSlotIndex(subId),
+                        mContext.getMainExecutor(),
+                        mCarrierPrivilegesListener);
+            } else {
+                runWithShellPermissionIdentity(() -> {
+                    mTelephonyManager.addCarrierPrivilegesListener(
+                            SubscriptionManager.getSlotIndex(subId),
+                            mContext.getMainExecutor(),
+                            mCarrierPrivilegesListener);
+                }, Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+            }
         }
 
         @Override
         public void close() {
-            mContext.unregisterReceiver(this);
-        }
+            if (mTelephonyManager == null) return;
 
-        @Override
-        public void onReceive(Context c, Intent intent) {
-            if (!CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED.equals(intent.getAction())) {
-                return;
-            }
-
-            final int subId = intent.getIntExtra(
-                    CarrierConfigManager.EXTRA_SUBSCRIPTION_INDEX,
-                    SubscriptionManager.INVALID_SUBSCRIPTION_ID);
-            if (mSubId != subId) {
-                return;
-            }
-
-            final PersistableBundle carrierConfigs =
-                    c.getSystemService(CarrierConfigManager.class).getConfigForSubId(mSubId);
-            if (!CarrierConfigManager.isConfigForIdentifiedCarrier(carrierConfigs)) {
-                return;
-            }
-
-            try {
-                if (hasCarrierPrivileges(c, mSubId) == mGain) {
-                    mLatch.countDown();
-                }
-            } catch (Exception e) {
+            if (mIsShell) {
+                mTelephonyManager.removeCarrierPrivilegesListener(mCarrierPrivilegesListener);
+            } else {
+                runWithShellPermissionIdentity(() -> {
+                    mTelephonyManager.removeCarrierPrivilegesListener(mCarrierPrivilegesListener);
+                }, Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             }
         }
 
         public void waitForCarrierPrivilegeChanged() throws Exception {
-            if (!mLatch.await(5000 /* millis */, TimeUnit.MILLISECONDS)) {
+            if (!mLatch.await(5, TimeUnit.SECONDS)) {
                 throw new IllegalStateException("Failed to update carrier privileges");
             }
         }
@@ -130,7 +133,7 @@ public class CarrierPrivilegeUtils {
                 .getPackageInfo(c.getOpPackageName(), PackageManager.GET_SIGNATURES);
         final MessageDigest md = MessageDigest.getInstance("SHA-256");
         final byte[] certHash = md.digest(pkgInfo.signatures[0].toByteArray());
-        return IccUtils.bytesToHexString(certHash);
+        return UiccUtil.bytesToHexString(certHash);
     }
 
     private static void changeCarrierPrivileges(Context c, int subId, boolean gain, boolean isShell)
@@ -154,8 +157,8 @@ public class CarrierPrivilegeUtils {
 
         final CarrierConfigManager configManager = c.getSystemService(CarrierConfigManager.class);
 
-        try (CarrierPrivilegeReceiver receiver =
-                new CarrierPrivilegeReceiver(c, subId, certHash, gain)) {
+        try (CarrierPrivilegeChangeMonitor monitor =
+                     new CarrierPrivilegeChangeMonitor(c, subId, gain, isShell)) {
             // If the caller is the shell, it's dangerous to adopt shell permission identity for
             // the CarrierConfig override (as it will override the existing shell permissions).
             if (isShell) {
@@ -166,7 +169,7 @@ public class CarrierPrivilegeUtils {
                 }, android.Manifest.permission.MODIFY_PHONE_STATE);
             }
 
-            receiver.waitForCarrierPrivilegeChanged();
+            monitor.waitForCarrierPrivilegeChanged();
         }
     }
 
@@ -174,7 +177,7 @@ public class CarrierPrivilegeUtils {
             throws Exception {
         try {
             changeCarrierPrivileges(c, subId, true /* gain */, false /* isShell */);
-            action.runOrThrow();
+            action.run();
         } finally {
             changeCarrierPrivileges(c, subId, false /* lose */, false /* isShell */);
         }
@@ -185,7 +188,7 @@ public class CarrierPrivilegeUtils {
             throws Exception {
         try {
             changeCarrierPrivileges(c, subId, true /* gain */, true /* isShell */);
-            action.runOrThrow();
+            action.run();
         } finally {
             changeCarrierPrivileges(c, subId, false /* lose */, true /* isShell */);
         }
@@ -195,7 +198,7 @@ public class CarrierPrivilegeUtils {
             throws Exception {
         try {
             changeCarrierPrivileges(c, subId, true /* gain */, false /* isShell */);
-            return action.getOrThrow();
+            return action.get();
         } finally {
             changeCarrierPrivileges(c, subId, false /* lose */, false /* isShell */);
         }
