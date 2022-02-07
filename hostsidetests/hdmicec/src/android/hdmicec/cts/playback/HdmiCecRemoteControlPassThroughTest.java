@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.playback;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -25,6 +27,7 @@ import android.hdmicec.cts.RemoteControlPassthrough;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -140,5 +143,27 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                 dutLogicalAddress,
                 cecKeycode,
                 androidKeycode);
+    }
+
+    /*
+     * Test HF4-8-13 (CEC 2.0)
+     *
+     * <p>Tests that the device responds with a {@code <FEATURE_ABORT>[Not in correct mode]} when it
+     * is not in a mode to action the message.
+     */
+    @Test
+    public void cect_hf4_8_13_AbortIncorrectMode() throws Exception {
+        setCec20();
+        try {
+            sendDeviceToSleep();
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    LogicalAddress.TV, HdmiCecConstants.CEC_KEYCODE_ROOT_MENU, false);
+            String message =
+                    hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.FEATURE_ABORT);
+            int reason = CecMessage.getParams(message) & 0xFF;
+            assertThat(reason).isEqualTo(HdmiCecConstants.ABORT_NOT_IN_CORRECT_MODE);
+        } finally {
+            wakeUpDevice();
+        }
     }
 }
