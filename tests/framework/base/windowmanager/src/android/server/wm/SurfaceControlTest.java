@@ -29,7 +29,6 @@ import android.platform.test.annotations.Presubmit;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
-import android.view.TransactionCommittedListener;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
@@ -348,7 +347,7 @@ public class SurfaceControlTest {
                     public void execute(Runnable command) {
                         command.run();
                     }
-                }, new TransactionCommittedListener() {
+                }, new SurfaceControl.TransactionCommittedListener() {
                     @Override
                     public void onTransactionCommitted() {
                         mActivity.transactionCommitted();
