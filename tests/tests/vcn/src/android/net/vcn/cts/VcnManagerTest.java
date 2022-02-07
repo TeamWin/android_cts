@@ -59,11 +59,12 @@ import android.os.ParcelUuid;
 import android.os.SystemClock;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.cts.util.CarrierPrivilegeUtils;
 import android.telephony.cts.util.SubscriptionGroupUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 
 import org.junit.After;
 import org.junit.Before;

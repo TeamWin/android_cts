@@ -19,6 +19,7 @@ package com.android.compatibility.common.util;
 import android.Manifest;
 import android.telephony.TelephonyManager;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.StringDef;
 import androidx.test.InstrumentationRegistry;
 
@@ -26,6 +27,11 @@ import java.util.List;
 
 /** Utility class for common UICC- and SIM-related operations. */
 public final class UiccUtil {
+    // A table mapping from a number to a hex character for fast encoding hex strings.
+    private static final char[] HEX_CHARS = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+    };
+
     /** The hashes of all supported CTS UICC test keys and their corresponding specification. */
     @StringDef({UiccCertificate.CTS_UICC_LEGACY, UiccCertificate.CTS_UICC_2021})
     public @interface UiccCertificate {
@@ -71,5 +77,29 @@ public final class UiccUtil {
                         TelephonyManager::getCertsFromCarrierPrivilegeAccessRules,
                         Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
         return uiccCerts == null ? false : uiccCerts.contains(requiredCert);
+    }
+
+    /**
+     * Converts a byte array into a String of hexadecimal characters.
+     *
+     * @param bytes an array of bytes
+     *
+     * @return hex string representation of bytes array
+     */
+    @Nullable
+    public static String bytesToHexString(@Nullable byte[] bytes) {
+        if (bytes == null) return null;
+
+        StringBuilder ret = new StringBuilder(2*bytes.length);
+
+        for (int i = 0 ; i < bytes.length ; i++) {
+            int b;
+            b = 0x0f & (bytes[i] >> 4);
+            ret.append(HEX_CHARS[b]);
+            b = 0x0f & bytes[i];
+            ret.append(HEX_CHARS[b]);
+        }
+
+        return ret.toString();
     }
 }
