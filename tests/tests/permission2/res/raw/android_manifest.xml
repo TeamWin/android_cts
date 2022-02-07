@@ -2937,6 +2937,11 @@
     <permission android:name="android.permission.FORCE_DEVICE_POLICY_MANAGER_LOGS"
                 android:protectionLevel="signature" />
 
+    <!-- @SystemApi Allows an application to write to the security log buffer in logd.
+         @hide -->
+    <permission android:name="android.permission.WRITE_SECURITY_LOG"
+        android:protectionLevel="signature|privileged" />
+
     <!-- Allows an application to get full detailed information about
          recently running tasks, with full fidelity to the real state.
          @hide -->
