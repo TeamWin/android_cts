@@ -16,21 +16,18 @@
 
 package com.android.bedstead.harrier.policies;
 
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_COPE_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
-
-import android.app.admin.DevicePolicyManager;
-import android.app.admin.WifiSsidPolicy;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for Wi-Fi minimum security.
+ * Policy for setting permitted accessibility services.
  *
- * <p>Users of this policy are {@link DevicePolicyManager#setWifiSsidPolicy(WifiSsidPolicy)}
- * and {@link DevicePolicyManager#getWifiSsidPolicy()}.
+ * <p>See {@code DevicePolicyManager#setPermittedAccessibilityServices(ComponentName, List<String>)}
+ * for more detail.
  */
-@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_COPE_PROFILE_OWNER | APPLIES_GLOBALLY)
-public class WifiSsidRestriction {
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER)
+public class PermittedAccessibilityServices {
 }

@@ -25,21 +25,23 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Ensure that the given permission is granted before running the test.
+ * Ensure that the given permission is grantable before running the test.
+ *
+ * <p>This is equivalent to {@link EnsureHasPermission} but does not actually grant the permission.
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureHasPermissions.class)
-public @interface EnsureHasPermission {
+@Repeatable(EnsureCanGetPermissions.class)
+public @interface EnsureCanGetPermission {
     String[] value();
-
-    FailureMode failureMode() default FailureMode.FAIL;
 
     /** The minimum version where this permission is required. */
     int minVersion() default 0;
 
     /** The maximum version where this permission is required. */
     int maxVersion() default Integer.MAX_VALUE;
+
+    FailureMode failureMode() default FailureMode.FAIL;
 
     /**
      * Weight sets the order that annotations will be resolved.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,13 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
 
-import android.app.admin.DevicePolicyManager;
-
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
  * Policy for Wi-Fi minimum security.
  *
- * <p>Users of this policy are {@link DevicePolicyManager#setMinimumRequiredWifiSecurityLevel(int)}
- * and {@link DevicePolicyManager#getMinimumRequiredWifiSecurityLevel()}.
+ * <p>Users of this policy are {@code DevicePolicyManager#setMinimumRequiredWifiSecurityLevel(int)}
+ * and {@code DevicePolicyManager#getMinimumRequiredWifiSecurityLevel()}.
  */
 @EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_COPE_PROFILE_OWNER | APPLIES_GLOBALLY)
 public class WifiMinimumSecurity {
