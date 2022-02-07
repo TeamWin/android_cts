@@ -17,11 +17,15 @@
 package android.hdmicec.app;
 
 import android.app.Activity;
+import android.view.KeyEvent;
+import android.hardware.hdmi.HdmiClient;
 import android.hardware.hdmi.HdmiControlManager;
 import android.hardware.hdmi.HdmiPlaybackClient;
 import android.hardware.hdmi.HdmiTvClient;
 import android.os.Bundle;
 import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * A simple activity that can be used to trigger actions using the HdmiControlManager. The actions
@@ -71,6 +75,10 @@ public class HdmiControlManagerHelper extends Activity {
             case "android.hdmicec.app.DEVICE_SELECT":
                 int logicalAddress = getIntent().getIntExtra("la", 50);
                 deviceSelect(logicalAddress);
+                break;
+            case "android.hdmicec.app.INTERRUPTED_LONG_PRESS_KEY":
+                interruptedLongPress();
+                break;
             default:
                 Log.w(TAG, "Unknown intent!");
         }
@@ -113,5 +121,30 @@ public class HdmiControlManagerHelper extends Activity {
                     }
                     finishAndRemoveTask();
                 });
+    }
+
+    private void interruptedLongPress() {
+        HdmiClient client = mHdmiControlManager.getPlaybackClient();
+        if (client == null) {
+            client = mHdmiControlManager.getTvClient();
+        }
+
+        if (client == null) {
+            Log.i(TAG, "Could not get a TV/Playback client, cannot send key event");
+            return;
+        }
+
+        try {
+            for (int i = 0; i < 5; i++) {
+                client.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, true);
+                TimeUnit.MILLISECONDS.sleep(450);
+            }
+            client.sendKeyEvent(KeyEvent.KEYCODE_DPAD_UP, false);
+            // Sleep for 500ms more
+            TimeUnit.MILLISECONDS.sleep(500);
+            client.sendKeyEvent(KeyEvent.KEYCODE_DPAD_DOWN, true);
+        } catch (InterruptedException ie) {
+            Log.w(TAG, "Interrupted between keyevents, could not send all keyevents!");
+        }
     }
 }
