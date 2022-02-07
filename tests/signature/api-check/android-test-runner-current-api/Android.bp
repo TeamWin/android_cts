@@ -32,6 +32,15 @@ android_test {
         ":cts-android-test-runner-current-api-gz",
     ],
 
+    // Prevent android.test.base and android.test.mock libraries from being implicitly added to
+    // the manifest. Their classes should still be available at runtime as a dependency on
+    // android.test.runner should automatically add a dependency on android.test.base and
+    // android.test.mock.
+    exclude_uses_libs: [
+        "android.test.base",
+        "android.test.mock",
+    ],
+
     use_embedded_native_libs: false,
     test_suites: [
         "cts",
