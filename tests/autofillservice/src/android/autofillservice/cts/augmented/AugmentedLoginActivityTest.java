@@ -68,6 +68,9 @@ import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import androidx.test.filters.FlakyTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Test;
 
@@ -85,6 +88,8 @@ public class AugmentedLoginActivityTest
             @Override
             protected void afterActivityLaunched() {
                 mActivity = getActivity();
+                WindowUtil.waitForFocus(mActivity);
+                InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
             }
         };
     }
