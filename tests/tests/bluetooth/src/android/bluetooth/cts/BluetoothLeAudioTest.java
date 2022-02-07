@@ -16,6 +16,8 @@
 
 package android.bluetooth.cts;
 
+import static org.junit.Assert.assertThrows;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothLeAudio;
@@ -26,6 +28,8 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
@@ -58,6 +62,9 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
                     PackageManager.FEATURE_BLUETOOTH);
 
             if (!mHasBluetooth) return;
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
+
             BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
             mAdapter = manager.getAdapter();
             assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -90,6 +97,8 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
                 mIsProfileReady = false;
             }
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
             mAdapter = null;
         }
     }
@@ -154,6 +163,28 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
         assertEquals(BluetoothLeAudio.AUDIO_LOCATION_INVALID,
                 mBluetoothLeAudio.getAudioLocation(testDevice));
     }
+
+    public void test_setgetConnectionPolicy() {
+        if (!(mHasBluetooth && mIsLeAudioSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeAudio);
+
+        assertFalse(mBluetoothLeAudio.setConnectionPolicy(null, 0));
+        assertEquals(BluetoothProfile.CONNECTION_POLICY_FORBIDDEN,
+                mBluetoothLeAudio.getConnectionPolicy(null));
+    }
+
+    public void test_setVolume() {
+        if (!(mHasBluetooth && mIsLeAudioSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeAudio);
+
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        assertThrows(SecurityException.class, () -> mBluetoothLeAudio.setVolume(42));
+    }
+
 
     private boolean waitForProfileConnect() {
         mProfileConnectedlock.lock();
