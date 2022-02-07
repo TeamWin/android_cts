@@ -275,6 +275,19 @@
     </string>
     <string name="fs_force_stop_verification_pending">Verifying... Please wait.</string>
 
+    <!-- Strings for ClipboardPreviewText -->
+    <string name="clipboard_preview_test">Clipboard Preview Test</string>
+    <string name="clipboard_preview_test_info">
+        This test verifies that clipboard contents are visible to the user when copied.
+    </string>
+    <string name="clipboard_preview_test_instructions">
+        Press the \'Copy\' button to copy the secret code to the clipboard.
+        \n\nUse the clipboard preview UI, or the clipboard editor component to view the secret code.
+        \n\nEnter the secret code using the buttons below.
+    </string>
+    <string name="clipboard_preview_test_copy_button">Copy</string>
+
+
     <!-- Strings for BiometricTest -->
     <string name="biometric_test">Biometric Tests</string>
 

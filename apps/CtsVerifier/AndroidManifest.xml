@@ -219,6 +219,21 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".clipboard.ClipboardPreviewTestActivity"
+                  android:label="@string/clipboard_preview_test"
+                  android:exported="true"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_features" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
+
         <activity android:name=".companion.CompanionDeviceTestActivity"
                   android:label="@string/companion_test"
                   android:exported="true"
