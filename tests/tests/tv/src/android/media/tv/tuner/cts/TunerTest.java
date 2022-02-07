@@ -2357,7 +2357,7 @@ public class TunerTest {
 
         int timeDelayInMs = 5000;
         Instant start = Instant.now();
-        int status = f.delayCallbackUntilMillisElapsed(timeDelayInMs);
+        int status = f.delayCallbackForDurationMillis(timeDelayInMs);
 
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_2_0)) {
             // start / stop prevents initial race condition after first setting the time delay.
