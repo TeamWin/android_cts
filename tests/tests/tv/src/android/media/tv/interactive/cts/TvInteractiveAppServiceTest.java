@@ -59,6 +59,7 @@ import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
 import android.tv.cts.R;
+import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.SurfaceView;
 import android.view.View;
@@ -446,6 +447,14 @@ public class TvInteractiveAppServiceTest {
         assertThat(mSession.mKeyMultipleCount).isEqualTo(1);
         assertThat(mSession.mKeyMultipleCode).isEqualTo(keyCode);
         assertKeyEventEquals(mSession.mKeyMultipleEvent, event);
+    }
+
+    @Test
+    public void testDispatchUnhandledInputEvent() {
+        final int keyCode = KeyEvent.KEYCODE_I;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_UP, keyCode);
+
+        mTvIAppView.dispatchUnhandledInputEvent(event);
     }
 
     @Test
@@ -1016,6 +1025,46 @@ public class TvInteractiveAppServiceTest {
         assertThat(response.getUnitsPerSecond()).isEqualTo(10);
         assertThat(response.getWallClock()).isEqualTo(100);
         assertThat(response.getTicks()).isEqualTo(1000);
+    }
+
+    @Test
+    public void testViewOnAttachedToWindow() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTvIAppView.onAttachedToWindow();
+            }
+        });
+
+    }
+
+    @Test
+    public void testViewOnDetachedFromWindow() {
+        mTvIAppView.onDetachedFromWindow();
+    }
+
+    @Test
+    public void testViewOnLayout() {
+        int left = 1, top = 10, right = 5, bottom = 20;
+        mTvIAppView.onLayout(true, left, top, right, bottom);
+    }
+
+    @Test
+    public void testViewOnMeasure() {
+        int widthMeasureSpec = 5, heightMeasureSpec = 10;
+        mTvIAppView.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+    @Test
+    public void testViewOnVisibilityChanged() {
+        mTvIAppView.onVisibilityChanged(mTvIAppView, View.VISIBLE);
+    }
+
+    @Test
+    public void testOnUnhandledInputEvent() {
+        final int keyCode = KeyEvent.KEYCODE_Q;
+        final KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
+        mTvIAppView.onUnhandledInputEvent(event);
     }
 
     public static void assertKeyEventEquals(KeyEvent actual, KeyEvent expected) {
