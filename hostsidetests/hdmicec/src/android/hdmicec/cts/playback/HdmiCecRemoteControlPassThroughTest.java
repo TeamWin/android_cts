@@ -22,6 +22,7 @@ import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RemoteControlPassthrough;
 
@@ -145,7 +146,37 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                 androidKeycode);
     }
 
-    /*
+    /**
+     * Test HF4-8-9 (CEC 2.0)
+     *
+     * <p>Tests that the DUT sends multiple {@code <USER_CONTROL_PRESSED>[KEYCODE]} when there is a
+     * long press keyevent.
+     */
+    @Test
+    public void cect_hf4_8_9_SendLongPress() throws Exception {
+        setCec20();
+        String message;
+        int i;
+
+        HdmiControlManagerUtility.sendLongPressKeyevent(getDevice());
+        // The above command should send 5 <UCP>[KEYCODE_UP] messages followed by 1 <UCR> message
+        // and finally, a <UCP>[KEYCODE_DOWN].
+        for (i = 0; i < 5; i++) {
+            message =
+                    hdmiCecClient.checkExpectedOutput(
+                            LogicalAddress.TV, CecOperand.USER_CONTROL_PRESSED);
+            assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_KEYCODE_UP);
+        }
+        message =
+                hdmiCecClient.checkExpectedOutput(
+                        LogicalAddress.TV, CecOperand.USER_CONTROL_RELEASED);
+        message =
+                hdmiCecClient.checkExpectedOutput(
+                        LogicalAddress.TV, CecOperand.USER_CONTROL_PRESSED);
+        assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_KEYCODE_DOWN);
+    }
+
+    /**
      * Test HF4-8-13 (CEC 2.0)
      *
      * <p>Tests that the device responds with a {@code <FEATURE_ABORT>[Not in correct mode]} when it
