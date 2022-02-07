@@ -59,6 +59,8 @@ public final class GameServiceTest {
     private static final String FALSE_POSITIVE_GAME_PACKAGE_NAME =
             "android.service.games.cts.falsepositive";
     private static final String NOT_GAME_PACKAGE_NAME = "android.service.games.cts.notgame";
+    private static final String RESTART_GAME_VERIFIER_PACKAGE_NAME =
+            "android.service.games.cts.restartgameverifier";
     private static final String START_ACTIVITY_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.startactivityverifier";
 
@@ -81,7 +83,8 @@ public final class GameServiceTest {
                         Context.BIND_AUTO_CREATE)).isTrue();
         mServiceConnection.waitForConnection(10, TimeUnit.SECONDS);
 
-        getTestService().setGamePackageNames(ImmutableList.of(GAME_PACKAGE_NAME));
+        getTestService().setGamePackageNames(
+                ImmutableList.of(GAME_PACKAGE_NAME, RESTART_GAME_VERIFIER_PACKAGE_NAME));
     }
 
     @After
@@ -89,6 +92,7 @@ public final class GameServiceTest {
         forceStop(GAME_PACKAGE_NAME);
         forceStop(NOT_GAME_PACKAGE_NAME);
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        forceStop(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
 
         getTestService().resetState();
@@ -185,6 +189,26 @@ public final class GameServiceTest {
 
         assertThat(result.getGameSessionPackageName()).isEqualTo(GAME_PACKAGE_NAME);
         assertThat(result.getFailure().getClazz()).isEqualTo(ActivityNotFoundException.class);
+    }
+
+    @Test
+    public void restartGame_gameAppIsRestarted() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("1"));
+
+        getTestService().restartFocusedGameSession();
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("2"));
+
+        getTestService().restartFocusedGameSession();
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("3"));
     }
 
     private IGameServiceTestService getTestService() {

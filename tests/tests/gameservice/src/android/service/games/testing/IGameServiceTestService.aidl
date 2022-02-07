@@ -31,4 +31,6 @@ interface IGameServiceTestService {
     void startGameSessionActivity(in Intent intent, in Bundle options);
 
     ActivityResult getLastActivityResult();
+
+    void restartFocusedGameSession();
 }
