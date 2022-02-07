@@ -49,7 +49,6 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
-import android.telephony.cts.util.CarrierPrivilegeUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -59,6 +58,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestThread;
