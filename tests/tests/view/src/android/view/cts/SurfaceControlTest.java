@@ -21,11 +21,14 @@ import static android.view.cts.util.ASurfaceControlTestUtils.getQuadrantBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.getSolidBuffer;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.view.SurfaceControl;
@@ -142,6 +145,17 @@ public class SurfaceControlTest {
             assertNotNull("failed to make solid buffer", buffer);
             new SurfaceControl.Transaction()
                     .setBuffer(surfaceControl, buffer)
+                    .apply();
+            mBuffers.add(buffer);
+        }
+
+        public void setSolidBuffer(SurfaceControl surfaceControl,
+                int width, int height, int color, int dataSpace) {
+            HardwareBuffer buffer = getSolidBuffer(width, height, color);
+            assertNotNull("failed to make solid buffer", buffer);
+            new SurfaceControl.Transaction()
+                    .setBuffer(surfaceControl, buffer)
+                    .setDataSpace(surfaceControl, dataSpace)
                     .apply();
             mBuffers.add(buffer);
         }
@@ -1075,6 +1089,52 @@ public class SurfaceControlTest {
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount == 0;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setDataSpace_srgb() {
+        final int darkRed = 0xFF00006F;
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                darkRed, DataSpace.DATASPACE_SRGB);
+                    }
+                },
+                new PixelChecker(darkRed) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setDataSpace_bt2020() {
+        final int darkRed = 0xFF00006F;
+        long converted = Color.convert(0x6F / 255.f, 0f, 0f, 1f,
+                ColorSpace.get(ColorSpace.Named.BT2020), ColorSpace.get(ColorSpace.Named.SRGB));
+        assertTrue(Color.isSrgb(converted));
+        int argb = Color.toArgb(converted);
+        // PixelChecker uses a ABGR for some reason (endian mismatch with native?), swizzle to match
+        int asABGR = 0xFF000000 | Color.red(argb);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                darkRed, DataSpace.DATASPACE_BT2020);
+                    }
+                },
+                new PixelChecker(asABGR) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
                     }
                 });
     }
