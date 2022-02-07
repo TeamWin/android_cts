@@ -51,4 +51,16 @@ public class HdmiControlManagerUtility {
                         + "\"la\" "
                         + logicalAddress);
     }
+
+    /**
+     * Sends a long press keyevent (KEYCODE_UP) followed by a short press of another keyevent
+     * (KEYCODE_DOWN).
+     */
+    public static void sendLongPressKeyevent(ITestDevice device)
+            throws DeviceNotAvailableException {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        device.executeShellCommand(
+                START_COMMAND + "android.hdmicec.app.INTERRUPTED_LONG_PRESS_KEY");
+    }
 }
