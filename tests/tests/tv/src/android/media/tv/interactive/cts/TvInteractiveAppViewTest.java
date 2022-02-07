@@ -70,6 +70,7 @@ public class TvInteractiveAppViewTest {
 
         @Override
         public void onStateChanged(String interactiveAppServiceId, int state, int err) {
+            super.onStateChanged(interactiveAppServiceId, state, err);
             mInteractiveAppServiceId = interactiveAppServiceId;
             mState = state;
             mErr = err;

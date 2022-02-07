@@ -19,13 +19,19 @@ package android.media.tv.interactive.cts;
 import android.content.Context;
 import android.media.tv.AdResponse;
 import android.media.tv.BroadcastInfoResponse;
+import android.media.tv.TvContentRating;
+import android.media.tv.TvTrackInfo;
 import android.media.tv.interactive.AppLinkInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
 import android.media.tv.interactive.TvInteractiveAppService;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.Surface;
+import android.view.View;
+
+import java.util.List;
 
 /**
  * Stub implementation of (@link android.media.tv.interactive.TvInteractiveAppService}.
@@ -53,15 +59,18 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
     @Override
     public void onAppLinkCommand(Bundle command) {
+        super.onAppLinkCommand(command);
         sAppLinkCommand = command;
     }
 
     @Override
     public void onRegisterAppLinkInfo(AppLinkInfo bundle) {
+        super.onRegisterAppLinkInfo(bundle);
     }
 
     @Override
     public void onUnregisterAppLinkInfo(AppLinkInfo bundle) {
+        super.onUnregisterAppLinkInfo(bundle);
     }
 
     public static class StubSessionImpl extends Session {
@@ -127,6 +136,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onStartInteractiveApp() {
+            super.onStartInteractiveApp();
             mStartInteractiveAppCount++;
             notifySessionStateChanged(
                     TvInteractiveAppManager.INTERACTIVE_APP_STATE_RUNNING,
@@ -135,6 +145,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onStopInteractiveApp() {
+            super.onStopInteractiveApp();
             mStopInteractiveAppCount++;
         }
 
@@ -150,11 +161,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onSurfaceChanged(int format, int width, int height) {
+            super.onSurfaceChanged(format, width, height);
             mSurfaceChangedCount++;
         }
 
         @Override
         public boolean onKeyDown(int keyCode, KeyEvent event) {
+            super.onKeyDown(keyCode, event);
             mKeyDownCount++;
             mKeyDownCode = keyCode;
             mKeyDownEvent = event;
@@ -163,11 +176,13 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+            super.onKeyLongPress(keyCode, event);
             return false;
         }
 
         @Override
         public boolean onKeyUp(int keyCode, KeyEvent event) {
+            super.onKeyUp(keyCode, event);
             mKeyUpCount++;
             mKeyUpCode = keyCode;
             mKeyUpEvent = event;
@@ -176,6 +191,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
+            super.onKeyMultiple(keyCode, count, event);
             mKeyMultipleCount++;
             mKeyMultipleCode = keyCode;
             mKeyMultipleEvent = event;
@@ -184,6 +200,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onCreateBiInteractiveApp(Uri biIAppUri, Bundle params) {
+            super.onCreateBiInteractiveApp(biIAppUri, params);
             mCreateBiIAppCount++;
             mCreateBiIAppUri = biIAppUri;
             mCreateBiIAppParams = params;
@@ -192,107 +209,130 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
 
         @Override
         public void onDestroyBiInteractiveApp(String biIAppId) {
+            super.onDestroyBiInteractiveApp(biIAppId);
             mDestroyBiIAppCount++;
             mDestroyBiIAppId = biIAppId;
         }
 
         @Override
         public void onTuned(Uri uri) {
+            super.onTuned(uri);
             mTunedCount++;
             mTunedUri = uri;
         }
 
         @Override
         public void onVideoAvailable() {
+            super.onVideoAvailable();
             mVideoAvailableCount++;
         }
 
         @Override
         public void onAdResponse(AdResponse response) {
+            super.onAdResponse(response);
             mAdResponseCount++;
             mAdResponse = response;
         }
 
         @Override
         public void onBroadcastInfoResponse(BroadcastInfoResponse response) {
+            super.onBroadcastInfoResponse(response);
             mBroadcastInfoResponseCount++;
             mBroadcastInfoResponse = response;
         }
 
         @Override
         public void onContentAllowed() {
+            super.onContentAllowed();
         }
 
         @Override
-        public void onContentBlocked(android.media.tv.TvContentRating rating) {
+        public void onContentBlocked(TvContentRating rating) {
+            super.onContentBlocked(rating);
         }
 
         @Override
-        public android.view.View onCreateMediaView() {
+        public View onCreateMediaView() {
+            super.onCreateMediaView();
             return null;
         }
 
         @Override
         public void onCurrentChannelLcn(int lcn) {
+            super.onCurrentChannelLcn(lcn);
         }
 
         @Override
-        public void onCurrentChannelUri(android.net.Uri uri) {
+        public void onCurrentChannelUri(Uri uri) {
+            super.onCurrentChannelUri(uri);
         }
 
         @Override
         public void onCurrentTvInputId(String id) {
+            super.onCurrentTvInputId(id);
         }
 
         @Override
-        public boolean onGenericMotionEvent(android.view.MotionEvent event) {
+        public boolean onGenericMotionEvent(MotionEvent event) {
+            super.onGenericMotionEvent(event);
             return false;
         }
 
         @Override
         public void onMediaViewSizeChanged(int w, int h) {
+            super.onMediaViewSizeChanged(w, h);
         }
 
         @Override
         public void onResetInteractiveApp() {
+            super.onResetInteractiveApp();
         }
 
         @Override
         public void onSetTeletextAppEnabled(boolean enable) {
+            super.onSetTeletextAppEnabled(enable);
         }
 
         @Override
         public void onSignalStrength(int strength) {
+            super.onSignalStrength(strength);
         }
 
         @Override
         public void onStreamVolume(float v) {
+            super.onStreamVolume(v);
         }
 
         @Override
-        public boolean onTouchEvent(android.view.MotionEvent event) {
+        public boolean onTouchEvent(MotionEvent event) {
+            super.onTouchEvent(event);
             return false;
         }
 
         @Override
-        public void onTrackInfoList(java.util.List<android.media.tv.TvTrackInfo> infos) {
+        public void onTrackInfoList(List<TvTrackInfo> infos) {
+            super.onTrackInfoList(infos);
         }
 
         @Override
         public void onTrackSelected(int type, String id) {
+            super.onTrackSelected(type, id);
         }
 
         @Override
-        public boolean onTrackballEvent(android.view.MotionEvent event) {
+        public boolean onTrackballEvent(MotionEvent event) {
+            super.onTrackballEvent(event);
             return false;
         }
 
         @Override
-        public void onTracksChanged(java.util.List<android.media.tv.TvTrackInfo> info) {
+        public void onTracksChanged(List<TvTrackInfo> infos) {
+            super.onTracksChanged(infos);
         }
 
         @Override
         public void onVideoUnavailable(int reason) {
+            super.onVideoUnavailable(reason);
         }
     }
 }
