@@ -27,6 +27,7 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASS
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
+import static android.app.admin.ProvisioningException.ERROR_PRE_CONDITION_FAILED;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
@@ -44,6 +45,7 @@ import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
+import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -81,7 +83,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -94,8 +98,10 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -396,6 +402,23 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Postsubmit(reason = "new test")
+    @Test
+    public void createAndProvisionManagedProfile_withExistingProfile_preconditionFails()
+            throws Exception {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder().build();
+
+        ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
+                provisionManagedProfile(params));
+        assertThat(exception.getProvisioningError()).isEqualTo(ERROR_PRE_CONDITION_FAILED);
+    }
+
     private void assertIsCrossProfilePackageIfInstalled(String packageName) throws Exception {
         if (!isPackageInstalledOnCurrentUser(packageName)) {
             return;
@@ -447,8 +470,17 @@ public final class DevicePolicyManagerTest {
     }
 
     private Set<String> getInstalledPackagesOnUser(Set<String> packages, UserHandle user) {
-        return packages.stream().filter(p -> isPackageInstalledOnUser(p, user))
-                .collect(Collectors.toSet());
+        Set<String> installedPackagesOnUser = new HashSet<>();
+
+        UserReference userRef = TestApis.users().find(user);
+        Collection<Package> packageInUser = TestApis.packages().installedForUser(userRef);
+        for (Package pkg : packageInUser) {
+            if (packages.contains(pkg.packageName())) {
+                installedPackagesOnUser.add(pkg.packageName());
+            }
+        }
+
+        return installedPackagesOnUser;
     }
 
     private boolean isPackageInstalledOnCurrentUser(String packageName) {

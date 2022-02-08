@@ -47,6 +47,8 @@ public final class ActivityDumpTest {
     @UiThreadTest // Needed to create activity
     public void setActivity() throws Exception {
         mActivity = new CustomActivity(ApplicationProvider.getApplicationContext());
+        Log.i(TAG, "setActivity: activity=" + mActivity
+                + ", targetSdk=" + mActivity.getApplicationInfo().targetSdkVersion);
     }
 
     @Test
@@ -87,26 +89,27 @@ public final class ActivityDumpTest {
 
     @Test
     public void testDump_autofill() throws Exception {
-        specialArgDumpTest("--autofill");
+        legacyArgDumpTest("--autofill", "AutofillManager");
     }
 
     @Test
     public void testDump_contentCapture() throws Exception {
-        specialArgDumpTest("--contentcapture");
+        legacyArgDumpTest("--contentcapture", "ContentCaptureManager");
     }
 
     @Test
     public void testDump_translation() throws Exception {
-        specialArgDumpTest("--translation");
+        legacyArgDumpTest("--translation", "UiTranslationController");
     }
 
-    private void specialArgDumpTest(String arg) throws IOException {
+    private void legacyArgDumpTest(String arg, String dumpableName) throws IOException {
         String baselineDump = dump(mActivity);
 
-        String specialArgDump = dump(mActivity, arg);
+        String legacyArgDump = dump(mActivity, arg);
+        String equivalentDumpableDump = dump(mActivity, "--dump-dumpable", dumpableName);
 
-        assertWithMessage("dump([%s])", arg).that(specialArgDump).isNotEqualTo(baselineDump);
-        assertWithMessage("dump([%s])", arg).that(baselineDump).contains(specialArgDump);
+        assertWithMessage("dump([%s])", arg).that(legacyArgDump).isNotEqualTo(baselineDump);
+        assertWithMessage("dump([%s])", arg).that(legacyArgDump).isEqualTo(equivalentDumpableDump);
     }
 
     @Test

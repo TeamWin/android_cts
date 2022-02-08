@@ -53,6 +53,7 @@
             <intent-filter>
                 <action android:name="android.hdmicec.app.OTP" />
                 <action android:name="android.hdmicec.app.DEVICE_SELECT" />
+                <action android:name="android.hdmicec.app.INTERRUPTED_LONG_PRESS_KEY" />
             </intent-filter>
         </activity>
         <activity android:name=".HdmiCecVendorCommandListener"

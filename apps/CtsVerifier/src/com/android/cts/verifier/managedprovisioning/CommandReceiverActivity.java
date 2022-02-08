@@ -578,6 +578,7 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY: {
                     int complexity = intent.getIntExtra(EXTRA_VALUE,
                             DevicePolicyManager.PASSWORD_COMPLEXITY_NONE);
+                    Log.d(TAG, "calling setRequiredPasswordComplexity(" + complexity + ")");
                     mDpm.setRequiredPasswordComplexity(complexity);
                 }
             }

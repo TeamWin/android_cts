@@ -24,5 +24,5 @@ public enum UserType {
     PRIMARY_USER,
     SECONDARY_USER,
     WORK_PROFILE,
-    TV_PROFILE,
+    TV_PROFILE;
 }

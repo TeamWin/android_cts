@@ -32,6 +32,16 @@ android_test {
         ":cts-android-test-runner-current-api-gz",
     ],
 
+    // Prevent android.test.base, android.test.runner and android.test.mock classes being available
+    // at runtime by excluding them from the list of libraries that are implicitly added to the
+    // manifest. Otherwise, the test would break as it is not expecting those classes to be
+    // available.
+    exclude_uses_libs: [
+        "android.test.base",
+        "android.test.runner",
+        "android.test.mock",
+    ],
+
     use_embedded_native_libs: false,
     test_suites: [
         "cts",

@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
+import android.media.tv.AitInfo;
 import android.media.tv.BroadcastInfoRequest;
 import android.media.tv.BroadcastInfoResponse;
 import android.media.tv.CommandRequest;
@@ -78,8 +79,8 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.Executor;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Test {@link android.media.tv.interactive.TvInteractiveAppService}.
@@ -195,6 +196,15 @@ public class TvInteractiveAppServiceTest {
     }
 
     public static class MockTvInputCallback extends TvView.TvInputCallback {
+        public void onAitInfoUpdated(String inputId, AitInfo aitInfo) {
+            super.onAitInfoUpdated(inputId, aitInfo);
+        }
+        public void onSignalStrength(String inputId, int strength) {
+            super.onSignalStrength(inputId, strength);
+        }
+        public void onTuned(String inputId, Uri uri) {
+            super.onTuned(inputId, uri);
+        }
     }
 
     private TvInteractiveAppView findTvInteractiveAppViewById(int id) {
@@ -528,6 +538,7 @@ public class TvInteractiveAppServiceTest {
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mAdResponseCount > 0);
 
         assertThat(mSession.mAdResponseCount).isEqualTo(1);
+        assertThat(mSession.mAdResponse.getId()).isEqualTo(767);
         assertThat(mSession.mAdResponse.getResponseType())
                 .isEqualTo(AdResponse.RESPONSE_TYPE_PLAYING);
         assertThat(mSession.mAdResponse.getElapsedTimeMillis()).isEqualTo(909L);
@@ -535,10 +546,26 @@ public class TvInteractiveAppServiceTest {
 
     // TODO: check the counts and values
     @Test
+    public void testAitInfo() throws Throwable {
+        linkTvView();
+        mInputSession.notifyAitInfoUpdated(
+                new AitInfo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV, 2));
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
     public void testSignalStrength() throws Throwable {
         linkTvView();
 
         mInputSession.notifySignalStrength(TvInputManager.SIGNAL_STRENGTH_STRONG);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testRemoveBroadcastInfo() throws Throwable {
+        linkTvView();
+
+        mSession.removeBroadcastInfo(23);
         mInstrumentation.waitForIdleSync();
     }
 

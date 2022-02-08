@@ -16,14 +16,26 @@
 
 package com.android.bedstead.harrier;
 
+import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.CrossUserTest;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnumTestParameter;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
+import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
+import com.android.bedstead.harrier.annotations.UserPair;
+import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerPrimaryUser;
+import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -108,5 +120,39 @@ public class BedsteadJUnit4Test {
     public void enumParameterized(
             @EnumTestParameter(EnumWithThreeValues.class) EnumWithThreeValues argument) {
         sEnumParameterizedCalls += 1;
+    }
+
+    @PermissionTest({INTERACT_ACROSS_PROFILES, INTERACT_ACROSS_USERS})
+    @EnsureHasPermission(INTERACT_ACROSS_USERS_FULL)
+    @Test
+    public void permissionTestAnnotation_generatesRunsWithOnePermissionOrOther() {
+        assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS_FULL)).isTrue();
+        if (TestApis.permissions().hasPermission(INTERACT_ACROSS_PROFILES)) {
+            assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS)).isFalse();
+        } else {
+            assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS)).isTrue();
+        }
+    }
+
+    @UserTest({UserType.PRIMARY_USER, UserType.WORK_PROFILE})
+    @Test
+    public void userTestAnnotation_isRunningOnCorrectUsers() {
+        if (!TestApis.users().instrumented().equals(sDeviceState.primaryUser())) {
+            assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.secondaryUser());
+        }
+    }
+
+    @CrossUserTest({
+            @UserPair(from = PRIMARY_USER, to = WORK_PROFILE),
+            @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
+    })
+    @Test
+    public void crossUserTestAnnotation_isRunningWithCorrectUserPairs() {
+        if (TestApis.users().instrumented().equals(sDeviceState.primaryUser())) {
+            assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.workProfile());
+        } else {
+            assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.workProfile());
+            assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.primaryUser());
+        }
     }
 }

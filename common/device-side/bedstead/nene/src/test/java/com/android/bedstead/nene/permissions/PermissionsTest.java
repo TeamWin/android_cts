@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.permissions;
 
+import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -32,6 +34,8 @@ import android.content.Context;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -249,5 +253,17 @@ public class PermissionsTest {
             assertThat(sContext.checkSelfPermission(MANAGE_EXTERNAL_STORAGE))
                     .isNotEqualTo(PERMISSION_GRANTED);
         }
+    }
+
+    @Test
+    @EnsureHasPermission(INTERACT_ACROSS_USERS_FULL)
+    public void hasPermission_permissionIsGranted_returnsTrue() {
+        assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS_FULL)).isTrue();
+    }
+
+    @Test
+    @EnsureDoesNotHavePermission(INTERACT_ACROSS_USERS_FULL)
+    public void hasPermission_permissionIsNotGranted_returnsFalse() {
+        assertThat(TestApis.permissions().hasPermission(INTERACT_ACROSS_USERS_FULL)).isFalse();
     }
 }

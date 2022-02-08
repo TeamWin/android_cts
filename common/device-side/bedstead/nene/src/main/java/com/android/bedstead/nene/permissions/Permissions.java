@@ -421,4 +421,9 @@ public final class Permissions {
 
         mExistingPermissions = null;
     }
+
+    /** True if the current process has the given permission. */
+    public boolean hasPermission(String permission) {
+        return sContext.checkSelfPermission(permission) == PERMISSION_GRANTED;
+    }
 }

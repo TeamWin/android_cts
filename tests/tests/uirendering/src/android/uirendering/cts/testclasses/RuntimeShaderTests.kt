@@ -214,16 +214,17 @@ class RuntimeShaderTests : ActivityTestBase() {
 
     @Test
     fun testDefaultColorUniform() {
-        val shader = RuntimeShader(simpleColorShader, true)
+        val shader = RuntimeShader(simpleColorShader)
 
         val paint = Paint()
         paint.shader = shader
+        paint.blendMode = BlendMode.SRC
 
         val rect = Rect(10, 10, 80, 80)
 
         createTest().addCanvasClient(CanvasClient
                 { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
-                true).runWithVerifier(RectVerifier(Color.WHITE, Color.BLACK, rect))
+                true).runWithVerifier(RectVerifier(Color.WHITE, Color.TRANSPARENT, rect))
     }
 
     @Test
@@ -399,26 +400,6 @@ class RuntimeShaderTests : ActivityTestBase() {
         createTest().addCanvasClient(CanvasClient
         { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
                 true).runWithVerifier(RectVerifier(Color.WHITE, linearColorMix.toArgb(), rect, 4))
-    }
-
-    @Test
-    fun testOpaqueConstructor() {
-        val shader = RuntimeShader(simpleColorShader, true)
-        Assert.assertTrue(shader.isForceOpaque)
-
-        val color = Color.valueOf(0.0f, 0.0f, 1.0f, 0.5f)
-        shader.setFloatUniform("inputNonColor", color.components)
-        shader.setIntUniform("useNonColor", 1)
-
-        val paint = Paint()
-        paint.shader = shader
-        paint.blendMode = BlendMode.SRC
-
-        val rect = Rect(10, 10, 80, 80)
-
-        createTest().addCanvasClient(CanvasClient
-                { canvas: Canvas, width: Int, height: Int -> canvas.drawRect(rect, paint) },
-                true).runWithVerifier(RectVerifier(Color.WHITE, Color.BLUE, rect))
     }
 
     @Test

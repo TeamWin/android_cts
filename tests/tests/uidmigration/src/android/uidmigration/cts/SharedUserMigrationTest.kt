@@ -39,6 +39,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.UUID
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -160,29 +161,18 @@ class SharedUserMigrationTest {
         var result = resolver.call(authority, "data", null, null).assertNotNull()
         val oldUUID = result.getString(RESULT_KEY).assertNotNull()
 
-        // Need 2 receivers because the intent filters are not compatible.
-        val verifier = PackageBroadcastVerifier(oldUid)
-        val r1: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                verifier.verify(intent)
-            }
-        }
+        val receiver = PackageBroadcastReceiver(oldUid)
         IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_REMOVED)
             addAction(Intent.ACTION_PACKAGE_ADDED)
             addAction(Intent.ACTION_PACKAGE_REPLACED)
             addDataScheme("package")
-            mContext.registerReceiver(r1, this)
-        }
-        val r2: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                verifier.verify(intent)
-            }
+            mContext.registerReceiver(receiver, this)
         }
         IntentFilter().apply {
             addAction(Intent.ACTION_UID_REMOVED)
             addAction(Const.ACTION_UPDATE_ACK)
-            mContext.registerReceiver(r2, this)
+            mContext.registerReceiver(receiver, this)
         }
 
         // Update the data test APK and make sure UID changed.
@@ -192,16 +182,15 @@ class SharedUserMigrationTest {
 
         // Ensure system broadcasts are delivered properly.
         try {
-            val e = verifier.poll(5, TimeUnit.SECONDS)
+            val e = receiver.poll(5, TimeUnit.SECONDS)
             if (e !== NOT_AN_ERROR) {
                 throw AssertionError(e)
             }
         } catch (e: InterruptedException) {
             fail(e.message)
         }
-        assertEquals(newUid, verifier.newUid)
-        mContext.unregisterReceiver(r1)
-        mContext.unregisterReceiver(r2)
+        assertEquals(newUid, receiver.newUid)
+        mContext.unregisterReceiver(receiver)
 
         // Ask the app again for a UUID. If data migration is working, it shall be the same.
         result = resolver.call(authority, "data", null, null).assertNotNull()
@@ -264,15 +253,15 @@ class SharedUserMigrationTest {
         runShellCommand("pm uninstall $packageName")
     }
 
-    class PackageBroadcastVerifier(
+    class PackageBroadcastReceiver(
         private val mPreviousUid: Int
-    ) : ArrayBlockingQueue<Throwable?>(1) {
+    ) : BroadcastReceiver(), BlockingQueue<Throwable?> by ArrayBlockingQueue<Throwable?>(1) {
 
         var newUid = -1
             private set
         private var mCounter = 0
 
-        fun verify(intent: Intent) {
+        override fun onReceive(context: Context?, intent: Intent) {
             try {
                 verifyInternal(intent)
             } catch (e: Throwable) {
@@ -310,6 +299,8 @@ class SharedUserMigrationTest {
                     assertFalse(intent.hasExtra(Intent.EXTRA_REPLACING))
                     assertTrue(intent.getBooleanExtra(Intent.EXTRA_UID_CHANGING, false))
                     assertEquals(mPreviousUid, intent.getIntExtra(Intent.EXTRA_UID, -1))
+                    newUid = intent.getIntExtra(Intent.EXTRA_NEW_UID, -1)
+                    assertNotEquals(mPreviousUid, newUid)
                 }
                 Intent.ACTION_UID_REMOVED -> {
                     assertEquals(2, mCounter)
@@ -324,8 +315,7 @@ class SharedUserMigrationTest {
                     assertEquals(3, mCounter)
                     assertFalse(intent.hasExtra(Intent.EXTRA_REPLACING))
                     assertTrue(intent.getBooleanExtra(Intent.EXTRA_UID_CHANGING, false))
-                    newUid = intent.getIntExtra(Intent.EXTRA_UID, mPreviousUid)
-                    assertNotEquals(mPreviousUid, newUid)
+                    assertEquals(newUid, intent.getIntExtra(Intent.EXTRA_UID, mPreviousUid))
                     assertEquals(mPreviousUid, intent.getIntExtra(Intent.EXTRA_PREVIOUS_UID, -1))
                 }
                 Const.ACTION_UPDATE_ACK -> {

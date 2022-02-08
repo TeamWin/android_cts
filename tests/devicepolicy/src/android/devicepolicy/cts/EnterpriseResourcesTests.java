@@ -24,11 +24,13 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyDrawableResource;
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.DevicePolicyResources;
 import android.app.admin.DevicePolicyStringResource;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -48,6 +50,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 // TODO(b/208084779): Add more cts tests to cover setting different styles and sources, also
 //  add more tests to cover calling from other packages after adding support for the new APIs in
@@ -63,6 +66,7 @@ public class EnterpriseResourcesTests {
     private static final String UPDATABLE_DRAWABLE_ID_1 = "UPDATABLE_DRAWABLE_ID_1";
     private static final String UPDATABLE_DRAWABLE_ID_2 = "UPDATABLE_DRAWABLE_ID_2";
     private static final String DRAWABLE_STYLE_1 = "DRAWABLE_STYLE_1";
+    private static final String DRAWABLE_SOURCE_1 = "DRAWABLE_SOURCE_1";
 
     private static final String UPDATABLE_STRING_ID_1 = "UPDATABLE_STRING_ID_1";
     private static final String UPDATABLE_STRING_ID_2 = "UPDATABLE_STRING_ID_2";
@@ -314,17 +318,82 @@ public class EnterpriseResourcesTests {
         sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         assertThrows(NullPointerException.class, () -> sDpm.getDrawable(
-                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ null));
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                (Callable<Drawable>) /* default= */ null));
     }
 
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getDrawable_defaultIsNull_returnsNull() {
+    public void getDrawable_defaultLoaderReturnsNull_returnsNull() {
         sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
 
         assertThat(sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, /* default= */ () -> null)).isNull();
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableForDensity_drawableIsSet_returnsUpdatedDrawable() {
+        sDpm.setDrawables(createDrawable(
+                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
+
+        Drawable drawable = sDpm.getDrawableForDensity(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                /* density= */ 0,
+                /* default= */ () -> null);
+
+        assertThat(areSameDrawables(drawable, sContext.getDrawable(R.drawable.test_drawable_1)))
+                .isTrue();
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableForDensity_drawableIsNotSet_returnsDefaultDrawable() {
+        Drawable defaultDrawable = sContext.getDrawable(R.drawable.test_drawable_1);
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
+
+        Drawable drawable = sDpm.getDrawableForDensity(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                /* density= */ 0,
+                /* default= */ () -> defaultDrawable);
+
+        assertThat(drawable).isEqualTo(defaultDrawable);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawable_drawableIsSet_returnsUpdatedIcon() {
+        sDpm.setDrawables(createDrawable(
+                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
+
+        Icon icon = sDpm.getDrawableAsIcon(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                /* default= */ Icon.createWithResource(sContext, R.drawable.test_drawable_2));
+
+        assertThat(icon.getResId()).isEqualTo(R.drawable.test_drawable_1);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawable_drawableIsNotSet_returnsDefaultIcon() {
+        Icon defaultIcon = Icon.createWithResource(sContext, R.drawable.test_drawable_2);
+        sDpm.resetDrawables(new String[]{UPDATABLE_DRAWABLE_ID_1});
+
+        Icon icon = sDpm.getDrawableAsIcon(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                defaultIcon);
+
+        assertThat(icon).isEqualTo(defaultIcon);
     }
 
     @Test
@@ -341,6 +410,58 @@ public class EnterpriseResourcesTests {
     public void constructDevicePolicyDrawableResource_withNonDrawableResource_throwsIllegalStateException() {
         assertThrows(IllegalStateException.class, () -> new DevicePolicyDrawableResource(
                 sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.string.test_string_1));
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableId_returnsCorrectValue() {
+        DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
+                sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1);
+
+        assertThat(resource.getDrawableId()).isEqualTo(UPDATABLE_DRAWABLE_ID_1);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableStyle_returnsCorrectValue() {
+        DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
+                sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1);
+
+        assertThat(resource.getDrawableStyle()).isEqualTo(DRAWABLE_STYLE_1);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableStyle_sourceNotSpecified_returnsUndefined() {
+        DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
+                sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1);
+
+        assertThat(resource.getDrawableSource()).isEqualTo(
+                DevicePolicyResources.Drawables.Source.UNDEFINED);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableStyle_sourceSpecified_returnsCorrectValue() {
+        DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
+                sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, DRAWABLE_SOURCE_1,
+                R.drawable.test_drawable_1);
+
+        assertThat(resource.getDrawableSource()).isEqualTo(DRAWABLE_SOURCE_1);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getDrawableCallingPackageResourceId_returnsCorrectValue() {
+        DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
+                sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1);
+
+        assertThat(resource.getCallingPackageResourceId()).isEqualTo(R.drawable.test_drawable_1);
     }
 
     // TODO(b/16348282): extract to a common place to make it reusable.
@@ -566,7 +687,7 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getString_defaultIsNull_returnsNull() {
+    public void getString_defaultLoaderReturnsNull_returnsNull() {
         sDpm.resetStrings(new String[]{UPDATABLE_STRING_ID_1});
 
         assertThat(sDpm.getString(UPDATABLE_STRING_ID_1, /* default= */ () -> null)).isNull();
@@ -598,6 +719,26 @@ public class EnterpriseResourcesTests {
     public void constructDevicePolicyStringResource_withNonStringResource_throwsIllegalStateException() {
         assertThrows(IllegalStateException.class, () -> new DevicePolicyStringResource(
                 sContext, UPDATABLE_STRING_ID_1, R.drawable.test_drawable_2));
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getStringId_returnsCorrectValue() {
+        DevicePolicyStringResource resource = new  DevicePolicyStringResource(
+                sContext, UPDATABLE_STRING_ID_1, R.string.test_string_1);
+
+        assertThat(resource.getStringId()).isEqualTo(UPDATABLE_STRING_ID_1);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void getStringCallingPackageResourceId_returnsCorrectValue() {
+        DevicePolicyStringResource resource = new  DevicePolicyStringResource(
+                sContext, UPDATABLE_STRING_ID_1, R.string.test_string_1);
+
+        assertThat(resource.getCallingPackageResourceId()).isEqualTo(R.string.test_string_1);
     }
 
     private Set<DevicePolicyStringResource> createString(

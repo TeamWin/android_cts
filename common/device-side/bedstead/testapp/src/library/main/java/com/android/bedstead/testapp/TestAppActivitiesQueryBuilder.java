@@ -49,8 +49,6 @@ public final class TestAppActivitiesQueryBuilder implements Queryable {
         Iterator<com.android.queryable.info.ActivityInfo> activityIterator =
                 mTestAppActivities.activities().iterator();
 
-        Log.e("jonathan", "TesTApps: " + mTestAppActivities.activities());
-
         while (activityIterator.hasNext()) {
             com.android.queryable.info.ActivityInfo activity = activityIterator.next();
             if (ActivityQueryHelper.matches(mActivity, activity)) {
