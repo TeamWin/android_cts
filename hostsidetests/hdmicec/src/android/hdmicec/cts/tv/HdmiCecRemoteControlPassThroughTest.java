@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTest {
 
-    private static final int WAIT_TIME_MS = 300;
+    private static final int WAIT_TIME_MS = 1000;
 
     private HashMap<String, Integer> remoteControlKeys = new HashMap<String, Integer>();
     private HashMap<String, Integer> remoteControlAudioKeys = new HashMap<String, Integer>();
