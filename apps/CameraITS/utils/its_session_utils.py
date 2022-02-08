@@ -1213,7 +1213,7 @@ def do_capture_with_latency(cam, req, sync_latency, fmt=None):
   return caps[-1]
 
 
-def load_scene(cam, props, scene, tablet, chart_distance):
+def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True):
   """Load the scene for the camera based on the FOV.
 
   Args:
@@ -1222,6 +1222,7 @@ def load_scene(cam, props, scene, tablet, chart_distance):
     scene: scene to be loaded
     tablet: tablet to load scene on
     chart_distance: distance to tablet
+    lighting_check: Boolean for lighting check enabled
   """
   if not tablet:
     logging.info('Manual run: no tablet to load scene on.')
@@ -1246,7 +1247,7 @@ def load_scene(cam, props, scene, tablet, chart_distance):
           chart_distance,
           opencv_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1) and
       float(camera_fov) > opencv_processing_utils.FOV_THRESH_WFOV)
-  if rfov_camera_in_rfov_box or wfov_camera_in_wfov_box:
+  if (rfov_camera_in_rfov_box or wfov_camera_in_wfov_box) and lighting_check:
     cam.do_3a()
     cap = cam.do_capture(
         capture_request_utils.auto_capture_request(), cam.CAP_YUV)
@@ -1254,16 +1255,19 @@ def load_scene(cam, props, scene, tablet, chart_distance):
     validate_lighting(y_plane, scene)
 
 
-def validate_lighting(y_plane, scene):
+def validate_lighting(y_plane, scene, state='ON'):
   """Validates the lighting level in scene corners based on empirical values.
 
   Args:
     y_plane: Y plane of YUV image
     scene: scene name
+    state: string 'ON' or 'OFF'
+
   Returns:
     boolean True if lighting validated, else raise AssertionError
   """
   logging.debug('Validating lighting levels.')
+  image_processing_utils.write_image(y_plane, f'validate_lighting_{scene}.jpg')
 
   # Test patches from each corner.
   for location, coordinates in _VALIDATE_LIGHTING_REGIONS.items():
@@ -1272,11 +1276,21 @@ def validate_lighting(y_plane, scene):
         _VALIDATE_LIGHTING_PATCH_W, _VALIDATE_LIGHTING_PATCH_H)
     y_mean = image_processing_utils.compute_image_means(patch)[0]
     logging.debug('%s corner Y mean: %.3f', location, y_mean)
-    if y_mean > _VALIDATE_LIGHTING_THRESH:
-      logging.debug('Lights ON in test rig.')
-      return True
-  image_processing_utils.write_image(y_plane, f'validate_lighting_{scene}.jpg')
-  raise AssertionError('Lights OFF in test rig. Please turn ON and retry.')
+    if state == 'ON':
+      if y_mean > _VALIDATE_LIGHTING_THRESH:
+        logging.debug('Lights ON in test rig.')
+        return True
+      else:
+        raise AssertionError('Lights OFF in test rig. Turn ON and retry.')
+    elif state == 'OFF':
+      if y_mean < _VALIDATE_LIGHTING_THRESH:
+        logging.debug('Lights OFF in test rig.')
+        return True
+      else:
+        raise AssertionError('Lights ON in test rig. Turn OFF and retry.')
+    else:
+      raise AssertionError('Invalid lighting state string. '
+                           "Valid strings: 'ON', 'OFF'.")
 
 
 def get_build_sdk_version(device_id):

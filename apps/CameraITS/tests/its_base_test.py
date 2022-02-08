@@ -123,8 +123,6 @@ class ItsBaseTest(base_test.BaseTestClass):
       lighting_control_utils.set_light_brightness(
       self.lighting_ch, 255, arduino_serial_port)
       logging.debug('Light is turned ON.')
-    else:
-      logging.info('Ensure lights ON')
 
   def _setup_devices(self, num):
     """Sets up each device in parallel if more than one device."""
