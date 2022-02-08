@@ -63,9 +63,9 @@ public class MeasuredTextTest {
         new MeasuredText.Builder(text.toCharArray())
                 .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
 
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
-        config.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
         new MeasuredText.Builder(text.toCharArray())
                 .appendStyleRun(sPaint, config, text.length(), false /* isRtl */).build();
     }

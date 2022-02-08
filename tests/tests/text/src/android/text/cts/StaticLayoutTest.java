@@ -241,8 +241,9 @@ public class StaticLayoutTest {
         }
         {
             // setLineBreakConfig
-            LineBreakConfig lineBreakConfig = new LineBreakConfig();
-            lineBreakConfig.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+            LineBreakConfig lineBreakConfig = new LineBreakConfig.Builder()
+                    .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                    .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
 
             StaticLayout.Builder builder = StaticLayout.Builder.obtain(LAYOUT_TEXT, 0,
                     LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
@@ -256,8 +257,9 @@ public class StaticLayoutTest {
         }
         {
             // setLineBreakConfig with word style(lw=phrase)
-            LineBreakConfig lineBreakConfig = new LineBreakConfig();
-            lineBreakConfig.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+            LineBreakConfig lineBreakConfig = new LineBreakConfig.Builder()
+                    .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_STYLE_NONE)
+                    .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
 
             StaticLayout.Builder builder = StaticLayout.Builder.obtain(LAYOUT_TEXT, 0,
                     LAYOUT_TEXT.length(), mDefaultPaint, DEFAULT_OUTER_WIDTH);
