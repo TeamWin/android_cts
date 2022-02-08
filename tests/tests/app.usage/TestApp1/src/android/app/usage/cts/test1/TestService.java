@@ -24,7 +24,6 @@ import android.app.usage.UsageStatsManager;
 import android.app.usage.cts.ITestReceiver;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.SystemClock;
 
 public class TestService extends Service {
 
@@ -52,8 +51,6 @@ public class TestService extends Service {
         @Override
         public void postNotification(int notificationId, Notification notification) {
             getNotificationManager().notify(notificationId, notification);
-            // TODO: Remove this after making create/update notification times more accurate.
-            SystemClock.sleep(500);
         }
 
         @Override
