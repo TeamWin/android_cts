@@ -20,6 +20,8 @@ import android.Manifest
 import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.os.Handler
+import android.os.Looper
 
 const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
 const val EXTRA_CREATE_CHANNELS = "extra_create"
@@ -31,6 +33,7 @@ const val DELAY_MS = 1000L
 class CreateNotificationChannelsActivity : Activity() {
     lateinit var notificationManager: NotificationManager
     override fun onStart() {
+        val handler = Handler(Looper.getMainLooper())
         notificationManager = baseContext.getSystemService(NotificationManager::class.java)!!
         if (intent.getBooleanExtra(EXTRA_CREATE_CHANNELS, false)) {
             if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
@@ -40,10 +43,10 @@ class CreateNotificationChannelsActivity : Activity() {
         }
 
         if (intent.getBooleanExtra(EXTRA_REQUEST_PERMISSIONS, false)) {
-            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 0)
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         } else if (intent.getBooleanExtra(EXTRA_REQUEST_PERMISSIONS_DELAYED, false)) {
-            mainThreadHandler.postDelayed({
-                requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 0)
+            handler.postDelayed({
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
             }, DELAY_MS)
         }
 

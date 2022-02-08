@@ -21,9 +21,9 @@
 
     <uses-sdk android:minSdkVersion="33" android:targetSdkVersion="33" />
 
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <application android:label="CreateNotificationChannels">
+    <application android:label="CreateNotif">
         <activity android:name=".CreateNotificationChannelsActivity"
                   android:exported="true">
             <intent-filter>

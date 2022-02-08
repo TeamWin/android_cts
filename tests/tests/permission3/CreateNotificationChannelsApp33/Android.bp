@@ -21,7 +21,9 @@ package {
 android_test_helper_app {
     name: "CtsCreateNotificationChannelsApp33",
     defaults: ["mts-target-sdk-version-current"],
-    min_sdk_version: "33",
+    // TODO ntmyren: change to "33" when it is a valid target
+    sdk_version: "test_current",
+    min_sdk_version: "test_current",
 
     static_libs: [
         "kotlin-stdlib",
