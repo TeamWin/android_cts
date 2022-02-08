@@ -141,6 +141,8 @@ public class AccessibilityServiceInfoTest {
                 speakingService.loadDescription(mPackageManager));
         assertEquals(/* expected= */ "Some summary",
                 speakingService.loadSummary(mPackageManager));
+        assertEquals(/* expected= */ "Some intro",
+                speakingService.loadIntro(mPackageManager));
         assertNotNull(speakingService.getResolveInfo());
         assertEquals(/* expected= */ 6000,
                 speakingService.getInteractiveUiTimeoutMillis());
