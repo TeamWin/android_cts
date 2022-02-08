@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,33 +16,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsGameServiceTestCases",
+android_test_helper_app {
+    name: "CtsGameServiceRestartGameVerifier",
     srcs: [
-        "src/**/*.aidl",
         "src/**/*.java",
     ],
-    data: [
-        ":CtsGameServiceFalsePositiveGame",
-        ":CtsGameServiceGame",
-        ":CtsGameServiceNotGame",
-        ":CtsGameServiceRestartGameVerifier",
-        ":CtsGameServiceStartActivityVerifier",
-    ],
-    libs: [
-        "android.test.base",
-        "android.test.runner",
-    ],
     static_libs: [
-        "androidx.test.core",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "junit",
-        "truth-prebuilt",
+        "androidx.appcompat_appcompat",
     ],
-    sdk_version: "test_current",
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
+    defaults: ["cts_support_defaults"],
+    min_sdk_version: "current",
+    resource_dirs: ["res"],
 }

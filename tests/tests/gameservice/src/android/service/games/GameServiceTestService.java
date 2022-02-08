@@ -100,6 +100,15 @@ public final class GameServiceTestService extends Service {
 
             return mLastActivityResult;
         }
+
+        @Override
+        public void restartFocusedGameSession() {
+            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
+            if (focusedGameSession == null) {
+                return;
+            }
+            focusedGameSession.restartGame();
+        }
     };
 
     @Nullable
