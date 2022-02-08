@@ -45,6 +45,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
+import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
@@ -263,6 +264,7 @@ public final class DeviceState extends HarrierRule {
     private PermissionContextImpl applyAnnotations(List<Annotation> annotations, boolean isTest)
             throws Throwable {
         PermissionContextImpl permissionContext = null;
+        Log.i(LOG_TAG, "Applying annotations: " + annotations);
         for (Annotation annotation : annotations) {
             Log.i(LOG_TAG, "Applying annotation " + annotation);
 
@@ -545,9 +547,31 @@ public final class DeviceState extends HarrierRule {
                 continue;
             }
 
+            if (annotation instanceof EnsureCanGetPermission) {
+                EnsureCanGetPermission ensureCanGetPermissionAnnotation =
+                        (EnsureCanGetPermission) annotation;
+
+                if (!meetsSdkVersionRequirements(
+                        ensureCanGetPermissionAnnotation.minVersion(),
+                        ensureCanGetPermissionAnnotation.maxVersion())) {
+                    continue;
+                }
+
+                for (String permission : ensureCanGetPermissionAnnotation.value()) {
+                    ensureCanGetPermission(permission);
+                }
+                continue;
+            }
+
             if (annotation instanceof EnsureHasPermission) {
                 EnsureHasPermission ensureHasPermissionAnnotation =
                         (EnsureHasPermission) annotation;
+
+                if (!meetsSdkVersionRequirements(
+                        ensureHasPermissionAnnotation.minVersion(),
+                        ensureHasPermissionAnnotation.maxVersion())) {
+                    continue;
+                }
 
                 for (String permission : ensureHasPermissionAnnotation.value()) {
                     ensureCanGetPermission(permission);
@@ -620,7 +644,7 @@ public final class DeviceState extends HarrierRule {
 
         if (isTest && mPermissionsInstrumentationPackage != null
                 && !mHasRequirePermissionInstrumentation) {
-            requireNoPermissionsInstrumentation();
+            requireNoPermissionsInstrumentation("No reason to use instrumentation");
         }
 
         return permissionContext;
@@ -860,7 +884,7 @@ public final class DeviceState extends HarrierRule {
                 !TestApis.packages().features().contains(feature), failureMode);
     }
 
-    private void requireNoPermissionsInstrumentation() {
+    private void requireNoPermissionsInstrumentation(String reason) {
         boolean instrumentingPermissions =
                 TestApis.context()
                         .instrumentedContext().getPackageName()
@@ -868,13 +892,13 @@ public final class DeviceState extends HarrierRule {
 
         checkFailOrSkip(
                 "This test never runs using permissions instrumentation on this version"
-                        + " of Android",
+                        + " of Android: " + reason,
                 !instrumentingPermissions,
                 FailureMode.SKIP
         );
     }
 
-    private void requirePermissionsInstrumentation() {
+    private void requirePermissionsInstrumentation(String reason) {
         mHasRequirePermissionInstrumentation = true;
         boolean instrumentingPermissions =
                 TestApis.context()
@@ -883,7 +907,7 @@ public final class DeviceState extends HarrierRule {
 
         checkFailOrSkip(
                 "This test only runs when using permissions instrumentation on this"
-                        + " version of Android",
+                        + " version of Android: " + reason,
                 instrumentingPermissions,
                 FailureMode.SKIP
         );
@@ -1951,13 +1975,13 @@ public final class DeviceState extends HarrierRule {
         }
 
         if (TestApis.permissions().adoptablePermissions().contains(permission)) {
-            requireNoPermissionsInstrumentation();
+            requireNoPermissionsInstrumentation("Requires permission " + permission);
         } else if (mPermissionsInstrumentationPackagePermissions.contains(permission)) {
-            requirePermissionsInstrumentation();
+            requirePermissionsInstrumentation("Requires permission " + permission);
         } else {
             // Can't get permission at all - error (including the permissions for both)
             TestApis.permissions().throwPermissionException(
-                    "Can not get permission including by instrumenting "
+                    "Can not get permission " + permission + " including by instrumenting "
                             + mPermissionsInstrumentationPackage
                             + "\n " + mPermissionsInstrumentationPackage + " permissions: "
                             + mPermissionsInstrumentationPackagePermissions,

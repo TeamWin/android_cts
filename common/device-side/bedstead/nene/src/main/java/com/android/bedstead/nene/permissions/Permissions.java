@@ -152,6 +152,52 @@ public final class Permissions {
 
     /**
      * Enter a {@link PermissionContext} where the given permissions are granted only when running
+     * on the given version or below.
+     *
+     * <p>If the permissions cannot be granted, and are not already granted, an exception will be
+     * thrown.
+     *
+     * <p>If the version does not match, the permission context will not change.
+     */
+    public PermissionContextImpl withPermissionOnVersionAtMost(
+            int maxSdkVersion, String... permissions) {
+        if (mPermissionContexts.isEmpty()) {
+            recordExistingPermissions();
+        }
+
+        PermissionContextImpl permissionContext = new PermissionContextImpl(this);
+        mPermissionContexts.add(permissionContext);
+
+        permissionContext.withPermissionOnVersionAtMost(maxSdkVersion, permissions);
+
+        return permissionContext;
+    }
+
+    /**
+     * Enter a {@link PermissionContext} where the given permissions are granted only when running
+     * on the range of versions given (inclusive).
+     *
+     * <p>If the permissions cannot be granted, and are not already granted, an exception will be
+     * thrown.
+     *
+     * <p>If the version does not match, the permission context will not change.
+     */
+    public PermissionContextImpl withPermissionOnVersionBetween(
+            int minSdkVersion, int maxSdkVersion, String... permissions) {
+        if (mPermissionContexts.isEmpty()) {
+            recordExistingPermissions();
+        }
+
+        PermissionContextImpl permissionContext = new PermissionContextImpl(this);
+        mPermissionContexts.add(permissionContext);
+
+        permissionContext.withPermissionOnVersionBetween(minSdkVersion, maxSdkVersion, permissions);
+
+        return permissionContext;
+    }
+
+    /**
+     * Enter a {@link PermissionContext} where the given permissions are granted only when running
      * on the given version.
      *
      * <p>If the permissions cannot be granted, and are not already granted, an exception will be
