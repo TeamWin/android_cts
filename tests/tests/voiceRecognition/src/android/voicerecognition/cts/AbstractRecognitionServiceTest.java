@@ -16,8 +16,10 @@
 
 package android.voicerecognition.cts;
 
+import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_END_SEGMENTED_SESSION;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_ERROR;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_RESULTS;
+import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_SEGMENTS_RESULTS;
 import static android.voicerecognition.cts.CallbackMethod.CALLBACK_METHOD_UNSPECIFIED;
 import static android.voicerecognition.cts.RecognizerMethod.RECOGNIZER_METHOD_CANCEL;
 import static android.voicerecognition.cts.RecognizerMethod.RECOGNIZER_METHOD_DESTROY;
@@ -168,6 +170,25 @@ abstract class AbstractRecognitionServiceTest {
                 /* expected callback methods invoked: */ ImmutableList.of(
                         CALLBACK_METHOD_RESULTS,
                         CALLBACK_METHOD_RESULTS)
+        );
+    }
+
+    @Test
+    public void setSequenceTest_startListening_segment_endofsession() {
+        executeSequenceTest(
+                /* service methods to call: */ ImmutableList.of(
+                        RECOGNIZER_METHOD_START_LISTENING,
+                        RECOGNIZER_METHOD_STOP_LISTENING
+                        ),
+                /* callback methods to call: */ ImmutableList.of(
+                        CALLBACK_METHOD_SEGMENTS_RESULTS,
+                        CALLBACK_METHOD_END_SEGMENTED_SESSION
+                        ),
+                /* expected service methods propagated: */ ImmutableList.of(true, true, true),
+                /* expected callback methods invoked: */ ImmutableList.of(
+                        CALLBACK_METHOD_SEGMENTS_RESULTS,
+                        CALLBACK_METHOD_END_SEGMENTED_SESSION
+                )
         );
     }
 
