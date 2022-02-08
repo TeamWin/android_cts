@@ -113,6 +113,18 @@ public class VehiclePropertyIdsTest {
                 .isEqualTo("EV_CHARGE_PORT_CONNECTED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_PORT_OPEN))
                 .isEqualTo("EV_CHARGE_PORT_OPEN");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_CURRENT_DRAW_LIMIT))
+                .isEqualTo("EV_CHARGE_CURRENT_DRAW_LIMIT");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_PERCENT_LIMIT))
+                .isEqualTo("EV_CHARGE_PERCENT_LIMIT");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_SWITCH))
+                .isEqualTo("EV_CHARGE_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_STATE))
+                .isEqualTo("EV_CHARGE_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_TIME_REMAINING))
+                .isEqualTo("EV_CHARGE_TIME_REMAINING");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_REGENERATIVE_BRAKING_STATE))
+                .isEqualTo("EV_REGENERATIVE_BRAKING_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.RANGE_REMAINING))
                 .isEqualTo("RANGE_REMAINING");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE)).
