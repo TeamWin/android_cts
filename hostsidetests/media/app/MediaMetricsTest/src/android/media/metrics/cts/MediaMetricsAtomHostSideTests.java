@@ -19,6 +19,7 @@ package android.media.metrics.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.media.metrics.EditingSession;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.NetworkEvent;
@@ -28,14 +29,13 @@ import android.media.metrics.PlaybackSession;
 import android.media.metrics.PlaybackStateEvent;
 import android.media.metrics.RecordingSession;
 import android.media.metrics.TrackChangeEvent;
+import android.media.metrics.TranscodingSession;
 import android.os.Bundle;
 import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
-
-import java.lang.InterruptedException;
 
 import org.junit.Test;
 
@@ -315,6 +315,32 @@ public class MediaMetricsAtomHostSideTests {
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
         try(RecordingSession s = manager.createRecordingSession()) {
+            assertThat(s).isNotEqualTo(null);
+            LogSessionId idObj = s.getSessionId();
+            assertThat(idObj).isNotEqualTo(null);
+            assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        }
+    }
+
+    @Test
+    public void testEditingSession() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+
+        try (EditingSession s = manager.createEditingSession()) {
+            assertThat(s).isNotEqualTo(null);
+            LogSessionId idObj = s.getSessionId();
+            assertThat(idObj).isNotEqualTo(null);
+            assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        }
+    }
+
+    @Test
+    public void testTranscodingSession() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+
+        try (TranscodingSession s = manager.createTranscodingSession()) {
             assertThat(s).isNotEqualTo(null);
             LogSessionId idObj = s.getSessionId();
             assertThat(idObj).isNotEqualTo(null);
