@@ -1,4 +1,4 @@
-// Copyright 2020 The Android Open Source Project
+// Copyright 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,33 +16,9 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsQuickAccessWalletTestCases",
+android_test_helper_app {
+    name: "CtsQuickAccessWalletSampleApp",
     defaults: ["cts_defaults"],
-    dex_preopt: {
-        enabled: false,
-    },
-    optimize: {
-        enabled: false,
-    },
-    static_libs: [
-        "androidx.test.rules",
-        "androidx.test.ext.junit",
-        "androidx.test.uiautomator_uiautomator",
-        "compatibility-device-util-axt",
-    ],
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
     srcs: ["src/**/*.java"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-    data: [
-        ":CtsQuickAccessWalletSampleApp",
-    ],
-    sdk_version: "test_current",
+    sdk_version: "current",
 }
