@@ -523,9 +523,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 appConfigInfo.sizeInfo.displayWidth > appConfigInfo.sizeInfo.displayHeight);
         assertEquals("The app display metrics must be landscape", isLandscape,
                 appConfigInfo.sizeInfo.metricsWidth > appConfigInfo.sizeInfo.metricsHeight);
-        assertEquals("The display metrics of system resources must be landscape",
-                new Point(dc.getAppRect().width(), dc.getAppRect().height()),
-                new Point(globalSizeInfo.metricsWidth, globalSizeInfo.metricsHeight));
+        assertEquals("The display metrics of system resources must be landscape", isLandscape,
+                globalSizeInfo.metricsWidth > globalSizeInfo.metricsHeight);
     }
 
     @Test
