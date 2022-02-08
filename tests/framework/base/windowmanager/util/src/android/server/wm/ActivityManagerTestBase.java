@@ -104,7 +104,6 @@ import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -213,6 +212,7 @@ public abstract class ActivityManagerTestBase {
         testPackages.add(THIRD_TEST_PACKAGE);
         testPackages.add("android.server.wm.cts");
         testPackages.add("android.server.wm.jetpack");
+        testPackages.add("android.server.wm.jetpack.second");
         TEST_PACKAGES = Collections.unmodifiableList(testPackages);
     }
 
