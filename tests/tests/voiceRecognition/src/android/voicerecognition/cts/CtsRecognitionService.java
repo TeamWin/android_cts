@@ -21,7 +21,6 @@ import static android.voicerecognition.cts.TestObjects.PARTIAL_RESULTS_BUNDLE;
 import static android.voicerecognition.cts.TestObjects.READY_FOR_SPEECH_BUNDLE;
 import static android.voicerecognition.cts.TestObjects.RESULTS_BUNDLE;
 import static android.voicerecognition.cts.TestObjects.RMS_CHANGED_VALUE;
-import static android.voicerecognition.cts.TestObjects.SEGMENT_RESULTS_BUNDLE;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -120,12 +119,6 @@ public class CtsRecognitionService extends RecognitionService {
                     break;
                 case CALLBACK_METHOD_RMS_CHANGED:
                     listener.rmsChanged(RMS_CHANGED_VALUE);
-                    break;
-                case CALLBACK_METHOD_SEGMENTS_RESULTS:
-                    listener.segmentResults(SEGMENT_RESULTS_BUNDLE);
-                    break;
-                case CALLBACK_METHOD_END_SEGMENTED_SESSION:
-                    listener.endOfSegmentedSession();
                     break;
                 default:
                     fail();
