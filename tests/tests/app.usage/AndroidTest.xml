@@ -32,5 +32,10 @@
         <option name="package" value="android.app.usage.cts" />
         <option name="runtime-hint" value="1m47s" />
         <option name="hidden-api-checks" value="false" />
+        <option name="isolated-storage" value="false" />
     </test>
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/CtsUsageStatsTestCases" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
 </configuration>
