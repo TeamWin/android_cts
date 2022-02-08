@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
-    private static final int WAIT_TIME_MS = 300;
+    private static final int WAIT_TIME_MS = 1000;
 
     private static final int SLEEP_TIMESTEP_SECONDS = 1;
     private static final int POWER_TRANSITION_WAIT_TIME = 10;
