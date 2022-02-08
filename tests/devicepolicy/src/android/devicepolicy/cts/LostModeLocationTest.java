@@ -36,7 +36,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.LostMode;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.location.LocationProvider;
@@ -95,14 +95,14 @@ public final class LostModeLocationTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = LostMode.class)
+    @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_noTestProviders_returnFalse() throws Exception {
         sendLostModeLocationUpdate(/* expected= */ false);
     }
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = LostMode.class)
+    @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_noLocation_returnFalse() throws Exception {
         try (LocationProvider provider = TestApis.location().addLocationProvider()) {
             sendLostModeLocationUpdate(/* expected */ false);
@@ -111,7 +111,7 @@ public final class LostModeLocationTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = LostMode.class)
+    @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_returnTrueAndSendLocationUpdate() throws Exception {
         try (LocationProvider provider = TestApis.location().addLocationProvider()) {
             provider.setLocation(TEST_LATITUDE, TEST_LONGITUDE, TEST_ACCURACY);
@@ -134,7 +134,7 @@ public final class LostModeLocationTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = LostMode.class)
+    @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_sendMostRecentLocation() throws Exception {
         try (LocationProvider provider = TestApis.location().addLocationProvider()) {
             provider.setLocation(TEST_LATITUDE, TEST_LONGITUDE, TEST_ACCURACY);

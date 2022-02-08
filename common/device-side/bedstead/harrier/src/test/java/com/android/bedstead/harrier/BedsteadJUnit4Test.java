@@ -138,7 +138,7 @@ public class BedsteadJUnit4Test {
     @Test
     public void userTestAnnotation_isRunningOnCorrectUsers() {
         if (!TestApis.users().instrumented().equals(sDeviceState.primaryUser())) {
-            assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.secondaryUser());
+            assertThat(TestApis.users().instrumented()).isEqualTo(sDeviceState.workProfile());
         }
     }
 

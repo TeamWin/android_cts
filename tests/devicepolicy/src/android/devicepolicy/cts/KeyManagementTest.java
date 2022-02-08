@@ -35,7 +35,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.KeyManagement;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.BlockingCallback;
@@ -271,7 +271,7 @@ public final class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @PolicyAppliesTest(policy = KeyManagement.class)
     public void choosePrivateKeyAlias_aliasIsSelectedByAdmin_returnAlias() throws Exception {
         try {
             // Install keypair
@@ -291,7 +291,7 @@ public final class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @PolicyAppliesTest(policy = KeyManagement.class)
     public void choosePrivateKeyAlias_nonUserSelectedAliasIsSelectedByAdmin_returnAlias()
             throws Exception {
         try {
@@ -312,7 +312,7 @@ public final class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @PolicyAppliesTest(policy = KeyManagement.class)
     public void getPrivateKey_aliasIsGranted_returnPrivateKey() throws Exception {
         try {
             // Install keypair
@@ -405,7 +405,7 @@ public final class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @PolicyAppliesTest(policy = KeyManagement.class)
     public void getKeyPairGrants_includesGrantedExplicitly() {
         try {
             sDeviceState.dpc().devicePolicyManager().installKeyPair(
@@ -503,7 +503,7 @@ public final class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @PolicyAppliesTest(policy = KeyManagement.class)
     public void grantKeyPair_keyUsable() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().installKeyPair(
@@ -524,7 +524,7 @@ public final class KeyManagementTest {
 
     @Test
     @Postsubmit(reason = "new test")
-    @PositivePolicyTest(policy = KeyManagement.class)
+    @PolicyAppliesTest(policy = KeyManagement.class)
     public void revokeKeyPairFromApp_keyNotUsable() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().installKeyPair(

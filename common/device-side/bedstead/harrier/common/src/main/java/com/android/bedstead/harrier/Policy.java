@@ -30,7 +30,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_PARENT;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_UNAFFILIATED_OTHER_USERS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_NEGATIVE_TESTS;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.NO;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_APP_RESTRICTIONS;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_BLOCK_UNINSTALL;
@@ -292,7 +292,7 @@ public final class Policy {
      *
      * <p>These are states which should be run where the policy is able to be applied.
      */
-    public static List<Annotation> positiveStates(String policyName,
+    public static List<Annotation> policyAppliesStates(String policyName,
             EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
@@ -300,7 +300,7 @@ public final class Policy {
 
         for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
                 ANNOTATIONS_MAP.entrySet()) {
-            if (isPositive(enterprisePolicy.dpc(), annotation.getValue())) {
+            if (policyWillApply(enterprisePolicy.dpc(), annotation.getValue())) {
                 annotations.addAll(annotation.getKey().apply(enterprisePolicy));
             }
         }
@@ -313,7 +313,7 @@ public final class Policy {
         return new ArrayList<>(annotations);
     }
 
-    private static boolean isPositive(int[] policyFlags, Set<Integer> annotationFlags) {
+    private static boolean policyWillApply(int[] policyFlags, Set<Integer> annotationFlags) {
         for (int annotationFlag : annotationFlags) {
             if (hasFlag(policyFlags, annotationFlag)) {
                 return true;
@@ -322,11 +322,11 @@ public final class Policy {
         return false;
     }
 
-    private static boolean isNegative(int[] policyFlags, Set<Integer> annotationFlags) {
+    private static boolean policyWillNotApply(int[] policyFlags, Set<Integer> annotationFlags) {
         for (int annotationFlag : annotationFlags) {
-            if (hasFlag(annotationFlag, DO_NOT_APPLY_TO_NEGATIVE_TESTS, /* nonMatchingFlag= */
-                    NO)) {
-                return false; // We don't support using this annotation for negative tests
+            if (hasFlag(annotationFlag,
+                    DO_NOT_APPLY_TO_POLICY_DOES_NOT_APPLY_TESTS, /* nonMatchingFlag= */ NO)) {
+                return false; // We don't support using this annotation for PolicyDoesNotApply tests
             }
 
             int appliedByFlag = APPLIED_BY_FLAGS & annotationFlag;
@@ -341,11 +341,11 @@ public final class Policy {
     }
 
     /**
-     * Get negative parameterized test runs for the given policy.
+     * Get parameterized test runs for the given policy.
      *
      * <p>These are states which should be run where the policy is not able to be applied.
      */
-    public static List<Annotation> negativeStates(String policyName,
+    public static List<Annotation> policyDoesNotApplyStates(String policyName,
             EnterprisePolicy enterprisePolicy) {
         Set<Annotation> annotations = new HashSet<>();
 
@@ -353,7 +353,7 @@ public final class Policy {
 
         for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
                 ANNOTATIONS_MAP.entrySet()) {
-            if (isNegative(enterprisePolicy.dpc(), annotation.getValue())) {
+            if (policyWillNotApply(enterprisePolicy.dpc(), annotation.getValue())) {
                 annotations.addAll(annotation.getKey().apply(enterprisePolicy));
             }
         }

@@ -27,7 +27,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.NearbyNotificationStreamingPolicy;
 
 import org.junit.Before;
@@ -51,7 +51,7 @@ public class NearbyNotificationStreamingPolicyTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = NearbyNotificationStreamingPolicy.class)
+    @PolicyAppliesTest(policy = NearbyNotificationStreamingPolicy.class)
     @Postsubmit(reason = "new test")
     public void getNearbyNotificationStreamingPolicy_defaultToSameManagedAccountOnly() {
         assertThat(mDevicePolicyManager.getNearbyNotificationStreamingPolicy())
@@ -59,7 +59,7 @@ public class NearbyNotificationStreamingPolicyTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = NearbyNotificationStreamingPolicy.class)
+    @PolicyAppliesTest(policy = NearbyNotificationStreamingPolicy.class)
     @Postsubmit(reason = "new test")
     public void setNearbyNotificationStreamingPolicy_policyApplied_works() {
         int originalPolicy = mDevicePolicyManager.getNearbyNotificationStreamingPolicy();
