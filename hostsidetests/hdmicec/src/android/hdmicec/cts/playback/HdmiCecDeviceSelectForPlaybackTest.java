@@ -52,15 +52,6 @@ public class HdmiCecDeviceSelectForPlaybackTest extends BaseHdmiCecCtsTest {
                                     this, HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE))
                     .around(hdmiCecClient);
 
-    private String setPowerStateChangeOnActiveSourceLost(String valToSet) throws Exception {
-        ITestDevice device = getDevice();
-        String previousPowerStateChange = device.executeShellCommand("cmd hdmi_control cec_setting "
-                + "get power_state_change_on_active_source_lost").split(" = ")[1].trim();
-        device.executeShellCommand("cmd hdmi_control cec_setting "
-                + "set power_state_change_on_active_source_lost " + valToSet);
-        return previousPowerStateChange;
-    }
-
     private int getUnusedPhysicalAddress(int initialValue, int usedValue) {
         if (initialValue == usedValue)
             return 0x2000;
@@ -89,7 +80,8 @@ public class HdmiCecDeviceSelectForPlaybackTest extends BaseHdmiCecCtsTest {
         // Store previous power state change on active source lost.
         // Set the power state change to none, such that the device won't go to sleep when the
         // active source is changed.
-        String previousPowerStateChange = setPowerStateChangeOnActiveSourceLost("none");
+        String previousPowerStateChange = setPowerStateChangeOnActiveSourceLost(
+                HdmiCecConstants.POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_NONE);
         try {
             int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
             // Add Playback 2 in the network.
