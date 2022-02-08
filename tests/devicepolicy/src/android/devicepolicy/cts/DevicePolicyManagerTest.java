@@ -95,7 +95,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -1329,6 +1328,11 @@ public final class DevicePolicyManagerTest {
                         .build();
 
         assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void getDeviceManagerRoleHolderPackageName_doesNotCrash() {
+        sDevicePolicyManager.getDeviceManagerRoleHolderPackageName();
     }
 
     private static PersistableBundle createAdminExtrasBundle() {
