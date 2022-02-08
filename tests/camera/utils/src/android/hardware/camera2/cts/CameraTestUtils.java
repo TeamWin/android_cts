@@ -90,6 +90,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -1169,6 +1170,24 @@ public class CameraTestUtils extends Assert {
         public boolean hasMoreAbortedSequences()
         {
             return !mAbortQueue.isEmpty();
+        }
+
+        public List<Long> getCaptureStartTimestamps(int count) {
+            Iterator<Pair<CaptureRequest, Long>> iter = mCaptureStartQueue.iterator();
+            List<Long> timestamps = new ArrayList<Long>();
+            try {
+                while (timestamps.size() < count) {
+                    Pair<CaptureRequest, Long> captureStart = mCaptureStartQueue.poll(
+                            CAPTURE_RESULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                    assertNotNull("Wait for a capture start timed out in "
+                            + CAPTURE_RESULT_TIMEOUT_MS + "ms", captureStart);
+
+                    timestamps.add(captureStart.second);
+                }
+                return timestamps;
+            } catch (InterruptedException e) {
+                throw new UnsupportedOperationException("Unhandled interrupted exception", e);
+            }
         }
 
         public void drain() {
