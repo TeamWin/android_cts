@@ -28,6 +28,7 @@ import android.service.games.GameSession.ScreenshotCallback;
 import android.service.games.TestGameSessionService.TestGameSession;
 import android.service.games.testing.ActivityResult;
 import android.service.games.testing.IGameServiceTestService;
+import android.service.games.testing.OnSystemBarVisibilityChangedInfo;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -179,6 +180,14 @@ public final class GameServiceTestService extends Service {
             }
 
             return ret[0];
+        }
+
+        public OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo() {
+            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
+            if (focusedGameSession == null) {
+                return null;
+            }
+            return focusedGameSession.getOnSystemBarVisibilityChangedInfo();
         }
     };
 

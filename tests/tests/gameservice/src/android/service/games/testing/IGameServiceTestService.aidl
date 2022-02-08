@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.service.games.testing.ActivityResult;
+import android.service.games.testing.OnSystemBarVisibilityChangedInfo;
 
 interface IGameServiceTestService {
     boolean isGameServiceConnected();
@@ -43,4 +44,6 @@ interface IGameServiceTestService {
     void showOverlayForFocusedGameSession();
 
     Bitmap getBitmapScreenshotForFocusedGameSession();
+
+    OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo();
 }

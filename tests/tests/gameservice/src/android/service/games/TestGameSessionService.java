@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.service.games.testing.OnSystemBarVisibilityChangedInfo;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +70,7 @@ public final class TestGameSessionService extends GameSessionService {
         private final int mTaskId;
         private final Rect mTouchableBounds = new Rect();
         private final FrameLayout mRootView;
+        private final OnSystemBarVisibilityChangedInfo mOnSystemBarVisibilityChangedInfo;
 
         private TestGameSession(Context context, String packageName, int taskId) {
             mContext = context;
@@ -76,6 +78,7 @@ public final class TestGameSessionService extends GameSessionService {
             mTaskId = taskId;
             mRootView = new FrameLayout(context);
             mRootView.setVisibility(View.GONE);
+            mOnSystemBarVisibilityChangedInfo = new OnSystemBarVisibilityChangedInfo();
         }
 
         String getPackageName() {
@@ -87,7 +90,11 @@ public final class TestGameSessionService extends GameSessionService {
         }
 
         Rect getTouchableBounds() {
-            return mTouchableBounds;
+            return new Rect(mTouchableBounds);
+        }
+
+        OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo() {
+            return mOnSystemBarVisibilityChangedInfo;
         }
 
         void showOverlay() {
@@ -123,7 +130,8 @@ public final class TestGameSessionService extends GameSessionService {
                 }
 
                 @Override
-                public void onViewDetachedFromWindow(View v) {}
+                public void onViewDetachedFromWindow(View v) {
+                }
             });
             textView.addOnLayoutChangeListener(
                     (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
@@ -140,8 +148,12 @@ public final class TestGameSessionService extends GameSessionService {
                 boolean visibleDueToGesture) {
             if (visibleDueToGesture) {
                 mRootView.setVisibility(View.VISIBLE);
+                mOnSystemBarVisibilityChangedInfo.incrementTimesShown();
             } else {
+                mTouchableBounds.setEmpty();
+                mRootView.getRootSurfaceControl().setTouchableRegion(new Region());
                 mRootView.setVisibility(View.GONE);
+                mOnSystemBarVisibilityChangedInfo.incrementTimesHidden();
             }
         }
 
