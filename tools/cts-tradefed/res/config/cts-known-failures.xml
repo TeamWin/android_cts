@@ -237,6 +237,9 @@
     <!-- b/195659372 -->
     <option name="compatibility:exclude-filter" value="CtsPermissionTestCases android.permission.cts.NearbyDevicesRenouncePermissionTest#scanRenouncingAtEndOfChainNotesBluetoothButNotLocation" />
 
+    <!-- b/216174963 -->
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PermissionPolicyTest#platformPermissionPolicyIsUnaltered" />
+
     <!-- b/195582566 -->
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.inline.InlineSimpleSaveActivityTest#testAutofill_oneDatasetAndSave" />
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases[instant] android.autofillservice.cts.inline.InlineSimpleSaveActivityTest#testAutofill_oneDatasetAndSave" />
