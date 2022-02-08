@@ -16,9 +16,9 @@
 
 package android.permission.cts;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
@@ -51,7 +51,8 @@ public class EthernetManagerPermissionTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mEthernetManager = mContext.getSystemService(EthernetManager.class);
-        assertNotNull(mEthernetManager);
+        // mEthernetManager may be null depending on the device's configuration.
+        assumeNotNull(mEthernetManager);
     }
 
     private void callUpdateConfiguration() {
