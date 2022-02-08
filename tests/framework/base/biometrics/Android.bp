@@ -43,6 +43,10 @@ android_test {
         "ub-uiautomator",
     ],
     srcs: ["src/**/*.java"],
+    data: [
+        ":CtsBiometricServiceTestApp",
+        ":CtsFingerprintServiceTestApp",
+    ],
     sdk_version: "test_current",
     per_testcase_directory: true,
 }
