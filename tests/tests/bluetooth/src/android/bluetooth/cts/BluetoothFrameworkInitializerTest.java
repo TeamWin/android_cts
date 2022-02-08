@@ -40,7 +40,6 @@ public class BluetoothFrameworkInitializerTest extends AndroidTestCase {
         assertThrows(IllegalStateException.class,
                 () -> BluetoothFrameworkInitializer.setBluetoothServiceManager(
                     new BluetoothServiceManager()));
-        assertNotNull(BluetoothFrameworkInitializer.getBluetoothServiceManager());
     }
 
     public void test_SetBinderCallsStatsInitializer() {
