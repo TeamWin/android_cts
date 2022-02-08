@@ -64,10 +64,6 @@ public class HdmiCecTvStandbyTest extends BaseHdmiCecCtsTest {
         try {
             sendDeviceToSleep();
             hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.STANDBY);
-            String wakeState = device.executeShellCommand("dumpsys power | grep mWakefulness=");
-            assertWithMessage("Device is not in standby.")
-                    .that(wakeState.trim())
-                    .isEqualTo("mWakefulness=Asleep");
         } finally {
             wakeUpDevice();
             setHdmiControlDeviceAutoOff(wasOn);

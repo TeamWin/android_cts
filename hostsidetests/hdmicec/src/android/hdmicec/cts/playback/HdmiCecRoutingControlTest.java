@@ -132,7 +132,6 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
-        ITestDevice device = getDevice();
         String previousPowerControlMode =
                 setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_NONE);
         try {
@@ -143,7 +142,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     CecOperand.SET_STREAM_PATH,
                     CecMessage.formatParams(dumpsysPhysicalAddress));
             TimeUnit.SECONDS.sleep(5);
-            sendDeviceToSleep();
+            sendDeviceToSleepWithoutWait();
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
             CecMessage.assertPhysicalAddressValid(message, dumpsysPhysicalAddress);
