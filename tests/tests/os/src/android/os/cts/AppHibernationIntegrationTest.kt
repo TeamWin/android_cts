@@ -20,6 +20,7 @@ import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING
 import android.app.Instrumentation
+import android.apphibernation.AppHibernationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -83,6 +84,7 @@ class AppHibernationIntegrationTest {
 
     private lateinit var packageManager: PackageManager
     private lateinit var permissionControllerManager: PermissionControllerManager
+    private lateinit var appHibernationManager: AppHibernationManager
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
@@ -95,6 +97,7 @@ class AppHibernationIntegrationTest {
         packageManager = context.packageManager
         permissionControllerManager =
             context.getSystemService(PermissionControllerManager::class.java)!!
+        appHibernationManager = context.getSystemService(AppHibernationManager::class.java)!!
 
         // Collapse notifications
         assertThat(
@@ -225,6 +228,38 @@ class AppHibernationIntegrationTest {
                     countDownLatch.await(TIMEOUT_TIME_MS, TimeUnit.MILLISECONDS))
                 assertEquals("Expected test app to be eligible for hibernation but wasn't.",
                     HIBERNATION_ELIGIBILITY_ELIGIBLE, hibernationEligibility)
+            }
+        }
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testGetHibernationStatsForUser_getsStatsForIndividualPackages() {
+        withDeviceConfig(NAMESPACE_APP_HIBERNATION, "app_hibernation_enabled", "true") {
+            withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
+                runWithShellPermissionIdentity {
+                    val stats =
+                        appHibernationManager.getHibernationStatsForUser(
+                            setOf(APK_PACKAGE_NAME_S_APP))
+
+                    assertEquals("Expected only 1 stat for requested package", 1, stats.size)
+                }
+            }
+        }
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testGetHibernationStatsForUser_getsStatsForAllPackages() {
+        withDeviceConfig(NAMESPACE_APP_HIBERNATION, "app_hibernation_enabled", "true") {
+            withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
+                runWithShellPermissionIdentity {
+                    val stats = appHibernationManager.getHibernationStatsForUser()
+
+                    assertFalse("Expected non-empty list of hibernation stats", stats.isEmpty())
+                    assertTrue("Expected test package to be in list of returned savings but wasn't",
+                        stats.containsKey(APK_PACKAGE_NAME_S_APP))
+                }
             }
         }
     }
