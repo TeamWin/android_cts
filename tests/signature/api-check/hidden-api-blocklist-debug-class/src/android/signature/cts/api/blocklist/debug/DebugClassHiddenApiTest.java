@@ -17,9 +17,8 @@
 package android.signature.cts.api.blocklist.debug;
 
 import android.signature.cts.DexMemberChecker;
-import android.signature.cts.api.dynamic.DynamicConfigHiddenApiTest;
 
-public class DebugClassHiddenApiTest extends DynamicConfigHiddenApiTest {
+public class DebugClassHiddenApiTest extends android.signature.cts.api.HiddenApiTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
