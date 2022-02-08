@@ -294,6 +294,8 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
         put("BENGAL", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
 	put("KHAJE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SDMMAGPIEP", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("BENGAL-IOT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("BENGALP-IOT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
             "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
     }};
