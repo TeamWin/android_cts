@@ -32,6 +32,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -48,6 +50,12 @@ import junit.framework.TestCase;
 /**
  */
 public class AbstractApiTest extends TestCase {
+
+    /**
+     * The name of the optional instrumentation option that contains the name of the dynamic config
+     * data set that contains the expected failures.
+     */
+    private static final String DYNAMIC_CONFIG_NAME_OPTION = "dynamic-config-name";
 
     private static final String TAG = "SignatureTest";
 
@@ -105,17 +113,25 @@ public class AbstractApiTest extends TestCase {
                 new BootClassPathClassesProvider(),
                 name -> name != null && name.startsWith("com.android.internal.R."));
 
+        String dynamicConfigName = instrumentationArgs.getString(DYNAMIC_CONFIG_NAME_OPTION);
+        if (dynamicConfigName != null) {
+            // Get the DynamicConfig.xml contents and extract the expected failures list.
+            DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(dynamicConfigName);
+            Collection<String> expectedFailures = dcds.getValues("expected_failures");
+            initExpectedFailures(expectedFailures);
+        }
+
         initializeFromArgs(instrumentationArgs);
     }
 
     /**
      * Initialize the expected failures.
      *
-     * <p>Call from with {@code #initializeFromArgs}</p>
+     * <p>Call from with {@link #setUp()}</p>
      *
      * @param expectedFailures the expected failures.
      */
-    protected void initExpectedFailures(Collection<String> expectedFailures) {
+    private void initExpectedFailures(Collection<String> expectedFailures) {
         this.expectedFailures = expectedFailures;
         String tag = getClass().getName();
         Log.d(tag, "Expected failure count: " + expectedFailures.size());
@@ -129,7 +145,6 @@ public class AbstractApiTest extends TestCase {
     }
 
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
-
     }
 
     protected interface RunnableWithResultObserver {
