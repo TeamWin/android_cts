@@ -90,6 +90,10 @@ public final class TestGameSessionService extends GameSessionService {
             return mTouchableBounds;
         }
 
+        void showOverlay() {
+            mRootView.post(() -> mRootView.setVisibility(View.VISIBLE));
+        }
+
         @Override
         public void onCreate() {
             synchronized (sLock) {
