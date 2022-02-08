@@ -39,10 +39,14 @@ public class AdbManagerHostDeviceTest extends BaseHostJUnit4Test {
         return Boolean.parseBoolean(result.getStdout().trim());
     }
 
-    // TODO (b/217971269) Update the following test case name
+    // The following testing case is for AdbService.java#isAdbWifiSupported which has expanded
+    // its support to Ethernet to provide wider coverage for ATV devices.
+    // We didn't rename the API `isAdbWifiSupported` since it's being referenced in multiple
+    // different places. But the following test case has been renamed to reflect the expanded
+    // coverage.
     @Test
     @CddTest(requirement="6.1/C-1-1")
-    public void test_isadbWifiSupported() throws Exception {
+    public void test_isadbNetworkSupported() throws Exception {
         boolean expected = hasFeature(FEATURE_WIFI) || hasFeature(FEATURE_ETHERNET);
 
         CommandResult result = getDevice().executeShellV2Command("cmd adb is-wifi-supported");
@@ -51,10 +55,14 @@ public class AdbManagerHostDeviceTest extends BaseHostJUnit4Test {
         Assert.assertEquals(expected, Boolean.parseBoolean(result.getStdout().trim()));
     }
 
-    // TODO (b/217971269) Update the following test case name
+    // The following testing case is for AdbService.java#isAdbWifiQrSupported which has expanded
+    // its support to Ethernet to provide wider coverage for ATV devices.
+    // We didn't rename the API `isAdbWifiQrSupported` since it's being referenced in multiple
+    // different places. But the following test case has been renamed to reflect the expanded
+    // coverage.
     @Test
     @CddTest(requirement="6.1/C-1-2")
-    public void test_isadbWifiQrSupported() throws Exception {
+    public void test_isadbNetworkQrSupported() throws Exception {
         boolean expected = (hasFeature(FEATURE_WIFI) || hasFeature(FEATURE_ETHERNET)) &&
             hasFeature(FEATURE_CAMERA_ANY);
 
