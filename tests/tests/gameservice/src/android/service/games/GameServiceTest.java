@@ -23,13 +23,16 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
-import android.service.games.cts.app.IGameServiceTestService;
+import android.service.games.testing.ActivityResult;
+import android.service.games.testing.IGameServiceTestService;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.Until;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -52,11 +55,12 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 public final class GameServiceTest {
-    private static final String TEST_APP_PACKAGE_NAME = "android.service.games.cts.app";
     private static final String GAME_PACKAGE_NAME = "android.service.games.cts.game";
     private static final String FALSE_POSITIVE_GAME_PACKAGE_NAME =
             "android.service.games.cts.falsepositive";
     private static final String NOT_GAME_PACKAGE_NAME = "android.service.games.cts.notgame";
+    private static final String START_ACTIVITY_VERIFIER_PACKAGE_NAME =
+            "android.service.games.cts.startactivityverifier";
 
     private ServiceConnection mServiceConnection;
 
@@ -65,13 +69,14 @@ public final class GameServiceTest {
         GameManager gameManager =
                 getInstrumentation().getContext().getSystemService(GameManager.class);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
-                manager -> manager.setGameServiceProvider(TEST_APP_PACKAGE_NAME));
+                manager -> manager.setGameServiceProvider(
+                        getInstrumentation().getContext().getPackageName()));
 
         mServiceConnection = new ServiceConnection();
         assertThat(
                 getInstrumentation().getContext().bindService(
                         new Intent("android.service.games.action.TEST_SERVICE").setPackage(
-                                TEST_APP_PACKAGE_NAME),
+                                getInstrumentation().getContext().getPackageName()),
                         mServiceConnection,
                         Context.BIND_AUTO_CREATE)).isTrue();
         mServiceConnection.waitForConnection(10, TimeUnit.SECONDS);
@@ -80,10 +85,13 @@ public final class GameServiceTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         forceStop(GAME_PACKAGE_NAME);
         forceStop(NOT_GAME_PACKAGE_NAME);
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
+
+        getTestService().resetState();
 
         GameManager gameManager =
                 getInstrumentation().getContext().getSystemService(GameManager.class);
@@ -110,6 +118,75 @@ public final class GameServiceTest {
                 GAME_PACKAGE_NAME);
     }
 
+    @Test
+    public void startActivityForResult_startsActivityAndReceivesResultWithData() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        getTestService().startGameSessionActivity(
+                new Intent("android.service.games.cts.startactivityverifier.START"), null);
+
+        setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_code_edit_text", "10");
+        setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_data_edit_text", "foobar");
+        click(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "send_result_button");
+
+        ActivityResult result = getTestService().getLastActivityResult();
+
+        assertThat(result.getGameSessionPackageName()).isEqualTo(GAME_PACKAGE_NAME);
+        assertThat(result.getSuccess().getResultCode()).isEqualTo(10);
+        assertThat(result.getSuccess().getData().getStringExtra("data")).isEqualTo("foobar");
+    }
+
+    @Test
+    public void startActivityForResult_startsActivityAndReceivesResultWithNoData()
+            throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        getTestService().startGameSessionActivity(
+                new Intent("android.service.games.cts.startactivityverifier.START"), null);
+
+        setText(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "result_code_edit_text", "10");
+        click(START_ACTIVITY_VERIFIER_PACKAGE_NAME, "send_result_button");
+
+        ActivityResult result = getTestService().getLastActivityResult();
+
+        assertThat(result.getGameSessionPackageName()).isEqualTo(GAME_PACKAGE_NAME);
+        assertThat(result.getSuccess().getResultCode()).isEqualTo(10);
+        assertThat(result.getSuccess().getData()).isNull();
+    }
+
+    @Test
+    public void startActivityForResult_cannotStartBlockedActivities() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        getTestService().startGameSessionActivity(
+                new Intent("android.service.games.cts.startactivityverifier.START_BLOCKED"), null);
+
+        ActivityResult result = getTestService().getLastActivityResult();
+
+        assertThat(result.getGameSessionPackageName()).isEqualTo(GAME_PACKAGE_NAME);
+        assertThat(result.getFailure().getClazz()).isEqualTo(SecurityException.class);
+    }
+
+    @Test
+    public void startActivityForResult_propagatesActivityNotFoundException() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        getTestService().startGameSessionActivity(new Intent("NO_ACTION"), null);
+
+        ActivityResult result = getTestService().getLastActivityResult();
+
+        assertThat(result.getGameSessionPackageName()).isEqualTo(GAME_PACKAGE_NAME);
+        assertThat(result.getFailure().getClazz()).isEqualTo(ActivityNotFoundException.class);
+    }
+
     private IGameServiceTestService getTestService() {
         return mServiceConnection.mService;
     }
@@ -126,8 +203,20 @@ public final class GameServiceTest {
         UiAutomatorUtils.waitFindObject(By.pkg(packageName).depth(0));
     }
 
+    private static void setText(String resourcePackage, String resourceId, String text)
+            throws Exception {
+        UiAutomatorUtils.waitFindObject(By.res(resourcePackage, resourceId))
+                .setText(text);
+    }
+
+    private static void click(String resourcePackage, String resourceId) throws Exception {
+        UiAutomatorUtils.waitFindObject(By.res(resourcePackage, resourceId))
+                .click();
+    }
+
     private static void forceStop(String packageName) {
         ShellUtils.runShellCommand("am force-stop %s", packageName);
+        UiAutomatorUtils.getUiDevice().wait(Until.gone(By.pkg(packageName).depth(0)), 20_000L);
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {

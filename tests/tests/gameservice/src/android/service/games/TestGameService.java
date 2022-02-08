@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package android.service.games.cts.app;
+package android.service.games;
 
-import android.service.games.GameService;
-import android.service.games.GameStartedEvent;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import android.Manifest;
 
 import androidx.annotation.GuardedBy;
 
@@ -38,6 +39,9 @@ public final class TestGameService extends GameService {
 
     @Override
     public void onConnected() {
+        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.MANAGE_GAME_ACTIVITY);
+
         synchronized (sLock) {
             sIsConnected = true;
         }
@@ -48,6 +52,8 @@ public final class TestGameService extends GameService {
         synchronized (sLock) {
             sIsConnected = false;
         }
+
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     @Override

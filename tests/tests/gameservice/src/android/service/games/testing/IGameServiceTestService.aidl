@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.service.games.cts.app;
+package android.service.games.testing;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.service.games.testing.ActivityResult;
 
 interface IGameServiceTestService {
     boolean isGameServiceConnected();
@@ -21,4 +25,10 @@ interface IGameServiceTestService {
     void setGamePackageNames(in List<String> packageNames);
 
     List<String> getActiveSessions();
+
+    void resetState();
+
+    void startGameSessionActivity(in Intent intent, in Bundle options);
+
+    ActivityResult getLastActivityResult();
 }

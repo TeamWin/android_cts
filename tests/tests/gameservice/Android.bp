@@ -18,12 +18,15 @@ package {
 
 android_test {
     name: "CtsGameServiceTestCases",
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.aidl",
+        "src/**/*.java",
+    ],
     data: [
-        ":CtsGameServiceTestApp",
         ":CtsGameServiceFalsePositiveGame",
         ":CtsGameServiceGame",
         ":CtsGameServiceNotGame",
+        ":CtsGameServiceStartActivityVerifier",
     ],
     libs: [
         "android.test.base",
@@ -32,7 +35,6 @@ android_test {
     static_libs: [
         "androidx.test.core",
         "compatibility-device-util-axt",
-        "CtsGameServiceAidls",
         "ctstestrunner-axt",
         "junit",
         "truth-prebuilt",
