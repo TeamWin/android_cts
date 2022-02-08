@@ -19,6 +19,7 @@ package android.bluetooth.cts;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHapClient;
+import android.bluetooth.BluetoothHapPresetInfo;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
@@ -153,7 +154,7 @@ public class BluetoothHapClientTest extends AndroidTestCase {
         assertNull(mBluetoothHapClient.getActivePresetInfo(testDevice));
     }
 
-    public void testSelectActivePreset() {
+    public void testSelectPreset() {
         if (!(mHasBluetooth && mIsHapClientSupported)) return;
 
         assertTrue(waitForProfileConnect());
@@ -163,11 +164,10 @@ public class BluetoothHapClientTest extends AndroidTestCase {
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
-        // Verify returns false if bluetooth is not enabled
         mBluetoothHapClient.selectPreset(testDevice, 1);
     }
 
-    public void testGroupSelectActivePreset() {
+    public void testSelectPresetForGroup() {
         if (!(mHasBluetooth && mIsHapClientSupported)) return;
 
         assertTrue(waitForProfileConnect());
@@ -175,11 +175,10 @@ public class BluetoothHapClientTest extends AndroidTestCase {
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
-        // Verify returns false if bluetooth is not enabled
         mBluetoothHapClient.selectPresetForGroup(1, 1);
     }
 
-    public void testGetPresetInfo() {
+    public void testGetAllPresetInfo() {
         if (!(mHasBluetooth && mIsHapClientSupported)) return;
 
         assertTrue(waitForProfileConnect());
@@ -190,21 +189,8 @@ public class BluetoothHapClientTest extends AndroidTestCase {
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify returns empty list if bluetooth is not enabled
-        assertTrue(mBluetoothHapClient.getAllPresetInfo(testDevice).isEmpty());
-    }
-
-    public void testGetAllPresetsInfo() {
-        if (!(mHasBluetooth && mIsHapClientSupported)) return;
-
-        assertTrue(waitForProfileConnect());
-        assertNotNull(mBluetoothHapClient);
-
-        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
-        // Verify returns false if bluetooth is not enabled
-        mBluetoothHapClient.getAllPresetInfo(testDevice);
+        List<BluetoothHapPresetInfo> presets = mBluetoothHapClient.getAllPresetInfo(testDevice);
+        assertTrue(presets.isEmpty());
     }
 
     public void testSetPresetName() {
@@ -217,11 +203,10 @@ public class BluetoothHapClientTest extends AndroidTestCase {
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
-        // Verify returns false if bluetooth is not enabled
         mBluetoothHapClient.setPresetName(testDevice, 1 , "New Name");
     }
 
-    public void testGroupSetPresetName() {
+    public void testSetPresetNameForGroup() {
         if (!(mHasBluetooth && mIsHapClientSupported)) return;
 
         assertTrue(waitForProfileConnect());
@@ -229,7 +214,6 @@ public class BluetoothHapClientTest extends AndroidTestCase {
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
-        // Verify returns false if bluetooth is not enabled
         mBluetoothHapClient.setPresetNameForGroup(1, 1 , "New Name");
     }
 
