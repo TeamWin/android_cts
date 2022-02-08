@@ -53,6 +53,8 @@ public final class TelephonyFeatureFlagsTest {
                 PackageManager.FEATURE_TELEPHONY_DATA);
         boolean hasFeatureEuicc = mPackageManager.hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY_EUICC);
+        boolean hasFeatureEuiccMep = mPackageManager.hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_EUICC_MEP);
         boolean hasFeatureGsm = mPackageManager.hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY_GSM);
         boolean hasFeatureIms = mPackageManager.hasSystemFeature(
@@ -86,6 +88,10 @@ public final class TelephonyFeatureFlagsTest {
 
         if (hasFeatureEuicc) {
             assertTrue(hasFeatureSubscription);
+        }
+
+        if (hasFeatureEuiccMep) {
+            assertTrue(hasFeatureEuicc);
         }
 
         if (hasFeatureGsm) {
