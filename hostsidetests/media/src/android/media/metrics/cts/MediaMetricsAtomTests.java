@@ -452,6 +452,20 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(data.size()).isEqualTo(0);
     }
 
+    public void testBundleSession() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testBundleSession");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data.size()).isEqualTo(0);
+    }
+
     public void testAppBlocklist() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
