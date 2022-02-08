@@ -3106,6 +3106,90 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Validate {@link CameraCharacteristics#LENS_POSE_TRANSLATION} and @{link
+     * CameraCharacteristics#LENS_POSE_ROTATION} of camera that list below characteristics in their
+     * static metadata.
+     * - CameraCharacteristics.AUTOMOTIVE_LOCATION_INTERIOR_OTHER
+     * - CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTERIOR_OTHER
+     * - CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTRA_OTHER
+     */
+    @Test
+    public void testAutomotiveCameraCharacteristics() throws Exception {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            CameraCharacteristics c = mCharacteristics.get(i);
+
+            Integer location = c.get(CameraCharacteristics.AUTOMOTIVE_LOCATION);
+            int[] lensFacing = c.get(CameraCharacteristics.AUTOMOTIVE_LENS_FACING);
+            if (location == null || lensFacing == null) {
+                // CameraManagerTest#testCameraManagerAutomotiveCameras() guarantees
+                // CameraCharacteristics.AUTOMOTIVE_LOCATION and
+                // CameraCharacteristics.AUTOMOTIVE_LENS_FACING are listed in a static metadata of
+                // cameras on the automotive device implementations.
+                continue;
+            }
+
+            float[] translation = c.get(CameraCharacteristics.LENS_POSE_TRANSLATION);
+            float[] rotation = c.get(CameraCharacteristics.LENS_POSE_ROTATION);
+            assertTrue("android.lens.poseTranslation and android.lens.poseRotation must exist " +
+                    "together or not at all",
+                    (translation != null) == (rotation != null));
+            if (translation == null && rotation != null) {
+                // Cameras without android.lens.poseTranslation and anroid.lens.poseRotation are
+                // exempt from this test case.
+                continue;
+            }
+
+            // android.lens.poseTranslation describes the lens optical center of the camera device
+            // as a three dimensional vector (x, y, z) and in the unit of meters.  On the automotive
+            // sensor coordinate system, we expect the following:
+            // - The width of the vehicle body frame would not exceed 6 meters, which is a width of
+            //   the vehicle lane approximately.
+            // - The length of the vehicle body frame would not exceed 10 meters, which is an
+            //   average length of the city bus.  We apply approximately 20% tolerance to this value
+            //   because of a relatively higher variance of the vehicle's length.
+            // - The height of the vehicle body frame would not exceed 5 meters, which is an average
+            //   height of the double decker bus.
+            assertTrue("Lens pose translation vector is invalid",
+                    (translation[0] >= -3 && translation[0] <= 3)
+                            && (translation[1] >= -2 && translation[1] <= 10)
+                            && (translation[2] >= 0 && translation[2] <= 5));
+
+            // Convert a given quaternion to axis-angle representation
+            double theta = 2.0 * Math.acos(rotation[3]);
+            double a_x = rotation[0] / Math.sin(theta / 2.0);
+            double a_y = rotation[1] / Math.sin(theta / 2.0);
+            double a_z = rotation[2] / Math.sin(theta / 2.0);
+
+            // Calculate an angle between a translation vector and a rotation axis
+            double dot = (translation[0] * a_x) + (translation[1] * a_y) + (translation[2] * a_z);
+            double mag_a = Math.sqrt(Math.pow(translation[0], 2) + Math.pow(translation[1], 2)
+                    + Math.pow(translation[2], 2));
+            double mag_b =
+                    Math.sqrt(Math.pow(a_x, 2) + Math.pow(a_y, 2) + Math.pow(a_z, 2));
+            double angle = Math.acos(dot / (mag_a * mag_b));
+
+            if (location == CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTERIOR_OTHER
+                    || location == CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTRA_OTHER) {
+                // If android.automotive.location is
+                // CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTERIOR_OTHER or
+                // CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTRA_OTHER, its
+                // android.lens.poseRotation should not describe a direction toward the inside of
+                // the vehicle cabin.
+                assertTrue("Lens pose rotation should not describe a direction toward the cabin",
+                        angle >= Math.PI / 4);
+            } else {
+                // Likewise, if android.automotive.location is
+                // CameraCharacteristics.AUTOMOTIVE_LOCATION_INTERIOR_OTHER, its
+                // android.lens.poseRotation should not describe a direction toward the outside of
+                // the vehicle cabin.
+                assertTrue("Lens pose rotation should not describe a direction toward the " +
+                        "outside of the cabin",
+                        angle <= Math.PI * 3 / 4);
+            }
+        }
+    }
+
+    /**
      * Check key is present in characteristics if the hardware level is at least {@code hwLevel};
      * check that the key is present if the actual capabilities are one of {@code capabilities}.
      *
