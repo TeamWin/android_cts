@@ -52,6 +52,21 @@ public class TestMmTelFeature extends MmTelFeature {
     TestMmTelFeature(TestImsService.ReadyListener readyListener,
             TestImsService.RemovedListener removedListener,
             TestImsService.CapabilitiesSetListener setListener) {
+        Log.d(TAG, "TestMmTelFeature with default constructor");
+        mReadyListener = readyListener;
+        mRemovedListener = removedListener;
+        mCapSetListener = setListener;
+        mSmsImpl = new TestImsSmsImpl();
+        // Must set the state to READY in the constructor - onFeatureReady depends on the state
+        // being ready.
+        setFeatureState(STATE_READY);
+    }
+
+    TestMmTelFeature(TestImsService.ReadyListener readyListener,
+            TestImsService.RemovedListener removedListener,
+            TestImsService.CapabilitiesSetListener setListener, Executor executor) {
+        super(executor);
+        Log.d(TAG, "TestMmTelFeature with Executor constructor");
         mReadyListener = readyListener;
         mRemovedListener = removedListener;
         mCapSetListener = setListener;
@@ -154,7 +169,7 @@ public class TestMmTelFeature extends MmTelFeature {
     }
 
     public boolean isCallSessionCreated() {
-        return (mCallSession != null) ? true : false;
+        return (mCallSession != null);
     }
 
     public void onIncomingCallReceived(Bundle extras) {

@@ -20,7 +20,11 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.telephony.ims.ImsService;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.feature.RcsFeature;
@@ -30,10 +34,11 @@ import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.telephony.ims.stub.SipTransportImplBase;
 import android.util.Log;
 
-
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,18 +47,19 @@ import java.util.concurrent.TimeUnit;
 public class TestImsService extends Service {
 
     private static final String TAG = "GtsImsTestImsService";
+    private static MessageExecutor sMessageExecutor = null;
 
-    private static final TestImsRegistration sImsRegistrationImplBase =
-            new TestImsRegistration();
-
+    private TestImsRegistration mImsRegistrationImplBase;
     private TestRcsFeature mTestRcsFeature;
     private TestMmTelFeature mTestMmTelFeature;
     private TestImsConfig mTestImsConfig;
     private TestSipTransport mTestSipTransport;
     private ImsService mTestImsService;
+    private Executor mExecutor = Runnable::run;
     private boolean mIsEnabled = false;
     private boolean mSetNullRcsBinding = false;
     private boolean mIsSipTransportImplemented = false;
+    private boolean mIsTestTypeExecutor = false;
     private long mCapabilities = 0;
     private ImsFeatureConfiguration mFeatureConfig;
     private final Object mLock = new Object();
@@ -106,9 +112,16 @@ public class TestImsService extends Service {
             if (getBaseContext() == null) {
                 attachBaseContext(context);
             }
-            mTestImsConfig = new TestImsConfig();
-            // For testing, just run on binder thread until required otherwise.
-            mTestSipTransport = new TestSipTransport(Runnable::run);
+
+            if (mIsTestTypeExecutor) {
+                mImsRegistrationImplBase = new TestImsRegistration(mExecutor);
+                mTestSipTransport = new TestSipTransport(mExecutor);
+                mTestImsConfig = new TestImsConfig(mExecutor);
+            } else {
+                mImsRegistrationImplBase = new TestImsRegistration();
+                mTestImsConfig = new TestImsConfig();
+                mTestSipTransport = new TestSipTransport();
+            }
         }
 
         @Override
@@ -146,33 +159,42 @@ public class TestImsService extends Service {
 
         @Override
         public RcsFeature createRcsFeature(int slotId) {
+
+            TestImsService.ReadyListener readyListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_RCS_READY);
+                }
+            };
+
+            TestImsService.RemovedListener removedListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_REMOVE_RCS);
+                    mTestRcsFeature = null;
+                }
+            };
+
+            TestImsService.CapabilitiesSetListener setListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_RCS_CAP_SET);
+                }
+            };
+
+            TestImsService.RcsCapabilityExchangeEventListener capExchangeEventListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_UCE_LISTENER_SET);
+                }
+            };
+
             synchronized (mLock) {
                 countDownLatch(LATCH_CREATE_RCS);
-                mTestRcsFeature = new TestRcsFeature(getBaseContext(),
-                        //onReady
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_RCS_READY);
-                            }
-                        },
-                        //onRemoved
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_REMOVE_RCS);
-                                mTestRcsFeature = null;
-                            }
-                        },
-                        //onCapabilitiesSet
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_RCS_CAP_SET);
-                            }
-                        },
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_UCE_LISTENER_SET);
-                        }
-                        });
+
+                if (mIsTestTypeExecutor) {
+                    mTestRcsFeature = new TestRcsFeature(readyListener, removedListener,
+                            setListener, capExchangeEventListener, mExecutor);
+                } else {
+                    mTestRcsFeature = new TestRcsFeature(readyListener, removedListener,
+                            setListener, capExchangeEventListener);
+                }
 
                 // Setup UCE request listener
                 mTestRcsFeature.setDeviceCapPublishListener(() -> {
@@ -195,36 +217,43 @@ public class TestImsService extends Service {
 
         @Override
         public MmTelFeature createMmTelFeature(int slotId) {
+
+            TestImsService.ReadyListener readyListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_MMTEL_READY);
+                }
+            };
+
+            TestImsService.RemovedListener removedListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_REMOVE_MMTEL);
+                    mTestMmTelFeature = null;
+                }
+            };
+
+            TestImsService.CapabilitiesSetListener capSetListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_MMTEL_CAP_SET);
+                }
+            };
+
             synchronized (mLock) {
                 countDownLatch(LATCH_CREATE_MMTEL);
-                mTestMmTelFeature = new TestMmTelFeature(
-                        //onReady
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_MMTEL_READY);
-                            }
-                        },
-                        //onRemoved
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_REMOVE_MMTEL);
-                                mTestMmTelFeature = null;
-                            }
-                        },
-                        //onCapabilitiesSet
-                        () -> {
-                            synchronized (mLock) {
-                                countDownLatch(LATCH_MMTEL_CAP_SET);
-                            }
-                        }
-                        );
+                if (mIsTestTypeExecutor) {
+                    mTestMmTelFeature = new TestMmTelFeature(readyListener, removedListener,
+                            capSetListener, mExecutor);
+                } else {
+                    mTestMmTelFeature = new TestMmTelFeature(readyListener, removedListener,
+                            capSetListener);
+                }
+
                 return mTestMmTelFeature;
             }
         }
 
         @Override
         public ImsRegistrationImplBase getRegistration(int slotId) {
-            return sImsRegistrationImplBase;
+            return mImsRegistrationImplBase;
         }
 
         @Nullable
@@ -234,6 +263,62 @@ public class TestImsService extends Service {
                 return mTestSipTransport;
             } else {
                 return null;
+            }
+        }
+
+        @Override
+        public @NonNull Executor getExecutor() {
+            if (mIsTestTypeExecutor) {
+                return mExecutor;
+            } else {
+                mExecutor = Runnable::run;
+                return mExecutor;
+            }
+        }
+    }
+
+    private static Looper createLooper(String name) {
+        HandlerThread thread = new HandlerThread(name);
+        thread.start();
+
+        Looper looper = thread.getLooper();
+
+        if (looper == null) {
+            return Looper.getMainLooper();
+        }
+        return looper;
+    }
+
+    /**
+     * Executes the tasks in the other thread rather than the calling thread.
+     */
+    public class MessageExecutor extends Handler implements Executor {
+        public MessageExecutor(String name) {
+            super(createLooper(name));
+        }
+
+        @Override
+        public void execute(Runnable r) {
+            Message m = Message.obtain(this, 0, r);
+            m.sendToTarget();
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.obj instanceof Runnable) {
+                executeInternal((Runnable) msg.obj);
+            } else {
+                Log.d(TAG, "[MessageExecutor] handleMessage :: "
+                        + "Not runnable object; ignore the msg=" + msg);
+            }
+        }
+
+        private void executeInternal(Runnable r) {
+            try {
+                r.run();
+            } catch (Throwable t) {
+                Log.d(TAG, "[MessageExecutor] executeInternal :: run task=" + r);
+                t.printStackTrace();
             }
         }
     }
@@ -277,10 +362,26 @@ public class TestImsService extends Service {
             mIsEnabled = false;
             mSetNullRcsBinding = false;
             mIsSipTransportImplemented = false;
+            mIsTestTypeExecutor = false;
             mCapabilities = 0;
             for (int i = 0; i < LATCH_MAX; i++) {
                 sLatches[i] = new CountDownLatch(1);
             }
+
+            if (sMessageExecutor != null) {
+                sMessageExecutor.getLooper().quit();
+                sMessageExecutor = null;
+            }
+        }
+    }
+
+    public void setExecutorTestType(boolean type) {
+        mIsTestTypeExecutor = type;
+        if (mIsTestTypeExecutor) {
+            if (sMessageExecutor == null) {
+                sMessageExecutor = new MessageExecutor("TestImSService");
+            }
+            mExecutor = sMessageExecutor;
         }
     }
 
@@ -388,7 +489,7 @@ public class TestImsService extends Service {
 
     public TestImsRegistration getImsRegistration() {
         synchronized (mLock) {
-            return sImsRegistrationImplBase;
+            return mImsRegistrationImplBase;
         }
     }
 
