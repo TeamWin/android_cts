@@ -469,7 +469,7 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             final Connection connection2 = new MockConnection();
             connection2.setActive();
             CtsConnectionService.addExistingConnectionToTelecom(TEST_PHONE_ACCOUNT_HANDLE,
-                    connection2);
+                            connection2);
             assertNumCalls(mInCallCallbacks.getService(), 2);
             mInCallCallbacks.lock.drainPermits();
             connections = CtsConnectionService.getAllConnectionsFromTelecom();

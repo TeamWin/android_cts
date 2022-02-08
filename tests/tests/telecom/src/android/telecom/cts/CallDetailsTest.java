@@ -26,7 +26,6 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Icon;
@@ -37,7 +36,6 @@ import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.provider.CallLog;
 import android.telecom.Call;
-import android.telecom.CallEndpoint;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.DisconnectCause;
@@ -50,10 +48,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -84,21 +79,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     public static final String TEST_EVENT = "com.test.event.TEST";
     public static final Uri TEST_DEFLECT_URI = Uri.fromParts("tel", "+16505551212", null);
     private static final int ASYNC_TIMEOUT = 10000;
-    private static final ComponentName COMPONENT_NAME = new ComponentName("android.telecom.cts",
-            "CallDetailsTest");
-    private static final CallEndpoint TEST_CALL_ENDPOINT1 = new CallEndpoint(
-            ParcelUuid.fromString(UUID.randomUUID().toString()),
-            "test endpoint 1", CallEndpoint.ENDPOINT_TYPE_TETHERED, COMPONENT_NAME);
-    private static final CallEndpoint TEST_CALL_ENDPOINT2 = new CallEndpoint(
-            ParcelUuid.fromString(UUID.randomUUID().toString()),
-            "test endpoint 2", CallEndpoint.ENDPOINT_TYPE_TETHERED, COMPONENT_NAME);
-    private static final Set<CallEndpoint> TEST_CALL_ENDPOINTS;
-    static {
-        TEST_CALL_ENDPOINTS = new HashSet<>();
-        TEST_CALL_ENDPOINTS.add(TEST_CALL_ENDPOINT1);
-        TEST_CALL_ENDPOINTS.add(TEST_CALL_ENDPOINT2);
-    }
-
     private StatusHints mStatusHints;
     private Bundle mExtras = new Bundle();
 
@@ -144,9 +124,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
             TestUtils.enablePhoneAccount(
                     getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
 
-            // Register available call endpoints
-            mTelecomManager.registerCallEndpoints(TEST_CALL_ENDPOINTS);
-
             /** Place a call as a part of the setup before we test the various
              *  Call details.
              */
@@ -158,12 +135,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
             assertCallState(mCall, Call.STATE_DIALING);
         }
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        mTelecomManager.unregisterCallEndpoints(TEST_CALL_ENDPOINTS);
-        super.tearDown();
     }
 
     /**
@@ -328,6 +299,9 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         mConnection.setConnectionProperties(Connection.PROPERTY_CROSS_SIM);
         assertCallProperties(mCall, Call.Details.PROPERTY_CROSS_SIM);
+
+        mConnection.setConnectionProperties(Connection.PROPERTY_TETHERED_CALL);
+        assertCallProperties(mCall, Call.Details.PROPERTY_TETHERED_CALL);
     }
 
     /**
@@ -1060,23 +1034,5 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertEquals(TEST_PHONE_ACCOUNT_HANDLE_2, mConnection.getPhoneAccountHandle());
         mOnPhoneAccountChangedCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertEquals(TEST_PHONE_ACCOUNT_HANDLE_2, mOnPhoneAccountChangedCounter.getArgs(0)[1]);
-    }
-
-    /**
-     * Verifies active and available {@link android.telecom.CallEndpoint} propagates to the dialer
-     * app.
-     * @throws Exception
-     */
-    public void testCallEndpoint() throws Exception {
-        if (!mShouldTestTelecom) {
-            return;
-        }
-        mConnection.setActive();
-        assertCallState(mCall, Call.STATE_ACTIVE);
-
-        assertEquals(TEST_CALL_ENDPOINTS, mCall.getDetails().getAvailableCallEndpoints());
-
-//        mCall.pushCall(TEST_CALL_ENDPOINT1);
-//        assertEquals(TEST_CALL_ENDPOINT1, mCall.getDetails().getActiveCallEndpoint());
     }
 }

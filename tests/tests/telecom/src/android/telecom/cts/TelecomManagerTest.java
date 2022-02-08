@@ -16,12 +16,12 @@
 
 package android.telecom.cts;
 
-import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn;
+import static com.android.compatibility.common.util.ShellIdentityUtils
+        .invokeMethodWithShellPermissionsNoReturn;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -30,15 +30,10 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.ParcelUuid;
-import android.telecom.CallEndpoint;
 import android.telecom.TelecomManager;
 
 import androidx.test.InstrumentationRegistry;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -47,15 +42,6 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
     private static final String TEST_EMERGENCY_NUMBER = "5553637";
     private static final Uri TEST_EMERGENCY_URI = Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null);
     private static final String CTS_TELECOM_PKG = TelecomManagerTest.class.getPackage().getName();
-
-    private static final CallEndpoint CALL_ENDPOINT_1 = new CallEndpoint(
-            ParcelUuid.fromString(UUID.randomUUID().toString()), "cts endpoint 1",
-            CallEndpoint.ENDPOINT_TYPE_TETHERED,
-            new ComponentName(CTS_TELECOM_PKG, TelecomManagerTest.class.getName()));
-    private static final CallEndpoint CALL_ENDPOINT_2 = new CallEndpoint(
-            ParcelUuid.fromString(UUID.randomUUID().toString()), "cts endpoint 2",
-            CallEndpoint.ENDPOINT_TYPE_TETHERED,
-            new ComponentName(CTS_TELECOM_PKG, TelecomManagerTest.class.getName()));
 
     public void testGetCurrentTtyMode() {
         if (!mShouldTestTelecom) {
@@ -195,35 +181,6 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
             fail("Couldn't check if in emergency call.");
             e.printStackTrace();
         }
-    }
-
-    public void testCallEndpointsRegistration() {
-        // TODO: grant permission after we request permission for relevant TelecomManager APIs.
-
-        // backup existing endpoints
-        Set<CallEndpoint> currentEndpoints = mTelecomManager.getCallEndpoints();
-        // unregister all current endpoints
-        mTelecomManager.unregisterCallEndpoints(currentEndpoints);
-
-        // Register call endpoints set 1
-        Set<CallEndpoint> endpointSet1 = new HashSet<>();
-        endpointSet1.add(CALL_ENDPOINT_1);
-        endpointSet1.add(CALL_ENDPOINT_2);
-        mTelecomManager.registerCallEndpoints(endpointSet1);
-        assertEquals(endpointSet1 , mTelecomManager.getCallEndpoints());
-
-        // Unregister several call endpoints
-        Set<CallEndpoint> endpointSet2 = new HashSet<>();
-        endpointSet2.add(CALL_ENDPOINT_2);
-        mTelecomManager.unregisterCallEndpoints(endpointSet2);
-        Set<CallEndpoint> telecomEndpointSet = mTelecomManager.getCallEndpoints();
-        assertEquals(1, telecomEndpointSet.size());
-        assertTrue(telecomEndpointSet.contains(CALL_ENDPOINT_1));
-
-        // Unregister all test endpoints
-        mTelecomManager.unregisterCallEndpoints(endpointSet1);
-        // restored backed endpoints
-        mTelecomManager.registerCallEndpoints(currentEndpoints);
     }
 
     private boolean isWiredHeadsetPluggedIn() {
