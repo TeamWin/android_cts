@@ -39,9 +39,11 @@ import android.util.Log;
 import com.android.cts.appsearch.ICommandReceiver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class AppSearchTestService extends Service {
 
@@ -119,7 +121,7 @@ public class AppSearchTestService extends Service {
 
         @Override
         public boolean indexGloballySearchableDocument(
-                String databaseName, String namespace, String id) {
+                String databaseName, String namespace, String id, int[] requiredPermissions) {
             try {
                 AppSearchSessionShim db =
                         AppSearchSessionShimImpl.createSearchSession(
@@ -134,6 +136,10 @@ public class AppSearchTestService extends Service {
                         new SetSchemaRequest.Builder()
                                 .setForceOverride(true)
                                 .addSchemas(AppSearchEmail.SCHEMA)
+                                .setRequiredPermissionsForSchemaTypeVisibility(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        Arrays.stream(requiredPermissions).boxed()
+                                                .collect(Collectors.toSet()))
                                 .build())
                         .get();
 
