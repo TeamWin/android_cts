@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.app.admin.DevicePolicyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;

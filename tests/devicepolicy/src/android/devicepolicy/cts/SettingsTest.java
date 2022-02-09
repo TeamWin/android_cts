@@ -22,6 +22,8 @@ import static android.provider.Settings.Global.BLUETOOTH_ON;
 import static android.provider.Settings.Secure.LOCATION_MODE;
 import static android.provider.Settings.Secure.SKIP_FIRST_USE_HINTS;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -31,6 +33,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
+import com.android.bedstead.harrier.policies.SetDeviceOwnerSecureSetting;
 import com.android.bedstead.harrier.policies.SetGlobalSetting;
 import com.android.bedstead.harrier.policies.SetSecureSetting;
 import com.android.bedstead.nene.TestApis;
@@ -78,7 +81,7 @@ public final class SettingsTest {
     @Postsubmit(reason = "new test")
     public void setGlobalSetting_invalidAdmin_throwsSecurityException() {
         assertThrows(SecurityException.class,
-                () ->             sDeviceState.dpc().devicePolicyManager().setGlobalSetting(
+                () -> sDeviceState.dpc().devicePolicyManager().setGlobalSetting(
                         sDeviceState.dpc().componentName(),
                         SUPPORTED_GLOBAL_SETTING, "1"));
     }
@@ -116,7 +119,8 @@ public final class SettingsTest {
     @PolicyAppliesTest(policy = SetSecureSetting.class)
     @Postsubmit(reason = "new test")
     public void setSecureSetting_sets() {
-        int originalValue = TestApis.settings().secure().getInt(SECURE_SETTING, 0);
+        int originalValue = TestApis.settings().secure()
+                .getInt(SECURE_SETTING, /* defaultValue= */ 0);
         int newValue = originalValue + 1;
 
         try {
@@ -124,7 +128,8 @@ public final class SettingsTest {
                     .setSecureSetting(sDeviceState.dpc().componentName(),
                             SECURE_SETTING, String.valueOf(newValue));
 
-            assertThat(TestApis.settings().secure().getInt(SECURE_SETTING)).isEqualTo(newValue);
+            assertThat(TestApis.settings().secure()
+                    .getInt(SECURE_SETTING, /* defaultValue= */  0)).isEqualTo(newValue);
         } finally {
             sDeviceState.dpc().devicePolicyManager()
                     .setSecureSetting(sDeviceState.dpc().componentName(),
@@ -134,12 +139,50 @@ public final class SettingsTest {
     }
 
     @Test
+    @CanSetPolicyTest(policy = SetDeviceOwnerSecureSetting.class)
+    @Postsubmit(reason = "new test")
+    public void setSecureSetting_deviceOwnerOnly_sets() {
+        int originalValue = TestApis.settings().secure()
+                .getInt(DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
+        int newValue = originalValue + 1;
+
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setSecureSetting(sDeviceState.dpc().componentName(),
+                            DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue));
+
+            assertThat(TestApis.settings().secure().getInt(DEVICE_OWNER_ONLY_SECURE_SETTING))
+                    .isEqualTo(newValue);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setSecureSetting(sDeviceState.dpc().componentName(),
+                            DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(originalValue));
+
+        }
+    }
+
+    @Test
+    @CannotSetPolicyTest(
+            policy = SetDeviceOwnerSecureSetting.class, includeNonDeviceAdminStates = false)
+    @Postsubmit(reason = "new test")
+    public void setSecureSetting_deviceOwnerOnly_isNotDeviceOwner_throwsException() {
+        int originalValue = TestApis.settings().secure()
+                .getInt(DEVICE_OWNER_ONLY_SECURE_SETTING, /* defaultValue= */ 0);
+        int newValue = originalValue + 1;
+
+        assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
+                .setSecureSetting(sDeviceState.dpc().componentName(),
+                        DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue)));
+    }
+
+    @Test
     @PolicyDoesNotApplyTest(policy = SetSecureSetting.class)
     @Postsubmit(reason = "new test")
     public void setSecureSetting_doesNotApplyToUser_isNotSet() {
-        int originalValue = TestApis.settings().secure().getInt(SECURE_SETTING, 0);
+        int originalValue = TestApis.settings().secure()
+                .getInt(SECURE_SETTING, /* defaultValue= */  0);
         int originalDpcValue = TestApis.settings().secure().getInt(sDeviceState.dpc().user(),
-                SECURE_SETTING, 0);
+                SECURE_SETTING, /* defaultValue= */ 0);
         int newValue = originalValue + 1;
 
         try {
@@ -147,7 +190,7 @@ public final class SettingsTest {
                     .setSecureSetting(sDeviceState.dpc().componentName(),
                             SECURE_SETTING, String.valueOf(newValue));
 
-            assertThat(TestApis.settings().secure().getInt(SECURE_SETTING, 0))
+            assertThat(TestApis.settings().secure().getInt(SECURE_SETTING, /* defaultValue= */  0))
                     .isEqualTo(originalValue);
         } finally {
             sDeviceState.dpc().devicePolicyManager()

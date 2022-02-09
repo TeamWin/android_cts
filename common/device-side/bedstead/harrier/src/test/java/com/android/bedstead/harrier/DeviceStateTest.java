@@ -46,6 +46,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
+import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
@@ -839,5 +841,17 @@ public class DeviceStateTest {
     @Test
     public void otherUser_noOtherUserSpecified_throwsException() {
         assertThrows(IllegalStateException.class, () -> sDeviceState.otherUser());
+    }
+
+    @Test
+    @EnsureBluetoothEnabled
+    public void ensureBluetoothEnabledAnnotation_bluetoothIsEnabled() {
+        assertThat(TestApis.bluetooth().isEnabled()).isTrue();
+    }
+
+    @Test
+    @EnsureBluetoothDisabled
+    public void ensureBluetoothDisabledAnnotation_bluetoothIsDisabled() {
+        assertThat(TestApis.bluetooth().isEnabled()).isFalse();
     }
 }
