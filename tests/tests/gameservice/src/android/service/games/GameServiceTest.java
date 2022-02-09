@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityTaskManager;
 import android.app.GameManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -49,6 +50,8 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * CTS tests for {@link android.service.games.GameService}.
@@ -120,6 +123,21 @@ public final class GameServiceTest {
 
         assertThat(getTestService().getActiveSessions()).containsExactly(
                 GAME_PACKAGE_NAME);
+    }
+
+    @Test
+    public void getTaskId_returnsTaskIdOfGame() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        ActivityTaskManager activityTaskManager =
+                getInstrumentation().getContext().getSystemService(ActivityTaskManager.class);
+
+        int taskId = getTestService().getFocusedTaskId();
+
+        assertThat(taskId).isEqualTo(
+                getActivityTaskId(GAME_PACKAGE_NAME, GAME_PACKAGE_NAME + ".MainActivity"));
     }
 
     @Test
@@ -241,6 +259,22 @@ public final class GameServiceTest {
     private static void forceStop(String packageName) {
         ShellUtils.runShellCommand("am force-stop %s", packageName);
         UiAutomatorUtils.getUiDevice().wait(Until.gone(By.pkg(packageName).depth(0)), 20_000L);
+    }
+
+    private static int getActivityTaskId(String packageName, String componentName) {
+        final String output = ShellUtils.runShellCommand("am stack list");
+        final Pattern pattern = Pattern.compile(
+                String.format(".*taskId=([0-9]+): %s/%s.*", packageName, componentName));
+
+        for (String line : output.split("\\n")) {
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.matches()) {
+                String taskId = matcher.group();
+                return Integer.parseInt(taskId);
+            }
+        }
+
+        return -1;
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {
