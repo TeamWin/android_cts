@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.RecognitionListener;
+import android.speech.RecognitionSupportCallback;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 
@@ -85,6 +86,14 @@ public class SpeechRecognitionActivity extends Activity {
 
     public void destroyRecognizer() {
         mHandler.post(mRecognizer::destroy);
+    }
+
+    public void checkRecognitionSupport(Intent intent, RecognitionSupportCallback rsc) {
+        mHandler.post(() -> mRecognizer.checkRecognitionSupport(intent, rsc));
+    }
+
+    public void triggerModelDownload(Intent intent) {
+        mHandler.post(() -> mRecognizer.triggerModelDownload(intent));
     }
 
     public void init(boolean onDevice, String customRecognizerComponent) {
