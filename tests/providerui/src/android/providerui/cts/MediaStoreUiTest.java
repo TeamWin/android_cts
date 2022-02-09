@@ -16,6 +16,8 @@
 
 package android.providerui.cts;
 
+import static android.provider.cts.ProviderTestUtils.resolveVolumeName;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -122,6 +124,7 @@ public class MediaStoreUiTest {
         mActivity = (GetResultActivity) mInstrumentation.startActivitySync(intent);
         mInstrumentation.waitForIdleSync();
         mActivity.clearResult();
+        mDevice.wakeUp();
     }
 
     @After
@@ -147,6 +150,7 @@ public class MediaStoreUiTest {
         if (!supportsHardware()) return;
 
         prepareFile();
+        clearDocumentsUi();
 
         final Uri treeUri = acquireAccess(mFile, Environment.DIRECTORY_DOCUMENTS);
         assertNotNull(treeUri);
@@ -175,6 +179,7 @@ public class MediaStoreUiTest {
         if (!supportsHardware()) return;
 
         prepareFile();
+        clearDocumentsUi();
 
         try {
             MediaStore.getDocumentUri(mActivity, mMediaStoreUri);
@@ -189,6 +194,7 @@ public class MediaStoreUiTest {
         if (!supportsHardware()) return;
 
         prepareFile();
+        clearDocumentsUi();
 
         final Uri treeUri = acquireAccess(mFile, Environment.DIRECTORY_DOCUMENTS);
         Log.v(TAG, "Tree " + treeUri);
@@ -408,7 +414,7 @@ public class MediaStoreUiTest {
     }
 
     private void prepareFile() throws Exception {
-        final File dir = new File(getVolumePath(mVolumeName),
+        final File dir = new File(getVolumePath(resolveVolumeName(mVolumeName)),
                 Environment.DIRECTORY_DOCUMENTS);
         final File file = new File(dir, "cts" + System.nanoTime() + ".txt");
 
@@ -419,7 +425,7 @@ public class MediaStoreUiTest {
     }
 
     private void prepareFile(String rawText) throws Exception {
-        final File dir = new File(getVolumePath(mVolumeName),
+        final File dir = new File(getVolumePath(resolveVolumeName(mVolumeName)),
                 Environment.DIRECTORY_DOCUMENTS);
         final File file = new File(dir, "cts" + System.nanoTime() + ".txt");
 
@@ -430,7 +436,8 @@ public class MediaStoreUiTest {
     }
 
     private Pair<Uri, File> prepareFileAndFetchDetails(String rawText) throws Exception {
-        final File dir = new File(getVolumePath(mVolumeName), Environment.DIRECTORY_DOCUMENTS);
+        final File dir = new File(getVolumePath(resolveVolumeName(mVolumeName)),
+                Environment.DIRECTORY_DOCUMENTS);
         final File file = new File(dir, "cts" + System.nanoTime() + ".txt");
 
         File stagedFile = stageFileWithRawText(rawText, file);
