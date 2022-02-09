@@ -158,7 +158,8 @@ class AAudioStreamCallbackTest : public ::testing::TestWithParam<CbTestParams> {
         if (AAudioExtensions::getInstance().isMMapSupported()) {
             AAudioExtensions::getInstance().setMMapPolicy(originalPolicy);
         }
-        if (!allowMMap) {
+        // Make sure we do not get MMAP when we disable it.
+        if (mSetupSuccessful && !allowMMap) {
             ASSERT_FALSE(AAudioExtensions::getInstance().isMMapUsed(mHelper->stream()));
         }
     }
