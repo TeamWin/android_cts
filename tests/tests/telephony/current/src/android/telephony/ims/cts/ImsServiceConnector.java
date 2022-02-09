@@ -123,7 +123,7 @@ class ImsServiceConnector {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            mCarrierService = null;
+            mExternalService = null;
         }
     }
 
@@ -149,17 +149,48 @@ class ImsServiceConnector {
             mIsServiceOverridden = true;
             switch (mConnectionType) {
                 case CONNECTION_TYPE_IMS_SERVICE_CARRIER: {
-                    setCarrierImsService("none");
+                    boolean unbindSent = setCarrierImsService("none");
+                    if (unbindSent) waitForCarrierPackageUnbind();
                     break;
                 }
                 case CONNECTION_TYPE_IMS_SERVICE_DEVICE: {
-                    setDeviceImsService("");
+                    boolean unbindSent = setDeviceImsService("");
+                    if (unbindSent) waitForDevicePackageUnbind();
                     break;
                 }
                 case CONNECTION_TYPE_DEFAULT_SMS_APP: {
                     // We don't need to clear anything for default SMS app.
                     break;
                 }
+            }
+        }
+
+        void waitForCarrierPackageUnbind() {
+            TestImsService carrierService = getCarrierService();
+            if (carrierService == null) return;
+            // First unbind the local services
+            removeLocalCarrierServiceConnection();
+            // Then wait for AOSP to unbind if there is still an active binding.
+            boolean isBound = carrierService.isTelephonyBound();
+            if (ImsUtils.VDBG) Log.i(TAG, "waitForCarrierPackageUnbind: isBound=" + isBound);
+            if (isBound) {
+                // Wait for telephony to unbind to local ImsService
+                carrierService.waitForLatchCountdown(TestImsService.LATCH_ON_UNBIND);
+            }
+        }
+
+        void waitForDevicePackageUnbind() throws Exception {
+            // Wait until the ImsService unbinds
+            ITestExternalImsService externalService = getExternalService();
+            if (externalService == null) return;
+            // First unbind the local services
+            removeLocalExternalServiceConnection();
+            // Then wait for AOSP to unbind if there is still an active binding.
+            boolean isBound = externalService.isTelephonyBound();
+            if (ImsUtils.VDBG) Log.i(TAG, "waitForDevicePackageUnbind: isBound=" + isBound);
+            if (isBound) {
+                // Wait for telephony to unbind to external ImsService
+                externalService.waitForLatchCountdown(TestImsService.LATCH_ON_UNBIND);
             }
         }
 
@@ -570,17 +601,27 @@ class ImsServiceConnector {
         }
     }
 
-    // Detect and disconnect all active services.
-    void disconnectServices() throws Exception {
-        // Remove local connection
+    void removeLocalCarrierServiceConnection() {
         if (mCarrierServiceConn != null) {
             mInstrumentation.getContext().unbindService(mCarrierServiceConn);
+            mCarrierServiceConn = null;
             mCarrierService = null;
         }
+    }
+
+    void removeLocalExternalServiceConnection() {
         if (mExternalServiceConn != null) {
             mInstrumentation.getContext().unbindService(mExternalServiceConn);
+            mExternalServiceConn = null;
             mExternalService = null;
         }
+    }
+
+    // Detect and disconnect all active services.
+    void disconnectServices() throws Exception {
+        // Remove local connections
+        removeLocalCarrierServiceConnection();
+        removeLocalExternalServiceConnection();
         mDeviceServiceConnection.restoreOriginalPackage();
         mCarrierServiceConnection.restoreOriginalPackage();
         mDefaultSmsAppConnection.restoreOriginalPackage();
