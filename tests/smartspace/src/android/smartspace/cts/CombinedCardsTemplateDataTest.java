@@ -20,9 +20,9 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.smartspace.SmartspaceTarget;
-import android.app.smartspace.uitemplatedata.SmartspaceCombinedCardsUiTemplateData;
-import android.app.smartspace.uitemplatedata.SmartspaceDefaultUiTemplateData;
-import android.app.smartspace.uitemplatedata.SmartspaceText;
+import android.app.smartspace.uitemplatedata.BaseTemplateData;
+import android.app.smartspace.uitemplatedata.CombinedCardsTemplateData;
+import android.app.smartspace.uitemplatedata.Text;
 import android.os.Parcel;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -34,51 +34,51 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tests for {@link SmartspaceCombinedCardsUiTemplateData}
+ * Tests for {@link CombinedCardsTemplateData}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class SmartspaceCombinedCardsUiTemplateDataTest {
+public class CombinedCardsTemplateDataTest {
 
-    private static final String TAG = "SmartspaceCombinedCardsUiTemplateDataTest";
+    private static final String TAG = "CombinedCardsTemplateDataTest";
 
     @Test
-    public void testCreateSmartspaceCombinedCardsUiTemplateData() {
-        List<SmartspaceDefaultUiTemplateData> dataList = new ArrayList<>();
-        dataList.add(createSmartspaceDefaultUiTemplateData());
-        dataList.add(createSmartspaceDefaultUiTemplateData());
-        SmartspaceCombinedCardsUiTemplateData combinedCardsUiTemplateData =
-                new SmartspaceCombinedCardsUiTemplateData.Builder(dataList).build();
+    public void testCreateCombinedCardsTemplateData() {
+        List<BaseTemplateData> dataList = new ArrayList<>();
+        dataList.add(createBaseTemplateData());
+        dataList.add(createBaseTemplateData());
+        CombinedCardsTemplateData combinedCardsTemplateData =
+                new CombinedCardsTemplateData.Builder(dataList).build();
 
-        assertThat(combinedCardsUiTemplateData.getCombinedCardDataList()).isEqualTo(dataList);
+        assertThat(combinedCardsTemplateData.getCombinedCardDataList()).isEqualTo(dataList);
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
-        combinedCardsUiTemplateData.writeToParcel(parcel, 0);
+        combinedCardsTemplateData.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        SmartspaceCombinedCardsUiTemplateData copyData =
-                SmartspaceCombinedCardsUiTemplateData.CREATOR.createFromParcel(parcel);
-        assertThat(combinedCardsUiTemplateData).isEqualTo(copyData);
+        CombinedCardsTemplateData copyData =
+                CombinedCardsTemplateData.CREATOR.createFromParcel(parcel);
+        assertThat(combinedCardsTemplateData).isEqualTo(copyData);
         parcel.recycle();
     }
 
-    private SmartspaceDefaultUiTemplateData createSmartspaceDefaultUiTemplateData() {
-        return new SmartspaceDefaultUiTemplateData.Builder(SmartspaceTarget.UI_TEMPLATE_DEFAULT)
-                .setTitleText(new SmartspaceText.Builder("title").build())
+    private BaseTemplateData createBaseTemplateData() {
+        return new BaseTemplateData.Builder(SmartspaceTarget.UI_TEMPLATE_DEFAULT)
+                .setTitleText(new Text.Builder("title").build())
                 .setTitleIcon(SmartspaceTestUtils.createSmartspaceIcon("title icon"))
-                .setSubtitleText(new SmartspaceText.Builder("subtitle").build())
+                .setSubtitleText(new Text.Builder("subtitle").build())
                 .setSubtitleIcon(SmartspaceTestUtils.createSmartspaceIcon("subtitle icon"))
                 .setPrimaryTapAction(SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                         "primary action"))
                 .setSupplementalSubtitleText(
-                        new SmartspaceText.Builder("supplemental subtitle").build())
+                        new Text.Builder("supplemental subtitle").build())
                 .setSupplementalSubtitleIcon(
                         SmartspaceTestUtils.createSmartspaceIcon("supplemental subtitle icon"))
                 .setSupplementalSubtitleTapAction(
                         SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                                 "supplemental tap action"))
-                .setSupplementalAlarmText(new SmartspaceText.Builder(
+                .setSupplementalAlarmText(new Text.Builder(
                         "supplemental alarm text").build()).build();
     }
 }
