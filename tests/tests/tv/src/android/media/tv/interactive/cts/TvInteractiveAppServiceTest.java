@@ -579,6 +579,12 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testNotifyBiInteractiveAppCreated() throws Throwable {
+        mSession.notifyBiInteractiveAppCreated(createTestUri(), "testAppId");
+        mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
     public void testTeletextAppState() throws Throwable {
         mSession.notifyTeletextAppStateChanged(TvInteractiveAppManager.TELETEXT_APP_STATE_HIDE);
         mInstrumentation.waitForIdleSync();
