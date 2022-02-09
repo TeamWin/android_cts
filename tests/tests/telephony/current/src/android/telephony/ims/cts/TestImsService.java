@@ -37,6 +37,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -55,14 +56,17 @@ public class TestImsService extends Service {
     private TestImsConfig mTestImsConfig;
     private TestSipTransport mTestSipTransport;
     private ImsService mTestImsService;
+    private ImsService mTestImsServiceCompat;
     private Executor mExecutor = Runnable::run;
     private boolean mIsEnabled = false;
     private boolean mSetNullRcsBinding = false;
     private boolean mIsSipTransportImplemented = false;
     private boolean mIsTestTypeExecutor = false;
+    private boolean mIsImsServiceCompat = false;
     private long mCapabilities = 0;
     private ImsFeatureConfiguration mFeatureConfig;
     protected boolean mIsTelephonyBound = false;
+    private HashSet<Integer> mSubIDs = new HashSet<Integer>();
     protected final Object mLock = new Object();
 
     public static final int LATCH_FEATURES_READY = 0;
@@ -109,6 +113,183 @@ public class TestImsService extends Service {
     private class ImsServiceUT extends ImsService {
 
         ImsServiceUT(Context context) {
+            // As explained above, ImsServiceUT is created in order to get around classloader
+            // restrictions. Attach the base context from the wrapper ImsService.
+            if (getBaseContext() == null) {
+                attachBaseContext(context);
+            }
+
+            if (mIsTestTypeExecutor) {
+                mImsRegistrationImplBase = new TestImsRegistration(mExecutor);
+                mTestSipTransport = new TestSipTransport(mExecutor);
+                mTestImsConfig = new TestImsConfig(mExecutor);
+            } else {
+                mImsRegistrationImplBase = new TestImsRegistration();
+                mTestImsConfig = new TestImsConfig();
+                mTestSipTransport = new TestSipTransport();
+            }
+        }
+
+        @Override
+        public ImsFeatureConfiguration querySupportedImsFeatures() {
+            return getFeatureConfig();
+        }
+
+        @Override
+        public long getImsServiceCapabilities() {
+            return mCapabilities;
+        }
+
+        @Override
+        public void readyForFeatureCreation() {
+            synchronized (mLock) {
+                countDownLatch(LATCH_FEATURES_READY);
+            }
+        }
+
+        @Override
+        public void enableImsForSubscription(int slotId, int subId) {
+            synchronized (mLock) {
+                countDownLatch(LATCH_ENABLE_IMS);
+                mSubIDs.add(subId);
+                setIsEnabled(true);
+            }
+        }
+
+        @Override
+        public void disableImsForSubscription(int slotId, int subId) {
+            synchronized (mLock) {
+                countDownLatch(LATCH_DISABLE_IMS);
+                mSubIDs.add(subId);
+                setIsEnabled(false);
+            }
+        }
+
+        @Override
+        public RcsFeature createRcsFeatureForSubscription(int slotId, int subId) {
+            TestImsService.ReadyListener readyListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_RCS_READY);
+                }
+            };
+
+            TestImsService.RemovedListener removedListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_REMOVE_RCS);
+                    mTestRcsFeature = null;
+                }
+            };
+
+            TestImsService.CapabilitiesSetListener setListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_RCS_CAP_SET);
+                }
+            };
+
+            TestImsService.RcsCapabilityExchangeEventListener capExchangeEventListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_UCE_LISTENER_SET);
+                }
+            };
+
+            synchronized (mLock) {
+                countDownLatch(LATCH_CREATE_RCS);
+                mSubIDs.add(subId);
+
+                if (mIsTestTypeExecutor) {
+                    mTestRcsFeature = new TestRcsFeature(readyListener, removedListener,
+                            setListener, capExchangeEventListener, mExecutor);
+                } else {
+                    mTestRcsFeature = new TestRcsFeature(readyListener, removedListener,
+                            setListener, capExchangeEventListener);
+                }
+
+                // Setup UCE request listener
+                mTestRcsFeature.setDeviceCapPublishListener(() -> {
+                    synchronized (mLock) {
+                        countDownLatch(LATCH_UCE_REQUEST_PUBLISH);
+                    }
+                });
+
+                if (mSetNullRcsBinding) {
+                    return null;
+                }
+                return mTestRcsFeature;
+            }
+        }
+
+        @Override
+        public ImsConfigImplBase getConfigForSubscription(int slotId, int subId) {
+            mSubIDs.add(subId);
+            return mTestImsConfig;
+        }
+
+        @Override
+        public MmTelFeature createMmTelFeatureForSubscription(int slotId, int subId) {
+            TestImsService.ReadyListener readyListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_MMTEL_READY);
+                }
+            };
+
+            TestImsService.RemovedListener removedListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_REMOVE_MMTEL);
+                    mTestMmTelFeature = null;
+                }
+            };
+
+            TestImsService.CapabilitiesSetListener capSetListener = () -> {
+                synchronized (mLock) {
+                    countDownLatch(LATCH_MMTEL_CAP_SET);
+                }
+            };
+
+            synchronized (mLock) {
+                countDownLatch(LATCH_CREATE_MMTEL);
+                mSubIDs.add(subId);
+                if (mIsTestTypeExecutor) {
+                    mTestMmTelFeature = new TestMmTelFeature(readyListener, removedListener,
+                            capSetListener, mExecutor);
+                } else {
+                    mTestMmTelFeature = new TestMmTelFeature(readyListener, removedListener,
+                            capSetListener);
+                }
+
+                return mTestMmTelFeature;
+            }
+        }
+
+        @Override
+        public ImsRegistrationImplBase getRegistrationForSubscription(int slotId, int subId) {
+            mSubIDs.add(subId);
+            return mImsRegistrationImplBase;
+        }
+
+        @Nullable
+        @Override
+        public SipTransportImplBase getSipTransport(int slotId) {
+            if (mIsSipTransportImplemented) {
+                return mTestSipTransport;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public @NonNull Executor getExecutor() {
+            if (mIsTestTypeExecutor) {
+                return mExecutor;
+            } else {
+                mExecutor = Runnable::run;
+                return mExecutor;
+            }
+        }
+    }
+
+    private class ImsServiceUT_compat extends ImsService {
+
+        ImsServiceUT_compat(Context context) {
             // As explained above, ImsServiceUT is created in order to get around classloader
             // restrictions. Attach the base context from the wrapper ImsService.
             if (getBaseContext() == null) {
@@ -219,7 +400,6 @@ public class TestImsService extends Service {
 
         @Override
         public MmTelFeature createMmTelFeature(int slotId) {
-
             TestImsService.ReadyListener readyListener = () -> {
                 synchronized (mLock) {
                     countDownLatch(LATCH_MMTEL_READY);
@@ -343,15 +523,32 @@ public class TestImsService extends Service {
         }
     }
 
+    protected ImsService getImsServiceCompat() {
+        synchronized (mLock) {
+            if (mTestImsServiceCompat != null) {
+                return mTestImsServiceCompat;
+            }
+            mTestImsServiceCompat = new ImsServiceUT_compat(this);
+            return mTestImsServiceCompat;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         synchronized (mLock) {
             if ("android.telephony.ims.ImsService".equals(intent.getAction())) {
-                if (ImsUtils.VDBG) {
-                    Log.i(TAG, "onBind-Remote");
-                }
                 mIsTelephonyBound = true;
-                return getImsService().onBind(intent);
+                if (mIsImsServiceCompat) {
+                    if (ImsUtils.VDBG) {
+                        Log.d(TAG, "onBind-Remote-Compat");
+                    }
+                    return getImsServiceCompat().onBind(intent);
+                } else {
+                    if (ImsUtils.VDBG) {
+                        Log.d(TAG, "onBind-Remote");
+                    }
+                    return getImsService().onBind(intent);
+                }
             }
             if (ImsUtils.VDBG) {
                 Log.i(TAG, "onBind-Local");
@@ -383,6 +580,7 @@ public class TestImsService extends Service {
             mSetNullRcsBinding = false;
             mIsSipTransportImplemented = false;
             mIsTestTypeExecutor = false;
+            mIsImsServiceCompat = false;
             mCapabilities = 0;
             for (int i = 0; i < LATCH_MAX; i++) {
                 sLatches[i] = new CountDownLatch(1);
@@ -392,6 +590,7 @@ public class TestImsService extends Service {
                 sMessageExecutor.getLooper().quit();
                 sMessageExecutor = null;
             }
+            mSubIDs.clear();
         }
     }
 
@@ -406,6 +605,12 @@ public class TestImsService extends Service {
                 sMessageExecutor = new MessageExecutor("TestImsService");
             }
             mExecutor = sMessageExecutor;
+        }
+    }
+
+    public void setImsServiceCompat() {
+        synchronized (mLock) {
+            mIsImsServiceCompat = true;
         }
     }
 
@@ -511,5 +716,9 @@ public class TestImsService extends Service {
 
     public ImsConfigImplBase getConfig() {
         return mTestImsConfig;
+    }
+
+    public HashSet<Integer> getSubIDs() {
+        return mSubIDs;
     }
 }
