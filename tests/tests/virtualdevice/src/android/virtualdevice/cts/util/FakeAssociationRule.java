@@ -20,8 +20,11 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.companion.AssociationInfo;
 import android.companion.CompanionDeviceManager;
+import android.content.pm.PackageManager;
 import android.os.Process;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -46,6 +49,9 @@ public class FakeAssociationRule extends ExternalResource {
     @Override
     protected void before() throws Throwable {
         super.before();
+        assumeTrue(
+                getApplicationContext().getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         mCompanionDeviceManager =
                 getApplicationContext().getSystemService(CompanionDeviceManager.class);
         clearExistingAssociations();
