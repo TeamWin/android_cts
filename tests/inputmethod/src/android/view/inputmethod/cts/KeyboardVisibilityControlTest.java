@@ -510,7 +510,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 dialogRef.set(dialog);
             });
 
-            try (AutoCloseableWrapper dialogCloseWrapper = AutoCloseableWrapper.create(
+            try (AutoCloseableWrapper<AlertDialog> dialogCloseWrapper = AutoCloseableWrapper.create(
                     dialogRef.get(), dialog -> TestUtils.runOnMainSync(dialog::dismiss))) {
                 TestUtils.waitOnMainUntil(() -> dialogRef.get().isShowing()
                         && editTextRef.get().hasFocus(), TIMEOUT);

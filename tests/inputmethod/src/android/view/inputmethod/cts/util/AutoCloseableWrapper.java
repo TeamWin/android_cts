@@ -39,7 +39,7 @@ public final class AutoCloseableWrapper<T> implements AutoCloseable {
      * @return {@link AutoCloseableWrapper} that wraps {@code object}.
      */
     @AnyThread
-    public static <U> AutoCloseableWrapper create(@Nullable U object,
+    public static <U> AutoCloseableWrapper<U> create(@Nullable U object,
             @NonNull ClosingFunction<U> closingFunction) {
         Objects.requireNonNull(object, "object cannot be null");
         Objects.requireNonNull(closingFunction, "closingFunction cannot be null");
