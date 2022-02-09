@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TestImsService extends Service {
 
-    private static final String TAG = "GtsImsTestImsService";
+    private static final String TAG = "CtsImsTestImsService";
     private static MessageExecutor sMessageExecutor = null;
 
     private TestImsRegistration mImsRegistrationImplBase;
@@ -62,7 +62,8 @@ public class TestImsService extends Service {
     private boolean mIsTestTypeExecutor = false;
     private long mCapabilities = 0;
     private ImsFeatureConfiguration mFeatureConfig;
-    private final Object mLock = new Object();
+    protected boolean mIsTelephonyBound = false;
+    protected final Object mLock = new Object();
 
     public static final int LATCH_FEATURES_READY = 0;
     public static final int LATCH_ENABLE_IMS = 1;
@@ -77,7 +78,8 @@ public class TestImsService extends Service {
     public static final int LATCH_RCS_CAP_SET = 10;
     public static final int LATCH_UCE_LISTENER_SET = 11;
     public static final int LATCH_UCE_REQUEST_PUBLISH = 12;
-    private static final int LATCH_MAX = 13;
+    public static final int LATCH_ON_UNBIND = 13;
+    private static final int LATCH_MAX = 14;
     protected static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
     static {
         for (int i = 0; i < LATCH_MAX; i++) {
@@ -343,16 +345,34 @@ public class TestImsService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        if ("android.telephony.ims.ImsService".equals(intent.getAction())) {
-            if (ImsUtils.VDBG) {
-                Log.d(TAG, "onBind-Remote");
+        synchronized (mLock) {
+            if ("android.telephony.ims.ImsService".equals(intent.getAction())) {
+                if (ImsUtils.VDBG) {
+                    Log.i(TAG, "onBind-Remote");
+                }
+                mIsTelephonyBound = true;
+                return getImsService().onBind(intent);
             }
-            return getImsService().onBind(intent);
+            if (ImsUtils.VDBG) {
+                Log.i(TAG, "onBind-Local");
+            }
+            return mBinder;
         }
-        if (ImsUtils.VDBG) {
-            Log.i(TAG, "onBind-Local");
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        synchronized (mLock) {
+            if ("android.telephony.ims.ImsService".equals(intent.getAction())) {
+                if (ImsUtils.VDBG)  Log.i(TAG, "onUnbind-Remote");
+                mIsTelephonyBound = false;
+                countDownLatch(LATCH_ON_UNBIND);
+            } else {
+                if (ImsUtils.VDBG)  Log.i(TAG, "onUnbind-Local");
+            }
+            // return false so that onBind is called next time.
+            return false;
         }
-        return mBinder;
     }
 
     public void resetState() {
@@ -375,11 +395,15 @@ public class TestImsService extends Service {
         }
     }
 
+    public boolean isTelephonyBound() {
+        return mIsTelephonyBound;
+    }
+
     public void setExecutorTestType(boolean type) {
         mIsTestTypeExecutor = type;
         if (mIsTestTypeExecutor) {
             if (sMessageExecutor == null) {
-                sMessageExecutor = new MessageExecutor("TestImSService");
+                sMessageExecutor = new MessageExecutor("TestImsService");
             }
             mExecutor = sMessageExecutor;
         }
@@ -430,20 +454,7 @@ public class TestImsService extends Service {
     }
 
     public boolean waitForLatchCountdown(int latchIndex) {
-        boolean complete = false;
-        try {
-            CountDownLatch latch;
-            synchronized (mLock) {
-                latch = sLatches[latchIndex];
-            }
-            complete = latch.await(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            // complete == false
-        }
-        synchronized (mLock) {
-            sLatches[latchIndex] = new CountDownLatch(1);
-        }
-        return complete;
+        return waitForLatchCountdown(latchIndex, ImsUtils.TEST_TIMEOUT_MS);
     }
 
     public boolean waitForLatchCountdown(int latchIndex, long waitMs) {
@@ -453,7 +464,12 @@ public class TestImsService extends Service {
             synchronized (mLock) {
                 latch = sLatches[latchIndex];
             }
+            long startTime = System.currentTimeMillis();
             complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
+            if (ImsUtils.VDBG) {
+                Log.i(TAG, "Latch " + latchIndex + " took "
+                        + (System.currentTimeMillis() - startTime) + " ms to count down.");
+            }
         } catch (InterruptedException e) {
             // complete == false
         }
