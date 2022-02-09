@@ -72,8 +72,8 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     private static final long IMAGE_SIZE_BYTES = 107684;
 
-    private static final String VERSION_1 = "VERSION_1";
-    private static final String VERSION_2 = "VERSION_2";
+    private static final String COLLECTION_1 = "COLLECTION_1";
+    private static final String COLLECTION_2 = "COLLECTION_2";
 
     private static final String CLOUD_ID1 = "CLOUD_ID1";
     private static final String CLOUD_ID2 = "CLOUD_ID2";
@@ -90,8 +90,8 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         mCloudPrimaryMediaGenerator.resetAll();
         mCloudSecondaryMediaGenerator.resetAll();
 
-        mCloudPrimaryMediaGenerator.setVersion(VERSION_1);
-        mCloudSecondaryMediaGenerator.setVersion(VERSION_1);
+        mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
+        mCloudSecondaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
 
         setCloudProvider(mContext, null);
 
@@ -180,7 +180,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
         assertThat(mediaIds).containsExactly(CLOUD_ID1, CLOUD_ID2);
 
-        mCloudPrimaryMediaGenerator.setVersion(VERSION_2);
+        mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_2);
         syncCloudProvider(mContext);
 
         clipData = fetchPickerMedia(2);
