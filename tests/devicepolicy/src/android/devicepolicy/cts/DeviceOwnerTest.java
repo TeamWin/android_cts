@@ -16,6 +16,7 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.queryable.queries.ServiceQuery.service;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -29,7 +30,11 @@ import android.content.Context;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.UserType;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.UserTest;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -40,14 +45,13 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-public final class DeviceOwnerPrerequisitesTest {
+public final class DeviceOwnerTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -64,26 +68,36 @@ public final class DeviceOwnerPrerequisitesTest {
                                     + ".TestAppAccountAuthenticatorService"))
             .get();
     private static final TestApp sDpcApp = sTestAppProvider
-            .query()
-            .wherePackageName().isEqualTo(RemoteDpc.DPC_COMPONENT_NAME.getPackageName())
+            .query().whereIsDeviceAdmin().isTrue()
             .get();
 
     private static final String EXISTING_ACCOUNT_TYPE =
             "com.android.bedstead.testapp.AccountManagementApp.account.type";
     private static final String SET_DEVICE_OWNER_COMMAND = "dpm set-device-owner";
-    private static final Account ACCOUNT_WITH_EXISTING_TYPE
-            = new Account("user0", EXISTING_ACCOUNT_TYPE);
+    private static final Account ACCOUNT_WITH_EXISTING_TYPE =
+            new Account("user0", EXISTING_ACCOUNT_TYPE);
     private static final String TEST_PASSWORD = "password";
 
-    private AccountManager mAccountManager;
-
-    @Before
-    public void setUp() {
-        mAccountManager = sContext.getSystemService(AccountManager.class);
-    }
+    private static final AccountManager sAccountManager =
+            sContext.getSystemService(AccountManager.class);
+    private static final DevicePolicyManager sDevicePolicyManager =
+            sContext.getSystemService(DevicePolicyManager.class);
 
     @Test
-    @Postsubmit(reason = "new test with sleep")
+    @Postsubmit(reason = "new test")
+    @EnsureHasDeviceOwner
+    public void setDeviceOwner_setsDeviceOwner() {
+        assertThat(sDevicePolicyManager.isAdminActive(sDeviceState.dpc().componentName()))
+                .isTrue();
+        assertThat(sDevicePolicyManager.isDeviceOwnerApp(sDeviceState.dpc().packageName()))
+                .isTrue();
+        assertThat(sDevicePolicyManager.getDeviceOwner())
+                .isEqualTo(sDeviceState.dpc().packageName());
+    }
+
+
+    @Test
+    @Postsubmit(reason = "new test")
     @EnsureHasNoDpc
     public void setDeviceOwnerViaAdb_deviceHasAccount_fails()
             throws InterruptedException {
@@ -110,6 +124,26 @@ public final class DeviceOwnerPrerequisitesTest {
         }
     }
 
+    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER, UserType.WORK_PROFILE})
+    @EnsureHasDeviceOwner
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    @Postsubmit(reason = "new test")
+    public void getDeviceOwnerNameOnAnyUser_returnsDeviceOwnerName() {
+        assertThat(sDevicePolicyManager.getDeviceOwnerNameOnAnyUser())
+                .isEqualTo(sDeviceState.dpc().packageName());
+    }
+
+    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER, UserType.WORK_PROFILE})
+    @EnsureHasDeviceOwner
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    @Postsubmit(reason = "new test")
+    public void getDeviceOwnerComponentOnAnyUser_returnsDeviceOwnerComponent() {
+        assertThat(sDevicePolicyManager.getDeviceOwnerComponentOnAnyUser())
+                .isEqualTo(sDeviceState.dpc().componentName());
+    }
+
     /**
      * Blocks until an account is added.
      */
@@ -121,7 +155,7 @@ public final class DeviceOwnerPrerequisitesTest {
     }
 
     private boolean addAccountOnce() {
-        return mAccountManager.addAccountExplicitly(
+        return sAccountManager.addAccountExplicitly(
                 ACCOUNT_WITH_EXISTING_TYPE,
                 TEST_PASSWORD,
                 /* userdata= */ null);

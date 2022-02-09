@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_BACKUP;
 import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
@@ -91,11 +90,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     private static final String GLOBAL_SETTING_DATA_ROAMING = "data_roaming";
     private static final String GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED =
             "usb_mass_storage_enabled";
-
-    @Test
-    public void testDeviceOwnerSetup() throws Exception {
-        executeDeviceOwnerTest("DeviceOwnerSetupTest");
-    }
 
     @Test
     public void testProxyStaticProxyTest() throws Exception {
@@ -661,14 +655,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             removeAdmin(deviceAdminReceiver, adminUserId);
             getDevice().uninstallPackage(deviceAdminPkg);
         }
-    }
-
-    // The backup service cannot be enabled if the backup feature is not supported.
-    @RequiresAdditionalFeatures({FEATURE_BACKUP})
-    @Test
-    public void testBackupServiceEnabling() throws Exception {
-        executeDeviceTestMethod(".BackupServicePoliciesTest",
-                "testEnablingAndDisablingBackupService");
     }
 
     @Test
