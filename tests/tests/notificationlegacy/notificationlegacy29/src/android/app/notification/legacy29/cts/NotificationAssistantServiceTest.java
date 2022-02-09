@@ -710,6 +710,22 @@ public class NotificationAssistantServiceTest {
         mUi.dropShellPermissionIdentity();
     }
 
+    @Test
+    public void testNotificationCancel_api29HasLegacyReason() throws Exception {
+        setUpListeners(); // also enables assistant
+
+        sendNotification(1, ICON_ID);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+
+        mNotificationAssistantService.cancelNotifications(new String[]{sbn.getKey()});
+        int reason = getAssistantCancellationReason(sbn.getKey());
+        if (reason != NotificationListenerService.REASON_LISTENER_CANCEL) {
+            fail("Failed cancellation from assistant: reason=" + reason);
+        }
+    }
+
     private StatusBarNotification getFirstNotificationFromPackage(String PKG)
             throws InterruptedException {
         StatusBarNotification sbn = mNotificationListenerService.mPosted.poll(SLEEP_TIME,
@@ -843,5 +859,19 @@ public class NotificationAssistantServiceTest {
                 throw new IOException("Could not read stdout of command: " + command, e);
             }
         }
+    }
+
+    private int getAssistantCancellationReason(String key) {
+        for (int tries = 3; tries-- > 0; ) {
+            if (mNotificationAssistantService.mRemoved.containsKey(key)) {
+                return mNotificationAssistantService.mRemoved.get(key);
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return -1;
     }
 }
