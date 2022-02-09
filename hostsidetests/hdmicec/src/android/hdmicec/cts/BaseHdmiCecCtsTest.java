@@ -194,6 +194,36 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 "Could not parse logicalAddress from dumpsys.");
     }
 
+    /**
+     * Gets the system audio mode status of the device by parsing the dumpsys hdmi_control. Returns
+     * true when system audio mode is on and false when system audio mode is off
+     */
+    public boolean isSystemAudioModeOn(ITestDevice device) throws DumpsysParseException {
+        List<LogicalAddress> logicalAddressList = new ArrayList<>();
+        String line;
+        String pattern =
+                "(.*?)"
+                        + "(mSystemAudioActivated: )"
+                        + "(?<"
+                        + "systemAudioModeStatus"
+                        + ">[true|false])"
+                        + "(.*?)";
+        Pattern p = Pattern.compile(pattern);
+        try {
+            String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
+            BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
+            while ((line = reader.readLine()) != null) {
+                Matcher m = p.matcher(line);
+                if (m.matches()) {
+                    return m.group("systemAudioModeStatus").equals("true");
+                }
+            }
+        } catch (IOException | DeviceNotAvailableException e) {
+            throw new DumpsysParseException("Could not parse system audio mode from dumpsys.", e);
+        }
+        throw new DumpsysParseException("Could not parse system audio mode from dumpsys.");
+    }
+
     /** Gets the DUT's logical address to which messages should be sent */
     public LogicalAddress getTargetLogicalAddress() throws DumpsysParseException {
         return getTargetLogicalAddress(getDevice(), mTestDeviceType);
