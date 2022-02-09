@@ -127,6 +127,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
@@ -1418,6 +1421,68 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         assertThrows(SecurityException.class,
                 () -> mWifiManager.setExternalPnoScanRequest(executor, ssids, null, callback));
+    }
+
+    /**
+     * Verify the invalid and valid usages of {@code WifiManager#getLastCallerInfoForApi}.
+     */
+    public void testGetLastCallerInfoForApi() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        AtomicReference<String> packageName = new AtomicReference<>();
+        AtomicBoolean enabled = new AtomicBoolean(false);
+        BiConsumer<String, Boolean> listener = new BiConsumer<String, Boolean>() {
+            @Override
+            public void accept(String caller, Boolean value) {
+                synchronized (mLock) {
+                    packageName.set(caller);
+                    enabled.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+        // Test invalid inputs trigger IllegalArgumentException
+        assertThrows("Invalid apiType should trigger exception", IllegalArgumentException.class,
+                () -> mWifiManager.getLastCallerInfoForApi(-1, mExecutor, listener));
+        assertThrows("null executor should trigger exception", IllegalArgumentException.class,
+                () -> mWifiManager.getLastCallerInfoForApi(WifiManager.API_SOFT_AP, null,
+                        listener));
+        assertThrows("null listener should trigger exception", IllegalArgumentException.class,
+                () -> mWifiManager.getLastCallerInfoForApi(WifiManager.API_SOFT_AP, mExecutor,
+                        null));
+
+        // Test caller with no permission triggers SecurityException.
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> mWifiManager.getLastCallerInfoForApi(WifiManager.API_SOFT_AP,
+                        mExecutor, listener));
+
+        String expectedPackage = "com.android.shell";
+        boolean isEnabledBefore = mWifiManager.isWifiEnabled();
+        // toggle wifi and verify getting last caller
+        setWifiEnabled(!isEnabledBefore);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getLastCallerInfoForApi(WifiManager.API_WIFI_ENABLED, mExecutor,
+                        listener));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+
+        assertEquals("package does not match", expectedPackage, packageName.get());
+        assertEquals("enabled does not match", !isEnabledBefore, enabled.get());
+
+        // toggle wifi again and verify last caller
+        packageName.set(null);
+        setWifiEnabled(isEnabledBefore);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getLastCallerInfoForApi(WifiManager.API_WIFI_ENABLED, mExecutor,
+                        listener));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertEquals("package does not match", expectedPackage, packageName.get());
+        assertEquals("enabled does not match", isEnabledBefore, enabled.get());
     }
 
     /**
