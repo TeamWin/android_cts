@@ -337,6 +337,13 @@ public class InputMethodServiceDeviceTest {
             return;
         }
 
+        if (isOperatorTierDevice()) {
+            // On operator tier devices of AndroidTv, Activity is put behind TvLauncher
+            // after turnScreenOff by android.intent.category.HOME intent from
+            // TvRecommendation.
+            return;
+        }
+
         // Make sure the IME switch UI still works after device screen off / on with focusing
         // same Editor.
         turnScreenOff(helper);
@@ -416,5 +423,11 @@ public class InputMethodServiceDeviceTest {
         helper.shell(ShellCommandUtils.showImePicker());
         pollingCheck(() -> imm.isInputMethodPickerShown(), TIMEOUT,
                 "InputMethod picker should be shown");
+    }
+
+    private boolean isOperatorTierDevice() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        return context.getPackageManager()
+                .hasSystemFeature("com.google.android.tv.operator_tier");
     }
 }
