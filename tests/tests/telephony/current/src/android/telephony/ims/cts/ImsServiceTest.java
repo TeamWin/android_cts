@@ -88,6 +88,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -416,6 +417,8 @@ public class ImsServiceTest {
                 TestImsService.LATCH_CREATE_RCS);
         assertNotNull("ImsService created, but ImsService#createRcsFeature was not called!",
                 sServiceConnector.getCarrierService().getRcsFeature());
+        assertTrue("Not expected subId received!",
+                isExpectedSubId(sServiceConnector.getCarrierService().getSubIDs()));
     }
 
     @Test
@@ -454,6 +457,8 @@ public class ImsServiceTest {
         // Wait for the framework to set the capabilities on the ImsService
         sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_MMTEL_CAP_SET);
+        assertTrue("Not expected subId received!",
+                isExpectedSubId(sServiceConnector.getCarrierService().getSubIDs()));
     }
 
     @Test
@@ -483,6 +488,8 @@ public class ImsServiceTest {
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_DISABLE_IMS));
         assertFalse(sServiceConnector.getCarrierService().isEnabled());
+        assertTrue("Not expected subId received!",
+                isExpectedSubId(sServiceConnector.getCarrierService().getSubIDs()));
     }
 
     @Test
@@ -501,6 +508,41 @@ public class ImsServiceTest {
 
         // Change the supported feature to MMTEl
         sServiceConnector.getCarrierService().getImsService().onUpdateSupportedImsFeatures(
+                new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL).build());
+
+        // createMmTelFeature should be called.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_CREATE_MMTEL));
+
+        // Wait for the framework to set the capabilities on the ImsService
+        sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_MMTEL_CAP_SET);
+        assertTrue("Not expected subId received!",
+                isExpectedSubId(sServiceConnector.getCarrierService().getSubIDs()));
+    }
+
+    @Test
+    public void testCarrierImsServiceBindRcsChangeToMmtelCompat() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        // Connect to the ImsService with the RCS feature.
+        ImsFeatureConfiguration config = new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .build();
+        assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
+        sServiceConnector.getCarrierService().resetState();
+        // Set the flag for ImsService compatibility test.
+        sServiceConnector.getCarrierService().setImsServiceCompat();
+        assertTrue(sServiceConnector.triggerFrameworkConnectionToCarrierImsService(config));
+        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_CREATE_RCS));
+
+        // Change the supported feature to MMTEl
+        sServiceConnector.getCarrierService().getImsServiceCompat().onUpdateSupportedImsFeatures(
                 new ImsFeatureConfiguration.Builder()
                 .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL).build());
 
@@ -548,6 +590,8 @@ public class ImsServiceTest {
         // Wait for the framework to set the capabilities on the ImsService
         sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_MMTEL_CAP_SET);
+        assertTrue("Not expected subId received!",
+                isExpectedSubId(sServiceConnector.getCarrierService().getSubIDs()));
     }
 
     @Test
@@ -4990,5 +5034,9 @@ public class ImsServiceTest {
         if (c >= 'a' && c <= 'f') return (c - 'a' + 10);
 
         throw new RuntimeException("Invalid hex char '" + c + "'");
+    }
+
+    private boolean isExpectedSubId(HashSet<Integer> subIDs) {
+        return (subIDs.size() == 1) && subIDs.contains(sTestSub);
     }
 }
