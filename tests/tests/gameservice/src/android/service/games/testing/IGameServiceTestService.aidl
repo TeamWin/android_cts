@@ -28,6 +28,8 @@ interface IGameServiceTestService {
 
     void resetState();
 
+    int getFocusedTaskId();
+
     void startGameSessionActivity(in Intent intent, in Bundle options);
 
     ActivityResult getLastActivityResult();

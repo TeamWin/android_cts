@@ -42,7 +42,8 @@ public final class TestGameSessionService extends GameSessionService {
 
     @Override
     public GameSession onNewSession(CreateGameSessionRequest createGameSessionRequest) {
-        return new TestGameSession(this, createGameSessionRequest.getGamePackageName());
+        return new TestGameSession(this, createGameSessionRequest.getGamePackageName(),
+                createGameSessionRequest.getTaskId());
     }
 
     static Set<String> getActiveSessions() {
@@ -61,14 +62,20 @@ public final class TestGameSessionService extends GameSessionService {
     static final class TestGameSession extends GameSession {
         private final Context mContext;
         private final String mPackageName;
+        private final int mTaskId;
 
-        private TestGameSession(Context context, String packageName) {
+        private TestGameSession(Context context, String packageName, int taskId) {
             mContext = context;
             mPackageName = packageName;
+            mTaskId = taskId;
         }
 
         String getPackageName() {
             return mPackageName;
+        }
+
+        int getTaskId() {
+            return mTaskId;
         }
 
         @Override
@@ -94,7 +101,8 @@ public final class TestGameSessionService extends GameSessionService {
                 }
 
                 @Override
-                public void onViewDetachedFromWindow(View v) {}
+                public void onViewDetachedFromWindow(View v) {
+                }
             });
         }
 

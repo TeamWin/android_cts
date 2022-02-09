@@ -67,6 +67,16 @@ public final class GameServiceTestService extends Service {
         }
 
         @Override
+        public int getFocusedTaskId() {
+            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
+            if (focusedGameSession == null) {
+                return -1;
+            }
+
+            return focusedGameSession.getTaskId();
+        }
+
+        @Override
         public void startGameSessionActivity(Intent intent, Bundle options) {
             TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
             if (focusedGameSession == null) {
