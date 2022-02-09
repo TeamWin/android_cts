@@ -23,11 +23,13 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.VehiclePropertyIds;
 import android.car.telemetry.CarTelemetryManager;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.ArrayMap;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -54,6 +56,35 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
                     .build();
     private static final String TEST_CONFIG_NAME = TEST_CONFIG.getName();
 
+    /* MetricsConfig with simple script that listens for parking brake change. */
+    private static final String PARKING_BRAKE_CHANGE_SCRIPT = new StringBuilder()
+            .append("function onParkingBrakeChange(published_data, saved_state)\n")
+            .append("    result = {data = \"Hello World!\"}\n")
+            .append("    on_script_finished(result)\n")
+            .append("end\n")
+            .toString();
+    private static final TelemetryProto.Publisher PARKING_BRAKE_PROPERTY_PUBLISHER =
+            TelemetryProto.Publisher.newBuilder()
+                    .setVehicleProperty(
+                            TelemetryProto.VehiclePropertyPublisher.newBuilder()
+                                    .setVehiclePropertyId(VehiclePropertyIds.PARKING_BRAKE_ON)
+                                    .setReadRate(0f))
+                    .build();
+    private static final TelemetryProto.Subscriber PARKING_BRAKE_PROPERTY_SUBSCRIBER =
+            TelemetryProto.Subscriber.newBuilder()
+                    .setHandler("onParkingBrakeChange")
+                    .setPublisher(PARKING_BRAKE_PROPERTY_PUBLISHER)
+                    .setPriority(0)
+                    .build();
+    private static final TelemetryProto.MetricsConfig PARKING_BRAKE_CONFIG =
+            TelemetryProto.MetricsConfig.newBuilder()
+                    .setName("parking_brake_config")
+                    .setVersion(1)
+                    .setScript(PARKING_BRAKE_CHANGE_SCRIPT)
+                    .addSubscribers(PARKING_BRAKE_PROPERTY_SUBSCRIBER)
+                    .build();
+    private static final String PARKING_BRAKE_CONFIG_NAME = PARKING_BRAKE_CONFIG.getName();
+
     private CarTelemetryManager mCarTelemetryManager;
     private UiAutomation mUiAutomation;
 
@@ -70,10 +101,15 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
         mCarTelemetryManager = (CarTelemetryManager) Car.createCar(
                 instrumentation.getContext()).getCarManager(Car.CAR_TELEMETRY_SERVICE);
         assertThat(mCarTelemetryManager).isNotNull();
+
+        // start from a clean state
+        mCarTelemetryManager.removeAllMetricsConfigs();
     }
 
     @After
     public void tearDown() throws Exception {
+        // end in a clean state
+        mCarTelemetryManager.removeAllMetricsConfigs();
         mUiAutomation.dropShellPermissionIdentity();
     }
 
@@ -85,14 +121,14 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
                 Runnable::run, callback);
         callback.mSemaphore.acquire();
         assertThat(callback.mAddConfigStatusMap.get(TEST_CONFIG_NAME))
-                .isEqualTo(CarTelemetryManager.STATUS_METRICS_CONFIG_SUCCESS);
+                .isEqualTo(CarTelemetryManager.STATUS_ADD_METRICS_CONFIG_SUCCEEDED);
 
         // Test: add a duplicate MetricsConfig. Expect: ALREADY_EXISTS status code
         mCarTelemetryManager.addMetricsConfig(TEST_CONFIG_NAME, TEST_CONFIG.toByteArray(),
                 Runnable::run, callback);
         callback.mSemaphore.acquire();
         assertThat(callback.mAddConfigStatusMap.get(TEST_CONFIG_NAME))
-                .isEqualTo(CarTelemetryManager.STATUS_METRICS_CONFIG_ALREADY_EXISTS);
+                .isEqualTo(CarTelemetryManager.STATUS_ADD_METRICS_CONFIG_ALREADY_EXISTS);
 
         // Test: remove a MetricsConfig. Expect: the next add should return SUCCESS
         mCarTelemetryManager.removeMetricsConfig(TEST_CONFIG_NAME);
@@ -100,7 +136,40 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
                 Runnable::run, callback);
         callback.mSemaphore.acquire();
         assertThat(callback.mAddConfigStatusMap.get(TEST_CONFIG_NAME))
-                .isEqualTo(CarTelemetryManager.STATUS_METRICS_CONFIG_SUCCESS);
+                .isEqualTo(CarTelemetryManager.STATUS_ADD_METRICS_CONFIG_SUCCEEDED);
+    }
+
+    @Test
+    public void testEndToEndScriptExecution_getFinishedReport() throws Exception {
+        // add metrics config and assert success
+        AddMetricsConfigCallbackImpl callback = new AddMetricsConfigCallbackImpl();
+        mCarTelemetryManager.addMetricsConfig(PARKING_BRAKE_CONFIG_NAME,
+                PARKING_BRAKE_CONFIG.toByteArray(), Runnable::run, callback);
+        callback.mSemaphore.acquire();
+        assertThat(callback.mAddConfigStatusMap.get(PARKING_BRAKE_CONFIG_NAME))
+                .isEqualTo(CarTelemetryManager.STATUS_ADD_METRICS_CONFIG_SUCCEEDED);
+
+        // inject event to set parking brake on, triggering script execution
+        executeShellCommand("cmd car_service inject-vhal-event %d %s",
+                VehiclePropertyIds.PARKING_BRAKE_ON, true);
+
+        FinishedReportListenerImpl reportListener = new FinishedReportListenerImpl();
+        mCarTelemetryManager.getFinishedReport(
+                PARKING_BRAKE_CONFIG_NAME, Runnable::run, reportListener);
+        reportListener.mSemaphore.acquire();
+        // TODO(b/218596986): remove this method after the client notification API is added
+        waitForReport(reportListener, PARKING_BRAKE_CONFIG_NAME);
+        assertThat(reportListener.mReportMap.get(PARKING_BRAKE_CONFIG_NAME)).isNotNull();
+    }
+
+    private void waitForReport(FinishedReportListenerImpl listener, String configName)
+            throws Exception {
+        while (listener.mStatusMap.get(configName)
+                != CarTelemetryManager.STATUS_GET_METRICS_CONFIG_FINISHED) {
+            Thread.sleep(200);
+            mCarTelemetryManager.getFinishedReport(configName, Runnable::run, listener);
+            listener.mSemaphore.acquire();
+        }
     }
 
     private final class AddMetricsConfigCallbackImpl
@@ -112,6 +181,22 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
         @Override
         public void onAddMetricsConfigStatus(@NonNull String metricsConfigName, int statusCode) {
             mAddConfigStatusMap.put(metricsConfigName, statusCode);
+            mSemaphore.release();
+        }
+    }
+
+    private final class FinishedReportListenerImpl
+            implements CarTelemetryManager.MetricsReportCallback {
+
+        private final Semaphore mSemaphore = new Semaphore(0);
+        private final Map<String, byte[]> mReportMap = new ArrayMap<>();
+        private final Map<String, Integer> mStatusMap = new ArrayMap<>();
+
+        @Override
+        public void onResult(@NonNull String metricsConfigName, @Nullable byte[] report,
+                @Nullable byte[] error, int status) {
+            mReportMap.put(metricsConfigName, report);
+            mStatusMap.put(metricsConfigName, status);
             mSemaphore.release();
         }
     }
