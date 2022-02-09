@@ -1302,6 +1302,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 OutputConfiguration config = new OutputConfiguration(mReader.getSurface());
                 assertTrue("Default timestamp source must be DEFAULT",
                         config.getTimestampBase() == OutputConfiguration.TIMESTAMP_BASE_DEFAULT);
+                assertTrue("Default mirroring mode must be AUTO",
+                        config.getMirrorMode() == OutputConfiguration.MIRROR_MODE_AUTO);
                 if (physicalId != null) {
                     config.setPhysicalCameraId(physicalId);
                 }
