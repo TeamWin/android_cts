@@ -45,6 +45,16 @@ public class TestAppHelper {
             "android.virtualdevice.streamedtestapp.StreamedAppService";
 
     /** @see android.virtualdevice.streamedtestapp.MainActivity */
+    static final String ACTION_TEST_CAMERA =
+            "android.virtualdevice.streamedtestapp.TEST_CAMERA";
+    /** @see android.virtualdevice.streamedtestapp.MainActivity */
+    public static final String EXTRA_CAMERA_ID = "cameraId";
+    /** @see android.virtualdevice.streamedtestapp.MainActivity */
+    public static final String EXTRA_CAMERA_RESULT = "cameraResult";
+    /** @see android.virtualdevice.streamedtestapp.MainActivity */
+    public static final String EXTRA_CAMERA_ON_ERROR_CODE = "cameraOnErrorCode";
+
+    /** @see android.virtualdevice.streamedtestapp.MainActivity */
     static final String ACTION_TEST_CLIPBOARD =
             "android.virtualdevice.streamedtestapp.TEST_CLIPBOARD";
     /** @see android.virtualdevice.streamedtestapp.MainActivity */
@@ -57,6 +67,11 @@ public class TestAppHelper {
 
     public static final ComponentName MAIN_ACTIVITY_COMPONENT = new ComponentName(
             TestAppHelper.PACKAGE_NAME, TestAppHelper.MAIN_ACTIVITY);
+
+    public static Intent createCameraAccessTestIntent() {
+        return new Intent(ACTION_TEST_CAMERA)
+                .setComponent(MAIN_ACTIVITY_COMPONENT);
+    }
 
     public static Intent createClipboardTestIntent(String clipboardString) {
         return new Intent(ACTION_TEST_CLIPBOARD)

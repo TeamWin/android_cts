@@ -17,7 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.virtualdevice.streamedtestapp">
-
+    <uses-permission android:name="android.permission.CAMERA" />
     <application>
         <activity android:name=".MainActivity"
             android:allowEmbedded="true"
