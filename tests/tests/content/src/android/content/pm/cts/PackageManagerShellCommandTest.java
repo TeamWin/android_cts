@@ -59,6 +59,7 @@ import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
@@ -1483,6 +1484,30 @@ public class PackageManagerShellCommandTest {
                 name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
         assertEquals(ApplicationInfo.FLAG_SYSTEM, info.flags & ApplicationInfo.FLAG_SYSTEM);
         assertTrue(info.sourceDir.startsWith("/apex/com.android.supplementalprocess"));
+    }
+
+    @Test
+    public void testGetPackagesForUid_supplementalProcessUid() throws Exception {
+        final PackageManager pm = getPackageManager();
+        final String[] pkgs = pm.getPackagesForUid(Process.toSupplementalUid(10239));
+        assertEquals(1, pkgs.length);
+        assertEquals(pm.getSupplementalProcessPackageName(), pkgs[0]);
+    }
+
+    @Test
+    public void testGetNameForUid_supplementalProcessUid() throws Exception {
+        final PackageManager pm = getPackageManager();
+        final String pkgName = pm.getNameForUid(Process.toSupplementalUid(11543));
+        assertEquals(pm.getSupplementalProcessPackageName(), pkgName);
+    }
+
+    @Test
+    public void testGetNamesForUids_supplementalProcessUids() throws Exception {
+        final PackageManager pm = getPackageManager();
+        final int[] uids = new int[]{Process.toSupplementalUid(10101)};
+        final String[] names = pm.getNamesForUids(uids);
+        assertEquals(1, names.length);
+        assertEquals(pm.getSupplementalProcessPackageName(), names[0]);
     }
 
     private static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
