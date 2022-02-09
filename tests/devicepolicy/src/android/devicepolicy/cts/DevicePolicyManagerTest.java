@@ -1417,6 +1417,11 @@ public final class DevicePolicyManagerTest {
         assertThat(params.getAdminExtras().isEmpty()).isTrue();
     }
 
+    @Test
+    public void getDeviceManagerRoleHolderPackageName_doesNotCrash() {
+        sDevicePolicyManager.getDeviceManagerRoleHolderPackageName();
+    }
+
     private static PersistableBundle createAdminExtrasBundle() {
         PersistableBundle result = new PersistableBundle();
         result.putString("key1", "value1");
