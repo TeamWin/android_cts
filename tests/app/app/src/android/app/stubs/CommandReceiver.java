@@ -152,6 +152,7 @@ public class CommandReceiver extends BroadcastReceiver {
         context.unbindService(sServiceMap.remove(targetPackage));
     }
 
+  
     private void doStartService(Context context, Intent commandIntent, String serviceName) {
         String targetPackage = getTargetPackage(commandIntent);
         Intent fgsIntent = new Intent();
@@ -182,7 +183,7 @@ public class CommandReceiver extends BroadcastReceiver {
         Intent fgsIntent = new Intent();
         fgsIntent.putExtras(commandIntent); // include the fg service type if any.
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
-        int command = LocalForegroundService.COMMAND_START_FOREGROUND_WITH_TYPE;
+        int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
         context.startForegroundService(fgsIntent);
     }
