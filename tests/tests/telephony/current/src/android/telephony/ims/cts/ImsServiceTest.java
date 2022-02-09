@@ -393,7 +393,7 @@ public class ImsServiceTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        // Unbind the GTS ImsService after the test completes.
+        // Unbind the ImsService after the test completes.
         if (sServiceConnector != null) {
             sServiceConnector.setSingleRegistrationTestModeEnabled(false);
             sServiceConnector.disconnectCarrierImsService();
