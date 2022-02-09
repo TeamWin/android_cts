@@ -16,6 +16,9 @@
 
 package android.bluetooth.cts;
 
+import static android.Manifest.permission.BLUETOOTH_CONNECT;
+
+import android.app.UiAutomation;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothCodecConfig;
@@ -26,6 +29,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +45,7 @@ public class BluetoothA2dpTest extends AndroidTestCase {
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
+    private UiAutomation mUiAutomation;;
 
     private BluetoothA2dp mBluetoothA2dp;
     private boolean mIsA2dpSupported;
@@ -54,6 +60,9 @@ public class BluetoothA2dpTest extends AndroidTestCase {
                 PackageManager.FEATURE_BLUETOOTH);
 
         if (!mHasBluetooth) return;
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+
         BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -86,6 +95,7 @@ public class BluetoothA2dpTest extends AndroidTestCase {
             }
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
+            mUiAutomation.dropShellPermissionIdentity();
         }
     }
 
