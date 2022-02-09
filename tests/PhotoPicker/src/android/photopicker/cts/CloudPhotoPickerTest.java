@@ -34,6 +34,8 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import android.os.storage.StorageManager;
 import android.photopicker.cts.cloudproviders.CloudProviderNoIntentFilter;
 import android.photopicker.cts.cloudproviders.CloudProviderNoPermission;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
@@ -293,6 +295,23 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         mediaIds = extractMediaIds(clipData, 1);
 
         assertThat(mediaIds).containsExactly(CLOUD_ID1);
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testStorageManagerKnowsCloudProvider() {
+        final StorageManager storageManager = mContext.getSystemService(StorageManager.class);
+
+        setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
+        assertThat(storageManager.getCloudMediaProvider())
+                .isEqualTo(CloudProviderPrimary.AUTHORITY);
+
+        setCloudProvider(mContext, CloudProviderSecondary.AUTHORITY);
+        assertThat(storageManager.getCloudMediaProvider())
+                .isEqualTo(CloudProviderSecondary.AUTHORITY);
+
+        setCloudProvider(mContext, null);
+        assertThat(storageManager.getCloudMediaProvider()).isNull();
     }
 
     private List<String> extractMediaIds(ClipData clipData, int minCount) {
