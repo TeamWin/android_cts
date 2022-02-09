@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.cts;
+package android.media.audio.cts;
 
 import android.media.AudioFormat;
 import android.media.AudioProfile;
