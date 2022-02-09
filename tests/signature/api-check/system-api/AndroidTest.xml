@@ -45,7 +45,6 @@
         <option name="instrumentation-arg" key="dynamic-config-name" value="CtsSystemApiSignatureTestCases" />
         <option name="instrumentation-arg" key="base-api-files" value="current.api" />
         <option name="instrumentation-arg" key="expected-api-files" value="system-all.api.zip" />
-        <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-mock-current.api,android-test-runner-current.api" />
         <option name="runtime-hint" value="30s" />
         <!-- disable isolated storage so tests can access dynamic config stored in /sdcard. -->
         <option name="isolated-storage" value="false" />
