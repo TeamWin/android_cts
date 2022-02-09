@@ -26,6 +26,6 @@
         <option name="test-file-name" value="CtsAmbientContextDetectionServiceDeviceTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.ambientaudioevent.cts" />
+        <option name="package" value="android.ambientcontext.cts" />
     </test>
 </configuration>

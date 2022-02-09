@@ -24,7 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ambientcontext.AmbientContextEvent;
-import android.app.ambientcontext.AmbientContextEventResponse;
+import android.app.ambientcontext.AmbientContextManager;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.platform.test.annotations.AppModeFull;
@@ -99,7 +99,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
         CtsAmbientContextDetectionService.respondSuccess(FAKE_EVENT);
 
         // From manager, verify callback was called
-        assertThat(getLastStatusCode()).isEqualTo(AmbientContextEventResponse.STATUS_SUCCESS);
+        assertThat(getLastStatusCode()).isEqualTo(AmbientContextManager.STATUS_SUCCESS);
     }
 
     @Test
@@ -111,14 +111,28 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
 
         // From test service, cancel the request and respond with STATUS_SERVICE_UNAVAILABLE
         CtsAmbientContextDetectionService.respondFailure(
-                AmbientContextEventResponse.STATUS_SERVICE_UNAVAILABLE);
+                AmbientContextManager.STATUS_SERVICE_UNAVAILABLE);
 
         // From test service, verify that the request was cancelled
         assertThat(CtsAmbientContextDetectionService.hasPendingRequest()).isFalse();
 
         // From manager, verify that the callback was called with STATUS_SERVICE_UNAVAILABLE
         assertThat(getLastStatusCode()).isEqualTo(
-                AmbientContextEventResponse.STATUS_SERVICE_UNAVAILABLE);
+                AmbientContextManager.STATUS_SERVICE_UNAVAILABLE);
+    }
+
+    @Test
+    public void testAmbientContextDetectionService_QueryEventStatus() {
+        assertThat(CtsAmbientContextDetectionService.hasQueryRequest()).isFalse();
+        callQueryServiceStatus();
+        assertThat(CtsAmbientContextDetectionService.hasQueryRequest()).isTrue();
+
+        // From test service, respond with STATUS_ACCESS_DENIED
+        CtsAmbientContextDetectionService.respondFailure(
+                AmbientContextManager.STATUS_ACCESS_DENIED);
+
+        // From manager, verify callback was called
+        assertThat(getLastStatusCode()).isEqualTo(AmbientContextManager.STATUS_ACCESS_DENIED);
     }
 
     private int getLastStatusCode() {
@@ -145,6 +159,18 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
      */
     private void callStartDetection() {
         runShellCommand("cmd ambient_context start-detection %s %s",
+                USER_ID, FAKE_SERVICE_PACKAGE);
+        CtsAmbientContextDetectionService.onReceivedResponse();
+    }
+
+    /**
+     * This call is asynchronous (manager spawns + binds to service and then asynchronously makes a
+     * call).
+     * As such, we need to ensure consistent testing results, by waiting until we receive a response
+     * in our test service w/ CountDownLatch(s).
+     */
+    private void callQueryServiceStatus() {
+        runShellCommand("cmd ambient_context query-service-status %s %s",
                 USER_ID, FAKE_SERVICE_PACKAGE);
         CtsAmbientContextDetectionService.onReceivedResponse();
     }
