@@ -39,7 +39,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
@@ -104,7 +104,7 @@ public final class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
         List<String> originalDisabledPackages =
@@ -125,7 +125,7 @@ public final class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
         List<String> originalDisabledPackages =
@@ -155,7 +155,7 @@ public final class UserControlDisabledPackagesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void
     getUserControlDisabledPackages_noProtectedPackagesSet_returnsEmptyProtectedPackages() {
@@ -177,7 +177,7 @@ public final class UserControlDisabledPackagesTest {
 
     @Test
     @EnsureHasPermission(value = permission.FORCE_STOP_PACKAGES)
-    @PositivePolicyTest(policy = UserControlDisabledPackages.class)
+    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_launchActivity_verifyPackageNotStopped()
             throws Exception {

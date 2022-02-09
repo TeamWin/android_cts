@@ -24,8 +24,7 @@ import android.os.Handler;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-
-import androidx.annotation.NonNull;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,16 +148,6 @@ public class SpeechRecognitionActivity extends Activity {
         @Override
         public void onPartialResults(Bundle partialResults) {
             mCallbackMethodsInvoked.add(CallbackMethod.CALLBACK_METHOD_PARTIAL_RESULTS);
-        }
-
-        @Override
-        public void onSegmentResults(@NonNull Bundle segmentResults) {
-            mCallbackMethodsInvoked.add(CallbackMethod.CALLBACK_METHOD_SEGMENTS_RESULTS);
-        }
-
-        @Override
-        public void onEndOfSegmentedSession() {
-            mCallbackMethodsInvoked.add(CallbackMethod.CALLBACK_METHOD_END_SEGMENTED_SESSION);
         }
 
         @Override

@@ -22,7 +22,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
-import android.telecom.CallEndpoint;
 import android.telecom.InCallService;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -69,7 +68,6 @@ public class MockInCallService extends InCallService {
         public void onRttInitiationFailure(Call call, int reason) {}
         public void onHandoverComplete(Call call) {}
         public void onHandoverFailed(Call call, int failureReason) {}
-        public void onAnswerFailed(CallEndpoint callEndpoint, int failureReason) {}
 
         final public MockInCallService getService() {
             return mService;
@@ -212,14 +210,6 @@ public class MockInCallService extends InCallService {
             super.onHandoverFailed(call, failureReason);
             if (getCallbacks() != null) {
                 getCallbacks().onHandoverFailed(call, failureReason);
-            }
-        }
-
-        @Override
-        public void onAnswerFailed(CallEndpoint callEndpoint, int failureReason) {
-            super.onAnswerFailed(callEndpoint, failureReason);
-            if (getCallbacks() != null) {
-                getCallbacks().onAnswerFailed(callEndpoint, failureReason);
             }
         }
     };

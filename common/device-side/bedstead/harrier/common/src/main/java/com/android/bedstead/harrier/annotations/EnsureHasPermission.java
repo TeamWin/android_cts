@@ -19,6 +19,7 @@ package com.android.bedstead.harrier.annotations;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -28,10 +29,17 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
+@Repeatable(EnsureHasPermissions.class)
 public @interface EnsureHasPermission {
     String[] value();
 
     FailureMode failureMode() default FailureMode.FAIL;
+
+    /** The minimum version where this permission is required. */
+    int minVersion() default 0;
+
+    /** The maximum version where this permission is required. */
+    int maxVersion() default Integer.MAX_VALUE;
 
     /**
      * Weight sets the order that annotations will be resolved.

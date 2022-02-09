@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene;
 
+import com.android.bedstead.nene.accessibility.Accessibility;
 import com.android.bedstead.nene.activities.Activities;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.context.Context;
@@ -84,10 +85,16 @@ public final class TestApis {
         return Device.sInstance;
     }
 
-    /** Access Test APIs related to location */
+    /** Access Test APIs related to location. */
     @Experimental
     public static Locations location() {
         return Locations.sInstance;
+    }
+
+    /** Access Test APIs related to accessibility. */
+    @Experimental
+    public static Accessibility accessibility() {
+        return Accessibility.sInstance;
     }
 
     /** @deprecated Use statically */

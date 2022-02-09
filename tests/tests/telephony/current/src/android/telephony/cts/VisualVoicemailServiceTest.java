@@ -83,7 +83,7 @@ public class VisualVoicemailServiceTest {
     private static final String PACKAGE = "android.telephony.cts";
 
     private static final long EVENT_RECEIVED_TIMEOUT_MILLIS = 60_000;
-    private static final long EVENT_NOT_RECEIVED_TIMEOUT_MILLIS = 1_000;
+    private static final long EVENT_NOT_RECEIVED_TIMEOUT_MILLIS = 5_000;
 
     private Context mContext;
     private TelephonyManager mTelephonyManager;

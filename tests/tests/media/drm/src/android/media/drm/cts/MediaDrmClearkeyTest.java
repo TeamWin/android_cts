@@ -1643,6 +1643,9 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             assertFalse("ERROR_SESSION_NOT_OPENED requires new session", e.isTransient());
             assertEquals("Expected ERROR_SESSION_NOT_OPENED",
                     MediaDrm.ErrorCodes.ERROR_SESSION_NOT_OPENED, e.getErrorCode());
+            assertTrue("Expected ERROR_SESSION_NOT_OPENED value in info",
+                    e.getDiagnosticInfo().contains(
+                            String.valueOf(MediaDrm.ErrorCodes.ERROR_SESSION_NOT_OPENED)));
         }  finally {
             if (drm != null) {
                 drm.close();

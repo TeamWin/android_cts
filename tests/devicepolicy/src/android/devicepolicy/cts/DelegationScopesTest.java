@@ -39,7 +39,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.Delegation;
 import com.android.bedstead.harrier.policies.NetworkLoggingDelegation;
 import com.android.bedstead.harrier.policies.SecurityLoggingDelegation;
@@ -86,7 +86,7 @@ public final class DelegationScopesTest {
     private static final TestApp sTestApp2 = sTestAppProvider.any();
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void getDelegatedScopes_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
@@ -128,7 +128,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void getDelegatedScopes_returnsLatestFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
 
@@ -171,7 +171,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void getDelegatePackages_oneApp_twoScopes_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
 
@@ -205,7 +205,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void getDelegatePackages_twoApps_differentScopes_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -235,7 +235,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void getDelegatePackages_twoApps_sameScope_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -264,7 +264,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = NetworkLoggingDelegation.class)
+    @PolicyAppliesTest(policy = NetworkLoggingDelegation.class)
     public void setDelegatedScopes_networkLogging_validAdminType_noException() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
@@ -296,7 +296,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SecurityLoggingDelegation.class)
+    @PolicyAppliesTest(policy = SecurityLoggingDelegation.class)
     // TODO(b/198774281): add a negative policy test (in line with all the others here) once we can
     //  correctly mark security logging delegation as possible for COPE profile POs.
     public void setDelegatedScopes_securityLogging_validAdminType_noException() {
@@ -313,7 +313,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void setDelegatedScopes_certSelection_settingSecondApp_revokesFirstApp() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -347,7 +347,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = NetworkLoggingDelegation.class)
+    @PolicyAppliesTest(policy = NetworkLoggingDelegation.class)
     public void setDelegatedScopes_networkLogging_settingSecondApp_revokesFirstApp() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -381,7 +381,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SecurityLoggingDelegation.class)
+    @PolicyAppliesTest(policy = SecurityLoggingDelegation.class)
     public void setDelegatedScopes_securityLogging_settingSecondApp_revokesFirstApp() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -415,7 +415,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void setDelegatedScopes_delegatedPackageReceivesScopesFromBroadcast() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             // TODO(b/198769413): we should not need to start (or query for) an activity, but the

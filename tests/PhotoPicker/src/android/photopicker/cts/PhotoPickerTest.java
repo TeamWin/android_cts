@@ -495,6 +495,11 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         }
 
         clickAndWait(findViewSelectedButton());
+
+        // Wait for playback to start. This is needed in some devices where playback
+        // buffering -> ready state takes around 10s.
+        final long playbackStartTimeout = 10000;
+        (findPreviewVideoImageView()).waitUntilGone(playbackStartTimeout);
     }
 
     private void setUpAndAssertStickyPlayerControls(UiObject playerView, UiObject playPauseButton,
@@ -562,6 +567,11 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     private static UiObject findPlayPauseButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
                 REGEX_PACKAGE_NAME + ":id/exo_play_pause"));
+    }
+
+    private static UiObject findPreviewVideoImageView() {
+        return new UiObject(new UiSelector().resourceIdMatches(
+                REGEX_PACKAGE_NAME + ":id/preview_video_image"));
     }
 
     private void clickAndWait(UiObject uiObject) throws Exception {
