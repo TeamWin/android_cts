@@ -31,6 +31,7 @@ import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -39,6 +40,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -65,6 +67,8 @@ public class BackgroundRestrictedAlarmsTest {
     private static final long DEFAULT_WAIT = 1_000;
     private static final long POLL_INTERVAL = 200;
     private static final long MIN_REPEATING_INTERVAL = 10_000;
+    private static final long APP_STANDBY_WINDOW = 10_000;
+    private static final long APP_STANDBY_RESTRICTED_WINDOW = 10_000;
 
     private Context mContext;
     private ComponentName mAlarmScheduler;
@@ -93,6 +97,8 @@ public class BackgroundRestrictedAlarmsTest {
         mDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER);
         mDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted", "false");
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_UNTIL_REBOOT));
         setAppOpsMode(APP_OP_MODE_IGNORED);
         makeUidIdle();
         final IntentFilter intentFilter = new IntentFilter();
@@ -107,6 +113,7 @@ public class BackgroundRestrictedAlarmsTest {
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TYPE, type);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TRIGGER_TIME, triggerMillis);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_REPEAT_INTERVAL, interval);
+        setAlarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         mContext.sendBroadcast(setAlarmIntent);
     }
 
@@ -176,6 +183,8 @@ public class BackgroundRestrictedAlarmsTest {
 
     @After
     public void tearDown() throws Exception {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_NONE));
         deleteAlarmManagerConstants();
         setAppOpsMode(APP_OP_MODE_ALLOWED);
         mDeviceConfigStateHelper.restoreOriginalValues();
@@ -192,6 +201,8 @@ public class BackgroundRestrictedAlarmsTest {
         mConfigHelper.with("min_futurity", 0L)
                 .with("min_interval", MIN_REPEATING_INTERVAL)
                 .with("min_window", 0)
+                .with("app_standby_window", APP_STANDBY_WINDOW)
+                .with("app_standby_restricted_window", APP_STANDBY_RESTRICTED_WINDOW)
                 .commitAndAwaitPropagation();
     }
 
