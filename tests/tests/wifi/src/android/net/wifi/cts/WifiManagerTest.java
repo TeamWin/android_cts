@@ -3933,9 +3933,25 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
 
+        String networkKey = mWifiManager.getConnectionInfo().getNetworkKey();
+        assertNotNull(networkKey);
+
         Network wifiCurrentNetwork = ShellIdentityUtils.invokeWithShellPermissions(
                 mWifiManager::getCurrentNetwork);
         assertNotNull(wifiCurrentNetwork);
+
+        List<WifiConfiguration> configuredNetwork = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getConfiguredNetworks);
+
+        boolean isNetworkKeyExist = false;
+        for (WifiConfiguration config : configuredNetwork) {
+            if (config.getAllNetworkKeys().contains(networkKey)) {
+                isNetworkKeyExist = true;
+                break;
+            }
+        }
+
+        assertTrue(isNetworkKeyExist);
 
         TestNetworkCallback networkCallbackListener = new TestNetworkCallback(mLock);
         synchronized (mLock) {
