@@ -67,6 +67,9 @@ public class AccessibilityEventTest {
     private static final long IDLE_TIMEOUT_MS = 500;
     private static final long DEFAULT_TIMEOUT_MS = 1000;
 
+    // From ViewConfiguration.SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS
+    private static final long SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS = 100;
+
     private EventReportingLinearLayout mParentView;
     private View mChildView;
     private TextView mTextView;
@@ -151,10 +154,10 @@ public class AccessibilityEventTest {
                         mChildView.scrollTo(0, 25);
                         mChildView.scrollTo(0, 50);
                         mChildView.scrollTo(0, 100);
-                        Thread.sleep(150);
+                        Thread.sleep(SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS * 2);
                         mChildView.scrollTo(0, 150);
                         mChildView.scrollTo(0, 175);
-                        Thread.sleep(50);
+                        Thread.sleep(SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS / 2);
                         mChildView.scrollTo(0, 200);
                     } catch (InterruptedException e) {
                         fail("Interrupted while dispatching event bursts.");
@@ -234,7 +237,7 @@ public class AccessibilityEventTest {
                         mChildView.scrollTo(0, 25);
                         mChildView.scrollTo(5, 50);
                         mChildView.scrollTo(7, 100);
-                        Thread.sleep(100);
+                        Thread.sleep(SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS * 2);
                         mChildView.scrollTo(0, 25);
                         mChildView.scrollTo(5, 50);
                         mChildView.scrollTo(7, 100);
@@ -281,10 +284,10 @@ public class AccessibilityEventTest {
                         sendStateDescriptionChangedEvent(mChildView);
                         sendStateDescriptionChangedEvent(mChildView);
                         sendStateDescriptionChangedEvent(mChildView);
-                        Thread.sleep(150);
+                        Thread.sleep(SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS * 2);
                         sendStateDescriptionChangedEvent(mChildView);
                         sendStateDescriptionChangedEvent(mChildView);
-                        Thread.sleep(50);
+                        Thread.sleep(SEND_RECURRING_ACCESSIBILITY_EVENTS_INTERVAL_MILLIS / 2);
                         sendStateDescriptionChangedEvent(mChildView);
                     } catch (InterruptedException e) {
                         fail("Interrupted while dispatching event bursts.");
