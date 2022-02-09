@@ -34,6 +34,7 @@ filegroup {
         "src/android/telephony/ims/cts/SipMessageUtils.java",
         "src/android/telephony/ims/cts/TestAcsClient.java",
         "src/android/telephony/ims/cts/TestImsCallSessionImpl.java",
+        "src/android/telephony/ims/cts/ConferenceHelper.java",
     ],
     path: "src/",
 }
