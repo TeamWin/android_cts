@@ -214,7 +214,7 @@ public class StatusBarManagerTest {
      *
      * @throws Exception
      */
-    @Test(expected = UnsupportedOperationException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testSetNavBarModeOverride_invalid_throws() throws Exception {
         int invalidInput = -1;
         mStatusBarManager.setNavBarModeOverride(invalidInput);
