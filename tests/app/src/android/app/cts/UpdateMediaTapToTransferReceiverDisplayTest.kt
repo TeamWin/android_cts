@@ -68,7 +68,9 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
             // Clear any existing chip
             statusBarManager.updateMediaTapToTransferReceiverDisplay(
                 StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_FAR_FROM_SENDER,
-                ROUTE_INFO
+                ROUTE_INFO,
+                null,
+                null
             )
         }
     }
@@ -78,7 +80,9 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
         uiAutomation.dropShellPermissionIdentity()
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
             StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
-            ROUTE_INFO
+            ROUTE_INFO,
+            null,
+            null
         )
     }
 
@@ -86,7 +90,9 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     fun closeToSender_displaysChipWindow() {
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
             StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
-            ROUTE_INFO
+            ROUTE_INFO,
+            null,
+            null
         )
 
         windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
