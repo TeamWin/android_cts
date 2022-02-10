@@ -20,6 +20,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.GameManager;
@@ -38,7 +39,11 @@ import android.service.games.testing.IGameServiceTestService;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
+import android.util.Size;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -71,6 +76,8 @@ public final class GameServiceTest {
             "android.service.games.cts.restartgameverifier";
     private static final String START_ACTIVITY_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.startactivityverifier";
+    private static final String TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME =
+            "android.service.games.cts.takescreenshotverifier";
     private static final String TOUCH_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.touchverifier";
 
@@ -97,6 +104,7 @@ public final class GameServiceTest {
                 ImmutableList.of(
                         GAME_PACKAGE_NAME,
                         RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                        TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME,
                         TOUCH_VERIFIER_PACKAGE_NAME));
     }
 
@@ -107,6 +115,7 @@ public final class GameServiceTest {
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
         forceStop(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
+        forceStop(TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME);
         forceStop(TOUCH_VERIFIER_PACKAGE_NAME);
 
         getTestService().resetState();
@@ -300,6 +309,79 @@ public final class GameServiceTest {
                 By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("3"));
     }
 
+    @Test
+    public void takeScreenshot_expectedBitmapReturned() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME);
+
+        // Make sure that the overlay is shown so that assertions can be made to check that
+        // the overlay is excluded from the game screenshot.
+        getTestService().showOverlayForFocusedGameSession();
+        Rect overlayBounds = waitForTouchableOverlayBounds();
+
+        Bitmap gameScreenshot = getTestService().getBitmapScreenshotForFocusedGameSession();
+
+        // Make sure a screenshot was taken and has the same dimensions as the device screen.
+        assertNotNull(gameScreenshot);
+
+        Size screenSize = getScreenSize();
+        assertThat(gameScreenshot.getWidth()).isEqualTo(screenSize.getWidth());
+        assertThat(gameScreenshot.getHeight()).isEqualTo(screenSize.getHeight());
+
+        // The test game is always fullscreen red. It is too expensive to verify that the entire
+        // bitmap is red, so spot check certain areas.
+
+        // 1. Make sure that the overlay is excluded from the screenshot by checking pixels within
+        // the overlay bounds:
+
+        // top-left of overlay bounds:
+        assertThat(
+                gameScreenshot.getPixel(overlayBounds.left + 1, overlayBounds.top + 1)).isEqualTo(
+                Color.RED);
+        // bottom-left corner of overlay bounds:
+        assertThat(gameScreenshot.getPixel(overlayBounds.left + 1,
+                overlayBounds.bottom - 1)).isEqualTo(Color.RED);
+        // top-right corner of overlay bounds:
+        assertThat(
+                gameScreenshot.getPixel(overlayBounds.right - 1, overlayBounds.top + 1)).isEqualTo(
+                Color.RED);
+        // bottom-right corner of overlay bounds:
+        assertThat(gameScreenshot.getPixel(overlayBounds.right - 1,
+                overlayBounds.bottom - 1)).isEqualTo(Color.RED);
+        // middle corner of overlay bounds:
+        assertThat(gameScreenshot.getPixel((overlayBounds.left + overlayBounds.right) / 2,
+                (overlayBounds.top + overlayBounds.bottom) / 2)).isEqualTo(Color.RED);
+
+        // 2. Also check some pixels between the edge of the screen and the overlay bounds:
+
+        // above and to the left of the overlay
+        assertThat(
+                gameScreenshot.getPixel(overlayBounds.left / 2, overlayBounds.top / 2)).isEqualTo(
+                Color.RED);
+        // below and to the left of the overlay
+        assertThat(gameScreenshot.getPixel(overlayBounds.left / 2,
+                (overlayBounds.bottom + gameScreenshot.getHeight()) / 2)).isEqualTo(Color.RED);
+        // above and to the right of the overlay
+        assertThat(gameScreenshot.getPixel((overlayBounds.left + gameScreenshot.getWidth()) / 2,
+                overlayBounds.top / 2)).isEqualTo(Color.RED);
+        // below and to the right of the overlay
+        assertThat(gameScreenshot.getPixel((overlayBounds.left + gameScreenshot.getWidth()) / 2,
+                (overlayBounds.bottom + gameScreenshot.getHeight()) / 2)).isEqualTo(Color.RED);
+
+        // 3. Finally check some pixels at the corners of the screen:
+
+        // top-left corner of screen
+        assertThat(gameScreenshot.getPixel(0, 0)).isEqualTo(Color.RED);
+        // bottom-left corner of screen
+        assertThat(gameScreenshot.getPixel(0, gameScreenshot.getHeight() - 1)).isEqualTo(Color.RED);
+        // top-right corner of screen
+        assertThat(gameScreenshot.getPixel(gameScreenshot.getWidth() - 1, 0)).isEqualTo(Color.RED);
+        // bottom-right corner of screen
+        assertThat(gameScreenshot.getPixel(gameScreenshot.getWidth() - 1,
+                gameScreenshot.getHeight() - 1)).isEqualTo(Color.RED);
+    }
+
     private IGameServiceTestService getTestService() {
         return mServiceConnection.mService;
     }
@@ -367,6 +449,17 @@ public final class GameServiceTest {
         }
 
         return -1;
+    }
+
+    private static Size getScreenSize() {
+        WindowManager wm =
+                (WindowManager)
+                        InstrumentationRegistry.getInstrumentation()
+                                .getContext()
+                                .getSystemService(Context.WINDOW_SERVICE);
+        WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
+        Rect windowBounds = windowMetrics.getBounds();
+        return new Size(windowBounds.width(), windowBounds.height());
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {
