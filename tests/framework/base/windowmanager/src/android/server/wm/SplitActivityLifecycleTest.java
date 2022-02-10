@@ -283,7 +283,41 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         waitAndAssertResumedActivity(mActivityC, "Activity C must be resumed.");
         waitAndAssertActivityState(mActivityB, STATE_STOPPED,
                 "Activity B is occluded by Activity C, so it must be stopped.");
-        waitAndAssertResumedActivity(mActivityA, "Activity B must be resumed.");
+        waitAndAssertResumedActivity(mActivityA, "Activity A must be resumed.");
+    }
+
+    /**
+     * Verifies the behavior of the activities in a TaskFragment that is sandwiched in adjacent
+     * TaskFragments. It should be hidden even if part of it is not cover by the adjacent
+     * TaskFragment above.
+     */
+    @Test
+    public void testSandwichTaskFragmentInAdjacent_partialOccluding() {
+        // Initialize test environment by launching Activity A and B side-by-side.
+        initializeSplitActivities(false /* verifyEmbeddedTask */);
+
+        final IBinder taskFragTokenA = mTaskFragA.getTaskFragToken();
+        // TaskFragment C is not fully occluding TaskFragment B.
+        final Rect partialOccludingSideBounds = new Rect(mSideBounds);
+        partialOccludingSideBounds.left += 50;
+        final TaskFragmentCreationParams paramsC = mTaskFragmentOrganizer.generateTaskFragParams(
+                mOwnerToken, partialOccludingSideBounds, WINDOWING_MODE_MULTI_WINDOW);
+        final IBinder taskFragTokenC = paramsC.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                // Create the side TaskFragment for C and launch
+                .createTaskFragment(paramsC)
+                .startActivityInTaskFragment(taskFragTokenC, mOwnerToken, mIntent,
+                        null /* activityOptions */)
+                .setAdjacentTaskFragments(taskFragTokenA, taskFragTokenC, null /* options */);
+
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        // Wait for the TaskFragment of Activity C to be created.
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+
+        waitAndAssertResumedActivity(mActivityC, "Activity C must be resumed.");
+        waitAndAssertActivityState(mActivityB, STATE_STOPPED,
+                "Activity B is occluded by Activity C, so it must be stopped.");
+        waitAndAssertResumedActivity(mActivityA, "Activity A must be resumed.");
     }
 
     /**
