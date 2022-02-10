@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import static com.android.compatibility.common.util.ShellIdentityUtils.invokeWithShellPermissions;
+
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -96,7 +98,7 @@ public class BtAdapterUtils {
 
         if (bluetoothAdapter.isEnabled()) return true;
 
-        bluetoothAdapter.enable();
+        invokeWithShellPermissions(() -> bluetoothAdapter.enable());
         sAdapterStateEnablingLock.lock();
         try {
             // Wait for the Adapter to be enabled
@@ -125,7 +127,7 @@ public class BtAdapterUtils {
 
         if (bluetoothAdapter.getState() == BluetoothAdapter.STATE_OFF) return true;
 
-        bluetoothAdapter.disable();
+        invokeWithShellPermissions(() -> bluetoothAdapter.disable());
         sAdapterStateDisablingLock.lock();
         try {
             // Wait for the Adapter to be disabled
