@@ -35,7 +35,6 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Service allowing external apps to verify the state of {@link TestGameService} and {@link
@@ -120,16 +119,7 @@ public final class GameServiceTestService extends Service {
                 return null;
             }
 
-            AtomicReference<Rect> bounds =
-                    new AtomicReference<>(focusedGameSession.getTouchableBounds());
-            if (bounds.get().isEmpty()) {
-                PollingCheck.waitFor(() -> {
-                    bounds.set(focusedGameSession.getTouchableBounds());
-                    return !bounds.get().isEmpty();
-                });
-            }
-
-            return bounds.get();
+            return focusedGameSession.getTouchableBounds();
         }
 
         @Override
