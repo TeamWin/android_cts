@@ -24,19 +24,14 @@ import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccount;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import java.util.ArrayList;
 
 public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
 
     // mirrors constant in PhoneAccountRegistrar called MAX_PHONE_ACCOUNT_REGISTRATIONS
     public static final int MAX_PHONE_ACCOUNT_REGISTRATIONS = 10;
-
-    // In setUp(), setupConnectionService registers a phone account
-    // In setUp(), setupForEmergencyCalling register another phone account
-    public static final int EMERGENCY_CALL_TESTS_CLASS_OFFSET = 2;
-
-    public static final int MAX_PHONE_ACCOUNT_REGISTRATIONS_FOR_EMERGENCY_CALL_TESTS_CLASS =
-            MAX_PHONE_ACCOUNT_REGISTRATIONS - EMERGENCY_CALL_TESTS_CLASS_OFFSET;
 
     @Override
     public void setUp() throws Exception {
@@ -60,14 +55,28 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
     public void testEmergencyCallFailureDueToInvalidPhoneAccounts() throws Exception {
         if (!mShouldTestTelecom) return;
 
+        // needed in order to call mTelecomManager.getPhoneAccountsForPackage()
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+
+        // determine the number of phone accounts already registered to this package.
+        int phoneAccountsRegisteredAlready = mTelecomManager.getPhoneAccountsForPackage().size();
+
+        // now, determine the number of accounts remaining
+        int numberOfAccountsThatCanBeRegistered =
+                MAX_PHONE_ACCOUNT_REGISTRATIONS - phoneAccountsRegisteredAlready;
+
+        // create the remaining phone accounts allowed
         ArrayList<PhoneAccount> accounts = TestUtils.generateRandomPhoneAccounts(52L,
-                MAX_PHONE_ACCOUNT_REGISTRATIONS_FOR_EMERGENCY_CALL_TESTS_CLASS,
+                numberOfAccountsThatCanBeRegistered,
                 TestUtils.PACKAGE, TestUtils.COMPONENT);
 
         try {
+            // register the phone accounts
             accounts.stream().forEach(a -> mTelecomManager.registerPhoneAccount(a));
-            assertTrue(mTelecomManager.getSelfManagedPhoneAccounts().size()
-                    >= MAX_PHONE_ACCOUNT_REGISTRATIONS_FOR_EMERGENCY_CALL_TESTS_CLASS);
+            // assert all were registered successfully
+            assertTrue(mTelecomManager.getPhoneAccountsForPackage().size()
+                    >= MAX_PHONE_ACCOUNT_REGISTRATIONS);
 
             // The existing start emergency call test is impacted if there is a failure due to
             // excess phone accounts being present.
@@ -75,6 +84,9 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
         } finally {
             accounts.stream().forEach(d -> mTelecomManager.unregisterPhoneAccount(
                     d.getAccountHandle()));
+            // cleanup permission that was added
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().dropShellPermissionIdentity();
         }
     }
 

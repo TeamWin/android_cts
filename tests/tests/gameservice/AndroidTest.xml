@@ -28,7 +28,9 @@
         <option name="test-file-name" value="CtsGameServiceGame.apk" />
         <option name="test-file-name" value="CtsGameServiceFalsePositiveGame.apk" />
         <option name="test-file-name" value="CtsGameServiceNotGame.apk" />
+        <option name="test-file-name" value="CtsGameServiceTouchVerifier.apk" />
         <option name="test-file-name" value="CtsGameServiceStartActivityVerifier.apk" />
+        <option name="test-file-name" value="CtsGameServiceRestartGameVerifier.apk" />
         <option name="test-file-name" value="CtsGameServiceTestCases.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">

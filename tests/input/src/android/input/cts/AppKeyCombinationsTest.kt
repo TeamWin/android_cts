@@ -68,6 +68,13 @@ class AppKeyCombinationsTest {
         assertKeyEvent(KeyEvent.KEYCODE_Z, KeyEvent.ACTION_UP, 0)
     }
 
+    @Test
+    fun testSYSRQ() {
+        ShellUtils.runShellCommand("input keyevent KEYCODE_SYSRQ")
+        assertKeyEvent(KeyEvent.KEYCODE_SYSRQ, KeyEvent.ACTION_DOWN, 0)
+        assertKeyEvent(KeyEvent.KEYCODE_SYSRQ, KeyEvent.ACTION_UP, 0)
+    }
+
     private fun assertKeyEvent(keyCode: Int, action: Int, metaState: Int) {
         val event = activity.getInputEvent() as KeyEvent
         assertEquals(keyCode, event.keyCode)

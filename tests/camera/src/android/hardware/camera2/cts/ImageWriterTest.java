@@ -224,7 +224,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
     public void testWriterWithImageFormatOverride() throws Exception {
         final int imageReaderFormat = ImageFormat.YUV_420_888;
         final int imageWriterFormat = ImageFormat.YV12;
-        final long dataSpace = DataSpace.DATASPACE_JFIF;
+        final int dataSpace = DataSpace.DATASPACE_JFIF;
         final int hardwareBufferFormat = ImageFormat.YV12;
         try (
             ImageReader reader = new ImageReader

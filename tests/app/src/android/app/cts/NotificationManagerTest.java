@@ -68,6 +68,7 @@ import android.app.role.RoleManager;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
+import android.app.stubs.TestNotificationAssistant;
 import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
@@ -281,6 +282,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             builder.withValue(Data.MIMETYPE, Phone.CONTENT_ITEM_TYPE);
             builder.withValue(Phone.TYPE, Phone.TYPE_MOBILE);
             builder.withValue(Phone.NUMBER, phone);
+            builder.withValue(Phone.NORMALIZED_NUMBER, phone);
             builder.withValue(Data.IS_PRIMARY, 1);
             operationList.add(builder.build());
         }
@@ -339,6 +341,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             }
         }
         return null;
+    }
+
+    // Simple helper function to take a phone number's string representation and make a tel: uri
+    private Uri makePhoneUri(String phone) {
+        return new Uri.Builder()
+                .scheme("tel")
+                .encodedOpaquePart(phone)  // don't re-encode anything passed in
+                .build();
     }
 
     private StatusBarNotification findNotificationNoWait(int id, boolean all) {
@@ -424,6 +434,20 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         for (int tries = 3; tries-- > 0; ) {
             if (mListener.mRemoved.containsKey(key)) {
                 return mListener.mRemoved.get(key);
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return -1;
+    }
+
+    private int getAssistantCancellationReason(String key) {
+        for (int tries = 3; tries-- > 0; ) {
+            if (mAssistant.mRemoved.containsKey(key)) {
+                return mAssistant.mRemoved.get(key);
             }
             try {
                 Thread.sleep(1000);
@@ -2447,6 +2471,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 InstrumentationRegistry.getInstrumentation(), true);
         int origFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
+
+        // for storing lookup URIs for deleting the contacts afterwards
         Uri aliceUri = null;
         Uri bobUri = null;
         try {
@@ -2454,14 +2480,15 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             // starred contact from whom to receive a call
             insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, true);
             aliceUri = lookupContact(ALICE_PHONE);
+            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
 
             // non-starred contact from whom to also receive a call
             insertSingleContact(BOB, BOB_PHONE, BOB_EMAIL, false);
             bobUri = lookupContact(BOB_PHONE);
+            Uri bobPhoneUri = makePhoneUri(BOB_PHONE);
 
             // non-contact phone URI
-            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    Uri.encode("+16175555656"));
+            Uri phoneUri = makePhoneUri("+16175555656");
 
             // set up: any contacts are allowed to call.
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
@@ -2473,8 +2500,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             // in this case Alice and Bob should get through but not the unknown number.
-            assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
-            assertTrue(mNotificationManager.matchesCallFilter(bobUri));
+            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
+            assertTrue(mNotificationManager.matchesCallFilter(bobPhoneUri));
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
 
             // set up: only starred contacts are allowed to call.
@@ -2484,8 +2511,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             // now only Alice should be allowed to get through
-            assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
-            assertFalse(mNotificationManager.matchesCallFilter(bobUri));
+            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
+            assertFalse(mNotificationManager.matchesCallFilter(bobPhoneUri));
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
         } finally {
             mNotificationManager.setInterruptionFilter(origFilter);
@@ -2509,8 +2536,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         long startTime = System.currentTimeMillis();
         try {
             // create a phone URI from which to receive a call
-            Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
-                    Uri.encode("+16175551212"));
+            Uri phoneUri = makePhoneUri("+16175551212");
 
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
@@ -2528,6 +2554,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
             // now this number should count as a repeat caller
             assertTrue(mNotificationManager.matchesCallFilter(phoneUri));
+
+            // also, any other variants of this phone number should also count as a repeat caller
+            Uri[] variants = { makePhoneUri("1-617-555-1212"),
+                    makePhoneUri(Uri.encode("+1-617-555-1212")),
+                    makePhoneUri("16175551212") };
+            for (int i = 0; i < variants.length; i++) {
+                assertTrue(mNotificationManager.matchesCallFilter(variants[i]));
+            }
         } finally {
             mNotificationManager.setInterruptionFilter(origFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -2539,13 +2573,65 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    public void testMatchesCallFilter_repeatCallers_fromContact() throws Exception {
+        // set up such that only repeat callers (and not any individuals) are allowed; make sure
+        // that a call registered with a contact's lookup URI will return the correct info
+        // when matchesCallFilter is called with their phone number
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
+        Policy origPolicy = mNotificationManager.getNotificationPolicy();
+        Uri aliceUri = null;
+        long startTime = System.currentTimeMillis();
+        try {
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
+            aliceUri = lookupContact(ALICE_PHONE);
+            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
+
+            // no one has called; matchesCallFilter should return false for both URIs
+            assertFalse(mNotificationManager.matchesCallFilter(aliceUri));
+            assertFalse(mNotificationManager.matchesCallFilter(alicePhoneUri));
+
+            assertTrue(aliceUri.toString()
+                    .startsWith(ContactsContract.Contacts.CONTENT_LOOKUP_URI.toString()));
+
+            // register a call from Alice via the contact lookup URI, then cancel so the call is
+            // recorded accordingly.
+            sendNotification(1, null, R.drawable.blue, true, aliceUri);
+            // wait for contact lookup of number to finish; this can take a while because it runs
+            // in the background, so give it a fair bit of time
+            Thread.sleep(3000);
+            cancelAndPoll(1);
+
+            // now a phone call from Alice's phone number should match the repeat callers list
+            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
+        } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
+            mNotificationManager.setNotificationPolicy(origPolicy);
+            if (aliceUri != null) {
+                // delete the contact
+                deleteSingleContact(aliceUri);
+            }
+
+            // clean up the recorded calls
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mNotificationManager.cleanUpCallersAfter(startTime));
+        }
+    }
+
     public void testMatchesCallFilter_allCallers() throws Exception {
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         int origFilter = mNotificationManager.getCurrentInterruptionFilter();
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
-        Uri aliceUri = null;
+        Uri aliceUri = null;  // for deletion after the test is done
         try {
             NotificationManager.Policy currPolicy = mNotificationManager.getNotificationPolicy();
             NotificationManager.Policy newPolicy = new NotificationManager.Policy(
@@ -2559,9 +2645,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
-
             aliceUri = lookupContact(ALICE_PHONE);
-            assertTrue(mNotificationManager.matchesCallFilter(aliceUri));
+
+            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
+            assertTrue(mNotificationManager.matchesCallFilter(alicePhoneUri));
         } finally {
             mNotificationManager.setInterruptionFilter(origFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -2988,6 +3075,27 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         if (getCancellationReason(sbn.getKey())
                 != NotificationListenerService.REASON_LISTENER_CANCEL) {
             fail("Failed to cancel notification id=" + notificationId);
+        }
+    }
+
+    public void testNotificationAssistant_cancelNotifications() throws Exception {
+        toggleAssistantAccess(true);
+        Thread.sleep(500); // wait for assistant to be allowed
+
+        mAssistant = TestNotificationAssistant.getInstance();
+        assertNotNull(mAssistant);
+        final int notificationId = 1006;
+
+        sendNotification(notificationId, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
+        StatusBarNotification sbn = findPostedNotification(notificationId, false);
+
+        mAssistant.cancelNotifications(new String[]{sbn.getKey()});
+        int gotReason = getAssistantCancellationReason(sbn.getKey());
+        if (gotReason != NotificationListenerService.REASON_ASSISTANT_CANCEL) {
+            fail("Failed cancellation from assistant, notification id=" + notificationId
+                    + "; got reason=" + gotReason);
         }
     }
 

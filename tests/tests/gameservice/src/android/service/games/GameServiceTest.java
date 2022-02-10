@@ -28,6 +28,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.IBinder;
 import android.service.games.testing.ActivityResult;
 import android.service.games.testing.IGameServiceTestService;
@@ -49,6 +52,8 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * CTS tests for {@link android.service.games.GameService}.
@@ -59,8 +64,12 @@ public final class GameServiceTest {
     private static final String FALSE_POSITIVE_GAME_PACKAGE_NAME =
             "android.service.games.cts.falsepositive";
     private static final String NOT_GAME_PACKAGE_NAME = "android.service.games.cts.notgame";
+    private static final String RESTART_GAME_VERIFIER_PACKAGE_NAME =
+            "android.service.games.cts.restartgameverifier";
     private static final String START_ACTIVITY_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.startactivityverifier";
+    private static final String TOUCH_VERIFIER_PACKAGE_NAME =
+            "android.service.games.cts.touchverifier";
 
     private ServiceConnection mServiceConnection;
 
@@ -81,7 +90,11 @@ public final class GameServiceTest {
                         Context.BIND_AUTO_CREATE)).isTrue();
         mServiceConnection.waitForConnection(10, TimeUnit.SECONDS);
 
-        getTestService().setGamePackageNames(ImmutableList.of(GAME_PACKAGE_NAME));
+        getTestService().setGamePackageNames(
+                ImmutableList.of(
+                        GAME_PACKAGE_NAME,
+                        RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                        TOUCH_VERIFIER_PACKAGE_NAME));
     }
 
     @After
@@ -89,7 +102,9 @@ public final class GameServiceTest {
         forceStop(GAME_PACKAGE_NAME);
         forceStop(NOT_GAME_PACKAGE_NAME);
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
+        forceStop(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
+        forceStop(TOUCH_VERIFIER_PACKAGE_NAME);
 
         getTestService().resetState();
 
@@ -116,6 +131,79 @@ public final class GameServiceTest {
 
         assertThat(getTestService().getActiveSessions()).containsExactly(
                 GAME_PACKAGE_NAME);
+    }
+
+    @Test
+    public void getTaskId_returnsTaskIdOfGame() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        int taskId = getTestService().getFocusedTaskId();
+
+        assertThat(taskId).isEqualTo(
+                getActivityTaskId(GAME_PACKAGE_NAME, GAME_PACKAGE_NAME + ".MainActivity"));
+    }
+
+    @Test
+    public void setTaskOverlayView_addsViewsToOverlay() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+
+        Rect touchableBounds = getTestService().getTouchableOverlayBounds();
+
+        Bitmap overlayScreenshot = Bitmap.createBitmap(
+                getInstrumentation().getUiAutomation().takeScreenshot(),
+                touchableBounds.left,
+                touchableBounds.top,
+                touchableBounds.width(),
+                touchableBounds.height());
+
+        // TODO(b/215706114): UI automator does not appear to have visibility into the overlay;
+        //                    therefore, it cannot be used to validate the overlay's contents.
+        //                    We should try and see if we can expose the overlay to UI automator in
+        //                    order to have a more foolproof validation check. We will use this
+        //                    magenta background check in the meantime.
+        // The overlay background is set to magenta. Verify that it has been rendered by checking
+        // the corners.
+        assertThat(overlayScreenshot.getPixel(0, 0)).isEqualTo(Color.MAGENTA);
+        assertThat(overlayScreenshot.getPixel(0, overlayScreenshot.getHeight() - 1)).isEqualTo(
+                Color.MAGENTA);
+        assertThat(overlayScreenshot.getPixel(overlayScreenshot.getWidth() - 1, 0)).isEqualTo(
+                Color.MAGENTA);
+        assertThat(overlayScreenshot.getPixel(overlayScreenshot.getWidth() - 1,
+                overlayScreenshot.getHeight() - 1)).isEqualTo(Color.MAGENTA);
+    }
+
+    @Test
+    public void setTaskOverlayView_passesTouchesOutsideOverlayToGame() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(TOUCH_VERIFIER_PACKAGE_NAME);
+
+        Rect touchableBounds = getTestService().getTouchableOverlayBounds();
+        UiAutomatorUtils.getUiDevice().click(touchableBounds.centerX(), touchableBounds.centerY());
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(TOUCH_VERIFIER_PACKAGE_NAME, "times_clicked").text("0"));
+
+        UiAutomatorUtils.getUiDevice().click(touchableBounds.centerX(), touchableBounds.top - 30);
+        UiAutomatorUtils.waitFindObject(
+                By.res(TOUCH_VERIFIER_PACKAGE_NAME, "times_clicked").text("1"));
+
+        UiAutomatorUtils.getUiDevice()
+                .click(touchableBounds.centerX(), touchableBounds.bottom + 30);
+        UiAutomatorUtils.waitFindObject(
+                By.res(TOUCH_VERIFIER_PACKAGE_NAME, "times_clicked").text("2"));
+
+        UiAutomatorUtils.getUiDevice().click(touchableBounds.left - 30, touchableBounds.centerY());
+        UiAutomatorUtils.waitFindObject(
+                By.res(TOUCH_VERIFIER_PACKAGE_NAME, "times_clicked").text("3"));
+
+        UiAutomatorUtils.getUiDevice().click(touchableBounds.right + 30, touchableBounds.centerY());
+        UiAutomatorUtils.waitFindObject(
+                By.res(TOUCH_VERIFIER_PACKAGE_NAME, "times_clicked").text("4"));
     }
 
     @Test
@@ -187,6 +275,26 @@ public final class GameServiceTest {
         assertThat(result.getFailure().getClazz()).isEqualTo(ActivityNotFoundException.class);
     }
 
+    @Test
+    public void restartGame_gameAppIsRestarted() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("1"));
+
+        getTestService().restartFocusedGameSession();
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("2"));
+
+        getTestService().restartFocusedGameSession();
+
+        UiAutomatorUtils.waitFindObject(
+                By.res(RESTART_GAME_VERIFIER_PACKAGE_NAME, "times_started").text("3"));
+    }
+
     private IGameServiceTestService getTestService() {
         return mServiceConnection.mService;
     }
@@ -217,6 +325,22 @@ public final class GameServiceTest {
     private static void forceStop(String packageName) {
         ShellUtils.runShellCommand("am force-stop %s", packageName);
         UiAutomatorUtils.getUiDevice().wait(Until.gone(By.pkg(packageName).depth(0)), 20_000L);
+    }
+
+    private static int getActivityTaskId(String packageName, String componentName) {
+        final String output = ShellUtils.runShellCommand("am stack list");
+        final Pattern pattern = Pattern.compile(
+                String.format(".*taskId=([0-9]+): %s/%s.*", packageName, componentName));
+
+        for (String line : output.split("\\n")) {
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.matches()) {
+                String taskId = matcher.group(1);
+                return Integer.parseInt(taskId);
+            }
+        }
+
+        return -1;
     }
 
     private static final class ServiceConnection implements android.content.ServiceConnection {

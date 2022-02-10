@@ -141,7 +141,7 @@ public class DataSpaceTest {
         mSurface = new Surface(mSurfaceTexture);
         mWriter = new ImageWriter.Builder(mSurface).build();
 
-        long dataSpace = DataSpace.pack(DataSpace.STANDARD_BT709,
+        int dataSpace = DataSpace.pack(DataSpace.STANDARD_BT709,
                                         DataSpace.TRANSFER_SMPTE_170M,
                                         DataSpace.RANGE_LIMITED);
         Image inputImage = null;
@@ -153,7 +153,7 @@ public class DataSpaceTest {
             mWriter.queueInputImage(inputImage);
 
             mSurfaceTexture.updateTexImage();
-            long outDataSpace = mSurfaceTexture.getDataSpace();
+            int outDataSpace = mSurfaceTexture.getDataSpace();
 
             assertEquals(dataSpace, outDataSpace);
             assertEquals(DataSpace.STANDARD_BT709, DataSpace.getStandard(outDataSpace));
@@ -234,7 +234,7 @@ public class DataSpaceTest {
         mReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_420_888, 1);
         mWriter = ImageWriter.newInstance(mReader.getSurface(), 1);
 
-        long dataSpace = DataSpace.pack(DataSpace.STANDARD_BT601_625,
+        int dataSpace = DataSpace.pack(DataSpace.STANDARD_BT601_625,
                                         DataSpace.TRANSFER_SMPTE_170M,
                                         DataSpace.RANGE_FULL);
 

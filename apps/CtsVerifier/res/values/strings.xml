@@ -3546,6 +3546,14 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="provisioning_byod_uninstall_work_app_install_work_app">Install work app</string>
 
+    <string name="provisioning_byod_launch_work_tab">Launch work tab in launcher</string>
+    <string name="provisioning_byod_launch_work_tab_instruction">
+        This test verifies that the work tab (if tabs are supported) can be launched.\n
+        1. Press \"Go\".\n
+        2. If this device supports tabs, verify that you have landed on the work tab.\n
+        3. If this device doesn\'t support tabs, verify that you have landing on the all apps page .\n
+    </string>
+
     <string name="provisioning_byod_turn_off_work">Turn off work profile</string>
     <string name="provisioning_byod_turn_off_work_info">This test verifies device behaviors when turning off work profile.</string>
     <string name="provisioning_byod_turn_off_work_instructions">

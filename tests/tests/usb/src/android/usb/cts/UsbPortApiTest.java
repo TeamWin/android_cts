@@ -73,6 +73,7 @@ public class UsbPortApiTest {
         Assert.assertNotNull(mUsbManagerSys);
         Assert.assertNotNull(mUsbManagerMock =
                 new UsbManager(mContext, mMockUsbService));
+        mUsbPort = new UsbPort(mUsbManagerSys, "1", 0, 0, true, true);
     }
 
     /**
@@ -84,7 +85,6 @@ public class UsbPortApiTest {
         mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
 
         mMockUsbPort = new UsbPort(mUsbManagerMock, "1", 0, 0, true, true);
-        mUsbPort = new UsbPort(mUsbManagerSys, "1", 0, 0, true, true);
         int result = 0;
 
         // Should pass with permission.
@@ -105,6 +105,93 @@ public class UsbPortApiTest {
             Assert.fail("Expected SecurityException on resetUsbPort.");
         } catch (SecurityException secEx) {
             Log.d(TAG, "Expected SecurityException on resetUsbPort.");
+        }
+    }
+
+    /**
+     * Verify that SecurityException is thrown when MANAGE_USB is not
+     * held and not thrown when MANAGE_USB is held.
+     */
+    @Test
+    public void test_UsbApiForEnableUsbDataWhileDocked() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Should pass with permission.
+        try {
+            mUsbPort.enableUsbDataWhileDocked();
+        } catch (SecurityException secEx) {
+            Assert.fail("Unexpected SecurityException on enableUsbDataWhileDocked.");
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+
+        try {
+            mUsbPort.enableUsbDataWhileDocked();
+            Assert.fail(
+                "SecurityException not thrown for enableUsbDataWhileDocked when MANAGE_USB is not acquired.");
+        } catch (SecurityException secEx) {
+            Log.i(TAG,
+                "SecurityException expected on enableUsbDataWhileDocked when MANAGE_USB is not acquired.");
+        }
+    }
+
+    /**
+     * Verify that SecurityException is thrown when MANAGE_USB is not
+     * held and not thrown when MANAGE_USB is held.
+     */
+    @Test
+    public void test_UsbApiForEnableUsbData() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Should pass with permission.
+        try {
+            mUsbPort.enableUsbData(true);
+        } catch (SecurityException secEx) {
+            Assert.fail("Unexpected SecurityException on enableUsbData.");
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+
+        try {
+            mUsbPort.enableUsbData(true);
+            Assert.fail(
+                "SecurityException not thrown for enableUsbData when MANAGE_USB is not acquired.");
+        } catch (SecurityException secEx) {
+            Log.i(TAG,
+                "SecurityException expected on enableUsbData when MANAGE_USB is not acquired.");
+        }
+    }
+
+    /**
+     * Verify that SecurityException is thrown when MANAGE_USB is not
+     * held and not thrown when MANAGE_USB is held.
+     */
+    @Test
+    public void test_UsbApiForEnableLimitPowerTransfer() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Should pass with permission.
+        try {
+            mUsbPort.enableLimitPowerTransfer(false);
+        } catch (SecurityException secEx) {
+            Assert.fail("Unexpected SecurityException on enableLimitPowerTransfer.");
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+
+        try {
+            mUsbPort.enableLimitPowerTransfer(false);
+            Assert.fail(
+                "SecurityException not thrown for enableLimitPowerTransfer when MANAGE_USB is not acquired.");
+        } catch (SecurityException secEx) {
+            Log.i(TAG,
+                "SecurityException expected on enableLimitPowerTransfer when MANAGE_USB is not acquired.");
         }
     }
 }

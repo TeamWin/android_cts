@@ -1635,7 +1635,7 @@ public class TelephonyManagerTest {
     }
 
     /**
-     * Verifies that {@link TelephonyManager#rebootRadio()} does not throw any exception
+     * Verifies that {@link TelephonyManager#rebootModem()} does not throw any exception
      * and final radio state is radio power on.
      */
     @Test
@@ -1672,10 +1672,11 @@ public class TelephonyManagerTest {
                 TelephonyManager.RADIO_POWER_ON);
         assertThat(mRadioRebootTriggered).isFalse();
         assertThat(mHasRadioPowerOff).isFalse();
-        boolean success = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.rebootRadio());
-        //skip this test if not supported or unsuccessful (success=false)
-        if(!success) {
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.rebootModem());
+        } catch (Exception ex) {
+            //skip this test if not supported or unsuccessful (success=false)
             return;
         }
 

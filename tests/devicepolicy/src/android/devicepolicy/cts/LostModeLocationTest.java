@@ -46,6 +46,7 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,6 +97,7 @@ public final class LostModeLocationTest {
     @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
+    @Ignore("b/216487148")
     public void sendLostModeLocationUpdate_noTestProviders_returnFalse() throws Exception {
         sendLostModeLocationUpdate(/* expected= */ false);
     }
@@ -103,6 +105,7 @@ public final class LostModeLocationTest {
     @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
+    @Ignore("b/216487148")
     public void sendLostModeLocationUpdate_noLocation_returnFalse() throws Exception {
         try (LocationProvider provider = TestApis.location().addLocationProvider()) {
             sendLostModeLocationUpdate(/* expected */ false);

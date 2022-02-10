@@ -184,12 +184,12 @@ public class CaptioningManagerTest {
 
     @Test(expected = SecurityException.class)
     public void testSetSystemAudioCaptionWithoutPermission_throwSecurityException() {
-        mManager.setSystemAudioCaptioningRequested(true);
+        mManager.setSystemAudioCaptioningEnabled(true);
     }
 
     @Test(expected = SecurityException.class)
     public void testSetSystemAudioCaptionUiWithoutPermission_throwSecurityException() {
-        mManager.setSystemAudioCaptioningUiRequested(true);
+        mManager.setSystemAudioCaptioningUiEnabled(true);
     }
 
     @Test
@@ -198,13 +198,13 @@ public class CaptioningManagerTest {
         putSecureSetting("odi_captions_volume_ui_enabled", "0");
         mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.SET_SYSTEM_AUDIO_CAPTION);
         try {
-            mManager.setSystemAudioCaptioningRequested(true);
+            mManager.setSystemAudioCaptioningEnabled(true);
             assertTrue("Test runner set system audio caption enabled to true",
-                    mManager.isSystemAudioCaptioningRequested());
+                    mManager.isSystemAudioCaptioningEnabled());
 
-            mManager.setSystemAudioCaptioningUiRequested(true);
+            mManager.setSystemAudioCaptioningUiEnabled(true);
             assertTrue("Test runner set system audio caption ui enabled to true",
-                    mManager.isSystemAudioCaptioningUiRequested());
+                    mManager.isSystemAudioCaptioningUiEnabled());
         } finally {
             mUiAutomation.dropShellPermissionIdentity();
             putSecureSetting("odi_captions_enabled", "0");

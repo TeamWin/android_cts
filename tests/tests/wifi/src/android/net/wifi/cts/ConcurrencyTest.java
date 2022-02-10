@@ -30,6 +30,7 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -932,5 +933,48 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertEquals(WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED, mMyResponse.discoveryState);
 
         mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+    }
+
+    public void testP2pSetVendorElements() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        // Vendor-Specific EID is 221.
+        List<ScanResult.InformationElement> ies = new ArrayList<>(Arrays.asList(
+                new ScanResult.InformationElement(221, 0,
+                        new byte[]{(byte) 1, (byte) 2, (byte) 3, (byte) 4})));
+        resetResponse(mMyResponse);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            mWifiP2pManager.setVendorElements(mWifiP2pChannel, ies, mActionListener);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            assertTrue(mMyResponse.success);
+        });
+
+        resetResponse(mMyResponse);
+        mWifiP2pManager.discoverPeers(mWifiP2pChannel, mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+    }
+
+    /** Test IEs whose size is greater than the maximum allowed size. */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testP2pSetVendorElementsOverMaximumAllowedSize() {
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        List<ScanResult.InformationElement> ies = new ArrayList<>();
+        ies.add(new ScanResult.InformationElement(221, 0,
+                new byte[WifiP2pManager.getP2pMaxAllowedVendorElementsLength() + 1]));
+        resetResponse(mMyResponse);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            try {
+                mWifiP2pManager.setVendorElements(mWifiP2pChannel, ies, mActionListener);
+                fail("Should raise IllegalArgumentException");
+            } catch (IllegalArgumentException ex) {
+                // expected
+                return;
+            }
+        });
     }
 }

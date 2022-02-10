@@ -36,7 +36,9 @@ import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -45,6 +47,7 @@ import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
+import android.app.admin.PreferentialNetworkServiceConfig;
 import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -143,6 +146,8 @@ public final class DevicePolicyManagerTest {
             "dpm set-device-owner --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
     private static final String REMOVE_ACTIVE_ADMIN_COMMAND =
             "dpm remove-active-admin --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
+    private static final String SET_PROFILE_OWNER_COMMAND =
+            "dpm set-profile-owner --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
 
     private static final String NFC_INTENT_COMPONENT_NAME =
             "com.test.dpc/com.test.dpc.DeviceAdminReceiver";
@@ -644,6 +649,38 @@ public final class DevicePolicyManagerTest {
         assertWithMessage("list of policy-exempt apps")
                 .that(sDevicePolicyManager.getPolicyExemptApps())
                 .isEmpty();
+    }
+
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setPreferentialNetworkServiceConfig_withoutRequiredPermission() {
+        PreferentialNetworkServiceConfig preferentialNetworkServiceConfigEnabled =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true).build();
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                        preferentialNetworkServiceConfigEnabled));
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                        PreferentialNetworkServiceConfig.DEFAULT));
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.getPreferentialNetworkServiceConfig());
+    }
+
+    @Test
+    public void setPreferentialNetworkServiceConfig_withRequiredPermission() {
+        SystemUtil.runShellCommand(SET_PROFILE_OWNER_COMMAND);
+        PreferentialNetworkServiceConfig preferentialNetworkServiceConfigEnabled =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true).build();
+        sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                preferentialNetworkServiceConfigEnabled);
+        assertTrue(sDevicePolicyManager.getPreferentialNetworkServiceConfig().isEnabled());
+        sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                PreferentialNetworkServiceConfig.DEFAULT);
+        assertFalse(sDevicePolicyManager.getPreferentialNetworkServiceConfig().isEnabled());
+        sDevicePolicyManager.clearProfileOwner(DEVICE_ADMIN_COMPONENT_NAME);
+        SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
     }
 
     FullyManagedDeviceProvisioningParams.Builder
@@ -1378,6 +1415,11 @@ public final class DevicePolicyManagerTest {
                         .build();
 
         assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void getDeviceManagerRoleHolderPackageName_doesNotCrash() {
+        sDevicePolicyManager.getDeviceManagerRoleHolderPackageName();
     }
 
     private static PersistableBundle createAdminExtrasBundle() {

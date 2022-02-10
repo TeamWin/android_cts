@@ -467,6 +467,15 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.app.stubs.TestNotificationAssistant"
+                 android:exported="true"
+                 android:label="TestNotificationAssistant"
+                 android:permission="android.permission.BIND_NOTIFICATION_ASSISTANT_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationAssistantService"/>
+            </intent-filter>
+        </service>
+
         <service android:name="android.app.stubs.TestTileService"
              android:exported="true"
              android:label="TestTileService"
