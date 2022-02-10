@@ -53,18 +53,6 @@ public @interface EnterprisePolicy {
         int modifiers() default NO;
     }
 
-    /**
-     * An enterprise policy which can be controlled by an app with a particular delegated scope.
-     */
-    @interface DelegatedScope {
-         /** The delegated scope required to exercise the policy. */
-        String scope();
-        /** Flags indicating who the policy applies to when applied in this way. */
-        int appliesTo();
-        /** Additional modifiers. */
-        int modifiers() default NO;
-    }
-
     /** A policy that cannot be applied. */
     int NO = 0;
 
@@ -192,7 +180,7 @@ public @interface EnterprisePolicy {
     AppOp[] appOps() default {};
 
     /**
-     * {@link DelegatedScope} indicating which delegated scopes can control the policy.
+     * Which delegated scopes can control the policy.
      *
      * <p>This applies to {@link #dpc()} entries with the {@link #CAN_BE_DELEGATED} flag.
      */

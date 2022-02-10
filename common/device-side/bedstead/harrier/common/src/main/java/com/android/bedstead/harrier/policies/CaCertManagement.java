@@ -19,6 +19,8 @@ package com.android.bedstead.harrier.policies;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
+import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_CERT_INSTALL;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
@@ -29,6 +31,10 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#installCaCert(ComponentName, byte[])} and
  * {@code DevicePolicyManager#uninstallCaCert(ComponentName, byte[])}.
  */
-@EnterprisePolicy(dpc = {APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER})
+@EnterprisePolicy(
+        dpc = {
+                APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER
+                        | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED},
+        delegatedScopes = DELEGATION_CERT_INSTALL)
 public final class CaCertManagement {
 }

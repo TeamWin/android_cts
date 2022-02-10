@@ -269,11 +269,6 @@ final class DevicePolicyManagerWrapper
             // Used by BlockUninstallDelegateTest
             doAnswer(answer).when(spy).isUninstallBlocked(any(), any());
 
-            // Used by CertInstallDelegateTest
-            doAnswer(answer).when(spy).hasCaCertInstalled(any(), any());
-            doAnswer(answer).when(spy).getInstalledCaCerts(any());
-            doAnswer(answer).when(spy).installKeyPair(any(), any(), any(), any());
-
             // Used By DelegationTest
             doAnswer(answer).when(spy).getDelegatePackages(any(), any());
 
