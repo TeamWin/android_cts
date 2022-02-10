@@ -636,6 +636,10 @@
                   android:exported="true"
                   android:theme="@style/ReplaceIconTheme"
                   android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
+        <activity android:name=".SplashScreenStyleThemeActivity"
+                  android:exported="true"
+                  android:theme="@style/SplashScreenStyleTheme"
+                  android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
 
         <service android:name=".OverlayTestService"
                  android:exported="true" />

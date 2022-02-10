@@ -93,6 +93,10 @@
         <item name="android:windowSplashScreenBackground">@drawable/red</item>
     </style>
 
+    <style name="SplashScreenStyleTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+    </style>
+
     <style name="Theme.CustomTransitionTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:background">#ffffff</item>
         <item name="android:windowBackground">#ffffff</item>
