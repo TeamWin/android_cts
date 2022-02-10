@@ -53,10 +53,6 @@ def test_flip_mirror_impl(cam, props, fmt, chart, debug, log_path):
   Returns:
     boolean: True if flipped, False if not
   """
-
-  # determine if monochrome camera
-  mono_camera = camera_properties_utils.mono_camera(props)
-
   # get a local copy of the chart template
   template = cv2.imread(opencv_processing_utils.CHART_FILE, cv2.IMREAD_ANYDEPTH)
 
@@ -138,6 +134,10 @@ class FlipMirrorTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       debug = self.debug_mode
       chart_loc_arg = self.chart_loc_arg
+
+      # check SKIP conditions
+      camera_properties_utils.skip_unless(
+          not camera_properties_utils.mono_camera(props))
 
       # load chart for scene
       its_session_utils.load_scene(
