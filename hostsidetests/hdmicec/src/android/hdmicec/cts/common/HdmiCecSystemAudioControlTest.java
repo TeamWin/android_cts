@@ -153,8 +153,6 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_GiveSystemAudioModeStatus() throws Exception {
         ITestDevice device = getDevice();
-        /* Home Key to prevent device from going to deep suspend state */
-        device.executeShellCommand("input keyevent KEYCODE_HOME");
         sendDeviceToSleep();
         wakeUpDeviceWithoutWait();
         hdmiCecClient.checkExpectedOutput(
