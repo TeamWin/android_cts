@@ -88,7 +88,7 @@ class AppHibernationIntegrationTest {
     private lateinit var packageManager: PackageManager
     private lateinit var permissionControllerManager: PermissionControllerManager
     private lateinit var appHibernationManager: AppHibernationManager
-    private lateinit var oldHibernationValue: String
+    private var oldHibernationValue: String? = null
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
