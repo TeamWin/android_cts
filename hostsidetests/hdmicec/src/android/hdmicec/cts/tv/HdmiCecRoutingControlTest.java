@@ -98,8 +98,8 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
         hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.PLAYBACK_1, 0x2200);
         TimeUnit.SECONDS.sleep(2);
         // Make the device with LA 4 as the active source.
-        HdmiControlManagerUtility.setActiveSource(
-                getDevice(), LogicalAddress.PLAYBACK_1.getLogicalAddressAsInt());
+        HdmiControlManagerUtility.selectDevice(
+                this, getDevice(), LogicalAddress.PLAYBACK_1.toString());
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.SET_STREAM_PATH);
         assertWithMessage("Device has not sent a Set Stream Path message to the selected device")
                 .that(CecMessage.getParams(message))
@@ -115,8 +115,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_1_2_2_DutDoesNotRespondToRequestActiveSourceMessage() throws Exception {
         // Ensure that DUT is the active source.
-        HdmiControlManagerUtility.setActiveSource(
-                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        HdmiControlManagerUtility.selectDevice(this, getDevice(), LogicalAddress.TV.toString());
         hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
         // Broadcast an active source from the client device.
         hdmiCecClient.broadcastActiveSource(hdmiCecClient.getSelfDevice());
@@ -137,8 +136,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_1_2_3_DutDoesRespondToRequestActiveSourceMessage() throws Exception {
         // Make the TV device the active source.
-        HdmiControlManagerUtility.setActiveSource(
-                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        HdmiControlManagerUtility.selectDevice(this, getDevice(), LogicalAddress.TV.toString());
         hdmiCecClient.sendCecMessage(
                 hdmiCecClient.getSelfDevice(),
                 LogicalAddress.BROADCAST,
