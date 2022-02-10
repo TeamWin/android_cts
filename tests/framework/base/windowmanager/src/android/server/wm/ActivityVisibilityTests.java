@@ -565,6 +565,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @Ignore("Unable to disable AOD for some devices")
     public void testTurnScreenOnWithAttr_Freeform() {
         assumeTrue(supportsLockScreen());
         assumeTrue(supportsFreeform());
