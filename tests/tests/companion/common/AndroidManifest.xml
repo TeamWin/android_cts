@@ -32,9 +32,9 @@
                 <action android:name="android.companion.CompanionDeviceService" />
             </intent-filter>
 
-            <meta-data
-                    android:name="android.companion.primary"
-                    android:value="true" />
+            <property android:name="android.companion.PROPERTY_PRIMARY_COMPANION_DEVICE_SERVICE"
+                      android:value="true" />
+
         </service>
 
         <service
