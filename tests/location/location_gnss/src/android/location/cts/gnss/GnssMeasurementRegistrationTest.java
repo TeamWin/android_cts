@@ -26,6 +26,7 @@ import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
 import android.location.cts.common.SoftAssert;
 import android.location.cts.common.TestGnssMeasurementListener;
+import android.location.cts.common.TestGnssStatusCallback;
 import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
