@@ -121,6 +121,19 @@ public class MockEuiccService extends EuiccService {
     }
 
     @Override
+    public DownloadSubscriptionResult onDownloadSubscription(
+            int slotId,
+            int portIndex,
+            @NonNull DownloadableSubscription subscription,
+            boolean switchAfterDownload,
+            boolean forceDeactivateSim,
+            @Nullable Bundle resolvedBundle) {
+        sMockEuiccServiceCallback.setMethodCalled();
+        return onDownloadSubscription(slotId, subscription, switchAfterDownload,
+                forceDeactivateSim, resolvedBundle);
+    }
+
+    @Override
     public @NonNull GetEuiccProfileInfoListResult onGetEuiccProfileInfoList(int slotId) {
         sMockEuiccServiceCallback.setMethodCalled();
         return new GetEuiccProfileInfoListResult(
