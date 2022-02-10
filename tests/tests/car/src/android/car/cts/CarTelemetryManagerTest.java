@@ -18,6 +18,7 @@ package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -141,6 +142,14 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
 
     @Test
     public void testEndToEndScriptExecution_getFinishedReport() throws Exception {
+        // set listener to receive report ready notification
+        Semaphore reportReadySemaphore = new Semaphore(0);
+        mCarTelemetryManager.setReportReadyListener(Runnable::run, metricsConfigName -> {
+            if (metricsConfigName.equals(PARKING_BRAKE_CONFIG_NAME)) {
+                reportReadySemaphore.release();
+            }
+        });
+
         // add metrics config and assert success
         AddMetricsConfigCallbackImpl callback = new AddMetricsConfigCallbackImpl();
         mCarTelemetryManager.addMetricsConfig(PARKING_BRAKE_CONFIG_NAME,
@@ -153,23 +162,31 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
         executeShellCommand("cmd car_service inject-vhal-event %d %s",
                 VehiclePropertyIds.PARKING_BRAKE_ON, true);
 
+        // wait for report ready notification, then call getFinishedReport()
+        reportReadySemaphore.acquire();
         FinishedReportListenerImpl reportListener = new FinishedReportListenerImpl();
         mCarTelemetryManager.getFinishedReport(
                 PARKING_BRAKE_CONFIG_NAME, Runnable::run, reportListener);
         reportListener.mSemaphore.acquire();
-        // TODO(b/218596986): remove this method after the client notification API is added
-        waitForReport(reportListener, PARKING_BRAKE_CONFIG_NAME);
         assertThat(reportListener.mReportMap.get(PARKING_BRAKE_CONFIG_NAME)).isNotNull();
+        assertThat(reportListener.mStatusMap.get(PARKING_BRAKE_CONFIG_NAME))
+                .isEqualTo(CarTelemetryManager.STATUS_GET_METRICS_CONFIG_FINISHED);
     }
 
-    private void waitForReport(FinishedReportListenerImpl listener, String configName)
-            throws Exception {
-        while (listener.mStatusMap.get(configName)
-                != CarTelemetryManager.STATUS_GET_METRICS_CONFIG_FINISHED) {
-            Thread.sleep(200);
-            mCarTelemetryManager.getFinishedReport(configName, Runnable::run, listener);
-            listener.mSemaphore.acquire();
-        }
+    @Test
+    public void testSetClearReportReadyListener() {
+        CarTelemetryManager.ReportReadyListener listener = metricsConfigName -> { };
+
+        // test clearReportReadyListener, should not error
+        mCarTelemetryManager.setReportReadyListener(Runnable::run, listener);
+
+        // setListener multiple times should fail
+        assertThrows(IllegalStateException.class,
+                () -> mCarTelemetryManager.setReportReadyListener(Runnable::run, listener));
+
+        // test clearReportReadyListener, a successful "clear" should allow for a successful "set"
+        mCarTelemetryManager.clearReportReadyListener();
+        mCarTelemetryManager.setReportReadyListener(Runnable::run, listener);
     }
 
     private final class AddMetricsConfigCallbackImpl
