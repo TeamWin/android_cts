@@ -20,7 +20,7 @@ package {
         "cts_apps_CtsVerifier_opencv_license",
         "Android-Apache-2.0",
         "cts_apps_CtsVerifier_fatcow_license",
-    ]
+    ],
 }
 
 license {
@@ -88,7 +88,7 @@ android_test {
         "androidx.legacy_legacy-support-v4",
         "CtsForceStopHelper-constants",
         "ctsmediautil",
-        "DpmWrapper"
+        "DpmWrapper",
     ],
 
     libs: ["telephony-common"] + ["android.test.runner.stubs"] + ["android.test.base.stubs"] + ["android.test.mock.stubs"] + ["android.car-test-stubs"] + ["voip-common"] + ["truth-prebuilt"],
@@ -162,6 +162,7 @@ filegroup {
 filegroup {
     name: "other_required_apps",
     srcs: [
+        ":CtsCarWatchdogCompanionApp",
         ":CtsTileServiceApp",
         ":CtsVerifierUSBCompanion",
         ":CtsVpnFirewallAppApi23",
