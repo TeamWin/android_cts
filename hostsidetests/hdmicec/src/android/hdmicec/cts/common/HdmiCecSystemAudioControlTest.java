@@ -156,7 +156,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
         /* Home Key to prevent device from going to deep suspend state */
         device.executeShellCommand("input keyevent KEYCODE_HOME");
         sendDeviceToSleep();
-        wakeUpDevice();
+        wakeUpDeviceWithoutWait();
         hdmiCecClient.checkExpectedOutput(
                 hdmiCecClient.getSelfDevice(), CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS);
     }
