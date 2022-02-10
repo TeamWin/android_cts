@@ -160,7 +160,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
         String message;
         int i;
 
-        HdmiControlManagerUtility.sendLongPressKeyevent(getDevice());
+        HdmiControlManagerUtility.sendLongPressKeyevent(this);
         // The above command should send 5 <UCP>[KEYCODE_UP] messages followed by 1 <UCR> message
         // and finally, a <UCP>[KEYCODE_DOWN].
         for (i = 0; i < 5; i++) {

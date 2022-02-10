@@ -131,8 +131,7 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
             TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         }
         // Make the TV device the active source.
-        HdmiControlManagerUtility.setActiveSource(
-                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        HdmiControlManagerUtility.selectDevice(this, getDevice(), LogicalAddress.TV.toString());
         hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
     }
 
@@ -209,4 +208,3 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
                 .isEqualTo(powerStatus);
     }
 }
-
