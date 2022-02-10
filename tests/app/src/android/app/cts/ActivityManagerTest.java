@@ -37,6 +37,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ConfigurationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.SystemClock;
 import android.platform.test.annotations.RestrictedBuildTest;
@@ -852,6 +853,13 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             assertFalse(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
                     proc.pid, SIMPLE_PACKAGE_NAME)));
 
+            if (isAtvDevice()) {
+                // On operator tier devices of AndroidTv, Activity is put behind TvLauncher
+                // after turnScreenOff by android.intent.category.HOME intent from
+                // TvRecommendation.
+                return;
+            }
+
             // force device idle
             toggleScreenOn(false);
             triggerIdle(true);
@@ -949,5 +957,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             Thread.sleep(500);
         } while (!(result = supplier.get()) && SystemClock.uptimeMillis() < deadLine);
         return result;
+    }
+
+    private boolean isAtvDevice() {
+        final Context context = mInstrumentation.getTargetContext();
+        return context.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEVISION);
     }
 }
