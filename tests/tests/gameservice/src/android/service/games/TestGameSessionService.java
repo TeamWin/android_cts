@@ -17,10 +17,13 @@
 package android.service.games;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Region;
-import android.view.View;
+import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
@@ -63,6 +66,7 @@ public final class TestGameSessionService extends GameSessionService {
         private final Context mContext;
         private final String mPackageName;
         private final int mTaskId;
+        private final Rect mTouchableBounds = new Rect();
 
         private TestGameSession(Context context, String packageName, int taskId) {
             mContext = context;
@@ -78,32 +82,40 @@ public final class TestGameSessionService extends GameSessionService {
             return mTaskId;
         }
 
+        Rect getTouchableBounds() {
+            return mTouchableBounds;
+        }
+
         @Override
         public void onCreate() {
             synchronized (sLock) {
                 sActiveSessions.add(mPackageName);
             }
 
-            // TODO(b/215706114): Render content in the overlay and verify that it works.
-            //                    The below code just ensures that touches can pass through the
-            //                    overlay.
-            FrameLayout rootView = new FrameLayout(mContext);
+            final FrameLayout rootView = new FrameLayout(mContext);
+            rootView.setFocusableInTouchMode(true);
+
+            final TextView textView = new TextView(mContext);
+            textView.setText("Overlay was rendered on: " + mPackageName);
+            textView.setBackgroundColor(Color.MAGENTA);
+            final FrameLayout.LayoutParams textViewLayoutParams =
+                    new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
+            textViewLayoutParams.leftMargin = 100;
+            textViewLayoutParams.rightMargin = 100;
+            textView.setLayoutParams(textViewLayoutParams);
+            rootView.addView(textView);
+
             setTaskOverlayView(rootView,
                     new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
 
-            rootView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-                @Override
-                public void onViewAttachedToWindow(View v) {
-                    // Allow all touches to pass through the overlay.
-                    v.getRootSurfaceControl().setTouchableRegion(new Region());
-                    v.removeOnAttachStateChangeListener(this);
-                }
-
-                @Override
-                public void onViewDetachedFromWindow(View v) {
-                }
-            });
+            textView.addOnLayoutChangeListener(
+                    (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                        v.getGlobalVisibleRect(mTouchableBounds);
+                        v.getRootSurfaceControl().setTouchableRegion(new Region(mTouchableBounds));
+                    }
+            );
         }
 
         @Override

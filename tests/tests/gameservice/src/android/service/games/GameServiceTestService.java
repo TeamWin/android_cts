@@ -18,6 +18,7 @@ package android.service.games;
 
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -34,6 +35,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Service allowing external apps to verify the state of {@link TestGameService} and {@link
@@ -109,6 +111,25 @@ public final class GameServiceTestService extends Service {
             }
 
             return mLastActivityResult;
+        }
+
+        @Override
+        public Rect getTouchableOverlayBounds() {
+            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
+            if (focusedGameSession == null) {
+                return null;
+            }
+
+            AtomicReference<Rect> bounds =
+                    new AtomicReference<>(focusedGameSession.getTouchableBounds());
+            if (bounds.get().isEmpty()) {
+                PollingCheck.waitFor(() -> {
+                    bounds.set(focusedGameSession.getTouchableBounds());
+                    return !bounds.get().isEmpty();
+                });
+            }
+
+            return bounds.get();
         }
 
         @Override
