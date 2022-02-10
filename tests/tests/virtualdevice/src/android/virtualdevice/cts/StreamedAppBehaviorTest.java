@@ -27,6 +27,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -42,6 +43,9 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Handler;
 import android.os.Looper;
@@ -156,6 +160,61 @@ public class StreamedAppBehaviorTest {
                 .onDisplayEmpty(eq(virtualDisplay.getDisplay().getDisplayId()));
         assertThat(clipboardManager.getPrimaryClip().getItemAt(0).getText().toString())
                 .isEqualTo("clipboard content from test");
+    }
+
+    @Test
+    public void appsInVirtualDevice_shouldNotHaveAccessToCamera() throws CameraAccessException {
+        Context context = getApplicationContext();
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                /* width= */ 100,
+                /* height= */ 100,
+                /* densityDpi= */ 240,
+                /* surface= */ null,
+                /* flags= */ 0,
+                new Handler(Looper.getMainLooper()),
+                mVirtualDisplayCallback);
+
+        CameraManager manager = context.getSystemService(CameraManager.class);
+        String[] cameras = manager.getCameraIdList();
+        assumeNotNull(cameras);
+
+        for (String cameraId : cameras) {
+            EmptyActivity activity =
+                    (EmptyActivity) InstrumentationRegistry.getInstrumentation()
+                            .startActivitySync(
+                                    new Intent(context, EmptyActivity.class)
+                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                                    | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                                    createActivityOptions(virtualDisplay));
+
+            EmptyActivity.Callback callback = mock(EmptyActivity.Callback.class);
+            activity.setCallback(callback);
+
+            int requestCode = 1;
+            activity.startActivityForResult(
+                    TestAppHelper.createCameraAccessTestIntent().putExtra(
+                            TestAppHelper.EXTRA_CAMERA_ID, cameraId),
+                    requestCode,
+                    createActivityOptions(virtualDisplay));
+
+            ArgumentCaptor<Intent> intentArgumentCaptor = ArgumentCaptor.forClass(Intent.class);
+            verify(callback, timeout(10000)).onActivityResult(
+                    eq(requestCode), eq(Activity.RESULT_OK), intentArgumentCaptor.capture());
+            Intent resultData = intentArgumentCaptor.getValue();
+            activity.finish();
+
+            assertThat(resultData).isNotNull();
+            String result = resultData.getStringExtra(TestAppHelper.EXTRA_CAMERA_RESULT);
+            assertThat(result).isAnyOf("onDisconnected", "onError");
+            if (result.equals("onError")) {
+                int error = resultData.getIntExtra(TestAppHelper.EXTRA_CAMERA_ON_ERROR_CODE, -1);
+                assertThat(error).isEqualTo(CameraDevice.StateCallback.ERROR_CAMERA_DISABLED);
+            }
+        }
     }
 }
 
