@@ -202,6 +202,7 @@ public class TvInteractiveAppManagerTest {
             }
         }
         assertNotNull(stubInfo);
+        stubInfo.getSupportedTypes();
 
         mManager.prepare(stubInfo.getId(), TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mIAppServiceId != null);
@@ -254,6 +255,20 @@ public class TvInteractiveAppManagerTest {
         AppLinkInfo info = new AppLinkInfo.Builder("pkg_name", "clazz_name").build();
 
         mManager.registerAppLinkInfo(stubInfo.getId(), info);
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getPackageName()).isEqualTo("pkg_name");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getClassName()).isEqualTo("clazz_name");
+
+        info = new AppLinkInfo.Builder("pkg1", "class1").setPackageName("pkg2")
+                .setClassName("class2").setUriScheme("url1").setUriHost("host2")
+                .setUriPrefix("prefix").build();
+
+        mManager.registerAppLinkInfo(stubInfo.getId(), info);
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getPackageName()).isEqualTo("pkg2");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getClassName()).isEqualTo("class2");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriScheme()).isEqualTo("url1");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriHost()).isEqualTo("host2");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriPrefix()).isEqualTo("prefix");
+
         mManager.unregisterAppLinkInfo(stubInfo.getId(), info);
     }
 
