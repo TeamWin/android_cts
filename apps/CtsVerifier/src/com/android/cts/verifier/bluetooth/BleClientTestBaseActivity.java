@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import static com.android.compatibility.common.util.ShellIdentityUtils.invokeWithShellPermissions;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -30,6 +32,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.ListView;
+
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -476,12 +479,8 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
             if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1);
                 if (state == BluetoothAdapter.STATE_OFF) {
-                    mHandler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            mAdapter.enable();
-                        }
-                    }, BT_ON_DELAY);
+                    mHandler.postDelayed(() ->
+                            invokeWithShellPermissions(() -> mAdapter.enable()), BT_ON_DELAY);
                 } else if (state == BluetoothAdapter.STATE_ON) {
                     mIsSwitching = false;
                     unregisterReceiver(this);
