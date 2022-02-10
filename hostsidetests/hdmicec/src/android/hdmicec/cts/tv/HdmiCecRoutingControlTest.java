@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
 
-    private static final int WAIT_TIME_MS = 300;
+    private static final int WAIT_TIME_MS = 1000;
 
     @Rule
     public RuleChain ruleChain =
