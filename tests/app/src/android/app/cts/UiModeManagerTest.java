@@ -184,6 +184,13 @@ public class UiModeManagerTest extends AndroidTestCase {
                 () -> mUiModeManager.setNightModeCustomType(MODE_NIGHT_CUSTOM_TYPE_BEDTIME));
     }
 
+    public void testSetNightModeCustomType_customTypeUnknown_bedtime_shouldThrow() {
+        acquireModifyNightModePermission();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mUiModeManager.setNightModeCustomType(MODE_NIGHT_CUSTOM_TYPE_UNKNOWN));
+    }
+
     public void testSetNightModeCustomType_bedtime_shouldPersist() {
         acquireModifyNightModePermission();
         mUiModeManager.setNightModeCustomType(MODE_NIGHT_CUSTOM_TYPE_BEDTIME);
