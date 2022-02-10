@@ -76,6 +76,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     @Override
     public void onUnregisterAppLinkInfo(AppLinkInfo bundle) {
         super.onUnregisterAppLinkInfo(bundle);
+        sAppLinkInfo = null;
     }
 
     public static class StubSessionImpl extends Session {
