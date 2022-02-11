@@ -15,8 +15,12 @@
  */
 package com.android.cts.deviceandprofileowner;
 
+import static android.app.KeyguardManager.PIN;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_LOW;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
 import static android.app.admin.SecurityLog.LEVEL_ERROR;
 import static android.app.admin.SecurityLog.LEVEL_INFO;
@@ -46,6 +50,7 @@ import static android.app.admin.SecurityLog.TAG_MEDIA_MOUNT;
 import static android.app.admin.SecurityLog.TAG_MEDIA_UNMOUNT;
 import static android.app.admin.SecurityLog.TAG_OS_SHUTDOWN;
 import static android.app.admin.SecurityLog.TAG_OS_STARTUP;
+import static android.app.admin.SecurityLog.TAG_PASSWORD_CHANGED;
 import static android.app.admin.SecurityLog.TAG_PASSWORD_COMPLEXITY_REQUIRED;
 import static android.app.admin.SecurityLog.TAG_PASSWORD_COMPLEXITY_SET;
 import static android.app.admin.SecurityLog.TAG_PASSWORD_EXPIRATION_SET;
@@ -57,12 +62,14 @@ import static android.app.admin.SecurityLog.TAG_USER_RESTRICTION_ADDED;
 import static android.app.admin.SecurityLog.TAG_USER_RESTRICTION_REMOVED;
 import static android.app.admin.SecurityLog.TAG_WIPE_FAILURE;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.cts.devicepolicy.TestCertificates.TEST_CA;
 import static com.android.cts.devicepolicy.TestCertificates.TEST_CA_SUBJECT;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.SecurityLog;
 import android.app.admin.SecurityLog.SecurityEvent;
@@ -153,6 +160,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                     .put(TAG_CERT_VALIDATION_FAILURE, of(S))
                     .put(TAG_CAMERA_POLICY_SET, of(S, I, I, I))
                     .put(TAG_PASSWORD_COMPLEXITY_REQUIRED, of(S, I, I, I))
+                    .put(TAG_PASSWORD_CHANGED, of(I, I))
                     .build();
 
     private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
@@ -232,6 +240,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         verifyKeystoreEventsPresent(events);
         verifyKeyChainEventsPresent(events);
         verifyAdminEventsPresent(events);
+        verifyPasswordChangedEventsPresent(events);
         verifyAdbShellCommand(events); // Event generated from host side logic
         if (mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()) {
             verifyEventsRedacted(events);
@@ -270,6 +279,30 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         verifyUserRestrictionEventsPresent(events);
         verifyCameraPolicyEvents(events);
     }
+
+    private void verifyPasswordChangedEventsPresent(List<SecurityEvent> events) {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
+        final int userId = Process.myUserHandle().getIdentifier();
+        findEvent("set low complexity password", events,
+                e -> e.getTag() == TAG_PASSWORD_CHANGED
+                        && getInt(e, 0) == PASSWORD_COMPLEXITY_LOW
+                        && getInt(e, 1) == userId);
+        findEvent("set medium complexity password", events,
+                e -> e.getTag() == TAG_PASSWORD_CHANGED
+                        && getInt(e, 0) == PASSWORD_COMPLEXITY_MEDIUM
+                        && getInt(e, 1) == userId);
+        findEvent("set high complexity password", events,
+                e -> e.getTag() == TAG_PASSWORD_CHANGED
+                        && getInt(e, 0) == PASSWORD_COMPLEXITY_HIGH
+                        && getInt(e, 1) == userId);
+        findEvent("set none complexity password", events,
+                e -> e.getTag() == TAG_PASSWORD_CHANGED
+                        && getInt(e, 0) == PASSWORD_COMPLEXITY_NONE
+                        && getInt(e, 1) == userId);
+    }
+
     private void verifyAdbShellCommand(List<SecurityEvent> events) {
         // Won't be able to locate the command on org-owned devices, as it will be redacted.
         if (!mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile()) {
@@ -298,6 +331,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                     assertEquals(userId, getInt(event, USERID_INDEX));
                     break;
                 case TAG_KEY_INTEGRITY_VIOLATION:
+                case TAG_PASSWORD_CHANGED:
                     assertEquals(userId, UserHandle.getUserId(getInt(event, 1)));
                     break;
             }
@@ -311,6 +345,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         generateKeystoreEvents();
         generateKeyChainEvents();
         generateAdminEvents();
+        generatePasswordChangedEvents();
     }
 
     private void generateKeyChainEvents() {
@@ -335,6 +370,18 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         generateCameraPolicyEvents();
     }
 
+    private void generatePasswordChangedEvents() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
+        KeyguardManager km = mContext.getSystemService(KeyguardManager.class);
+        runWithShellPermissionIdentity(() -> {
+            km.setLock(PIN, "1111".getBytes(), PIN, null);
+            km.setLock(PIN, "1914".getBytes(), PIN, "1111".getBytes());
+            km.setLock(PIN, "83651865".getBytes(), PIN, "1914".getBytes());
+            km.setLock(PIN, null, PIN, "83651865".getBytes());
+        });
+    }
     /**
      * Fetches and checks the events.
      */
