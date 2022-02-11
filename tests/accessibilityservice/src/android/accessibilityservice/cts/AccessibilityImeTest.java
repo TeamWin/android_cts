@@ -16,43 +16,53 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibility.cts.common.InstrumentedAccessibilityService.disableAllServices;
 import static android.accessibility.cts.common.InstrumentedAccessibilityService.enableService;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.InputMethod;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
+import android.accessibilityservice.cts.utils.AsyncUtils;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 import android.widget.EditText;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Test one a11y service requiring ime capabilities and one doesn't.
  */
+@LargeTest
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityImeTest {
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
+
+    private static StubImeAccessibilityService sStubImeAccessibilityService;
+    private static StubNonImeAccessibilityService sStubNonImeAccessibilityService;
 
     private AccessibilityEndToEndActivity mActivity;
 
@@ -70,74 +80,80 @@ public class AccessibilityImeTest {
             .outerRule(mActivityRule)
             .around(mDumpOnFailureRule);
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void oneTimeSetup() throws Exception {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiAutomation = sInstrumentation.getUiAutomation();
         sInstrumentation
                 .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        sStubImeAccessibilityService = enableService(StubImeAccessibilityService.class);
+        sStubNonImeAccessibilityService = enableService(StubNonImeAccessibilityService.class);
+    }
+
+    @AfterClass
+    public static void postTestTearDown() {
+        sStubImeAccessibilityService.disableSelfAndRemove();
+        sStubNonImeAccessibilityService.disableSelfAndRemove();
+        sUiAutomation.destroy();
+    }
+
+    @Before
+    public void setUp() throws Exception {
         mActivity = launchActivityAndWaitForItToBeOnscreen(
                 sInstrumentation, sUiAutomation, mActivityRule);
         // focus the edit text
         mEditText = mActivity.findViewById(R.id.edittext);
         // initial text
         mInitialText = mActivity.getString(R.string.text_input_blah);
-        disableAllServices();
     }
 
     @Test
     public void testInputConnection_requestIme() throws InterruptedException {
-        StubImeAccessibilityService stubImeAccessibilityService =
-                enableService(StubImeAccessibilityService.class);
-
         CountDownLatch startInputLatch = new CountDownLatch(1);
-        stubImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
+        sStubImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
 
         mActivity.runOnUiThread(() -> {
             mEditText.requestFocus();
             mEditText.setSelection(mInitialText.length(), mInitialText.length());
         });
 
-        startInputLatch.await(2, TimeUnit.SECONDS);
-        assertNotNull(stubImeAccessibilityService.getInputMethod());
+        assertTrue("time out waiting for input to start",
+                startInputLatch.await(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
+        assertNotNull(sStubImeAccessibilityService.getInputMethod());
         InputMethod.AccessibilityInputConnection connection =
-                stubImeAccessibilityService.getInputMethod().getCurrentInputConnection();
+                sStubImeAccessibilityService.getInputMethod().getCurrentInputConnection();
         assertNotNull(connection);
 
         CountDownLatch selectionChangeLatch = new CountDownLatch(1);
-        stubImeAccessibilityService.setSelectionChangeLatch(selectionChangeLatch);
-        stubImeAccessibilityService.setSelectionTarget(mInitialText.length() * 2);
+        sStubImeAccessibilityService.setSelectionChangeLatch(selectionChangeLatch);
+        sStubImeAccessibilityService.setSelectionTarget(mInitialText.length() * 2);
 
         connection.commitText(mInitialText, 1, null);
 
-        selectionChangeLatch.await(2, TimeUnit.SECONDS);
+        assertTrue("time out waiting for selection change",
+                selectionChangeLatch.await(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
         assertEquals(mInitialText + mInitialText, mEditText.getText().toString());
     }
 
     @Test
     public void testInputConnection_notRequestIme() throws InterruptedException {
-        StubNonImeAccessibilityService stubNonImeAccessibilityService =
-                enableService(StubNonImeAccessibilityService.class);
-
         CountDownLatch startInputLatch = new CountDownLatch(1);
-        stubNonImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
+        sStubNonImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
 
         mActivity.runOnUiThread(() -> {
             mEditText.requestFocus();
             mEditText.setSelection(mInitialText.length(), mInitialText.length());
         });
 
-        startInputLatch.await(2, TimeUnit.SECONDS);
-        assertNull(stubNonImeAccessibilityService.getInputMethod());
+        assertFalse("should time out waiting for input to start",
+                startInputLatch.await(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
+        assertNull(sStubNonImeAccessibilityService.getInputMethod());
     }
 
     @Test
     public void testSelectionChange_requestIme() throws InterruptedException {
-        StubImeAccessibilityService stubImeAccessibilityService =
-                enableService(StubImeAccessibilityService.class);
-
         CountDownLatch startInputLatch = new CountDownLatch(1);
-        stubImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
+        sStubImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
 
         mActivity.runOnUiThread(() -> {
             mEditText.requestFocus();
@@ -145,31 +161,30 @@ public class AccessibilityImeTest {
         });
 
         final int targetPos = mInitialText.length() - 1;
-        startInputLatch.await(2, TimeUnit.SECONDS);
-        assertNotNull(stubImeAccessibilityService.getInputMethod());
+        assertTrue("time out waiting for input to start",
+                startInputLatch.await(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
+        assertNotNull(sStubImeAccessibilityService.getInputMethod());
         InputMethod.AccessibilityInputConnection connection =
-                stubImeAccessibilityService.getInputMethod().getCurrentInputConnection();
+                sStubImeAccessibilityService.getInputMethod().getCurrentInputConnection();
         assertNotNull(connection);
 
         CountDownLatch selectionChangeLatch = new CountDownLatch(1);
-        stubImeAccessibilityService.setSelectionChangeLatch(selectionChangeLatch);
-        stubImeAccessibilityService.setSelectionTarget(targetPos);
+        sStubImeAccessibilityService.setSelectionChangeLatch(selectionChangeLatch);
+        sStubImeAccessibilityService.setSelectionTarget(targetPos);
 
         connection.setSelection(targetPos, targetPos);
-        selectionChangeLatch.await(2, TimeUnit.SECONDS);
+        assertTrue("time out waiting for selection change",
+                selectionChangeLatch.await(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
 
         assertEquals(targetPos, mEditText.getSelectionStart());
         assertEquals(targetPos, mEditText.getSelectionEnd());
 
-        assertEquals(targetPos, stubImeAccessibilityService.selStart);
-        assertEquals(targetPos, stubImeAccessibilityService.selEnd);
+        assertEquals(targetPos, sStubImeAccessibilityService.selStart);
+        assertEquals(targetPos, sStubImeAccessibilityService.selEnd);
     }
 
     @Test
     public void testSelectionChange_notRequestIme() throws InterruptedException {
-        StubNonImeAccessibilityService stubNonImeAccessibilityService =
-                enableService(StubNonImeAccessibilityService.class);
-
         mActivity.runOnUiThread(() -> {
             mEditText.requestFocus();
             mEditText.setSelection(mInitialText.length(), mInitialText.length());
@@ -177,20 +192,21 @@ public class AccessibilityImeTest {
 
         final int targetPos = mInitialText.length() - 1;
         CountDownLatch selectionChangeLatch = new CountDownLatch(1);
-        stubNonImeAccessibilityService.setSelectionChangeLatch(selectionChangeLatch);
-        stubNonImeAccessibilityService.setSelectionTarget(targetPos);
+        sStubNonImeAccessibilityService.setSelectionChangeLatch(selectionChangeLatch);
+        sStubNonImeAccessibilityService.setSelectionTarget(targetPos);
 
         mActivity.runOnUiThread(() -> {
             mEditText.setSelection(targetPos, targetPos);
         });
-        selectionChangeLatch.await(2, TimeUnit.SECONDS);
+        assertFalse("should time out waiting for selection change",
+                selectionChangeLatch.await(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
 
         assertEquals(targetPos, mEditText.getSelectionStart());
         assertEquals(targetPos, mEditText.getSelectionEnd());
 
-        assertEquals(-1, stubNonImeAccessibilityService.oldSelStart);
-        assertEquals(-1, stubNonImeAccessibilityService.oldSelEnd);
-        assertEquals(-1, stubNonImeAccessibilityService.selStart);
-        assertEquals(-1, stubNonImeAccessibilityService.selEnd);
+        assertEquals(-1, sStubNonImeAccessibilityService.oldSelStart);
+        assertEquals(-1, sStubNonImeAccessibilityService.oldSelEnd);
+        assertEquals(-1, sStubNonImeAccessibilityService.selStart);
+        assertEquals(-1, sStubNonImeAccessibilityService.selEnd);
     }
 }
