@@ -63,7 +63,8 @@ public class HeartbeatActivity extends Activity {
         int countdown = getIntent().getIntExtra(HEARTBEAT_COUNTDOWN, IHeartbeat.DEFAULT_COUNTDOWN);
         long interval = getIntent().getLongExtra(HEARTBEAT_INTERVAL, IHeartbeat.DEFAULT_INTERVAL);
         Log.d(TAG, "Heartbeat intent countdown=" + countdown + " interval=" + interval);
-        registerReceiver(mReceiver, new IntentFilter(IHeartbeat.HEARTBEAT_DONE));
+        registerReceiver(mReceiver, new IntentFilter(IHeartbeat.HEARTBEAT_DONE),
+                Context.RECEIVER_NOT_EXPORTED);
         startHeartbeat(countdown, interval);
     }
 
