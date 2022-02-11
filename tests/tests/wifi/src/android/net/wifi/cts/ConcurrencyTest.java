@@ -801,6 +801,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             return;
         }
 
+        if (!mWifiP2pManager.isGroupClientRemovalSupported()) return;
+
         resetResponse(mMyResponse);
         mWifiP2pManager.createGroup(mWifiP2pChannel, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
@@ -834,6 +836,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         if (!setupWifiP2p()) {
             return;
         }
+
+        if (!mWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
 
         resetResponse(mMyResponse);
         mWifiP2pManager.requestDiscoveryState(
@@ -895,6 +899,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             return;
         }
 
+        if (!mWifiP2pManager.isChannelConstrainedDiscoverySupported()) return;
+
         resetResponse(mMyResponse);
         mWifiP2pManager.requestDiscoveryState(
                 mWifiP2pChannel, new WifiP2pManager.DiscoveryStateListener() {
@@ -952,6 +958,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         if (!setupWifiP2p()) {
             return;
         }
+
+        if (!mWifiP2pManager.isSetVendorElementsSupported()) return;
 
         // Vendor-Specific EID is 221.
         List<ScanResult.InformationElement> ies = new ArrayList<>(Arrays.asList(
