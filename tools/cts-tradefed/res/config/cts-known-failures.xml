@@ -250,6 +250,8 @@
 
     <!-- b/209382234 -->
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases android.devicepolicy.cts.KeyManagementTest" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-work-profile] android.devicepolicy.cts.KeyManagementTest" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-secondary-user] android.devicepolicy.cts.KeyManagementTest" />
 
     <!-- b/203177211 -->
     <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.ListeningPortsTest#testNoRemotelyAccessibleListeningUdpPorts" />
