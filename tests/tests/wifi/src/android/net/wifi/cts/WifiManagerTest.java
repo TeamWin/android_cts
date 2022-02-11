@@ -701,6 +701,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
+    private boolean hasWifiDirect() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_WIFI_DIRECT);
+    }
+
+    private boolean hasWifiAware() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE);
+    }
+
     public void testSignal() {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -5424,6 +5433,33 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mWifiManager.updateNetwork(network);
             }
             uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests
+     * {@link WifiManager#reportImpactToCreateIfaceRequest(int, boolean, Executor, BiConsumer)}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testIsItPossibleToCreateInterface() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        AtomicBoolean called = new AtomicBoolean(false);
+        AtomicBoolean canBeCreated = new AtomicBoolean(false);
+        assertThrows(SecurityException.class, () -> mWifiManager.reportImpactToCreateIfaceRequest(
+                WifiManager.WIFI_INTERFACE_TYPE_AP, false, mExecutor,
+                (canBeCreatedLocal, interfacesWhichWillBeDeleted) -> {
+                    synchronized (mLock) {
+                        canBeCreated.set(canBeCreatedLocal);
+                        called.set(true);
+                        mLock.notify();
+                    }
+                }));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
         }
     }
 }
