@@ -154,6 +154,8 @@ public class PackageManagerTest {
             + "CtsContentMaxPackageNameTestApp.apk";
     private static final String MAX_SHARED_USER_ID_APK = SAMPLE_APK_BASE
             + "CtsContentMaxSharedUserIdTestApp.apk";
+    private static final String LONG_LABEL_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentLongLabelNameTestApp.apk";
     private static final String EMPTY_APP_PACKAGE_NAME = "android.content.cts.emptytestapp";
     private static final String EMPTY_APP_MAX_PACKAGE_NAME = "android.content.cts.emptytestapp27j"
             + "EBRNRG3ozwBsGr1sVIM9U0bVTI2TdyIyeRkZgW4JrJefwNIBAmCg4AzqXiCvG6JjqA0uTCWSFu2YqAVxVd"
@@ -162,6 +164,8 @@ public class PackageManagerTest {
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
     private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
+
+    private static final int MAX_SAFE_LABEL_LENGTH = 1000;
 
     @Before
     public void setup() throws Exception {
@@ -1480,5 +1484,34 @@ public class PackageManagerTest {
 
     private void uninstallPackage(String packageName) {
         SystemUtil.runShellCommand("pm uninstall " + packageName);
+    }
+
+    @Test
+    public void loadApplicationLabel_withLongLabelName_truncated() throws Exception {
+        assertThat(installPackage(LONG_LABEL_NAME_APK)).isTrue();
+        final ApplicationInfo info = mPackageManager.getApplicationInfo(
+                EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+        final CharSequence resLabel = mPackageManager.getText(
+                EMPTY_APP_PACKAGE_NAME, info.labelRes, info);
+
+        assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
+        assertThat(info.loadLabel(mPackageManager).length()).isEqualTo(MAX_SAFE_LABEL_LENGTH);
+    }
+
+    @Test
+    public void loadComponentLabel_withLongLabelName_truncated() throws Exception {
+        assertThat(installPackage(LONG_LABEL_NAME_APK)).isTrue();
+        final ComponentName componentName = ComponentName.createRelative(
+                EMPTY_APP_PACKAGE_NAME, ".MockActivity");
+        final ApplicationInfo appInfo = mPackageManager.getApplicationInfo(
+                EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+        final ActivityInfo activityInfo = mPackageManager.getActivityInfo(
+                componentName, 0 /* flags */);
+        final CharSequence resLabel = mPackageManager.getText(
+                EMPTY_APP_PACKAGE_NAME, activityInfo.labelRes, appInfo);
+
+        assertThat(resLabel.length()).isGreaterThan(MAX_SAFE_LABEL_LENGTH);
+        assertThat(activityInfo.loadLabel(mPackageManager).length())
+                .isEqualTo(MAX_SAFE_LABEL_LENGTH);
     }
 }

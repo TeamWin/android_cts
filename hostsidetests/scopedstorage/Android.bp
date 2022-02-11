@@ -194,9 +194,25 @@ java_test_host {
     name: "CtsScopedStorageHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["cts-tradefed", "tradefed", "testng"],
-    static_libs: ["modules-utils-build-testing"],
+    static_libs: ["modules-utils-build-testing", "compatibility-host-util"],
     test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     test_config: "AndroidTest.xml",
+    data: [
+        ":CtsLegacyStorageTestAppRequestLegacy",
+        ":CtsLegacyStorageTestAppPreserveLegacy",
+    ],
+}
+
+java_test_host {
+    name: "GtsPreserveLegacyStorageHostTest",
+    srcs:  [
+        "host/src/android/scopedstorage/cts/host/PreserveLegacyStorageHostTest.java",
+        "host/src/android/scopedstorage/cts/host/BaseHostTestCase.java"
+    ],
+    libs: ["cts-tradefed", "tradefed", "testng"],
+    static_libs: ["modules-utils-build-testing", "compatibility-host-util"],
+    test_suites: ["general-tests", "gts"],
+    test_config: "AndroidPreserveLegacyTest.xml",
     data: [
         ":CtsLegacyStorageTestAppRequestLegacy",
         ":CtsLegacyStorageTestAppPreserveLegacy",
@@ -207,7 +223,7 @@ java_test_host {
     name: "CtsScopedStoragePublicVolumeHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["cts-tradefed", "tradefed", "testng"],
-    static_libs: ["modules-utils-build-testing"],
+    static_libs: ["modules-utils-build-testing", "compatibility-host-util"],
     test_suites: ["general-tests", "mts-mediaprovider"],
     test_config: "PublicVolumeTest.xml",
 }

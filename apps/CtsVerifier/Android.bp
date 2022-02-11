@@ -193,14 +193,13 @@ genrule {
         ":apps_to_include",
         ":CtsVerifier",
         ":camera-its",
-        "NOTICE.txt",
     ],
     tools: [
         "soong_zip",
         "merge_zips",
     ],
     out: ["android-cts-verifier.zip"],
-    cmd: "echo $(locations :apps_to_include) $(location :CtsVerifier) $(location NOTICE.txt) > $(genDir)/list &&" +
+    cmd: "echo $(locations :apps_to_include) $(location :CtsVerifier) > $(genDir)/list &&" +
         " $(location soong_zip) -o $(genDir)/cts-verifier.zip -j -P android-cts-verifier -l $(genDir)/list &&" +
         " $(location merge_zips) $(out) $(genDir)/cts-verifier.zip $(location :camera-its)",
     dists: [

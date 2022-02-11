@@ -18,11 +18,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.cts.verifier"
           android:versionCode="5"
-          android:versionName="12_r1">
+          android:versionName="12.1_r1">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="31"/>
 
     <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
+    <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"/>
@@ -2720,8 +2721,7 @@
 
         <activity android:name=".camera.formats.CameraFormatsActivity"
                  android:label="@string/camera_format"
-                 android:exported="true"
-                 android:screenOrientation="landscape">
+                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -2774,7 +2774,6 @@
         <activity
             android:name=".camera.fov.PhotoCaptureActivity"
             android:label="@string/camera_fov_calibration"
-            android:screenOrientation="landscape"
             android:exported="true"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
             <intent-filter android:label="@string/camera_fov_calibration" >
@@ -2791,7 +2790,6 @@
         <activity
             android:name=".camera.fov.DetermineFovActivity"
             android:label="@string/camera_fov_calibration"
-            android:screenOrientation="landscape"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
@@ -2810,8 +2808,7 @@
 
         <activity android:name=".camera.video.CameraVideoActivity"
                  android:label="@string/camera_video"
-                 android:exported="true"
-                 android:screenOrientation="landscape">
+                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -3034,6 +3031,24 @@
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>
+
+        <activity android:name=".notifications.NotificationPrivacyVerifierActivity"
+            android:exported="true"
+            android:label="@string/notif_privacy_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".notifications.ShowWhenLockedActivity"
+            android:exported="true"
+            android:showWhenLocked="true"
+            />
 
         <receiver android:name=".notifications.BlockChangeReceiver"
             android:exported="true">
@@ -4092,6 +4107,8 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_DEVICE_OWNER_FOR_REQUESTING_BUGREPORT" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_PROFILE_OWNER_FOR_REQUESTING_BUGREPORT" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_CURRENT_USER_AFFILIATED_FOR_REQUESTING_BUGREPORT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
@@ -5003,7 +5020,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.watch:android.hardware.type.television" />
+                       android:value="android.hardware.type.watch:android.hardware.type.television:android.hardware.type.automotive" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
@@ -5226,6 +5243,20 @@
             <meta-data android:name="test_category" android:value="@string/test_category_car" />
             <meta-data android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+        </activity>
+
+        <activity android:name=".car.PowerPolicyTestActivity"
+                  android:exported="true"
+                android:label="@string/car_power_policy_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_car" />
+            <meta-data android:name="test_required_features"
+                android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity-alias android:name=".car.CarDockActivity2"

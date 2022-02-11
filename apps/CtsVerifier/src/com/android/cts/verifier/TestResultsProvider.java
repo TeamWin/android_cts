@@ -33,6 +33,8 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 
+import androidx.annotation.NonNull;
+
 import com.android.compatibility.common.util.ReportLog;
 
 import java.io.ByteArrayOutputStream;
@@ -43,8 +45,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
-
-import androidx.annotation.NonNull;
 
 /**
  * {@link ContentProvider} that provides read and write access to the test results.

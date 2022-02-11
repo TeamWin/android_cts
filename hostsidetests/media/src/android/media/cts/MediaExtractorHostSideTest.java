@@ -84,9 +84,17 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
                 .isEqualTo(MediametricsMessage.ExtractorData.EntryPoint.NDK_WITH_JVM);
     }
 
-    public void testMediaMetricsLogSessionId() throws Exception {
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testLogSessionId");
-        assertThat(getMediaExtractorReportedLogSessionId()).isEqualTo("FakeLogSessionId");
+    public void testMediaMetricsInvalidLogSessionId() throws Exception {
+        runDeviceTests(
+                DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testInvalidLogSessionId");
+        // An invalid log session is blocked from statsd, so the reported id is empty.
+        assertThat(getMediaExtractorReportedLogSessionId()).isEmpty();
+    }
+
+    public void testMediaMetricsValidLogSessionId() throws Exception {
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testValidLogSessionId");
+        // A valid log session id is sent to statsd, so the reported id is not empty.
+        assertThat(getMediaExtractorReportedLogSessionId()).isNotEmpty();
     }
 
     // Internal methods.

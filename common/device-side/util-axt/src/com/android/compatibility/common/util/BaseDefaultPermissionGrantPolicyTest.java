@@ -312,7 +312,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
 
     public void addException(DefaultPermissionGrantException exception,
             Set<String> runtimePermNames, Map<String, PackageInfo> packageInfos,
-            SparseArray<UidState> outUidStates) {
+            Set<String> platformSignedPackages, SparseArray<UidState> outUidStates) {
         Log.v(LOG_TAG, "Adding exception for company " + exception.company
                 + ". Metadata: " + exception.metadata);
         String packageName = exception.pkg;
@@ -356,9 +356,12 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
                 return;
             }
         } else {
-            Log.w(LOG_TAG, "Attribute sha256-cert-digest or brand must be provided for package: "
-                    + packageName);
-            return;
+            if (!platformSignedPackages.contains(packageName)) {
+                String packageDigest = computePackageCertDigest(packageInfo.signatures[0]);
+                Log.w(LOG_TAG, "Package is not signed with the platform certificate: " + packageName
+                        + ". Package signature: " + packageDigest.toUpperCase());
+                return;
+            }
         }
 
         List<String> requestedPermissions = Arrays.asList(packageInfo.requestedPermissions);
@@ -432,12 +435,27 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
         // Only use exceptions from business logic if they've been added
         if (!mRemoteExceptions.isEmpty()) {
             Log.d(LOG_TAG, String.format("Found %d remote exceptions", mRemoteExceptions.size()));
+            Set<String> platformSignedPackages = getPlatformSignedPackages(packageInfos);
             for (DefaultPermissionGrantException dpge : mRemoteExceptions) {
-                addException(dpge, runtimePermNames, packageInfos, outUidStates);
+                addException(dpge, runtimePermNames, packageInfos, platformSignedPackages,
+                        outUidStates);
             }
         } else {
             Log.w(LOG_TAG, "Failed to retrieve remote default permission grant exceptions.");
         }
+    }
+
+    private Set<String> getPlatformSignedPackages(Map<String, PackageInfo> packageInfos) {
+        Set<String> platformSignedPackages = new ArraySet<>();
+        PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        for (PackageInfo pkg : packageInfos.values()) {
+            boolean isPlatformSigned = pm.checkSignatures(pkg.packageName, PLATFORM_PACKAGE_NAME)
+                    == PackageManager.SIGNATURE_MATCH;
+            if (isPlatformSigned) {
+                platformSignedPackages.add(pkg.packageName);
+            }
+        }
+        return platformSignedPackages;
     }
 
 
@@ -785,7 +803,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
         public Map<String, Boolean> permissions = new HashMap<>();
 
         public boolean hasNonBrandSha256() {
-            return sha256 != null && !hasBrand;
+            return !sha256.isEmpty() && !hasBrand;
         }
 
         public DefaultPermissionGrantException(String pkg, String sha256,
@@ -800,7 +818,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
             this.metadata = metadata;
             this.pkg = pkg;
             this.sha256 = sha256;
-            if (!sha256.contains(":")) {
+            if (!sha256.isEmpty() && !sha256.contains(":")) {
                 hasBrand = true; // rough approximation of brand vs. SHA256 hash
             }
             this.permissions = permissions;

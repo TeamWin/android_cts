@@ -337,6 +337,44 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         mWmState.assertHomeActivityVisible(true);
     }
 
+    /**
+     * This test case tests behavior of activity launched with FLAG_ACTIVITY_TASK_ON_HOME in lock
+     * task mode. The home task do not move to the front of the launched task if the home task
+     * is violated with the lock-task mode.
+     */
+    @Test
+    public void testLaunchTaskOnHomeInLockTaskMode() {
+        if (!hasHomeScreen()) {
+            return;
+        }
+        // Start LaunchingActivity and BroadcastReceiverActivity in two separate tasks.
+        getLaunchActivityBuilder().setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
+        waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,"Activity must be resumed");
+        final int taskId1 = mWmState.getTaskByActivity(LAUNCHING_ACTIVITY).mTaskId;
+        final int taskId2 = mWmState.getTaskByActivity(BROADCAST_RECEIVER_ACTIVITY).mTaskId;
+
+        try {
+            runWithShellPermission(() -> {
+                mAtm.startSystemLockTaskMode(taskId1);
+                mAtm.startSystemLockTaskMode(taskId2);
+            });
+            getLaunchActivityBuilder()
+                    .setUseInstrumentation()
+                    .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                    .setIntentFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_TASK_ON_HOME).execute();
+            waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,"Activity must be resumed");
+            mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+            mWmState.waitAndAssertActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
+
+            mWmState.assertHomeActivityVisible(false);
+        } finally {
+            runWithShellPermission(() -> {
+                mAtm.stopSystemLockTaskMode();
+            });
+        }
+    }
+
     @Test
     public void testFinishActivityWithMoveTaskToBackAfterPause() {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_PAUSE);
@@ -638,7 +676,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         lockScreenSession.sleepDevice();
         mWmState.waitForAllStoppedActivities();
         separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
+        launchActivityNoWait(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
         mWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
         // Display should keep off, because setTurnScreenOn(false) has been called at
         // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.

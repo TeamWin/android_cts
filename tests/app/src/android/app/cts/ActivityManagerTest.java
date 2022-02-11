@@ -21,6 +21,13 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_HOME;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -36,6 +43,7 @@ import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.Instrumentation.ActivityResult;
 import android.app.PendingIntent;
+import android.app.TaskInfo;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
@@ -44,8 +52,10 @@ import android.app.stubs.LocalForegroundService;
 import android.app.stubs.MockApplicationActivity;
 import android.app.stubs.MockService;
 import android.app.stubs.ScreenOnActivity;
+import android.app.stubs.TestHomeActivity;
 import android.app.stubs.TrimMemService;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -53,6 +63,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.os.Binder;
 import android.os.Bundle;
@@ -143,6 +154,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     private List<Activity> mStartedActivityList;
     private int mErrorProcessID;
     private Instrumentation mInstrumentation;
+    private HomeActivitySession mTestHomeSession;
 
     @Override
     protected void setUp() throws Exception {
@@ -160,6 +172,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+        if (mTestHomeSession != null) {
+            mTestHomeSession.close();
+        }
         if (mIntent != null) {
             mInstrumentation.getContext().stopService(mIntent);
         }
@@ -196,19 +211,10 @@ public class ActivityManagerTest extends InstrumentationTestCase {
          * than the index of recent1_activity
          */
         recentTaskList = mActivityManager.getRecentTasks(maxNum, flags);
-        int indexRecentOne = -1;
-        int indexRecentTwo = -1;
-        int i = 0;
-        for (RecentTaskInfo rti : recentTaskList) {
-            if (rti.baseIntent.getComponent().getClassName().equals(
-                    ActivityManagerRecentOneActivity.class.getName())) {
-                indexRecentOne = i;
-            } else if (rti.baseIntent.getComponent().getClassName().equals(
-                    ActivityManagerRecentTwoActivity.class.getName())) {
-                indexRecentTwo = i;
-            }
-            i++;
-        }
+        int indexRecentOne = getTaskInfoIndex(recentTaskList,
+                ActivityManagerRecentOneActivity.class);
+        int indexRecentTwo = getTaskInfoIndex(recentTaskList,
+                ActivityManagerRecentTwoActivity.class);
         assertTrue(indexRecentOne != -1 && indexRecentTwo != -1);
         assertTrue(indexRecentTwo < indexRecentOne);
 
@@ -306,6 +312,18 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         mStartedActivityList.add(monitor.waitForActivity());
     }
 
+    private <T extends TaskInfo, S extends Activity> int getTaskInfoIndex(List<T> taskList,
+            Class<S> activityClass) {
+        int i = 0;
+        for (TaskInfo ti : taskList) {
+            if (ti.baseActivity.getClassName().equals(activityClass.getName())) {
+                return i;
+            }
+            i++;
+        }
+        return -1;
+    }
+
     public void testGetRunningTasks() {
         // Test illegal parameter
         List<RunningTaskInfo> runningTaskList;
@@ -321,30 +339,36 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         // start recent1_activity.
         startSubActivity(ActivityManagerRecentOneActivity.class);
-        // start recent2_activity
+
+        runningTaskList = mActivityManager.getRunningTasks(20);
+
+        // assert only recent1_activity exists and is visible.
+        int indexRecentOne = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentOneActivity.class);
+        int indexRecentTwo = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentTwoActivity.class);
+        assertTrue(indexRecentOne != -1 && indexRecentTwo == -1);
+        assertTrue(runningTaskList.get(indexRecentOne).isVisible());
+
+        // start recent2_activity.
         startSubActivity(ActivityManagerRecentTwoActivity.class);
 
         /*
          * assert both recent1_activity and recent2_activity exist in the
          * running tasks list. Moreover,the index of the recent2_activity is
-         * smaller than the index of recent1_activity
+         * smaller than the index of recent1_activity.
          */
         runningTaskList = mActivityManager.getRunningTasks(20);
-        int indexRecentOne = -1;
-        int indexRecentTwo = -1;
-        int i = 0;
-        for (RunningTaskInfo rti : runningTaskList) {
-            if (rti.baseActivity.getClassName().equals(
-                    ActivityManagerRecentOneActivity.class.getName())) {
-                indexRecentOne = i;
-            } else if (rti.baseActivity.getClassName().equals(
-                    ActivityManagerRecentTwoActivity.class.getName())) {
-                indexRecentTwo = i;
-            }
-            i++;
-        }
+        indexRecentOne = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentOneActivity.class);
+        indexRecentTwo = getTaskInfoIndex(runningTaskList,
+                ActivityManagerRecentTwoActivity.class);
         assertTrue(indexRecentOne != -1 && indexRecentTwo != -1);
         assertTrue(indexRecentTwo < indexRecentOne);
+
+        // assert only recent2_activity is visible.
+        assertFalse(runningTaskList.get(indexRecentOne).isVisible());
+        assertTrue(runningTaskList.get(indexRecentTwo).isVisible());
     }
 
     public void testGetRunningServices() throws Exception {
@@ -583,6 +607,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that the TimeTrackingAPI works properly when starting and ending an activity.
      */
     public void testTimeTrackingAPI_SimpleStartExit() throws Exception {
+        createManagedHomeActivitySession();
         launchHome();
         // Prepare to start an activity from another APK.
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -669,6 +694,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * Verify that the TimeTrackingAPI works properly when switching away from the monitored task.
      */
     public void testTimeTrackingAPI_SwitchAwayTriggers() throws Exception {
+        createManagedHomeActivitySession();
         launchHome();
 
         // Prepare to start an activity from another APK.
@@ -717,6 +743,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * and ended.
      */
     public void testTimeTrackingAPI_ChainedActivityExit() throws Exception {
+        createManagedHomeActivitySession();
         launchHome();
         // Prepare to start an activity from another APK.
         Intent intent = new Intent(Intent.ACTION_MAIN);
@@ -1755,5 +1782,64 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             Thread.sleep(500);
         } while (!(result = supplier.get()) && SystemClock.uptimeMillis() < deadLine);
         return result;
+    }
+
+    private void createManagedHomeActivitySession()
+            throws Exception {
+        if (noHomeScreen()) return;
+        ComponentName homeActivity = new ComponentName(
+                STUB_PACKAGE_NAME, TestHomeActivity.class.getName());
+        mTestHomeSession = new HomeActivitySession(homeActivity);
+    }
+
+    /**
+     * HomeActivitySession is used to replace the default home component, so that you can use
+     * your preferred home for testing within the session. The original default home will be
+     * restored automatically afterward.
+     */
+    private class HomeActivitySession {
+        private PackageManager mPackageManager;
+        private ComponentName mOrigHome;
+        private ComponentName mSessionHome;
+
+        HomeActivitySession(ComponentName sessionHome) throws Exception {
+            mSessionHome = sessionHome;
+            mPackageManager = mInstrumentation.getContext().getPackageManager();
+            mOrigHome = getDefaultHomeComponent();
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
+                            COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP));
+            setDefaultHome(mSessionHome);
+        }
+
+        public void close() throws Exception {
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
+                            COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
+            if (mOrigHome != null) {
+                setDefaultHome(mOrigHome);
+                mOrigHome = null;
+            }
+        }
+
+        private void setDefaultHome(ComponentName componentName) throws Exception {
+            executeShellCommand("cmd package set-home-activity --user "
+                    + android.os.Process.myUserHandle().getIdentifier() + " "
+                    + componentName.flattenToString());
+        }
+
+        private ComponentName getDefaultHomeComponent() {
+            final Intent intent = new Intent(ACTION_MAIN);
+            intent.addCategory(CATEGORY_HOME);
+            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+            final ResolveInfo resolveInfo = mInstrumentation.getContext()
+                    .getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
+            if (resolveInfo == null) {
+                throw new AssertionError("Home activity not found");
+            }
+            return new ComponentName(resolveInfo.activityInfo.packageName,
+                    resolveInfo.activityInfo.name);
+        }
     }
 }

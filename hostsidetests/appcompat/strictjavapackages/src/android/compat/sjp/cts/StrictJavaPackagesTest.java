@@ -145,6 +145,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/gsi/IImageService;",
                     "Landroid/gsi/IProgressCallback;",
                     "Landroid/gsi/MappedImage;",
+                    "Landroid/gui/TouchOcclusionMode;",
                     "Landroid/hardware/contexthub/V1_0/AsyncEventType;",
                     "Landroid/hardware/contexthub/V1_0/ContextHub;",
                     "Landroid/hardware/contexthub/V1_0/ContextHubMsg;",
@@ -193,7 +194,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/os/IInputConstants;",
                     "Landroid/os/InputEventInjectionResult;",
                     "Landroid/os/InputEventInjectionSync;",
-                    "Landroid/os/TouchOcclusionMode;",
                     "Lcom/android/internal/util/FrameworkStatsLog;"
             );
 

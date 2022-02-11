@@ -28,8 +28,10 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiScrollable
 import android.support.test.uiautomator.UiSelector
+import android.support.test.uiautomator.StaleObjectException
 import android.text.Spanned
 import android.text.style.ClickableSpan
+import android.util.Log
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil.eventually
 import org.junit.After
@@ -449,7 +451,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             if (isWatch) {
                 click(By.text(permissionLabel), 40_000)
             } else {
-                click(By.text(permissionLabel))
+                clickPermissionControllerUi(By.text(permissionLabel))
             }
 
             val wasGranted = if (isAutomotive) {

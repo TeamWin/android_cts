@@ -59,8 +59,6 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
     fun testTapjackGrantDialog_partialOverlay() {
         // PermissionController for television uses a floating window.
         assumeFalse(isTv)
-        // Automotive doesn't support detecting partial overlays yet: b/192088266
-        assumeFalse(isAutomotive)
 
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {}

@@ -19,12 +19,11 @@ package com.android.cts.verifier;
 import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
 import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
-import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.TestResultHistory;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
+
+import com.android.compatibility.common.util.ReportLog;
 
 /**
  * Object representing the result of a test activity like whether it succeeded or failed.

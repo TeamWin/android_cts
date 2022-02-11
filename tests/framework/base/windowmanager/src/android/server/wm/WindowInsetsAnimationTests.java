@@ -16,7 +16,10 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.graphics.Insets.NONE;
+import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
@@ -63,7 +66,8 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     @Before
     public void setup() throws Exception {
         super.setUp();
-        mActivity = startActivity(TestActivity.class);
+        mActivity = startActivity(TestActivity.class, DEFAULT_DISPLAY, true,
+                WINDOWING_MODE_FULLSCREEN);
         mRootView = mActivity.getWindow().getDecorView();
         assumeTrue(hasWindowInsets(mRootView, systemBars()));
     }
@@ -77,7 +81,8 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
         waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
-        commonAnimationAssertions(mActivity, before, false /* show */, systemBars());
+        commonAnimationAssertions(mActivity, before, false /* show */,
+                systemBars() & ~captionBar());
     }
 
     @Test
@@ -95,7 +100,8 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
         waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
-        commonAnimationAssertions(mActivity, before, true /* show */, systemBars());
+        commonAnimationAssertions(mActivity, before, true /* show */,
+                systemBars() & ~captionBar());
     }
 
     @Test

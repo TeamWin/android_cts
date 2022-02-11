@@ -400,6 +400,8 @@ public class AnalogHeadsetAudioActivity
             }
         }
 
+        reportHeadsetPort(mHeadsetDeviceInfo != null);
+
         showConnectedDevice();
     }
 

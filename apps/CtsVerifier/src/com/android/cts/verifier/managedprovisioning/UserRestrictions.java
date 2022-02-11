@@ -331,7 +331,7 @@ public class UserRestrictions {
             case UserManager.DISALLOW_SHARE_LOCATION:
                 return pm.hasSystemFeature(PackageManager.FEATURE_LOCATION);
             case UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES:
-                return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+                return FeatureUtil.isInstallUnknownSourcesSupported(context);
             case UserManager.DISALLOW_CONFIG_CREDENTIALS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                         && hasSettingsActivity(context, ACTION_CREDENTIALS_INSTALL);

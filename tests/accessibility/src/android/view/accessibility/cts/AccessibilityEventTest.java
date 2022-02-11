@@ -18,6 +18,7 @@ package android.view.accessibility.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -33,6 +34,7 @@ import android.platform.test.annotations.Presubmit;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.LocaleSpan;
+import android.view.Display;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -56,6 +58,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeoutException;
 
 /** Class for testing {@link AccessibilityEvent}. */
 @Presubmit
@@ -162,6 +165,24 @@ public class AccessibilityEventTest {
                 },
                 new ScrollEventFilter(2),
                 DEFAULT_TIMEOUT_MS);
+    }
+
+    class ScrollEventFilter extends AccessibilityEventFilter {
+        private int mCount = 0;
+        private int mTargetCount;
+
+        ScrollEventFilter(int count) {
+            mTargetCount = count;
+        }
+
+        public boolean accept(AccessibilityEvent event) {
+            if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+                mCount += 1;
+                mEvents.add(event);
+                return mCount >= mTargetCount;
+            }
+            return false;
+        }
     }
 
     @Test
@@ -292,6 +313,44 @@ public class AccessibilityEventTest {
         assertEquals(expectedState, event.getText().get(0));
     }
 
+    class StateDescriptionEventFilter extends AccessibilityEventFilter {
+        private int mCount;
+        private int mTargetCount;
+
+        StateDescriptionEventFilter(int count) {
+            mTargetCount = count;
+        }
+
+        public boolean accept(AccessibilityEvent event) {
+            if (event.getContentChangeTypes()
+                    == AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION) {
+                mCount += 1;
+                mEvents.add(event);
+                return mCount >= mTargetCount;
+            }
+            return false;
+        }
+    }
+    ;
+
+    private abstract class AccessibilityEventFilter
+            implements UiAutomation.AccessibilityEventFilter {
+        protected List<AccessibilityEvent> mEvents = new ArrayList<>();
+
+        public abstract boolean accept(AccessibilityEvent event);
+
+        void assertReceivedEventCount(int count) {
+            assertEquals(count, mEvents.size());
+        }
+
+        AccessibilityEvent getLastEvent() {
+            if (mEvents.size() > 0) {
+                return mEvents.get(mEvents.size() - 1);
+            }
+            return null;
+        }
+    }
+
     private void sendStateDescriptionChangedEvent(View view) {
         sendStateDescriptionChangedEvent(view, null);
     }
@@ -380,30 +439,12 @@ public class AccessibilityEventTest {
         parcel.recycle();
     }
 
-    /** Tests if {@link AccessibilityEvent} are properly reused. */
-    @SmallTest
-    @Test
-    public void testReuse() {
-        AccessibilityEvent firstEvent = AccessibilityEvent.obtain();
-        firstEvent.recycle();
-        AccessibilityEvent secondEvent = AccessibilityEvent.obtain();
-        assertSame("AccessibilityEvent not properly reused", firstEvent, secondEvent);
-    }
-
-    /** Tests if {@link AccessibilityEvent} are properly recycled. */
+    /** Tests if {@link AccessibilityEvent} can be acquired through obtain(). */
     @SmallTest
     @Test
     public void testRecycle() {
-        // obtain and populate an event
-        AccessibilityEvent populatedEvent = AccessibilityEvent.obtain();
-        fullyPopulateAccessibilityEvent(populatedEvent);
-
-        // recycle and obtain the same recycled instance
-        populatedEvent.recycle();
-        AccessibilityEvent recycledEvent = AccessibilityEvent.obtain();
-
-        // check expectations
-        assertAccessibilityEventCleared(recycledEvent);
+        // evaluate that recycle() can be called on an event acquired by obtain()
+        AccessibilityEvent.obtain().recycle();
     }
 
     /** Tests whether the event types are correctly converted to strings. */
@@ -708,61 +749,5 @@ public class AccessibilityEventTest {
         TestCase.assertEquals("eventTime not properly recycled", 0, event.getEventTime());
         TestCase.assertEquals("eventType not properly recycled", 0, event.getEventType());
         TestCase.assertNull("packageName not properly recycled", event.getPackageName());
-    }
-
-    class ScrollEventFilter extends AccessibilityEventFilter {
-        private int mCount = 0;
-        private int mTargetCount;
-
-        ScrollEventFilter(int count) {
-            mTargetCount = count;
-        }
-
-        public boolean accept(AccessibilityEvent event) {
-            if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-                mCount += 1;
-                mEvents.add(event);
-                return mCount >= mTargetCount;
-            }
-            return false;
-        }
-    }
-
-    class StateDescriptionEventFilter extends AccessibilityEventFilter {
-        private int mCount;
-        private int mTargetCount;
-
-        StateDescriptionEventFilter(int count) {
-            mTargetCount = count;
-        }
-
-        public boolean accept(AccessibilityEvent event) {
-            if (event.getContentChangeTypes()
-                    == AccessibilityEvent.CONTENT_CHANGE_TYPE_STATE_DESCRIPTION) {
-                mCount += 1;
-                mEvents.add(event);
-                return mCount >= mTargetCount;
-            }
-            return false;
-        }
-    }
-    ;
-
-    private abstract class AccessibilityEventFilter
-            implements UiAutomation.AccessibilityEventFilter {
-        protected List<AccessibilityEvent> mEvents = new ArrayList<>();
-
-        public abstract boolean accept(AccessibilityEvent event);
-
-        void assertReceivedEventCount(int count) {
-            assertEquals(count, mEvents.size());
-        }
-
-        AccessibilityEvent getLastEvent() {
-            if (mEvents.size() > 0) {
-                return mEvents.get(mEvents.size() - 1);
-            }
-            return null;
-        }
     }
 }

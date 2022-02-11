@@ -104,6 +104,21 @@ public final class WifiConfigLockdownTest extends BaseDeviceOwnerTest {
                 .that(updateCount).isAtLeast(2);
     }
 
+    public void testDeviceOwnerCanRemoveConfig() throws Exception {
+        List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
+        int removeCount = 0;
+        for (WifiConfiguration config : configs) {
+            if (areMatchingSsids(ORIGINAL_DEVICE_OWNER_SSID, config.SSID)
+                    || areMatchingSsids(ORIGINAL_REGULAR_SSID, config.SSID)) {
+                assertWithMessage("mWifiManager.removeNetwork(%s)", config.networkId)
+                        .that(mWifiManager.removeNetwork(config.networkId)).isTrue();
+                ++removeCount;
+            }
+        }
+        assertWithMessage("number of removed configs (the DO created one and the regular one)")
+                .that(removeCount).isEqualTo(2);
+    }
+
     public void testRegularAppCannotUpdateDeviceOwnerConfig() throws Exception {
         List<WifiConfiguration> configs = mWifiConfigCreator.getConfiguredNetworks();
         logConfigs("testRegularAppCannotUpdateDeviceOwnerConfig()", configs);
