@@ -124,9 +124,10 @@ import java.util.function.Supplier;
 public class ActivityManagerTest {
     private static final String TAG = ActivityManagerTest.class.getSimpleName();
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
-    private static final int WAITFOR_MSEC = 5000;
+    private static final long WAITFOR_MSEC = 5000;
     private static final String SERVICE_NAME = "android.app.stubs.MockService";
-    private static final int WAIT_TIME = 2000;
+    private static final long WAIT_TIME = 2000;
+    private static final long WAITFOR_ORDERED_BROADCAST_DRAINED = 60000;
     // A secondary test activity from another APK.
     static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
     static final String SIMPLE_ACTIVITY = ".SimpleActivity";
@@ -189,6 +190,7 @@ public class ActivityManagerTest {
         mAutomotiveDevice = mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         mLeanbackOnly = mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
         startSubActivity(ScreenOnActivity.class);
+        drainOrderedBroadcastQueue(2);
     }
 
     @After
@@ -205,6 +207,27 @@ public class ActivityManagerTest {
         if (mErrorProcessID != -1) {
             android.os.Process.killProcess(mErrorProcessID);
         }
+    }
+
+    /**
+     * Drain the ordered broadcast queue, it'll be useful when the test runs right after
+     * the device booted, the ordered broadcast queue could be clogged.
+     */
+    private void drainOrderedBroadcastQueue(int loopCount) throws Exception {
+        for (int i = loopCount; i > 0; i--) {
+            final CountDownLatch latch = new CountDownLatch(1);
+            final BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    latch.countDown();
+                }
+            };
+            CommandReceiver.sendCommandWithResultReceiver(mTargetContext,
+                    CommandReceiver.COMMAND_EMPTY,
+                    STUB_PACKAGE_NAME, STUB_PACKAGE_NAME, 0, null, receiver);
+            latch.await(WAITFOR_ORDERED_BROADCAST_DRAINED, TimeUnit.MILLISECONDS);
+        }
+        Log.i(TAG, "Ordered broadcast queue drained");
     }
 
     @Test
@@ -1857,8 +1880,7 @@ public class ActivityManagerTest {
         assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         final String[] packageNames = {PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, PACKAGE_NAME_APP3};
-        final WatchUidRunner[] watchers = initWatchUidRunners(packageNames, WAITFOR_MSEC);
-        final long shortTimeout = 2_000;
+        final WatchUidRunner[] watchers = initWatchUidRunners(packageNames, WAITFOR_MSEC * 2);
 
         try {
             // Set the PACKAGE_NAME_APP1 into rare bucket
@@ -1899,7 +1921,7 @@ public class ActivityManagerTest {
             SystemUtil.runShellCommand(mInstrumentation, "am set-standby-bucket "
                     + PACKAGE_NAME_APP1 + " restricted");
             // Sleep a while to let it take effect.
-            Thread.sleep(shortTimeout);
+            Thread.sleep(WAITFOR_MSEC);
 
             final Intent intent = new Intent();
             final CountDownLatch[] latch = new CountDownLatch[] {new CountDownLatch(1)};
