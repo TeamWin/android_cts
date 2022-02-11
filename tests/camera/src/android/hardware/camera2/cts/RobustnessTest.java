@@ -359,7 +359,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 for (MandatoryStreamCombination combination : combinations) {
                     Log.i(TAG, "Testing fixed mandatory output combination with stream use case: " +
                             combination.getDescription() + " on camera: " + id);
-                    testMandatoryUseCaseOutputCombination(id, combination);
+                    CaptureRequest.Builder requestBuilder =
+                            mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                    testMandatoryOutputCombinationWithPresetKeys(id, combination, requestBuilder);
                 }
             } finally {
                 closeDevice(id);
@@ -367,8 +369,44 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void testMandatoryUseCaseOutputCombination(String cameraId,
-            MandatoryStreamCombination combination) {
+    @Test
+    public void testMandatoryPreviewStabilizationOutputCombinations() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            StaticMetadata info = mAllStaticInfo.get(id);
+            CameraCharacteristics chars = info.getCharacteristics();
+            CameraCharacteristics.Key<MandatoryStreamCombination []> ck =
+                    CameraCharacteristics
+                            .SCALER_MANDATORY_PREVIEW_STABILIZATION_OUTPUT_STREAM_COMBINATIONS;
+            MandatoryStreamCombination[] combinations = chars.get(ck);
+
+            if (combinations == null) {
+                assertNull(combinations);
+                Log.i(TAG, "Camera id " + id + " doesn't support preview stabilization, skip test");
+                continue;
+            }
+
+            assertNotNull(combinations);
+            openDevice(id);
+
+            try {
+                for (MandatoryStreamCombination combination : combinations) {
+                    Log.i(TAG, "Testing fixed mandatory output combination with preview"
+                            + "stabilization case: " + combination.getDescription() + " on camera: "
+                                     + id);
+                    CaptureRequest.Builder requestBuilder =
+                            mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                    requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION);
+                    testMandatoryOutputCombinationWithPresetKeys(id, combination, requestBuilder);
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void testMandatoryOutputCombinationWithPresetKeys(String cameraId,
+            MandatoryStreamCombination combination, CaptureRequest.Builder requestBuilderWithKeys) {
         final int TIMEOUT_FOR_RESULT_MS = 1000;
         final int MIN_RESULT_COUNT = 3;
 
@@ -395,14 +433,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             createSessionByConfigs(outputConfigs);
             haveSession = true;
-            CaptureRequest.Builder requestBuilder =
-                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             for (Surface s : outputSurfaces) {
-                requestBuilder.addTarget(s);
+                requestBuilderWithKeys.addTarget(s);
             }
             CameraCaptureSession.CaptureCallback mockCaptureCallback =
                     mock(CameraCaptureSession.CaptureCallback.class);
-            CaptureRequest request = requestBuilder.build();
+            CaptureRequest request = requestBuilderWithKeys.build();
 
             mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
             verify(mockCaptureCallback,
