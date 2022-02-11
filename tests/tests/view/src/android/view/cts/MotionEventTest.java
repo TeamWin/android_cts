@@ -1011,7 +1011,8 @@ public class MotionEventTest {
     @Test
     public void testNativeConverter() {
         final MotionEvent event = MotionEvent.obtain(mDownTime, mEventTime,
-                MotionEvent.ACTION_MOVE, X_3F, Y_4F, META_STATE);
+                MotionEvent.ACTION_BUTTON_PRESS, X_3F, Y_4F, META_STATE);
+        event.setActionButton(MotionEvent.BUTTON_PRIMARY);
         nativeMotionEventTest(event);
     }
 }
