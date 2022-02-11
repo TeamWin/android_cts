@@ -71,11 +71,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.WindowUtil;
-
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -160,11 +157,7 @@ public class TouchInteractionControllerTest {
     @Before
     public void setUp() throws Exception {
         ActivityLaunchUtils.homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
-
-        GestureDispatchActivity activity = mActivityRule.launchActivity(null);
-        WindowUtil.waitForFocus(activity);
-        Assert.assertTrue(activity.hasWindowFocus());
-        sInstrumentation.setInTouchMode(false);
+        mActivityRule.launchActivity(null);
 
         PackageManager pm = sInstrumentation.getContext().getPackageManager();
         mHasTouchscreen =
