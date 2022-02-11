@@ -292,6 +292,11 @@ public final class AutoFillServiceTestCase {
         protected final String mPackageName;
         protected final UiBot mUiBot;
 
+        public BaseTestCase() {
+            mPackageName = mContext.getPackageName();
+            mUiBot = sDefaultUiBot;
+        }
+
         private BaseTestCase(@NonNull UiBot uiBot) {
             mPackageName = mContext.getPackageName();
             mUiBot = uiBot;
