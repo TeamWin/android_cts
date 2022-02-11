@@ -39,6 +39,7 @@ android_test {
         "CtsMockInputMethodLib",
         "hamcrest-library",
         "modules-utils-build_system",
+        "platformprotosnano",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [
