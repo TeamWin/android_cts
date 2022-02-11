@@ -18,6 +18,7 @@ package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
 import static android.app.admin.DevicePolicyManager.DELEGATION_APP_RESTRICTIONS;
 import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
@@ -48,7 +49,9 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
@@ -112,6 +115,8 @@ public class DeviceStateTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final String APP_OP = OPSTR_FINE_LOCATION;
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
@@ -853,5 +858,16 @@ public class DeviceStateTest {
     @EnsureBluetoothDisabled
     public void ensureBluetoothDisabledAnnotation_bluetoothIsDisabled() {
         assertThat(TestApis.bluetooth().isEnabled()).isFalse();
+    }
+
+    @EnsureHasAppOp(APP_OP)
+    public void ensureHasAppOpAnnotation_appOpIsAllowed() {
+        assertThat(TestApis.permissions().hasAppOpAllowed(APP_OP)).isTrue();
+    }
+
+    @Test
+    @EnsureDoesNotHaveAppOp(APP_OP)
+    public void ensureDoesNotHaveAppOpAnnotation_appOpIsNotAllowed() {
+        assertThat(TestApis.permissions().hasAppOpAllowed(APP_OP)).isFalse();
     }
 }

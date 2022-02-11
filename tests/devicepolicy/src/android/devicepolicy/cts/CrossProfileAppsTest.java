@@ -61,7 +61,7 @@ import com.android.bedstead.harrier.annotations.UserPair;
 import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.appops.AppOps.AppOpsMode;
+import com.android.bedstead.nene.appops.AppOpsMode;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.testapp.TestApp;

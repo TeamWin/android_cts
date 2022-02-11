@@ -19,8 +19,8 @@ package android.devicepolicy.cts;
 import static android.Manifest.permission.MANAGE_CREDENTIAL_MANAGEMENT_APP;
 import static android.app.admin.DevicePolicyManager.INSTALLKEY_SET_USER_SELECTABLE;
 
-import static com.android.bedstead.nene.appops.AppOps.AppOpsMode.ALLOWED;
-import static com.android.bedstead.nene.appops.AppOps.AppOpsMode.DEFAULT;
+import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
+import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;

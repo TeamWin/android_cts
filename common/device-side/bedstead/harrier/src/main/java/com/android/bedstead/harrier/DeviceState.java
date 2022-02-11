@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
+import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
@@ -48,7 +49,9 @@ import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
@@ -199,7 +202,7 @@ public final class DeviceState extends HarrierRule {
                 arguments.getString(SKIP_CLASS_TEARDOWN_KEY, "false"));
         mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
         mSkipTests = !mSkipTestsReason.isEmpty();
-        mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, Build.VERSION.SDK_INT);
+        mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, SDK_INT);
         mPermissionsInstrumentationPackage =
                 arguments.getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
         if (mPermissionsInstrumentationPackage != null) {
@@ -590,11 +593,60 @@ public final class DeviceState extends HarrierRule {
                 if (!meetsSdkVersionRequirements(
                         ensureCanGetPermissionAnnotation.minVersion(),
                         ensureCanGetPermissionAnnotation.maxVersion())) {
+                    Log.d(LOG_TAG,
+                            "Version " + SDK_INT +  " does not need to get permissions "
+                                    + Arrays.toString(ensureCanGetPermissionAnnotation.value()));
                     continue;
                 }
 
                 for (String permission : ensureCanGetPermissionAnnotation.value()) {
                     ensureCanGetPermission(permission);
+                }
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasAppOp) {
+                EnsureHasAppOp ensureHasAppOpAnnotation = (EnsureHasAppOp) annotation;
+
+                if (!meetsSdkVersionRequirements(
+                        ensureHasAppOpAnnotation.minVersion(),
+                        ensureHasAppOpAnnotation.maxVersion())) {
+                    Log.d(LOG_TAG,
+                            "Version " + SDK_INT +  " does not need to get appOp "
+                                    + ensureHasAppOpAnnotation.value());
+                    continue;
+                }
+
+                try {
+                    if (permissionContext == null) {
+                        permissionContext = TestApis.permissions().withAppOp(
+                                ensureHasAppOpAnnotation.value());
+                    } else {
+                        permissionContext = permissionContext.withAppOp(
+                                ensureHasAppOpAnnotation.value());
+                    }
+                } catch (NeneException e) {
+                    failOrSkip("Error getting appOp: " + e,
+                            ensureHasAppOpAnnotation.failureMode());
+                }
+                continue;
+            }
+
+            if (annotation instanceof EnsureDoesNotHaveAppOp) {
+                EnsureDoesNotHaveAppOp ensureDoesNotHaveAppOpAnnotation =
+                        (EnsureDoesNotHaveAppOp) annotation;
+
+                try {
+                    if (permissionContext == null) {
+                        permissionContext = TestApis.permissions().withoutAppOp(
+                                ensureDoesNotHaveAppOpAnnotation.value());
+                    } else {
+                        permissionContext = permissionContext.withoutAppOp(
+                                ensureDoesNotHaveAppOpAnnotation.value());
+                    }
+                } catch (NeneException e) {
+                    failOrSkip("Error denying appOp: " + e,
+                            ensureDoesNotHaveAppOpAnnotation.failureMode());
                 }
                 continue;
             }
@@ -606,6 +658,9 @@ public final class DeviceState extends HarrierRule {
                 if (!meetsSdkVersionRequirements(
                         ensureHasPermissionAnnotation.minVersion(),
                         ensureHasPermissionAnnotation.maxVersion())) {
+                    Log.d(LOG_TAG,
+                            "Version " + SDK_INT +  " does not need to get permission "
+                                    + Arrays.toString(ensureHasPermissionAnnotation.value()));
                     continue;
                 }
 
@@ -981,7 +1036,7 @@ public final class DeviceState extends HarrierRule {
             int min, int max, FailureMode failureMode, String failureMessage) {
         mMinSdkVersionCurrentTest = min;
         checkFailOrSkip(
-                failureMessage + " (version is " + Build.VERSION.SDK_INT + ")",
+                failureMessage + " (version is " + SDK_INT + ")",
                 meetsSdkVersionRequirements(min, max),
                 failureMode
         );
@@ -1598,7 +1653,6 @@ public final class DeviceState extends HarrierRule {
     private void ensureHasDelegate(
             EnsureHasDelegate.AdminType adminType, List<String> scopes, boolean isPrimary) {
         RemotePolicyManager dpc = getDeviceAdmin(adminType);
-
 
         boolean specifiesAdminType = adminType != EnsureHasDelegate.AdminType.PRIMARY;
         boolean currentPrimaryPolicyManagerIsNotDelegator = mPrimaryPolicyManager != dpc;

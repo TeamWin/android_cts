@@ -31,6 +31,8 @@ public final class PermissionContextImpl implements PermissionContext {
     private final Permissions mPermissions;
     private final Set<String> mGrantedPermissions = new HashSet<>();
     private final Set<String> mDeniedPermissions = new HashSet<>();
+    private final Set<String> mGrantedAppOps = new HashSet<>();
+    private final Set<String> mDeniedAppOps = new HashSet<>();
 
     PermissionContextImpl(Permissions permissions) {
         mPermissions = permissions;
@@ -42,6 +44,14 @@ public final class PermissionContextImpl implements PermissionContext {
 
     Set<String> deniedPermissions() {
         return mDeniedPermissions;
+    }
+
+    Set<String> grantedAppOps() {
+        return mGrantedAppOps;
+    }
+
+    Set<String> deniedAppOps() {
+        return mDeniedAppOps;
     }
 
     /**
@@ -116,6 +126,77 @@ public final class PermissionContextImpl implements PermissionContext {
         }
 
         mDeniedPermissions.addAll(Arrays.asList(permissions));
+
+        mPermissions.applyPermissions();
+
+        return this;
+    }
+
+    /**
+     * See {@link Permissions#withAppOp(String...)}
+     */
+    public PermissionContextImpl withAppOp(String... appOps) {
+        for (String appOp : appOps) {
+            if (mDeniedAppOps.contains(appOp)) {
+                mPermissions.clearPermissions();
+                throw new NeneException(
+                        appOp + " cannot be required to be both granted and denied");
+            }
+        }
+
+        mGrantedAppOps.addAll(Arrays.asList(appOps));
+
+        mPermissions.applyPermissions();
+
+        return this;
+    }
+
+    /**
+     * See {@link Permissions#withAppOpOnVersion(int, String...)}
+     */
+    public PermissionContextImpl withAppOpOnVersion(int sdkVersion, String... appOps) {
+        return withAppOpOnVersionBetween(sdkVersion, sdkVersion, appOps);
+    }
+
+    /**
+     * See {@link Permissions#withAppOpOnVersionAtMost(int, String...)}
+     */
+    public PermissionContextImpl withAppOpOnVersionAtMost(int sdkVersion, String... appOps) {
+        return withAppOpOnVersionBetween(Versions.ANY, sdkVersion, appOps);
+    }
+
+    /**
+     * See {@link Permissions#withAppOpOnVersionAtLeast(int, String...)}
+     */
+    public PermissionContextImpl withAppOpOnVersionAtLeast(int sdkVersion, String... appOps) {
+        return withAppOpOnVersionBetween(sdkVersion, Versions.ANY, appOps);
+    }
+
+    /**
+     * See {@link Permissions#withAppOpOnVersionBetween(int, String...)}
+     */
+    public PermissionContextImpl withAppOpOnVersionBetween(
+            int minSdkVersion, int maxSdkVersion, String... appOps) {
+        if (Versions.meetsSdkVersionRequirements(minSdkVersion, maxSdkVersion)) {
+            return withAppOp(appOps);
+        }
+
+        return this;
+    }
+
+    /**
+     * See {@link Permissions#withoutAppOp(String...)}.
+     */
+    public PermissionContextImpl withoutAppOp(String... appOps) {
+        for (String appOp : appOps) {
+            if (mGrantedAppOps.contains(appOp)) {
+                mPermissions.clearPermissions();
+                throw new NeneException(
+                        appOp + " cannot be required to be both granted and denied");
+            }
+        }
+
+        mDeniedAppOps.addAll(Arrays.asList(appOps));
 
         mPermissions.applyPermissions();
 
