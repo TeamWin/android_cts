@@ -45,6 +45,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
@@ -125,7 +127,7 @@ public class ActivityBlockingTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
 
         Intent intent = TestAppHelper.createNoEmbedIntent()
@@ -147,7 +149,7 @@ public class ActivityBlockingTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
@@ -179,7 +181,7 @@ public class ActivityBlockingTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
 
         Intent intent = TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver)
@@ -210,7 +212,7 @@ public class ActivityBlockingTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
@@ -246,7 +248,7 @@ public class ActivityBlockingTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()

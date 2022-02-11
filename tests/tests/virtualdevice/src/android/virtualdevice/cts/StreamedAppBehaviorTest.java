@@ -47,6 +47,8 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.display.VirtualDisplay;
+import android.os.Handler;
+import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
 import android.virtualdevice.cts.util.FakeAssociationRule;
@@ -119,7 +121,7 @@ public class StreamedAppBehaviorTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
         ClipboardManager clipboardManager = context.getSystemService(ClipboardManager.class);
         clipboardManager.setPrimaryClip(

@@ -33,6 +33,8 @@ import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.hardware.display.VirtualDisplay;
+import android.os.Handler;
+import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 import android.virtualdevice.cts.util.FakeAssociationRule;
@@ -101,7 +103,7 @@ public class CreateVirtualDisplayTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
         assertThat(virtualDisplay).isNotNull();
         int displayFlags = virtualDisplay.getDisplay().getFlags();
@@ -128,7 +130,7 @@ public class CreateVirtualDisplayTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                Runnable::run,
+                new Handler(Looper.getMainLooper()),
                 mVirtualDisplayCallback);
         assertThat(virtualDisplay).isNotNull();
         int displayFlags = virtualDisplay.getDisplay().getFlags();
