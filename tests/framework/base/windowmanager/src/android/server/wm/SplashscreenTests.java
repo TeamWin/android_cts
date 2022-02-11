@@ -55,6 +55,7 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HA
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_SET_NIGHT_MODE_ON_CREATE;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.captionBar;
+import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -174,9 +175,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         final Bitmap image = takeScreenshot();
         final WindowMetrics windowMetrics = mWm.getMaximumWindowMetrics();
         final Rect stableBounds = new Rect(windowMetrics.getBounds());
-        Insets insets = windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
-                systemBars() & ~captionBar());
-        stableBounds.inset(insets);
+        Insets statusBarInsets = windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
+                statusBars());
+        stableBounds.inset(windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
+                systemBars() & ~captionBar()));
         WindowManagerState.WindowState startingWindow = mWmState.findFirstWindowWithType(
                 WindowManager.LayoutParams.TYPE_APPLICATION_STARTING);
 
@@ -188,9 +190,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
             appBounds = new Rect(startingWindow.getFrame());
         }
 
-        Rect topInsetsBounds = new Rect(insets.left, 0, appBounds.right - insets.right, insets.top);
-        Rect bottomInsetsBounds = new Rect(insets.left, appBounds.bottom - insets.bottom,
-                appBounds.right - insets.right, appBounds.bottom);
+        Rect statusBarInsetsBounds = new Rect(statusBarInsets.left, 0,
+                appBounds.right - statusBarInsets.right, statusBarInsets.top);
 
         assertFalse("Couldn't find splash screen bounds. Impossible to assert the colors",
                 appBounds.isEmpty());
@@ -206,11 +207,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
         appBounds.intersect(stableBounds);
         assertColors(image, appBounds, primaryColor, 0.99f, secondaryColor, 0.02f, ignoreRect);
-        if (isFullscreen && !topInsetsBounds.isEmpty()) {
-            assertColors(image, topInsetsBounds, primaryColor, 0.80f, secondaryColor, 0.10f, null);
-        }
-        if (isFullscreen && !bottomInsetsBounds.isEmpty()) {
-            assertColors(image, bottomInsetsBounds, primaryColor, 0.80f, secondaryColor, 0.10f,
+        if (isFullscreen && !statusBarInsetsBounds.isEmpty()) {
+            assertColors(image, statusBarInsetsBounds, primaryColor, 0.80f, secondaryColor, 0.10f,
                     null);
         }
     }
