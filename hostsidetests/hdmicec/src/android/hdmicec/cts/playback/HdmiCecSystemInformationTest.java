@@ -66,27 +66,6 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     }
 
     /**
-     * Test 11.2.6-3
-     * Tests that the device handles a <SET_MENU_LANGUAGE> with a valid language correctly.
-     */
-    @Test
-    public void cect_11_2_6_3_SetValidMenuLanguage() throws Exception {
-        assumeTrue(isLanguageEditable());
-        final String locale = getSystemLocale();
-        final String originalLanguage = extractLanguage(locale);
-        final String language = originalLanguage.equals("spa") ? "eng" : "spa";
-        final String newLanguage = originalLanguage.equals("spa") ? "en" : "es";
-        try {
-            hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
-                    CecOperand.SET_MENU_LANGUAGE, CecMessage.convertStringToHexParams(language));
-            TimeUnit.SECONDS.sleep(5);
-            assertThat(extractLanguage(getSystemLocale())).isEqualTo(newLanguage);
-        } finally {
-            setSystemLocale(locale);
-        }
-    }
-
-    /**
      * Test 11.2.6-4
      * Tests that the device ignores a <SET_MENU_LANGUAGE> with an invalid language.
      */

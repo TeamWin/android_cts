@@ -496,9 +496,9 @@ public final class EventLogHelperTest {
 
     @Test
     public void testWriteCarUserManagerAddListener() {
-        EventLogHelper.writeCarUserManagerAddListener(101, "string");
+        EventLogHelper.writeCarUserManagerAddListener(101, "string", true);
 
-        assertLogMessage("I car_user_mgr_add_listener: [101,string]");
+        assertLogMessage("I car_user_mgr_add_listener: [101,string,1]");
     }
 
     @Test

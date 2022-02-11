@@ -23,7 +23,7 @@
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
-    <application android:label="CreateNotificationChannels">
+    <application android:label="CreateNotif">
         <activity android:name=".CreateNotificationChannelsActivity"
                   android:exported="true">
             <intent-filter>

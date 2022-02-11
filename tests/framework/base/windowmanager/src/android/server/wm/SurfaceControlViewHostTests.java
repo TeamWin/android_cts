@@ -56,6 +56,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.PopupWindow;
 
 import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 
@@ -96,6 +97,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     private WindowManager.LayoutParams mEmbeddedLayoutParams;
 
     private volatile boolean mClicked = false;
+    private volatile boolean mPopupClicked = false;
+    private PopupWindow mPopupWindow;
 
     private SurfaceControlViewHost.SurfacePackage mRemoteSurfacePackage;
 
@@ -873,6 +876,44 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mInstrumentation.waitForIdleSync();
 
         assertFalse(mTestService.getViewIsTouched());
+    }
+
+    @Test
+    public void testPopupWindowReceivesInput() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setOnClickListener((View v) -> {
+            mClicked = true;
+        });
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        mActivityRule.runOnUiThread(() -> {
+            PopupWindow pw = new PopupWindow();
+            mPopupWindow = pw;
+            Button popupButton = new Button(mActivity);
+            popupButton.setOnClickListener((View v) -> {
+                mPopupClicked = true;
+            });
+            pw.setWidth(DEFAULT_SURFACE_VIEW_WIDTH);
+            pw.setHeight(DEFAULT_SURFACE_VIEW_HEIGHT);
+            pw.setContentView(popupButton);
+            pw.showAsDropDown(mEmbeddedView);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertTrue(mPopupClicked);
+        assertFalse(mClicked);
+
+        mActivityRule.runOnUiThread(() -> {
+            mPopupWindow.dismiss();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mClicked);
     }
 }
 

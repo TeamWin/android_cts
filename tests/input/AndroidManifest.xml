@@ -48,6 +48,11 @@
                   android:turnScreenOn="true"
                   android:exported="true">
         </activity>
+        <activity android:name="android.app.Activity"
+                  android:label="Empty activity for simple tests"
+                  android:turnScreenOn="true"
+                  android:exported="true">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

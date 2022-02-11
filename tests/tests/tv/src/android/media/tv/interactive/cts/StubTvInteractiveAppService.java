@@ -17,7 +17,10 @@
 package android.media.tv.interactive.cts;
 
 import android.content.Context;
+import android.graphics.Rect;
+import android.media.tv.AdRequest;
 import android.media.tv.AdResponse;
+import android.media.tv.BroadcastInfoRequest;
 import android.media.tv.BroadcastInfoResponse;
 import android.media.tv.TvContentRating;
 import android.media.tv.TvTrackInfo;
@@ -41,6 +44,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     public static StubSessionImpl sSession;
     public static int sType;
     public static Bundle sAppLinkCommand = null;
+    public static AppLinkInfo sAppLinkInfo = null;
 
     @Override
     public Session onCreateSession(String iAppServiceId, int type) {
@@ -51,7 +55,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     @Override
     public void onPrepare(int type) {
         sType = type;
-        notifyStateChanged(
+        super.notifyStateChanged(
                 sType,
                 TvInteractiveAppManager.SERVICE_STATE_PREPARING,
                 TvInteractiveAppManager.ERROR_NONE);
@@ -66,6 +70,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     @Override
     public void onRegisterAppLinkInfo(AppLinkInfo bundle) {
         super.onRegisterAppLinkInfo(bundle);
+        sAppLinkInfo = bundle;
     }
 
     @Override
@@ -132,6 +137,71 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mDestroyBiIAppId = null;
             mAdResponse = null;
             mBroadcastInfoResponse = null;
+        }
+
+        @Override
+        public void layoutSurface(int left, int top, int right, int bottom) {
+            super.layoutSurface(left, top, right, bottom);
+        }
+
+        @Override
+        public void notifySessionStateChanged(int state, int err) {
+            super.notifySessionStateChanged(state, err);
+        }
+
+        @Override
+        public void removeBroadcastInfo(int requestId) {
+            super.removeBroadcastInfo(requestId);
+        }
+
+        @Override
+        public void requestAd(AdRequest request) {
+            super.requestAd(request);
+        }
+
+        @Override
+        public void requestBroadcastInfo(BroadcastInfoRequest request) {
+            super.requestBroadcastInfo(request);
+        }
+
+        @Override
+        public void requestCurrentChannelLcn() {
+            super.requestCurrentChannelLcn();
+        }
+
+        @Override
+        public void requestCurrentChannelUri() {
+            super.requestCurrentChannelUri();
+        }
+
+        @Override
+        public void requestCurrentTvInputId() {
+            super.requestCurrentTvInputId();
+        }
+
+        @Override
+        public void requestStreamVolume() {
+            super.requestStreamVolume();
+        }
+
+        @Override
+        public void requestTrackInfoList() {
+            super.requestTrackInfoList();
+        }
+
+        @Override
+        public void sendPlaybackCommandRequest(String cmdType, Bundle parameters) {
+            super.sendPlaybackCommandRequest(cmdType, parameters);
+        }
+
+        @Override
+        public void setMediaViewEnabled(boolean enable) {
+            super.setMediaViewEnabled(enable);
+        }
+
+        @Override
+        public void setVideoBounds(Rect rect) {
+            super.setVideoBounds(rect);
         }
 
         @Override

@@ -340,6 +340,11 @@ public class BuildTest extends TestCase {
         assertTrue(
                 "Expected all elements in Build.VERSION.KNOWN_CODENAMES to be declared in"
                         + " Build.VERSION_CODES, found " + diff, diff.isEmpty());
+
+        if (!Build.VERSION.CODENAME.equals("REL")) {
+            assertTrue("In-development CODENAME must be declared in Build.VERSION.KNOWN_CODENAMES",
+                Build.VERSION.KNOWN_CODENAMES.contains(Build.VERSION.CODENAME));
+        }
     }
 
     /**

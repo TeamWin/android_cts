@@ -34,11 +34,16 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
+import android.content.Intent;
 import android.os.SystemClock;
+import android.speech.RecognitionSupport;
+import android.speech.RecognitionSupportCallback;
+import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
@@ -108,6 +113,63 @@ abstract class AbstractRecognitionServiceTest {
         }
         // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
         SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);
+    }
+
+    @Test
+    public void testCanCheckForSupport() throws Throwable {
+        mUiDevice.waitForIdle();
+        assertThat(mActivity.mRecognizer).isNotNull();
+        setCurrentRecognizer(mActivity.mRecognizer, IN_PACKAGE_RECOGNITION_SERVICE);
+        mUiDevice.waitForIdle();
+
+        List<RecognitionSupport> supportResults = new ArrayList<>();
+        List<Integer> errors = new ArrayList<>();
+        RecognitionSupportCallback supportCallback = new RecognitionSupportCallback() {
+            @Override
+            public void onSupportResult(@NonNull RecognitionSupport recognitionSupport) {
+                supportResults.add(recognitionSupport);
+            }
+
+            @Override
+            public void onError(int error) {
+                errors.add(error);
+            }
+        };
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        mActivity.checkRecognitionSupport(intent, supportCallback);
+        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
+                () -> supportResults.size() + errors.size() > 0);
+        assertThat(supportResults).isEmpty();
+        assertThat(errors).containsExactly(SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT);
+
+        errors.clear();
+        RecognitionSupport rs = new RecognitionSupport.Builder()
+                .addInstalledLanguages("en")
+                .addPendingLanguages("jp")
+                .addSupportedLanguages("de")
+                .build();
+        CtsRecognitionService.sConsumerQueue.add(c -> c.onSupportResult(rs));
+
+        mActivity.checkRecognitionSupport(intent, supportCallback);
+        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
+                () -> supportResults.size() + errors.size() > 0);
+        assertThat(errors).isEmpty();
+        assertThat(supportResults).containsExactly(rs);
+    }
+
+    @Test
+    public void testCanTriggerModelDownload() throws Throwable {
+        mUiDevice.waitForIdle();
+        assertThat(mActivity.mRecognizer).isNotNull();
+        setCurrentRecognizer(mActivity.mRecognizer, IN_PACKAGE_RECOGNITION_SERVICE);
+        mUiDevice.waitForIdle();
+
+        CtsRecognitionService.sDownloadTriggers.clear();
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        mActivity.triggerModelDownload(intent);
+        PollingCheck.waitFor(SEQUENCE_TEST_WAIT_TIMEOUT_MS,
+                () -> CtsRecognitionService.sDownloadTriggers.size() > 0);
+        assertThat(CtsRecognitionService.sDownloadTriggers).hasSize(1);
     }
 
     @Test

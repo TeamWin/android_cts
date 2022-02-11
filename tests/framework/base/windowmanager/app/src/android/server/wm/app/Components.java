@@ -256,6 +256,8 @@ public class Components extends ComponentsBase {
             component("SplashScreenReplaceIconActivity");
     public static final ComponentName SPLASH_SCREEN_REPLACE_THEME_ACTIVITY =
             component("SplashScreenReplaceThemeActivity");
+    public static final ComponentName SPLASH_SCREEN_STYLE_THEME_ACTIVITY =
+            component("SplashScreenStyleThemeActivity");
 
     public static final ComponentName TEST_DREAM_SERVICE =
             component("TestDream");
@@ -327,7 +329,7 @@ public class Components extends ComponentsBase {
         public static final String OVERRIDE_THEME_ENABLED = "override_theme_enabled";
         public static final String OVERRIDE_THEME_COLOR = "override_theme_color";
         public static final String OVERRIDE_THEME_COMPONENT = "override_theme_component";
-
+        public static final String STYLE_THEME_COMPONENT = "style_theme_component";
     }
 
     /**

@@ -18,7 +18,6 @@ package android.photopicker.cts.cloudproviders;
 
 import static android.photopicker.cts.PickerProviderMediaGenerator.MediaGenerator;
 import static android.photopicker.cts.PickerProviderMediaGenerator.QueryExtras;
-import static android.provider.CloudMediaProvider.SurfaceEventCallback.PLAYBACK_EVENT_READY;
 import static android.provider.CloudMediaProviderContract.EXTRA_LOOPING_PLAYBACK_ENABLED;
 import static android.provider.CloudMediaProviderContract.MediaInfo;
 
@@ -51,6 +50,7 @@ public class CloudProviderPrimary extends CloudMediaProvider {
     private static final SurfaceControllerImpl sMockSurfaceControllerListener =
             mock(SurfaceControllerImpl.class);
 
+    private static SurfaceControllerImpl sSurfaceControllerImpl = null;
 
     private MediaGenerator mMediaGenerator;
 
@@ -120,7 +120,8 @@ public class CloudProviderPrimary extends CloudMediaProvider {
     public SurfaceController onCreateSurfaceController(@NonNull Bundle config,
             @NonNull SurfaceEventCallback callback) {
         final boolean enableLoop = config.getBoolean(EXTRA_LOOPING_PLAYBACK_ENABLED, false);
-        return new SurfaceControllerImpl(getContext(), enableLoop, callback);
+        sSurfaceControllerImpl = new SurfaceControllerImpl(getContext(), enableLoop, callback);
+        return sSurfaceControllerImpl;
     }
 
     /**
@@ -129,6 +130,14 @@ public class CloudProviderPrimary extends CloudMediaProvider {
      */
     public static SurfaceControllerImpl getMockSurfaceControllerListener() {
         return sMockSurfaceControllerListener;
+    }
+
+    public static void sendPlaybackEvent(int surfaceId, int event) {
+        if (sSurfaceControllerImpl == null) {
+            throw new IllegalStateException("Surface Controller object expected to be not null");
+        }
+
+        sSurfaceControllerImpl.sendPlaybackEvent(surfaceId, event);
     }
 
     public static class SurfaceControllerImpl extends SurfaceController {
@@ -156,8 +165,6 @@ public class CloudProviderPrimary extends CloudMediaProvider {
         public void onSurfaceCreated(int surfaceId, @NonNull Surface surface,
                 @NonNull String mediaId) {
             sMockSurfaceControllerListener.onSurfaceCreated(surfaceId, surface, mediaId);
-
-            mCallback.onPlaybackEvent(surfaceId, PLAYBACK_EVENT_READY, null);
 
             Log.d(TAG, "Surface prepared: " + surfaceId + ". Surface: " + surface
                     + ". MediaId: " + mediaId);
@@ -204,6 +211,10 @@ public class CloudProviderPrimary extends CloudMediaProvider {
         public void onDestroy() {
             sMockSurfaceControllerListener.onDestroy();
             Log.d(TAG, "Surface controller destroyed.");
+        }
+
+        public void sendPlaybackEvent(int surfaceId, int event) {
+            mCallback.onPlaybackEvent(surfaceId, event, null);
         }
     }
 }

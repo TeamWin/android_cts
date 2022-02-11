@@ -245,7 +245,7 @@ void executionFailure() {
 } // namespace
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_android_server_cts_device_statsdatom_StatsdCtsForegroundActivity_trigger_1libneuralnetworks_1atoms(
+Java_com_android_nn_stats_app_NnapiDeviceActivity_trigger_1libneuralnetworks_1atoms(
         JNIEnv*, jobject /*this*/) {
     compilationSuccess();
     compilationFailure();

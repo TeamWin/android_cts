@@ -18,11 +18,13 @@ package android.service.games;
 
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.service.games.GameSession.ScreenshotCallback;
 import android.service.games.TestGameSessionService.TestGameSession;
 import android.service.games.testing.ActivityResult;
 import android.service.games.testing.IGameServiceTestService;
@@ -35,13 +37,17 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service allowing external apps to verify the state of {@link TestGameService} and {@link
  * TestGameSessionService}.
  */
 public final class GameServiceTestService extends Service {
+
+    private static final long SCREENSHOT_CALLBACK_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(1);
+
     @Nullable
     private ActivityResult mLastActivityResult;
     private final IGameServiceTestService.Stub mStub = new IGameServiceTestService.Stub() {
@@ -120,16 +126,7 @@ public final class GameServiceTestService extends Service {
                 return null;
             }
 
-            AtomicReference<Rect> bounds =
-                    new AtomicReference<>(focusedGameSession.getTouchableBounds());
-            if (bounds.get().isEmpty()) {
-                PollingCheck.waitFor(() -> {
-                    bounds.set(focusedGameSession.getTouchableBounds());
-                    return !bounds.get().isEmpty();
-                });
-            }
-
-            return bounds.get();
+            return focusedGameSession.getTouchableBounds();
         }
 
         @Override
@@ -139,6 +136,49 @@ public final class GameServiceTestService extends Service {
                 return;
             }
             focusedGameSession.restartGame();
+        }
+
+        @Override
+        public void showOverlayForFocusedGameSession() {
+            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
+            if (focusedGameSession == null) {
+                return;
+            }
+            focusedGameSession.showOverlay();
+        }
+
+        @Override
+        public Bitmap getBitmapScreenshotForFocusedGameSession() {
+            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
+            if (focusedGameSession == null) {
+                return null;
+            }
+
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            Bitmap[] ret = new Bitmap[1];
+            ScreenshotCallback callback =
+                    new ScreenshotCallback() {
+                        @Override
+                        public void onFailure(int statusCode) {
+                            countDownLatch.countDown();
+                        }
+
+                        @Override
+                        public void onSuccess(Bitmap bitmap) {
+                            ret[0] = bitmap;
+                            countDownLatch.countDown();
+                        }
+                    };
+            focusedGameSession.takeScreenshot(Runnable::run, callback);
+
+            try {
+                countDownLatch.await(
+                        SCREENSHOT_CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                return null;
+            }
+
+            return ret[0];
         }
     };
 
