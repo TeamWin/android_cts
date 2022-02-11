@@ -484,8 +484,8 @@ public final class Processor extends AbstractProcessor {
             "public void dumpInternal(@NonNull String, @Nullable java.io.FileDescriptor, @NonNull "
                     + "java.io.PrintWriter, @Nullable String[])",
 
-            // Uses android.view.OnBackInvokedDispatcher
-            "public android.view.OnBackInvokedDispatcher getOnBackInvokedDispatcher()",
+            // Uses android.window.OnBackInvokedDispatcher
+            "public android.window.OnBackInvokedDispatcher getOnBackInvokedDispatcher()",
 
             // Uses android.app.Activity
             "@Deprecated public void finishActivityFromChild(@NonNull android.app.Activity, int)",
