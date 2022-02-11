@@ -30,10 +30,19 @@ import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.test.MoreAsserts;
 import android.util.Log;
+
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.internal.util.HexDump;
+
+import libcore.java.security.TestKeyStore;
+import libcore.javax.net.ssl.TestKeyManager;
+import libcore.javax.net.ssl.TestSSLContext;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -47,10 +56,10 @@ import java.security.NoSuchProviderException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.Provider.Service;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.security.Provider.Service;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECKey;
@@ -60,6 +69,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +84,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.text.DecimalFormatSymbols;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -84,16 +93,11 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.security.auth.x500.X500Principal;
 
-import libcore.java.security.TestKeyStore;
-import libcore.javax.net.ssl.TestKeyManager;
-import libcore.javax.net.ssl.TestSSLContext;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 @RunWith(AndroidJUnit4.class)
 public class KeyPairGeneratorTest {
+
+    private static final String TAG = "KeyPairGeneratorTest";
+
     private KeyStore mKeyStore;
 
     private CountingSecureRandom mRng;
@@ -804,6 +808,130 @@ public class KeyPairGeneratorTest {
         PublicKey pub2 = keyPair2.getPublic();
         if(Arrays.equals(pub1.getEncoded(), pub2.getEncoded())) {
             fail("The same RSA key pair was generated twice");
+        }
+    }
+
+    @Test
+    public void testRSA_Key_Quality() throws NoSuchAlgorithmException, NoSuchProviderException,
+            InvalidAlgorithmParameterException {
+        final int numKeysToGenerate = 10;
+        testRSA_Key_QualityHelper(numKeysToGenerate, false /* useStrongbox */);
+        if (TestUtils.hasStrongBox(getContext())) {
+            testRSA_Key_QualityHelper(numKeysToGenerate, true /* useStrongbox */);
+        }
+    }
+
+    private void testRSA_Key_QualityHelper(int numKeysToGenerate, boolean useStrongbox)
+            throws NoSuchAlgorithmException, NoSuchProviderException,
+                    InvalidAlgorithmParameterException {
+        Log.w(TAG, "Starting key quality testing");
+        List<PublicKey> publicKeys = getPublicKeys(numKeysToGenerate, useStrongbox);
+
+        testRSA_Key_Quality_All_DifferentHelper(publicKeys);
+        testRSA_Key_Quality_Not_Too_Many_ZerosHelper(publicKeys);
+        // Run the GCD test after verifying all keys are distinct. (Identical keys have a trivial
+        // common divisor greater than one.)
+        testRSA_Key_Quality_Not_Perfect_SquareHelper(publicKeys);
+        testRSA_Key_Quality_Public_Modulus_GCD_Is_One_Helper(publicKeys);
+    }
+
+    private void testRSA_Key_Quality_Not_Perfect_SquareHelper(Iterable<PublicKey> publicKeys) {
+        for (PublicKey publicKey : publicKeys) {
+            RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
+            BigInteger publicModulus = rsaPublicKey.getModulus();
+            BigInteger[] sqrtAndRemainder = publicModulus.sqrtAndRemainder();
+            BigInteger sqrt = sqrtAndRemainder[0];
+            BigInteger remainder = sqrtAndRemainder[1];
+            if (remainder.equals(BigInteger.ZERO)) {
+                fail(
+                        "RSA key public modulus is perfect square. "
+                                + HexDump.dumpHexString(publicKey.getEncoded()));
+            }
+        }
+    }
+
+    private void testRSA_Key_Quality_Public_Modulus_GCD_Is_One_Helper(
+            Iterable<PublicKey> publicKeys) {
+        // Inspired by Heninger et al 2012 ( https://factorable.net/paper.html ).
+
+        // First, compute the product of all public moduli.
+        BigInteger allProduct = BigInteger.ONE;
+        for (PublicKey publicKey : publicKeys) {
+            RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
+            BigInteger publicModulus = rsaPublicKey.getModulus();
+            allProduct = allProduct.multiply(publicModulus);
+        }
+        // There are better batch GCD algorithms (eg Bernstein 2004
+        // (https://cr.yp.to/factorization/smoothparts-20040510.pdf)).
+        // Since we are dealing with a small set of keys, we just use BigInteger.gcd().
+        for (PublicKey publicKey : publicKeys) {
+            RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
+            BigInteger publicModulus = rsaPublicKey.getModulus();
+            BigInteger gcd = allProduct.divide(publicModulus).gcd(publicModulus);
+
+            if (!gcd.equals(BigInteger.ONE)) {
+                Log.i(TAG, "Common factor found");
+                Log.i(TAG, "Key: " + HexDump.dumpHexString(publicKey.getEncoded()));
+                Log.i(TAG, "GCD : " + gcd.toString(16));
+                fail(
+                        "RSA keys have shared prime factor. Key: "
+                                + HexDump.dumpHexString(publicKey.getEncoded())
+                                + " GCD: "
+                                + gcd.toString());
+            }
+        }
+    }
+
+    private List<PublicKey> getPublicKeys(int numKeysToGenerate, boolean useStrongbox)
+            throws NoSuchAlgorithmException, NoSuchProviderException,
+                    InvalidAlgorithmParameterException {
+        List<PublicKey> publicKeys = new ArrayList<PublicKey>();
+        KeyPairGenerator generator = getRsaGenerator();
+        for (int i = 0; i < numKeysToGenerate; i++) {
+            generator.initialize(
+                    new KeyGenParameterSpec.Builder(
+                                    "test" + Integer.toString(i), KeyProperties.PURPOSE_SIGN)
+                            .setIsStrongBoxBacked(useStrongbox)
+                            .build());
+            KeyPair kp = generator.generateKeyPair();
+            PublicKey pk = kp.getPublic();
+            publicKeys.add(pk);
+            Log.v(TAG, "Key generation round " + Integer.toString(i));
+        }
+        return publicKeys;
+    }
+
+    public void testRSA_Key_Quality_All_DifferentHelper(Iterable<PublicKey> publicKeys) {
+        Log.d(TAG, "Testing all keys different.");
+        Set<Integer> keyHashSet = new HashSet<Integer>();
+        for (PublicKey pk : publicKeys) {
+            int keyHash = java.util.Arrays.hashCode(pk.getEncoded());
+            if (keyHashSet.contains(keyHash)) {
+                fail(
+                        "The same RSA key was generated twice. Key: "
+                                + HexDump.dumpHexString(pk.getEncoded()));
+            }
+            keyHashSet.add(keyHash);
+        }
+    }
+
+    public void testRSA_Key_Quality_Not_Too_Many_ZerosHelper(Iterable<PublicKey> publicKeys) {
+        // For 256 random bytes, there is less than a 1 in 10^16 chance of there being 17
+        // or more zero bytes.
+        int maxZerosAllowed = 17;
+
+        for (PublicKey pk : publicKeys) {
+            byte[] keyBytes = pk.getEncoded();
+            int zeroCount = 0;
+            for (int i = 0; i < keyBytes.length; i++) {
+                if (keyBytes[i] == 0x00) {
+                    zeroCount++;
+                }
+            }
+            if (zeroCount >= maxZerosAllowed) {
+                fail("RSA public key has " + Integer.toString(zeroCount)
+                        + " zeros. Key: " + HexDump.dumpHexString(keyBytes));
+            }
         }
     }
 
@@ -1698,7 +1826,7 @@ public class KeyPairGeneratorTest {
 
     private static void assertSelfSignedCertificateSignatureVerifies(Certificate certificate) {
         try {
-            Log.i("KeyPairGeneratorTest", HexDump.dumpHexString(certificate.getEncoded()));
+            Log.i(TAG, HexDump.dumpHexString(certificate.getEncoded()));
             certificate.verify(certificate.getPublicKey());
         } catch (Exception e) {
             throw new RuntimeException("Failed to verify self-signed certificate signature", e);
