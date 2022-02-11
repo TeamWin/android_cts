@@ -90,6 +90,18 @@ public class SpatializerTest extends CtsAndroidTestCase {
         assertThrows("Able to call getCompatibleAudioDevice without permission",
                 SecurityException.class,
                 () -> spat.getCompatibleAudioDevices());
+        assertThrows("Able to call isAvailableForDevice without permission",
+                SecurityException.class,
+                () -> spat.isAvailableForDevice(device));
+        assertThrows("Able to call hasHeadTracker without permission",
+                SecurityException.class,
+                () -> spat.hasHeadTracker(device));
+        assertThrows("Able to call setHeadTrackerEnabled without permission",
+                SecurityException.class,
+                () -> spat.setHeadTrackerEnabled(true, device));
+        assertThrows("Able to call isHeadTrackerEnabled without permission",
+                SecurityException.class,
+                () -> spat.isHeadTrackerEnabled(device));
 
         // try again with permission, then add a device and remove it
         getInstrumentation().getUiAutomation()
@@ -98,6 +110,13 @@ public class SpatializerTest extends CtsAndroidTestCase {
         List<AudioDeviceAttributes> compatDevices = spat.getCompatibleAudioDevices();
         assertTrue("added device not in list of compatible devices",
                 compatDevices.contains(device));
+        assertTrue("compatible device should be available", spat.isAvailableForDevice(device));
+        if (spat.hasHeadTracker(device)) {
+            spat.setHeadTrackerEnabled(true, device);
+            assertTrue("head tracker not found enabled", spat.isHeadTrackerEnabled(device));
+            spat.setHeadTrackerEnabled(false, device);
+            assertFalse("head tracker not found disabled", spat.isHeadTrackerEnabled(device));
+        }
         spat.removeCompatibleAudioDevice(device);
         compatDevices = spat.getCompatibleAudioDevices();
         assertFalse("removed device still in list of compatible devices",
