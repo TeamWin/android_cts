@@ -19,6 +19,7 @@ package android.media.cts;
 import static android.content.Context.AUDIO_SERVICE;
 import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
+import static android.media.cts.StubMediaRoute2ProviderService.FEATURES_ALL;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
