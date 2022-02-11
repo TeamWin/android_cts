@@ -104,14 +104,14 @@ class SafetyCenterEntryGroupTest {
     }
 
     @Test
-    fun getStatelessIconType_returnsStatelessIconType() {
-        assertThat(entryGroup1.statelessIconType)
-                .isEqualTo(SafetyCenterEntry.STATELESS_ICON_TYPE_NONE)
+    fun getSeverityNoneIconType_returnsSeverityNoneIconType() {
+        assertThat(entryGroup1.severityNoneIconType)
+                .isEqualTo(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_NO_ICON)
         assertThat(SafetyCenterEntryGroup.Builder(entryGroup1)
-                .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
                 .build()
-                .statelessIconType)
-                .isEqualTo(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .severityNoneIconType)
+                .isEqualTo(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
     }
 
     @Test
@@ -224,9 +224,9 @@ class SafetyCenterEntryGroupTest {
     }
 
     @Test
-    fun equals_toString_withDifferentStatelessIconTypes_areNotEqual() {
+    fun equals_toString_withDifferentSeverityNoneIconTypes_areNotEqual() {
         val differentFromEntryGroup1 = SafetyCenterEntryGroup.Builder(entryGroup1)
-                .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
                 .build()
 
         assertThat(differentFromEntryGroup1).isNotEqualTo(entryGroup1)
