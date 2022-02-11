@@ -39,27 +39,35 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 
 import android.opengl.GLES20;
 
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.CRC32;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
+
 @MediaHeavyPresubmitTest
 @AppModeFull
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class AdaptivePlaybackTest extends MediaTestBase {
 
     private static final boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
@@ -82,7 +90,21 @@ public class AdaptivePlaybackTest extends MediaTestBase {
         super.tearDown();
     }
 
-    public Iterable<Codec> H264(CodecFactory factory) {
+    private static final String CODEC_PREFIX_KEY = "codec-prefix";
+    private static final String mCodecPrefix;
+
+    @Parameterized.Parameter(0)
+    public String mCodecName;
+
+    @Parameterized.Parameter(1)
+    public CodecList mCodecs;
+
+    static {
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
+    }
+
+    public static Iterable<Codec> H264(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_AVC,
                 "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
@@ -90,7 +112,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 "bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz.mp4");
     }
 
-    public Iterable<Codec> HEVC(CodecFactory factory) {
+    public static Iterable<Codec> HEVC(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
                 "bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz.mp4",
@@ -98,21 +120,21 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 "bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz.mp4");
     }
 
-    public Iterable<Codec> Mpeg2(CodecFactory factory) {
+    public static Iterable<Codec> Mpeg2(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_MPEG2,
                 "video_640x360_mp4_mpeg2_2000kbps_30fps_aac_stereo_128kbps_48000hz.mp4",
                 "video_1280x720_mp4_mpeg2_3000kbps_30fps_aac_stereo_128kbps_48000hz.mp4");
     }
 
-    public Iterable<Codec> H263(CodecFactory factory) {
+    public static Iterable<Codec> H263(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_H263,
                 "video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
                 "video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp");
     }
 
-    public Iterable<Codec> Mpeg4(CodecFactory factory) {
+    public static Iterable<Codec> Mpeg4(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_MPEG4,
                 "video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
@@ -120,7 +142,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 "video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
 
-    public Iterable<Codec> VP8(CodecFactory factory) {
+    public static Iterable<Codec> VP8(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_VP8,
                 "video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
@@ -128,7 +150,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 "bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz.webm");
     }
 
-    public Iterable<Codec> VP9(CodecFactory factory) {
+    public static Iterable<Codec> VP9(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_VP9,
                 "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
@@ -136,7 +158,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 "bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz.webm");
     }
 
-    public Iterable<Codec> AV1(CodecFactory factory) {
+    public static Iterable<Codec> AV1(CodecFactory factory) {
         return factory.createCodecList(
                 MediaFormat.MIMETYPE_VIDEO_AV1,
                 "video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
@@ -144,18 +166,18 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 "video_320x180_webm_av1_200kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
-    CodecFactory ALL = new CodecFactory();
-    CodecFactory SW  = new SWCodecFactory();
-    CodecFactory HW  = new HWCodecFactory();
+    static CodecFactory ALL = new CodecFactory();
+    static CodecFactory SW  = new SWCodecFactory();
+    static CodecFactory HW  = new HWCodecFactory();
 
-    public Iterable<Codec> H264()  { return H264(ALL);  }
-    public Iterable<Codec> HEVC()  { return HEVC(ALL);  }
-    public Iterable<Codec> VP8()   { return VP8(ALL);   }
-    public Iterable<Codec> VP9()   { return VP9(ALL);   }
-    public Iterable<Codec> AV1()   { return AV1(ALL);   }
-    public Iterable<Codec> Mpeg2() { return Mpeg2(ALL); }
-    public Iterable<Codec> Mpeg4() { return Mpeg4(ALL); }
-    public Iterable<Codec> H263()  { return H263(ALL);  }
+    public static Iterable<Codec> H264()  { return H264(ALL);  }
+    public static Iterable<Codec> HEVC()  { return HEVC(ALL);  }
+    public static Iterable<Codec> VP8()   { return VP8(ALL);   }
+    public static Iterable<Codec> VP9()   { return VP9(ALL);   }
+    public static Iterable<Codec> AV1()   { return AV1(ALL);   }
+    public static Iterable<Codec> Mpeg2() { return Mpeg2(ALL); }
+    public static Iterable<Codec> Mpeg4() { return Mpeg4(ALL); }
+    public static Iterable<Codec> H263()  { return H263(ALL);  }
 
     public Iterable<Codec> AllCodecs() {
         return chain(H264(ALL), HEVC(ALL), VP8(ALL), VP9(ALL), AV1(ALL), Mpeg2(ALL), Mpeg4(ALL), H263(ALL));
@@ -170,23 +192,23 @@ public class AdaptivePlaybackTest extends MediaTestBase {
     }
 
     /* tests for adaptive codecs */
-    Test adaptiveEarlyEos     = new EarlyEosTest().adaptive();
-    Test adaptiveEosFlushSeek = new EosFlushSeekTest().adaptive();
-    Test adaptiveSkipAhead    = new AdaptiveSkipTest(true /* forward */);
-    Test adaptiveSkipBack     = new AdaptiveSkipTest(false /* forward */);
+    MediaTest adaptiveEarlyEos     = new EarlyEosTest().adaptive();
+    MediaTest adaptiveEosFlushSeek = new EosFlushSeekTest().adaptive();
+    MediaTest adaptiveSkipAhead    = new AdaptiveSkipTest(true /* forward */);
+    MediaTest adaptiveSkipBack     = new AdaptiveSkipTest(false /* forward */);
 
     /* DRC tests for adaptive codecs */
-    Test adaptiveReconfigDrc      = new ReconfigDrcTest().adaptive();
-    Test adaptiveSmallReconfigDrc = new ReconfigDrcTest().adaptiveSmall();
-    Test adaptiveDrc      = new AdaptiveDrcTest(); /* adaptive */
-    Test adaptiveSmallDrc = new AdaptiveDrcTest().adaptiveSmall();
+    MediaTest adaptiveReconfigDrc      = new ReconfigDrcTest().adaptive();
+    MediaTest adaptiveSmallReconfigDrc = new ReconfigDrcTest().adaptiveSmall();
+    MediaTest adaptiveDrc      = new AdaptiveDrcTest(); /* adaptive */
+    MediaTest adaptiveSmallDrc = new AdaptiveDrcTest().adaptiveSmall();
 
     /* tests for regular codecs */
-    Test earlyEos          = new EarlyEosTest();
-    Test eosFlushSeek      = new EosFlushSeekTest();
-    Test flushConfigureDrc = new ReconfigDrcTest();
+    MediaTest earlyEos          = new EarlyEosTest();
+    MediaTest eosFlushSeek      = new EosFlushSeekTest();
+    MediaTest flushConfigureDrc = new ReconfigDrcTest();
 
-    Test[] allTests = {
+    MediaTest[] allTests = {
         adaptiveEarlyEos,
         adaptiveEosFlushSeek,
         adaptiveSkipAhead,
@@ -201,7 +223,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
     };
 
     /* helpers to run sets of tests */
-    public void runEOS() { ex(AllCodecs(), new Test[] {
+    public void runEOS() { ex(AllCodecs(), new MediaTest[] {
         adaptiveEarlyEos,
         adaptiveEosFlushSeek,
         adaptiveReconfigDrc,
@@ -249,209 +271,108 @@ public class AdaptivePlaybackTest extends MediaTestBase {
     public void bytebuffer() { ex(H264(SW), new EarlyEosTest().byteBuffer()); }
     public void onlyTexture() { ex(H264(HW), new EarlyEosTest().texture()); }
 
-    /* Individual tests. */
-    @org.junit.Test
-    public void testH264_adaptiveEarlyEos()  { ex(H264(),  adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testHEVC_adaptiveEarlyEos()  { ex(HEVC(),  adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testVP8_adaptiveEarlyEos()   { ex(VP8(),   adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testVP9_adaptiveEarlyEos()   { ex(VP9(),   adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testAV1_adaptiveEarlyEos()   { ex(AV1(),   adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveEarlyEos() { ex(Mpeg2(), adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveEarlyEos() { ex(Mpeg4(), adaptiveEarlyEos); }
-    @org.junit.Test
-    public void testH263_adaptiveEarlyEos()  { ex(H263(),  adaptiveEarlyEos); }
-
-    @org.junit.Test
-    public void testH264_adaptiveEosFlushSeek()  { ex(H264(),  adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testHEVC_adaptiveEosFlushSeek()  { ex(HEVC(),  adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testVP8_adaptiveEosFlushSeek()   { ex(VP8(),   adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testVP9_adaptiveEosFlushSeek()   { ex(VP9(),   adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testAV1_adaptiveEosFlushSeek()   { ex(AV1(),   adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveEosFlushSeek() { ex(Mpeg2(), adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveEosFlushSeek() { ex(Mpeg4(), adaptiveEosFlushSeek); }
-    @org.junit.Test
-    public void testH263_adaptiveEosFlushSeek()  { ex(H263(),  adaptiveEosFlushSeek); }
-
-    @org.junit.Test
-    public void testH264_adaptiveSkipAhead()  { ex(H264(),  adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testHEVC_adaptiveSkipAhead()  { ex(HEVC(),  adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testVP8_adaptiveSkipAhead()   { ex(VP8(),   adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testVP9_adaptiveSkipAhead()   { ex(VP9(),   adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testAV1_adaptiveSkipAhead()   { ex(AV1(),   adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveSkipAhead() { ex(Mpeg2(), adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveSkipAhead() { ex(Mpeg4(), adaptiveSkipAhead); }
-    @org.junit.Test
-    public void testH263_adaptiveSkipAhead()  { ex(H263(),  adaptiveSkipAhead); }
-
-    @org.junit.Test
-    public void testH264_adaptiveSkipBack()  { ex(H264(),  adaptiveSkipBack); }
-    @org.junit.Test
-    public void testHEVC_adaptiveSkipBack()  { ex(HEVC(),  adaptiveSkipBack); }
-    @org.junit.Test
-    public void testVP8_adaptiveSkipBack()   { ex(VP8(),   adaptiveSkipBack); }
-    @org.junit.Test
-    public void testVP9_adaptiveSkipBack()   { ex(VP9(),   adaptiveSkipBack); }
-    @org.junit.Test
-    public void testAV1_adaptiveSkipBack()   { ex(AV1(),   adaptiveSkipBack); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveSkipBack() { ex(Mpeg2(), adaptiveSkipBack); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveSkipBack() { ex(Mpeg4(), adaptiveSkipBack); }
-    @org.junit.Test
-    public void testH263_adaptiveSkipBack()  { ex(H263(),  adaptiveSkipBack); }
-
-    @org.junit.Test
-    public void testH264_adaptiveReconfigDrc()  { ex(H264(),  adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testHEVC_adaptiveReconfigDrc()  { ex(HEVC(),  adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testVP8_adaptiveReconfigDrc()   { ex(VP8(),   adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testVP9_adaptiveReconfigDrc()   { ex(VP9(),   adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testAV1_adaptiveReconfigDrc()   { ex(AV1(),   adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveReconfigDrc() { ex(Mpeg2(), adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveReconfigDrc() { ex(Mpeg4(), adaptiveReconfigDrc); }
-    @org.junit.Test
-    public void testH263_adaptiveReconfigDrc()  { ex(H263(),  adaptiveReconfigDrc); }
-
-    @org.junit.Test
-    public void testH264_adaptiveSmallReconfigDrc()  { ex(H264(),  adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testHEVC_adaptiveSmallReconfigDrc()  { ex(HEVC(),  adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testVP8_adaptiveSmallReconfigDrc()   { ex(VP8(),   adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testVP9_adaptiveSmallReconfigDrc()   { ex(VP9(),   adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testAV1_adaptiveSmallReconfigDrc()   { ex(AV1(),   adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveSmallReconfigDrc() { ex(Mpeg2(), adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveSmallReconfigDrc() { ex(Mpeg4(), adaptiveSmallReconfigDrc); }
-    @org.junit.Test
-    public void testH263_adaptiveSmallReconfigDrc()  { ex(H263(),  adaptiveSmallReconfigDrc); }
-
-    @org.junit.Test
-    public void testH264_adaptiveDrc() { ex(H264(), adaptiveDrc); }
-    @org.junit.Test
-    public void testHEVC_adaptiveDrc() { ex(HEVC(), adaptiveDrc); }
-    @org.junit.Test
-    public void testVP8_adaptiveDrc()  { ex(VP8(),  adaptiveDrc); }
-    @org.junit.Test
-    public void testVP9_adaptiveDrc()  { ex(VP9(),  adaptiveDrc); }
-    @org.junit.Test
-    public void testAV1_adaptiveDrc()  { ex(AV1(),  adaptiveDrc); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveDrc() { ex(Mpeg2(), adaptiveDrc); }
-    @org.junit.Test
-    public void testMpeg4_adaptiveDrc() { ex(Mpeg4(), adaptiveDrc); }
-    @org.junit.Test
-    public void testH263_adaptiveDrc() { ex(H263(), adaptiveDrc); }
-
-    @org.junit.Test
-    public void testH264_adaptiveDrcEarlyEos() { ex(H264(), new AdaptiveDrcEarlyEosTest()); }
-    @org.junit.Test
-    public void testHEVC_adaptiveDrcEarlyEos() { ex(HEVC(), new AdaptiveDrcEarlyEosTest()); }
-    @org.junit.Test
-    public void testVP8_adaptiveDrcEarlyEos()  { ex(VP8(),  new AdaptiveDrcEarlyEosTest()); }
-    @org.junit.Test
-    public void testVP9_adaptiveDrcEarlyEos()  { ex(VP9(),  new AdaptiveDrcEarlyEosTest()); }
-    @org.junit.Test
-    public void testAV1_adaptiveDrcEarlyEos()  { ex(AV1(),  new AdaptiveDrcEarlyEosTest()); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveDrcEarlyEos(){ ex(Mpeg2(), new AdaptiveDrcEarlyEosTest()); }
-
-    @org.junit.Test
-    public void testH264_adaptiveSmallDrc()  { ex(H264(),  adaptiveSmallDrc); }
-    @org.junit.Test
-    public void testHEVC_adaptiveSmallDrc()  { ex(HEVC(),  adaptiveSmallDrc); }
-    @org.junit.Test
-    public void testVP8_adaptiveSmallDrc()   { ex(VP8(),   adaptiveSmallDrc); }
-    @org.junit.Test
-    public void testVP9_adaptiveSmallDrc()   { ex(VP9(),   adaptiveSmallDrc); }
-    @org.junit.Test
-    public void testAV1_adaptiveSmallDrc()   { ex(AV1(),   adaptiveSmallDrc); }
-    @org.junit.Test
-    public void testMpeg2_adaptiveSmallDrc() { ex(Mpeg2(), adaptiveSmallDrc); }
-
-    @org.junit.Test
-    public void testH264_earlyEos()  { ex(H264(),  earlyEos); }
-    @org.junit.Test
-    public void testHEVC_earlyEos()  { ex(HEVC(),  earlyEos); }
-    @org.junit.Test
-    public void testVP8_earlyEos()   { ex(VP8(),   earlyEos); }
-    @org.junit.Test
-    public void testVP9_earlyEos()   { ex(VP9(),   earlyEos); }
-    @org.junit.Test
-    public void testAV1_earlyEos()   { ex(AV1(),   earlyEos); }
-    @org.junit.Test
-    public void testMpeg2_earlyEos() { ex(Mpeg2(), earlyEos); }
-    @org.junit.Test
-    public void testMpeg4_earlyEos() { ex(Mpeg4(), earlyEos); }
-    @org.junit.Test
-    public void testH263_earlyEos()  { ex(H263(),  earlyEos); }
-
-    @org.junit.Test
-    public void testH264_eosFlushSeek()  { ex(H264(),  eosFlushSeek); }
-    @org.junit.Test
-    public void testHEVC_eosFlushSeek()  { ex(HEVC(),  eosFlushSeek); }
-    @org.junit.Test
-    public void testVP8_eosFlushSeek()   { ex(VP8(),   eosFlushSeek); }
-    @org.junit.Test
-    public void testVP9_eosFlushSeek()   { ex(VP9(),   eosFlushSeek); }
-    @org.junit.Test
-    public void testAV1_eosFlushSeek()   { ex(AV1(),   eosFlushSeek); }
-    @org.junit.Test
-    public void testMpeg2_eosFlushSeek() { ex(Mpeg2(), eosFlushSeek); }
-    @org.junit.Test
-    public void testMpeg4_eosFlushSeek() { ex(Mpeg4(), eosFlushSeek); }
-    @org.junit.Test
-    public void testH263_eosFlushSeek()  { ex(H263(),  eosFlushSeek); }
-
-    @org.junit.Test
-    public void testH264_flushConfigureDrc()  { ex(H264(),  flushConfigureDrc); }
-    @org.junit.Test
-    public void testHEVC_flushConfigureDrc()  { ex(HEVC(),  flushConfigureDrc); }
-    @org.junit.Test
-    public void testVP8_flushConfigureDrc()   { ex(VP8(),   flushConfigureDrc); }
-    @org.junit.Test
-    public void testVP9_flushConfigureDrc()   { ex(VP9(),   flushConfigureDrc); }
-    @org.junit.Test
-    public void testAV1_flushConfigureDrc()   { ex(AV1(),   flushConfigureDrc); }
-    @org.junit.Test
-    public void testMpeg2_flushConfigureDrc() { ex(Mpeg2(), flushConfigureDrc); }
-    @org.junit.Test
-    public void testMpeg4_flushConfigureDrc() { ex(Mpeg4(), flushConfigureDrc); }
-    @org.junit.Test
-    public void testH263_flushConfigureDrc()  { ex(H263(),  flushConfigureDrc); }
-
-    /* only use unchecked exceptions to allow brief test methods */
-    private void ex(Iterable<Codec> codecList, Test test) {
-        ex(codecList, new Test[] { test } );
+    static private List<Object[]> prepareParamList(List<Object> exhaustiveArgsList) {
+        final List<Object[]> argsList = new ArrayList<>();
+        for (Object arg : exhaustiveArgsList) {
+            if (arg instanceof CodecList) {
+                CodecList codecList = (CodecList)arg;
+                for (Codec codec : codecList) {
+                    if (mCodecPrefix != null && !codec.name.startsWith(mCodecPrefix)) {
+                        continue;
+                    }
+                    Object[] testArgs = new Object[2];
+                    testArgs[0] = codec.name;
+                    CodecList subList = new CodecList();
+                    subList.add(codec);
+                    testArgs[1] = subList;
+                    argsList.add(testArgs);
+                }
+            }
+        }
+        return argsList;
     }
 
-    private void ex(Iterable<Codec> codecList, Test[] testList) {
+    @Parameterized.Parameters(name = "{index}({0})")
+    public static Collection<Object[]> input() {
+        final List<Object> exhaustiveArgsList = Arrays.asList(new Object[]{
+                H264(), HEVC(), VP8(), VP9(), AV1(), Mpeg2(), Mpeg4(), H263()
+        });
+        return prepareParamList(exhaustiveArgsList);
+    }
+
+    /* individual tests */
+    @Test
+    public void test_adaptiveEarlyEos() {
+        ex(mCodecs, adaptiveEarlyEos);
+    }
+
+    @Test
+    public void test_adaptiveEosFlushSeek() {
+        ex(mCodecs, adaptiveEosFlushSeek);
+    }
+
+    @Test
+    public void test_adaptiveSkipAhead() {
+        ex(mCodecs, adaptiveSkipAhead);
+    }
+
+    @Test
+    public void test_adaptiveSkipBack() {
+        ex(mCodecs, adaptiveSkipBack);
+    }
+
+    @Test
+    public void test_adaptiveReconfigDrc() {
+        ex(mCodecs, adaptiveReconfigDrc);
+    }
+
+    @Test
+    public void test_adaptiveSmallReconfigDrc() {
+        ex(mCodecs, adaptiveSmallReconfigDrc);
+    }
+
+    @Test
+    public void test_adaptiveDrc() {
+        ex(mCodecs, adaptiveDrc);
+    }
+
+    @Test
+    public void test_AdaptiveDrcEarlyEosTest() {
+        String mime = mCodecs.get(0).mediaList[0].getMime();
+        assumeFalse(mime.equals(MediaFormat.MIMETYPE_VIDEO_H263) ||
+                mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4));
+        ex(mCodecs, new AdaptiveDrcEarlyEosTest());
+    }
+
+    @Test
+    public void test_adaptiveSmallDrc() {
+        String mime = mCodecs.get(0).mediaList[0].getMime();
+        assumeFalse(mime.equals(MediaFormat.MIMETYPE_VIDEO_H263) ||
+                mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4));
+        ex(mCodecs, adaptiveSmallDrc);
+    }
+
+    @Test
+    public void test_earlyEos() {
+        ex(mCodecs, earlyEos);
+    }
+
+    @Test
+    public void test_eosFlushSeek() {
+        ex(mCodecs, eosFlushSeek);
+    }
+
+    @Test
+    public void test_flushConfigureDrc() {
+        ex(mCodecs, flushConfigureDrc);
+    }
+
+    /* only use unchecked exceptions to allow brief test methods */
+    private void ex(Iterable<Codec> codecList, MediaTest test) {
+        ex(codecList, new MediaTest[] { test } );
+    }
+
+    private void ex(Iterable<Codec> codecList, MediaTest[] testList) {
         if (codecList == null) {
             Log.i(TAG, "CodecList was empty. Skipping test.");
             return;
@@ -459,7 +380,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
 
         TestList tests = new TestList();
         for (Codec c : codecList) {
-            for (Test test : testList) {
+            for (MediaTest test : testList) {
                 if (test.isValid(c)) {
                     test.addTests(tests, c);
                 }
@@ -473,7 +394,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
     }
 
     /* need an inner class to have access to the activity */
-    abstract class ActivityTest extends Test {
+    abstract class ActivityTest extends MediaTest {
         TestSurface mNullSurface = new ActivitySurface(null);
         protected TestSurface getSurface() {
             if (mUseSurface) {
@@ -1759,7 +1680,7 @@ class TestList extends ArrayList<Step> {
     private int mWarnings;
 }
 
-abstract class Test {
+abstract class MediaTest {
     public static final int FORMAT_ADAPTIVE_LARGEST = 1;
     public static final int FORMAT_ADAPTIVE_FIRST = 2;
     public static final int FORMAT_REGULAR = 3;
@@ -1768,29 +1689,29 @@ abstract class Test {
     protected boolean mUseSurface;
     protected boolean mUseSurfaceTexture;
 
-    public Test() {
+    public MediaTest() {
         mFormatType = FORMAT_REGULAR;
         mUseSurface = true;
         mUseSurfaceTexture = false;
     }
 
-    public Test adaptive() {
+    public MediaTest adaptive() {
         mFormatType = FORMAT_ADAPTIVE_LARGEST;
         return this;
     }
 
-    public Test adaptiveSmall() {
+    public MediaTest adaptiveSmall() {
         mFormatType = FORMAT_ADAPTIVE_FIRST;
         return this;
     }
 
-    public Test byteBuffer() {
+    public MediaTest byteBuffer() {
         mUseSurface = false;
         mUseSurfaceTexture = false;
         return this;
     }
 
-    public Test texture() {
+    public MediaTest texture() {
         mUseSurface = false;
         mUseSurfaceTexture = true;
         return this;
@@ -1852,17 +1773,17 @@ abstract class Test {
 abstract class Step {
     private static final String TAG = "AdaptiveStep";
 
-    public Step(String title, Test instance, Codec codec, Media media) {
+    public Step(String title, MediaTest instance, Codec codec, Media media) {
         mTest = instance;
         mCodec = codec;
         mMedia = media;
         mDescription = title + " on " + stepSurface().getSurface() + " using " +
             mCodec.name + " and " + stepFormat();
     }
-    public Step(String title, Test instance, Codec codec, int mediaIx) {
+    public Step(String title, MediaTest instance, Codec codec, int mediaIx) {
         this(title, instance, codec, codec.mediaList[mediaIx]);
     }
-    public Step(String title, Test instance, Codec codec) {
+    public Step(String title, MediaTest instance, Codec codec) {
         this(title, instance, codec, 0);
     }
     public Step(String description) {
@@ -1873,7 +1794,7 @@ abstract class Step {
     public abstract void run() throws Throwable;
 
     private String mDescription;
-    private Test mTest;
+    private MediaTest mTest;
     private Codec mCodec;
     private Media mMedia;
     private int mWarnings;
