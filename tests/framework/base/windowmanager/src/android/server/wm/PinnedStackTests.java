@@ -95,11 +95,13 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.ActivityTaskManager;
 import android.app.PictureInPictureParams;
 import android.app.TaskInfo;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -490,6 +492,45 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         Rect pinnedStackBounds = getPinnedStackBounds();
         assertFloatEquals((float) pinnedStackBounds.width() / pinnedStackBounds.height(),
                 (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
+    }
+
+    @Test
+    public void testPreferDockBigOverlaysWithExpandedPip() {
+        testPreferDockBigOverlaysWithExpandedPip(true);
+    }
+
+    @Test
+    public void testNotPreferDockBigOverlaysWithExpandedPip() {
+        testPreferDockBigOverlaysWithExpandedPip(false);
+    }
+
+    private void testPreferDockBigOverlaysWithExpandedPip(boolean preferDock) {
+        assumeTrue(supportsExpandedPip());
+        TestActivitySession<TestActivity> testSession = createManagedTestActivitySession();
+        final Intent intent = new Intent(mContext, TestActivity.class);
+        testSession.launchTestActivityOnDisplaySync(null, intent, DEFAULT_DISPLAY);
+        final TestActivity activity = testSession.getActivity();
+        mWmState.assertResumedActivity("Activity must be resumed", activity.getComponentName());
+
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(4)));
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        testSession.runOnMainSyncAndWait(() -> activity.setPreferDockBigOverlays(preferDock));
+
+        mWmState.assertResumedActivity("Activity must be resumed", activity.getComponentName());
+        assertPinnedStackExists();
+        runWithShellPermission(() -> {
+            final Task task = mWmState.getTaskByActivity(activity.getComponentName());
+            final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
+
+            assertEquals(preferDock, info.getPreferDockBigOverlays());
+        });
     }
 
     @Test
@@ -1789,4 +1830,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                     WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
         }
     }
+
+    public static class TestActivity extends Activity { }
 }
