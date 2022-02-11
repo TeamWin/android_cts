@@ -433,6 +433,9 @@ public class PermissionPolicyTest {
                 case "role": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_ROLE;
                 } break;
+                case "knownSigner": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_KNOWN_SIGNER;
+                } break;
             }
         }
         return protectionLevel;
