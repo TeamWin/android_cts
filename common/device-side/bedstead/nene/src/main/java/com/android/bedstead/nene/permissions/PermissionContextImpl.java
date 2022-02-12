@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link PermissionContext}
  */
-public final class PermissionContextImpl implements PermissionContext {
+public final class PermissionContextImpl implements PermissionContextModifier {
     private final Permissions mPermissions;
     private final Set<String> mGrantedPermissions = new HashSet<>();
     private final Set<String> mDeniedPermissions = new HashSet<>();
@@ -57,6 +57,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withPermission(String...)}
      */
+    @Override
     public PermissionContextImpl withPermission(String... permissions) {
         for (String permission : permissions) {
             if (mDeniedPermissions.contains(permission)) {
@@ -76,6 +77,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withPermissionOnVersion(int, String...)}
      */
+    @Override
     public PermissionContextImpl withPermissionOnVersion(int sdkVersion, String... permissions) {
         return withPermissionOnVersionBetween(sdkVersion, sdkVersion, permissions);
     }
@@ -83,6 +85,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withPermissionOnVersionAtLeast(int, String...)}
      */
+    @Override
     public PermissionContextImpl withPermissionOnVersionAtLeast(
             int sdkVersion, String... permissions) {
         return withPermissionOnVersionBetween(sdkVersion, Versions.ANY, permissions);
@@ -91,6 +94,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withPermissionOnVersionAtMost(int, String...)}
      */
+    @Override
     public PermissionContextImpl withPermissionOnVersionAtMost(
             int sdkVersion, String... permissions) {
         return withPermissionOnVersionBetween(Versions.ANY, sdkVersion, permissions);
@@ -99,6 +103,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withPermissionOnVersionBetween(int, String...)}
      */
+    @Override
     public PermissionContextImpl withPermissionOnVersionBetween(
             int minSdkVersion, int maxSdkVersion, String... permissions) {
         if (Versions.meetsSdkVersionRequirements(minSdkVersion, maxSdkVersion)) {
@@ -111,6 +116,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withoutPermission(String...)}
      */
+    @Override
     public PermissionContextImpl withoutPermission(String... permissions) {
         for (String permission : permissions) {
             if (mGrantedPermissions.contains(permission)) {
@@ -135,6 +141,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withAppOp(String...)}
      */
+    @Override
     public PermissionContextImpl withAppOp(String... appOps) {
         for (String appOp : appOps) {
             if (mDeniedAppOps.contains(appOp)) {
@@ -154,6 +161,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withAppOpOnVersion(int, String...)}
      */
+    @Override
     public PermissionContextImpl withAppOpOnVersion(int sdkVersion, String... appOps) {
         return withAppOpOnVersionBetween(sdkVersion, sdkVersion, appOps);
     }
@@ -161,6 +169,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withAppOpOnVersionAtMost(int, String...)}
      */
+    @Override
     public PermissionContextImpl withAppOpOnVersionAtMost(int sdkVersion, String... appOps) {
         return withAppOpOnVersionBetween(Versions.ANY, sdkVersion, appOps);
     }
@@ -168,6 +177,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withAppOpOnVersionAtLeast(int, String...)}
      */
+    @Override
     public PermissionContextImpl withAppOpOnVersionAtLeast(int sdkVersion, String... appOps) {
         return withAppOpOnVersionBetween(sdkVersion, Versions.ANY, appOps);
     }
@@ -175,6 +185,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withAppOpOnVersionBetween(int, String...)}
      */
+    @Override
     public PermissionContextImpl withAppOpOnVersionBetween(
             int minSdkVersion, int maxSdkVersion, String... appOps) {
         if (Versions.meetsSdkVersionRequirements(minSdkVersion, maxSdkVersion)) {
@@ -187,6 +198,7 @@ public final class PermissionContextImpl implements PermissionContext {
     /**
      * See {@link Permissions#withoutAppOp(String...)}.
      */
+    @Override
     public PermissionContextImpl withoutAppOp(String... appOps) {
         for (String appOp : appOps) {
             if (mGrantedAppOps.contains(appOp)) {

@@ -16,10 +16,14 @@
 
 package com.android.bedstead.testapp;
 
+import static android.app.AppOpsManager.OPSTR_START_FOREGROUND;
 import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+import static android.content.PermissionChecker.PERMISSION_GRANTED;
 import static android.os.Build.VERSION_CODES.Q;
 import static android.os.Build.VERSION_CODES.S;
 
+import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
+import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -35,6 +39,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.eventlib.EventLogs;
@@ -62,6 +67,7 @@ public class TestAppInstanceTest {
     private static final TestApp sTestApp = sTestAppProvider.query()
             .whereActivities().isNotEmpty()
             .get();
+    private static final TestApp sTestApp2 = sTestAppProvider.any();
 
     private static final String INTENT_ACTION = "com.android.bedstead.testapp.test_action";
     private static final IntentFilter INTENT_FILTER = new IntentFilter(INTENT_ACTION);
@@ -139,25 +145,23 @@ public class TestAppInstanceTest {
     // unbounded amount of time
 
     @Test
-    @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_processIsNotRunning() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             testAppInstance.activities().any().start();
 
-//            testAppInstance.stop();
+            testAppInstance.stop();
 
             assertThat(sTestApp.pkg().runningProcesses()).isEmpty();
         }
     }
 
     @Test
-    @Ignore("b/203758521 need to re-add support for killing processes")
     public void stop_previouslyCalledKeepAlive_processDoesNotRestart() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             testAppInstance.activities().any().start();
             testAppInstance.keepAlive();
 
-//            testAppInstance.stop();
+            testAppInstance.stop();
 
             assertThat(sTestApp.pkg().runningProcesses()).isEmpty();
         }
@@ -392,6 +396,75 @@ public class TestAppInstanceTest {
     public void keyChain_returnsUsableInstance() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             assertThat(testAppInstance.keyChain().isKeyAlgorithmSupported("A")).isFalse();
+        }
+    }
+
+    @Test
+    public void permissions_withPermission_permissionStateAppliesToCallsToTestApp() {
+        try (TestAppInstance testApp = sTestApp.install();
+             PermissionContext p = testApp.permissions().withPermission(READ_CONTACTS)) {
+            assertThat(testApp.context().checkSelfPermission(
+                    READ_CONTACTS)).isEqualTo(PERMISSION_GRANTED);
+        }
+    }
+
+    @Test
+    public void permissions_withPermission_permissionStateDoesNotApplyToOtherTestApps() {
+        try (TestAppInstance testApp = sTestApp.install();
+             TestAppInstance testApp2 = sTestApp2.install();
+             PermissionContext p = testApp.permissions().withPermission(READ_CONTACTS)) {
+            assertThat(testApp2.context().checkSelfPermission(
+                    READ_CONTACTS)).isNotEqualTo(PERMISSION_GRANTED);
+        }
+    }
+
+    @Test
+    public void permissions_withPermission_permissionStateDoesNotApplyToInstrumentedApp() {
+        try (TestAppInstance testApp = sTestApp.install();
+             PermissionContext p = testApp.permissions().withPermission(READ_CONTACTS)) {
+            assertThat(sContext.checkSelfPermission(
+                    READ_CONTACTS)).isNotEqualTo(PERMISSION_GRANTED);
+        }
+    }
+
+    @Test
+    public void permissions_withPermission_permissionStateDoesNotApplyToInstrumentedAppAfterCall() {
+        try (TestAppInstance testApp = sTestApp.install();
+             PermissionContext p = testApp.permissions().withPermission(READ_CONTACTS)) {
+            testApp.context().checkSelfPermission(READ_CONTACTS);
+
+            assertThat(sContext.checkSelfPermission(
+                    READ_CONTACTS)).isNotEqualTo(PERMISSION_GRANTED);
+        }
+    }
+
+    @Test
+    public void permissions_withPermission_instrumentedPermissionStateDoesNotAffectTestApp() {
+        try (TestAppInstance testApp = sTestApp.install();
+             PermissionContext p = TestApis.permissions().withoutPermission(READ_CONTACTS);
+             PermissionContext p2 = testApp.permissions().withPermission(READ_CONTACTS)) {
+            assertThat(sContext.checkSelfPermission(
+                    READ_CONTACTS)).isNotEqualTo(PERMISSION_GRANTED);
+            assertThat(testApp.context().checkSelfPermission(
+                    READ_CONTACTS)).isEqualTo(PERMISSION_GRANTED);
+        }
+    }
+
+    @Test
+    public void permissions_withAppOp_appOpIsAllowedForTestApp() {
+        try (TestAppInstance testApp = sTestApp.install();
+             PermissionContext p = testApp.permissions().withAppOp(OPSTR_START_FOREGROUND)) {
+
+            assertThat(sTestApp.pkg().appOps().get(OPSTR_START_FOREGROUND)).isEqualTo(ALLOWED);
+        }
+    }
+
+    @Test
+    public void permissions_withoutAppOp_appOpIsNotAllowedForTestApp() {
+        try (TestAppInstance testApp = sTestApp.install();
+             PermissionContext p = testApp.permissions().withAppOp(OPSTR_START_FOREGROUND);
+             PermissionContext p2 = testApp.permissions().withoutAppOp(OPSTR_START_FOREGROUND)) {
+            assertThat(sTestApp.pkg().appOps().get(OPSTR_START_FOREGROUND)).isNotEqualTo(ALLOWED);
         }
     }
 }
