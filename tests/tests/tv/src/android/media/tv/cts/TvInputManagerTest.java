@@ -674,7 +674,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testGetClientPriority() {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity()) || !Utils.hasTunerFeature(getActivity())) {
             return;
         }
 
