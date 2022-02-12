@@ -125,6 +125,10 @@ public class VehiclePropertyIdsTest {
                 .isEqualTo("EV_CHARGE_TIME_REMAINING");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_REGENERATIVE_BRAKING_STATE))
                 .isEqualTo("EV_REGENERATIVE_BRAKING_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VEHICLE_CURB_WEIGHT))
+                .isEqualTo("VEHICLE_CURB_WEIGHT");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TRAILER_PRESENT))
+                .isEqualTo("TRAILER_PRESENT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.RANGE_REMAINING))
                 .isEqualTo("RANGE_REMAINING");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE)).
