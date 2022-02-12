@@ -28,11 +28,12 @@ import com.android.compatibility.common.util.WindowUtil
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val EVENT_PROPAGATION_TIMEOUT_MILLIS: Long = 100
+private const val EVENT_PROPAGATION_TIMEOUT_MILLIS: Long = 5000
 
 @RunWith(AndroidJUnit4::class)
 class TouchModeTest {
@@ -64,10 +65,14 @@ class TouchModeTest {
     }
 
     @Test
+    @Ignore("b/218883063")
     fun testNonFocusedWindowOwnerCannotChangeTouchMode() {
         uiDevice.pressHome()
         PollingCheck.waitFor { !activity.hasWindowFocus() }
         instrumentation.setInTouchMode(true)
+        // It takes 400-500 milliseconds for DecorView to receive the touch mode changed event on
+        // 2021 hardware, so we set the timeout to 10x that. It's still possible that a test would
+        // fail, but we don't have a better way to check that an event does not occur.
         SystemClock.sleep(EVENT_PROPAGATION_TIMEOUT_MILLIS)
         assertFalse(isInTouchMode())
     }
