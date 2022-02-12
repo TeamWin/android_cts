@@ -19,6 +19,7 @@ package android.media.metrics.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.media.metrics.BundleSession;
 import android.media.metrics.EditingSession;
 import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
@@ -341,6 +342,19 @@ public class MediaMetricsAtomHostSideTests {
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
 
         try (TranscodingSession s = manager.createTranscodingSession()) {
+            assertThat(s).isNotEqualTo(null);
+            LogSessionId idObj = s.getSessionId();
+            assertThat(idObj).isNotEqualTo(null);
+            assertThat(idObj.getStringId().length()).isGreaterThan(0);
+        }
+    }
+
+    @Test
+    public void testBundleSession() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+
+        try (BundleSession s = manager.createBundleSession()) {
             assertThat(s).isNotEqualTo(null);
             LogSessionId idObj = s.getSessionId();
             assertThat(idObj).isNotEqualTo(null);
