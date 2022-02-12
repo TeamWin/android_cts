@@ -350,21 +350,14 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
 
-                // Test TIMESTAMP_BASE_SENSOR with VIDEO_ENCDOER usage
                 BufferFormatTestParam params = new BufferFormatTestParam(
                         ImageFormat.YUV_420_888, /*repeating*/true);
-                params.mTimestampBase = OutputConfiguration.TIMESTAMP_BASE_SENSOR;
                 params.mValidateImageData = false;
-                params.mSetUsageFlag = true;
-                params.mUsageFlag = HardwareBuffer.USAGE_VIDEO_ENCODE;
-                bufferFormatTestByCamera(params);
-
-                params.mSetUsageFlag = false;
-
-                int[] otherTimeBases = {OutputConfiguration.TIMESTAMP_BASE_MONOTONIC,
+                int[] timeBases = {OutputConfiguration.TIMESTAMP_BASE_SENSOR,
+                        OutputConfiguration.TIMESTAMP_BASE_MONOTONIC,
                         OutputConfiguration.TIMESTAMP_BASE_REALTIME,
                         OutputConfiguration.TIMESTAMP_BASE_CHOREOGRAPHER_SYNCED};
-                for (int timeBase : otherTimeBases) {
+                for (int timeBase : timeBases) {
                     params.mTimestampBase = timeBase;
                     bufferFormatTestByCamera(params);
                 }

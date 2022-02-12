@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit
  * Integration test for app hibernation.
  */
 @RunWith(AndroidJUnit4::class)
+@AppModeFull(reason = "Instant apps cannot access app hibernation")
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
 class AppHibernationIntegrationTest {
     companion object {
@@ -273,7 +274,6 @@ class AppHibernationIntegrationTest {
         }
     }
 
-    @AppModeFull(reason = "Uses application details settings")
     @Test
     fun testAppInfo_RemovePermissionsAndFreeUpSpaceToggleExists() {
         assumeFalse(

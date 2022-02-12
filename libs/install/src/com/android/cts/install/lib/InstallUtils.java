@@ -83,7 +83,8 @@ public class InstallUtils {
         Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         try {
-            PackageInfo info = pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
+            PackageInfo info = pm.getPackageInfo(packageName,
+                    PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
             return info.getLongVersionCode();
         } catch (PackageManager.NameNotFoundException e) {
             return -1;
@@ -97,7 +98,8 @@ public class InstallUtils {
         Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         try {
-            return pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
+            return pm.getPackageInfo(packageName,
+                    PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
         } catch (PackageManager.NameNotFoundException e) {
             return null;
         }
@@ -318,7 +320,8 @@ public class InstallUtils {
         for (int userId: userIds) {
             List<PackageInfo> installedPackages;
             if (userId != userIdToCheck) {
-                installedPackages = pm.getInstalledPackagesAsUser(PackageManager.MATCH_APEX,
+                installedPackages = pm.getInstalledPackagesAsUser(
+                        PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX),
                         userId);
                 for (PackageInfo pi : installedPackages) {
                     if (pi.packageName.equals(packageName)) {

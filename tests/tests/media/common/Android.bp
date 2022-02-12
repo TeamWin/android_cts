@@ -12,6 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package {
+    default_applicable_licenses: [
+        "Android-Apache-2.0",
+        "cts_tests_tests_media_common_license",
+    ],
+}
+
+// See: http://go/android-license-faq
+license {
+    name: "cts_tests_tests_media_common_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "legacy_unencumbered",
+    ],
+}
+
 java_library {
     name: "ctsmediautil",
     srcs: [

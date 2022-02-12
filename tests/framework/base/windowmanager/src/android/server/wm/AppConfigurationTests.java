@@ -69,6 +69,7 @@ import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.view.Display;
+import android.window.WindowContainerTransaction;
 
 import org.junit.Test;
 
@@ -286,9 +287,13 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final SizeInfo dockedSizes = getLastReportedSizesForActivity(activityName);
         assertSizesAreSane(initialFullscreenSizes, dockedSizes);
 
-        // Restore to fullscreen.
         separateTestJournal();
-        mTaskOrganizer.dismissSplitScreen();
+        // Restore to fullscreen.
+        final int activityTaskId = mWmState.getTaskByActivity(activityName).mTaskId;
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+            .setWindowingMode(mTaskOrganizer.getTaskInfo(activityTaskId).getToken(),
+                WINDOWING_MODE_FULLSCREEN);
+        mTaskOrganizer.dismissSplitScreen(wct, false /* primaryOnTop */);
         // Home task could be on top since it was the top-most task while in split-screen mode
         // (dock task was minimized), start the activity again to ensure the activity is at
         // foreground.

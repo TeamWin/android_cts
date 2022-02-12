@@ -31,7 +31,6 @@ import android.media.cts.SdkMediaCodec;
 import android.opengl.GLES20;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.FlakyTest;
@@ -42,9 +41,22 @@ import com.android.compatibility.common.util.MediaUtils;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import javax.microedition.khronos.opengles.GL10;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Generates a series of video frames, encodes them, decodes them, and tests for significant
@@ -63,16 +75,14 @@ import javax.microedition.khronos.opengles.GL10;
 @RequiresDevice
 // TODO: b/186001256
 @FlakyTest
-public class EncodeDecodeTest extends AndroidTestCase {
+@RunWith(Parameterized.class)
+public class EncodeDecodeTest {
     private static final String TAG = "EncodeDecodeTest";
     private static final boolean VERBOSE = false;           // lots of logging
     private static final boolean DEBUG_SAVE_FILE = false;   // save copy of encoded movie
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/test.";
 
     // parameters for the encoder
-                                                            // H.264 Advanced Video Coding
-    private static final String MIME_TYPE_AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private static final String MIME_TYPE_VP8 = MediaFormat.MIMETYPE_VIDEO_VP8;
     private static final int FRAME_RATE = 15;               // 15fps
     private static final int IFRAME_INTERVAL = 10;          // 10 seconds between I-frames
 
@@ -96,97 +106,80 @@ public class EncodeDecodeTest extends AndroidTestCase {
     private static final int TEST_B1_BT709 = 189;
     private static final boolean USE_NDK = true;
 
+    // component names
+    private final String mEncoderName;
+    private final String mDecoderName;
+    // mime
+    private final String mMimeType;
     // size of a frame, in pixels
-    private int mWidth = -1;
-    private int mHeight = -1;
+    private final int mWidth;
+    private final int mHeight;
     // bit rate, in bits per second
-    private int mBitRate = -1;
-    private String mMimeType = MIME_TYPE_AVC;
-
-    // largest color component delta seen (i.e. actual vs. expected)
-    private int mLargestColorDelta;
-
+    private final int mBitRate;
     // validate YUV->RGB decoded frames against BT.601 and/or BT.709
     private boolean mAllowBT601 = true;
     private boolean mAllowBT709 = false;
 
-    /**
-     * Tests streaming of AVC video through the encoder and decoder.  Data is encoded from
-     * a series of byte[] buffers and decoded into ByteBuffers.  The output is checked for
-     * validity.
-     */
-    public void testEncodeDecodeVideoFromBufferToBufferQCIF() throws Exception {
-        setParameters(176, 144, 1000000, MIME_TYPE_AVC, true, false);
-        encodeDecodeVideoFromBuffer(false);
-    }
-    public void testEncodeDecodeVideoFromBufferToBufferQVGA() throws Exception {
-        setParameters(320, 240, 2000000, MIME_TYPE_AVC, true, false);
-        encodeDecodeVideoFromBuffer(false);
-    }
-    public void testEncodeDecodeVideoFromBufferToBuffer720p() throws Exception {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        encodeDecodeVideoFromBuffer(false);
+    // largest color component delta seen (i.e. actual vs. expected)
+    private int mLargestColorDelta;
+
+    static private List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList) {
+        final List<Object[]> argsList = new ArrayList<>();
+        int argLength = exhaustiveArgsList.get(0).length;
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (Object[] arg : exhaustiveArgsList) {
+            MediaFormat format = MediaFormat.createVideoFormat((String)arg[0], (Integer)arg[1],
+                    (Integer)arg[2]);
+
+            String eName = mcl.findEncoderForFormat(format);
+            String dName = mcl.findDecoderForFormat(format);
+
+            Object[] testArgs = new Object[argLength + 2];
+            testArgs[0] = eName;
+            testArgs[1] = dName;
+            System.arraycopy(arg, 0, testArgs, 2, argLength);
+            argsList.add(testArgs);
+        }
+        return argsList;
     }
 
-    /**
-     * Tests streaming of VP8 video through the encoder and decoder.  Data is encoded from
-     * a series of byte[] buffers and decoded into ByteBuffers.  The output is checked for
-     * validity.
-     */
-    public void testVP8EncodeDecodeVideoFromBufferToBufferQCIF() throws Exception {
-        setParameters(176, 144, 1000000, MIME_TYPE_VP8, true, false);
-        encodeDecodeVideoFromBuffer(false);
-    }
-    public void testVP8EncodeDecodeVideoFromBufferToBufferQVGA() throws Exception {
-        setParameters(320, 240, 2000000, MIME_TYPE_VP8, true, false);
-        encodeDecodeVideoFromBuffer(false);
-    }
-    public void testVP8EncodeDecodeVideoFromBufferToBuffer720p() throws Exception {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        encodeDecodeVideoFromBuffer(false);
+    @Before
+    public void shouldSkip() {
+        MediaFormat format = MediaFormat.createVideoFormat(mMimeType, mWidth, mHeight);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+        assumeTrue(MediaUtils.supports(mEncoderName, format));
+        assumeTrue(MediaUtils.supports(mDecoderName, format));
     }
 
-    /**
-     * Tests streaming of AVC video through the encoder and decoder.  Data is encoded from
-     * a series of byte[] buffers and decoded into Surfaces.  The output is checked for
-     * validity.
-     * <p>
-     * Because of the way SurfaceTexture.OnFrameAvailableListener works, we need to run this
-     * test on a thread that doesn't have a Looper configured.  If we don't, the test will
-     * pass, but we won't actually test the output because we'll never receive the "frame
-     * available" notifications".  The CTS test framework seems to be configuring a Looper on
-     * the test thread, so we have to hand control off to a new thread for the duration of
-     * the test.
-     */
-    public void testEncodeDecodeVideoFromBufferToSurfaceQCIF() throws Throwable {
-        setParameters(176, 144, 1000000, MIME_TYPE_AVC, true, false);
-        BufferToSurfaceWrapper.runTest(this);
-    }
-    public void testEncodeDecodeVideoFromBufferToSurfaceQVGA() throws Throwable {
-        setParameters(320, 240, 2000000, MIME_TYPE_AVC, true, false);
-        BufferToSurfaceWrapper.runTest(this);
-    }
-    public void testEncodeDecodeVideoFromBufferToSurface720p() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, true);
-        BufferToSurfaceWrapper.runTest(this);
+    @Parameterized.Parameters(name = "{index}({0}:{1})")
+    public static Collection<Object[]> input() {
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+                // Mime, width, height, bit-rate, allow bt601, allow bt709
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 176, 144, 1000000, true, false},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240, 2000000, true, false},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 6000000, true, true},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, 176, 144, 1000000, true, false},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, 320, 240, 2000000, true, false},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, 1280, 720, 6000000, true, true},
+        });
+        return prepareParamList(exhaustiveArgsList);
     }
 
-    /**
-     * Tests streaming of VP8 video through the encoder and decoder.  Data is encoded from
-     * a series of byte[] buffers and decoded into Surfaces.  The output is checked for
-     * validity.
-     */
-    public void testVP8EncodeDecodeVideoFromBufferToSurfaceQCIF() throws Throwable {
-        setParameters(176, 144, 1000000, MIME_TYPE_VP8, true, false);
-        BufferToSurfaceWrapper.runTest(this);
-    }
-    public void testVP8EncodeDecodeVideoFromBufferToSurfaceQVGA() throws Throwable {
-        setParameters(320, 240, 2000000, MIME_TYPE_VP8, true, false);
-        BufferToSurfaceWrapper.runTest(this);
-    }
-    public void testVP8EncodeDecodeVideoFromBufferToSurface720p() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, true);
-        BufferToSurfaceWrapper.runTest(this);
+    public EncodeDecodeTest(String encoder, String decoder, String mimeType, int width, int height,
+            int bitRate, boolean allowBT601, boolean allowBT709) {
+        if ((width % 16) != 0 || (height % 16) != 0) {
+            Log.w(TAG, "WARNING: width or height not multiple of 16");
+        }
+        mEncoderName = encoder;
+        mDecoderName = decoder;
+        mMimeType = mimeType;
+        mWidth = width;
+        mHeight = height;
+        mBitRate = bitRate;
+        mAllowBT601 = allowBT601;
+        mAllowBT709 = allowBT709;
     }
 
     /** Wraps testEncodeDecodeVideoFromBuffer(true) */
@@ -221,90 +214,6 @@ public class EncodeDecodeTest extends AndroidTestCase {
         }
     }
 
-    /**
-     * Tests streaming of AVC video through the encoder and decoder.  Data is provided through
-     * a Surface and decoded onto a Surface.  The output is checked for validity.
-     */
-    public void testEncodeDecodeVideoFromSurfaceToSurfaceQCIF() throws Throwable {
-        setParameters(176, 144, 1000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testEncodeDecodeVideoFromSurfaceToSurfaceQVGA() throws Throwable {
-        setParameters(320, 240, 2000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testEncodeDecodeVideoFromSurfaceToSurface720p() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testEncodeDecodeVideoFromSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, USE_NDK);
-    }
-
-    /**
-     * Tests streaming of AVC video through the encoder and decoder.  Data is provided through
-     * a PersistentSurface and decoded onto a Surface.  The output is checked for validity.
-     */
-    public void testEncodeDecodeVideoFromPersistentSurfaceToSurfaceQCIF() throws Throwable {
-        setParameters(176, 144, 1000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testEncodeDecodeVideoFromPersistentSurfaceToSurfaceQVGA() throws Throwable {
-        setParameters(320, 240, 2000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testEncodeDecodeVideoFromPersistentSurfaceToSurface720p() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testEncodeDecodeVideoFromPersistentSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_AVC, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, USE_NDK);
-    }
-
-    /**
-     * Tests streaming of VP8 video through the encoder and decoder.  Data is provided through
-     * a Surface and decoded onto a Surface.  The output is checked for validity.
-     */
-    public void testVP8EncodeDecodeVideoFromSurfaceToSurfaceQCIF() throws Throwable {
-        setParameters(176, 144, 1000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testVP8EncodeDecodeVideoFromSurfaceToSurfaceQVGA() throws Throwable {
-        setParameters(320, 240, 2000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testVP8EncodeDecodeVideoFromSurfaceToSurface720p() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, false);
-    }
-    public void testVP8EncodeDecodeVideoFromSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, false, USE_NDK);
-    }
-
-    /**
-     * Tests streaming of VP8 video through the encoder and decoder.  Data is provided through
-     * a PersistentSurface and decoded onto a Surface.  The output is checked for validity.
-     */
-    public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurfaceQCIF() throws Throwable {
-        setParameters(176, 144, 1000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurfaceQVGA() throws Throwable {
-        setParameters(320, 240, 2000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurface720p() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, false);
-    }
-    public void testVP8EncodeDecodeVideoFromPersistentSurfaceToSurface720pNdk() throws Throwable {
-        setParameters(1280, 720, 6000000, MIME_TYPE_VP8, true, false);
-        SurfaceToSurfaceWrapper.runTest(this, true, USE_NDK);
-    }
-
     /** Wraps testEncodeDecodeVideoFromSurfaceToSurface() */
     private static class SurfaceToSurfaceWrapper implements Runnable {
         private Throwable mThrowable;
@@ -320,10 +229,6 @@ public class EncodeDecodeTest extends AndroidTestCase {
 
         @Override
         public void run() {
-            if (mTest.shouldSkip()) {
-                return;
-            }
-
             InputSurfaceInterface inputSurface = null;
             try {
                 if (!mUsePersistentInput) {
@@ -367,38 +272,6 @@ public class EncodeDecodeTest extends AndroidTestCase {
     }
 
     /**
-     * Sets the desired frame size and bit rate.
-     */
-    protected void setParameters(int width, int height, int bitRate, String mimeType,
-	        boolean allowBT601, boolean allowBT709) {
-        if ((width % 16) != 0 || (height % 16) != 0) {
-            Log.w(TAG, "WARNING: width or height not multiple of 16");
-        }
-        mWidth = width;
-        mHeight = height;
-        mBitRate = bitRate;
-        mMimeType = mimeType;
-        mAllowBT601 = allowBT601;
-        mAllowBT709 = allowBT709;
-    }
-
-    private boolean shouldSkip() {
-        if (!MediaUtils.hasEncoder(mMimeType)) {
-            return true;
-        }
-
-        MediaFormat format = MediaFormat.createVideoFormat(mMimeType, mWidth, mHeight);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-        if (!MediaUtils.checkEncoderForFormat(format)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
      * Tests encoding and subsequently decoding video from frames generated into a buffer.
      * <p>
      * We encode several frames of a video test pattern using MediaCodec, then decode the
@@ -407,10 +280,6 @@ public class EncodeDecodeTest extends AndroidTestCase {
      * See http://b.android.com/37769 for a discussion of input format pitfalls.
      */
     private void encodeDecodeVideoFromBuffer(boolean toSurface) throws Exception {
-        if (shouldSkip()) {
-            return;
-        }
-
         MediaCodec encoder = null;
         MediaCodec decoder = null;
 
@@ -420,24 +289,10 @@ public class EncodeDecodeTest extends AndroidTestCase {
             // We avoid the device-specific limitations on width and height by using values that
             // are multiples of 16, which all tested devices seem to be able to handle.
             MediaFormat format = MediaFormat.createVideoFormat(mMimeType, mWidth, mHeight);
-            MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            String codec = mcl.findEncoderForFormat(format);
-            if (codec == null) {
-                // Don't fail CTS if they don't have an AVC codec (not here, anyway).
-                Log.e(TAG, "Unable to find an appropriate codec for " + format);
-                return;
-            }
-            if (VERBOSE) Log.d(TAG, "found codec: " + codec);
-
-            String codec_decoder = mcl.findDecoderForFormat(format);
-            if (codec_decoder == null) {
-                Log.e(TAG, "Unable to find an appropriate codec for " + format);
-                return;
-            }
 
             // Create a MediaCodec for the desired codec, then configure it as an encoder with
             // our desired properties.
-            encoder = MediaCodec.createByCodecName(codec);
+            encoder = MediaCodec.createByCodecName(mEncoderName);
 
             int colorFormat = selectColorFormat(encoder.getCodecInfo(), mMimeType);
             if (VERBOSE) Log.d(TAG, "found colorFormat: " + colorFormat);
@@ -455,7 +310,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
 
             // Create a MediaCodec for the decoder, just based on the MIME type.  The various
             // format details will be passed through the csd-0 meta-data later on.
-            decoder = MediaCodec.createByCodecName(codec_decoder);
+            decoder = MediaCodec.createByCodecName(mDecoderName);
             if (VERBOSE) Log.d(TAG, "got decoder: " + decoder.getName());
 
             doEncodeDecodeVideoFromBuffer(encoder, colorFormat, decoder, toSurface);
@@ -492,14 +347,6 @@ public class EncodeDecodeTest extends AndroidTestCase {
             // We avoid the device-specific limitations on width and height by using values that
             // are multiples of 16, which all tested devices seem to be able to handle.
             MediaFormat format = MediaFormat.createVideoFormat(mMimeType, mWidth, mHeight);
-            MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            String codec = mcl.findEncoderForFormat(format);
-            if (codec == null) {
-                // Don't fail CTS if they don't have an AVC codec (not here, anyway).
-                Log.e(TAG, "Unable to find an appropriate codec for " + format);
-                return;
-            }
-            if (VERBOSE) Log.d(TAG, "found codec: " + codec);
 
             int colorFormat = MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 
@@ -520,14 +367,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
             // Create the output surface.
             outputSurface = new OutputSurface(mWidth, mHeight);
 
-            // Create a MediaCodec for the decoder, just based on the MIME type.  The various
-            // format details will be passed through the csd-0 meta-data later on.
-            String codec_decoder = mcl.findDecoderForFormat(format);
-            if (codec_decoder == null) {
-                Log.e(TAG, "Unable to find an appropriate codec for " + format);
-                return;
-            }
-            decoder = MediaCodec.createByCodecName(codec_decoder);
+            decoder = MediaCodec.createByCodecName(mDecoderName);
             if (VERBOSE) Log.d(TAG, "got decoder: " + decoder.getName());
             decoder.configure(format, outputSurface.getSurface(), null, 0);
             decoder.start();
@@ -535,9 +375,9 @@ public class EncodeDecodeTest extends AndroidTestCase {
             // Create a MediaCodec for the desired codec, then configure it as an encoder with
             // our desired properties.  Request a Surface to use for input.
             if (useNdk) {
-                encoder = new NdkMediaCodec(codec);
+                encoder = new NdkMediaCodec(mEncoderName);
             }else {
-                encoder = new SdkMediaCodec(MediaCodec.createByCodecName(codec));
+                encoder = new SdkMediaCodec(MediaCodec.createByCodecName(mEncoderName));
             }
             encoder.configure(format, MediaCodec.CONFIGURE_FLAG_ENCODE);
             if (inSurf != null) {
@@ -759,7 +599,7 @@ public class EncodeDecodeTest extends AndroidTestCase {
                         // For codecs that don't have codec config data (such as VP8),
                         // initialize the decoder before trying to decode the first packet.
                         assertTrue((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0 ||
-                                   mMimeType.equals(MIME_TYPE_VP8));
+                                   mMimeType.equals(MediaFormat.MIMETYPE_VIDEO_VP8));
                         MediaFormat format =
                                 MediaFormat.createVideoFormat(mMimeType, mWidth, mHeight);
                         if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0)
@@ -1388,5 +1228,60 @@ public class EncodeDecodeTest extends AndroidTestCase {
      */
     private static long computePresentationTime(int frameIndex) {
         return 132 + frameIndex * 1000000 / FRAME_RATE;
+    }
+
+    /**
+     * Tests streaming of video through the encoder and decoder.  Data is encoded from
+     * a series of byte[] buffers and decoded into ByteBuffers.  The output is checked for
+     * validity.
+     */
+    @Test
+    public void testEncodeDecodeVideoFromBufferToBuffer() throws Exception {
+        encodeDecodeVideoFromBuffer(false);
+    }
+
+    /**
+     * Tests streaming of video through the encoder and decoder.  Data is encoded from
+     * a series of byte[] buffers and decoded into Surfaces.  The output is checked for
+     * validity.
+     * <p>
+     * Because of the way SurfaceTexture.OnFrameAvailableListener works, we need to run this
+     * test on a thread that doesn't have a Looper configured.  If we don't, the test will
+     * pass, but we won't actually test the output because we'll never receive the "frame
+     * available" notifications".  The CTS test framework seems to be configuring a Looper on
+     * the test thread, so we have to hand control off to a new thread for the duration of
+     * the test.
+     */
+    @Test
+    public void testEncodeDecodeVideoFromBufferToSurface() throws Throwable {
+        BufferToSurfaceWrapper.runTest(this);
+    }
+
+    /**
+     * Tests streaming of AVC through the encoder and decoder.  Data is provided through
+     * a Surface and decoded onto a Surface.  The output is checked for validity.
+     */
+    @Test
+    public void testEncodeDecodeVideoFromSurfaceToSurface() throws Throwable {
+        SurfaceToSurfaceWrapper.runTest(this, false, false);
+    }
+
+    @Test
+    public void testEncodeDecodeVideoFromSurfaceToSurfaceNdk() throws Throwable {
+        SurfaceToSurfaceWrapper.runTest(this, false, USE_NDK);
+    }
+
+    /**
+     * Tests streaming of video through the encoder and decoder.  Data is provided through
+     * a PersistentSurface and decoded onto a Surface.  The output is checked for validity.
+     */
+    @Test
+    public void testEncodeDecodeVideoFromSurfaceToPersistentSurface() throws Throwable {
+        SurfaceToSurfaceWrapper.runTest(this, true, false);
+    }
+
+    @Test
+    public void testEncodeDecodeVideoFromSurfaceToPersistentSurfaceNdk() throws Throwable {
+        SurfaceToSurfaceWrapper.runTest(this, true, USE_NDK);
     }
 }

@@ -18,11 +18,8 @@ package com.android.eventlib.premade;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
@@ -38,9 +35,6 @@ public class EventLibServiceTest {
     // This must exist as a <service> in AndroidManifest.xml
     private static final String GENERATED_SERVICE_CLASS_NAME =
             "com.android.generatedEventLibService";
-
-    private static final Instrumentation sInstrumentation =
-            InstrumentationRegistry.getInstrumentation();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
 
@@ -73,5 +67,7 @@ public class EventLibServiceTest {
                 .queryPackage(sContext.getPackageName())
                 .whereService().serviceClass().className().isEqualTo(GENERATED_SERVICE_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
+
+        sContext.stopService(intent);
     }
 }

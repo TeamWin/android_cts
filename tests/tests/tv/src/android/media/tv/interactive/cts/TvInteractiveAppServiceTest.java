@@ -197,8 +197,20 @@ public class TvInteractiveAppServiceTest {
     }
 
     public static class MockTvInputCallback extends TvView.TvInputCallback {
+        private int mAitInfoUpdatedCount = 0;
+
+        private AitInfo mAitInfo = null;
+
+        private void resetValues() {
+            mAitInfoUpdatedCount = 0;
+
+            mAitInfo = null;
+        }
+
         public void onAitInfoUpdated(String inputId, AitInfo aitInfo) {
             super.onAitInfoUpdated(inputId, aitInfo);
+            mAitInfoUpdatedCount++;
+            mAitInfo = aitInfo;
         }
         public void onSignalStrength(String inputId, int strength) {
             super.onSignalStrength(inputId, strength);
@@ -294,6 +306,13 @@ public class TvInteractiveAppServiceTest {
         }
         assertNotNull(mStubInfo);
         mTvIAppView.setCallback(getExecutor(), mCallback);
+        mTvIAppView.setOnUnhandledInputEventListener(getExecutor(),
+                new TvInteractiveAppView.OnUnhandledInputEventListener() {
+                    @Override
+                    public boolean onUnhandledInputEvent(InputEvent event) {
+                        return true;
+                    }
+                });
         mTvIAppView.prepareInteractiveApp(mStubInfo.getId(), 1);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mTvIAppView.getInteractiveAppSession() != null);
@@ -454,7 +473,7 @@ public class TvInteractiveAppServiceTest {
         final int keyCode = KeyEvent.KEYCODE_I;
         final KeyEvent event = new KeyEvent(KeyEvent.ACTION_UP, keyCode);
 
-        mTvIAppView.dispatchUnhandledInputEvent(event);
+        assertThat(mTvIAppView.dispatchUnhandledInputEvent(event)).isTrue();
     }
 
     @Test
@@ -553,13 +572,20 @@ public class TvInteractiveAppServiceTest {
         assertThat(mSession.mAdResponse.getElapsedTimeMillis()).isEqualTo(909L);
     }
 
-    // TODO: check the counts and values
     @Test
     public void testAitInfo() throws Throwable {
         linkTvView();
+        mTvInputCallback.resetValues();
+
         mInputSession.notifyAitInfoUpdated(
                 new AitInfo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV, 2));
         mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mTvInputCallback.mAitInfoUpdatedCount > 0);
+
+        assertThat(mTvInputCallback.mAitInfoUpdatedCount).isEqualTo(1);
+        assertThat(mTvInputCallback.mAitInfo.getType())
+                .isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+        assertThat(mTvInputCallback.mAitInfo.getVersion()).isEqualTo(2);
     }
 
     @Test

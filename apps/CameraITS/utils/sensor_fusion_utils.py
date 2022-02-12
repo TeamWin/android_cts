@@ -34,6 +34,9 @@ ARDUINO_CMD_LENGTH = 3
 ARDUINO_CMD_TIME = 2.0 * ARDUINO_CMD_LENGTH / ARDUINO_BAUDRATE  # round trip
 ARDUINO_MOVE_TIME = 0.06 - ARDUINO_CMD_TIME  # seconds
 ARDUINO_PID = 0x0043
+ARDUINO_SERVO_SPEED_MAX = 255
+ARDUINO_SERVO_SPEED_MIN = 1
+ARDUINO_SPEED_START_BYTE = 253
 ARDUINO_START_BYTE = 255
 ARDUINO_START_NUM_TRYS = 3
 ARDUINO_TEST_CMD = (b'\x01', b'\x02', b'\x03')
@@ -246,6 +249,27 @@ def rotation_rig(rotate_cntl, rotate_ch, num_rotations):
       canakit_set_relay_channel_state(canakit_serial_port, rotate_ch, 'ON')
       canakit_set_relay_channel_state(canakit_serial_port, rotate_ch, 'OFF')
   logging.debug('Finished rotations')
+
+
+def set_servo_speed(ch, servo_speed, serial_port, delay=0):
+  """Set servo to specified speed.
+
+  Args:
+    ch: str; servo to turn on in ARDUINO_VALID_CH
+    servo_speed: int; value of speed between 1 and 255
+    serial_port: object; serial port
+    delay: int; time in seconds
+  """
+  if servo_speed < ARDUINO_SERVO_SPEED_MIN:
+    logging.debug('Servo speed must be >= %d.', ARDUINO_SERVO_SPEED_MIN)
+    servo_speed = ARDUINO_SERVO_SPEED_MIN
+  elif servo_speed > ARDUINO_SERVO_SPEED_MAX:
+    logging.debug('Servo speed must be <= %d.', ARDUINO_SERVO_SPEED_MAX)
+    servo_speed = ARDUINO_SERVO_SPEED_MAX
+
+  cmd = [struct.pack('B', i) for i in [ARDUINO_SPEED_START_BYTE, int(ch), servo_speed]]
+  arduino_send_cmd(serial_port, cmd)
+  time.sleep(delay)
 
 
 def get_gyro_rotations(gyro_events, cam_times):

@@ -324,6 +324,7 @@ public class EuiccServiceTest {
 
         mEuiccServiceBinder.downloadSubscription(
                 MOCK_SLOT_ID,
+                MOCK_PORT_ID,
                 subscription,
                 true /*switchAfterDownload*/,
                 true /*forceDeactivateSim*/,

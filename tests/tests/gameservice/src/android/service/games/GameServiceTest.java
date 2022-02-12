@@ -76,6 +76,8 @@ public final class GameServiceTest {
             "android.service.games.cts.restartgameverifier";
     private static final String START_ACTIVITY_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.startactivityverifier";
+    private static final String SYSTEM_BAR_VERIFIER_PACKAGE_NAME =
+            "android.service.games.cts.systembarverifier";
     private static final String TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME =
             "android.service.games.cts.takescreenshotverifier";
     private static final String TOUCH_VERIFIER_PACKAGE_NAME =
@@ -104,6 +106,7 @@ public final class GameServiceTest {
                 ImmutableList.of(
                         GAME_PACKAGE_NAME,
                         RESTART_GAME_VERIFIER_PACKAGE_NAME,
+                        SYSTEM_BAR_VERIFIER_PACKAGE_NAME,
                         TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME,
                         TOUCH_VERIFIER_PACKAGE_NAME));
     }
@@ -115,6 +118,7 @@ public final class GameServiceTest {
         forceStop(FALSE_POSITIVE_GAME_PACKAGE_NAME);
         forceStop(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         forceStop(START_ACTIVITY_VERIFIER_PACKAGE_NAME);
+        forceStop(SYSTEM_BAR_VERIFIER_PACKAGE_NAME);
         forceStop(TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME);
         forceStop(TOUCH_VERIFIER_PACKAGE_NAME);
 
@@ -162,7 +166,7 @@ public final class GameServiceTest {
         assumeGameServiceFeaturePresent();
 
         launchAndWaitForPackage(GAME_PACKAGE_NAME);
-        swipeToShowSystemBars();
+        swipeFromTopEdgeToShowSystemBars();
 
         Rect touchableBounds = waitForTouchableOverlayBounds();
 
@@ -173,7 +177,7 @@ public final class GameServiceTest {
                 touchableBounds.width(),
                 touchableBounds.height());
 
-        // TODO(b/215706114): UI automator does not appear to have visibility into the overlay;
+        // TODO(b/218901969): UI automator does not appear to have visibility into the overlay;
         //                    therefore, it cannot be used to validate the overlay's contents.
         //                    We should try and see if we can expose the overlay to UI automator in
         //                    order to have a more foolproof validation check. We will use this
@@ -194,7 +198,7 @@ public final class GameServiceTest {
         assumeGameServiceFeaturePresent();
 
         launchAndWaitForPackage(TOUCH_VERIFIER_PACKAGE_NAME);
-        swipeToShowSystemBars();
+        swipeFromTopEdgeToShowSystemBars();
 
         Rect touchableBounds = waitForTouchableOverlayBounds();
         UiAutomatorUtils.getUiDevice().click(touchableBounds.centerX(), touchableBounds.centerY());
@@ -218,6 +222,44 @@ public final class GameServiceTest {
         UiAutomatorUtils.getUiDevice().click(touchableBounds.right + 30, touchableBounds.centerY());
         UiAutomatorUtils.waitFindObject(
                 By.res(TOUCH_VERIFIER_PACKAGE_NAME, "times_clicked").text("4"));
+    }
+
+    @Test
+    public void onTransientSystemBarVisibilityChanged_nonTransient_doesNotDispatchShow()
+            throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(SYSTEM_BAR_VERIFIER_PACKAGE_NAME);
+
+        UiAutomatorUtils.getUiDevice().findObject(
+                        By.text("Show system bars permanently")
+                                .pkg(SYSTEM_BAR_VERIFIER_PACKAGE_NAME))
+                .click();
+
+        assertOverlayDoesNotAppear();
+        assertThat(
+                getTestService().getOnSystemBarVisibilityChangedInfo().getTimesShown())
+                .isEqualTo(0);
+    }
+
+
+    @Test
+    public void onTransientSystemBarVisibilityFromRevealGestureChanged_dispatchesHideEvent()
+            throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        launchAndWaitForPackage(GAME_PACKAGE_NAME);
+        swipeFromTopEdgeToShowSystemBars();
+
+        assertThat(waitForTouchableOverlayBounds().isEmpty()).isFalse();
+        assertThat(
+                getTestService().getOnSystemBarVisibilityChangedInfo().getTimesShown())
+                .isEqualTo(1);
+
+        assertThat(waitForOverlayToDisappear().isEmpty()).isTrue();
+        assertThat(
+                getTestService().getOnSystemBarVisibilityChangedInfo().getTimesHidden())
+                .isEqualTo(1);
     }
 
     @Test
@@ -409,7 +451,7 @@ public final class GameServiceTest {
                 .click();
     }
 
-    private static void swipeToShowSystemBars() {
+    private static void swipeFromTopEdgeToShowSystemBars() {
         UiDevice uiDevice = UiAutomatorUtils.getUiDevice();
         uiDevice.swipe(
                 uiDevice.getDisplayWidth() / 2, 20,
@@ -428,6 +470,23 @@ public final class GameServiceTest {
                     }
                 },
                 bounds -> !bounds.isEmpty());
+    }
+
+    private void assertOverlayDoesNotAppear() {
+        assertThat(waitForTouchableOverlayBounds().isEmpty()).isTrue();
+    }
+
+    private Rect waitForOverlayToDisappear() {
+        return PollingCheck.waitFor(
+                20_000L,
+                () -> {
+                    try {
+                        return getTestService().getTouchableOverlayBounds();
+                    } catch (RemoteException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                Rect::isEmpty);
     }
 
     private static void forceStop(String packageName) {

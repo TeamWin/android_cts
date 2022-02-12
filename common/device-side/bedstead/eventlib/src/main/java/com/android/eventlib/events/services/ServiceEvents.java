@@ -50,6 +50,34 @@ public interface ServiceEvents {
     ServiceDestroyedEvent.ServiceDestroyedEventQuery serviceDestroyed();
 
     /**
+     * Query for when an service's configuration is changed.
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    ServiceConfigurationChangedEvent.ServiceConfigurationChangedEventQuery
+            serviceConfigurationChanged();
+
+    /**
+     * Query for when an service has low memory.
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    ServiceLowMemoryEvent.ServiceLowMemoryEventQuery serviceLowMemory();
+
+    /**
+     * Query for when an service has it's memory trimmed.
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    ServiceMemoryTrimmedEvent.ServiceMemoryTrimmedEventQuery serviceMemoryTrimmed();
+
+    /**
      * Query for when an service is bound.
      *
      * <p>Additional filters can be added to the returned object.
@@ -66,4 +94,22 @@ public interface ServiceEvents {
      * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
      */
     ServiceUnboundEvent.ServiceUnboundEventQuery serviceUnbound();
+
+    /**
+     * Query for when an service is re-bound.
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    ServiceReboundEvent.ServiceReboundEventQuery serviceRebound();
+
+    /**
+     * Query for when an service has a task removed.
+     *
+     * <p>Additional filters can be added to the returned object.
+     *
+     * <p>{@code #poll} can be used to fetch results, and the result can be asserted on.
+     */
+    ServiceTaskRemovedEvent.ServiceTaskRemovedEventQuery serviceTaskRemoved();
 }

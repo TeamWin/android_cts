@@ -144,9 +144,9 @@ abstract class AbstractRecognitionServiceTest {
 
         errors.clear();
         RecognitionSupport rs = new RecognitionSupport.Builder()
-                .addInstalledLanguages("en")
-                .addPendingLanguages("jp")
-                .addSupportedLanguages("de")
+                .addInstalledLanguage("en")
+                .addPendingLanguage("jp")
+                .addSupportedLanguage("de")
                 .build();
         CtsRecognitionService.sConsumerQueue.add(c -> c.onSupportResult(rs));
 

@@ -46,8 +46,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
@@ -146,9 +144,9 @@ public class ActivityManagementTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
-        EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
+        InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
                         new Intent(context, EmptyActivity.class)
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
@@ -184,7 +182,7 @@ public class ActivityManagementTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
@@ -219,7 +217,7 @@ public class ActivityManagementTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
@@ -252,7 +250,7 @@ public class ActivityManagementTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
 
         mVirtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
@@ -277,7 +275,7 @@ public class ActivityManagementTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
 
         mVirtualDevice.launchPendingIntent(
@@ -304,7 +302,7 @@ public class ActivityManagementTest {
                 /* densityDpi= */ 240,
                 /* surface= */ null,
                 /* flags= */ 0,
-                new Handler(Looper.getMainLooper()),
+                Runnable::run,
                 mVirtualDisplayCallback);
 
         mVirtualDevice.launchPendingIntent(

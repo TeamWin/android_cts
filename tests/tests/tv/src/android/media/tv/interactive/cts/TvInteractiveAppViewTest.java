@@ -134,13 +134,6 @@ public class TvInteractiveAppViewTest {
         }
         assertNotNull(mStubInfo);
         mTvInteractiveAppView.setCallback(getExecutor(), mCallback);
-        mTvInteractiveAppView.setOnUnhandledInputEventListener(getExecutor(),
-                new TvInteractiveAppView.OnUnhandledInputEventListener() {
-                    @Override
-                    public boolean onUnhandledInputEvent(InputEvent event) {
-                        return true;
-                    }
-                });
     }
 
     @After

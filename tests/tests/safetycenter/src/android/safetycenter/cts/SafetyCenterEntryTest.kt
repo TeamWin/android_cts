@@ -96,13 +96,14 @@ class SafetyCenterEntryTest {
     }
 
     @Test
-    fun getStatelessIconType_returnsStatelessIconType() {
-        assertThat(entry1.statelessIconType).isEqualTo(SafetyCenterEntry.STATELESS_ICON_TYPE_NONE)
+    fun getSeverityNoneIconType_returnsSeverityNoneIconType() {
+        assertThat(entry1.severityNoneIconType).isEqualTo(
+                SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_NO_ICON)
         assertThat(SafetyCenterEntry.Builder(entry1)
-                .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
                 .build()
-                .statelessIconType)
-                .isEqualTo(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .severityNoneIconType)
+                .isEqualTo(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
     }
 
     @Test
@@ -179,7 +180,7 @@ class SafetyCenterEntryTest {
                 .setTitle("a title")
                 .setSummary("a summary")
                 .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
-                .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
                 .setPendingIntent(pendingIntent1)
                 .setIconAction(SafetyCenterEntry.IconAction.ICON_ACTION_TYPE_INFO, pendingIntent2)
                 .build()
@@ -187,7 +188,7 @@ class SafetyCenterEntryTest {
                 .setTitle("a title")
                 .setSummary("a summary")
                 .setSeverityLevel(SafetyCenterEntry.ENTRY_SEVERITY_LEVEL_OK)
-                .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
                 .setPendingIntent(pendingIntent1)
                 .setIconAction(SafetyCenterEntry.IconAction.ICON_ACTION_TYPE_INFO, pendingIntent2)
                 .build()
@@ -247,9 +248,9 @@ class SafetyCenterEntryTest {
     }
 
     @Test
-    fun equals_toString_withDifferentStatelessIconTypes_areNotEqual() {
+    fun equals_toString_withDifferentSeverityNoneIconTypes_areNotEqual() {
         val differentFromEntry1 = SafetyCenterEntry.Builder(entry1)
-                .setStatelessIconType(SafetyCenterEntry.STATELESS_ICON_TYPE_PRIVACY)
+                .setSeverityNoneIconType(SafetyCenterEntry.SEVERITY_NONE_ICON_TYPE_PRIVACY)
                 .build()
 
         assertThat(differentFromEntry1).isNotEqualTo(entry1)

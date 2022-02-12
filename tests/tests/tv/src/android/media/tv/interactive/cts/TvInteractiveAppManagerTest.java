@@ -255,21 +255,27 @@ public class TvInteractiveAppManagerTest {
         AppLinkInfo info = new AppLinkInfo.Builder("pkg_name", "clazz_name").build();
 
         mManager.registerAppLinkInfo(stubInfo.getId(), info);
+        PollingCheck.waitFor(
+                TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo != null);
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getPackageName()).isEqualTo("pkg_name");
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getClassName()).isEqualTo("clazz_name");
+
+        mManager.unregisterAppLinkInfo(stubInfo.getId(), info);
+        PollingCheck.waitFor(
+                TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo == null);
 
         info = new AppLinkInfo.Builder("pkg1", "class1").setPackageName("pkg2")
                 .setClassName("class2").setUriScheme("url1").setUriHost("host2")
                 .setUriPrefix("prefix").build();
 
         mManager.registerAppLinkInfo(stubInfo.getId(), info);
+        PollingCheck.waitFor(
+                TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo != null);
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getPackageName()).isEqualTo("pkg2");
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getClassName()).isEqualTo("class2");
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriScheme()).isEqualTo("url1");
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriHost()).isEqualTo("host2");
         assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriPrefix()).isEqualTo("prefix");
-
-        mManager.unregisterAppLinkInfo(stubInfo.getId(), info);
     }
 
     private static void assertBundlesAreEqual(Bundle actual, Bundle expected) {

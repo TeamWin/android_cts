@@ -1277,15 +1277,21 @@ public final class MockIme extends InputMethodService {
         }
 
         void onPrepareStylusHandwriting(@NonNull Runnable runnable) {
-            recordEventInternal("onPrepareStylusHandwriting", runnable);
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
+            recordEventInternal("onPrepareStylusHandwriting", runnable, arguments);
         }
 
         void onStartStylusHandwriting(@NonNull Runnable runnable) {
-            recordEventInternal("onStartStylusHandwriting", runnable);
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
+            recordEventInternal("onStartStylusHandwriting", runnable, arguments);
         }
 
         void onFinishStylusHandwriting(@NonNull Runnable runnable) {
-            recordEventInternal("onFinishStylusHandwriting", runnable);
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
+            recordEventInternal("onFinishStylusHandwriting", runnable, arguments);
         }
 
         void onFinishInputView(boolean finishingInput, @NonNull Runnable runnable) {

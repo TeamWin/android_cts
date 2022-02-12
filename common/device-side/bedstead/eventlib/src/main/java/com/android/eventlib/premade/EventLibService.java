@@ -24,9 +24,14 @@ import android.os.Binder;
 import android.os.IBinder;
 
 import com.android.eventlib.events.services.ServiceBoundEvent;
+import com.android.eventlib.events.services.ServiceConfigurationChangedEvent;
 import com.android.eventlib.events.services.ServiceCreatedEvent;
 import com.android.eventlib.events.services.ServiceDestroyedEvent;
+import com.android.eventlib.events.services.ServiceLowMemoryEvent;
+import com.android.eventlib.events.services.ServiceMemoryTrimmedEvent;
+import com.android.eventlib.events.services.ServiceReboundEvent;
 import com.android.eventlib.events.services.ServiceStartedEvent;
+import com.android.eventlib.events.services.ServiceTaskRemovedEvent;
 import com.android.eventlib.events.services.ServiceUnboundEvent;
 
 /**
@@ -76,14 +81,17 @@ public class EventLibService extends Service {
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
+        ServiceConfigurationChangedEvent.logger(this, getClassName(), newConfig).log();
     }
 
     @Override
     public void onLowMemory() {
+        ServiceLowMemoryEvent.logger(this, getClassName()).log();
     }
 
     @Override
     public void onTrimMemory(int level) {
+        ServiceMemoryTrimmedEvent.logger(this, getClassName(), level).log();
     }
 
     @Override
@@ -100,9 +108,11 @@ public class EventLibService extends Service {
 
     @Override
     public void onRebind(Intent intent) {
+        ServiceReboundEvent.logger(this, getClassName(), intent).log();
     }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
+        ServiceTaskRemovedEvent.logger(this, getClassName(), rootIntent).log();
     }
 }
