@@ -131,6 +131,13 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.waitOnMainUntil(() -> !TextUtils.equals(editText.getText(), "Hi!"), TIMEOUT,
                     "InputMethodService#commitText should not work after screen off");
 
+            if (isOperatorTierDevice()) {
+                // On operator tier devices of AndroidTv, Activity is put behind TvLauncher
+                // after turnScreenOff by android.intent.category.HOME intent from
+                // TvRecommendation.
+                return;
+            }
+
             // Expected text commit will work when turnScreenOn.
             TestUtils.turnScreenOn();
             TestUtils.unlockScreen();
@@ -222,5 +229,11 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
 
     private static Predicate<ImeEvent> onFinishInputMatcher() {
         return event -> TextUtils.equals("onFinishInput", event.getEventName());
+    }
+
+    private boolean isOperatorTierDevice() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        return context.getPackageManager()
+                .hasSystemFeature("com.google.android.tv.operator_tier");
     }
 }
