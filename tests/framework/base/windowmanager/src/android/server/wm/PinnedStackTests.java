@@ -57,6 +57,8 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPEC
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
+import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
@@ -313,6 +315,79 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testEnterPipAspectRatioMax() {
         testEnterPipAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR);
+    }
+
+    @Test
+    public void testEnterExpandedPipAspectRatio() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(5)));
+        // Wait for animation complete since we are comparing aspect ratio
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        // Assert that we have entered PIP and that the aspect ratio is correct
+        final Rect bounds = getPinnedStackBounds();
+        assertFloatEquals((float) bounds.width() / bounds.height(), (float) 1.0f / 5.0f);
+    }
+
+    @Test
+    public void testEnterExpandedPipAspectRatioMaxHeight() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1000)));
+        // Wait for animation complete since we are comparing aspect ratio
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        // Assert that we have entered PIP and that the aspect ratio is correct
+        final Rect bounds = getPinnedStackBounds();
+        final int displayHeight = mWmState.getDisplay(DEFAULT_DISPLAY).getDisplayRect().height();
+        assertTrue(bounds.height() <= displayHeight);
+    }
+
+    @Test
+    public void testEnterExpandedPipAspectRatioMaxWidth() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1000)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)));
+        // Wait for animation complete since we are comparing aspect ratio
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        // Assert that we have entered PIP and that the aspect ratio is correct
+        final Rect bounds = getPinnedStackBounds();
+        final int displayWidth = mWmState.getDisplay(DEFAULT_DISPLAY).getDisplayRect().width();
+        assertTrue(bounds.width() <= displayWidth);
+    }
+
+    @Test
+    public void testEnterExpandedPipWithNormalAspectRatio() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(2)));
+        assertPinnedStackDoesNotExist();
+
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)));
+        assertPinnedStackDoesNotExist();
     }
 
     private void testEnterPipAspectRatio(int num, int denom) {

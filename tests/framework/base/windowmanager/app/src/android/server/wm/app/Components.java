@@ -540,6 +540,10 @@ public class Components extends ComponentsBase {
         // Calls requestAutoEnterPictureInPicture() with the value provided
         public static final String EXTRA_ENTER_PIP_ON_PIP_REQUESTED =
                 "enter_pip_on_pip_requested";
+        public static final String EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR =
+                "expanded_pip_numerator";
+        public static final String EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR =
+                "expanded_pip_denomenator";
         // Sets auto PIP allowed on the activity picture-in-picture params.
         public static final String EXTRA_ALLOW_AUTO_PIP = "enter_pip_auto_pip_allowed";
         // Sets seamless resize enabled on the activity picture-in-picture params.

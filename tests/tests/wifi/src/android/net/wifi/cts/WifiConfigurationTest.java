@@ -31,6 +31,8 @@ import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_SAE;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_WAPI_CERT;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_WAPI_PSK;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -159,5 +161,16 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
 
         configuration.setMacRandomizationSetting(RANDOMIZATION_AUTO);
         assertEquals(RANDOMIZATION_AUTO, configuration.getMacRandomizationSetting());
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testGetDefaultDppAkmConfigurations() throws Exception {
+        WifiConfiguration configuration = new WifiConfiguration();
+
+        assertEquals(false, configuration.isDppConfigurator());
+        assertThat(configuration.getDppCSignKey()).isNotNull();
+        assertThat(configuration.getDppConnector()).isNotNull();
+        assertThat(configuration.getDppNetAccessKey()).isNotNull();
+        assertThat(configuration.getDppPrivateEcKey()).isNotNull();
     }
 }
