@@ -2351,7 +2351,7 @@ public class TelephonyManagerTest {
         assertEquals(0, cq.getNumDroppedRtpPackets());
         assertEquals(0, cq.getMinPlayoutDelayMillis());
         assertEquals(0, cq.getMaxPlayoutDelayMillis());
-        assertEquals(0, cq.getNumRtpSidPacketsRx());
+        assertEquals(0, cq.getNumRtpSidPacketsReceived());
         assertEquals(0, cq.getNumRtpDuplicatePackets());
     }
 
@@ -2363,14 +2363,14 @@ public class TelephonyManagerTest {
         CallQuality cq = new CallQuality.Builder()
                 .setDownlinkCallQualityLevel(CallQuality.CALL_QUALITY_NOT_AVAILABLE)
                 .setUplinkCallQualityLevel(CallQuality.CALL_QUALITY_NOT_AVAILABLE)
-                .setCallDuration(20000)
+                .setCallDurationMillis(20000)
                 .setNumRtpPacketsTransmitted(550)
                 .setNumRtpPacketsReceived(450)
                 .setNumRtpPacketsTransmittedLost(4)
                 .setNumRtpPacketsNotReceived(6)
                 .setAverageRelativeJitter(20)
                 .setMaxRelativeJitter(30)
-                .setAverageRoundTripTime(150)
+                .setAverageRoundTripTimeMillis(150)
                 .setCodecType(0)
                 .setRtpInactivityDetected(false)
                 .setIncomingSilenceDetectedAtCallSetup(false)
@@ -2380,7 +2380,7 @@ public class TelephonyManagerTest {
                 .setNumDroppedRtpPackets(5)
                 .setMinPlayoutDelayMillis(500)
                 .setMaxPlayoutDelayMillis(1000)
-                .setNumRtpSidPacketsRx(300)
+                .setNumRtpSidPacketsReceived(300)
                 .setNumRtpDuplicatePackets(0)
                 .build();
 
