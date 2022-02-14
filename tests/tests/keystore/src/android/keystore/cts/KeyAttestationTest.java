@@ -890,8 +890,16 @@ public class KeyAttestationTest extends AndroidTestCase {
                     assertThat("TEE KM version must be 0 or 1 with software attestation",
                             attestation.getKeymasterVersion(), either(is(0)).or(is(1)));
                 } else {
-                    assertThat("Software KM is version 3", attestation.getKeymasterVersion(),
+                    // On TVs TEE attestation is required from Android 10 so allow more
+                    // keymaster versions even for software attestation
+                    if (isTVDevice()) {
+                        assertThat("On TVs Software KM is version 3, 4 or 4.1",
+                            attestation.getKeymasterVersion(),
+                            either(is(3)).or(is(4)).or(is(41)));
+                    } else {
+                        assertThat("Software KM is version 3", attestation.getKeymasterVersion(),
                             is(3));
+                    }
                     assertThat(softwareEnforced.getOsVersion(), is(systemOsVersion));
                     checkSystemPatchLevel(teeEnforced.getOsPatchLevel(), systemPatchLevel);
                 }
