@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.CtsDownstreamingTest;
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -34,6 +35,7 @@ import org.junit.runner.RunWith;
 /**
  * Runs the legacy file path access tests.
  */
+@CtsDownstreamingTest
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class PreserveLegacyStorageHostTest extends BaseHostTestCase {

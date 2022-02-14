@@ -596,6 +596,7 @@ public class DisplayTest {
             mInitialRefreshRateSwitchingType =
                     DisplayUtil.getRefreshRateSwitchingType(mDisplayManager);
             mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
+
             final DisplayTestActivity activity = launchActivity(mRetainedDisplayTestActivity);
 
             // Create a deterministically shuffled list of display modes, which ends with the

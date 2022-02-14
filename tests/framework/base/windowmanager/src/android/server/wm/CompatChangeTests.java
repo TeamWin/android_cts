@@ -16,10 +16,13 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE;
 import static android.content.pm.ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE;
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.provider.DeviceConfig.NAMESPACE_CONSTRAIN_DISPLAY_APIS;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Surface.ROTATION_90;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -44,8 +47,8 @@ import android.server.wm.WindowManagerTestBase.FocusableActivity;
 import android.util.Size;
 
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 
+import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
 
 import org.junit.Before;
@@ -71,10 +74,12 @@ import org.junit.rules.TestRule;
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
             component(ResizeablePortraitActivity.class);
-    private static final ComponentName RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY =
-            component(ResizeableLargeAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_PORTRAIT_ACTIVITY =
             component(NonResizeablePortraitActivity.class);
+    private static final ComponentName NON_RESIZEABLE_LANDSCAPE_ACTIVITY =
+            component(NonResizeableLandscapeActivity.class);
+    private static final ComponentName NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY =
+            component(NonResizeableNonFixedOrientationActivity.class);
     private static final ComponentName NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY =
             component(NonResizeableAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY =
@@ -82,8 +87,6 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY =
             component(SupportsSizeChangesPortraitActivity.class);
 
-    // Fixed orientation min aspect ratio
-    private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;
     // The min aspect ratio of NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY (as defined in the manifest).
     private static final float ACTIVITY_MIN_ASPECT_RATIO = 1.6f;
     // The min aspect ratio of NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY (as defined in the
@@ -105,8 +108,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
         mDisplayMetricsSession =
                 createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
-        createManagedLetterboxAspectRatioSession(DEFAULT_DISPLAY,
-                FIXED_ORIENTATION_MIN_ASPECT_RATIO);
+        createManagedIgnoreOrientationRequestSession(DEFAULT_DISPLAY, /* value=  */ true);
         createManagedConstrainDisplayApisFlagsSession();
     }
 
@@ -117,7 +119,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSizeCompatForNonResizeableActivity() {
         runSizeCompatTest(
-                NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize= */ true);
+                NON_RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                /* inSizeCompatModeAfterResize= */ true);
     }
 
     /**
@@ -128,7 +131,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.FORCE_RESIZE_APP})
     public void testSizeCompatForNonResizeableActivityForceResizeEnabled() {
         runSizeCompatTest(
-                NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize= */ false);
+                NON_RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                /* inSizeCompatModeAfterResize= */ false);
     }
 
     /**
@@ -137,7 +141,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSizeCompatForResizeableActivity() {
-        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY,  /* inSizeCompatModeAfterResize= */ false);
+        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                /* inSizeCompatModeAfterResize= */ false);
     }
 
     /**
@@ -147,7 +152,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSizeCompatForSupportsSizeChangesActivity() {
         runSizeCompatTest(
-                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize= */ false);
+                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                /* inSizeCompatModeAfterResize= */ false);
     }
 
     /**
@@ -157,7 +163,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.FORCE_NON_RESIZE_APP})
     public void testSizeCompatForResizeableActivityForceNonResizeEnabled() {
-        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize= */ true);
+        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                /* inSizeCompatModeAfterResize= */ true);
     }
 
     /**
@@ -169,7 +176,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.FORCE_NON_RESIZE_APP})
     public void testSizeCompatForSupportsSizeChangesActivityForceNonResizeEnabled() {
         runSizeCompatTest(
-                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize= */ true);
+                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
+                /* inSizeCompatModeAfterResize= */ true);
     }
 
     /**
@@ -178,8 +186,18 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSandboxForNonResizableAspectRatioActivity() {
-        runSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                /* isSandboxed= */ true);
+        assertSandboxedByBounds(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */
+                true);
     }
+
+     // =================
+     // NEVER_SANDBOX test cases
+     // =================
+     // Validates that an activity forced into size compat mode never has sandboxing applied to the
+     // max bounds. It is expected that an activity in size compat mode normally always has
+     // sandboxing applied.
 
     /**
      * Test that a min aspect ratio activity eligible for size compat mode does not have the Display
@@ -189,7 +207,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.NEVER_SANDBOX_DISPLAY_APIS})
     public void testSandboxForNonResizableAspectRatioActivityNeverSandboxDisplayApisEnabled() {
-        runSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */ false);
+        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                /* isSandboxed= */ false);
     }
 
     /**
@@ -202,7 +221,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         setNeverConstrainDisplayApisAllPackagesFlag("true");
         // Setting 'never_constrain_display_apis' as well to make sure it is ignored.
         setNeverConstrainDisplayApisFlag("com.android.other::");
-        runSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */ false);
+        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                /* isSandboxed= */ false);
     }
 
     /**
@@ -215,7 +235,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + "::");
-        runSandboxTest(activity, /* isSandboxed= */ false);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ false);
     }
 
     /**
@@ -230,7 +250,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":" + String.valueOf(
                         version - 1) + ":" + String.valueOf(version + 1));
-        runSandboxTest(activity, /* isSandboxed= */ false);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ false);
     }
 
     /**
@@ -245,7 +265,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":" + String.valueOf(
                         version + 1) + ":");
-        runSandboxTest(activity, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ true);
     }
 
     /**
@@ -256,7 +276,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxForNonResizableActivityPackageNotInNeverSandboxDeviceConfigFlag() {
         setNeverConstrainDisplayApisFlag("com.android.other::,com.android.other2::");
-        runSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                /* isSandboxed= */ true);
     }
 
     /**
@@ -266,7 +287,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxForNonResizableActivityNeverSandboxDeviceConfigFlagEmpty() {
         setNeverConstrainDisplayApisFlag("");
-        runSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                /* isSandboxed= */ true);
     }
 
     /**
@@ -279,43 +301,48 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":::");
-        runSandboxTest(activity, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ true);
     }
 
+    // =================
+    // ALWAYS_SANDBOX test cases
+    // =================
+    // Validates that an activity simply in letterbox mode has sandboxing applied to the max
+    // bounds when ALWAYS_SANDBOX is set. Without the flag, we would not expect a letterbox activity
+    // to be sandboxed, unless it is also eligible for size compat mode.
+
     /**
-     * Test that a min aspect ratio activity not eligible for size compat mode does have the
+     * Test that a portrait activity not eligible for size compat mode does have the
      * Display APIs sandboxed when the {@link ActivityInfo#ALWAYS_SANDBOX_DISPLAY_APIS} compat
      * change is enabled.
      */
     @Test
     @EnableCompatChanges({ActivityInfo.ALWAYS_SANDBOX_DISPLAY_APIS})
-    public void testSandboxForResizableAspectRatioActivityAlwaysSandboxDisplayApisEnabled() {
-        runSandboxTest(RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */
-                true, /* inSizeCompatModeAfterResize= */ false);
+    public void testSandboxForResizableActivityAlwaysSandboxDisplayApisEnabled() {
+        runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed= */ true);
     }
 
     /**
-     * Test that a min aspect ratio activity non eligible for size compat mode does not have the
+     * Test that a portrait activity not eligible for size compat mode does not have the
      * Display APIs sandboxed when the 'always_constrain_display_apis' Device Config flag is empty.
      */
     @Test
     public void testSandboxResizableActivityAlwaysSandboxDeviceConfigFlagEmpty() {
         setAlwaysConstrainDisplayApisFlag("");
-        runSandboxTest(RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */
-                false, /* inSizeCompatModeAfterResize= */ false);
+        runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed= */ false);
     }
 
     /**
-     * Test that a min aspect ratio activity eligible for size compat mode does have the Display
+     * Test that a portrait activity not eligible for size compat mode does have the Display
      * APIs sandboxed when the 'always_constrain_display_apis' Device Config flag contains the test
      * package.
      */
     @Test
     public void testSandboxResizableActivityPackageInAlwaysSandboxDeviceConfigFlag() {
-        ComponentName activity = RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
+        ComponentName activity = RESIZEABLE_PORTRAIT_ACTIVITY;
         setAlwaysConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + "::");
-        runSandboxTest(activity, /* isSandboxed= */ true, /* inSizeCompatModeAfterResize= */ false);
+        runLetterboxSandboxTest(activity, /* isSandboxed= */ true);
     }
 
     /**
@@ -337,6 +364,54 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioMissingGeneralOverride() {
         runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation is fixed to landscape.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    public void testOverrideMinAspectRatioForLandscapeActivity() {
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */ 0);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation isn't fixed.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY})
+    public void testOverrideMinAspectRatioForNonFixedOrientationActivityPortraitOnlyDisabled() {
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */
+                OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation is fixed to landscape.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY})
+    public void testOverrideMinAspectRatioForLandscapeActivityPortraitOnlyDisabled() {
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */
+                OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
+    }
+
+    /**
+     * Test that applying {@link ActivityInfo#OVERRIDE_MIN_ASPECT_RATIO_LARGE} has no effect on
+     * activities whose orientation isn't fixed.
+     */
+    @Test
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
+            ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
+    public void testOverrideMinAspectRatioForNonFixedOrientationActivity() {
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */ 0);
     }
 
     /**
@@ -390,7 +465,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
     /**
      * Test that the min aspect ratio of the activity as defined in the manifest is upheld if
-     * there is a n override for a smaller min aspect ratio present (3:2 < 1.6).
+     * there is an override for a smaller min aspect ratio present (3:2 < 1.6).
      */
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
@@ -406,13 +481,17 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * original size.
      *
      * @param activity                    the activity under test.
+     * @param windowingMode               the launch windowing mode for the activity
      * @param inSizeCompatModeAfterResize if the activity should be in size compat mode after
      *                                    resizing the display
      */
-    private void runSizeCompatTest(ComponentName activity, boolean inSizeCompatModeAfterResize) {
-        runSizeCompatTest(activity, /* resizeRatio= */ 0.5, inSizeCompatModeAfterResize);
+    private void runSizeCompatTest(ComponentName activity, int windowingMode,
+            boolean inSizeCompatModeAfterResize) {
+        runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 0.5,
+                inSizeCompatModeAfterResize);
         restoreDisplay(activity);
-        runSizeCompatTest(activity, /* resizeRatio= */ 2, inSizeCompatModeAfterResize);
+        runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 2,
+                inSizeCompatModeAfterResize);
     }
 
     /**
@@ -420,13 +499,17 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * After resizing the display, verifies if activity is in size compat mode or not
      *
      * @param activity                    the activity under test
+     * @param windowingMode               the launch windowing mode for the activity
      * @param resizeRatio                 the ratio to resize the display
      * @param inSizeCompatModeAfterResize if the activity should be in size compat mode after
      *                                    resizing the display
      */
-    private void runSizeCompatTest(ComponentName activity, double resizeRatio,
+    private void runSizeCompatTest(ComponentName activity, int windowingMode, double resizeRatio,
             boolean inSizeCompatModeAfterResize) {
-        launchActivity(activity);
+        // TODO(b/208918131): Remove once real cause is found.
+        assumeFalse(ENABLE_SHELL_TRANSITIONS);
+
+        launchActivity(activity, windowingMode);
 
         assertSizeCompatMode(activity, /* expectedInSizeCompatMode= */ false);
 
@@ -447,32 +530,69 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
-    private void runSandboxTest(ComponentName activity, boolean isSandboxed) {
-        runSandboxTest(activity, isSandboxed, /* inSizeCompatModeAfterResize= */ true);
+    private void runSizeCompatModeSandboxTest(ComponentName activity,
+            boolean isSandboxed) {
+        runSizeCompatModeSandboxTest(activity, isSandboxed,
+                /* inSizeCompatModeAfterResize= */ true);
     }
 
     /**
-     * Similar to {@link #runSizeCompatTest(ComponentName, boolean)}, but the activity is expected
-     * to be in size compat mode after resizing the display.
+     * Similar to {@link #runSizeCompatTest(ComponentName, int, boolean)}, but the activity is
+     * expected to be in size compat mode after resizing the display.
      *
      * @param activity                    the activity under test
-     * @param isSandboxed                 when {@code true}, {@link android.app.WindowConfiguration#getMaxBounds()}
-     *                                    are sandboxed to the activity bounds. Otherwise, they inherit the
+     * @param isSandboxed                 when {@code true},
+     * {@link android.app.WindowConfiguration#getMaxBounds()}
+     *                                    are sandboxed to the activity bounds. Otherwise, they
+     *                                    inherit the
      *                                    DisplayArea bounds
      * @param inSizeCompatModeAfterResize if the activity should be in size compat mode after
      *                                    resizing the display
      */
-    private void runSandboxTest(ComponentName activity, boolean isSandboxed,
+    private void runSizeCompatModeSandboxTest(ComponentName activity, boolean isSandboxed,
             boolean inSizeCompatModeAfterResize) {
         assertThat(getInitialDisplayAspectRatio()).isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
-        runSizeCompatTest(activity, /* resizeRatio= */ 0.5, inSizeCompatModeAfterResize);
-        assertSandboxed(activity, isSandboxed);
+        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio= */ 0.5,
+                inSizeCompatModeAfterResize);
+        assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
         restoreDisplay(activity);
-        runSizeCompatTest(activity, /* resizeRatio= */ 2, inSizeCompatModeAfterResize);
-        assertSandboxed(activity, isSandboxed);
+        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio= */ 2,
+                inSizeCompatModeAfterResize);
+        assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
     }
 
-    private void assertSandboxed(ComponentName activityName, boolean expectedSandboxed) {
+    /**
+     * Similar to {@link #runSizeCompatModeSandboxTest(ComponentName, boolean)}, but the
+     * activity is put into letterbox mode after resizing the display.
+     *
+     * @param activityName the activity under test
+     * @param isSandboxed  when {@code true}, {@link android.app.WindowConfiguration#getMaxBounds()}
+     *                     are sandboxed to the activity bounds. Otherwise, they inherit the
+     *                     DisplayArea bounds
+     */
+    private void runLetterboxSandboxTest(ComponentName activityName, boolean isSandboxed) {
+        assertThat(getInitialDisplayAspectRatio()).isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
+        // Initialize display to portrait orientation.
+        final RotationSession rotationSession = createManagedRotationSession();
+        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        if (originalDisplaySize.getHeight() < originalDisplaySize.getWidth()) {
+            // Device is landscape
+            rotationSession.set(ROTATION_90);
+        } else if (originalDisplaySize.getHeight() == originalDisplaySize.getWidth()) {
+            // Device is square, so skip this test case (portrait activity will never be
+            // letterboxed)
+            return;
+        }
+
+        // Launch portrait activity
+        launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
+
+        // Change display to landscape should force portrait resizeable activity into letterbox.
+        changeDisplayAspectRatioAndWait(activityName, /* aspectRatio= */ 2);
+        assertSandboxedByProvidesMaxBounds(activityName, isSandboxed);
+    }
+
+    private void assertSandboxedByBounds(ComponentName activityName, boolean isSandboxed) {
         mWmState.computeState(new WaitForValidActivityState(activityName));
         final WindowManagerState.Activity activity = mWmState.getActivity(activityName);
         assertNotNull(activity);
@@ -480,14 +600,29 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         final Rect maxBounds = activity.getMaxBounds();
         WindowManagerState.DisplayArea tda = mWmState.getTaskDisplayArea(activityName);
         assertNotNull(tda);
-        if (expectedSandboxed) {
+        if (isSandboxed) {
             assertEquals(
-                    "The Window has max bounds sandboxed to the window bounds",
+                    "The window has max bounds sandboxed to the window bounds",
                     activityBounds, maxBounds);
         } else {
             assertEquals(
-                    "The Window is not sandboxed, with max bounds reflecting the DisplayArea",
+                    "The window is not sandboxed, with max bounds reflecting the DisplayArea",
                     tda.getBounds(), maxBounds);
+        }
+    }
+
+    private void assertSandboxedByProvidesMaxBounds(ComponentName activityName, boolean isSandboxed) {
+        mWmState.computeState(new WaitForValidActivityState(activityName));
+        final WindowManagerState.Activity activity = mWmState.getActivity(activityName);
+        assertNotNull(activity);
+        if (isSandboxed) {
+            assertTrue(
+                    "The window should have max bounds sandboxed to the window bounds",
+                    activity.providesMaxBounds());
+        } else {
+            assertFalse(
+                    "The window should not be sandboxed; max bounds should reflect the DisplayArea",
+                    activity.providesMaxBounds());
         }
     }
 
@@ -564,10 +699,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * Restore the display size and ensure configuration changes are complete.
      */
     private void restoreDisplay(ComponentName activity) {
-        final Rect originalTaskBounds = mWmState.getTaskByActivity(activity).getBounds();
+        final Rect originalBounds = mWmState.getActivity(activity).getBounds();
         mDisplayMetricsSession.restoreDisplayMetrics();
         // Ensure configuration changes are complete after resizing the display.
-        waitForTaskBoundsChanged(activity, originalTaskBounds);
+        waitForActivityBoundsChanged(activity, originalBounds);
     }
 
     /**
@@ -575,26 +710,46 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     private void resizeDisplay(ComponentName activity, double sizeRatio) {
         Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        final Rect originalTaskBounds = mWmState.getTaskByActivity(activity).getBounds();
+        final Rect originalBounds = mWmState.getActivity(activity).getBounds();
         mDisplayMetricsSession.changeDisplayMetrics(sizeRatio, /* densityRatio= */ 1);
         mWmState.computeState(new WaitForValidActivityState(activity));
 
         Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
         assumeFalse("If a display size is capped, resizing may be a no-op",
-            originalDisplaySize.equals(currentDisplaySize));
+                originalDisplaySize.equals(currentDisplaySize));
 
         // Ensure configuration changes are complete after resizing the display.
-        waitForTaskBoundsChanged(activity, originalTaskBounds);
+        waitForActivityBoundsChanged(activity, originalBounds);
+    }
+
+    /**
+     * Resize the display to given aspect ratio in landscape orientation, and ensure configuration
+     * changes are complete.
+     */
+    private void changeDisplayAspectRatioAndWait(ComponentName activity, double aspectRatio) {
+        mWmState.computeState(new WaitForValidActivityState(activity));
+        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
+        final Rect originalBounds = mWmState.getActivity(activity).getBounds();
+        mDisplayMetricsSession.changeAspectRatio(aspectRatio,
+                /* orientation= */ ORIENTATION_LANDSCAPE);
+        mWmState.computeState(new WaitForValidActivityState(activity));
+
+        Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
+        assumeFalse("If a display size is capped, resizing may be a no-op",
+                originalDisplaySize.equals(currentDisplaySize));
+
+        // Ensure configuration changes are complete after resizing the display.
+        waitForActivityBoundsChanged(activity, originalBounds);
     }
 
     /**
      * Waits until the given activity has updated task bounds.
      */
-    private void waitForTaskBoundsChanged(ComponentName activityName, Rect priorTaskBounds) {
+    private void waitForActivityBoundsChanged(ComponentName activityName, Rect priorActivityBounds) {
         mWmState.waitForWithAmState(wmState -> {
-            WindowManagerState.ActivityTask task = wmState.getTaskByActivity(activityName);
-            return task != null && !task.getBounds().equals(priorTaskBounds);
-        }, "checking task bounds updated");
+            WindowManagerState.Activity activity = wmState.getActivity(activityName);
+            return activity != null && !activity.getBounds().equals(priorActivityBounds);
+        }, "checking activity bounds updated");
     }
 
     private float getInitialDisplayAspectRatio() {
@@ -604,9 +759,14 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     private void launchActivity(ComponentName activity) {
+        launchActivity(activity, WINDOWING_MODE_FULLSCREEN);
+    }
+
+    private void launchActivity(ComponentName activity, int windowingMode) {
         getLaunchActivityBuilder()
                 .setDisplayId(DEFAULT_DISPLAY)
                 .setTargetActivity(activity)
+                .setWindowingMode(windowingMode)
                 .setUseInstrumentation()
                 .allowMultipleInstances(false)
                 .execute();
@@ -628,10 +788,13 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public static class ResizeablePortraitActivity extends FocusableActivity {
     }
 
-    public static class ResizeableLargeAspectRatioActivity extends FocusableActivity {
+    public static class NonResizeablePortraitActivity extends FocusableActivity {
     }
 
-    public static class NonResizeablePortraitActivity extends FocusableActivity {
+    public static class NonResizeableLandscapeActivity extends FocusableActivity {
+    }
+
+    public static class NonResizeableNonFixedOrientationActivity extends FocusableActivity {
     }
 
     public static class NonResizeableAspectRatioActivity extends FocusableActivity {

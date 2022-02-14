@@ -94,11 +94,16 @@ public class BiometricSimpleTests extends BiometricTestBase {
     public void testPackageManagerAndDumpsysMatch() throws Exception {
         assumeTrue(Utils.isFirstApiLevel29orGreater());
         final BiometricServiceState state = getCurrentState();
+        final PackageManager pm = mContext.getPackageManager();
         if (mSensorProperties.isEmpty()) {
             assertTrue(state.mSensorStates.sensorStates.isEmpty());
-        } else {
-            final PackageManager pm = mContext.getPackageManager();
 
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT));
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_FACE));
+            assertFalse(pm.hasSystemFeature(PackageManager.FEATURE_IRIS));
+
+            assertTrue(state.mSensorStates.sensorStates.isEmpty());
+        } else {
             assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT),
                     state.mSensorStates.containsModality(SensorStateProto.FINGERPRINT));
             assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FACE),
