@@ -467,6 +467,13 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         WakeLockHelper.releasePartialWakeLock(device);
     }
 
+    public void wakeUpDeviceWithoutWait() throws Exception {
+        ITestDevice device = getDevice();
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_AWAKE);
+        WakeLockHelper.releasePartialWakeLock(device);
+    }
+
     public void checkStandbyAndWakeUp() throws Exception {
         assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
         wakeUpDevice();
