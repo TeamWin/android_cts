@@ -197,7 +197,6 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
         assertTrue(control.checkBindStatus(true /* bindStatus */));
 
         connection.waitOnInCallServiceTrackingChanged();
-        assertTrue(connection.isTracked());
         assertTrue(connection.isAlternativeUiShowing());
         mUiAutomation.dropShellPermissionIdentity();
 
