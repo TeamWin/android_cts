@@ -68,7 +68,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
 
     private static final String CLOUD_ID1 = "CLOUD_ID1";
     private static final String CLOUD_ID2 = "CLOUD_ID2";
-    private static final String VERSION_1 = "VERSION_1";
+    private static final String COLLECTION_1 = "COLLECTION_1";
 
     private static final long IMAGE_SIZE_BYTES = 107684;
     private static final long VIDEO_SIZE_BYTES = 135600;
@@ -90,7 +90,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
         mCloudPrimaryMediaGenerator = PickerProviderMediaGenerator.getMediaGenerator(
                 mContext, CloudProviderPrimary.AUTHORITY);
         mCloudPrimaryMediaGenerator.resetAll();
-        mCloudPrimaryMediaGenerator.setVersion(VERSION_1);
+        mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
 
         setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.getCloudProvider(mContext.getContentResolver()))
