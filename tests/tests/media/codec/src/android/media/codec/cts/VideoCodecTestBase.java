@@ -247,6 +247,33 @@ public class VideoCodecTestBase {
         boolean runInLooperThread;
         // Flag if use NdkMediaCodec
         boolean useNdk;
+        // Encoding Statistics Level
+        // 0: None, 1: Average block QP and picture type of a frame
+        public int encodingStatisticsLevel;
+    }
+
+    /**
+     * Encoding Statistics for a whole sequence
+     */
+    protected class EncodingStatisticsInfo {
+        public float averageSeqQp = 0; // Average qp of a whole sequence,
+                                         // i.e. average of 'per-frame average block QP'
+        public int encodedFrames = 0; // # of encoded frames,
+                                       // i.e. # of average_block_qp is reported
+    }
+
+    /**
+     * Encoding Statistics for a whole sequence
+     */
+    protected class VideoEncodeOutput{
+        public ArrayList<MediaCodec.BufferInfo> bufferInfo;
+        public EncodingStatisticsInfo encStat;
+
+        VideoEncodeOutput(ArrayList<MediaCodec.BufferInfo> bufferInfo,
+            EncodingStatisticsInfo encStat) {
+            bufferInfo = bufferInfo;
+            encStat = encStat;
+        }
     }
 
     private String getCodecSuffix(String codecMimeType) {
@@ -795,19 +822,22 @@ public class VideoCodecTestBase {
 
         private InputStream mYuvStream;
         private int mInputFrameIndex;
+        private final EncodingStatisticsInfo mEncStatInfo;
 
         MediaEncoderAsyncHelper(
                 EncoderOutputStreamParameters streamParams,
                 CodecProperties properties,
                 ArrayList<MediaCodec.BufferInfo> bufferInfos,
                 IvfWriter ivf,
-                ArrayList<ByteBuffer> codecConfigs)
+                ArrayList<ByteBuffer> codecConfigs,
+                EncodingStatisticsInfo encStatInfo)
                 throws Exception {
             mStreamParams = streamParams;
             mProperties = properties;
             mBufferInfos = bufferInfos;
             mIvf = ivf;
             mCodecConfigs = codecConfigs;
+            mEncStatInfo = encStatInfo;
 
             int srcFrameSize = streamParams.frameWidth * streamParams.frameHeight * 3 / 2;
             mSrcFrame = new byte[srcFrameSize];
@@ -883,6 +913,11 @@ public class VideoCodecTestBase {
                 }
             }
             return false;
+        }
+
+        public void saveAvgQp(int avg_qp) {
+            mEncStatInfo.averageSeqQp += (float) avg_qp;
+            ++mEncStatInfo.encodedFrames;  // Note: Duplicated info to  mOutputFrameIndex
         }
     }
 
@@ -1011,6 +1046,13 @@ public class VideoCodecTestBase {
 
                 out.flags = info.flags;
                 out.outputGenerated = true;
+
+                MediaFormat format = codec.getOutputFormat(index);
+                if (format.containsKey(MediaFormat.KEY_VIDEO_QP_AVERAGE)) {
+                    int avgQp = format.getInteger(MediaFormat.KEY_VIDEO_QP_AVERAGE);
+                    // Copy per-frame avgQp to sequence level buffer
+                    mHelper.saveAvgQp(avgQp);
+                }
 
                 if (mHelper.saveOutputFrame(out)) {
                     // output EOS
@@ -1347,7 +1389,7 @@ public class VideoCodecTestBase {
     /**
      * @see #encode(EncoderOutputStreamParameters, ArrayList<ByteBuffer>)
      */
-    protected ArrayList<MediaCodec.BufferInfo> encode(
+    protected VideoEncodeOutput encode(
             EncoderOutputStreamParameters streamParams) throws Exception {
         return encode(streamParams, new ArrayList<ByteBuffer>());
     }
@@ -1367,13 +1409,16 @@ public class VideoCodecTestBase {
      *
      * @param streamParams  Structure with encoder parameters
      * @param codecConfigs  List to be filled with codec config buffers
-     * @return              Returns array of encoded frames information for each frame.
+     * @return              Returns VideoEncodeOutput, which consists of
+     *                      array of encoded frames information for each frame and Encoding
+     *                      Statistics Information.
      */
-    protected ArrayList<MediaCodec.BufferInfo> encode(
+    protected VideoEncodeOutput encode(
             EncoderOutputStreamParameters streamParams,
             ArrayList<ByteBuffer> codecConfigs) throws Exception {
 
         ArrayList<MediaCodec.BufferInfo> bufferInfos = new ArrayList<MediaCodec.BufferInfo>();
+        EncodingStatisticsInfo encStatInfo = new EncodingStatisticsInfo();
         Log.d(TAG, "Source resolution: "+streamParams.frameWidth + " x " +
                 streamParams.frameHeight);
         int bitrate = streamParams.bitrateSet[0];
@@ -1404,6 +1449,11 @@ public class VideoCodecTestBase {
         int syncFrameInterval = (streamParams.syncFrameInterval + streamParams.frameRate/2) /
                 streamParams.frameRate;
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, syncFrameInterval);
+        if (streamParams.encodingStatisticsLevel !=
+                MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_NONE) {
+            format.setInteger(MediaFormat.KEY_VIDEO_ENCODING_STATISTICS_LEVEL,
+                    streamParams.encodingStatisticsLevel);
+        }
 
         // Create encoder
         Log.d(TAG, "Creating encoder " + properties.codecName +
@@ -1529,7 +1579,7 @@ public class VideoCodecTestBase {
         ivf.close();
         yuvStream.close();
 
-        return bufferInfos;
+        return new VideoEncodeOutput(bufferInfos, encStatInfo);
     }
 
     /**
@@ -1546,9 +1596,11 @@ public class VideoCodecTestBase {
      *
      * @param streamParams  Structure with encoder parameters
      * @param codecConfigs  List to be filled with codec config buffers
-     * @return              Returns array of encoded frames information for each frame.
+     * @return              Returns VideoEncodeOutput, which consists of
+     *                      array of encoded frames information for each frame and Encoding
+     *                      Statistics Information.
      */
-    protected ArrayList<MediaCodec.BufferInfo> encodeAsync(
+    protected VideoEncodeOutput encodeAsync(
             EncoderOutputStreamParameters streamParams,
             ArrayList<ByteBuffer> codecConfigs) throws Exception {
         if (!streamParams.runInLooperThread) {
@@ -1556,6 +1608,7 @@ public class VideoCodecTestBase {
         }
 
         ArrayList<MediaCodec.BufferInfo> bufferInfos = new ArrayList<MediaCodec.BufferInfo>();
+        EncodingStatisticsInfo encStatInfo = new EncodingStatisticsInfo();
         Log.d(TAG, "Source resolution: "+streamParams.frameWidth + " x " +
                 streamParams.frameHeight);
         int bitrate = streamParams.bitrateSet[0];
@@ -1584,7 +1637,11 @@ public class VideoCodecTestBase {
         int syncFrameInterval = (streamParams.syncFrameInterval + streamParams.frameRate/2) /
                 streamParams.frameRate;
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, syncFrameInterval);
-
+        if (streamParams.encodingStatisticsLevel !=
+                MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_NONE) {
+            format.setInteger(MediaFormat.KEY_VIDEO_ENCODING_STATISTICS_LEVEL,
+                    MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_1);
+        }
         // Create encoder
         Log.d(TAG, "Creating encoder " + properties.codecName +
                 ". Color format: 0x" + Integer.toHexString(properties.colorFormat)+ " : " +
@@ -1598,7 +1655,7 @@ public class VideoCodecTestBase {
 
         MediaEncoderAsync codec = new MediaEncoderAsync();
         MediaEncoderAsyncHelper helper = new MediaEncoderAsyncHelper(
-                streamParams, properties, bufferInfos, ivf, codecConfigs);
+                streamParams, properties, bufferInfos, ivf, codecConfigs, encStatInfo);
 
         codec.setAsyncHelper(helper);
         codec.createCodec(0, properties.codecName, format,
@@ -1608,7 +1665,7 @@ public class VideoCodecTestBase {
         codec.deleteCodec();
         ivf.close();
 
-        return bufferInfos;
+        return new VideoEncodeOutput(bufferInfos, encStatInfo);
     }
 
     /**
