@@ -110,9 +110,8 @@ public abstract class BaseEmulatorActivity extends PassFailButtons.Activity {
                     changeDefault.putExtra(CardEmulation.EXTRA_CATEGORY,
                             CardEmulation.CATEGORY_PAYMENT);
                     changeDefault.putExtra(CardEmulation.EXTRA_SERVICE_COMPONENT, defaultComponent);
-                    changeDefault.putExtra(CardEmulation.EXTRA_USERID,
-                            UserHandle.getUserHandleForUid(getApplicationInfo().uid)
-                            .getIdentifier());
+                    changeDefault.putExtra(Intent.EXTRA_USER,
+                            UserHandle.getUserHandleForUid(getApplicationInfo().uid));
                     startActivityForResult(changeDefault, 0);
                 }
             });
