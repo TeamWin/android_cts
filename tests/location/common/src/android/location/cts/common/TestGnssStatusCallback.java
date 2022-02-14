@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Google Inc.
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package android.location.cts.gnss;
+package android.location.cts.common;
 
 import android.location.GnssStatus;
-import android.location.cts.common.TestMeasurementUtil;
-import android.location.cts.common.TestUtils;
 import android.util.Log;
 
 import java.util.HashSet;
@@ -83,12 +81,12 @@ public class TestGnssStatusCallback extends GnssStatus.Callback {
             }
             if (status.hasCarrierFrequencyHz(i)) {
                 mGnssUsedSvStringIds.add(
-                    TestMeasurementUtil.getUniqueSvStringId(status.getConstellationType(i),
-                        status.getSvid(i), status.getCarrierFrequencyHz(i)));
+                        TestMeasurementUtil.getUniqueSvStringId(status.getConstellationType(i),
+                                status.getSvid(i), status.getCarrierFrequencyHz(i)));
             } else {
                 mGnssUsedSvStringIds.add(
-                    TestMeasurementUtil.getUniqueSvStringId(status.getConstellationType(i),
-                        status.getSvid(i)));
+                        TestMeasurementUtil.getUniqueSvStringId(status.getConstellationType(i),
+                                status.getSvid(i)));
             }
         }
         mLatchStatus.countDown();
