@@ -45,6 +45,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     private static final Set<String> OVERRIDABLE_CHANGES = ImmutableSet.of(
             "ALWAYS_SANDBOX_DISPLAY_APIS",
             "CTS_SYSTEM_API_OVERRIDABLE_CHANGEID",
+            "DEFER_BOOT_COMPLETED_BROADCAST_CHANGE_ID",
             "DOWNSCALED",
             "DOWNSCALE_30",
             "DOWNSCALE_35",
