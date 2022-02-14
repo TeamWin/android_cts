@@ -20,7 +20,6 @@ import static android.Manifest.permission.INSTALL_PACKAGES;
 import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
@@ -39,7 +38,6 @@ import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Environment;
 import android.util.Log;
 
 import androidx.annotation.CheckResult;
@@ -58,11 +56,8 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import org.junit.AssumptionViolatedException;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,7 +66,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -328,17 +322,13 @@ public final class Packages {
      *
      * <p>If the package is marked testOnly, it will still be installed.
      *
-     * <p>On versions of Android prior to Q, or when running as an instant app, this will return
-     * null. On other versions it will return the installed package.
+     * <p>When running as an instant app, this will return null. On other versions it will return
+     * the installed package.
      */
     @Nullable
     public Package install(UserReference user, byte[] apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
-        }
-
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-            return installPreS(user, apkFile);
         }
 
         if (!user.exists() || !user.isUnlocked()) {
@@ -369,6 +359,10 @@ public final class Packages {
             }
 
             return null;
+        }
+
+        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+            return installPreS(user, apkFile);
         }
 
         // This is not inside the try because if the install is unsuccessful we don't want to await
@@ -428,30 +422,25 @@ public final class Packages {
 
     @Nullable
     private Package installPreS(UserReference user, byte[] apkFile) {
-        // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
-        File outputDir = Environment.getExternalStorageDirectory();
-        File outputFile = null;
+        // This is not in the try because if the install fails we don't want to await the broadcast
+        BlockingBroadcastReceiver broadcastReceiver =
+                registerPackageInstalledBroadcastReceiver(user);
 
-        if (TestApis.packages().instrumented().isInstantApp()) {
-            // We can't manage files as an instant app, so we must skip this test
-            throw new AssumptionViolatedException("Cannot install packages as instant app");
-        }
-
-        try (PermissionContext p =
-                     TestApis.permissions().withPermissionOnVersion(R, MANAGE_EXTERNAL_STORAGE)) {
-            // TODO(b/202705721): Replace this with fixed name
-            outputFile = new File(outputDir, UUID.randomUUID() + ".apk");
-            outputFile.getParentFile().mkdirs();
-            try (FileOutputStream output = new FileOutputStream(outputFile)) {
-                output.write(apkFile);
-            }
-
-            return install(user, outputFile);
-        } catch (IOException e) {
-            throw new NeneException("Error when writing bytes to temp file", e);
+        // We should install using stdin with the byte array
+        try {
+            ShellCommand.builderForUser(user, "pm install")
+                    .addOperand("-t") // Allow installing test apks
+                    .addOperand("-r") // Replace existing apps
+                    .addOption("-S", apkFile.length) // Install from stdin
+                    .writeToStdIn(apkFile)
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
+            return waitForPackageAddedBroadcast(broadcastReceiver);
+        } catch (AdbException e) {
+            throw new NeneException("Error installing package", e);
         } finally {
-            if (outputFile != null) {
-                outputFile.delete();
+            if (broadcastReceiver != null) {
+                broadcastReceiver.unregisterQuietly();
             }
         }
     }
