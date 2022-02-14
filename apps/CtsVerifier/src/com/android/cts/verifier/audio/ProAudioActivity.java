@@ -16,8 +16,10 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.media.AudioDeviceCallback;
@@ -32,13 +34,10 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
-
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 
 public class ProAudioActivity
         extends PassFailButtons.Activity
@@ -298,30 +297,28 @@ public class ProAudioActivity
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.proAudioHasHDMICheckBox:
-                if (mClaimsHDMICheckBox.isChecked()) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(
-                            this, android.R.style.Theme_Material_Dialog_Alert);
-                    builder.setTitle(getResources().getString(R.string.proaudio_hdmi_infotitle));
-                    builder.setMessage(getResources().getString(R.string.proaudio_hdmi_message));
-                    builder.setPositiveButton(android.R.string.yes,
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                }
-                            });
-                    builder.setIcon(android.R.drawable.ic_dialog_alert);
-                    builder.show();
+        if (view.getId() == R.id.proAudioHasHDMICheckBox) {
+            if (mClaimsHDMICheckBox.isChecked()) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(
+                        this, android.R.style.Theme_Material_Dialog_Alert);
+                builder.setTitle(getResources().getString(R.string.proaudio_hdmi_infotitle));
+                builder.setMessage(getResources().getString(R.string.proaudio_hdmi_message));
+                builder.setPositiveButton(android.R.string.yes,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+                builder.setIcon(android.R.drawable.ic_dialog_alert);
+                builder.show();
 
-                    mClaimsHDMI = true;
-                    mHDMISupportLbl.setText(
-                            getResources().getString(R.string.audio_proaudio_hdmiPending));
-                } else {
-                    mClaimsHDMI = false;
-                    mHDMISupportLbl.setText(getResources().getString(R.string.audio_proaudio_NA));
-                }
-                displayTestResults();
-                break;
+                mClaimsHDMI = true;
+                mHDMISupportLbl.setText(
+                        getResources().getString(R.string.audio_proaudio_hdmiPending));
+            } else {
+                mClaimsHDMI = false;
+                mHDMISupportLbl.setText(getResources().getString(R.string.audio_proaudio_NA));
+            }
+            displayTestResults();
         }
     }
 

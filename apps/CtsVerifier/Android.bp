@@ -50,12 +50,9 @@ filegroup {
     srcs: ["src/com/android/cts/verifier/vr/MockVrListenerService.java"],
 }
 
-android_test {
-    name: "CtsVerifier",
+android_library {
+    name: "CtsVerifierLibT",
     defaults: ["cts_error_prone_rules_tests"],
-    additional_manifests: ["AndroidManifest-common.xml"],
-
-    compile_multilib: "both",
 
     srcs: [
         "src/**/*.java",
@@ -95,13 +92,6 @@ android_test {
 
     platform_apis: true,
 
-    jni_libs: [
-        "libctsverifier_jni",
-        "libctsnativemidi_jni",
-        "libaudioloopback_jni",
-        "libmegaaudio_jni",
-    ],
-
     optimize: {
         proguard_flags_files: ["proguard.flags"],
     },
@@ -109,6 +99,24 @@ android_test {
     dex_preopt: {
         enabled: false,
     },
+}
+
+android_test {
+    name: "CtsVerifier",
+    static_libs: [
+        "CtsVerifierLibT"
+    ],
+
+    compile_multilib: "both",
+
+    manifest: "AndroidManifest-verifierConfig.xml",
+
+    jni_libs: [
+        "libctsverifier_jni",
+        "libctsnativemidi_jni",
+        "libaudioloopback_jni",
+        "libmegaaudio_jni",
+    ],
 }
 
 // opencv library
@@ -172,7 +180,7 @@ filegroup {
 }
 
 filegroup {
-    name: "apps_to_include",
+    name: "cts_apps_to_include",
     srcs: [
         ":pre_installed_apps",
         ":pre_installed_instant_app",
@@ -192,7 +200,7 @@ filegroup {
 genrule {
     name: "android-cts-verifier",
     srcs: [
-        ":apps_to_include",
+        ":cts_apps_to_include",
         ":CtsVerifier",
         ":camera-its",
     ],
@@ -201,7 +209,7 @@ genrule {
         "merge_zips",
     ],
     out: ["android-cts-verifier.zip"],
-    cmd: "echo $(locations :apps_to_include) $(location :CtsVerifier) > $(genDir)/list &&" +
+    cmd: "echo $(locations :cts_apps_to_include) $(location :CtsVerifier) > $(genDir)/list &&" +
         " $(location soong_zip) -o $(genDir)/cts-verifier.zip -j -P android-cts-verifier -l $(genDir)/list &&" +
         " $(location merge_zips) $(out) $(genDir)/cts-verifier.zip $(location :camera-its)",
     dists: [

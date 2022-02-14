@@ -68,13 +68,8 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
                 return; // failed to create the recorder
             }
 
-            switch (v.getId()) {
-                case R.id.audio_routingnotification_recordBtn:
-                    startRecording();
-                    break;
-
-                case R.id.audio_routingnotification_recordStopBtn:
-                    break;
+            if (v.getId() == R.id.audio_routingnotification_recordBtn) {
+                startRecording();
             }
         }
     }
