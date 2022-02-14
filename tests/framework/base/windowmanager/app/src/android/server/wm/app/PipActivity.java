@@ -47,7 +47,9 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_CALLBAC
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_STASHED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
+import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
 import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
@@ -203,6 +205,16 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         if (getIntent().hasExtra(EXTRA_IS_SEAMLESS_RESIZE_ENABLED)) {
             sharedBuilder.setSeamlessResizeEnabled(
                     getIntent().getBooleanExtra(EXTRA_IS_SEAMLESS_RESIZE_ENABLED, true));
+            sharedBuilderChanged = true;
+        }
+
+        if (getIntent().hasExtra(EXTRA_TITLE)) {
+            sharedBuilder.setTitle(getIntent().getStringExtra(EXTRA_TITLE));
+            sharedBuilderChanged = true;
+        }
+
+        if (getIntent().hasExtra(EXTRA_SUBTITLE)) {
+            sharedBuilder.setSubtitle(getIntent().getStringExtra(EXTRA_SUBTITLE));
             sharedBuilderChanged = true;
         }
 
