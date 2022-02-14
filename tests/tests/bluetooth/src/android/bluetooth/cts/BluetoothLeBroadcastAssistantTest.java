@@ -19,11 +19,14 @@ package android.bluetooth.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothLeBroadcastAssistant;
+import android.bluetooth.BluetoothLeBroadcastMetadata;
+import android.bluetooth.BluetoothLeBroadcastReceiveState;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
@@ -44,7 +47,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -128,6 +133,169 @@ public class BluetoothLeBroadcastAssistantTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
         }
+    }
+
+    @Test
+    public void test_addSource() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // TODO When implemented
+        assertThrows(UnsupportedOperationException.class, () -> mBluetoothLeBroadcastAssistant
+                .addSource(null, null, true));
+
+        mBluetoothLeBroadcastAssistant.removeSource(null, 0);
+    }
+
+    @Test
+    public void test_getAllSources() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // TODO When implemented
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        // Verify returns empty list if bluetooth is not enabled
+        assertTrue(mBluetoothLeBroadcastAssistant.getAllSources(null).isEmpty());
+    }
+
+    @Test
+    public void test_setConnectionPolicy() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // TODO When implemented
+        assertFalse(mBluetoothLeBroadcastAssistant.setConnectionPolicy(null,
+                    BluetoothProfile.CONNECTION_POLICY_FORBIDDEN));
+        assertEquals(mBluetoothLeBroadcastAssistant.getConnectionPolicy(null),
+                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN);
+    }
+
+    @Test
+    public void test_getMaximumSourceCapacity() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // TODO When implemented
+        assertEquals(mBluetoothLeBroadcastAssistant.getMaximumSourceCapacity(null), 0);
+    }
+
+    @Test
+    public void test_isSearchInProgress() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // TODO When implemented
+        assertFalse(mBluetoothLeBroadcastAssistant.isSearchInProgress());
+    }
+
+    @Test
+    public void test_modifySource() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // TODO When implemented
+        assertThrows(UnsupportedOperationException.class, () -> mBluetoothLeBroadcastAssistant
+                .modifySource(null, 0, null));
+    }
+
+    @Test
+    public void test_registerCallback() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        Executor executor = mContext.getMainExecutor();
+        BluetoothLeBroadcastAssistant.Callback callback =
+                new BluetoothLeBroadcastAssistant.Callback() {
+                    @Override
+                    public void onSearchStarted(int reason) {}
+                    @Override
+                    public void onSearchStartFailed(int reason) {}
+                    @Override
+                    public void onSearchStopped(int reason) {}
+                    @Override
+                    public void onSearchStopFailed(int reason) {}
+                    @Override
+                    public void onSourceFound(BluetoothLeBroadcastMetadata source) {}
+                    @Override
+                    public void onSourceAdded(BluetoothDevice sink, int sourceId, int reason) {}
+                    @Override
+                    public void onSourceAddFailed(BluetoothDevice sink,
+                            BluetoothLeBroadcastMetadata source, int reason) {}
+                    @Override
+                    public void onSourceModified(BluetoothDevice sink, int sourceId, int reason) {}
+                    @Override
+                    public void onSourceModifyFailed(
+                            BluetoothDevice sink, int sourceId, int reason) {}
+                    @Override
+                    public void onSourceRemoved(BluetoothDevice sink, int sourceId, int reason) {}
+                    @Override
+                    public void onSourceRemoveFailed(
+                            BluetoothDevice sink, int sourceId, int reason) {}
+                    @Override
+                    public void onReceiveStateChanged(BluetoothDevice sink, int sourceId,
+                            BluetoothLeBroadcastReceiveState state) {}
+                };
+        // empty calls to callback override
+        callback.onSearchStarted(0);
+        callback.onSearchStartFailed(0);
+        callback.onSearchStopped(0);
+        callback.onSearchStopFailed(0);
+        callback.onSourceFound(null);
+        callback.onSourceAdded(null, 0, 0);
+        callback.onSourceAddFailed(null, null, 0);
+        callback.onSourceModified(null, 0, 0);
+        callback.onSourceModifyFailed(null, 0, 0);
+        callback.onSourceRemoved(null, 0, 0);
+        callback.onSourceRemoveFailed(null, 0, 0);
+        callback.onReceiveStateChanged(null, 0, null);
+
+        // Verify parameter
+        assertThrows(IllegalArgumentException.class, () -> mBluetoothLeBroadcastAssistant
+                .registerCallback(null, callback));
+        assertThrows(IllegalArgumentException.class, () -> mBluetoothLeBroadcastAssistant
+                .registerCallback(executor, null));
+        assertThrows(IllegalArgumentException.class, () -> mBluetoothLeBroadcastAssistant
+                .unregisterCallback(null));
+
+
+        // TODO When implemented
+        assertThrows(UnsupportedOperationException.class, () -> mBluetoothLeBroadcastAssistant
+                .registerCallback(executor, callback));
+        assertThrows(UnsupportedOperationException.class, () -> mBluetoothLeBroadcastAssistant
+                .unregisterCallback(callback));
+    }
+
+    @Test
+    public void test_startSearchingForSources() {
+        if (!(mHasBluetooth && mIsLeBroadcastAssistantSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeBroadcastAssistant);
+
+        // Verify parameter
+        assertThrows(IllegalArgumentException.class, () -> mBluetoothLeBroadcastAssistant
+                .startSearchingForSources(null));
+
+        // TODO When implemented
+        assertThrows(UnsupportedOperationException.class, () -> mBluetoothLeBroadcastAssistant
+                .startSearchingForSources(new ArrayList<>()));
+        assertThrows(UnsupportedOperationException.class, () -> mBluetoothLeBroadcastAssistant
+                .stopSearchingForSources());
     }
 
     @Test
