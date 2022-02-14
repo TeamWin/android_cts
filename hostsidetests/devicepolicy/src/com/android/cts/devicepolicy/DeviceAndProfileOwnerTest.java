@@ -241,7 +241,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".CertInstallDelegateTest", null);
         result.put(".BlockUninstallDelegateTest", null);
         result.put(".PermissionGrantDelegateTest", null);
         result.put(".PackageAccessDelegateTest", null);
@@ -267,11 +266,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 DELEGATION_BLOCK_UNINSTALL,
                 DELEGATION_PERMISSION_GRANT,
                 DELEGATION_PACKAGE_ACCESS,
-                DELEGATION_ENABLE_SYSTEM_APP,
-                // CERT_SELECTION scope is in the list so it still participates GeneralDelegateTest.
-                // But its main functionality test is driven by testDelegationCertSelection() and
-                // hence missing from getDelegationTests() on purpose.
-                DELEGATION_CERT_SELECTION
+                DELEGATION_ENABLE_SYSTEM_APP
                 ));
         result.addAll(getAdditionalDelegationScopes());
         return result;
@@ -314,8 +309,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Granting the appropriate delegation scopes makes APIs accessible.
             final List<String> scopes = getDelegationScopes();
             setDelegatedScopes(DELEGATE_APP_PKG, scopes);
-            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest", null, mUserId,
-                    ImmutableMap.of("scopes", String.join(",", scopes)));
             executeDelegationTests(delegationTests, true /* positive result */);
 
             // APIs are not accessible after revoking delegations.

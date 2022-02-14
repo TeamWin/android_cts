@@ -19,6 +19,7 @@ package com.android.bedstead.nene;
 import com.android.bedstead.nene.accessibility.Accessibility;
 import com.android.bedstead.nene.activities.Activities;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
@@ -95,6 +96,12 @@ public final class TestApis {
     @Experimental
     public static Accessibility accessibility() {
         return Accessibility.sInstance;
+    }
+
+    /** Access Test APIs related to bluetooth. */
+    @Experimental
+    public static Bluetooth bluetooth() {
+        return Bluetooth.sInstance;
     }
 
     /** @deprecated Use statically */
