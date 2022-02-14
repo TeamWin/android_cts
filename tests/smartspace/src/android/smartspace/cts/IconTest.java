@@ -17,9 +17,8 @@ package android.smartspace.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.smartspace.uitemplatedata.SmartspaceIcon;
+import android.app.smartspace.uitemplatedata.Icon;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Icon;
 import android.os.Parcel;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -28,19 +27,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for {@link SmartspaceIcon}
+ * Tests for {@link Icon}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class SmartspaceIconTest {
+public class IconTest {
 
-    private static final String TAG = "SmartspaceIconTest";
+    private static final String TAG = "IconTest";
 
     @Test
-    public void testCreateSmartspaceIcon() {
-        Icon icon = Icon.createWithBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
-        SmartspaceIcon smartspaceIcon = new SmartspaceIcon.Builder(icon).setContentDescription(
+    public void testCreateIcon() {
+        android.graphics.drawable.Icon icon = android.graphics.drawable.Icon.createWithBitmap(
+                Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
+        Icon smartspaceIcon = new Icon.Builder(icon).setContentDescription(
                 "test content").build();
 
         assertThat(smartspaceIcon.getIcon()).isEqualTo(icon);
@@ -50,7 +50,7 @@ public class SmartspaceIconTest {
         parcel.setDataPosition(0);
         smartspaceIcon.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        SmartspaceIcon copyIcon = SmartspaceIcon.CREATOR.createFromParcel(parcel);
+        Icon copyIcon = Icon.CREATOR.createFromParcel(parcel);
         assertThat(smartspaceIcon).isEqualTo(copyIcon);
         parcel.recycle();
     }

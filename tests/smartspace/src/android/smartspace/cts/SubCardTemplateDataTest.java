@@ -19,8 +19,8 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.smartspace.uitemplatedata.SmartspaceSubListUiTemplateData;
-import android.app.smartspace.uitemplatedata.SmartspaceText;
+import android.app.smartspace.uitemplatedata.SubCardTemplateData;
+import android.app.smartspace.uitemplatedata.Text;
 import android.os.Parcel;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -28,45 +28,40 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Tests for {@link SmartspaceSubListUiTemplateData}
+ * Tests for {@link SubCardTemplateData}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class SmartspaceSubListUiTemplateDataTest {
+public class SubCardTemplateDataTest {
 
-    private static final String TAG = "SmartspaceSubListUiTemplateDataTest";
+    private static final String TAG = "SubCardTemplateDataTest";
 
     @Test
-    public void testCreateSmartspaceSubListUiTemplateData() {
-        List<SmartspaceText> texts = new ArrayList<>();
-        texts.add(new SmartspaceText.Builder("text1").build());
-        texts.add(new SmartspaceText.Builder("text2").build());
-
-        SmartspaceSubListUiTemplateData subListUiTemplateData =
-                new SmartspaceSubListUiTemplateData.Builder(texts)
-                        .setSubListIcon(SmartspaceTestUtils.createSmartspaceIcon("icon"))
-                        .setSubListAction(
+    public void testCreateSubCardTemplateData() {
+        SubCardTemplateData subCardTemplateData =
+                new SubCardTemplateData.Builder(
+                        SmartspaceTestUtils.createSmartspaceIcon("icon"))
+                        .setSubCardText(new Text.Builder("text").build())
+                        .setSubCardAction(
                                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(), "tap"))
                         .build();
 
-        assertThat(subListUiTemplateData.getSubListIcon()).isEqualTo(
+        assertThat(subCardTemplateData.getSubCardIcon()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceIcon("icon"));
-        assertThat(subListUiTemplateData.getSubListTexts()).isEqualTo(texts);
-        assertThat(subListUiTemplateData.getSubListAction()).isEqualTo(
+        assertThat(subCardTemplateData.getSubCardText()).isEqualTo(
+                new Text.Builder("text").build());
+        assertThat(subCardTemplateData.getSubCardAction()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(), "tap"));
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
-        subListUiTemplateData.writeToParcel(parcel, 0);
+        subCardTemplateData.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        SmartspaceSubListUiTemplateData copyData =
-                SmartspaceSubListUiTemplateData.CREATOR.createFromParcel(parcel);
-        assertThat(subListUiTemplateData).isEqualTo(copyData);
+        SubCardTemplateData copyData =
+                SubCardTemplateData.CREATOR.createFromParcel(parcel);
+        assertThat(subCardTemplateData).isEqualTo(copyData);
         parcel.recycle();
     }
 }

@@ -21,7 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
-import android.app.smartspace.uitemplatedata.SmartspaceTapAction;
+import android.app.smartspace.uitemplatedata.TapAction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -33,17 +33,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for {@link SmartspaceTapAction}
+ * Tests for {@link TapAction}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class SmartspaceTapActionTest {
+public class TapActionTest {
 
-    private static final String TAG = "SmartspaceTapActionTest";
+    private static final String TAG = "TapActionTest";
 
     @Test
-    public void testCreateSmartspaceTapAction() {
+    public void testCreateTapAction() {
         Bundle extras = new Bundle();
         extras.putString("key", "value");
 
@@ -52,24 +52,24 @@ public class SmartspaceTapActionTest {
                 .addNextIntent(intent)
                 .getPendingIntent(0, PendingIntent.FLAG_IMMUTABLE);
 
-        SmartspaceTapAction smartspaceTapAction = new SmartspaceTapAction.Builder("id")
+        TapAction tapAction = new TapAction.Builder("id")
                 .setIntent(intent)
                 .setPendingIntent(pendingIntent)
                 .setUserHandle(Process.myUserHandle())
                 .setExtras(extras).build();
 
-        assertThat(smartspaceTapAction.getId()).isEqualTo("id");
-        assertThat(smartspaceTapAction.getIntent()).isEqualTo(intent);
-        assertThat(smartspaceTapAction.getPendingIntent()).isEqualTo(pendingIntent);
-        assertThat(smartspaceTapAction.getUserHandle()).isEqualTo(Process.myUserHandle());
-        assertThat(smartspaceTapAction.getExtras()).isEqualTo(extras);
+        assertThat(tapAction.getId()).isEqualTo("id");
+        assertThat(tapAction.getIntent()).isEqualTo(intent);
+        assertThat(tapAction.getPendingIntent()).isEqualTo(pendingIntent);
+        assertThat(tapAction.getUserHandle()).isEqualTo(Process.myUserHandle());
+        assertThat(tapAction.getExtras()).isEqualTo(extras);
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
-        smartspaceTapAction.writeToParcel(parcel, 0);
+        tapAction.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        SmartspaceTapAction copyTapAction = SmartspaceTapAction.CREATOR.createFromParcel(parcel);
-        assertThat(smartspaceTapAction).isEqualTo(copyTapAction);
+        TapAction copyTapAction = TapAction.CREATOR.createFromParcel(parcel);
+        assertThat(tapAction).isEqualTo(copyTapAction);
         parcel.recycle();
     }
 }
