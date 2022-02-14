@@ -670,11 +670,17 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
 
     /**
      * Resume playback when paused.
+     *
+     * @throws IllegalStateException if playback is not paused or if there is no configured audio
+     *                               track.
      */
     public void resume() {
         Log.d(TAG, "resume");
-        if (mAudioTrackState == null || mState != STATE_PAUSED) {
-            return;
+        if (mAudioTrackState == null) {
+            throw new IllegalStateException("Resuming playback with no audio track");
+        }
+        if (mState != STATE_PAUSED) {
+            throw new IllegalStateException("Expected STATE_PAUSED, got " + mState);
         }
         mAudioTrackState.playAudioTrack();
         mState = STATE_PLAYING;
