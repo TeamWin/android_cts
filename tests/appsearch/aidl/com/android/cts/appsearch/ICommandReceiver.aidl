@@ -18,13 +18,16 @@ package com.android.cts.appsearch;
 import java.util.List;
 
 interface ICommandReceiver {
-    List<String> globalSearch(String queryExpression);
+    List<String> globalSearch(in String queryExpression);
 
-    List<String> globalGet(String packageName, String databaseName, String namespace, String id);
+    List<String> globalGet(in String packageName, in String databaseName, in String namespace,
+        in String id);
 
-    boolean indexGloballySearchableDocument(String databaseName, String namespace, String id);
+    boolean indexGloballySearchableDocument(in String databaseName, in String namespace,
+        in String id, in int[] requiredPermissions);
 
-    boolean indexNotGloballySearchableDocument(String databaseName, String namespace, String id);
+    boolean indexNotGloballySearchableDocument(in String databaseName, in String namespace,
+        in String id);
 
-    boolean clearData(String databaseName);
+    boolean clearData(in String databaseName);
 }
