@@ -138,12 +138,9 @@ public class PhotoPickerAssertionsUtils {
             File file = new File(c.getString(c.getColumnIndex(PickerMediaColumns.DATA)));
 
             // The location is redacted
-            // TODO(b/193668830): Assert file path access after fixing cross-user FUSE lookup for
-            // picker path. See failing test in:
-            // PhotoPickerCrossProfileTest#testPersonalApp_canAccessWorkProfileContents
-            //try (InputStream is = new FileInputStream(file)) {
-            //  assertImageExifRedacted(is);
-            //}
+            try (InputStream is = new FileInputStream(file)) {
+                assertImageExifRedacted(is);
+            }
 
             // Assert no write access
             try (ParcelFileDescriptor pfd =
