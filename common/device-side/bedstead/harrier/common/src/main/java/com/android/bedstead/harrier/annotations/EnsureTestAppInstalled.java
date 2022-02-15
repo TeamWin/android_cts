@@ -21,6 +21,7 @@ import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.M
 import com.android.bedstead.harrier.UserType;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -34,28 +35,19 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasTestApp {
+@Repeatable(EnsureTestAppsInstalled.class)
+public @interface EnsureTestAppInstalled {
+
+    String DEFAULT_TEST_APP_KEY = "testApp";
 
     /** A key which uniquely identifies the test app for the test. */
-    String key() default "";
+    String key() default DEFAULT_TEST_APP_KEY;
 
     /** The package name of the testapp. */
     String packageName();
 
     /** The user the testApp should be installed on. */
     UserType onUser() default UserType.CURRENT_USER;
-
-    /** The appOps which should be granted to the test app. */
-    String[] grantPermissions() default {};
-
-    /** The appOps which should be denied to the test app. */
-    String[] denyPermissions() default {};
-
-    /** The appOps which should be granted to the test app. */
-    String[] grantAppOps() default {};
-
-    /** The appOps which should be denied to the test app. */
-    String[] denyAppOps() default {};
 
     /**
      * Whether this testApp should be returned by calls to {@code DeviceState#policyManager()}.

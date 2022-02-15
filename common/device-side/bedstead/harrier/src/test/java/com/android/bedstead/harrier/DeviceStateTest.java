@@ -62,6 +62,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
@@ -97,6 +98,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParent
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToProfileOwnerProfile;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Tags;
@@ -104,6 +106,7 @@ import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.NotFoundException;
 import com.android.bedstead.testapp.TestApp;
+import com.android.bedstead.testapp.TestAppInstance;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -130,6 +133,7 @@ public class DeviceStateTest {
 
     // Expects that this package name matches an actual test app
     private static final String TEST_APP_PACKAGE_NAME = "com.android.bedstead.testapp.EmptyTestApp";
+    private static final String TEST_APP_PACKAGE_NAME2 = "com.android.bedstead.testapp.SmsApp";
     private static final String TEST_APP_USED_IN_FIELD_NAME =
             "com.android.bedstead.testapp.NotEmptyTestApp";
     private static final TestApp sTestApp = sDeviceState.testApps().query()
@@ -905,4 +909,48 @@ public class DeviceStateTest {
         assertThrows(NotFoundException.class, () -> sDeviceState.testApps().query()
                 .wherePackageName().isEqualTo(TEST_APP_USED_IN_FIELD_NAME).get());
     }
+
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)
+    @Test
+    public void ensureTestAppInstalledAnnotation_testAppIsInstalled() {
+        assertThat(TestApis.packages().find(TEST_APP_PACKAGE_NAME).installedOnUser()).isTrue();
+    }
+
+    @EnsureHasSecondaryUser
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME, onUser = SECONDARY_USER)
+    @Test
+    public void ensureTestAppInstalledAnnotation_testAppIsInstalledOnCorrectUser() {
+        assertThat(TestApis.packages().find(TEST_APP_PACKAGE_NAME)
+                .installedOnUser(sDeviceState.secondaryUser())).isTrue();
+    }
+
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)
+    @Test
+    public void testApp_returnsTestApp() {
+        assertThat(sDeviceState.testApp().packageName()).isEqualTo(TEST_APP_PACKAGE_NAME);
+    }
+
+    @Test
+    public void testApp_noHarrierManagedTestApp_throwsException() {
+        try (TestAppInstance testApp = sDeviceState.testApps().any().install()) {
+            assertThrows(NeneException.class, sDeviceState::testApp);
+        }
+    }
+
+    @EnsureTestAppInstalled(key = "testApp1", packageName = TEST_APP_PACKAGE_NAME)
+    @EnsureTestAppInstalled(key = "testApp2", packageName = TEST_APP_PACKAGE_NAME2)
+    @Test
+    public void testApp_withKey_returnsCorrectTestApp() {
+        assertThat(sDeviceState.testApp("testApp1").packageName())
+                .isEqualTo(TEST_APP_PACKAGE_NAME);
+        assertThat(sDeviceState.testApp("testApp2").packageName())
+                .isEqualTo(TEST_APP_PACKAGE_NAME2);
+    }
+
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME, isPrimary = true)
+    @Test
+    public void dpc_primaryTestApp_returnsTestApp() {
+        assertThat(sDeviceState.dpc().packageName()).isEqualTo(TEST_APP_PACKAGE_NAME);
+    }
+
 }

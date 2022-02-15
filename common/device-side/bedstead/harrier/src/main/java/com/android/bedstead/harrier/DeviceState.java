@@ -22,6 +22,7 @@ import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
+import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -53,11 +54,11 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.EnsureHasTestApp;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -103,6 +104,7 @@ import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.remotedpc.RemoteDpcUsingParentInstance;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
+import com.android.bedstead.remotedpc.RemoteTestApp;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -421,6 +423,18 @@ public final class DeviceState extends HarrierRule {
                         requireRunOnProfileAnnotation.hasProfileOwner(),
                         /* useParentInstance= */ false,
                         dpcIsPrimary, switchedToParentUser, affiliationIds);
+                continue;
+            }
+
+            if (annotation instanceof EnsureTestAppInstalled) {
+                EnsureTestAppInstalled ensureTestAppInstalledAnnotation =
+                        (EnsureTestAppInstalled) annotation;
+                ensureTestAppInstalled(
+                        ensureTestAppInstalledAnnotation.key(),
+                        ensureTestAppInstalledAnnotation.packageName(),
+                        ensureTestAppInstalledAnnotation.onUser(),
+                        ensureTestAppInstalledAnnotation.isPrimary()
+                );
                 continue;
             }
 
@@ -1524,6 +1538,7 @@ public final class DeviceState extends HarrierRule {
         mRegisteredBroadcastReceivers.clear();
         mPrimaryPolicyManager = null;
         mOtherUserType = null;
+        mTestApps.clear();
 
         mTestAppProvider.restore();
     }
@@ -1704,6 +1719,28 @@ public final class DeviceState extends HarrierRule {
         ensureTestAppNotInstalled(RemoteDelegate.sTestApp, dpc.user());
     }
 
+    private void ensureTestAppInstalled(
+            String key, String packageName, UserType onUser, boolean isPrimary) {
+        TestApp testApp = mTestAppProvider.query()
+                .wherePackageName().isEqualTo(packageName)
+                .get();
+
+        TestAppInstance testAppInstance = ensureTestAppInstalled(
+                testApp, resolveUserTypeToUser(onUser));
+
+        mTestApps.put(key, testAppInstance);
+
+        if (isPrimary) {
+            if (mPrimaryPolicyManager != null) {
+                throw new IllegalStateException(
+                        "Only one DPC can be marked as primary per test (current primary is "
+                                + mPrimaryPolicyManager + ")");
+            }
+
+            mPrimaryPolicyManager = new RemoteTestApp(testAppInstance);
+        }
+    }
+
     private RemotePolicyManager getDeviceAdmin(EnsureHasDelegate.AdminType adminType) {
         switch (adminType) {
             case DEVICE_OWNER:
@@ -1717,16 +1754,20 @@ public final class DeviceState extends HarrierRule {
         }
     }
 
-    private void ensureTestAppInstalled(TestApp testApp, UserReference user) {
-        if (TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
-            return;
+    private TestAppInstance ensureTestAppInstalled(TestApp testApp, UserReference user) {
+        Package pkg = TestApis.packages().find(testApp.packageName());
+        if (pkg != null && TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
+            return testApp.instance(user);
         }
 
-        mInstalledTestApps.add(testApp.install(user));
+        TestAppInstance testAppInstance = testApp.install(user);
+        mInstalledTestApps.add(testAppInstance);
+        return testAppInstance;
     }
 
     private void ensureTestAppNotInstalled(TestApp testApp, UserReference user) {
-        if (!TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
+        Package pkg = TestApis.packages().find(testApp.packageName());
+        if (pkg == null || !TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
             return;
         }
 
@@ -2070,24 +2111,28 @@ public final class DeviceState extends HarrierRule {
      * Get a {@link TestAppProvider} which is cleared between tests.
      *
      * <p>Note that you must still manage the test apps manually. To have the infrastructure
-     * automatically remove test apps use the {@link EnsureHasTestApp} annotation.
+     * automatically remove test apps use the {@link EnsureTestAppInstalled} annotation.
      */
     public TestAppProvider testApps() {
         return mTestAppProvider;
     }
 
     /**
-     * Get a test app installed with @EnsureHasTestApp with no key.
+     * Get a test app installed with @EnsureTestAppInstalled with no key.
      */
     public TestAppInstance testApp() {
-        return null;
+        return testApp(DEFAULT_TEST_APP_KEY);
     }
 
     /**
-     * Get a test app installed with `@EnsureHasTestApp` with the given key.
+     * Get a test app installed with `@EnsureTestAppInstalled` with the given key.
      */
     public TestAppInstance testApp(String key) {
-        return null;
+        if (!mTestApps.containsKey(key)) {
+            throw new NeneException("No testapp with given key. Use @EnsureTestAppInstalled");
+        }
+
+        return mTestApps.get(key);
     }
 
     private void ensureCanGetPermission(String permission) {
