@@ -68,12 +68,12 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
 
     @Test
     public void testMissingClass() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISSING_CLASS);
-        JDiffClassDescription clz = new JDiffClassDescription(
-                "android.signature.cts.tests.data", "NoSuchClass");
-        clz.setType(JDiffClassDescription.JDiffType.CLASS);
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISSING_CLASS)) {
+            JDiffClassDescription clz = new JDiffClassDescription(
+                    "android.signature.cts.tests.data", "NoSuchClass");
+            clz.setType(JDiffClassDescription.JDiffType.CLASS);
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     @Test
@@ -281,15 +281,16 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
 
     @Test
     public void testFieldValueChanged() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_FIELD);
-        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffField field = new JDiffClassDescription.JDiffField(
-                "VALUE_FIELD", "java.lang.String",
-                Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC, "\"&#9992;\"");
-        clz.addField(field);
-        checkSignatureCompliance(clz, observer);
-        assertEquals(field.toSignatureString(), "public static final java.lang.String VALUE_FIELD");
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_FIELD)) {
+            JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+            JDiffClassDescription.JDiffField field = new JDiffClassDescription.JDiffField(
+                    "VALUE_FIELD", "java.lang.String",
+                    Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC, "\"&#9992;\"");
+            clz.addField(field);
+            checkSignatureCompliance(clz, observer);
+            assertEquals(field.toSignatureString(),
+                    "public static final java.lang.String VALUE_FIELD");
+        }
     }
 
     @Test
@@ -408,10 +409,10 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      */
     @Test
     public void testAddingAbstractToAClass() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS);
-        JDiffClassDescription clz = createClass("AbstractClass");
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = createClass("AbstractClass");
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
@@ -456,8 +457,9 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         JDiffClassDescription.JDiffMethod method = method("finalMethod",
                 Modifier.PUBLIC | Modifier.ABSTRACT, "void");
         clz.addMethod(method);
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        checkSignatureCompliance(clz, observer);
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
@@ -472,8 +474,9 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         JDiffClassDescription.JDiffMethod method = method("abstractMethod",
                 Modifier.PUBLIC, "void");
         clz.addMethod(method);
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        checkSignatureCompliance(clz, observer);
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     @Test
@@ -523,12 +526,13 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      */
     @Test
     public void testAddingFinalToAMethodInANonFinalClass() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        JDiffClassDescription clz = createClass("NormalClass");
-        JDiffClassDescription.JDiffMethod method = method("finalMethod", Modifier.PUBLIC, "void");
-        clz.addMethod(method);
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            JDiffClassDescription clz = createClass("NormalClass");
+            JDiffClassDescription.JDiffMethod method = method("finalMethod", Modifier.PUBLIC,
+                    "void");
+            clz.addMethod(method);
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     @Test
