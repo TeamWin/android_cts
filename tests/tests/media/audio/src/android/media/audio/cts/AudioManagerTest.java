@@ -1992,31 +1992,31 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     public void testAssistantUidRouting() {
         try {
-            mAudioManager.addAssistantServicesUids(new ArrayList<>(0));
+            mAudioManager.addAssistantServicesUids(new int[0]);
             fail("addAssistantServicesUids must fail due to no permission");
         } catch (SecurityException e) {
         }
 
         try {
-            mAudioManager.removeAssistantServicesUids(new ArrayList<>(0));
+            mAudioManager.removeAssistantServicesUids(new int[0]);
             fail("removeAssistantServicesUids must fail due to no permission");
         } catch (SecurityException e) {
         }
 
         try {
-            List<Integer> uids = mAudioManager.getAssistantServicesUids();
+            int[] uids = mAudioManager.getAssistantServicesUids();
             fail("getAssistantServicesUids must fail due to no permission");
         } catch (SecurityException e) {
         }
 
         try {
-            mAudioManager.setActiveAssistantServiceUids(new ArrayList<>(0));
+            mAudioManager.setActiveAssistantServiceUids(new int[0]);
             fail("setActiveAssistantServiceUids must fail due to no permission");
         } catch (SecurityException e) {
         }
 
         try {
-            List<Integer> uids = mAudioManager.getActiveAssistantServicesUids();
+            int[] activeUids = mAudioManager.getActiveAssistantServicesUids();
             fail("getActiveAssistantServicesUids must fail due to no permission");
         } catch (SecurityException e) {
         }
