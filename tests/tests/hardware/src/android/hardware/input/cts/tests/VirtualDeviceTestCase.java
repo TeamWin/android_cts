@@ -107,7 +107,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 /* dpi= */ 50,
                 /* surface= */ new Surface(new SurfaceTexture(ARBITRARY_SURFACE_TEX_ID)),
                 /* flags= */ 0,
-                /* handler= */ null,
+                /* executor= */ Runnable::run,
                 /* callback= */ null);
         if (mVirtualDisplay == null) {
             fail("Could not create virtual display");
@@ -137,13 +137,22 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     @Override
     void onTearDown() {
-        onTearDownVirtualInputDevice();
-        mTestActivity.finish();
-        mVirtualDisplay.release();
-        mVirtualDevice.close();
-        InstrumentationRegistry.getTargetContext().getSystemService(InputManager.class)
-                .unregisterInputDeviceListener(mInputDeviceListener);
-        disassociateCompanionDevice();
+        try {
+            onTearDownVirtualInputDevice();
+        } finally {
+            if (mTestActivity != null) {
+                mTestActivity.finish();
+            }
+            if (mVirtualDisplay != null) {
+                mVirtualDisplay.release();
+            }
+            if (mVirtualDevice != null) {
+                mVirtualDevice.close();
+            }
+            InstrumentationRegistry.getTargetContext().getSystemService(InputManager.class)
+                    .unregisterInputDeviceListener(mInputDeviceListener);
+            disassociateCompanionDevice();
+        }
     }
 
     @Override
