@@ -63,7 +63,7 @@ public class BluetoothAdapterTest extends AndroidTestCase {
     private boolean mIsAdapterNameChanged;
 
     private BluetoothAdapter mAdapter;
-    private UiAutomation mUiAutomation;;
+    private UiAutomation mUiAutomation;
 
     @Override
     public void setUp() throws Exception {
@@ -177,7 +177,6 @@ public class BluetoothAdapterTest extends AndroidTestCase {
             // Skip the test if bluetooth is not present.
             return;
         }
-        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         IntentFilter filter = new IntentFilter();
@@ -495,6 +494,7 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         assertFalse(mAdapter.registerBluetoothConnectionCallback(executor, null));
         assertFalse(mAdapter.unregisterBluetoothConnectionCallback(null));
 
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
         assertThrows(SecurityException.class,
@@ -538,8 +538,18 @@ public class BluetoothAdapterTest extends AndroidTestCase {
     public void test_factoryReset() {
         if (!mHasBluetooth) return;
 
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+
+        // Verify throws SecurityException without permission.BLUETOOTH_PRIVILEGED
+        assertThrows(SecurityException.class, () -> mAdapter.factoryReset());
+        mUiAutomation.dropShellPermissionIdentity();
         // Verify throws SecurityException without permission.BLUETOOTH_CONNECT
         assertThrows(SecurityException.class, () -> mAdapter.factoryReset());
+
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        // Verify throws RuntimeException when trying to save sysprop for later (permission denied)
+        assertThrows(RuntimeException.class, () -> mAdapter.factoryReset());
     }
 
     public void test_BluetoothProfile_getConnectionStateName() {
