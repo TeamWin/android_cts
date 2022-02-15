@@ -216,19 +216,16 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
             apiModifiers &= ~(Modifier.FINAL | Modifier.ABSTRACT);
         }
 
-        // If the reflected class isn't abstract but the api class is then it should be ok. This
-        // test should probably only be performed for previous APIs but it is not clear whether that
-        // is the case as the test for this was added in http://b/1839622, long before the test
-        // supported checking previous APIs. It is possible that it was needed because they were
-        // running a CTS test on a later release.
-        if ((apiModifiers & Modifier.ABSTRACT) != 0
-                && (reflectionModifiers & Modifier.ABSTRACT) == 0) {
-            // Ignore abstract modifiers.
-            reflectionModifiers &= ~Modifier.ABSTRACT;
-            apiModifiers &= ~Modifier.ABSTRACT;
-        }
-
         if (classDescription.isPreviousApi()) {
+
+            // Changing a class from being previously abstract to concrete is forwards compatible.
+            if ((apiModifiers & Modifier.ABSTRACT) != 0
+                    && (reflectionModifiers & Modifier.ABSTRACT) == 0) {
+                // Ignore abstract modifiers.
+                reflectionModifiers &= ~Modifier.ABSTRACT;
+                apiModifiers &= ~Modifier.ABSTRACT;
+            }
+
             if (isAllowedClassAbstractionFromPreviousSystemApi(classDescription, runtimeClass)) {
                 // A previously final class with no accessible constructors has been converted to an
                 // abstract class. So, clear the appropriate modifiers.
