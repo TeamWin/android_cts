@@ -374,12 +374,10 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
 
     @Test
     public void testRemovingFinalFromAClass_PreviousApi() {
-        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
-            JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-            clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
-            clz.setPreviousApiFlag(true);
-            checkSignatureCompliance(clz, observer);
-        }
+        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+        clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
     }
 
     /**
