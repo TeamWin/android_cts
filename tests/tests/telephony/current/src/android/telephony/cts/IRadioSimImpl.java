@@ -23,6 +23,9 @@ import android.hardware.radio.sim.CardStatus;
 import android.hardware.radio.sim.IRadioSim;
 import android.hardware.radio.sim.IRadioSimIndication;
 import android.hardware.radio.sim.IRadioSimResponse;
+import android.os.AsyncResult;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -32,14 +35,56 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     private final MockModemService mService;
     private IRadioSimResponse mRadioSimResponse;
     private IRadioSimIndication mRadioSimIndication;
-    private CardStatus mCardStatus = null;
-    private boolean mSimStatePresent = false;
+    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
+    private Object mCacheUpdateMutex;
+    private final Handler mHandler;
+    private int mSubId;
 
-    public IRadioSimImpl(MockModemService service) {
+    // ***** Events
+    static final int EVENT_SIM_CARD_STATUS_CHANGED = 1;
+
+    // ***** Cache of modem attributes/status
+    private int mNumOfLogicalSim;
+    private CardStatus mCardStatus;
+
+    public IRadioSimImpl(
+            MockModemService service, MockModemConfigInterface[] interfaces, int instanceId) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
-        mCardStatus = setCardAbsent();
+        sMockModemConfigInterfaces = interfaces;
+        mSubId = instanceId;
+        mCardStatus = new CardStatus();
+        mCacheUpdateMutex = new Object();
+        mHandler = new IRadioSimHandler();
+        mNumOfLogicalSim = sMockModemConfigInterfaces.length;
+
+        // Register events
+        sMockModemConfigInterfaces[mSubId].registerForCardStatusChanged(
+                mHandler, EVENT_SIM_CARD_STATUS_CHANGED, null);
+    }
+
+    /** Handler class to handle callbacks */
+    private final class IRadioSimHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            AsyncResult ar;
+            synchronized (mCacheUpdateMutex) {
+                switch (msg.what) {
+                    case EVENT_SIM_CARD_STATUS_CHANGED:
+                        Log.d(TAG, "Received EVENT_SIM_CARD_STATUS_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mCardStatus = (CardStatus) ar.result;
+                            Log.i(TAG, "Sim card status: " + mCardStatus);
+                            simStatusChanged();
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     // Implementation of IRadioSim functions
@@ -183,18 +228,18 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     @Override
     public void getIccCardStatus(int serial) {
         Log.d(TAG, "getIccCardStatus");
+        CardStatus cardStatus;
 
-        // TODO: use helper function to handle
-        if (mSimStatePresent) mCardStatus.cardState = CardStatus.STATE_PRESENT;
+        synchronized (mCacheUpdateMutex) {
+            cardStatus = mCardStatus;
+        }
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioSimResponse.getIccCardStatusResponse(rsp, mCardStatus);
+            mRadioSimResponse.getIccCardStatusResponse(rsp, cardStatus);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getIccCardStatus from AIDL. Exception" + ex);
         }
-
-        mService.countDownLatch(MockModemService.LATCH_MOCK_MODEM_SIM_READY);
     }
 
     @Override
@@ -717,29 +762,5 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         } else {
             Log.e(TAG, "null mRadioSimIndication");
         }
-    }
-
-    private CardStatus setCardAbsent() {
-        CardStatus cardStatus = new CardStatus();
-        cardStatus.cardState = CardStatus.STATE_ABSENT;
-        cardStatus.universalPinState = 0;
-        cardStatus.gsmUmtsSubscriptionAppIndex = -1;
-        cardStatus.cdmaSubscriptionAppIndex = -1;
-        cardStatus.imsSubscriptionAppIndex = -1;
-        cardStatus.applications = new android.hardware.radio.sim.AppStatus[0];
-        cardStatus.atr = "";
-        cardStatus.iccid = "";
-        cardStatus.eid = "";
-        cardStatus.slotMap = new android.hardware.radio.config.SlotPortMapping();
-        cardStatus.slotMap.physicalSlotId = 0;
-        cardStatus.slotMap.portId = 0;
-
-        return cardStatus;
-    }
-
-    // TODO: use helper function to handle
-    public void setSimPresent(int slotId) {
-        // TODO: check  slotId and Phone ID
-        mSimStatePresent = true;
     }
 }

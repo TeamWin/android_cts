@@ -86,6 +86,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
         removeTestPackages();
         deviceDisableDeviceConfigSync();
+        deviceSetupServerBasedParameter();
     }
 
     @After
@@ -95,46 +96,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void resumeOnReboot_SingleUser_Success() throws Exception {
-        if (!isSupportedDevice()) {
-            CLog.v(TAG, "Device not supported; skipping test");
-            return;
-        }
-
-        int[] users = Utils.prepareSingleUser(getDevice());
-        int initialUser = users[0];
-
-        // Clean up the server based parameters for HAL based test.
-        deviceCleanupServerBasedParameter();
-
-        try {
-            installTestPackages();
-
-            deviceSetup(initialUser);
-            deviceRequestLskf();
-            deviceLock(initialUser);
-            deviceEnterLskf(initialUser);
-            deviceRebootAndApply();
-
-            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
-        } finally {
-            try {
-                // Remove secure lock screens and tear down test app
-                runDeviceTestsAsUser("testTearDown", initialUser);
-
-                deviceClearLskf();
-            } finally {
-                removeTestPackages();
-            }
-        }
-    }
-
-    @Test
     public void resumeOnReboot_ManagedProfile_Success() throws Exception {
-        if (!isSupportedDevice()) {
-            CLog.v(TAG, "Device not supported; skipping test");
-            return;
-        }
+        assumeTrue("Device isn't at least S or has no lock screen", isSupportedSDevice());
 
         if (!getDevice().hasFeature("android.software.managed_users")) {
             CLog.v(TAG, "Device doesn't support managed users; skipping test");
@@ -145,8 +108,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int initialUser = users[0];
 
         int managedUserId = createManagedProfile(initialUser);
-
-        deviceCleanupServerBasedParameter();
 
         try {
             // Set up test app and secure lock screens
@@ -177,10 +138,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void resumeOnReboot_TwoUsers_SingleUserUnlock_Success() throws Exception {
-        if (!isSupportedDevice()) {
-            CLog.v(TAG, "Device not supported; skipping test");
-            return;
-        }
+        assumeTrue("Device isn't at least S or has no lock screen", isSupportedSDevice());
 
         if (!mSupportsMultiUser) {
             CLog.v(TAG, "Device doesn't support multi-user; skipping test");
@@ -190,8 +148,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int[] users = Utils.prepareMultipleUsers(getDevice(), 2);
         int initialUser = users[0];
         int secondaryUser = users[1];
-
-        deviceCleanupServerBasedParameter();
 
         try {
             // Set up test app and secure lock screens
@@ -234,10 +190,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void resumeOnReboot_TwoUsers_BothUserUnlock_Success() throws Exception {
-        if (!isSupportedDevice()) {
-            CLog.v(TAG, "Device not supported; skipping test");
-            return;
-        }
+        assumeTrue("Device isn't at least S or has no lock screen", isSupportedSDevice());
 
         if (!mSupportsMultiUser) {
             CLog.v(TAG, "Device doesn't support multi-user; skipping test");
@@ -247,8 +200,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int[] users = Utils.prepareMultipleUsers(getDevice(), 2);
         int initialUser = users[0];
         int secondaryUser = users[1];
-
-        deviceCleanupServerBasedParameter();
 
         try {
             installTestPackages();
@@ -291,22 +242,12 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    private boolean isSupportedSDevice() throws Exception {
-        // The following tests targets API level >= S.
-        boolean isAtleastS = ApiLevelUtil.isAfter(getDevice(), 30 /* BUILD.VERSION_CODES.R */)
-                || ApiLevelUtil.codenameEquals(getDevice(), "S");
-
-        return isAtleastS && getDevice().hasFeature(FEATURE_SECURE_LOCK_SCREEN);
-    }
-
     @Test
     public void resumeOnReboot_SingleUser_ServerBased_Success() throws Exception {
-        assumeTrue("Device isn't at least S or have no lock screen", isSupportedSDevice());
+        assumeTrue("Device isn't at least S or has no lock screen", isSupportedSDevice());
 
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];
-
-        deviceSetupServerBasedParameter();
 
         try {
             installTestPackages();
@@ -327,7 +268,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-                deviceCleanupServerBasedParameter();
 
                 getDevice().rebootUntilOnline();
                 getDevice().waitForDeviceAvailable();
@@ -337,12 +277,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void resumeOnReboot_SingleUser_MultiClient_ClientASuccess() throws Exception {
-        assumeTrue("Device isn't at least S or have no lock screen", isSupportedSDevice());
+        assumeTrue("Device isn't at least S or has no lock screen", isSupportedSDevice());
 
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];
-
-        deviceSetupServerBasedParameter();
 
         final String clientA = "ClientA";
         final String clientB = "ClientB";
@@ -370,7 +308,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-                deviceCleanupServerBasedParameter();
 
                 getDevice().rebootUntilOnline();
                 getDevice().waitForDeviceAvailable();
@@ -380,12 +317,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void resumeOnReboot_SingleUser_MultiClient_ClientBSuccess() throws Exception {
-        assumeTrue("Device isn't at least S or have no lock screen", isSupportedSDevice());
+        assumeTrue("Device isn't at least S or has no lock screen", isSupportedSDevice());
 
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];
-
-        deviceSetupServerBasedParameter();
 
         final String clientA = "ClientA";
         final String clientB = "ClientB";
@@ -412,7 +347,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 deviceClearLskf();
             } finally {
                 removeTestPackages();
-                deviceCleanupServerBasedParameter();
 
                 getDevice().rebootUntilOnline();
                 getDevice().waitForDeviceAvailable();
@@ -631,9 +565,12 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, CLASS, testMethodName);
     }
 
-    private boolean isSupportedDevice() throws Exception {
-        return getDevice().hasFeature(FEATURE_DEVICE_ADMIN)
-                && getDevice().hasFeature(FEATURE_REBOOT_ESCROW);
+    private boolean isSupportedSDevice() throws Exception {
+        // The following tests targets API level >= S.
+        boolean isAtleastS = ApiLevelUtil.isAfter(getDevice(), 30 /* BUILD.VERSION_CODES.R */)
+                || ApiLevelUtil.codenameEquals(getDevice(), "S");
+
+        return isAtleastS && getDevice().hasFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {

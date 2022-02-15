@@ -33,8 +33,7 @@ class MockModemServiceConnector {
 
     private static final String TAG = "MockModemServiceConnector";
 
-    private static final String DEFAULT_SERVICE_NAME =
-            MockModemService.class.getClass().getName();
+    private static final String DEFAULT_SERVICE_NAME = MockModemService.class.getClass().getName();
     private static final String COMMAND_BASE = "cmd phone ";
     private static final String COMMAND_SET_MODEM_SERVICE = "radio set-modem-service ";
     private static final String COMMAND_GET_MODEM_SERVICE = "radio get-modem-service ";
@@ -196,10 +195,9 @@ class MockModemServiceConnector {
                             MockModemService.LATCH_RADIO_INTERFACES_READY,
                             BIND_RADIO_INTERFACE_READY_TIMEOUT_MS);
 
-            mMockModemService.initialization();
-            isComplete =
-                    mMockModemService.waitForLatchCountdown(
-                            MockModemService.LATCH_MOCK_MODEM_INITIALIZATION_READY);
+            if (isComplete) {
+                isComplete = mMockModemService.initialize();
+            }
         }
 
         return isComplete;

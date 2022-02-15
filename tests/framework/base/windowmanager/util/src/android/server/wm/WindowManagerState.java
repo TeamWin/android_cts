@@ -42,6 +42,7 @@ import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.nano.RectProto;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.SparseArray;
@@ -143,7 +144,6 @@ public class WindowManagerState {
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
     private Boolean mIsHomeRecentsComponent;
-    private int mDefaultMinSizeOfResizableTaskDp;
     private String mTopResumedActivityRecord = null;
     final List<String> mResumedActivitiesInRootTasks = new ArrayList<>();
     final List<String> mResumedActivitiesInDisplays = new ArrayList<>();
@@ -420,7 +420,6 @@ public class WindowManagerState {
             mTopResumedActivityRecord = focusedDisplay.mResumedActivity;
         }
         mIsHomeRecentsComponent = new Boolean(root.isHomeRecentsComponent);
-        mDefaultMinSizeOfResizableTaskDp = root.defaultMinSizeResizableTask;
 
         for (int i = 0; i < root.pendingActivities.length; i++) {
             mPendingActivities.add(root.pendingActivities[i].title);
@@ -1106,6 +1105,7 @@ public class WindowManagerState {
         boolean mSingleTaskInstance;
         Rect mDefaultPinnedStackBounds = null;
         Rect mPinnedStackMovementBounds = null;
+        int mMinSizeOfResizeableTaskDp;
 
         private Rect mDisplayRect = new Rect();
         private Rect mAppRect = new Rect();
@@ -1122,6 +1122,7 @@ public class WindowManagerState {
         private int mFixedToUserRotationMode;
         private int mLastOrientation;
         private boolean mIsFixedToUserRotation;
+        private List<Rect> mKeepClearRects;
 
         DisplayContent(DisplayContentProto proto) {
             super(proto.rootDisplayArea);
@@ -1144,6 +1145,7 @@ public class WindowManagerState {
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
             mSurfaceSize = proto.surfaceSize;
             mFocusedApp = proto.focusedApp;
+            mMinSizeOfResizeableTaskDp = proto.minSizeOfResizeableTaskDp;
 
             final AppTransitionProto appTransitionProto = proto.appTransition;
             int appState = 0;
@@ -1169,6 +1171,10 @@ public class WindowManagerState {
                 mFixedToUserRotationMode = rotationProto.fixedToUserRotationMode;
                 mLastOrientation = rotationProto.lastOrientation;
                 mIsFixedToUserRotation = rotationProto.isFixedToUserRotation;
+            }
+            mKeepClearRects = new ArrayList();
+            for (RectProto r : proto.keepClearAreas) {
+                mKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
             }
         }
 
@@ -1288,10 +1294,70 @@ public class WindowManagerState {
 
         String getAppTransitionState() { return mAppTransitionState; }
 
+        List<Rect> getKeepClearRects() { return mKeepClearRects; }
+
         @Override
         public String toString() {
             return "Display #" + mId + ": name=" + mName + " mDisplayRect=" + mDisplayRect
                     + " mAppRect=" + mAppRect + " mFlags=" + mFlags;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (o == null) {
+                return false;
+            }
+            if (!(o instanceof DisplayContent)) {
+                return false;
+            }
+
+            DisplayContent dc = (DisplayContent) o;
+
+            return (dc.mDisplayRect == null ? mDisplayRect == null
+                    : dc.mDisplayRect.equals(mDisplayRect))
+                && (dc.mAppRect == null ? mAppRect == null : dc.mAppRect.equals(mAppRect))
+                && dc.mDpi == mDpi
+                && dc.mFlags == mFlags
+                && (dc.mName == null ? mName == null : dc.mName.equals(mName))
+                && dc.mSurfaceSize == mSurfaceSize
+                && (dc.mAppTransitionState == null ? mAppTransitionState == null
+                    : dc.mAppTransitionState.equals(mAppTransitionState))
+                && dc.mRotation == mRotation
+                && dc.mFrozenToUserRotation == mFrozenToUserRotation
+                && dc.mUserRotation == mUserRotation
+                && dc.mFixedToUserRotationMode == mFixedToUserRotationMode
+                && dc.mLastOrientation == mLastOrientation
+                && dc.mIsFixedToUserRotation == mIsFixedToUserRotation;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 0;
+            if (mDisplayRect != null) {
+                result = 31 * result + mDisplayRect.hashCode();
+            }
+            if (mAppRect != null) {
+                result = 31 * result + mAppRect.hashCode();
+            }
+            result = 31 * result + mDpi;
+            result = 31 * result + mFlags;
+            if (mName != null) {
+                result = 31 * result + mName.hashCode();
+            }
+            result = 31 * result + mSurfaceSize;
+            if (mAppTransitionState != null) {
+                result = 31 * result + mAppTransitionState.hashCode();
+            }
+            result = 31 * result + mRotation;
+            result = 31 * result + Boolean.hashCode(mFrozenToUserRotation);
+            result = 31 * result + mUserRotation;
+            result = 31 * result + mFixedToUserRotationMode;
+            result = 31 * result + mLastOrientation;
+            result = 31 * result + Boolean.hashCode(mIsFixedToUserRotation);
+            return result;
         }
     }
 
@@ -1919,6 +1985,7 @@ public class WindowManagerState {
         private float mGlobalScale;
         private int mRequestedWidth;
         private int mRequestedHeight;
+        private List<Rect> mKeepClearRects;
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
@@ -1961,6 +2028,10 @@ public class WindowManagerState {
             mGlobalScale = proto.globalScale;
             mRequestedWidth = proto.requestedWidth;
             mRequestedHeight = proto.requestedHeight;
+            mKeepClearRects = new ArrayList();
+            for (RectProto r : proto.keepClearAreas) {
+                mKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
+            }
         }
 
         boolean isStartingWindow() {
@@ -2031,6 +2102,10 @@ public class WindowManagerState {
             return mRequestedHeight;
         }
 
+        public List<Rect> getKeepClearRects() {
+            return mKeepClearRects;
+        }
+
         private String getWindowTypeSuffix(int windowType) {
             switch (windowType) {
                 case WINDOW_TYPE_STARTING:
@@ -2063,7 +2138,8 @@ public class WindowManagerState {
     }
 
     int defaultMinimalTaskSize(int displayId) {
-        return dpToPx(mDefaultMinSizeOfResizableTaskDp, getDisplay(displayId).getDpi());
+        final DisplayContent dc = getDisplay(displayId);
+        return dpToPx(dc.mMinSizeOfResizeableTaskDp, dc.getDpi());
     }
 
     int defaultMinimalDisplaySizeForSplitScreen(int displayId) {

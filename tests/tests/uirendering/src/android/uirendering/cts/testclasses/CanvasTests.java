@@ -41,13 +41,15 @@ import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 @MediumTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class CanvasTests extends ActivityTestBase {
 
     private static final int PAINT_COLOR = 0xff00ff00;
@@ -69,8 +71,12 @@ public class CanvasTests extends ActivityTestBase {
         return immutableBitmap;
     }
 
+    public Bitmap getMutableBitmap(Bitmap.Config config) {
+        return Bitmap.createBitmap(BITMAP_WIDTH, BITMAP_HEIGHT, config);
+    }
+
     public Bitmap getMutableBitmap() {
-        return Bitmap.createBitmap(BITMAP_WIDTH, BITMAP_HEIGHT, Bitmap.Config.ARGB_8888);
+        return getMutableBitmap(Bitmap.Config.ARGB_8888);
     }
 
     @Test
@@ -168,7 +174,7 @@ public class CanvasTests extends ActivityTestBase {
                 .runWithVerifier(new SamplePointVerifier(testPoints, colors));
     }
 
-    private void drawRotatedBitmap(boolean aa, Canvas canvas) {
+    private void drawRotatedBitmap(boolean aa, Canvas canvas, Bitmap.Config config) {
         // create a black bitmap to be drawn to the canvas
         Bitmap bm = getMutableBitmap();
         bm.eraseColor(Color.BLACK);
@@ -186,23 +192,32 @@ public class CanvasTests extends ActivityTestBase {
         canvas.drawBitmap(bm, 0, 0, aaPaint);
     }
 
+    private Object[] testConfigs() {
+        return new Object[] {
+            Bitmap.Config.ARGB_8888,
+            Bitmap.Config.RGBA_1010102
+        };
+    }
+
     @Test
-    public void testDrawRotatedBitmapWithAA() {
+    @Parameters(method = "testConfigs")
+    public void testDrawRotatedBitmapWithAA(Bitmap.Config config) {
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
                     canvas.setDensity(400);
-                    drawRotatedBitmap(true, canvas);
+                    drawRotatedBitmap(true, canvas, config);
                 })
                 // Test asserts there are more than 10 grey pixels.
                 .runWithVerifier(AntiAliasPixelCounter.aaVerifier(Color.WHITE, Color.BLACK, 10));
     }
 
     @Test
-    public void testDrawRotatedBitmapWithoutAA() {
+    @Parameters(method = "testConfigs")
+    public void testDrawRotatedBitmapWithoutAA(Bitmap.Config config) {
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
                     canvas.setDensity(400);
-                    drawRotatedBitmap(false, canvas);
+                    drawRotatedBitmap(false, canvas, config);
                 })
                 // Test asserts there are no grey pixels.
                 .runWithVerifier(AntiAliasPixelCounter.noAAVerifier(Color.WHITE, Color.BLACK));

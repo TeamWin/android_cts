@@ -28,8 +28,11 @@ import android.compat.testing.SharedLibraryInfo;
 
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableCollection;
@@ -62,7 +65,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
 
     private static final String ANDROID_TEST_MOCK_JAR = "/system/framework/android.test.mock.jar";
 
-    private static final Object sLock = new Object();
     private static ImmutableList<String> sBootclasspathJars;
     private static ImmutableList<String> sSystemserverclasspathJars;
     private static ImmutableList<String> sSharedLibJars;
@@ -105,6 +107,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/annotation/DrawableRes;",
                     "Landroid/annotation/DurationMillisLong;",
                     "Landroid/annotation/ElapsedRealtimeLong;",
+                    "Landroid/annotation/EnforcePermission;",
                     "Landroid/annotation/FloatRange;",
                     "Landroid/annotation/FontRes;",
                     "Landroid/annotation/FractionRes;",
@@ -319,53 +322,53 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      * <p>This method cannot be static, as there are no static equivalents for {@link #getDevice()}
      * and {@link #getBuild()}.
      */
-    @Before
-    public void setupOnce() throws IOException, DeviceNotAvailableException {
-        if (getDevice() == null || getBuild() == null) {
+    @BeforeClassWithInfo
+    public static void setupOnce(TestInformation testInfo) throws Exception {
+        if (testInfo.getDevice() == null || testInfo.getBuildInfo() == null) {
             throw new RuntimeException("No device and/or build type specified!");
         }
-        mDeviceSdkLevel = new DeviceSdkLevel(getDevice());
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(testInfo.getDevice());
 
-        synchronized (sLock) {
-            if (sJarsToClasses != null) {
-                return;
-            }
-            sBootclasspathJars = Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH);
-            sSystemserverclasspathJars =
-                    Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH);
-            sSharedLibs = mDeviceSdkLevel.isDeviceAtLeastS()
-                    ? Classpaths.getSharedLibraryInfos(getDevice(), getBuild())
-                    : ImmutableList.of();
-            sSharedLibJars = sSharedLibs.stream()
-                    .map(sharedLibraryInfo -> sharedLibraryInfo.paths)
-                    .flatMap(ImmutableCollection::stream)
-                    .filter(this::doesFileExist)
-                    .collect(ImmutableList.toImmutableList());
+        sBootclasspathJars = Classpaths.getJarsOnClasspath(testInfo.getDevice(), BOOTCLASSPATH);
+        sSystemserverclasspathJars =
+                Classpaths.getJarsOnClasspath(testInfo.getDevice(), SYSTEMSERVERCLASSPATH);
+        sSharedLibs = deviceSdkLevel.isDeviceAtLeastS()
+                ? Classpaths.getSharedLibraryInfos(testInfo.getDevice(), testInfo.getBuildInfo())
+                : ImmutableList.of();
+        sSharedLibJars = sSharedLibs.stream()
+                .map(sharedLibraryInfo -> sharedLibraryInfo.paths)
+                .flatMap(ImmutableCollection::stream)
+                .filter(file -> doesFileExist(file, testInfo.getDevice()))
+                .collect(ImmutableList.toImmutableList());
 
-            final ImmutableSetMultimap.Builder<String, String> jarsToClasses =
-                    ImmutableSetMultimap.builder();
-            Stream.of(sBootclasspathJars.stream(),
-                            sSystemserverclasspathJars.stream(),
-                            sSharedLibJars.stream())
-                    .reduce(Stream::concat).orElseGet(Stream::empty)
-                    .parallel()
-                    .forEach(jar -> {
-                        try {
-                            ImmutableSet<String> classes =
-                                    Classpaths.getClassDefsFromJar(getDevice(), jar).stream()
-                                            .map(ClassDef::getType)
-                                            // Inner classes always go with their parent.
-                                            .filter(className -> !className.contains("$"))
-                                            .collect(ImmutableSet.toImmutableSet());
-                            synchronized (jarsToClasses) {
-                                jarsToClasses.putAll(jar, classes);
-                            }
-                        } catch (DeviceNotAvailableException | IOException e) {
-                            throw new RuntimeException(e);
+        final ImmutableSetMultimap.Builder<String, String> jarsToClasses =
+                ImmutableSetMultimap.builder();
+        Stream.of(sBootclasspathJars.stream(),
+                        sSystemserverclasspathJars.stream(),
+                        sSharedLibJars.stream())
+                .reduce(Stream::concat).orElseGet(Stream::empty)
+                .parallel()
+                .forEach(jar -> {
+                    try {
+                        ImmutableSet<String> classes =
+                                Classpaths.getClassDefsFromJar(testInfo.getDevice(), jar).stream()
+                                        .map(ClassDef::getType)
+                                        // Inner classes always go with their parent.
+                                        .filter(className -> !className.contains("$"))
+                                        .collect(ImmutableSet.toImmutableSet());
+                        synchronized (jarsToClasses) {
+                            jarsToClasses.putAll(jar, classes);
                         }
-                    });
-            sJarsToClasses = jarsToClasses.build();
-        }
+                    } catch (DeviceNotAvailableException | IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        sJarsToClasses = jarsToClasses.build();
+    }
+
+    @Before
+    public void setup() {
+        mDeviceSdkLevel = new DeviceSdkLevel(getDevice());
     }
 
     /**
@@ -524,10 +527,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         return Multimaps.filterKeys(allClasses, key -> allClasses.get(key).size() > 1);
     }
 
-    private boolean doesFileExist(String path) {
+    private static boolean doesFileExist(String path, ITestDevice device) {
         assertThat(path).isNotNull();
         try {
-            return getDevice().doesFileExist(path);
+            return device.doesFileExist(path);
         } catch (DeviceNotAvailableException e) {
             throw new RuntimeException("Could not check whether " + path + " exists on device", e);
         }

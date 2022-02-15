@@ -395,7 +395,7 @@ public final class Package {
         }
     }
 
-    private void checkCanGrantOrRevokePermission(UserReference user, String permission) {
+    void checkCanGrantOrRevokePermission(UserReference user, String permission) {
         if (!installedOnUser(user)) {
             throw new NeneException("Attempting to grant " + permission + " to " + this
                     + " on user " + user + ". But it is not installed");
@@ -781,6 +781,12 @@ public final class Package {
         }
 
         return Packages.parseDumpsys().mPackages.containsKey(mPackageName);
+    }
+
+    /** Get the targetSdkVersion for the package. */
+    @Experimental
+    public int targetSdkVersion() {
+        return applicationInfoFromAnyUserOrError(/* flags= */ 0).targetSdkVersion;
     }
 
     /**

@@ -17,7 +17,6 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
@@ -34,6 +33,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -124,6 +124,123 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     }
 
     /**
+     * Test HF4-6-22 (CEC 2.0)
+     *
+     * <p>Verifies that the DUT notifies the transition back to Standby state if an ongoing
+     * transition from standby state to power on state is interrupted.
+     */
+    @Test
+    public void cect_hf4_6_22_interruptedPowerOn() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+
+        try {
+            // Turn device off
+            sendDeviceToSleep();
+
+            List<Integer> keycodes = new ArrayList<>();
+            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION);
+            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION);
+
+            // Send a <UCP>[Power On] immediately followed by a <UCP>[Power Off]
+            hdmiCecClient.sendMultipleUserControlPressAndRelease(LogicalAddress.TV, keycodes);
+
+            String reportPowerStatus =
+                    hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+
+            switch (CecMessage.getParams(reportPowerStatus)) {
+                case HdmiCecConstants.CEC_POWER_STATUS_STANDBY:
+                    // No further messages are expected, check for 5s outside the switch case.
+                    break;
+                case HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY:
+                    reportPowerStatus =
+                            hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+                    assertThat(CecMessage.getParams(reportPowerStatus))
+                            .isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+                    break;
+                case HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_ON:
+                case HdmiCecConstants.CEC_POWER_STATUS_ON:
+                    reportPowerStatus =
+                            hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+                    int powerState = CecMessage.getParams(reportPowerStatus);
+                    if (powerState == HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY) {
+                        // If it is in transition, wait for another <Report Power Status>[Power Off]
+                        reportPowerStatus =
+                                hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+                        powerState = CecMessage.getParams(reportPowerStatus);
+                    }
+                    // If no <Report Power Status>[Power Off] is received, fail the test
+                    assertThat(powerState).isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+                    break;
+            }
+            // Make sure there are no further <Report Power Status> for 5s
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.REPORT_POWER_STATUS, 5000);
+        } finally {
+            wakeUpDevice();
+        }
+    }
+
+    /**
+     * Test HF4-6-23 (CEC 2.0)
+     *
+     * <p>Verifies that the DUT notifies the transition back to On state if an ongoing transition
+     * from On state to Standby state is interrupted.
+     */
+    @Test
+    public void cect_hf4_6_23_interruptedStandby() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+
+        try {
+            // Turn device off
+            wakeUpDevice();
+            WakeLockHelper.acquirePartialWakeLock(getDevice());
+
+            List<Integer> keycodes = new ArrayList<>();
+            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION);
+            keycodes.add(HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION);
+
+            // Send a <UCP>[Power Off] immediately followed by a <UCP>[Power On]
+            hdmiCecClient.sendMultipleUserControlPressAndRelease(LogicalAddress.TV, keycodes);
+
+            String reportPowerStatus =
+                    hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+
+            switch (CecMessage.getParams(reportPowerStatus)) {
+                case HdmiCecConstants.CEC_POWER_STATUS_ON:
+                    // No further messages are expected, check for 5s outside the switch case.
+                    break;
+                case HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_ON:
+                    reportPowerStatus =
+                            hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+                    assertThat(CecMessage.getParams(reportPowerStatus))
+                            .isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+                    break;
+                case HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_STANDBY:
+                case HdmiCecConstants.CEC_POWER_STATUS_STANDBY:
+                    reportPowerStatus =
+                            hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+                    int powerState = CecMessage.getParams(reportPowerStatus);
+                    if (powerState == HdmiCecConstants.CEC_POWER_STATUS_IN_TRANSITION_TO_ON) {
+                        // If it is in transition, wait for another <Report Power Status>[Power On]
+                        reportPowerStatus =
+                                hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_POWER_STATUS);
+                        powerState = CecMessage.getParams(reportPowerStatus);
+                    }
+                    // If no <Report Power Status>[Power On] is received, fail the test
+                    assertThat(powerState).isEqualTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+                    break;
+            }
+            // Make sure there are no further <Report Power Status> for 5s
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.REPORT_POWER_STATUS, 5000);
+        } finally {
+            wakeUpDevice();
+        }
+    }
+
+    /**
      * Test 11.1.14-1, 11.2.14-1
      *
      * <p>Tests that the device sends a {@code <REPORT_POWER_STATUS>} with params 0x0 when the
@@ -186,9 +303,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_hf4_6_8_userControlPressed_powerOn() throws Exception {
         ITestDevice device = getDevice();
-        List<Integer> powerControlOperands = Arrays.asList(HdmiCecConstants.CEC_CONTROL_POWER,
-                HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION,
-                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+        List<Integer> powerControlOperands = Arrays.asList(HdmiCecConstants.CEC_KEYCODE_POWER,
+                HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION,
+                HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION);
 
         LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
                 ? LogicalAddress.PLAYBACK_1
@@ -197,17 +314,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         for (Integer operand : powerControlOperands) {
             try {
                 sendDeviceToSleep();
-                String wakeStateBefore = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
-
                 hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
-
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-                String wakeStateAfter = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertWithMessage("Device should wake up on <User Control Pressed> %s", operand)
-                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
+                assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_AWAKE);
             } finally {
                 wakeUpDevice();
             }
@@ -224,8 +333,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     public void cect_hf4_6_10_userControlPressed_powerOff() throws Exception {
         ITestDevice device = getDevice();
         List<Integer> powerControlOperands = Arrays.asList(
-                HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION,
-                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+                HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION,
+                HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION);
 
         LogicalAddress source = hasDeviceType(HdmiCecConstants.CEC_DEVICE_TYPE_TV)
                 ? LogicalAddress.PLAYBACK_1
@@ -234,22 +343,134 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         for (Integer operand : powerControlOperands) {
             try {
                 wakeUpDevice();
-                String wakeStateBefore = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
-
                 WakeLockHelper.acquirePartialWakeLock(device);
                 hdmiCecClient.sendUserControlPressAndRelease(source, operand, false);
-
                 TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-                String wakeStateAfter = device.executeShellCommand(
-                        "dumpsys power | grep mWakefulness=");
-                assertWithMessage("Device should go to standby on <User Control Pressed> %s",
-                        operand)
-                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Asleep");
+                assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_ASLEEP);
             } finally {
                 wakeUpDevice();
             }
+        }
+    }
+
+    /**
+     * Test HF4-6-26
+     *
+     * <p> Verify that, when a Source device is put to Standby by the user, it does not broadcast a
+     * system {@code <Standby>} message unless explicitly requested by the user.
+     */
+    @Test
+    public void cect_hf4_6_26_standby_noBroadcast_20() throws Exception {
+        ITestDevice device = getDevice();
+        setCec20();
+        String previousPowerControlMode =
+                setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_NONE);
+        try {
+            sendDeviceToSleep();
+            hdmiCecClient.checkOutputDoesNotContainMessage(
+                    LogicalAddress.BROADCAST, CecOperand.STANDBY);
+        } finally {
+            wakeUpDevice();
+            setPowerControlMode(previousPowerControlMode);
+        }
+    }
+
+    /**
+     * Test HF4-6-27 (CEC 2.0)
+     *
+     * <p>Verify that action of a {@code <Standby>} message can only be used to send a device to
+     * the standby state.
+     */
+    @Test
+    public void cect_hf4_6_27_standby_action_20() throws Exception {
+        ITestDevice device = getDevice();
+        /* Make sure the device is not booting up/in standby */
+        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        setCec20();
+        try {
+            // Directly addressed standby message to DUT.
+            sendDeviceToSleepAndValidateUsingStandbyMessage(true);
+            // Resending Standby message and validate device stays in standby mode
+            sendDeviceToSleepAndValidateUsingStandbyMessage(true);
+            wakeUpDevice();
+
+            // Broadcast standby message.
+            sendDeviceToSleepAndValidateUsingStandbyMessage(false);
+            // Resending Standby message and validate device stays in standby mode
+            sendDeviceToSleepAndValidateUsingStandbyMessage(false);
+        } finally {
+            wakeUpDevice();
+        }
+    }
+
+    /*
+     * Test HF4-6-28
+     *
+     * <p>Tests that the DUT handles {@code <User Control Pressed>} of any power related buttons
+     * correctly
+     */
+    @Test
+    public void cect_hf_4_6_28_testPowerUcpHandling() throws Exception {
+        setCec20();
+        int waitSeconds = 10;
+        ITestDevice device = getDevice();
+        // Ensure device is awake.
+        wakeUpDevice();
+
+        // Acquire the wakelock.
+        WakeLockHelper.acquirePartialWakeLock(device);
+        try {
+            // All <UCP> commands will be sent from TV.
+            LogicalAddress source = LogicalAddress.TV;
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Toggle power again, DUT should wakeup.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            // Send <UCP>[Power On]. DUT should remain in ON state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            // Send <UCP>[Power Off]. DUT should got to OFF state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Send <UCP>[Power Off] again. DUT should stay in OFF state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Send <UCP>[Power On]. DUT should go to ON state, check for 10s.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+            TimeUnit.SECONDS.sleep(waitSeconds);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+
+            // Send <UCP> [Power]. DUT should go to standby.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+
+            // Send <UCP> [Power]. DUT should wakeup.
+            hdmiCecClient.sendUserControlPressAndRelease(
+                    source, HdmiCecConstants.CEC_KEYCODE_POWER, false);
+            waitForTransitionTo(HdmiCecConstants.CEC_POWER_STATUS_ON);
+        } finally {
+            // Wake up the device. This will also release the wakelock.
+            wakeUpDevice();
         }
     }
 }

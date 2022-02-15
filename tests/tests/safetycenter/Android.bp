@@ -35,7 +35,11 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "kotlin-stdlib",
+        "kotlinx-coroutines-android",
+        "kotlin-test",
         "modules-utils-build_system",
+        "safety-center-config",
+        "safety-center-resources-lib",
         "truth-prebuilt",
     ],
     test_suites: [

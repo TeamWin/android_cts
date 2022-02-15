@@ -16,6 +16,9 @@
 
 package android.os.cts;
 
+import static android.os.VibrationEffect.VibrationParameter.targetAmplitude;
+import static android.os.VibrationEffect.VibrationParameter.targetFrequency;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -24,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -35,6 +37,7 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
 import android.os.VibratorManager;
+import android.os.vibrator.VibratorFrequencyProfile;
 import android.util.SparseArray;
 
 import androidx.test.filters.LargeTest;
@@ -52,6 +55,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.time.Duration;
 import java.util.Arrays;
 
 @RunWith(AndroidJUnit4.class)
@@ -68,6 +72,12 @@ public class VibratorManagerTest {
     
     @Rule
     public final MockitoRule mMockitoRule = MockitoJUnit.rule();
+
+    private static final float TEST_TOLERANCE = 1e-5f;
+
+    private static final float MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY = 1f;
+    private static final float MINIMUM_ACCEPTED_FREQUENCY = 1f;
+    private static final float MAXIMUM_ACCEPTED_FREQUENCY = 1_000f;
 
     private static final long CALLBACK_TIMEOUT_MILLIS = 5_000;
     private static final VibrationAttributes VIBRATION_ATTRIBUTES =
@@ -189,6 +199,51 @@ public class VibratorManagerTest {
         assertStopsVibrating();
     }
 
+
+    @LargeTest
+    @Test
+    public void testVibrateWaveformWithFrequencyStartsAndFinishesVibration() {
+        int[] vibratorIds = mVibratorManager.getVibratorIds();
+        for (int vibratorId : vibratorIds) {
+            Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
+            if (!vibrator.hasFrequencyControl()) {
+                continue;
+            }
+            VibratorFrequencyProfile frequencyProfile = vibrator.getFrequencyProfile();
+
+            float minFrequency = frequencyProfile.getMinFrequency();
+            float maxFrequency = frequencyProfile.getMaxFrequency();
+            float resonantFrequency = vibrator.getResonantFrequency();
+            float sustainFrequency = Float.isNaN(resonantFrequency)
+                    ? (maxFrequency + minFrequency) / 2
+                    : resonantFrequency;
+
+            // Then ramp to zero amplitude at fixed frequency.
+            VibrationEffect waveform =
+                    VibrationEffect.startWaveform(targetAmplitude(0), targetFrequency(minFrequency))
+                            // Ramp from min to max frequency and from zero to max amplitude.
+                            .addTransition(Duration.ofMillis(10),
+                                    targetAmplitude(1), targetFrequency(maxFrequency))
+                            // Ramp back to min frequency and zero amplitude.
+                            .addTransition(Duration.ofMillis(10),
+                                    targetAmplitude(0), targetFrequency(minFrequency))
+                            // Then sustain at a fixed frequency and half amplitude.
+                            .addTransition(Duration.ZERO,
+                                    targetAmplitude(0.5f), targetFrequency(sustainFrequency))
+                            .addSustain(Duration.ofMillis(20))
+                            // Ramp from min to max frequency and at max amplitude.
+                            .addTransition(Duration.ZERO,
+                                    targetAmplitude(1), targetFrequency(minFrequency))
+                            .addTransition(Duration.ofMillis(10), targetFrequency(maxFrequency))
+                            // Ramp from max to min amplitude at max frequency.
+                            .addTransition(Duration.ofMillis(10), targetAmplitude(0))
+                            .build();
+            vibrator.vibrate(waveform);
+            assertStartsVibrating(vibratorId);
+            assertStopsVibrating();
+        }
+    }
+
     @Test
     public void testVibrateSingleVibrator() {
         int[] vibratorIds = mVibratorManager.getVibratorIds();
@@ -242,16 +297,80 @@ public class VibratorManagerTest {
     }
 
     @Test
-    public void testVibrator() {
+    public void testSingleVibratorIsPresent() {
         for (int vibratorId : mVibratorManager.getVibratorIds()) {
             Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
             assertNotNull(vibrator);
             assertEquals(vibratorId, vibrator.getId());
             assertTrue(vibrator.hasVibrator());
+        }
+    }
 
-            // Just check these methods will not crash.
-            // We don't really have a way to test if the device supports each effect or not.
+    @Test
+    public void testSingleVibratorAmplitudeAndFrequencyControls() {
+        for (int vibratorId : mVibratorManager.getVibratorIds()) {
+            Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
+            assertNotNull(vibrator);
+
+            // Just check this method will not crash.
             vibrator.hasAmplitudeControl();
+
+            // Single vibrators should return the frequency profile when it has frequency control.
+            assertEquals(vibrator.hasFrequencyControl(),
+                    vibrator.getFrequencyProfile() != null);
+        }
+    }
+
+    @Test
+    public void testSingleVibratorFrequencyProfile() {
+        for (int vibratorId : mVibratorManager.getVibratorIds()) {
+            Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
+            VibratorFrequencyProfile frequencyProfile = vibrator.getFrequencyProfile();
+            if (frequencyProfile == null) {
+                continue;
+            }
+
+            float measurementIntervalHz = frequencyProfile.getMaxAmplitudeMeasurementInterval();
+            assertTrue(measurementIntervalHz >= MINIMUM_ACCEPTED_MEASUREMENT_INTERVAL_FREQUENCY);
+
+            float resonantFrequency = vibrator.getResonantFrequency();
+            float minFrequencyHz = frequencyProfile.getMinFrequency();
+            float maxFrequencyHz = frequencyProfile.getMaxFrequency();
+
+            assertTrue(minFrequencyHz >= MINIMUM_ACCEPTED_FREQUENCY);
+            assertTrue(maxFrequencyHz > minFrequencyHz);
+            assertTrue(maxFrequencyHz <= MAXIMUM_ACCEPTED_FREQUENCY);
+
+            if (!Float.isNaN(resonantFrequency)) {
+                // If the device has a resonant frequency, then it should be within the supported
+                // frequency range described by the profile.
+                assertTrue(resonantFrequency >= minFrequencyHz);
+                assertTrue(resonantFrequency <= maxFrequencyHz);
+            }
+
+            float[] measurements = frequencyProfile.getMaxAmplitudeMeasurements();
+
+            // There should be at least 3 points for a valid profile.
+            assertTrue(measurements.length > 2);
+            assertEquals(maxFrequencyHz,
+                    minFrequencyHz + ((measurements.length - 1) * measurementIntervalHz),
+                    TEST_TOLERANCE);
+
+            boolean hasPositiveMeasurement = false;
+            for (float measurement : measurements) {
+                assertTrue(measurement >= 0);
+                assertTrue(measurement <= 1);
+                hasPositiveMeasurement |= measurement > 0;
+            }
+            assertTrue(hasPositiveMeasurement);
+        }
+    }
+
+    @Test
+    public void testSingleVibratorEffectAndPrimitiveSupport() {
+        for (int vibratorId : mVibratorManager.getVibratorIds()) {
+            Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
+            assertNotNull(vibrator);
 
             // Just check these methods return valid support arrays.
             // We don't really have a way to test if the device supports each effect or not.
@@ -260,6 +379,14 @@ public class VibratorManagerTest {
             assertEquals(2, vibrator.arePrimitivesSupported(
                     VibrationEffect.Composition.PRIMITIVE_CLICK,
                     VibrationEffect.Composition.PRIMITIVE_TICK).length);
+        }
+    }
+
+    @Test
+    public void testSingleVibratorVibrateAndCancel() {
+        for (int vibratorId : mVibratorManager.getVibratorIds()) {
+            Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
+            assertNotNull(vibrator);
 
             vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
             assertStartsVibrating(vibratorId);

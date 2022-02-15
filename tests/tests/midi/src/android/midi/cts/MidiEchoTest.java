@@ -18,25 +18,24 @@ package android.midi.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.midi.MidiManager;
-import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiDevice;
-import android.media.midi.MidiDevice.MidiConnection;
 import android.media.midi.MidiDeviceInfo;
 import android.media.midi.MidiDeviceInfo.PortInfo;
 import android.media.midi.MidiDeviceStatus;
 import android.media.midi.MidiInputPort;
+import android.media.midi.MidiManager;
+import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiReceiver;
-import android.media.midi.MidiSender;
 import android.os.Bundle;
-import android.util.Log;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import com.android.midi.CTSMidiEchoTestService;
 import com.android.midi.MidiEchoTestService;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
 
 /**
@@ -307,6 +306,8 @@ public class MidiEchoTest extends AndroidTestCase {
 
         assertEquals("MIDI device type", MidiDeviceInfo.TYPE_VIRTUAL,
                 echoInfo.getType());
+        assertEquals("MIDI default protocol", MidiDeviceInfo.PROTOCOL_UNKNOWN,
+                echoInfo.getDefaultProtocol());
     }
 
     // Is the MidiManager supported?
@@ -324,6 +325,14 @@ public class MidiEchoTest extends AndroidTestCase {
         MidiDeviceInfo[] infos = midiManager.getDevices();
         assertTrue("device list was null", infos != null);
         assertTrue("device list was empty", infos.length >= 1);
+
+        Collection<MidiDeviceInfo> legacyDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
+        assertTrue("Legacy Device list was null.", legacyDeviceInfos != null);
+        assertTrue("Legacy Device list was empty", legacyDeviceInfos.size() >= 1);
+        Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
+        assertTrue("Universal Device list was null.", universalDeviceInfos != null);
     }
 
     public void testDeviceInfo() throws Exception {

@@ -33,6 +33,7 @@ import static android.scopedstorage.cts.lib.TestUtils.checkPermission;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createImageEntryAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
+import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
@@ -351,7 +352,7 @@ public class LegacyStorageTest {
         try {
             assertThat(newDir.mkdir()).isFalse();
         } finally {
-            newDir.delete();
+            deleteRecursively(newDir);
         }
     }
 
@@ -436,8 +437,8 @@ public class LegacyStorageTest {
 
             pdfFile1.delete();
             pdfFile2.delete();
-            nonMediaDir1.delete();
-            nonMediaDir2.delete();
+            deleteRecursively(nonMediaDir1);
+            deleteRecursively(nonMediaDir2);
         }
     }
 
@@ -548,8 +549,8 @@ public class LegacyStorageTest {
             // UNIQUE constraint error.
             TestUtils.renameWithMediaProvider(directoryOldPath, directoryNewPath);
         } finally {
-            directoryOldPath.delete();
-            directoryNewPath.delete();
+            deleteRecursively(directoryOldPath);
+            deleteRecursively(directoryNewPath);
         }
     }
 
@@ -725,7 +726,7 @@ public class LegacyStorageTest {
             imageInNoMediaDir.delete();
             renamedImageInDCIM.delete();
             noMediaFile.delete();
-            directoryNoMedia.delete();
+            deleteRecursively(directoryNoMedia);
         }
     }
 
@@ -909,7 +910,7 @@ public class LegacyStorageTest {
         } finally {
             imageFile.delete();
             imageFileInTopLevelDir.delete();
-            topLevelTestDirectory.delete();
+            deleteRecursively(topLevelTestDirectory);
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }

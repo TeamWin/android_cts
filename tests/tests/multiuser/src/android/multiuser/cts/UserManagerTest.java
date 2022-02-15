@@ -17,53 +17,74 @@
 package android.multiuser.cts;
 
 import static android.Manifest.permission.CREATE_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+import static android.Manifest.permission.QUERY_USERS;
+import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.PermissionHelper.adoptShellPermissionIdentity;
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
+import static android.os.UserManager.USER_TYPE_PROFILE_MANAGED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.NewUserRequest;
 import android.os.NewUserResponse;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.users.UserType;
+
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class UserManagerTest {
 
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final Context sContext = TestApis.context().instrumentedContext();
+
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
-    private final Context mContext = mInstrumentation.getContext();
     private UserManager mUserManager;
 
     private final String mAccountName = "test_account_name";
     private final String mAccountType = "test_account_type";
 
-
     @Before
-    public void setTestFixtures() {
-        mUserManager = mContext.getSystemService(UserManager.class);
-
+    public void setUp() {
+        mUserManager = sContext.getSystemService(UserManager.class);
         assertWithMessage("UserManager service").that(mUserManager).isNotNull();
     }
 
@@ -104,25 +125,26 @@ public final class UserManagerTest {
 
     @Test
     @SystemUserOnly(reason = "Profiles are only supported on system user.")
-    public void testCloneUser() throws Exception {
+    public void testCloneProfile() throws Exception {
         UserHandle userHandle = null;
 
         // Need CREATE_USERS permission to create user in test
         try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
             Set<String> disallowedPackages = new HashSet<String>();
             userHandle = mUserManager.createProfile(
-                    "Clone user", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
+                    "Clone profile", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
             assertThat(userHandle).isNotNull();
 
-            final Context userContext = mContext.createPackageContextAsUser("system", 0,
+            final Context userContext = sContext.createPackageContextAsUser("system", 0,
                     userHandle);
             final UserManager cloneUserManager = userContext.getSystemService(UserManager.class);
             assertThat(cloneUserManager.isMediaSharedWithParent()).isTrue();
+            assertThat(cloneUserManager.isCredentialSharedWithParent()).isTrue();
             assertThat(cloneUserManager.isCloneProfile()).isTrue();
 
-            List<UserInfo> list = mUserManager.getUsers(true, true, true);
+            final List<UserInfo> list = mUserManager.getUsers(true, true, true);
             final UserHandle finalUserHandle = userHandle;
-            List<UserInfo> cloneUsers = list.stream().filter(
+            final List<UserInfo> cloneUsers = list.stream().filter(
                     user -> (user.id == finalUserHandle.getIdentifier()
                             && user.isCloneProfile()))
                     .collect(Collectors.toList());
@@ -132,6 +154,35 @@ public final class UserManagerTest {
         }
     }
 
+    @Test
+    @SystemUserOnly(reason = "Restricted users are only supported on system user.")
+    public void testRestrictedUser() throws Exception {
+        UserHandle user = null;
+        try (PermissionHelper ph = adoptShellPermissionIdentity(mInstrumentation, CREATE_USERS)) {
+            // Check that the SYSTEM user is not restricted.
+            assertThat(mUserManager.isRestrictedProfile()).isFalse();
+            assertThat(mUserManager.isRestrictedProfile(UserHandle.SYSTEM)).isFalse();
+            assertThat(mUserManager.getRestrictedProfileParent()).isNull();
+
+            final UserInfo info = mUserManager.createRestrictedProfile("Restricted user");
+
+            // If the device supports Restricted users, it must report it correctly.
+            assumeTrue("Couldn't create a restricted profile", info != null);
+
+            user = UserHandle.of(info.id);
+            assertThat(mUserManager.isRestrictedProfile(user)).isTrue();
+
+            final Context userContext = sContext.createPackageContextAsUser("system", 0, user);
+            final UserManager userUm = userContext.getSystemService(UserManager.class);
+            // TODO(183239043): Remove the if{} clause after v33 Sdk bump.
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
+                assertThat(userUm.isRestrictedProfile()).isTrue();
+            }
+            assertThat(userUm.getRestrictedProfileParent().isSystem()).isTrue();
+        } finally {
+            removeUser(user);
+        }
+    }
 
     private NewUserRequest newUserRequest() {
         final PersistableBundle accountOptions = new PersistableBundle();
@@ -184,7 +235,7 @@ public final class UserManagerTest {
             assertThat(response.isSuccessful()).isTrue();
             assertThat(user).isNotNull();
 
-            UserManager userManagerOfNewUser = mContext
+            UserManager userManagerOfNewUser = sContext
                     .createPackageContextAsUser("android", 0, user)
                     .getSystemService(UserManager.class);
 
@@ -222,6 +273,86 @@ public final class UserManagerTest {
         } finally {
             removeUser(user1);
             removeUser(user2);
+        }
+    }
+
+    @Test
+    @AppModeFull
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void getProfileParent_withNewlyCreatedProfile() {
+        final UserReference parent = TestApis.users().instrumented();
+        try (UserReference profile = TestApis.users().createUser()
+                .parent(parent)
+                .type(TestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart()) {
+            assertThat(mUserManager.getProfileParent(profile.userHandle()))
+                    .isEqualTo(parent.userHandle());
+        }
+    }
+
+    @Test
+    @AppModeFull
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    public void getProfileParent_returnsNullForNonProfile() {
+        assertThat(mUserManager.getProfileParent(TestApis.users().system().userHandle())).isNull();
+    }
+
+    @Test
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testGetRemainingCreatableUserCount() {
+        final int maxAllowedIterations = 15;
+        final String userType = USER_TYPE_FULL_SECONDARY;
+        final NewUserRequest request = new NewUserRequest.Builder().build();
+        final ArrayDeque<UserHandle> usersCreated = new ArrayDeque<>();
+
+        try {
+            final int initialRemainingCount = mUserManager.getRemainingCreatableUserCount(userType);
+            assertThat(initialRemainingCount).isAtLeast(0);
+
+            final int numUsersToAdd = Math.min(maxAllowedIterations, initialRemainingCount);
+
+            for (int i = 0; i < numUsersToAdd; i++) {
+                usersCreated.push(mUserManager.createUser(request).getUser());
+                assertThat(mUserManager.getRemainingCreatableUserCount(userType))
+                        .isEqualTo(initialRemainingCount - usersCreated.size());
+            }
+            for (int i = 0; i < numUsersToAdd; i++) {
+                mUserManager.removeUser(usersCreated.pop());
+                assertThat(mUserManager.getRemainingCreatableUserCount(userType))
+                        .isEqualTo(initialRemainingCount - usersCreated.size());
+            }
+        } finally {
+            usersCreated.forEach(this::removeUser);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testGetRemainingCreatableProfileCount() {
+        final int maxAllowedIterations = 15;
+        final String type = USER_TYPE_PROFILE_MANAGED;
+        final ArrayDeque<UserHandle> profilesCreated = new ArrayDeque<>();
+        final Set<String> disallowedPackages = new HashSet<>();
+        try {
+            final int initialRemainingCount =
+                    mUserManager.getRemainingCreatableProfileCount(type);
+            assertThat(initialRemainingCount).isAtLeast(0);
+
+            final int numUsersToAdd = Math.min(maxAllowedIterations, initialRemainingCount);
+
+            for (int i = 0; i < numUsersToAdd; i++) {
+                profilesCreated.push(mUserManager.createProfile(null, type, disallowedPackages));
+                assertThat(mUserManager.getRemainingCreatableProfileCount(type))
+                        .isEqualTo(initialRemainingCount - profilesCreated.size());
+            }
+            for (int i = 0; i < numUsersToAdd; i++) {
+                mUserManager.removeUser(profilesCreated.pop());
+                assertThat(mUserManager.getRemainingCreatableProfileCount(type))
+                        .isEqualTo(initialRemainingCount - profilesCreated.size());
+            }
+        } finally {
+            profilesCreated.forEach(this::removeUser);
         }
     }
 }

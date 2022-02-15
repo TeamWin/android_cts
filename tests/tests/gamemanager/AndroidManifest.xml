@@ -20,15 +20,14 @@
 
     <application android:appCategory="game">
         <uses-library android:name="android.test.runner"/>
-        <meta-data android:name="com.android.app.gamemode.performance.enabled"
-                   android:value="true"/>
-        <meta-data android:name="com.android.app.gamemode.battery.enabled"
-                   android:value="true"/>
+        <meta-data android:name="android.game_mode_config"
+                   android:resource="@xml/game_mode_config" />
         <activity android:name=".GameManagerCtsActivity"
                   android:label="GameManagerCtsActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>

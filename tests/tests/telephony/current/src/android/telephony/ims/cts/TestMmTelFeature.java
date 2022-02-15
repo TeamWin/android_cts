@@ -16,7 +16,6 @@
 
 package android.telephony.ims.cts;
 
-import android.app.UiAutomation;
 import android.os.Bundle;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsStreamMediaProfile;
@@ -26,8 +25,6 @@ import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsCallSessionImplBase;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.util.Log;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.List;
 import java.util.Set;
@@ -52,6 +49,21 @@ public class TestMmTelFeature extends MmTelFeature {
     TestMmTelFeature(TestImsService.ReadyListener readyListener,
             TestImsService.RemovedListener removedListener,
             TestImsService.CapabilitiesSetListener setListener) {
+        Log.d(TAG, "TestMmTelFeature with default constructor");
+        mReadyListener = readyListener;
+        mRemovedListener = removedListener;
+        mCapSetListener = setListener;
+        mSmsImpl = new TestImsSmsImpl();
+        // Must set the state to READY in the constructor - onFeatureReady depends on the state
+        // being ready.
+        setFeatureState(STATE_READY);
+    }
+
+    TestMmTelFeature(TestImsService.ReadyListener readyListener,
+            TestImsService.RemovedListener removedListener,
+            TestImsService.CapabilitiesSetListener setListener, Executor executor) {
+        super(executor);
+        Log.d(TAG, "TestMmTelFeature with Executor constructor");
         mReadyListener = readyListener;
         mRemovedListener = removedListener;
         mCapSetListener = setListener;
@@ -154,7 +166,7 @@ public class TestMmTelFeature extends MmTelFeature {
     }
 
     public boolean isCallSessionCreated() {
-        return (mCallSession != null) ? true : false;
+        return (mCallSession != null);
     }
 
     public void onIncomingCallReceived(Bundle extras) {
@@ -175,13 +187,7 @@ public class TestMmTelFeature extends MmTelFeature {
 
         Executor executor = incomingSession.getExecutor();
         executor.execute(() -> {
-            UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-            try {
-                ui.adoptShellPermissionIdentity();
-                notifyIncomingCall(incomingSession, extras);
-            } finally {
-                ui.dropShellPermissionIdentity();
-            }
+            notifyIncomingCall(incomingSession, extras);
         });
     }
 }

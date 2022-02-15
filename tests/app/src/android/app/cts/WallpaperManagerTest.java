@@ -29,6 +29,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+import android.Manifest;
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
 import android.app.stubs.R;
@@ -68,6 +69,9 @@ public class WallpaperManagerTest {
 
     private static final boolean DEBUG = false;
     private static final String TAG = "WallpaperManagerTest";
+    private static final long MAX_WAIT_TIME_SECS = 2;
+    private static final long MAX_WAIT_TIME_MS = MAX_WAIT_TIME_SECS * 1000;
+    private static final long WAIT_TIME_INCR_MS = 100;
 
     private WallpaperManager mWallpaperManager;
     private Context mContext;
@@ -75,6 +79,7 @@ public class WallpaperManagerTest {
     private BroadcastReceiver mBroadcastReceiver;
     private CountDownLatch mCountDownLatch;
     private boolean mEnableWcg;
+    private boolean mAcquiredWallpaperDimmingPermission = false;
 
     @Before
     public void setUp() throws Exception {
@@ -105,6 +110,23 @@ public class WallpaperManagerTest {
     public void tearDown() throws Exception {
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
+        }
+        try {
+            ensureSetWallpaperDimAmountPermissionIsGranted();
+            mWallpaperManager.setWallpaperDimAmount(0f);
+            assertDimAmountEqualsTo(0f);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+            mAcquiredWallpaperDimmingPermission = false;
+        }
+    }
+
+    private void ensureSetWallpaperDimAmountPermissionIsGranted() {
+        if (!mAcquiredWallpaperDimmingPermission) {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.SET_WALLPAPER_DIM_AMOUNT);
+            mAcquiredWallpaperDimmingPermission = true;
         }
     }
 
@@ -403,6 +425,95 @@ public class WallpaperManagerTest {
         }
     }
 
+    @Test
+    public void testGetWallpaperDimAmountWithNoPermission_shouldThrowException() {
+        Assert.assertThrows(SecurityException.class,
+                () -> mWallpaperManager.getWallpaperDimAmount());
+    }
+
+    @Test
+    public void testSetWallpaperDimAmountWithNoPermission_shouldThrowException() {
+        Assert.assertThrows(SecurityException.class,
+                () -> {
+                    float dimAmount = 0.5f;
+                    mWallpaperManager.setWallpaperDimAmount(dimAmount);
+                    assertDimAmountEqualsTo(dimAmount);
+                });
+    }
+
+    @Test
+    public void setWallpaperDimAmount_withinBound_shouldSetDimAmount() {
+        ensureSetWallpaperDimAmountPermissionIsGranted();
+
+        float dimAmount = 0.6f;
+        mWallpaperManager.setWallpaperDimAmount(dimAmount);
+        assertDimAmountEqualsTo(dimAmount);
+
+        // Remove additional dimming and verify that the dim amount is set to 0 again
+        mWallpaperManager.setWallpaperDimAmount(0f);
+        assertDimAmountEqualsTo(0f);
+    }
+
+    @Test
+    public void setWallpaperDimAmountBeyondRange_shouldBeBounded() {
+        ensureSetWallpaperDimAmountPermissionIsGranted();
+
+        // Setting dim amount < 0 should be bounded to lower limit 0.0
+        mWallpaperManager.setWallpaperDimAmount(-1f);
+        assertDimAmountEqualsTo(0f);
+
+        // Setting dim amount > 1 should be bounded to upper limit 1.0
+        mWallpaperManager.setWallpaperDimAmount(1.5f);
+        assertDimAmountEqualsTo(1f);
+    }
+
+    @Test
+    public void setWallpaperDimAmount_changingWallpaperShouldRemainDimmed() throws IOException {
+        ensureSetWallpaperDimAmountPermissionIsGranted();
+
+        float dimAmount = 0.65f;
+        mWallpaperManager.setWallpaperDimAmount(dimAmount);
+        mWallpaperManager.setResource(R.drawable.robot);
+
+        assertDimAmountEqualsTo(dimAmount);
+    }
+
+    @Test
+    public void colorHintsOnDimTest() throws IOException {
+        ensureSetWallpaperDimAmountPermissionIsGranted();
+
+        Bitmap tmpWallpaper = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(tmpWallpaper);
+        canvas.drawColor(Color.WHITE);
+
+        mWallpaperManager.setBitmap(tmpWallpaper);
+
+        WallpaperColors colors = mWallpaperManager
+                .getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+        int colorHints = colors.getColorHints();
+        // Color hints support dark text on white wallpaper
+        Assert.assertEquals(WallpaperColors.HINT_SUPPORTS_DARK_TEXT,
+                colorHints & WallpaperColors.HINT_SUPPORTS_DARK_TEXT);
+
+        float lowDimAmount = 0.1f;
+        mWallpaperManager.setWallpaperDimAmount(lowDimAmount);
+        assertDimAmountEqualsTo(lowDimAmount);
+        colors = mWallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+        colorHints = colors.getColorHints();
+        // Color hints still support dark text on white wallpaper that is not dimmed enough
+        Assert.assertEquals(WallpaperColors.HINT_SUPPORTS_DARK_TEXT,
+                colorHints & WallpaperColors.HINT_SUPPORTS_DARK_TEXT);
+
+        float higherDimAmount = 0.7f;
+        mWallpaperManager.setWallpaperDimAmount(higherDimAmount);
+        assertDimAmountEqualsTo(higherDimAmount);
+        colors = mWallpaperManager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+        colorHints = colors.getColorHints();
+        // Dimmed white wallpaper does not support dark text
+        Assert.assertNotEquals(WallpaperColors.HINT_SUPPORTS_DARK_TEXT,
+                colorHints & WallpaperColors.HINT_SUPPORTS_DARK_TEXT);
+    }
+
     private void assertBitmapDimensions(Bitmap bitmap) {
         int maxSize = getMaxTextureSize();
         boolean safe = false;
@@ -569,6 +680,20 @@ public class WallpaperManagerTest {
     public WallpaperManager.OnColorsChangedListener getTestableListener() {
         // Unfortunately mockito cannot mock anonymous classes or lambdas.
         return spy(new TestableColorListener());
+    }
+
+    private void assertDimAmountEqualsTo(float dimAmount) {
+        float storedDimAmount = -1f;
+        for (int i = 0; i < MAX_WAIT_TIME_MS; i += WAIT_TIME_INCR_MS) {
+            storedDimAmount = mWallpaperManager.getWallpaperDimAmount();
+            if (dimAmount == storedDimAmount) break;
+            try {
+                Thread.sleep(WAIT_TIME_INCR_MS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Assert.assertEquals(dimAmount, storedDimAmount, /* delta */ 0f);
     }
 
     public class TestableColorListener implements WallpaperManager.OnColorsChangedListener {

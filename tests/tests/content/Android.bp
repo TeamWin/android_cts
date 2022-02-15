@@ -107,7 +107,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
+        "mts-documentsui",
     ],
     min_sdk_version: "29",
 }

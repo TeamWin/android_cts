@@ -40,12 +40,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /** HDMI CEC test to check Remote Control Pass Through behaviour (Sections 11.1.13) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTest {
 
+    private static final int WAIT_TIME_MS = 1000;
+
     private HashMap<String, Integer> remoteControlKeys = new HashMap<String, Integer>();
+    private HashMap<String, Integer> remoteControlAudioKeys = new HashMap<String, Integer>();
 
     @Rule
     public RuleChain ruleChain =
@@ -80,6 +84,11 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                  */
                 hdmiCecClient.broadcastActiveSource(
                         LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+                try {
+                    TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+                } catch (InterruptedException ex) {
+                    // Do nothing
+                }
             }
         }
     }
@@ -94,7 +103,8 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_1_RemoteControlMessagesToRecorder() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
-        validateKeyeventToUserControlPress(LogicalAddress.RECORDER_1);
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+        validateKeyeventToUserControlPress(LogicalAddress.RECORDER_1, remoteControlKeys);
     }
 
     /**
@@ -107,7 +117,8 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_2_RemoteControlMessagesToPlayback() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.PLAYBACK_1, hdmiCecClient.getPhysicalAddress());
-        validateKeyeventToUserControlPress(LogicalAddress.PLAYBACK_1);
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+        validateKeyeventToUserControlPress(LogicalAddress.PLAYBACK_1, remoteControlKeys);
     }
 
     /**
@@ -120,7 +131,8 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_3_RemoteControlMessagesToTuner() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.TUNER_1, hdmiCecClient.getPhysicalAddress());
-        validateKeyeventToUserControlPress(LogicalAddress.TUNER_1);
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+        validateKeyeventToUserControlPress(LogicalAddress.TUNER_1, remoteControlKeys);
     }
 
     /**
@@ -133,7 +145,8 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     public void cect_11_1_13_4_RemoteControlMessagesToAudioSystem() throws Exception {
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.AUDIO_SYSTEM, hdmiCecClient.getPhysicalAddress());
-        validateKeyeventToUserControlPress(LogicalAddress.AUDIO_SYSTEM);
+        TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+        validateKeyeventToUserControlPress(LogicalAddress.AUDIO_SYSTEM, remoteControlAudioKeys);
     }
 
     /**
@@ -151,19 +164,23 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
     }
 
     private void mapRemoteControlKeys() {
-        remoteControlKeys.put("DPAD_UP", HdmiCecConstants.CEC_CONTROL_UP);
-        remoteControlKeys.put("DPAD_DOWN", HdmiCecConstants.CEC_CONTROL_DOWN);
-        remoteControlKeys.put("DPAD_LEFT", HdmiCecConstants.CEC_CONTROL_LEFT);
-        remoteControlKeys.put("DPAD_RIGHT", HdmiCecConstants.CEC_CONTROL_RIGHT);
+        remoteControlKeys.put("DPAD_UP", HdmiCecConstants.CEC_KEYCODE_UP);
+        remoteControlKeys.put("DPAD_DOWN", HdmiCecConstants.CEC_KEYCODE_DOWN);
+        remoteControlKeys.put("DPAD_LEFT", HdmiCecConstants.CEC_KEYCODE_LEFT);
+        remoteControlKeys.put("DPAD_RIGHT", HdmiCecConstants.CEC_KEYCODE_RIGHT);
+        remoteControlAudioKeys.put("VOLUME_UP", HdmiCecConstants.CEC_KEYCODE_VOLUME_UP);
+        remoteControlAudioKeys.put("VOLUME_DOWN", HdmiCecConstants.CEC_KEYCODE_VOLUME_DOWN);
+        remoteControlAudioKeys.put("VOLUME_MUTE", HdmiCecConstants.CEC_KEYCODE_MUTE);
     }
 
-    private void validateKeyeventToUserControlPress(LogicalAddress toDevice) throws Exception {
+    private void validateKeyeventToUserControlPress(LogicalAddress toDevice
+            , HashMap<String, Integer> keyMaps) throws Exception {
         ITestDevice device = getDevice();
-        for (String remoteKey : remoteControlKeys.keySet()) {
+        for (String remoteKey : keyMaps.keySet()) {
             device.executeShellCommand("input keyevent KEYCODE_" + remoteKey);
             String message =
                     hdmiCecClient.checkExpectedOutput(toDevice, CecOperand.USER_CONTROL_PRESSED);
-            assertThat(CecMessage.getParams(message)).isEqualTo(remoteControlKeys.get(remoteKey));
+            assertThat(CecMessage.getParams(message)).isEqualTo(keyMaps.get(remoteKey));
             hdmiCecClient.checkExpectedOutput(toDevice, CecOperand.USER_CONTROL_RELEASED);
         }
     }

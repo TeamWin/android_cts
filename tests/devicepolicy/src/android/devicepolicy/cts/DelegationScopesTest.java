@@ -39,7 +39,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.Delegation;
 import com.android.bedstead.harrier.policies.NetworkLoggingDelegation;
 import com.android.bedstead.harrier.policies.SecurityLoggingDelegation;
@@ -86,21 +86,84 @@ public final class DelegationScopesTest {
     private static final TestApp sTestApp2 = sTestAppProvider.any();
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @CanSetPolicyTest(policy = Delegation.class)
     public void getDelegatedScopes_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp.testApp().packageName()))
+                                testApp.packageName()))
                         .containsExactly(TEST_SCOPE, TEST_SCOPE_2);
             } finally {
                 resetDelegatedScopes(testApp);
+            }
+        }
+    }
+
+    @Test
+    @CanSetPolicyTest(policy = Delegation.class)
+    public void getDelegatedScopes_fromApp_returnsFromSetDelegatedScopes() {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
+                        sDeviceState.dpc().componentName(),
+                        testApp.packageName(),
+                        Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
+
+                assertThat(testApp.devicePolicyManager().getDelegatedScopes(
+                                null, testApp.packageName()))
+                        .containsExactly(TEST_SCOPE, TEST_SCOPE_2);
+            } finally {
+                resetDelegatedScopes(testApp);
+            }
+        }
+    }
+
+    @Test
+    @CanSetPolicyTest(policy = Delegation.class)
+    public void getDelegatedScopes_fromApp_passComponentName_throwsException() {
+        try (TestAppInstance testApp = sTestApp.install(sUser)) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
+                        sDeviceState.dpc().componentName(),
+                        testApp.packageName(),
+                        Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
+
+                assertThrows(SecurityException.class, () ->
+                        testApp.devicePolicyManager().getDelegatedScopes(
+                        sDeviceState.dpc().componentName(), testApp.packageName()));
+            } finally {
+                resetDelegatedScopes(testApp);
+            }
+        }
+    }
+
+    @Test
+    @CanSetPolicyTest(policy = Delegation.class)
+    public void getDelegatedScopes_fromApp_differentPackage_throwsException() {
+        try (TestAppInstance testApp = sTestApp.install(sUser);
+             TestAppInstance testApp2 = sTestApp2.install(sUser)) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
+                        sDeviceState.dpc().componentName(),
+                        testApp.packageName(),
+                        Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
+                sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
+                        sDeviceState.dpc().componentName(),
+                        testApp2.packageName(),
+                        Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
+
+                assertThrows(SecurityException.class, () ->
+                        testApp.devicePolicyManager().getDelegatedScopes(
+                                null, testApp2.packageName()));
+            } finally {
+                resetDelegatedScopes(testApp);
+                resetDelegatedScopes(testApp2);
             }
         }
     }
@@ -112,7 +175,7 @@ public final class DelegationScopesTest {
             assertThrows(SecurityException.class, () ->
                     sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                             sDeviceState.dpc().componentName(),
-                            testApp.testApp().packageName(),
+                            testApp.packageName(),
                             Arrays.asList(TEST_SCOPE, TEST_SCOPE_2)));
         }
     }
@@ -123,29 +186,29 @@ public final class DelegationScopesTest {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             assertThrows(SecurityException.class, () ->
                     sDeviceState.dpc().devicePolicyManager().getDelegatedScopes(
-                            sDeviceState.dpc().componentName(), testApp.testApp().packageName()));
+                            sDeviceState.dpc().componentName(), testApp.packageName()));
         }
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @CanSetPolicyTest(policy = Delegation.class)
     public void getDelegatedScopes_returnsLatestFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(TEST_SCOPE));
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(TEST_SCOPE_2));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp.testApp().packageName()))
+                                testApp.packageName()))
                         .containsExactly(TEST_SCOPE_2);
 
             } finally {
@@ -171,22 +234,22 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @CanSetPolicyTest(policy = Delegation.class)
     public void getDelegatePackages_oneApp_twoScopes_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
 
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatePackages(sDeviceState.dpc().componentName(), TEST_SCOPE))
-                        .containsExactly(testApp.testApp().packageName());
+                        .containsExactly(testApp.packageName());
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatePackages(sDeviceState.dpc().componentName(), TEST_SCOPE_2))
-                        .containsExactly(testApp.testApp().packageName());
+                        .containsExactly(testApp.packageName());
 
             } finally {
                 resetDelegatedScopes(testApp);
@@ -200,12 +263,12 @@ public final class DelegationScopesTest {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             assertThrows(SecurityException.class, () ->
                     sDeviceState.dpc().devicePolicyManager().getDelegatePackages(
-                            sDeviceState.dpc().componentName(), testApp.testApp().packageName()));
+                            sDeviceState.dpc().componentName(), testApp.packageName()));
         }
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @CanSetPolicyTest(policy = Delegation.class)
     public void getDelegatePackages_twoApps_differentScopes_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -213,19 +276,19 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(TEST_SCOPE));
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp2.testApp().packageName(),
+                        testApp2.packageName(),
                         Collections.singletonList(TEST_SCOPE_2));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatePackages(sDeviceState.dpc().componentName(), TEST_SCOPE))
-                        .containsExactly(testApp.testApp().packageName());
+                        .containsExactly(testApp.packageName());
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatePackages(sDeviceState.dpc().componentName(), TEST_SCOPE_2))
-                        .containsExactly(testApp2.testApp().packageName());
+                        .containsExactly(testApp2.packageName());
 
             } finally {
                 resetDelegatedScopes(testApp);
@@ -235,7 +298,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void getDelegatePackages_twoApps_sameScope_returnsFromSetDelegatedScopes() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -243,18 +306,18 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(TEST_SCOPE));
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp2.testApp().packageName(),
+                        testApp2.packageName(),
                         Collections.singletonList(TEST_SCOPE));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatePackages(sDeviceState.dpc().componentName(), TEST_SCOPE))
                         .containsExactly(
-                                testApp.testApp().packageName(),
-                                testApp2.testApp().packageName());
+                                testApp.packageName(),
+                                testApp2.packageName());
 
             } finally {
                 resetDelegatedScopes(testApp);
@@ -264,13 +327,13 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = NetworkLoggingDelegation.class)
+    @PolicyAppliesTest(policy = NetworkLoggingDelegation.class)
     public void setDelegatedScopes_networkLogging_validAdminType_noException() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(DELEGATION_NETWORK_LOGGING));
             } finally {
                 resetDelegatedScopes(testApp);
@@ -287,7 +350,7 @@ public final class DelegationScopesTest {
                 assertThrows(SecurityException.class, () ->
                         sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp.testApp().packageName(),
+                                testApp.packageName(),
                                 Collections.singletonList(DELEGATION_NETWORK_LOGGING)));
             } finally {
                 resetDelegatedScopes(testApp);
@@ -296,7 +359,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SecurityLoggingDelegation.class)
+    @PolicyAppliesTest(policy = SecurityLoggingDelegation.class)
     // TODO(b/198774281): add a negative policy test (in line with all the others here) once we can
     //  correctly mark security logging delegation as possible for COPE profile POs.
     public void setDelegatedScopes_securityLogging_validAdminType_noException() {
@@ -304,7 +367,7 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(DELEGATION_SECURITY_LOGGING));
             } finally {
                 resetDelegatedScopes(testApp);
@@ -313,7 +376,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void setDelegatedScopes_certSelection_settingSecondApp_revokesFirstApp() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -321,22 +384,22 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(DELEGATION_CERT_SELECTION));
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp2.testApp().packageName(),
+                        testApp2.packageName(),
                         Collections.singletonList(DELEGATION_CERT_SELECTION));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp.testApp().packageName()))
+                                testApp.packageName()))
                         .isEmpty();
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp2.testApp().packageName()))
+                                testApp2.packageName()))
                         .containsExactly(DELEGATION_CERT_SELECTION);
 
             } finally {
@@ -347,7 +410,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = NetworkLoggingDelegation.class)
+    @PolicyAppliesTest(policy = NetworkLoggingDelegation.class)
     public void setDelegatedScopes_networkLogging_settingSecondApp_revokesFirstApp() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -355,22 +418,22 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(DELEGATION_NETWORK_LOGGING));
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp2.testApp().packageName(),
+                        testApp2.packageName(),
                         Collections.singletonList(DELEGATION_NETWORK_LOGGING));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp.testApp().packageName()))
+                                testApp.packageName()))
                         .isEmpty();
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp2.testApp().packageName()))
+                                testApp2.packageName()))
                         .containsExactly(DELEGATION_NETWORK_LOGGING);
 
             } finally {
@@ -381,7 +444,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = SecurityLoggingDelegation.class)
+    @PolicyAppliesTest(policy = SecurityLoggingDelegation.class)
     public void setDelegatedScopes_securityLogging_settingSecondApp_revokesFirstApp() {
         try (TestAppInstance testApp = sTestApp.install(sUser);
              TestAppInstance testApp2 = sTestApp2.install(sUser)) {
@@ -389,22 +452,22 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Collections.singletonList(DELEGATION_SECURITY_LOGGING));
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp2.testApp().packageName(),
+                        testApp2.packageName(),
                         Collections.singletonList(DELEGATION_SECURITY_LOGGING));
 
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp.testApp().packageName()))
+                                testApp.packageName()))
                         .isEmpty();
                 assertThat(sDeviceState.dpc().devicePolicyManager()
                         .getDelegatedScopes(
                                 sDeviceState.dpc().componentName(),
-                                testApp2.testApp().packageName()))
+                                testApp2.packageName()))
                         .containsExactly(DELEGATION_SECURITY_LOGGING);
 
             } finally {
@@ -415,7 +478,7 @@ public final class DelegationScopesTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = Delegation.class)
+    @PolicyAppliesTest(policy = Delegation.class)
     public void setDelegatedScopes_delegatedPackageReceivesScopesFromBroadcast() {
         try (TestAppInstance testApp = sTestApp.install(sUser)) {
             // TODO(b/198769413): we should not need to start (or query for) an activity, but the
@@ -429,7 +492,7 @@ public final class DelegationScopesTest {
             try {
                 sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                         sDeviceState.dpc().componentName(),
-                        testApp.testApp().packageName(),
+                        testApp.packageName(),
                         Arrays.asList(TEST_SCOPE, TEST_SCOPE_2));
 
                 // TODO(b/198294382): support .stringListValue().contains(List<String>) to
@@ -450,7 +513,7 @@ public final class DelegationScopesTest {
     private void resetDelegatedScopes(TestAppInstance testApp) {
         sDeviceState.dpc().devicePolicyManager().setDelegatedScopes(
                 sDeviceState.dpc().componentName(),
-                testApp.testApp().packageName(),
+                testApp.packageName(),
                 /* scopes= */ Collections.emptyList());
     }
 }

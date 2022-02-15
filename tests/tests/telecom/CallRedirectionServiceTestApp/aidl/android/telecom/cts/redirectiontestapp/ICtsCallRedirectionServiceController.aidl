@@ -33,4 +33,6 @@ interface ICtsCallRedirectionServiceController {
     void setWaitForTimeout();
 
     boolean waitForTimeoutNotified();
+
+    boolean waitForOnPlaceCallInvoked();
 }

@@ -355,7 +355,7 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Test ANGLE is loaded when the Game Mode includes 'useAngle=true'.
+     * Test ANGLE is loaded when the Battery Game Mode includes 'useAngle=true'.
      */
     @Test
     public void testGameModeBatteryUseAngleDriver() throws Exception {
@@ -366,6 +366,24 @@ public class CtsAngleDeveloperOptionHostTest extends BaseHostJUnit4Test {
 
         setGameModeBatteryConfig(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG, true);
         setGameModeBattery(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
+
+        runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
+                ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,
+                ANGLE_DRIVER_TEST_ANGLE_METHOD);
+    }
+
+    /**
+     * Test ANGLE is loaded when the Standard Game Mode includes 'useAngle=true'.
+     */
+    @Test
+    public void testGameModeStandardUseAngleDriver() throws Exception {
+        Assume.assumeTrue(isAngleInstalled(getDevice()));
+        Assume.assumeFalse(isNativeDriverAngle(getDevice()));
+
+        installApp(ANGLE_GAME_DRIVER_TEST_APP);
+
+        setGameModeStandardConfig(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG, true);
+        setGameModeStandard(getDevice(), ANGLE_GAME_DRIVER_TEST_PKG);
 
         runDeviceTests(ANGLE_GAME_DRIVER_TEST_PKG,
                 ANGLE_GAME_DRIVER_TEST_PKG + "." + ANGLE_DRIVER_TEST_CLASS,

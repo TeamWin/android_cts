@@ -512,7 +512,6 @@
                   android:exported="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <activity android:name="android.server.wm.HostActivity"
                   android:exported="true">
                <intent-filter>
@@ -523,7 +522,17 @@
                  <category android:name="android.intent.category.LAUNCHER"/>
                </intent-filter>
         </activity>
+        <activity android:name="android.server.wm.KeepClearRectsTests$TestActivity"
+                  android:exported="true"
+                  android:theme="@style/NoInsetsTheme" />
+        <activity android:name="android.server.wm.KeepClearRectsTests$TranslucentTestActivity"
+                  android:exported="true"
+                  android:theme="@style/NoInsetsTheme.Translucent" />
 
+        <activity android:name="android.server.wm.SnapshotTaskTests$TestActivity"
+            android:theme="@style/WhiteBackgroundTheme"
+            android:exported="true">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

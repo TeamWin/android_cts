@@ -26,6 +26,9 @@ android_test {
         "android.test.runner",
         "android.test.base",
     ],
+    static_libs: [
+        "permission-test-util-lib",
+    ],
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",

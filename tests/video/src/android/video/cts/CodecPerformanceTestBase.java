@@ -52,6 +52,7 @@ class CodecPerformanceTestBase {
     static final boolean IS_AT_LEAST_VNDK_S;
 
     static final int DEVICE_INITIAL_SDK;
+    static final int VNDK_VERSION;
 
     // Some older devices can not support concurrent instances of both decoder and encoder
     // at max resolution. To handle such cases, this test is limited to test the
@@ -97,17 +98,21 @@ class CodecPerformanceTestBase {
         // will mean that the tests built in Android S can't be run on Android R and below.
         DEVICE_INITIAL_SDK = SystemProperties.getInt("ro.product.first_api_level", 0);
 
-        // fps tolerance factor is kept quite low for devices launched on Android R and lower
-        FPS_TOLERANCE_FACTOR = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R ? 0.67 : 0.95;
+        VNDK_VERSION = SystemProperties.getInt("ro.vndk.version", 0);
 
-        IS_AT_LEAST_VNDK_S = SystemProperties.getInt("ro.vndk.version", 0) > Build.VERSION_CODES.R;
+        // fps tolerance factor is kept quite low for devices with Android R VNDK or lower
+        FPS_TOLERANCE_FACTOR = VNDK_VERSION <= Build.VERSION_CODES.R ? 0.67 : 0.95;
+
+        IS_AT_LEAST_VNDK_S = VNDK_VERSION > Build.VERSION_CODES.R;
 
         // Encoders on devices launched on Android Q and lower aren't tested at maximum resolution
         EXCLUDE_ENCODER_MAX_RESOLUTION = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.Q;
 
         // Encoders on devices launched on Android R and lower aren't tested when operating rate
-        // that is set is > 0 and < 30 for resolution 4k
-        EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R;
+        // that is set is > 0 and < 30 for resolution 4k.
+        // This includes devices launched on Android S with R or lower vendor partition.
+        EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K =
+            !IS_AT_LEAST_VNDK_S || (DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R);
     }
 
     @Before

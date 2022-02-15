@@ -35,7 +35,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.DisallowNetworkReset;
 import com.android.bedstead.harrier.policies.DisallowPrivateDnsConfig;
 import com.android.bedstead.nene.TestApis;
@@ -73,10 +73,10 @@ public final class NetworkResetTest {
         restoreSettings(mOriginalAirplaneMode, mOriginalPrivateDnsMode, mOriginalAvoidBadWifi);
     }
 
-    // TODO: Add @NegativePolicyTest
+    // TODO: Add @PolicyDoesNotApplyTest
 
     @Test
-    @PositivePolicyTest(policy = DisallowNetworkReset.class)
+    @PolicyAppliesTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void factoryReset_disallowedByNetworkResetPolicy_doesNotFactoryReset() throws Exception {
@@ -97,7 +97,7 @@ public final class NetworkResetTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = DisallowPrivateDnsConfig.class)
+    @PolicyAppliesTest(policy = DisallowPrivateDnsConfig.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void factoryReset_disallowedByConfigPrivateDnsPolicy_doesPartialFactoryReset() {
@@ -121,7 +121,7 @@ public final class NetworkResetTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = DisallowNetworkReset.class)
+    @PolicyAppliesTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void factoryReset_noPolicyRestrictions_resetsToDefault() throws Exception {

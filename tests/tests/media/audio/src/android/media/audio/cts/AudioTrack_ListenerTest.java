@@ -36,7 +36,7 @@ import java.util.ArrayList;
 @NonMediaMainlineTest
 public class AudioTrack_ListenerTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioTrack_ListenerTest";
-    private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static final String REPORT_LOG_NAME = "CtsMediaAudioTestCases";
     private final static int TEST_SR = 11025;
     private final static int TEST_CONF = AudioFormat.CHANNEL_OUT_MONO;
     private final static int TEST_FORMAT = AudioFormat.ENCODING_PCM_8BIT;

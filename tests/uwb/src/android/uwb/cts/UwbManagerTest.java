@@ -51,10 +51,14 @@ import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
+import com.google.uwb.support.multichip.ChipInfoParams;
+
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -74,7 +78,7 @@ public class UwbManagerTest {
     private String mDefaultChipId;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         mUwbManager = mContext.getSystemService(UwbManager.class);
         assumeTrue(UwbTestUtils.isUwbSupported(mContext));
         assertThat(mUwbManager).isNotNull();
@@ -82,10 +86,32 @@ public class UwbManagerTest {
         // Ensure UWB is toggled on.
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
             if (!mUwbManager.isUwbEnabled()) {
-                mUwbManager.setUwbEnabled(true);
+                try {
+                    setUwbEnabledAndWaitForCompletion(true);
+                } catch (Exception e) {
+                    fail("Exception while processing UWB toggle " + e);
+                }
             }
             mDefaultChipId = mUwbManager.getDefaultChipId();
         });
+    }
+
+    // Should be invoked with shell permissions.
+    private void setUwbEnabledAndWaitForCompletion(boolean enabled) throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        int adapterState = enabled ? STATE_ENABLED_INACTIVE : STATE_DISABLED;
+        AdapterStateCallback adapterStateCallback =
+                new AdapterStateCallback(countDownLatch, adapterState);
+        try {
+            mUwbManager.registerAdapterStateCallback(
+                    Executors.newSingleThreadExecutor(), adapterStateCallback);
+            mUwbManager.setUwbEnabled(enabled);
+            assertThat(countDownLatch.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(mUwbManager.isUwbEnabled()).isEqualTo(enabled);
+            assertThat(adapterStateCallback.state).isEqualTo(adapterState);
+        } finally {
+            mUwbManager.unregisterAdapterStateCallback(adapterStateCallback);
+        }
     }
 
     @Test
@@ -112,6 +138,21 @@ public class UwbManagerTest {
                     mUwbManager.getSpecificationInfo(mDefaultChipId);
             assertThat(persistableBundle).isNotNull();
             assertThat(persistableBundle.isEmpty()).isFalse();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetChipInfos() {
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        try {
+            // Needs UWB_PRIVILEGED permission which is held by shell.
+            uiAutomation.adoptShellPermissionIdentity();
+            List<PersistableBundle> chipInfos = mUwbManager.getChipInfos();
+            assertThat(chipInfos).hasSize(1);
+            ChipInfoParams chipInfoParams = ChipInfoParams.fromBundle(chipInfos.get(0));
+            assertThat(chipInfoParams.getChipId()).isEqualTo(mDefaultChipId);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -214,6 +255,204 @@ public class UwbManagerTest {
         } catch (SecurityException e) {
             /* pass */
             Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testAddServiceProfileWithoutUwbPrivileged() {
+        try {
+            mUwbManager.addServiceProfile(new PersistableBundle());
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testRemoveServiceProfileWithoutUwbPrivileged() {
+        try {
+            mUwbManager.removeServiceProfile(new PersistableBundle());
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+
+    @Test
+    public void testGetAllServiceProfilesWithoutUwbPrivileged() {
+        try {
+            mUwbManager.getAllServiceProfiles();
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testGetAdfProvisioningAuthoritiesWithoutUwbPrivileged() {
+        try {
+            mUwbManager.getAdfProvisioningAuthorities(new PersistableBundle());
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testGetAdfCertificateInfoWithoutUwbPrivileged() {
+        try {
+            mUwbManager.getAdfCertificateInfo(new PersistableBundle());
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testGetChipInfosWithoutUwbPrivileged() {
+        try {
+            mUwbManager.getChipInfos();
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testSendVendorUciWithoutUwbPrivileged() {
+        try {
+            mUwbManager.sendVendorUciMessage(10, 0, new byte[0]);
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    private class AdfProvisionStateCallback extends UwbManager.AdfProvisionStateCallback {
+        private final CountDownLatch mCountDownLatch;
+
+        public boolean onSuccessCalled;
+        public boolean onFailedCalled;
+
+        AdfProvisionStateCallback(@NonNull CountDownLatch countDownLatch) {
+            mCountDownLatch = countDownLatch;
+        }
+
+        @Override
+        public void onProfileAdfsProvisioned(@NonNull PersistableBundle params) {
+            onSuccessCalled = true;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onProfileAdfsProvisionFailed(int reason, @NonNull PersistableBundle params) {
+            onFailedCalled = true;
+            mCountDownLatch.countDown();
+        }
+    }
+
+    @Test
+    public void testProvisionProfileAdfByScriptWithoutUwbPrivileged() {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AdfProvisionStateCallback adfProvisionStateCallback =
+                new AdfProvisionStateCallback(countDownLatch);
+        try {
+            mUwbManager.provisionProfileAdfByScript(
+                    new PersistableBundle(),
+                    Executors.newSingleThreadExecutor(),
+                    adfProvisionStateCallback);
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testRemoveProfileAdfWithoutUwbPrivileged() {
+        try {
+            mUwbManager.removeProfileAdf(new PersistableBundle());
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    private class UwbVendorUciCallback implements UwbManager.UwbVendorUciCallback {
+        @Override
+        public void onVendorUciResponse(int gid, int oid, byte[] payload) { }
+        @Override
+        public void onVendorUciNotification(int gid, int oid, byte[] payload) { }
+    }
+
+    @Test
+    public void testRegisterVendorUciCallbackWithoutUwbPrivileged() {
+        UwbManager.UwbVendorUciCallback cb = new UwbVendorUciCallback();
+        try {
+            mUwbManager.registerUwbVendorUciCallback(
+                    Executors.newSingleThreadExecutor(), cb);
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    @Ignore("Not implemented yet")
+    public void testUnregisterVendorUciCallbackWithoutUwbPrivileged() {
+        UwbManager.UwbVendorUciCallback cb = new UwbVendorUciCallback();
+        try {
+            mUwbManager.registerUwbVendorUciCallback(
+                    Executors.newSingleThreadExecutor(), cb);
+        } catch (SecurityException e) {
+            /* pass */
+        }
+        try {
+            mUwbManager.unregisterUwbVendorUciCallback(cb);
+            // should fail if the call was successful without UWB_PRIVILEGED permission.
+            fail();
+        } catch (SecurityException e) {
+            /* pass */
+            Log.i(TAG, "Failed with expected security exception: " + e);
+        }
+    }
+
+    @Test
+    public void testInvalidCallbackUnregisterVendorUciCallback() {
+        UwbManager.UwbVendorUciCallback cb = new UwbVendorUciCallback();
+        try {
+            mUwbManager.registerUwbVendorUciCallback(
+                    Executors.newSingleThreadExecutor(), cb);
+        } catch (SecurityException e) {
+            /* registration failed */
+        }
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        try {
+            // Needs UWB_PRIVILEGED permission which is held by shell.
+            uiAutomation.adoptShellPermissionIdentity();
+            mUwbManager.unregisterUwbVendorUciCallback(cb);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -521,22 +760,13 @@ public class UwbManagerTest {
     @Test
     public void testUwbStateToggle() throws Exception {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        AdapterStateCallback adapterStateCallback =
-                new AdapterStateCallback(countDownLatch, STATE_DISABLED);
         try {
             // Needs UWB_PRIVILEGED permission which is held by shell.
             uiAutomation.adoptShellPermissionIdentity();
-            mUwbManager.registerAdapterStateCallback(
-                    Executors.newSingleThreadExecutor(), adapterStateCallback);
             assertThat(mUwbManager.isUwbEnabled()).isTrue();
             assertThat(mUwbManager.getAdapterState()).isEqualTo(STATE_ENABLED_INACTIVE);
             // Toggle the state
-            mUwbManager.setUwbEnabled(false);
-            // Wait for the on start failed callback.
-            assertThat(countDownLatch.await(1, TimeUnit.SECONDS)).isTrue();
-            assertThat(mUwbManager.isUwbEnabled()).isFalse();
-            assertThat(adapterStateCallback.state).isEqualTo(STATE_DISABLED);
+            setUwbEnabledAndWaitForCompletion(false);
             assertThat(mUwbManager.getAdapterState()).isEqualTo(STATE_DISABLED);
         } finally {
             uiAutomation.dropShellPermissionIdentity();

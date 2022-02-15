@@ -19,18 +19,17 @@ package android.media.tv.tuner.cts;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.tuner.cts.ISharedFilterTestServer;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
-import android.media.tv.tuner.filter.Settings;
 import android.media.tv.tuner.filter.SharedFilter;
 import android.media.tv.tuner.filter.SharedFilterCallback;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.os.IBinder;
 import android.util.Log;
+
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -58,7 +57,7 @@ public class SharedFilterTestService extends Service {
     private class SharedFilterTestServer extends ISharedFilterTestServer.Stub {
         @Override
         public String acquireSharedFilterToken() {
-            mFilter = TunerTest.createFilterForSharedFilterTest(
+            mFilter = TunerTest.createTsSectionFilter(
                     mTuner, getExecutor(), getFilterCallback());
 
             // Tune a frontend before start the filter

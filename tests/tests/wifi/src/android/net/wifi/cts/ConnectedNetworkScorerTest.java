@@ -41,17 +41,20 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.DhcpOption;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiConnectedSessionInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.net.wifi.WifiNetworkSuggestion;
+import android.net.wifi.WifiSsid;
 import android.net.wifi.WifiUsabilityStatsEntry;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
@@ -75,6 +78,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -788,5 +792,48 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             throws Exception {
         testSetWifiConnectedNetworkScorerForRestrictedSuggestionConnection(
                 Set.of(NET_CAPABILITY_OEM_PRIVATE));
+    }
+
+    /**
+     * Tests the
+     * {@link android.net.wifi.WifiManager#addCustomDhcpOptions(Object, Object, List)} and
+     * {@link android.net.wifi.WifiManager#removeCustomDhcpOptions(Object, Object)}.
+     *
+     * Verifies that these APIs can be invoked successfully with permissions.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @Test
+    public void testAddAndRemoveCustomDhcpOptions() throws Exception {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            WifiSsid ssid = WifiSsid.fromBytes(new byte[]{0x12, 0x34, 0x56});
+            byte[] oui = new byte[]{0x00, 0x01, 0x02};
+            List<DhcpOption> options = new ArrayList<DhcpOption>();
+            mWifiManager.addCustomDhcpOptions(ssid, oui, options);
+            mWifiManager.removeCustomDhcpOptions(ssid, oui);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests the
+     * {@link android.net.wifi.WifiManager#addCustomDhcpOptions(Object, Object, List)}.
+     *
+     * Verifies that SecurityException is thrown when permissions are missing.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @Test
+    public void testAddCustomDhcpOptionsOnMissingPermissions() throws Exception {
+        try {
+            WifiSsid ssid = WifiSsid.fromBytes(new byte[]{0x12, 0x34, 0x56});
+            byte[] oui = new byte[]{0x00, 0x01, 0x02};
+            List<DhcpOption> options = new ArrayList<DhcpOption>();
+            mWifiManager.addCustomDhcpOptions(ssid, oui, options);
+            fail("Expected SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
     }
 }

@@ -55,9 +55,9 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
     public static String KEY_FAKE_DATA = "fakeData";
     public static String VALUE_FAKE_DATA = "fakeData";
-    public static byte[] FAKE_BYTE_ARRAY_DATA = new byte[] {1, 2, 3};
+    public static byte[] FAKE_BYTE_ARRAY_DATA = new byte[]{1, 2, 3};
     public static byte[] FAKE_HOTWORD_AUDIO_DATA =
-            new byte[] {'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
+            new byte[]{'h', 'o', 't', 'w', 'o', 'r', 'd', '!'};
 
     private boolean mReady = false;
     private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
@@ -86,70 +86,95 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
         final int testEvent = intent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
         Log.i(TAG, "testEvent = " + testEvent);
-        if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
-            runWithShellPermissionIdentity(() -> {
-                mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
-            }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
-        } else if (testEvent == Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST) {
-            runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector(),
-                    Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE);
-        } else if (testEvent == Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST) {
-            runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector());
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST) {
-            // need to retain the identity until the callback is triggered
-            uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
-            if (mAlwaysOnHotwordDetector != null) {
-                mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
-                        /* soundModelHandle */ 100, /* captureAvailable */ true,
-                        /* captureSession */ 101, /* captureDelayMs */ 1000,
-                        /* capturePreambleMs */ 1001, /* triggerInData */ true,
-                        createFakeAudioFormat(), new byte[1024]);
-            }
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST) {
-            runWithShellPermissionIdentity(() -> {
+
+        try {
+            if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
+                runWithShellPermissionIdentity(() -> {
+                    mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
+                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+            } else if (testEvent == Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST) {
+                runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector(),
+                        Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE);
+            } else if (testEvent == Utils.VIS_HOLD_BIND_HOTWORD_DETECTION_PERMISSION_TEST) {
+                runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector());
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST) {
+                // need to retain the identity until the callback is triggered
+                uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
                 if (mAlwaysOnHotwordDetector != null) {
                     mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
                             /* soundModelHandle */ 100, /* captureAvailable */ true,
                             /* captureSession */ 101, /* captureDelayMs */ 1000,
                             /* capturePreambleMs */ 1001, /* triggerInData */ true,
-                            createFakeAudioFormat(), null);
+                            createFakeAudioFormat(), new byte[1024]);
                 }
-            });
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST) {
-            uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
-            if (mAlwaysOnHotwordDetector != null) {
-                ParcelFileDescriptor audioStream = createFakeAudioStream();
-                if (audioStream != null) {
-                    mAlwaysOnHotwordDetector.startRecognition(
-                            audioStream,
-                            createFakeAudioFormat(),
-                            createFakePersistableBundleData());
-                }
-            }
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST) {
-            runWithShellPermissionIdentity(() -> {
-                mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
-            }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST) {
-            uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
-            if (mSoftwareHotwordDetector != null) {
-                mSoftwareHotwordDetector.startRecognition();
-            }
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_CALL_STOP_RECOGNITION) {
-            if (mSoftwareHotwordDetector != null) {
-                mSoftwareHotwordDetector.stopRecognition();
-            }
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST) {
-            runWithShellPermissionIdentity(() -> {
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST) {
+                runWithShellPermissionIdentity(() -> {
+                    if (mAlwaysOnHotwordDetector != null) {
+                        mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */
+                                0,
+                                /* soundModelHandle */ 100, /* captureAvailable */ true,
+                                /* captureSession */ 101, /* captureDelayMs */ 1000,
+                                /* capturePreambleMs */ 1001, /* triggerInData */ true,
+                                createFakeAudioFormat(), null);
+                    }
+                });
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST) {
+                uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
                 if (mAlwaysOnHotwordDetector != null) {
-                    PersistableBundle persistableBundle = new PersistableBundle();
-                    persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
-                            Utils.HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
-                    mAlwaysOnHotwordDetector.updateState(
-                            persistableBundle,
-                            createFakeSharedMemoryData());
+                    ParcelFileDescriptor audioStream = createFakeAudioStream();
+                    if (audioStream != null) {
+                        mAlwaysOnHotwordDetector.startRecognition(
+                                audioStream,
+                                createFakeAudioFormat(),
+                                createFakePersistableBundleData());
+                    }
                 }
-            }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST) {
+                runWithShellPermissionIdentity(() -> {
+                    mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
+                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST) {
+                uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
+                if (mSoftwareHotwordDetector != null) {
+                    mSoftwareHotwordDetector.startRecognition();
+                }
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_CALL_STOP_RECOGNITION) {
+                if (mSoftwareHotwordDetector != null) {
+                    mSoftwareHotwordDetector.stopRecognition();
+                }
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_PROCESS_DIED_TEST) {
+                runWithShellPermissionIdentity(() -> {
+                    if (mAlwaysOnHotwordDetector != null) {
+                        PersistableBundle persistableBundle = new PersistableBundle();
+                        persistableBundle.putInt(Utils.KEY_TEST_SCENARIO,
+                                Utils.HOTWORD_DETECTION_SERVICE_ON_UPDATE_STATE_CRASH);
+                        mAlwaysOnHotwordDetector.updateState(
+                                persistableBundle,
+                                createFakeSharedMemoryData());
+                    }
+                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR) {
+                if (mAlwaysOnHotwordDetector != null) {
+                    Log.i(TAG, "destroying AlwaysOnHotwordDetector");
+                    mAlwaysOnHotwordDetector.destroy();
+                    broadcastIntentWithResult(
+                            Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                            Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+                }
+            } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR) {
+                if (mSoftwareHotwordDetector != null) {
+                    Log.i(TAG, "destroying SoftwareHotwordDetector");
+                    mSoftwareHotwordDetector.destroy();
+                    broadcastIntentWithResult(
+                            Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                            Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+                }
+            }
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "performing testEvent: " + testEvent + ", exception: " + e);
+            broadcastIntentWithResult(
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
         }
 
         return START_NOT_STICKY;

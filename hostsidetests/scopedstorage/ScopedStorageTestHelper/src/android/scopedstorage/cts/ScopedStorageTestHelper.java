@@ -24,6 +24,7 @@ import static android.scopedstorage.cts.lib.TestUtils.CHECK_DATABASE_ROW_EXISTS_
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_IMAGE_ENTRY_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_FILE_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.DELETE_RECURSIVE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXCEPTION;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_CALLING_PKG;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXTRA_PATH;
@@ -40,6 +41,7 @@ import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_PARAMS_SEPARAT
 import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.SETATTR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
+import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 
@@ -93,6 +95,7 @@ public class ScopedStorageTestHelper extends Activity {
                 case CAN_READ_WRITE_QUERY:
                 case CREATE_FILE_QUERY:
                 case DELETE_FILE_QUERY:
+                case DELETE_RECURSIVE_QUERY:
                 case CAN_OPEN_FILE_FOR_READ_QUERY:
                 case CAN_OPEN_FILE_FOR_WRITE_QUERY:
                 case OPEN_FILE_FOR_READ_QUERY:
@@ -262,6 +265,9 @@ public class ScopedStorageTestHelper extends Activity {
                     return intent;
                 case DELETE_FILE_QUERY:
                     intent.putExtra(queryType, file.delete());
+                    return intent;
+                case DELETE_RECURSIVE_QUERY:
+                    intent.putExtra(queryType, deleteRecursively(file));
                     return intent;
                 case SETATTR_QUERY:
                     int newTimeMillis = 12345000;

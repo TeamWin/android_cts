@@ -46,6 +46,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -55,6 +56,7 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.CursorAnchorInfo;
+import android.view.inputmethod.EditorBoundsInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
@@ -461,7 +463,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                         return new InputConnectionWrapper(original, false) {
                             @Override
                             public boolean requestCursorUpdates(int cursorUpdateMode) {
-                                if (cursorUpdateMode == InputConnection.CURSOR_UPDATE_IMMEDIATE) {
+                                if ((cursorUpdateMode & InputConnection.CURSOR_UPDATE_IMMEDIATE)
+                                        != 0) {
                                     requestCursorUpdatesCallCount.incrementAndGet();
                                     return true;
                                 }
@@ -503,6 +506,36 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     TIMEOUT).getArguments().getParcelable("cursorAnchorInfo");
             assertNotNull(receivedCursorAnchorInfo);
             assertEquals(receivedCursorAnchorInfo, originalCursorAnchorInfo);
+
+            requestCursorUpdatesCallCount.set(0);
+            // Request Cursor updates with Filter
+            // Make sure that InputConnection#requestCursorUpdates() returns true with data filter.
+            assertTrue(expectCommand(stream,
+                    imeSession.callRequestCursorUpdates(
+                            InputConnection.CURSOR_UPDATE_IMMEDIATE
+                            | InputConnection.CURSOR_UPDATE_FILTER_EDITOR_BOUNDS
+                            | InputConnection.CURSOR_UPDATE_FILTER_CHARACTER_BOUNDS
+                            | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER),
+                    TIMEOUT).getReturnBooleanValue());
+
+            // Also make sure that requestCursorUpdates() actually gets called only once.
+            assertEquals(1, requestCursorUpdatesCallCount.get());
+
+            EditorBoundsInfo.Builder builder = new EditorBoundsInfo.Builder();
+            builder.setEditorBounds(new RectF(0f, 1f, 2f, 3f));
+            final CursorAnchorInfo originalCursorAnchorInfo1 = new CursorAnchorInfo.Builder()
+                    .setMatrix(new Matrix())
+                    .setEditorBoundsInfo(builder.build())
+                    .build();
+
+            runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
+                    .updateCursorAnchorInfo(editText, originalCursorAnchorInfo1));
+
+            final CursorAnchorInfo receivedCursorAnchorInfo1 = expectEvent(stream,
+                    event -> "onUpdateCursorAnchorInfo".equals(event.getEventName()),
+                    TIMEOUT).getArguments().getParcelable("cursorAnchorInfo");
+            assertNotNull(receivedCursorAnchorInfo1);
+            assertEquals(receivedCursorAnchorInfo1, originalCursorAnchorInfo1);
         }
     }
 
@@ -512,6 +545,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         try (MockImeSession imeSession = MockImeSession.create(
                 mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
                 new ImeSettings.Builder().setVerifyUiContextApisInOnCreate(true))) {
+            ensureImeRunning();
             final ImeEventStream stream = imeSession.openEventStream();
 
             // Verify if getDisplay doesn't throw exception before InputMethodService's
@@ -709,6 +743,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         try (MockImeSession imeSession = MockImeSession.create(
                 mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
                 new ImeSettings.Builder().setVerifyUiContextApisInOnCreate(true))) {
+            ensureImeRunning();
             final ImeEventStream stream = imeSession.openEventStream();
 
             // Verify if InputMethodService#isUiContext returns true in #onCreate
@@ -755,6 +790,13 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             }
             // Verify no crash and onCreate / onDestroy keeps paired from MockIme event stream
             expectNoImeCrash(imeSession, TIMEOUT);
+        }
+    }
+
+    /** Explicitly start-up the IME process if it would have been prevented. */
+    protected void ensureImeRunning() {
+        if (isPreventImeStartup()) {
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 

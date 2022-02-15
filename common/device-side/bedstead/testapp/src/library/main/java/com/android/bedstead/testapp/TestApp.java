@@ -44,7 +44,7 @@ import java.util.Set;
 public final class TestApp {
     // Must be instrumentation context to access resources
     private static final Context sContext = TestApis.context().instrumentationContext();
-    private final TestAppDetails mDetails;
+    final TestAppDetails mDetails;
 
     TestApp(TestAppDetails details) {
         if (details == null) {

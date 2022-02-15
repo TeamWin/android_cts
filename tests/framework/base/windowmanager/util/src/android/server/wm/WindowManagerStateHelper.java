@@ -227,16 +227,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     /**
-     * Wait for orientation for the Activity
+     * Wait for the configuration orientation of the Activity.
      */
-    public void waitForActivityOrientation(ComponentName activityName, int orientation) {
-        waitForWithAmState(amState -> {
-            final Task task = amState.getTaskByActivity(activityName);
-            if (task == null) {
-                return false;
-            }
-            return task.mFullConfiguration.orientation == orientation;
-        }, "orientation of " + getActivityName(activityName) + " to be " + orientation);
+    public boolean waitForActivityOrientation(ComponentName activityName, int configOrientation) {
+        return waitForWithAmState(amState -> {
+            final Activity activity = amState.getActivity(activityName);
+            return activity != null && activity.mFullConfiguration.orientation == configOrientation;
+        }, "orientation of " + getActivityName(activityName) + " to be " + configOrientation);
     }
 
     public void waitForDisplayUnfrozen() {
@@ -668,7 +665,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     /**
-     * Asserts that the device default display minimim width is larger than the minimum task width.
+     * Asserts that the device default display minimum width is larger than the minimum task width.
      */
     void assertDeviceDefaultDisplaySizeForMultiWindow(String errorMessage) {
         computeState();
@@ -777,6 +774,17 @@ public class WindowManagerStateHelper extends WindowManagerState {
     WindowState getImeWindowState() {
         computeState();
         return getInputMethodWindowState();
+    }
+
+    /**
+     * @return the window state for the given {@param activityName}'s window.
+     */
+    WindowState getWindowState(ComponentName activityName) {
+        String windowName = getWindowName(activityName);
+        computeState(activityName);
+        final List<WindowManagerState.WindowState> tempWindowList =
+                getMatchingVisibleWindowState(windowName);
+        return tempWindowList.get(0);
     }
 
     boolean isScreenPortrait(int displayId) {

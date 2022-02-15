@@ -457,13 +457,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have credentials")
-    public void testResetPasswordDeprecated() throws Exception {
-        super.testResetPasswordDeprecated();
-    }
-
-    @Override
-    @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testCreateAdminSupportIntent() throws Exception {
         super.testCreateAdminSupportIntent();

@@ -78,8 +78,12 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       # Create requests
       max_jpeg_size = capture_request_utils.get_available_output_sizes(
           'jpeg', props)[0]
-      w, h = capture_request_utils.get_available_output_sizes(
-          'yuv', props, MAX_IMG_SIZE, max_jpeg_size)[0]
+      if capture_request_utils.is_common_aspect_ratio(max_jpeg_size):
+        w, h = capture_request_utils.get_available_output_sizes(
+            'yuv', props, MAX_IMG_SIZE, max_jpeg_size)[0]
+      else:
+        w, h = capture_request_utils.get_available_output_sizes(
+            'yuv', props, max_size=MAX_IMG_SIZE)[0]
       fmt_yuv = {'format': 'yuv', 'width': w, 'height': h}
       fmt_jpg = {'format': 'jpeg'}
 

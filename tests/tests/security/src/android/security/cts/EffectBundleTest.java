@@ -478,36 +478,39 @@ public class EffectBundleTest extends InstrumentationTestCase {
             UUID effectType, final int paramCodes[]) throws Exception {
 
         boolean effectFound = false;
-        for (AudioEffect.Descriptor descriptor : AudioEffect.queryEffects()) {
-            if (descriptor.type.compareTo(effectType) != 0) continue;
+        AudioEffect.Descriptor[] descriptors = AudioEffect.queryEffects();
+        if (descriptors != null) {
+            for (AudioEffect.Descriptor descriptor : descriptors) {
+                if (descriptor.type.compareTo(effectType) != 0) continue;
 
-            effectFound = true;
-            AudioEffect ae = null;
-            MediaPlayer mp = null;
-            try {
-                mp = MediaPlayer.create(getInstrumentation().getContext(), R.raw.good);
-                java.lang.reflect.Constructor ct = AudioEffect.class.getConstructor(
-                        UUID.class, UUID.class, int.class, int.class);
+                effectFound = true;
+                AudioEffect ae = null;
+                MediaPlayer mp = null;
                 try {
-                    ae = (AudioEffect) ct.newInstance(descriptor.type, descriptor.uuid,
-                            /*priority*/ 0, mp.getAudioSessionId());
-                } catch (Exception e) {
-                    // Not every effect can be instantiated by apps.
-                    Log.w(TAG, "Failed to create effect " + descriptor.uuid);
-                    continue;
-                }
-                java.lang.reflect.Method command = AudioEffect.class.getDeclaredMethod(
-                        "command", int.class, byte[].class, byte[].class);
-                for (int paramCode : paramCodes) {
-                    executeSetParameter(ae, command, intSize, 0, paramCode);
-                    executeSetParameter(ae, command, 0, intSize, paramCode);
-                }
-            } finally {
-                if (ae != null) {
-                    ae.release();
-                }
-                if (mp != null) {
-                    mp.release();
+                    mp = MediaPlayer.create(getInstrumentation().getContext(), R.raw.good);
+                    java.lang.reflect.Constructor ct = AudioEffect.class.getConstructor(
+                            UUID.class, UUID.class, int.class, int.class);
+                    try {
+                        ae = (AudioEffect) ct.newInstance(descriptor.type, descriptor.uuid,
+                                /*priority*/ 0, mp.getAudioSessionId());
+                    } catch (Exception e) {
+                        // Not every effect can be instantiated by apps.
+                        Log.w(TAG, "Failed to create effect " + descriptor.uuid);
+                        continue;
+                    }
+                    java.lang.reflect.Method command = AudioEffect.class.getDeclaredMethod(
+                            "command", int.class, byte[].class, byte[].class);
+                    for (int paramCode : paramCodes) {
+                        executeSetParameter(ae, command, intSize, 0, paramCode);
+                        executeSetParameter(ae, command, 0, intSize, paramCode);
+                    }
+                } finally {
+                    if (ae != null) {
+                        ae.release();
+                    }
+                    if (mp != null) {
+                        mp.release();
+                    }
                 }
             }
         }

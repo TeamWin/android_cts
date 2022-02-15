@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
@@ -55,6 +57,8 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPEC
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
+import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
@@ -105,8 +109,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteCallback;
-import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.SizeInfo;
@@ -126,7 +130,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -147,11 +150,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int ROTATION_90 = 1;
     private static final int ROTATION_180 = 2;
     private static final int ROTATION_270 = 3;
-
-    // Corresponds to ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-    private static final int ORIENTATION_LANDSCAPE = 0;
-    // Corresponds to ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    private static final int ORIENTATION_PORTRAIT = 1;
 
     private static final float FLOAT_COMPARE_EPSILON = 0.005f;
 
@@ -249,10 +247,10 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testEnterPipToOtherOrientation() {
         // Launch a portrait only app on the fullscreen stack
         launchActivity(TEST_ACTIVITY,
-                extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT)));
+                extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)));
         // Launch the PiP activity fixed as landscape
         launchActivity(PIP_ACTIVITY,
-                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_LANDSCAPE)));
+                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_LANDSCAPE)));
         // Enter PiP, and assert that the PiP is within bounds now that the device is back in
         // portrait
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
@@ -294,7 +292,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPipAnimationComplete(PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE);
         assertPinnedStackExists();
 
-        final WindowManagerState.WindowState windowState = getWindowState(
+        final WindowManagerState.WindowState windowState = mWmState.getWindowState(
                 PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE);
         final WindowManagerState.DisplayContent display = mWmState.getDisplay(
                 windowState.getDisplayId());
@@ -317,6 +315,79 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testEnterPipAspectRatioMax() {
         testEnterPipAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR);
+    }
+
+    @Test
+    public void testEnterExpandedPipAspectRatio() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(5)));
+        // Wait for animation complete since we are comparing aspect ratio
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        // Assert that we have entered PIP and that the aspect ratio is correct
+        final Rect bounds = getPinnedStackBounds();
+        assertFloatEquals((float) bounds.width() / bounds.height(), (float) 1.0f / 5.0f);
+    }
+
+    @Test
+    public void testEnterExpandedPipAspectRatioMaxHeight() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1000)));
+        // Wait for animation complete since we are comparing aspect ratio
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        // Assert that we have entered PIP and that the aspect ratio is correct
+        final Rect bounds = getPinnedStackBounds();
+        final int displayHeight = mWmState.getDisplay(DEFAULT_DISPLAY).getDisplayRect().height();
+        assertTrue(bounds.height() <= displayHeight);
+    }
+
+    @Test
+    public void testEnterExpandedPipAspectRatioMaxWidth() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1000)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)));
+        // Wait for animation complete since we are comparing aspect ratio
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        // Assert that we have entered PIP and that the aspect ratio is correct
+        final Rect bounds = getPinnedStackBounds();
+        final int displayWidth = mWmState.getDisplay(DEFAULT_DISPLAY).getDisplayRect().width();
+        assertTrue(bounds.width() <= displayWidth);
+    }
+
+    @Test
+    public void testEnterExpandedPipWithNormalAspectRatio() {
+        assumeTrue(supportsExpandedPip());
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(2)));
+        assertPinnedStackDoesNotExist();
+
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)));
+        assertPinnedStackDoesNotExist();
     }
 
     private void testEnterPipAspectRatio(int num, int denom) {
@@ -453,7 +524,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testAutoEnterPictureInPictureOnUserLeaveHintWhenPipRequestedNotOverridden()
             {
         // Launch a test activity so that we're not over home
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         // Launch the PIP activity that enters PIP on user leave hint, not on PIP requested
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT, "true"));
@@ -1083,22 +1154,21 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // Launch the PiP activity fixed as portrait, and enter picture-in-picture
         launchActivity(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT)),
+                extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)),
                 extraString(EXTRA_ENTER_PIP, "true"));
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Request that the orientation is set to landscape
-        mBroadcastActionTrigger.requestOrientationForPip(ORIENTATION_LANDSCAPE);
+        mBroadcastActionTrigger.requestOrientationForPip(SCREEN_ORIENTATION_LANDSCAPE);
 
         // Launch the activity back into fullscreen and ensure that it is now in landscape
         launchActivity(PIP_ACTIVITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
-        mWmState.waitForActivityOrientation(PIP_ACTIVITY, ORIENTATION_LANDSCAPE);
-
-        final Task pipActivityTask = mWmState.getTaskByActivity(PIP_ACTIVITY);
-        assertEquals(ORIENTATION_LANDSCAPE, pipActivityTask.mOverrideConfiguration.orientation);
+        assertTrue("The PiP activity in fullscreen must be landscape",
+                mWmState.waitForActivityOrientation(
+                        PIP_ACTIVITY, Configuration.ORIENTATION_LANDSCAPE));
     }
 
     @Test
@@ -1252,7 +1322,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testDisplayMetricsPinUnpin() {
         separateTestJournal();
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         final int defaultWindowingMode = mWmState
                 .getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
         final SizeInfo initialSizes = getLastReportedSizesForActivity(TEST_ACTIVITY);
@@ -1286,14 +1356,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testAutoPipAllowedBypassesExplicitEnterPip() {
         // Launch a test activity so that we're not over home.
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         // Launch the PIP activity and set its pip params to allow auto-pip.
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
         assertPinnedStackDoesNotExist();
 
         // Launch a new activity and ensure that there is a pinned stack.
-        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
@@ -1306,7 +1376,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotExist();
 
         // Launch another and ensure that there is a pinned stack.
-        launchActivity(TEST_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
@@ -1441,7 +1511,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the pinned stack bounds is contained in the display bounds.
      */
     private void assertPinnedStackActivityIsInDisplayBounds(ComponentName activityName) {
-        final WindowManagerState.WindowState windowState = getWindowState(activityName);
+        final WindowManagerState.WindowState windowState = mWmState.getWindowState(activityName);
         final WindowManagerState.DisplayContent display = mWmState.getDisplay(
                 windowState.getDisplayId());
         final Rect displayRect = display.getDisplayRect();
@@ -1593,17 +1663,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                     .getBounds();
             return floatEquals((float) bounds.width() / bounds.height(), (float) num / denom);
         }, "valid aspect ratio");
-    }
-
-    /**
-     * @return the window state for the given {@param activityName}'s window.
-     */
-    private WindowManagerState.WindowState getWindowState(ComponentName activityName) {
-        String windowName = getWindowName(activityName);
-        mWmState.computeState(activityName);
-        final List<WindowManagerState.WindowState> tempWindowList =
-                mWmState.getMatchingVisibleWindowState(windowName);
-        return tempWindowList.get(0);
     }
 
     /**

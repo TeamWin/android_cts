@@ -42,6 +42,8 @@ public class ApnSettingTest {
         EXPECTED_STRING_TO_INT_MAP.put(ApnSetting.TYPE_EMERGENCY_STRING, ApnSetting.TYPE_EMERGENCY);
         EXPECTED_STRING_TO_INT_MAP.put(ApnSetting.TYPE_MCX_STRING, ApnSetting.TYPE_MCX);
         EXPECTED_STRING_TO_INT_MAP.put(ApnSetting.TYPE_XCAP_STRING, ApnSetting.TYPE_XCAP);
+        EXPECTED_STRING_TO_INT_MAP.put(ApnSetting.TYPE_ENTERPRISE_STRING,
+                ApnSetting.TYPE_ENTERPRISE);
 
         EXPECTED_INT_TO_STRING_MAP = new ArrayMap<>();
         EXPECTED_INT_TO_STRING_MAP.put(ApnSetting.TYPE_DEFAULT, ApnSetting.TYPE_DEFAULT_STRING);
@@ -56,6 +58,8 @@ public class ApnSettingTest {
         EXPECTED_INT_TO_STRING_MAP.put(ApnSetting.TYPE_EMERGENCY, ApnSetting.TYPE_EMERGENCY_STRING);
         EXPECTED_INT_TO_STRING_MAP.put(ApnSetting.TYPE_MCX, ApnSetting.TYPE_MCX_STRING);
         EXPECTED_INT_TO_STRING_MAP.put(ApnSetting.TYPE_XCAP, ApnSetting.TYPE_XCAP_STRING);
+        EXPECTED_INT_TO_STRING_MAP.put(ApnSetting.TYPE_ENTERPRISE,
+                ApnSetting.TYPE_ENTERPRISE_STRING);
     }
 
     @Test

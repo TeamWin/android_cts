@@ -70,7 +70,7 @@ class UseMicCamera : Activity() {
                 finishAndRemoveTask()
                 Runtime.getRuntime().exit(0)
             }
-        }, IntentFilter(FINISH_MIC_CAM_ACTIVITY_ACTION))
+        }, IntentFilter(FINISH_MIC_CAM_ACTIVITY_ACTION), Context.RECEIVER_EXPORTED)
 
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -80,7 +80,7 @@ class UseMicCamera : Activity() {
                 }
                 startActivity(intent)
             }
-        }, IntentFilter(SHOW_OVERLAY_ACTION))
+        }, IntentFilter(SHOW_OVERLAY_ACTION), Context.RECEIVER_EXPORTED)
 
         val useMic = intent.getBooleanExtra(USE_MIC_EXTRA, false)
         val useCam = intent.getBooleanExtra(USE_CAM_EXTRA, false)

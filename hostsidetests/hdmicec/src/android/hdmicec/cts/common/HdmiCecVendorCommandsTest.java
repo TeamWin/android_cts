@@ -17,13 +17,12 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.LogHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -38,6 +37,24 @@ import org.junit.Test;
 public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
 
     private static final int INCORRECT_VENDOR_ID = 0x0;
+
+    /** The package name of the APK. */
+    private static final String PACKAGE = "android.hdmicec.app";
+    /** The class name of the main activity in the APK. */
+    private static final String CLASS = "HdmiCecVendorCommandListener";
+    /** The command to launch the main activity. */
+    private static final String START_COMMAND =
+            String.format("am start -W -n %s/%s.%s  ", PACKAGE, PACKAGE, CLASS);
+
+    private static final String VENDOR_LISTENER_WITH_ID =
+            "-a android.hdmicec.app.VENDOR_LISTENER_WITH_ID";
+    private static final String VENDOR_LISTENER_WITHOUT_ID =
+            "-a android.hdmicec.app.VENDOR_LISTENER_WITHOUT_ID";
+    /** The command to clear the main activity. */
+    private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
+
+    // This has to be the same as the vendor ID used in the HdmiCecVendorCommandListener
+    private static final int VENDOR_ID = 0xBADDAD;
 
     @Rule
     public RuleChain ruleChain =
@@ -89,5 +106,80 @@ public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
         device.reboot();
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.DEVICE_VENDOR_ID);
         assertThat(CecMessage.getParams(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
+    }
+
+    @Test
+    public void cecVendorCommandListenerWithVendorIdTest() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + VENDOR_LISTENER_WITH_ID);
+
+        String params = CecMessage.formatParams(VENDOR_ID);
+        params += CecMessage.formatParams("010203");
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.VENDOR_COMMAND_WITH_ID, params);
+
+        LogHelper.assertLog(device, CLASS, "Received vendor command with correct vendor ID");
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+    }
+
+    @Test
+    public void cecVendorCommandListenerReceivesVendorCommandWithoutId() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + VENDOR_LISTENER_WITH_ID);
+
+        String params = CecMessage.formatParams("010203");
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.VENDOR_COMMAND, params);
+
+        LogHelper.assertLog(device, CLASS, "Received vendor command without vendor ID");
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+    }
+
+    @Test
+    public void cecVendorCommandListenerWithoutVendorIdTest() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + VENDOR_LISTENER_WITHOUT_ID);
+
+        String params = CecMessage.formatParams("010203");
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.VENDOR_COMMAND, params);
+
+        LogHelper.assertLog(device, CLASS, "Received vendor command without vendor ID");
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+    }
+
+    @Test
+    public void cecVendorCommandListenerWithoutVendorIdDoesNotReceiveTest() throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + VENDOR_LISTENER_WITHOUT_ID);
+
+        String params = CecMessage.formatParams(VENDOR_ID);
+        params += CecMessage.formatParams("010203");
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.VENDOR_COMMAND_WITH_ID, params);
+
+        LogHelper.assertLogDoesNotContain(
+                device, CLASS, "Received vendor command with correct vendor ID");
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
     }
 }

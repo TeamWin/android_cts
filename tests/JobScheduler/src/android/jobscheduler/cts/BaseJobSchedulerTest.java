@@ -15,6 +15,8 @@
  */
 package android.jobscheduler.cts;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import android.annotation.CallSuper;
 import android.annotation.TargetApi;
 import android.app.Instrumentation;
@@ -32,6 +34,7 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -74,6 +77,8 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
 
     boolean mStorageStateChanged;
 
+    private String mInitialBatteryStatsConstants;
+
     @Override
     public void injectInstrumentation(Instrumentation instrumentation) {
         super.injectInstrumentation(instrumentation);
@@ -113,12 +118,20 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         kTestEnvironment.setUp();
         kTriggerTestEnvironment.setUp();
         mJobScheduler.cancelAll();
+
+        mInitialBatteryStatsConstants = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS);
+        // Make sure ACTION_CHARGING is sent immediately.
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS, "battery_charged_delay_ms=0");
     }
 
     @CallSuper
     @Override
     public void tearDown() throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.BATTERY_STATS_CONSTANTS, mInitialBatteryStatsConstants);
         if (mStorageStateChanged) {
             // Put storage service back in to normal operation.
             SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
@@ -220,29 +233,32 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     void setBatteryState(boolean plugged, int level) throws Exception {
         if (plugged) {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd battery set ac 1");
+            final int curLevel = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
+                    "dumpsys battery get level").trim());
+            if (curLevel >= level) {
+                // Lower the level so when we set it to the desired level, JobScheduler thinks
+                // the device is charging.
+                SystemUtil.runShellCommand(getInstrumentation(),
+                        "cmd battery set level " + Math.max(1, level - 1));
+            }
         } else {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd battery unplug");
         }
         int seq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd battery set -f level " + level).trim());
-        long startTime = SystemClock.elapsedRealtime();
 
         // Wait for the battery update to be processed by job scheduler before proceeding.
-        int curSeq;
-        boolean curCharging;
-        do {
-            Thread.sleep(50);
-            curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd jobscheduler get-battery-seq").trim());
-            curCharging = Boolean.parseBoolean(SystemUtil.runShellCommand(getInstrumentation(),
-                    "cmd jobscheduler get-battery-charging").trim());
-            if (curSeq >= seq && curCharging == plugged) {
-                return;
-            }
-        } while ((SystemClock.elapsedRealtime() - startTime) < 5000);
-
-        fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq
-                + ", expected charging=" + plugged + " curCharging=" + curCharging);
+        waitUntil("JobScheduler didn't update charging status to " + plugged, 15 /* seconds */,
+                () -> {
+                    int curSeq;
+                    boolean curCharging;
+                    curSeq = Integer.parseInt(SystemUtil.runShellCommand(getInstrumentation(),
+                            "cmd jobscheduler get-battery-seq").trim());
+                    curCharging = Boolean.parseBoolean(
+                            SystemUtil.runShellCommand(getInstrumentation(),
+                                    "cmd jobscheduler get-battery-charging").trim());
+                    return curSeq >= seq && curCharging == plugged;
+                });
     }
 
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */

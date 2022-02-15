@@ -17,8 +17,8 @@
 package android.photopicker.cts.util;
 
 import static android.os.SystemProperties.getBoolean;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+import static android.provider.MediaStore.Files.FileColumns;
+import static android.provider.MediaStore.PickerMediaColumns;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -32,13 +32,14 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.provider.CloudMediaProviderContract;
-import android.provider.MediaStore;
 
 import androidx.test.InstrumentationRegistry;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
@@ -65,36 +66,26 @@ public class PhotoPickerAssertionsUtils {
 
     public static void assertRedactedReadOnlyAccess(Uri uri) throws Exception {
         assertThat(uri).isNotNull();
-        final String[] projection = new String[]{MediaStore.Files.FileColumns.TITLE,
-            MediaStore.Files.FileColumns.MEDIA_TYPE};
+        final String[] projection = new String[]{ PickerMediaColumns.MIME_TYPE };
         final Context context = InstrumentationRegistry.getTargetContext();
         final ContentResolver resolver = context.getContentResolver();
         try (Cursor c = resolver.query(uri, projection, null, null)) {
             assertThat(c).isNotNull();
             assertThat(c.moveToFirst()).isTrue();
 
+            final String mimeType;
             if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
-                final String mimeType = c.getString(c.getColumnIndex(
-                                CloudMediaProviderContract.MediaColumns.MIME_TYPE));
-                if (mimeType.startsWith("image")) {
-                    assertImageRedactedReadOnlyAccess(uri, resolver);
-                } else if (mimeType.startsWith("video")) {
-                    assertVideoRedactedReadOnlyAccess(uri, resolver);
-                } else {
-                    fail("The mime type is not as expected: " + mimeType);
-                }
+                mimeType = c.getString(c.getColumnIndex(PickerMediaColumns.MIME_TYPE));
             } else {
-                final int mediaType = c.getInt(1);
-                switch (mediaType) {
-                    case MEDIA_TYPE_IMAGE:
-                        assertImageRedactedReadOnlyAccess(uri, resolver);
-                        break;
-                    case MEDIA_TYPE_VIDEO:
-                        assertVideoRedactedReadOnlyAccess(uri, resolver);
-                        break;
-                    default:
-                        fail("The media type is not as expected: " + mediaType);
-                }
+                mimeType = c.getString(c.getColumnIndex(FileColumns.MIME_TYPE));
+            }
+
+            if (mimeType.startsWith("image")) {
+                assertImageRedactedReadOnlyAccess(uri, resolver);
+            } else if (mimeType.startsWith("video")) {
+                assertVideoRedactedReadOnlyAccess(uri, resolver);
+            } else {
+                fail("The mime type is not as expected: " + mimeType);
             }
         }
     }
@@ -102,6 +93,8 @@ public class PhotoPickerAssertionsUtils {
     private static void assertVideoRedactedReadOnlyAccess(Uri uri, ContentResolver resolver)
             throws Exception {
         // The location is redacted
+        // TODO(b/201505595): Make this method work for test_video.mp4. Currently it works only for
+        //  test_video_dng.mp4
         try (InputStream in = resolver.openInputStream(uri);
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             FileUtils.copy(in, out);
@@ -125,29 +118,54 @@ public class PhotoPickerAssertionsUtils {
 
     private static void assertImageRedactedReadOnlyAccess(Uri uri, ContentResolver resolver)
             throws Exception {
+        // Assert URI access
         // The location is redacted
         try (InputStream is = resolver.openInputStream(uri)) {
-            final ExifInterface exif = new ExifInterface(is);
-            final float[] latLong = new float[2];
-            exif.getLatLong(latLong);
-            assertWithMessage("Failed to redact latitude")
-                    .that(latLong[0]).isWithin(0.001f).of(0);
-            assertWithMessage("Failed to redact longitude")
-                    .that(latLong[1]).isWithin(0.001f).of(0);
-
-            String xmp = exif.getAttribute(ExifInterface.TAG_XMP);
-            assertWithMessage("Failed to redact XMP longitude")
-                    .that(xmp.contains("10,41.751000E")).isFalse();
-            assertWithMessage("Failed to redact XMP latitude")
-                    .that(xmp.contains("53,50.070500N")).isFalse();
-            assertWithMessage("Redacted non-location XMP")
-                    .that(xmp.contains("LensDefaults")).isTrue();
+            assertImageExifRedacted(is);
         }
 
-        // assert no write access
+        // Assert no write access
         try (ParcelFileDescriptor pfd = resolver.openFileDescriptor(uri, "w")) {
             fail("Does not grant write access to uri " + uri.toString());
         } catch (SecurityException | FileNotFoundException expected) {
         }
+
+        // Assert file path access
+        try (Cursor c = resolver.query(uri, null, null, null)) {
+            assertThat(c).isNotNull();
+            assertThat(c.moveToFirst()).isTrue();
+
+            File file = new File(c.getString(c.getColumnIndex(PickerMediaColumns.DATA)));
+
+            // The location is redacted
+            try (InputStream is = new FileInputStream(file)) {
+                assertImageExifRedacted(is);
+            }
+
+            // Assert no write access
+            try (ParcelFileDescriptor pfd =
+                    ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE)) {
+                fail("Does not grant write access to file " + file);
+            } catch (IOException e) {
+            }
+        }
+    }
+
+    private static void assertImageExifRedacted(InputStream is) throws IOException {
+        final ExifInterface exif = new ExifInterface(is);
+        final float[] latLong = new float[2];
+        exif.getLatLong(latLong);
+        assertWithMessage("Failed to redact latitude")
+                .that(latLong[0]).isWithin(0.001f).of(0);
+        assertWithMessage("Failed to redact longitude")
+                .that(latLong[1]).isWithin(0.001f).of(0);
+
+        String xmp = exif.getAttribute(ExifInterface.TAG_XMP);
+        assertWithMessage("Failed to redact XMP longitude")
+                .that(xmp.contains("10,41.751000E")).isFalse();
+        assertWithMessage("Failed to redact XMP latitude")
+                .that(xmp.contains("53,50.070500N")).isFalse();
+        assertWithMessage("Redacted non-location XMP")
+                .that(xmp.contains("LensDefaults")).isTrue();
     }
 }

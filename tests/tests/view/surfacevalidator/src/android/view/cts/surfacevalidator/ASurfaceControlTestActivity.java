@@ -62,7 +62,7 @@ public class ASurfaceControlTestActivity extends Activity {
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
     private static final int OFFSET_X = 100;
     private static final int OFFSET_Y = 100;
-    private static final long WAIT_TIMEOUT_S = 5;
+    public static final long WAIT_TIMEOUT_S = 5;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private volatile boolean mOnWatch;
@@ -76,6 +76,7 @@ public class ASurfaceControlTestActivity extends Activity {
     private Instrumentation mInstrumentation;
 
     private final CountDownLatch mReadyToStart = new CountDownLatch(1);
+    private CountDownLatch mTransactionCommittedLatch;
 
     @Override
     public void onEnterAnimationComplete() {
@@ -118,6 +119,33 @@ public class ASurfaceControlTestActivity extends Activity {
 
     public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
             PixelChecker pixelChecker, TestName name) {
+        verifyTest(surfaceHolderCallback, pixelChecker, name, 0);
+    }
+
+    public void verifyTest(SurfaceHolder.Callback surfaceHolderCallback,
+            PixelChecker pixelChecker, TestName name, int numOfTransactionToListen) {
+        final boolean waitForTransactionLatch = numOfTransactionToListen > 0;
+        final CountDownLatch readyFence = new CountDownLatch(1);
+        if (waitForTransactionLatch) {
+            mTransactionCommittedLatch = new CountDownLatch(numOfTransactionToListen);
+        }
+        SurfaceHolderCallback surfaceHolderCallbackWrapper = new SurfaceHolderCallback(
+                surfaceHolderCallback,
+                readyFence, mParent.getViewTreeObserver());
+        createSurface(surfaceHolderCallbackWrapper);
+        try {
+            if (waitForTransactionLatch) {
+                assertTrue("timeout",
+                        mTransactionCommittedLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+            }
+            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            Assert.fail("interrupted");
+        }
+        verifyScreenshot(pixelChecker, name);
+    }
+
+    public void createSurface(SurfaceHolderCallback surfaceHolderCallback) {
         try {
             mReadyToStart.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -133,18 +161,13 @@ public class ASurfaceControlTestActivity extends Activity {
             return;
         }
 
-        final CountDownLatch readyFence = new CountDownLatch(1);
         mHandler.post(() -> {
-            mSurfaceView.getHolder().addCallback(new SurfaceHolderCallback(surfaceHolderCallback,
-                    readyFence, mParent.getViewTreeObserver()));
+            mSurfaceView.getHolder().addCallback(surfaceHolderCallback);
             mParent.addView(mSurfaceView, mLayoutParams);
         });
-        try {
-            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-            Assert.fail("interrupted");
-        }
+    }
 
+    public void verifyScreenshot(PixelChecker pixelChecker, TestName name) {
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
         mHandler.post(() -> {
@@ -178,6 +201,14 @@ public class ASurfaceControlTestActivity extends Activity {
 
     public SurfaceView getSurfaceView() {
         return mSurfaceView;
+    }
+
+    public FrameLayout getParentFrameLayout() {
+        return mParent;
+    }
+
+    public void transactionCommitted() {
+        mTransactionCommittedLatch.countDown();
     }
 
     public abstract static class MultiRectChecker extends RectChecker {
@@ -238,7 +269,7 @@ public class ASurfaceControlTestActivity extends Activity {
             for (int x = boundsToCheck.left; x < boundsToCheck.right; x++) {
                 for (int y = boundsToCheck.top; y < boundsToCheck.bottom; y++) {
                     int color = bitmap.getPixel(x + OFFSET_X, y + OFFSET_Y);
-                    if (matchesColor(getExpectedColor(x, y), color)) {
+                    if (getExpectedColor(x, y).matchesColor(color)) {
                         numMatchingPixels++;
                     } else if (DEBUG && mLogWhenNoMatch && numErrorsLogged < 100) {
                         // We don't want to spam the logcat with errors if something is really
@@ -256,22 +287,6 @@ public class ASurfaceControlTestActivity extends Activity {
             return numMatchingPixels;
         }
 
-        boolean matchesColor(PixelColor expectedColor, int color) {
-            final float red = Color.red(color);
-            final float green = Color.green(color);
-            final float blue = Color.blue(color);
-            final float alpha = Color.alpha(color);
-
-            return alpha <= expectedColor.mMaxAlpha
-                    && alpha >= expectedColor.mMinAlpha
-                    && red <= expectedColor.mMaxRed
-                    && red >= expectedColor.mMinRed
-                    && green <= expectedColor.mMaxGreen
-                    && green >= expectedColor.mMinGreen
-                    && blue <= expectedColor.mMaxBlue
-                    && blue >= expectedColor.mMinBlue;
-        }
-
         public abstract boolean checkPixels(int matchingPixelCount, int width, int height);
 
         public Rect getBoundsToCheck(Bitmap bitmap) {
@@ -283,12 +298,12 @@ public class ASurfaceControlTestActivity extends Activity {
         }
     }
 
-    private static class SurfaceHolderCallback implements SurfaceHolder.Callback {
+    public static class SurfaceHolderCallback implements SurfaceHolder.Callback {
         private final SurfaceHolder.Callback mTestCallback;
         private final CountDownLatch mSurfaceCreatedLatch;
         private final ViewTreeObserver mViewTreeObserver;
 
-        SurfaceHolderCallback(SurfaceHolder.Callback callback, CountDownLatch readyFence,
+        public SurfaceHolderCallback(SurfaceHolder.Callback callback, CountDownLatch readyFence,
                 ViewTreeObserver viewTreeObserver) {
             mTestCallback = callback;
             mSurfaceCreatedLatch = readyFence;

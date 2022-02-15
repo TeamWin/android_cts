@@ -17,6 +17,8 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -30,6 +32,7 @@ import java.util.Map;
 /**
  * Tests the visibility of installed applications.
  */
+@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ApplicationVisibilityTest extends BaseAppSecurityTest {
 

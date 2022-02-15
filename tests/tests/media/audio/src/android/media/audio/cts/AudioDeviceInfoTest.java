@@ -80,7 +80,8 @@ public class AudioDeviceInfoTest {
         AudioDeviceInfo.TYPE_HEARING_AID,
         AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE,
         AudioDeviceInfo.TYPE_BLE_HEADSET,
-        AudioDeviceInfo.TYPE_BLE_SPEAKER)
+        AudioDeviceInfo.TYPE_BLE_SPEAKER,
+        AudioDeviceInfo.TYPE_BLE_BROADCAST)
             .collect(Collectors.toCollection(HashSet::new));
 
     private static int MAX_TYPE;

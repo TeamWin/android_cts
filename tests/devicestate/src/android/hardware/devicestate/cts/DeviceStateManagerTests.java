@@ -16,19 +16,20 @@
 
 package android.hardware.devicestate.cts;
 
-import static android.hardware.devicestate.cts.DeviceStateUtils.assertValidState;
-import static android.hardware.devicestate.cts.DeviceStateUtils.runWithControlDeviceStatePermission;
 import static android.hardware.devicestate.DeviceStateManager.MAXIMUM_DEVICE_STATE;
 import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STATE;
+import static android.hardware.devicestate.cts.DeviceStateUtils.assertValidState;
+import static android.hardware.devicestate.cts.DeviceStateUtils.runWithControlDeviceStatePermission;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
@@ -37,8 +38,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
 import java.util.concurrent.Executor;
@@ -127,9 +128,8 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         final int[] supportedStates = manager.getSupportedStates();
         // We want to verify that the app can change device state
         // So we only attempt if there are more than 1 possible state.
-        if (supportedStates.length < 2) {
-            return;
-        }
+        assumeTrue(supportedStates.length > 1);
+
         final StateTrackingCallback callback = new StateTrackingCallback();
         manager.registerCallback(Runnable::run, callback);
         PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState != -1);
@@ -162,9 +162,8 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         final int[] supportedStates = manager.getSupportedStates();
         // We want to verify that the app can change device state
         // So we only attempt if there are more than 1 possible state.
-        if (supportedStates.length < 2) {
-            return;
-        }
+        assumeTrue(supportedStates.length > 1);
+
         final StateTrackingCallback callback = new StateTrackingCallback();
         manager.registerCallback(Runnable::run, callback);
         PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState != -1);
@@ -185,6 +184,60 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
         activity.requestDeviceStateChange(requestedState);
 
         assertTrue(activity.requestStateFailed);
+    }
+
+    /**
+     * Tests that calling {@link DeviceStateManager#cancelStateRequest} is successful and results
+     * in a registered callback being triggered with a value equal to the base state.
+     */
+    @Test
+    public void testCancelStateRequestFromNewActivity() throws IllegalArgumentException {
+        final DeviceStateManager manager = getDeviceStateManager();
+        final int[] supportedStates = manager.getSupportedStates();
+        // We want to verify that the app can change device state
+        // So we only attempt if there are more than 1 possible state.
+        assumeTrue(supportedStates.length > 1);
+
+        final StateTrackingCallback callback = new StateTrackingCallback();
+        manager.registerCallback(Runnable::run, callback);
+        PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState != -1);
+        final TestActivitySession<DeviceStateTestActivity> activitySession =
+                createManagedTestActivitySession();
+
+        activitySession.launchTestActivityOnDisplaySync(
+                DeviceStateTestActivity.class,
+                DEFAULT_DISPLAY
+        );
+
+        DeviceStateTestActivity activity = activitySession.getActivity();
+
+        int originalState = callback.mCurrentState;
+        int newState = determineNewState(callback.mCurrentState, supportedStates);
+        activity.requestDeviceStateChange(newState);
+
+        PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == newState);
+
+        assertEquals(newState, callback.mCurrentState);
+        assertFalse(activity.requestStateFailed);
+
+        activity.finish();
+
+        final TestActivitySession<DeviceStateTestActivity> secondActivitySession =
+                createManagedTestActivitySession();
+        secondActivitySession.launchTestActivityOnDisplaySync(
+                DeviceStateTestActivity.class,
+                DEFAULT_DISPLAY
+        );
+        // verify that the overridden state is still active after finishing
+        // and launching the second activity.
+        assertEquals(newState, callback.mCurrentState);
+
+        activity = secondActivitySession.getActivity();
+        activity.cancelOverriddenState();
+
+        PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == originalState);
+
+        assertEquals(originalState, callback.mCurrentState);
     }
 
     // determine what state we should request that isn't the current state
@@ -215,17 +268,17 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
     }
 
     /**
-     * Tests that calling {@link DeviceStateManager#cancelRequest()} throws a
+     * Tests that calling {@link DeviceStateManager#cancelStateRequest} throws a
      * {@link java.lang.SecurityException} without the
      * {@link android.Manifest.permission.CONTROL_DEVICE_STATE} permission held.
      */
     @Test(expected = SecurityException.class)
-    public void testCancelRequestWithoutPermission() throws Throwable {
+    public void testCancelOverrideRequestWithoutPermission() throws Throwable {
         final DeviceStateManager manager = getDeviceStateManager();
         final int[] states = manager.getSupportedStates();
         final DeviceStateRequest request = DeviceStateRequest.newBuilder(states[0]).build();
         runWithRequestActive(request, () -> {
-            manager.cancelRequest(request);
+            manager.cancelStateRequest();
         });
     }
 

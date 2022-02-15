@@ -23,6 +23,8 @@ import static android.localemanager.cts.util.LocaleConstants.EXTRA_QUERY_LOCALES
 import static android.localemanager.cts.util.LocaleConstants.EXTRA_SET_LOCALES;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROADCAST_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROADCAST_RECEIVER;
+import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION;
+import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_MAIN_ACTIVITY;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_PACKAGE;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_BROADCAST_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_BROADCAST_RECEIVER;
@@ -93,6 +95,9 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
     /* Receiver to listen to the response from the installer app. */
     private BlockingBroadcastReceiver mInstallerBroadcastInfoProvider;
 
+    /* Receiver to listen to the response from the installer app's activity. */
+    private BlockingBroadcastReceiver mInstallerAppCreationInfoProvider;
+
     @Before
     public void setUp() throws Exception {
         // Unlocks the device if locked, since we have tests where the app/activity needs
@@ -117,6 +122,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mInstallerBroadcastInfoProvider = new BlockingBroadcastReceiver();
         mTestAppCreationInfoProvider = new BlockingBroadcastReceiver();
         mTestAppConfigChangedInfoProvider = new BlockingBroadcastReceiver();
+        mInstallerAppCreationInfoProvider = new BlockingBroadcastReceiver();
 
         mContext.registerReceiver(mCallingAppBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_LOCALE_CHANGED));
@@ -128,6 +134,8 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
                 new IntentFilter(TEST_APP_CREATION_INFO_PROVIDER_ACTION));
         mContext.registerReceiver(mTestAppConfigChangedInfoProvider,
                 new IntentFilter(TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION));
+        mContext.registerReceiver(mInstallerAppCreationInfoProvider,
+                new IntentFilter(INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION));
 
         setInstallerForPackage(CALLING_PACKAGE);
         setInstallerForPackage(TEST_APP_PACKAGE);
@@ -144,6 +152,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         unRegisterReceiver(mTestAppBroadcastInfoProvider);
         unRegisterReceiver(mInstallerBroadcastInfoProvider);
         unRegisterReceiver(mTestAppCreationInfoProvider);
+        unRegisterReceiver(mInstallerAppCreationInfoProvider);
         runWithShellPermissionIdentity(() ->
                         mLocaleManager.setSystemLocales(mPreviousSystemLocales),
                 Manifest.permission.CHANGE_CONFIGURATION, Manifest.permission.WRITE_SETTINGS);
@@ -209,6 +218,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         mTestAppBroadcastInfoProvider.reset();
         mTestAppCreationInfoProvider.reset();
         mTestAppConfigChangedInfoProvider.reset();
+        mInstallerAppCreationInfoProvider.reset();
     }
 
     @Test
@@ -422,6 +432,22 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         //   Manifest.permission.READ_APP_SPECIFIC_LOCALES
         appSpecificLocaleBroadcastReceiver.assertNoBroadcastReceived();
         mCallingAppBroadcastReceiver.assertNoBroadcastReceived();
+    }
+
+    @Test
+    public void testGetApplicationLocales_callerIsInstaller_returnsLocales() throws Exception {
+        // Set locales for calling app
+        mLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+
+        // Make sure that locales were set for the app.
+        assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
+        // Tell the installer app to fetch locales for calling package.
+        launchActivity(INSTALLER_APP_MAIN_ACTIVITY,
+                extraString(EXTRA_QUERY_LOCALES, CALLING_PACKAGE));
+
+        mInstallerAppCreationInfoProvider.await();
+        assertReceivedBroadcastContains(mInstallerAppCreationInfoProvider,
+                CALLING_PACKAGE, DEFAULT_APP_LOCALES);
     }
 
     @Test(expected = SecurityException.class)

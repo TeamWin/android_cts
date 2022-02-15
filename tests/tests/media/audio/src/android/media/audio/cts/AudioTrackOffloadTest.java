@@ -24,6 +24,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.media.audio.cts.R;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.SystemClock;
 import android.util.Log;

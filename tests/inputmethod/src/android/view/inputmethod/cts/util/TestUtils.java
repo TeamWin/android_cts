@@ -26,7 +26,12 @@ import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.os.PowerManager;
+import android.os.SystemClock;
+import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -34,6 +39,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,7 +49,6 @@ import java.util.function.Supplier;
 
 public final class TestUtils {
     private static final long TIME_SLICE = 100;  // msec
-
     /**
      * Executes a call on the application's main thread, blocking until it is complete.
      *
@@ -180,5 +186,165 @@ public final class TestUtils {
         runWithShellPermissionIdentity(() -> {
             runShellCommandOrThrow("am force-stop " + pkg);
         });
+    }
+
+
+    /**
+     * Inject Stylus move on the Display inside view coordinates so that initiation can happen.
+     * @param view view on which stylus events should be overlapped.
+     */
+    public static void injectStylusEvents(@NonNull View view) {
+        int offsetX = view.getWidth() / 2;
+        int offsetY = view.getHeight() / 2;
+        injectStylusEvents(view, offsetX, offsetY);
+    }
+
+    /**
+     * Inject a stylus ACTION_DOWN event to the screen using given view's coordinates.
+     * @param view  view whose coordinates are used to compute the event location.
+     * @param x the x coordinates of the stylus event in the view's location coordinates.
+     * @param y the y coordinates of the stylus event in the view's location coordinates.
+     */
+    public static void injectStylusDownEvent(@NonNull View view, int x, int y) {
+        int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+        x += xy[0];
+        y += xy[1];
+
+        // Inject stylus ACTION_DOWN
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent downEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y);
+        injectMotionEvent(downEvent, true /* sync */);
+    }
+
+    /**
+     * Inject a stylus ACTION_UP event to the screen using given view's coordinates.
+     * @param view  view whose coordinates are used to compute the event location.
+     * @param x the x coordinates of the stylus event in the view's location coordinates.
+     * @param y the y coordinates of the stylus event in the view's location coordinates.
+     */
+    public static void injectStylusUpEvent(@NonNull View view, int x, int y) {
+        int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+        x += xy[0];
+        y += xy[1];
+
+        // Inject stylus ACTION_DOWN
+        long downTime = SystemClock.uptimeMillis();
+        MotionEvent downEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y);
+        injectMotionEvent(downEvent, true /* sync */);
+    }
+
+    /**
+     * Inject Stylus ACTION_MOVE events to the screen using the given view's coordinates.
+     *
+     * @param view  view whose coordinates are used to compute the event location.
+     * @param startX the start x coordinates of the stylus event in the view's local coordinates.
+     * @param startY the start y coordinates of the stylus event in the view's local coordinates.
+     * @param endX the end x coordinates of the stylus event in the view's local coordinates.
+     * @param endY the end y coordinates of the stylus event in the view's local coordinates.
+     * @param number the number of the motion events injected to the view.
+     */
+    public static void injectStylusMoveEvents(@NonNull View view, int startX, int startY,
+            int endX, int endY, int number) {
+        int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+
+        final float incrementX = ((float) (endX - startX)) / (number - 1);
+        final float incrementY = ((float) (endY - startY)) / (number - 1);
+
+        // Inject stylus ACTION_MOVE
+        for (int i = 0; i < number; i++) {
+            long time = SystemClock.uptimeMillis();
+            float x = startX + incrementX * i;
+            float y = startY + incrementY * i;
+            final MotionEvent moveEvent =
+                    getMotionEvent(time, time, MotionEvent.ACTION_MOVE, x, y);
+            injectMotionEvent(moveEvent, true /* sync */);
+        }
+    }
+
+    /**
+     * Inject stylus move on the display at the given position defined in the given view's
+     * coordinates.
+     *
+     * @param view view whose coordinates are used to compute the event location.
+     * @param x the initial x coordinates of the injected stylus events in the view's
+     *          local coordinates.
+     * @param y the initial y coordinates of the injected stylus events in the view's
+     *          local coordinates.
+     */
+    public static void injectStylusEvents(@NonNull View view, int x, int y) {
+        injectStylusDownEvent(view, x, y);
+        // Larger than the touchSlop.
+        int endX = x + getTouchSlop(view.getContext()) * 5;
+        injectStylusMoveEvents(view, x, y, endX, y, 10);
+        injectStylusUpEvent(view, endX, y);
+
+    }
+
+    public static List<MotionEvent> getStylusMoveEventsOnDisplay(int displayId) {
+        // TODO(b/210039666): use screen center.
+        // TODO(b/210039666): try combining with #injectStylusEvents().
+        int x = 500;
+        int y = 500;
+        List<MotionEvent> events = new ArrayList<>();
+        final long downTime = SystemClock.uptimeMillis();
+        events.add(getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId));
+
+        int j = 0;
+        for (int i = 0; i < 10; i++) {
+            final long moveTime = SystemClock.uptimeMillis();
+            j = i * 5;
+            events.add(getMotionEvent(
+                    moveTime, moveTime, MotionEvent.ACTION_MOVE, x + j, y + j, displayId));
+        }
+
+        final long upTime = SystemClock.uptimeMillis();
+        events.add(getMotionEvent(
+                upTime, upTime, MotionEvent.ACTION_UP, x + j, y + j, displayId));
+
+        return events;
+    }
+
+    private static MotionEvent getMotionEvent(long downTime, long eventTime, int action,
+            float x, float y) {
+        return getMotionEvent(downTime, eventTime, action, (int) x, (int) y, 0);
+    }
+
+    private static MotionEvent getMotionEvent(long downTime, long eventTime, int action,
+            int x, int y, int displayId) {
+        // Stylus related properties.
+        MotionEvent.PointerProperties[] properties =
+                new MotionEvent.PointerProperties[] { new MotionEvent.PointerProperties() };
+        properties[0].toolType = MotionEvent.TOOL_TYPE_STYLUS;
+        properties[0].id = 1;
+        MotionEvent.PointerCoords[] coords =
+                new MotionEvent.PointerCoords[] { new MotionEvent.PointerCoords() };
+        coords[0].x = x;
+        coords[0].y = y;
+        coords[0].pressure = 1;
+
+        final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
+                1 /* pointerCount */, properties, coords, 0 /* metaState */,
+                0 /* buttonState */, 1 /* xPrecision */, 1 /* yPrecision */, 0 /* deviceId */,
+                0 /* edgeFlags */, InputDevice.SOURCE_STYLUS, 0 /* flags */);
+        event.setDisplayId(displayId);
+        return event;
+    }
+
+    private static void injectMotionEvent(MotionEvent event, boolean sync) {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().injectInputEvent(
+                event, sync, false /* waitAnimations */);
+    }
+
+    public static void injectAll(List<MotionEvent> events) {
+        for (MotionEvent event : events) {
+            injectMotionEvent(event, true /* sync */);
+        }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().syncInputTransactions(false);
+    }
+    private static int getTouchSlop(Context context) {
+        return ViewConfiguration.get(context).getScaledTouchSlop();
     }
 }

@@ -34,6 +34,7 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
+import static android.content.pm.PackageManager.FEATURE_EXPANDED_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -104,7 +105,6 @@ import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -213,6 +213,7 @@ public abstract class ActivityManagerTestBase {
         testPackages.add(THIRD_TEST_PACKAGE);
         testPackages.add("android.server.wm.cts");
         testPackages.add("android.server.wm.jetpack");
+        testPackages.add("android.server.wm.jetpack.second");
         TEST_PACKAGES = Collections.unmodifiableList(testPackages);
     }
 
@@ -995,6 +996,10 @@ public abstract class ActivityManagerTestBase {
     protected boolean supportsPip() {
         return hasDeviceFeature(FEATURE_PICTURE_IN_PICTURE)
                 || PRETEND_DEVICE_SUPPORTS_PIP;
+    }
+
+    protected boolean supportsExpandedPip() {
+        return hasDeviceFeature(FEATURE_EXPANDED_PICTURE_IN_PICTURE);
     }
 
     protected boolean supportsFreeform() {
@@ -2499,7 +2504,8 @@ public abstract class ActivityManagerTestBase {
                 String amStartCmd =
                         (mWindowingMode == -1 || mNewTask)
                                 ? getAmStartCmd(mLaunchingActivity)
-                                : getAmStartCmd(mLaunchingActivity, mWindowingMode);
+                                : getAmStartCmd(mLaunchingActivity, mDisplayId)
+                                        + " --windowingMode " + mWindowingMode;
                 // Use launching activity to launch the target.
                 commandBuilder.append(amStartCmd)
                         .append(" -f 0x20000020");

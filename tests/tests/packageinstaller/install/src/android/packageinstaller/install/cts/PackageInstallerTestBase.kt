@@ -144,9 +144,15 @@ open class PackageInstallerTestBase {
         return startInstallationViaSession(installFlags, TEST_APK_NAME)
     }
 
+    protected fun startInstallationViaSessionWithPackageSource(packageSource: Int?):
+            CompletableFuture<Int> {
+        return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, packageSource)
+    }
+
     private fun createSession(
         installFlags: Int,
-        isMultiPackage: Boolean
+        isMultiPackage: Boolean,
+        packageSource: Int?
     ): Pair<Int, PackageInstaller.Session> {
         val pi = pm.packageInstaller
 
@@ -158,6 +164,9 @@ open class PackageInstallerTestBase {
         }
         if (isMultiPackage) {
             sessionParam.setMultiPackage()
+        }
+        if (packageSource != null) {
+            sessionParam.setPackageSource(packageSource)
         }
 
         val sessionId = pi.createSession(sessionParam)
@@ -195,7 +204,15 @@ open class PackageInstallerTestBase {
         installFlags: Int,
         apkName: String
     ): CompletableFuture<Int> {
-        val (sessionId, session) = createSession(installFlags, false)
+        return startInstallationViaSession(installFlags, apkName, null)
+    }
+
+    protected fun startInstallationViaSession(
+        installFlags: Int,
+        apkName: String,
+        packageSource: Int?
+    ): CompletableFuture<Int> {
+        val (sessionId, session) = createSession(installFlags, false, packageSource)
         writeSession(session, apkName)
         return commitSession(session)
     }
@@ -204,9 +221,9 @@ open class PackageInstallerTestBase {
         installFlags: Int,
         vararg apkNames: String
     ): CompletableFuture<Int> {
-        val (sessionId, session) = createSession(installFlags, true)
+        val (sessionId, session) = createSession(installFlags, true, null)
         for (apkName in apkNames) {
-            val (childSessionId, childSession) = createSession(installFlags, false)
+            val (childSessionId, childSession) = createSession(installFlags, false, null)
             writeSession(childSession, apkName)
             session.addChildSessionId(childSessionId)
         }

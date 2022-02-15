@@ -22,7 +22,6 @@ import android.media.AudioManager;
 import android.media.audiofx.PresetReverb;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.PostProcTestBase;
-import android.media.cts.Preconditions;
 import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;

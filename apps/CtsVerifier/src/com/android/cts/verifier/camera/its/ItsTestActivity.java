@@ -41,6 +41,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileNotFoundException;
@@ -77,6 +80,17 @@ public class ItsTestActivity extends DialogTestListActivity {
             Arrays.asList(new String[] {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}));
     private static final int MAX_SUMMARY_LEN = 200;
 
+    private static final int MPC12_CAMERA_LAUNCH_THRESHOLD = 600; // ms
+    private static final int MPC12_JPEG_CAPTURE_THRESHOLD = 1000; // ms
+
+    private static final String MPC_TESTS_REPORT_LOG_NAME = "MediaPerformanceClassLogs";
+    private static final String MPC_TESTS_REPORT_LOG_SECTION = "CameraIts";
+
+    private static final Pattern MPC12_CAMERA_LAUNCH_PATTERN =
+            Pattern.compile("camera_launch_time_ms:(\\d+(\\.\\d+)?)");
+    private static final Pattern MPC12_JPEG_CAPTURE_PATTERN =
+            Pattern.compile("1080p_jpeg_capture_time_ms:(\\d+(\\.\\d+)?)");
+
     private final ResultReceiver mResultsReceiver = new ResultReceiver();
     private boolean mReceiverRegistered = false;
 
@@ -97,7 +111,6 @@ public class ItsTestActivity extends DialogTestListActivity {
             add("scene4");
             add("scene5");
             add("scene6");
-            add("scene_change");
             add("sensor_fusion");
         }};
     // This must match scenes of SUB_CAMERA_TESTS in tools/run_all_tests.py
@@ -116,6 +129,10 @@ public class ItsTestActivity extends DialogTestListActivity {
     private final HashMap<ResultKey, Boolean> mExecutedScenes = new HashMap<>();
     // map camera id to ITS summary report path
     private final HashMap<ResultKey, String> mSummaryMap = new HashMap<>();
+    // All primary cameras for which MPC level test has run
+    private Set<ResultKey> mExecutedMpcTests = null;
+    // Map primary camera id to MPC level
+    private final HashMap<String, Integer> mMpcLevelMap = new HashMap<>();
 
     final class ResultKey {
         public final String cameraId;
@@ -213,7 +230,6 @@ public class ItsTestActivity extends DialogTestListActivity {
 
                     // Update test execution results
                     for (String scene : scenes) {
-                        HashMap<String, String> executedTests = new HashMap<>();
                         JSONObject sceneResult = jsonResults.getJSONObject(scene);
                         Log.v(TAG, sceneResult.toString());
                         String result = sceneResult.getString("result");
@@ -241,6 +257,22 @@ public class ItsTestActivity extends DialogTestListActivity {
                                 mSummaryMap.put(key, summary);
                             }
                         } // do nothing for NOT_EXECUTED scenes
+
+                        if (sceneResult.isNull("mpc_metrics")) {
+                            continue;
+                        }
+                        // Update MPC level
+                        JSONArray metrics = sceneResult.getJSONArray("mpc_metrics");
+                        for (int i = 0; i < metrics.length(); i++) {
+                            String mpcResult = metrics.getString(i);
+                            if (!matchMpcResult(cameraId, mpcResult, MPC12_CAMERA_LAUNCH_PATTERN,
+                                    "2.2.7.2/7.5/H-1-6", MPC12_CAMERA_LAUNCH_THRESHOLD) &&
+                                    !matchMpcResult(cameraId, mpcResult, MPC12_JPEG_CAPTURE_PATTERN,
+                                    "2.2.7.2/7.5/H-1-5", MPC12_JPEG_CAPTURE_THRESHOLD)) {
+                                Log.e(TAG, "Error parsing MPC result string:" + mpcResult);
+                                return;
+                            }
+                        }
                     }
                 } catch (org.json.JSONException e) {
                     Log.e(TAG, "Error reading json result string:" + results , e);
@@ -249,6 +281,7 @@ public class ItsTestActivity extends DialogTestListActivity {
 
                 // Set summary if all scenes reported
                 if (mSummaryMap.keySet().containsAll(mAllScenes)) {
+                    // Save test summary
                     StringBuilder summary = new StringBuilder();
                     for (String path : mSummaryMap.values()) {
                         appendFileContentToSummary(summary, path);
@@ -258,6 +291,17 @@ public class ItsTestActivity extends DialogTestListActivity {
                     }
                     ItsTestActivity.this.getReportLog().setSummary(
                             summary.toString(), 1.0, ResultType.NEUTRAL, ResultUnit.NONE);
+                }
+
+                //  Save MPC info once both front primary and rear primary data are collected.
+                if (mExecutedMpcTests.size() == 4) {
+                    ItsTestActivity.this.getReportLog().addValue(
+                            "Version", "0.0.1", ResultType.NEUTRAL, ResultUnit.NONE);
+                    for (Map.Entry<String, Integer> entry : mMpcLevelMap.entrySet()) {
+                        ItsTestActivity.this.getReportLog().addValue(entry.getKey(),
+                                entry.getValue(), ResultType.NEUTRAL, ResultUnit.NONE);
+                    }
+                    ItsTestActivity.this.getReportLog().submit();
                 }
 
                 // Display current progress
@@ -320,6 +364,29 @@ public class ItsTestActivity extends DialogTestListActivity {
                     }
                 }
             }
+        }
+
+        private boolean matchMpcResult(String cameraId, String mpcResult, Pattern pattern,
+                String reqNum, float threshold) {
+            Matcher matcher = pattern.matcher(mpcResult);
+            boolean match = matcher.matches();
+
+            if (match) {
+                // Store test result
+                ItsTestActivity.this.getReportLog().addValue("Cam" + cameraId,
+                        mpcResult, ResultType.NEUTRAL, ResultUnit.NONE);
+
+                float latency = Float.parseFloat(matcher.group(1));
+                int mpcLevel = latency < threshold ? 31 : 0;
+                mExecutedMpcTests.add(new ResultKey(cameraId, reqNum));
+
+                if (mMpcLevelMap.containsKey(reqNum)) {
+                    mpcLevel = Math.min(mpcLevel, mMpcLevelMap.get(reqNum));
+                }
+                mMpcLevelMap.put(reqNum, mpcLevel);
+            }
+
+            return match;
         }
     }
 
@@ -388,6 +455,9 @@ public class ItsTestActivity extends DialogTestListActivity {
                 testTitle(cam, scene),
                 testId(cam, scene)));
             }
+            if (mExecutedMpcTests == null) {
+                mExecutedMpcTests = new TreeSet<>(mComparator);
+            }
             Log.d(TAG,"Total combinations to test on this device:" + mAllScenes.size());
         }
     }
@@ -426,5 +496,15 @@ public class ItsTestActivity extends DialogTestListActivity {
         setContentView(R.layout.its_main);
         setInfoResources(R.string.camera_its_test, R.string.camera_its_test_info, -1);
         setPassFailButtonClickListeners();
+    }
+
+    @Override
+    public String getReportFileName() {
+        return MPC_TESTS_REPORT_LOG_NAME;
+    }
+
+    @Override
+    public String getReportSectionName() {
+        return MPC_TESTS_REPORT_LOG_SECTION;
     }
 }

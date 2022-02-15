@@ -16,9 +16,6 @@
 
 package android.server.wm;
 
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
-import static android.server.wm.UiDeviceUtils.pressUnlockButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -31,13 +28,25 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.Region;
+import android.os.Binder;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.scvh.Components;
+import android.util.ArrayMap;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -47,6 +56,9 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.PopupWindow;
+
+import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
@@ -56,8 +68,10 @@ import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
+import org.junit.After;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -69,18 +83,30 @@ import java.util.concurrent.atomic.AtomicReference;
  *     atest CtsWindowManagerDeviceTestCases:SurfaceControlViewHostTests
  */
 @Presubmit
-public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
-    private final ActivityTestRule<Activity> mActivityRule = new ActivityTestRule<>(Activity.class);
+public class SurfaceControlViewHostTests extends ActivityManagerTestBase implements SurfaceHolder.Callback {
+    private final ActivityTestRule<ConfigChangeHandlingActivity> mActivityRule =
+        new ActivityTestRule<>(ConfigChangeHandlingActivity.class);
 
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private SurfaceView mSurfaceView;
+    private ViewGroup mViewParent;
 
     private SurfaceControlViewHost mVr;
     private View mEmbeddedView;
     private WindowManager.LayoutParams mEmbeddedLayoutParams;
 
     private volatile boolean mClicked = false;
+    private volatile boolean mPopupClicked = false;
+    private PopupWindow mPopupWindow;
+
+    private SurfaceControlViewHost.SurfacePackage mRemoteSurfacePackage;
+
+    private final Map<String,
+        FutureConnection<ICrossProcessSurfaceControlViewHostTestService>> mConnections =
+            new ArrayMap<>();
+    private ICrossProcessSurfaceControlViewHostTestService mTestService = null;
+    private static final long TIMEOUT_MS = 3000L;
 
     /*
      * Configurable state to control how the surfaceCreated callback
@@ -93,26 +119,38 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     private static final int DEFAULT_SURFACE_VIEW_HEIGHT = 100;
 
     @Before
-    public void setUp() {
-        pressWakeupButton();
-        pressUnlockButton();
-        pressHomeButton();
-
+    public void setUp() throws Exception {
+        super.setUp();
         mClicked = false;
         mEmbeddedLayoutParams = null;
+        mRemoteSurfacePackage = null;
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.launchActivity(null);
         mInstrumentation.waitForIdleSync();
     }
 
+    @After
+    public void tearDown() throws Throwable {
+        for (FutureConnection<ICrossProcessSurfaceControlViewHostTestService> connection :
+                 mConnections.values()) {
+            mInstrumentation.getContext().unbindService(connection);
+        }
+        mConnections.clear();
+    }
+
     private void addSurfaceView(int width, int height) throws Throwable {
+        addSurfaceView(width, height, true);
+    }
+
+    private void addSurfaceView(int width, int height, boolean onTop) throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             final FrameLayout content = new FrameLayout(mActivity);
             mSurfaceView = new SurfaceView(mActivity);
-            mSurfaceView.setZOrderOnTop(true);
+            mSurfaceView.setZOrderOnTop(onTop);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
                 width, height, Gravity.LEFT | Gravity.TOP));
+            mViewParent = content;
             mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
             mSurfaceView.getHolder().addCallback(this);
         });
@@ -186,8 +224,18 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        addViewToSurfaceView(mSurfaceView, mEmbeddedView,
+        if (mTestService == null) {
+            addViewToSurfaceView(mSurfaceView, mEmbeddedView,
                 mEmbeddedViewWidth, mEmbeddedViewHeight);
+        } else if (mRemoteSurfacePackage == null) {
+            try {
+                mRemoteSurfacePackage = mTestService.getSurfacePackage(mSurfaceView.getHostToken());
+            } catch (Exception e) {
+            }
+            mSurfaceView.setChildSurfacePackage(mRemoteSurfacePackage);
+        } else {
+            mSurfaceView.setChildSurfacePackage(mRemoteSurfacePackage);
+        }
     }
 
     @Override
@@ -572,4 +620,300 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
     }
+
+    class MotionRecordingSurfaceView extends SurfaceView {
+        boolean mGotEvent = false;
+        MotionRecordingSurfaceView(Context c) {
+            super(c);
+        }
+        public boolean onTouchEvent(MotionEvent e) {
+            super.onTouchEvent(e);
+            synchronized (this) {
+                mGotEvent = true;
+            }
+            return true;
+        }
+        boolean gotEvent() {
+            synchronized (this) {
+                return mGotEvent;
+            }
+        }
+        void reset() {
+            synchronized (this) {
+                mGotEvent = false;
+            }
+        }
+    }
+
+    class TouchPunchingView extends View {
+        public TouchPunchingView(Context context) {
+            super(context);
+        }
+
+        void punchHoleInTouchableRegion() {
+            getRootSurfaceControl().setTouchableRegion(new Region());
+        }
+    }
+
+    private void addMotionRecordingSurfaceView(int width, int height) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new MotionRecordingSurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                width, height, Gravity.LEFT | Gravity.TOP));
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
+            mSurfaceView.getHolder().addCallback(this);
+        });
+    }
+
+    class ForwardingSurfaceView extends SurfaceView {
+        SurfaceControlViewHost.SurfacePackage mPackage;
+
+        ForwardingSurfaceView(Context c) {
+            super(c);
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            mPackage.notifyDetachedFromWindow();
+        }
+
+        @Override
+        protected void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            mPackage.notifyConfigurationChanged(newConfig);
+        }
+
+        @Override
+        public void setChildSurfacePackage(SurfaceControlViewHost.SurfacePackage p) {
+            super.setChildSurfacePackage(p);
+            mPackage = p;
+        }
+    }
+
+    class DetachRecordingView extends View {
+        boolean mDetached = false;
+        DetachRecordingView(Context c) {
+            super(c);
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            mDetached = true;
+        }
+    }
+
+    class ConfigRecordingView extends View {
+        CountDownLatch mLatch;
+        ConfigRecordingView(Context c, CountDownLatch latch) {
+            super(c);
+            mLatch = latch;
+        }
+
+        @Override
+        protected void onConfigurationChanged(Configuration newConfig) {
+            mLatch.countDown();
+        }
+    }
+
+    private void addForwardingSurfaceView(int width, int height) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new ForwardingSurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                width, height, Gravity.LEFT | Gravity.TOP));
+            mViewParent = content;
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
+            mSurfaceView.getHolder().addCallback(this);
+        });
+    }
+
+    @Test
+    public void testEmbeddedViewCanSetTouchableRegion() throws Throwable {
+        TouchPunchingView tpv;
+        mEmbeddedView = tpv = new TouchPunchingView(mActivity);
+
+        addMotionRecordingSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+
+        MotionRecordingSurfaceView mrsv = (MotionRecordingSurfaceView)mSurfaceView;
+        assertFalse(mrsv.gotEvent());
+        mActivityRule.runOnUiThread(() -> {
+            tpv.punchHoleInTouchableRegion();
+        });
+        mInstrumentation.waitForIdleSync();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mrsv.gotEvent());
+    }
+
+    @Test
+    public void forwardDetachedFromWindow() throws Throwable {
+        DetachRecordingView drv = new DetachRecordingView(mActivity);
+        mEmbeddedView = drv;
+        addForwardingSurfaceView(100, 100);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        
+        assertFalse(drv.mDetached);
+        mActivityRule.runOnUiThread(() -> {
+            mViewParent.removeView(mSurfaceView);
+        });
+        mInstrumentation.waitForIdleSync();
+        assertTrue(drv.mDetached);
+    }
+
+    @Test
+    public void forwardConfigurationChange() throws Throwable {
+        if (!supportsOrientationRequest()) {
+            return;
+        }
+        final CountDownLatch embeddedConfigLatch = new CountDownLatch(1);
+        ConfigRecordingView crv = new ConfigRecordingView(mActivity, embeddedConfigLatch);
+        mEmbeddedView = crv;
+        addForwardingSurfaceView(100, 100);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+        mActivityRule.runOnUiThread(() -> {
+            int orientation = mActivity.getResources().getConfiguration().orientation;
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            } else {
+                orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+            }
+            mActivity.setRequestedOrientation(orientation);
+        });
+        embeddedConfigLatch.await(3, TimeUnit.SECONDS);
+        mInstrumentation.waitForIdleSync();
+        mActivityRule.runOnUiThread(() -> {
+                assertEquals(mEmbeddedView.getResources().getConfiguration().orientation,
+                             mSurfaceView.getResources().getConfiguration().orientation);
+        });
+    }
+
+    @Test
+    public void testEmbeddedViewReceivesInputOnBottom() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setOnClickListener((View v) -> {
+            mClicked = true;
+        });
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, false);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        // We should receive no input until we punch a hole
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mClicked);
+
+        mActivityRule.runOnUiThread(() -> {
+            mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region(0,0,1,1));
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mClicked);
+    }
+
+    private ICrossProcessSurfaceControlViewHostTestService getService() throws Exception {
+        return mConnections.computeIfAbsent("android.server.wm.scvh", this::connect).get(TIMEOUT_MS);
+    }
+
+    private static ComponentName repackage(String packageName, ComponentName baseComponent) {
+        return new ComponentName(packageName, baseComponent.getClassName());
+    }
+
+    private FutureConnection<ICrossProcessSurfaceControlViewHostTestService> connect(
+            String packageName) {
+        FutureConnection<ICrossProcessSurfaceControlViewHostTestService> connection =
+                new FutureConnection<>(
+                    ICrossProcessSurfaceControlViewHostTestService.Stub::asInterface);
+        Intent intent = new Intent();
+        intent.setComponent(repackage(packageName,
+            Components.CrossProcessSurfaceControlViewHostTestService.COMPONENT));
+        assertTrue(mInstrumentation.getContext().bindService(intent,
+            connection, Context.BIND_AUTO_CREATE));
+        return connection;
+    }
+
+    @Test
+    public void testHostInputTokenAllowsObscuredTouches() throws Throwable {
+        SurfaceControlViewHost.SurfacePackage p = null;
+
+        mTestService = getService();
+        assertTrue(mTestService != null);
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, false);
+        mActivityRule.runOnUiThread(() -> {
+            mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region());
+        });
+        mInstrumentation.waitForIdleSync();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(mTestService.getViewIsTouchedAndObscured());
+    }
+
+    @Test
+    public void testNoHostInputTokenDisallowsObscuredTouches() throws Throwable {
+        mTestService = getService();
+        mRemoteSurfacePackage = mTestService.getSurfacePackage(new Binder());
+        assertTrue(mRemoteSurfacePackage != null);
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, false);
+        mActivityRule.runOnUiThread(() -> {
+            mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region());
+        });
+        mInstrumentation.waitForIdleSync();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+
+        assertFalse(mTestService.getViewIsTouched());
+    }
+
+    @Test
+    public void testPopupWindowReceivesInput() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setOnClickListener((View v) -> {
+            mClicked = true;
+        });
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        mActivityRule.runOnUiThread(() -> {
+            PopupWindow pw = new PopupWindow();
+            mPopupWindow = pw;
+            Button popupButton = new Button(mActivity);
+            popupButton.setOnClickListener((View v) -> {
+                mPopupClicked = true;
+            });
+            pw.setWidth(DEFAULT_SURFACE_VIEW_WIDTH);
+            pw.setHeight(DEFAULT_SURFACE_VIEW_HEIGHT);
+            pw.setContentView(popupButton);
+            pw.showAsDropDown(mEmbeddedView);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertTrue(mPopupClicked);
+        assertFalse(mClicked);
+
+        mActivityRule.runOnUiThread(() -> {
+            mPopupWindow.dismiss();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mClicked);
+    }
 }
+

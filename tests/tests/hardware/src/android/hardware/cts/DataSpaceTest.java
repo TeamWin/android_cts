@@ -139,9 +139,9 @@ public class DataSpaceTest {
         mSurfaceTexture.setDefaultBufferSize(16, 16);
 
         mSurface = new Surface(mSurfaceTexture);
-        mWriter = ImageWriter.newInstance(mSurface, 1);
+        mWriter = new ImageWriter.Builder(mSurface).build();
 
-        long dataSpace = DataSpace.pack(DataSpace.STANDARD_BT709,
+        int dataSpace = DataSpace.pack(DataSpace.STANDARD_BT709,
                                         DataSpace.TRANSFER_SMPTE_170M,
                                         DataSpace.RANGE_LIMITED);
         Image inputImage = null;
@@ -153,7 +153,7 @@ public class DataSpaceTest {
             mWriter.queueInputImage(inputImage);
 
             mSurfaceTexture.updateTexImage();
-            long outDataSpace = mSurfaceTexture.getDataSpace();
+            int outDataSpace = mSurfaceTexture.getDataSpace();
 
             assertEquals(dataSpace, outDataSpace);
             assertEquals(DataSpace.STANDARD_BT709, DataSpace.getStandard(outDataSpace));
@@ -207,7 +207,9 @@ public class DataSpaceTest {
         mSurfaceTexture.setDefaultBufferSize(16, 16);
 
         mSurface = new Surface(mSurfaceTexture);
-        mWriter = ImageWriter.newInstance(mSurface, 1, ImageFormat.YUV_420_888);
+        mWriter = new ImageWriter.Builder(mSurface)
+                .setImageFormat(ImageFormat.YUV_420_888)
+                .build();
 
         Image inputImage = null;
         try {
@@ -232,7 +234,7 @@ public class DataSpaceTest {
         mReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_420_888, 1);
         mWriter = ImageWriter.newInstance(mReader.getSurface(), 1);
 
-        long dataSpace = DataSpace.pack(DataSpace.STANDARD_BT601_625,
+        int dataSpace = DataSpace.pack(DataSpace.STANDARD_BT601_625,
                                         DataSpace.TRANSFER_SMPTE_170M,
                                         DataSpace.RANGE_FULL);
 
@@ -241,6 +243,7 @@ public class DataSpaceTest {
         try {
             outputImage = mWriter.dequeueInputImage();
             outputImage.setDataSpace(dataSpace);
+            assertEquals(dataSpace, outputImage.getDataSpace());
 
             mWriter.queueInputImage(outputImage);
 

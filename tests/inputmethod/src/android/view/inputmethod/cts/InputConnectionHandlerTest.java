@@ -309,6 +309,8 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
             assertTrue("InputMethodManager#isFullscreenMode() must return true",
                     getOnMainSync(() -> InstrumentationRegistry.getInstrumentation().getContext()
                             .getSystemService(InputMethodManager.class).isFullscreenMode()));
+            assertTrue(expectCommand(stream, imeSession.callVerifyExtractViewNotNull(), TIMEOUT)
+                    .getReturnBooleanValue());
         }
     }
 

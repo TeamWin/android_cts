@@ -580,6 +580,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @NonMediaMainlineTest
     public void testIsTrustedForMediaControl_withInvalidUid() throws Exception {
         List<String> packageNames = getEnabledNotificationListenerPackages();
         for (String packageName : packageNames) {

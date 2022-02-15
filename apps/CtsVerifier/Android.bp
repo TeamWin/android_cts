@@ -16,13 +16,33 @@
 
 package {
     // See: http://go/android-license-faq
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "cts_license"
-    // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
-    //   SPDX-license-identifier-BSD
-    //   SPDX-license-identifier-CC-BY
-    default_applicable_licenses: ["cts_license"],
+    default_applicable_licenses: [
+        "cts_apps_CtsVerifier_opencv_license",
+        "Android-Apache-2.0",
+        "cts_apps_CtsVerifier_fatcow_license",
+    ],
+}
+
+license {
+    name: "cts_apps_CtsVerifier_opencv_license",
+    package_name: "opencv",
+    license_kinds: [
+        "SPDX-license-identifier-BSD",
+    ],
+    license_text: [
+        "libs/opencv-android_LICENSE",
+        "res/raw/opencv_library_license",
+    ],
+}
+
+// See: src/com/android/cts/verifier/features/FeatureSummaryActivity.java
+license {
+    name: "cts_apps_CtsVerifier_fatcow_license",
+    package_name: "fatcow icons",
+    license_kinds: [
+        "SPDX-license-identifier-CC-BY-3.0",
+    ],
+    license_text: ["LICENSE_CC_BY"],
 }
 
 filegroup {
@@ -30,12 +50,9 @@ filegroup {
     srcs: ["src/com/android/cts/verifier/vr/MockVrListenerService.java"],
 }
 
-android_test {
-    name: "CtsVerifier",
+android_library {
+    name: "CtsVerifierLibT",
     defaults: ["cts_error_prone_rules_tests"],
-    additional_manifests: ["AndroidManifest-common.xml"],
-
-    compile_multilib: "both",
 
     srcs: [
         "src/**/*.java",
@@ -68,19 +85,12 @@ android_test {
         "androidx.legacy_legacy-support-v4",
         "CtsForceStopHelper-constants",
         "ctsmediautil",
-        "DpmWrapper"
+        "DpmWrapper",
     ],
 
     libs: ["telephony-common"] + ["android.test.runner.stubs"] + ["android.test.base.stubs"] + ["android.test.mock.stubs"] + ["android.car-test-stubs"] + ["voip-common"] + ["truth-prebuilt"],
 
     platform_apis: true,
-
-    jni_libs: [
-        "libctsverifier_jni",
-        "libctsnativemidi_jni",
-        "libaudioloopback_jni",
-        "libmegaaudio_jni",
-    ],
 
     optimize: {
         proguard_flags_files: ["proguard.flags"],
@@ -89,6 +99,24 @@ android_test {
     dex_preopt: {
         enabled: false,
     },
+}
+
+android_test {
+    name: "CtsVerifier",
+    static_libs: [
+        "CtsVerifierLibT"
+    ],
+
+    compile_multilib: "both",
+
+    manifest: "AndroidManifest-verifierConfig.xml",
+
+    jni_libs: [
+        "libctsverifier_jni",
+        "libctsnativemidi_jni",
+        "libaudioloopback_jni",
+        "libmegaaudio_jni",
+    ],
 }
 
 // opencv library
@@ -142,6 +170,7 @@ filegroup {
 filegroup {
     name: "other_required_apps",
     srcs: [
+        ":CtsCarWatchdogCompanionApp",
         ":CtsTileServiceApp",
         ":CtsVerifierUSBCompanion",
         ":CtsVpnFirewallAppApi23",
@@ -151,7 +180,7 @@ filegroup {
 }
 
 filegroup {
-    name: "apps_to_include",
+    name: "cts_apps_to_include",
     srcs: [
         ":pre_installed_apps",
         ":pre_installed_instant_app",
@@ -171,7 +200,7 @@ filegroup {
 genrule {
     name: "android-cts-verifier",
     srcs: [
-        ":apps_to_include",
+        ":cts_apps_to_include",
         ":CtsVerifier",
         ":camera-its",
     ],
@@ -180,7 +209,7 @@ genrule {
         "merge_zips",
     ],
     out: ["android-cts-verifier.zip"],
-    cmd: "echo $(locations :apps_to_include) $(location :CtsVerifier) > $(genDir)/list &&" +
+    cmd: "echo $(locations :cts_apps_to_include) $(location :CtsVerifier) > $(genDir)/list &&" +
         " $(location soong_zip) -o $(genDir)/cts-verifier.zip -j -P android-cts-verifier -l $(genDir)/list &&" +
         " $(location merge_zips) $(out) $(genDir)/cts-verifier.zip $(location :camera-its)",
     dists: [

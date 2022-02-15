@@ -23,30 +23,20 @@ package {
     // to get the below license kinds:
     //   SPDX-license-identifier-Apache-2.0
     //   legacy_unencumbered
-    default_applicable_licenses: ["cts_license"],
+    default_applicable_licenses: [
+        "Android-Apache-2.0",
+        "cts_tests_tests_media_libmediaandkjni_license",
+    ],
 }
 
-cc_test_library {
-    name: "libctscodecutils_jni",
-    srcs: [
-        "codec-utils-jni.cpp",
-        "md5_utils.cpp",
-    ],
-    shared_libs: [
-        "libnativehelper_compat_libc++",
-        "liblog",
-    ],
-    header_libs: ["liblog_headers"],
-    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
-    // (revisit if/when we add features to this library that require newer sdk.
-    sdk_version: "29",
-    cflags: [
-        "-Werror",
-        "-Wall",
-        "-DEGL_EGLEXT_PROTOTYPES",
-    ],
-    stl: "libc++_static",
-    gtest: false,
+license_kind {
+    name: "libmediaandkjni_public_domain",
+    conditions: ["unencumbered"],
+}
+
+license {
+    name: "cts_tests_tests_media_libmediaandkjni_license",
+    license_kinds: ["libmediaandkjni_public_domain"],
 }
 
 //------------------------------------------------------------------------------
@@ -56,8 +46,6 @@ cc_test_library {
     name: "libctsmediacodec_jni",
     srcs: [
         "native-media-jni.cpp",
-        "native_media_utils.cpp",
-        "native_media_decoder_source.cpp",
     ],
     shared_libs: [
         "libandroid",
@@ -79,35 +67,3 @@ cc_test_library {
     sdk_version: "29",
 }
 
-//------------------------------------------------------------------------------
-// Builds libctsmediadrm_jni.so
-//
-cc_test_library {
-    name: "libctsmediadrm_jni",
-    srcs: [
-        "CtsMediaDrmJniOnLoad.cpp",
-        "codec-utils-jni.cpp",
-        "md5_utils.cpp",
-        "native-mediadrm-jni.cpp",
-    ],
-    include_dirs: ["system/core/include"],
-    shared_libs: [
-        "libandroid",
-        "libnativehelper_compat_libc++",
-        "liblog",
-        "libmediandk",
-        "libdl",
-        "libEGL",
-    ],
-    header_libs: ["liblog_headers"],
-    cflags: [
-        "-Werror",
-        "-Wall",
-        "-DEGL_EGLEXT_PROTOTYPES",
-    ],
-    stl: "libc++_static",
-    gtest: false,
-    // this test suite will run on sdk 29 as part of MTS, make sure it's compatible
-    // (revisit if/when we add features to this library that require newer sdk.
-    sdk_version: "29",
-}

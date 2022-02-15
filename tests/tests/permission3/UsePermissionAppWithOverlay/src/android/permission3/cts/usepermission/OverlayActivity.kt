@@ -41,7 +41,7 @@ class OverlayActivity : Activity() {
 
                 finish()
             }
-        }, IntentFilter(RequestPermissionsActivity.ACTION_HIDE_OVERLAY))
+        }, IntentFilter(RequestPermissionsActivity.ACTION_HIDE_OVERLAY), RECEIVER_EXPORTED)
     }
 
     companion object {

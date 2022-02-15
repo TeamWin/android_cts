@@ -69,14 +69,11 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
             if (mAudioPlayer == null) {
                 return; // failed to create the player
             }
-            switch (v.getId()) {
-                case R.id.audio_routingnotification_playBtn:
-                    startPlayback();
-                    break;
-
-                case R.id.audio_routingnotification_playStopBtn:
-                    stopPlayback();
-                    break;
+            int id = v.getId();
+            if (id == R.id.audio_routingnotification_playBtn) {
+                startPlayback();
+            } else if (id == R.id.audio_routingnotification_playStopBtn) {
+                stopPlayback();
             }
         }
     }

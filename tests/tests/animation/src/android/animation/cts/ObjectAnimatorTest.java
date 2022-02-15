@@ -32,6 +32,7 @@ import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.TypeConverter;
+import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.app.Instrumentation;
 import android.graphics.Color;
@@ -197,6 +198,37 @@ public class ObjectAnimatorTest {
 
         verify(mockListener, timeout(2000)).onAnimationRepeat(colorAnimator);
         verify(mockListener, timeout(3000)).onAnimationEnd(colorAnimator, false);
+    }
+
+    @Test
+    public void testOfObject_generic() throws Throwable {
+        final AnimTarget target = new AnimTarget();
+        Property<AnimTarget, Float> property = AnimTarget.TEST_VALUE;
+        TypeEvaluator<Float> evaluator = new TypeEvaluator<Float>() {
+            public Float evaluate(float fraction, Float startValue, Float endValue) {
+                return startValue + fraction * (endValue - startValue);
+            }
+        };
+
+        int startValue = 5;
+        int endValue = 10;
+        Float[] values = {new Float(startValue), new Float(endValue)};
+        final ObjectAnimator animator = ObjectAnimator.ofObject(target, property,
+                evaluator, values);
+
+        target.setTestValue(startValue);
+        final float startValueExpected = (Float) property.get(target);
+        animator.setupStartValues();
+        target.setTestValue(endValue);
+        final float endValueExpected = (Float) property.get(target);
+        animator.setupEndValues();
+        mActivityRule.runOnUiThread(() -> {
+            animator.start();
+            assertEquals(startValueExpected, (float) animator.getAnimatedValue(), 0.0f);
+            animator.setCurrentFraction(1);
+            assertEquals(endValueExpected, (float) animator.getAnimatedValue(), 0.0f);
+            animator.cancel();
+        });
     }
 
     @Test

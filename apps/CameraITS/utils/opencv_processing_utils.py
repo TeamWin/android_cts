@@ -139,7 +139,6 @@ class Chart(object):
       cam,
       props,
       log_path,
-      chart_loc=None,
       chart_file=None,
       height=None,
       distance=None,
@@ -152,7 +151,6 @@ class Chart(object):
      cam: open ITS session
      props: camera properties object
      log_path: log path to store the captured images.
-     chart_loc: chart locator arg.
      chart_file: str; absolute path to png file of chart
      height: float; height in cm of displayed chart
      distance: float; distance in cm from camera of displayed chart
@@ -166,10 +164,7 @@ class Chart(object):
     self._scale_start = scale_start or CHART_SCALE_START
     self._scale_stop = scale_stop or CHART_SCALE_STOP
     self._scale_step = scale_step or CHART_SCALE_STEP
-    self.xnorm, self.ynorm, self.wnorm, self.hnorm, self.scale = (
-        image_processing_utils.chart_located_per_argv(chart_loc))
-    if not self.xnorm:
-      self.locate(cam, props, log_path)
+    self.locate(cam, props, log_path)
 
   def _set_scale_factors_to_one(self):
     """Set scale factors to 1.0 for skipped tests."""

@@ -25,7 +25,6 @@ import android.hardware.radio.data.IRadioDataResponse;
 import android.hardware.radio.data.KeepaliveRequest;
 import android.hardware.radio.data.LinkAddress;
 import android.hardware.radio.data.SliceInfo;
-import android.hardware.radio.data.TrafficDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -181,7 +180,6 @@ public class IRadioDataImpl extends IRadioData.Stub {
             String[] dnses,
             int pduSessionId,
             SliceInfo sliceInfo,
-            TrafficDescriptor trafficDescriptor,
             boolean matchAllRuleAllowed) {
         Log.d(TAG, "setupDataCall");
         RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);

@@ -30,11 +30,10 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.media.audio.cts.R;
 import android.media.cts.DeviceUtils;
-import android.media.cts.Preconditions;
 import android.media.cts.TestUtils.Monitor;
 
-import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -79,7 +78,6 @@ public class RoutingTest extends AndroidTestCase {
     private static final long WAIT_PLAYBACK_START_TIME_MS = 1000;
     private static final Set<Integer> AVAILABLE_INPUT_DEVICES_TYPE = new HashSet<>(
         Arrays.asList(AudioDeviceInfo.TYPE_BUILTIN_MIC));
-    static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private AudioManager mAudioManager;
     private File mOutFile;
@@ -618,10 +616,8 @@ public class RoutingTest extends AndroidTestCase {
     }
 
     private MediaPlayer allocMediaPlayer(AudioDeviceInfo device, boolean start) {
-        final String res = "testmp3_2.mp3";
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        MediaPlayer mediaPlayer = MediaPlayer.create(mContext, Uri
-                .fromFile(new File(mInpPrefix + res)));
+        final int resid = R.raw.testmp3_2;
+        MediaPlayer mediaPlayer = MediaPlayer.create(mContext, resid);
         mediaPlayer.setAudioAttributes(
                 new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build());
         if (device != null) {

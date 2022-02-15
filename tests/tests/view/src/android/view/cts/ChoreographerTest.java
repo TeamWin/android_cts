@@ -37,6 +37,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
+import java.util.HashSet;
+
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ChoreographerTest {
@@ -289,5 +291,139 @@ public class ChoreographerTest {
     @Test(expected=IllegalArgumentException.class)
     public void testRemoveNullFrameCallback() {
         mChoreographer.removeFrameCallback(null);
+    }
+
+    @Test
+    public void testPostExtendedFrameCallbackWithoutDelay() {
+        final Choreographer.ExtendedFrameCallback addedCallback1 = mock(
+                Choreographer.ExtendedFrameCallback.class);
+        final Choreographer.ExtendedFrameCallback addedCallback2 = mock(
+                Choreographer.ExtendedFrameCallback.class);
+        final Choreographer.ExtendedFrameCallback removedCallback = mock(
+                Choreographer.ExtendedFrameCallback.class);
+
+        // Add and remove a few callbacks.
+        long postTimeNanos = System.nanoTime();
+        mChoreographer.postExtendedFrameCallback(addedCallback1);
+        mChoreographer.postExtendedFrameCallback(addedCallback2);
+        mChoreographer.postExtendedFrameCallback(removedCallback);
+        mChoreographer.removeExtendedFrameCallback(removedCallback);
+
+        // We expect the remaining callbacks to have been invoked once.
+        ArgumentCaptor<Choreographer.FrameData> captor1 = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        ArgumentCaptor<Choreographer.FrameData> captor2 = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        verify(addedCallback1, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).onVsync(
+                captor1.capture());
+        verify(addedCallback2, times(1)).onVsync(captor2.capture());
+        verifyZeroInteractions(removedCallback);
+        assertTimeDeltaLessThan(captor1.getValue().getFrameTimeNanos() - postTimeNanos,
+                NOMINAL_VSYNC_PERIOD * 10 * NANOS_PER_MS);
+        assertTimeDeltaLessThan(captor2.getValue().getFrameTimeNanos() - postTimeNanos,
+                NOMINAL_VSYNC_PERIOD * 10 * NANOS_PER_MS);
+
+        // If we post a callback again, then it should be invoked again.
+        postTimeNanos = System.nanoTime();
+        mChoreographer.postExtendedFrameCallback(addedCallback1);
+
+        verify(addedCallback1, timeout(NOMINAL_VSYNC_PERIOD * 10).times(2)).onVsync(
+                captor1.capture());
+        verify(addedCallback2, times(1)).onVsync(captor2.capture());
+        verifyZeroInteractions(removedCallback);
+        assertTimeDeltaLessThan(captor1.getValue().getFrameTimeNanos() - postTimeNanos,
+                NOMINAL_VSYNC_PERIOD * 10 * NANOS_PER_MS);
+        // Callback #2 is not invoked a second time so the time delta is not checked here.
+    }
+
+    @Test
+    public void testPostExtendedFrameCallbackFrameDataVsyncIdValid() {
+        final Choreographer.ExtendedFrameCallback addedCallback = mock(
+                Choreographer.ExtendedFrameCallback.class);
+        long postTimeNanos = System.nanoTime();
+        mChoreographer.postExtendedFrameCallback(addedCallback);
+
+        ArgumentCaptor<Choreographer.FrameData> captor = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        verify(addedCallback, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).onVsync(
+                captor.capture());
+
+        Choreographer.FrameData frameData = captor.getValue();
+        assertTrue("Number of frame timelines should be greater than 0",
+                frameData.getFrameTimelines().length > 0);
+        HashSet<Long> pastVsyncIds = new HashSet();
+        for (Choreographer.FrameTimeline frameTimeline : frameData.getFrameTimelines()) {
+            long vsyncId = frameTimeline.getVsyncId();
+            assertTrue("Invalid vsync ID", vsyncId > 0);
+            assertTrue("Vsync ID should be unique", !pastVsyncIds.contains(vsyncId));
+            pastVsyncIds.add(vsyncId);
+        }
+    }
+
+    @Test
+    public void testPostExtendedFrameCallbackFrameDataDeadlineInFuture() {
+        final Choreographer.ExtendedFrameCallback addedCallback = mock(
+                Choreographer.ExtendedFrameCallback.class);
+        long postTimeNanos = System.nanoTime();
+        mChoreographer.postExtendedFrameCallback(addedCallback);
+
+        ArgumentCaptor<Choreographer.FrameData> captor = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        verify(addedCallback, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).onVsync(
+                captor.capture());
+
+        Choreographer.FrameData frameData = captor.getValue();
+        assertTrue("Number of frame timelines should be greater than 0",
+                frameData.getFrameTimelines().length > 0);
+        long lastValue = frameData.getFrameTimeNanos();
+        for (Choreographer.FrameTimeline frameTimeline : frameData.getFrameTimelines()) {
+            long deadline = frameTimeline.getDeadlineNanos();
+            assertTrue("Deadline must be after start time", deadline > postTimeNanos);
+            assertTrue("Deadline must be after frame time",
+                    deadline > frameData.getFrameTimeNanos());
+            assertTrue("Deadline must be after the previous frame deadline",
+                    deadline > lastValue);
+            lastValue = deadline;
+        }
+    }
+
+    @Test
+    public void testPostExtendedFrameCallbackFrameDataExpectedPresentTimeInFuture() {
+        final Choreographer.ExtendedFrameCallback addedCallback = mock(
+                Choreographer.ExtendedFrameCallback.class);
+        long postTimeNanos = System.nanoTime();
+        mChoreographer.postExtendedFrameCallback(addedCallback);
+
+        ArgumentCaptor<Choreographer.FrameData> captor = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        verify(addedCallback, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).onVsync(
+                captor.capture());
+
+        Choreographer.FrameData frameData = captor.getValue();
+        assertTrue("Number of frame timelines should be greater than 0",
+                frameData.getFrameTimelines().length > 0);
+        long lastValue = frameData.getFrameTimeNanos();
+        for (Choreographer.FrameTimeline frameTimeline : frameData.getFrameTimelines()) {
+            long expectedPresentTime = frameTimeline.getExpectedPresentTimeNanos();
+            assertTrue("Expected present time must be after start time",
+                    expectedPresentTime > postTimeNanos);
+            assertTrue("Expected present time must be after frame time",
+                    expectedPresentTime > frameData.getFrameTimeNanos());
+            assertTrue(
+                    "Expected present time must be after the previous frame expected present "
+                            + "time",
+                    expectedPresentTime > lastValue);
+            lastValue = expectedPresentTime;
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPostNullExtendedFrameCallback() {
+        mChoreographer.postExtendedFrameCallback(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRemoveNullExtendedFrameCallback() {
+        mChoreographer.removeExtendedFrameCallback(null);
     }
 }

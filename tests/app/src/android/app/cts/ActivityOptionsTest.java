@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static android.window.SplashScreen.SPLASH_SCREEN_STYLE_ICON;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.ActivityOptions;
@@ -40,6 +42,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
         opts.setLaunchDisplayId(displayId);
         opts.setLockTaskEnabled(true);
         opts.setLaunchBounds(bounds);
+        opts.setSplashScreenStyle(SPLASH_SCREEN_STYLE_ICON);
 
         Bundle optsBundle = opts.toBundle();
 
@@ -47,6 +50,7 @@ public class ActivityOptionsTest extends AndroidTestCase {
         assertThat(opts2.getLaunchDisplayId()).isEqualTo(displayId);
         assertThat(opts2.getLockTaskMode()).isTrue();
         assertThat(opts2.getLaunchBounds()).isEqualTo(bounds);
+        assertThat(opts2.getSplashScreenStyle()).isEqualTo(SPLASH_SCREEN_STYLE_ICON);
     }
 
     public void testGetSetPendingIntentBackgroundActivityLaunchAllowed() {

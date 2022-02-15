@@ -16,6 +16,8 @@
 
 package android.media.muxer.cts;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec.BufferInfo;
@@ -32,29 +34,38 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
 
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.MetadataRetriever;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.util.Util;
+import com.google.android.exoplayer2.video.ColorInfo;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 @AppModeFull(reason = "No interaction with system server")
 public class MediaMuxerTest extends AndroidTestCase {
     private static final String TAG = "MediaMuxerTest";
     private static final boolean VERBOSE = false;
-    private static final int MAX_SAMPLE_SIZE = 256 * 1024;
+    private static final int MAX_SAMPLE_SIZE = 1024 * 1024;
     private static final float LATITUDE = 0.0000f;
     private static final float LONGITUDE  = -180.0f;
     private static final float BAD_LATITUDE = 91.0f;
     private static final float BAD_LONGITUDE = -181.0f;
     private static final float TOLERANCE = 0.0002f;
     private static final long OFFSET_TIME_US = 29 * 60 * 1000000L; // 29 minutes
-    static final String mInpPrefix = WorkDir.getMediaDirString();
-    private boolean mAndroid11 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
+    private static final String MEDIA_DIR = WorkDir.getMediaDirString();
+
+    private final boolean mAndroid11 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
 
     @Override
     public void setContext(Context context) {
@@ -63,114 +74,11 @@ public class MediaMuxerTest extends AndroidTestCase {
 
     protected AssetFileDescriptor getAssetFileDescriptorFor(final String res)
             throws FileNotFoundException {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        File inpFile = new File(mInpPrefix + res);
+        Preconditions.assertTestFileExists(MEDIA_DIR + res);
+        File inpFile = new File(MEDIA_DIR + res);
         ParcelFileDescriptor parcelFD =
                 ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
         return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
-    }
-
-    /**
-     * Test: make sure the muxer handles both video and audio tracks correctly.
-     */
-    public void SKIP_testVideoAudio() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
-        // numTracks @ {1, 1}
-        final String source = "video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz.3gp";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideo", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    public void SKIP_testDualVideoTrack() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
-        // numTracks @ {2, 0}
-        final String source = "video_176x144_h264_408kbps_30fps_352x288_h264_122kbps_30fps.mp4";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testDualVideo", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    public void SKIP_testDualAudioTrack() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
-        // numTracks @ {0, 2}
-        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
-
-        final String source = "audio_aac_mono_70kbs_44100hz_aac_mono_70kbs_44100hz.mp4";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testDualAudio", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    public void SKIP_testDualVideoAndAudioTrack() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
-        // numTracks @ {2, 2}
-        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
-
-        final String source = "video_h264_30fps_video_h264_30fps_aac_44100hz_aac_44100hz.mp4";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testDualVideoAudio", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 4, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    /**
-     * Test: make sure the muxer handles video, audio and non standard compliant metadata tracks
-     * that generated before API29 correctly. This test will use extractor to extract the video
-     * track, audio and the non standard compliant metadata track from the source file, then
-     * remuxes them into a new file with standard compliant metadata track. Finally, it will check
-     * to make sure the new file's metadata track matches the source file's metadata track for the
-     * mime format and data payload.
-     */
-    public void SKIP_testVideoAudioMedatadataWithNonCompliantMetadataTrack() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[application/gyro]
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/h263]
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[audio/aac]
-        final String source =
-                "video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_non_compliant.3gp";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    /**
-     * Test: make sure the muxer handles video, audio and standard compliant metadata tracks that
-     * generated from API29 correctly. This test will use extractor to extract the video track,
-     * audio and the standard compliant metadata track from the source file, then remuxes them
-     * into a new file with standard compliant metadata track. Finally, it will check to make sure
-     * the new file's metadata track matches the source file's metadata track for the mime format
-     * and data payload.
-     */
-     public void SKIP_testVideoAudioMedatadataWithCompliantMetadataTrack() throws Exception {
-         // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[application/gyro]
-         // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/h263]
-         // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[audio/aac]
-         final String source =
-                 "video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_compliant.3gp";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    /**
-     * Test: make sure the muxer handles audio track only file correctly.
-     */
-    public void SKIP_testAudioOnly() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[audio/*]
-        final String source = "sinesweepm4a.m4a";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioOnly", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 1, -1, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-    }
-
-    /**
-     * Test: make sure the muxer handles video track only file correctly.
-     */
-        public void SKIP_testVideoOnly() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/*]
-        final String source = "video_only_176x144_3gp_h263_25fps.mp4";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_videoOnly", ".mp4")
-                .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 1, 180, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
     public void testWebmOutput() throws Exception {
@@ -181,140 +89,42 @@ public class MediaMuxerTest extends AndroidTestCase {
         cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
     }
 
-    public void SKIP_testThreegppOutput() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[*]
-        final String source = "video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp";
-        String outputFilePath = File.createTempFile("testThreegppOutput", ".3gp")
+    /**
+     * Test: make sure the muxer handles dovi profile 8.4 video track only file correctly.
+     */
+    // TODO(b/216824291) Enable once extractor issue is fixed
+    public void SKIP_testDolbyVisionVideoOnlyP8() throws Exception {
+        final String source = "video_dovi_1920x1080_60fps_dvhe_08_04.mp4";
+        String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP8videoOnly", ".mp4")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
+        try {
+            cloneAndVerify(source, outputFilePath, 2 /* expectedTrackCount */, 180 /* degrees */,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    MediaMuxerTest::filterOutNonDolbyVisionFormat);
+        } finally {
+            new File(outputFilePath).delete();
+        }
     }
 
     /**
-     * Tests: make sure the muxer handles exceptions correctly.
-     * <br> Throws exception b/c start() is not called.
-     * <br> Throws exception b/c 2 video tracks were added.
-     * <br> Throws exception b/c 2 audio tracks were added.
-     * <br> Throws exception b/c 3 tracks were added.
-     * <br> Throws exception b/c no tracks was added.
-     * <br> Throws exception b/c a wrong format.
+     * Test: make sure the muxer handles dovi profile 9.2 video track only file correctly.
      */
-    public void SKIP_testIllegalStateExceptions() throws IOException {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*] and
-        // duplicate of CtsMediaV2TestCases:MuxerUnitTest$TestApi
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testISEs", ".mp4")
+    public void testDolbyVisionVideoOnlyP9() throws Exception {
+        final String source = "video_dovi_1920x1080_60fps_dvav_09_02.mp4";
+        String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP9videoOnly", ".mp4")
                 .getAbsolutePath();
-        MediaMuxer muxer;
-
-        // Throws exception b/c start() is not called.
-        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
-
         try {
-            muxer.stop();
-            fail("should throw IllegalStateException.");
-        } catch (IllegalStateException e) {
-            // expected
+            cloneAndVerify(source, outputFilePath, 2 /* expectedTrackCount */, 180 /* degrees */,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    MediaMuxerTest::filterOutNonDolbyVisionFormat);
         } finally {
-            muxer.release();
+            new File(outputFilePath).delete();
         }
+    }
 
-        // Should not throw exception when 2 video tracks were added.
-        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
-
-        try {
-            muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
-        } catch (IllegalStateException e) {
-            fail("should not throw IllegalStateException.");
-        } finally {
-            muxer.release();
-        }
-
-        // Should not throw exception when 2 audio tracks were added.
-        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        muxer.addTrack(MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 1));
-        try {
-            muxer.addTrack(MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 1));
-        } catch (IllegalStateException e) {
-            fail("should not throw IllegalStateException.");
-        } finally {
-            muxer.release();
-        }
-
-        // Should not throw exception when 3 tracks were added.
-        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
-        muxer.addTrack(MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 1));
-        try {
-            muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
-        } catch (IllegalStateException e) {
-            fail("should not throw IllegalStateException.");
-        } finally {
-            muxer.release();
-        }
-
-        // Throws exception b/c no tracks was added.
-        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        try {
-            muxer.start();
-            fail("should throw IllegalStateException.");
-        } catch (IllegalStateException e) {
-            // expected
-        } finally {
-            muxer.release();
-        }
-
-        // Throws exception b/c a wrong format.
-        muxer = new MediaMuxer(outputFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        try {
-            muxer.addTrack(MediaFormat.createVideoFormat("vidoe/mp4", 480, 320));
-            fail("should throw IllegalStateException.");
-        } catch (IllegalStateException e) {
-            // expected
-        } finally {
-            muxer.release();
-        }
-
-        // Test FileDescriptor Constructor expect sucess.
-        RandomAccessFile file = null;
-        try {
-            file = new RandomAccessFile(outputFilePath, "rws");
-            muxer = new MediaMuxer(file.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            muxer.addTrack(MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 480, 320));
-        } finally {
-            file.close();
-            muxer.release();
-        }
-
-        // Test FileDescriptor Constructor expect exception with read only mode.
-        RandomAccessFile file2 = null;
-        try {
-            file2 = new RandomAccessFile(outputFilePath, "r");
-            muxer = new MediaMuxer(file2.getFD(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            fail("should throw IOException.");
-        } catch (IOException e) {
-            // expected
-        } finally {
-            file2.close();
-            // No need to release the muxer.
-        }
-
-        // Test FileDescriptor Constructor expect NO exception with write only mode.
-        ParcelFileDescriptor out = null;
-        try {
-            out = ParcelFileDescriptor.open(new File(outputFilePath),
-                    ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_CREATE);
-            muxer = new MediaMuxer(out.getFileDescriptor(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        } catch (IllegalArgumentException e) {
-            fail("should not throw IllegalArgumentException.");
-        } catch (IOException e) {
-            fail("should not throw IOException.");
-        } finally {
-            out.close();
-            muxer.release();
-        }
-
-        new File(outputFilePath).delete();
+    private static MediaFormat filterOutNonDolbyVisionFormat(MediaFormat format) {
+        String mime = format.getString(MediaFormat.KEY_MIME);
+        return mime.equals(MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION) ? format : null;
     }
 
     /**
@@ -332,27 +142,6 @@ public class MediaMuxerTest extends AndroidTestCase {
             verifySamplesMatch(source, outputFilePath, 66667 /* sample around 0 sec */, 0);
             verifySamplesMatch(
                     source, outputFilePath, 8033333 /*  sample around 8 sec */, OFFSET_TIME_US);
-        } finally {
-            new File(outputFilePath).delete();
-        }
-    }
-
-    /**
-     * Test: makes sure if video only muxing using MPEG4Writer works well when there are B Frames.
-     */
-    public void SKIP_testAllTimestampsBVideoOnly() throws Exception {
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/avc] and
-        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/hevc]
-        final String source = "video_480x360_mp4_h264_bframes_495kbps_30fps_editlist.mp4";
-        String outputFilePath = File.createTempFile("MediaMuxerTest_testAllTimestampsBVideoOnly",
-            ".mp4").getAbsolutePath();
-        try {
-            // No samples to drop in this case.
-            // No start offsets for any track.
-            cloneMediaWithSamplesDropAndStartOffsets(source, outputFilePath,
-                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, null, null);
-            verifyTSWithSamplesDropAndStartOffset(
-                    source, true /* has B frames */, outputFilePath, null, null);
         } finally {
             new File(outputFilePath).delete();
         }
@@ -596,6 +385,75 @@ public class MediaMuxerTest extends AndroidTestCase {
         checkTimestampsWithStartOffsets(startOffsetUsVect);
     }
 
+    public void testAdditionOfHdrStaticMetadata() throws Exception {
+        String outputFilePath =
+                File.createTempFile("MediaMuxerTest_testAdditionOfHdrStaticMetadata", ".mp4")
+                        .getAbsolutePath();
+        // HDR static metadata encoding the following information (format defined in CTA-861.3 -
+        // Static Metadata Descriptor, includes descriptor ID):
+        // Mastering display color primaries:
+        //   R: x=0.677980 y=0.321980, G: x=0.245000 y=0.703000, B: x=0.137980 y=0.052000,
+        //   White point: x=0.312680 y=0.328980
+        // Mastering display luminance min: 0.0000 cd/m2, max: 1000 cd/m2
+        // Maximum Content Light Level: 1100 cd/m2
+        // Maximum Frame-Average Light Level: 180 cd/m2
+        byte[] inputHdrStaticMetadata =
+                Util.getBytesFromHexString("006b84e33eda2f4e89f31a280a123d4140e80300004c04b400");
+        Function<MediaFormat, MediaFormat> staticMetadataAdditionFunction =
+                (mediaFormat) -> {
+                    if (!mediaFormat.getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                        return mediaFormat;
+                    }
+                    MediaFormat result = new MediaFormat(mediaFormat);
+                    result.setByteBuffer(
+                            MediaFormat.KEY_HDR_STATIC_INFO,
+                            ByteBuffer.wrap(inputHdrStaticMetadata));
+                    return result;
+                };
+        try {
+            cloneMediaUsingMuxer(
+                    /* srcMedia= */ "video_h264_main_b_frames.mp4",
+                    outputFilePath,
+                    /* expectedTrackCount= */ 2,
+                    /* degrees= */ 0,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    staticMetadataAdditionFunction);
+            assertArrayEquals(
+                    inputHdrStaticMetadata, getVideoColorInfo(outputFilePath).hdrStaticInfo);
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
+    public void testAdditionOfInvalidHdrStaticMetadataIsIgnored() throws Exception {
+        String outputFilePath =
+                File.createTempFile(
+                                "MediaMuxerTest_testAdditionOfInvalidHdrStaticMetadataIsIgnored",
+                                ".mp4")
+                        .getAbsolutePath();
+        Function<MediaFormat, MediaFormat> staticMetadataAdditionFunction =
+                (mediaFormat) -> {
+                    MediaFormat result = new MediaFormat(mediaFormat);
+                    // The input static info should be ignored, because its size is invalid (26 vs
+                    // expected 25).
+                    result.setByteBuffer(
+                            MediaFormat.KEY_HDR_STATIC_INFO, ByteBuffer.allocateDirect(26));
+                    return result;
+                };
+        try {
+            cloneMediaUsingMuxer(
+                    /* srcMedia= */ "video_h264_main_b_frames.mp4",
+                    outputFilePath,
+                    /* expectedTrackCount= */ 2,
+                    /* degrees= */ 0,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    staticMetadataAdditionFunction);
+            assertNull(getVideoColorInfo(outputFilePath));
+        } finally {
+            new File(outputFilePath).delete();
+        }
+    }
+
     /**
      * Test: makes sure if audio/video muxing using MPEG4Writer works with B Frames
      * when video and audio samples start after different times.
@@ -689,9 +547,27 @@ public class MediaMuxerTest extends AndroidTestCase {
      */
     private void cloneAndVerify(final String srcMedia, String outputMediaFile,
             int expectedTrackCount, int degrees, int fmt) throws IOException {
+        cloneAndVerify(srcMedia, outputMediaFile, expectedTrackCount, degrees, fmt,
+                Function.identity());
+    }
+
+    /**
+     * Clones a given file using MediaMuxer and verifies the output matches the input.
+     *
+     * <p>See {@link #cloneMediaUsingMuxer} for information about the parameters.
+     */
+    private void cloneAndVerify(final String srcMedia, String outputMediaFile,
+            int expectedTrackCount, int degrees, int fmt,
+            Function<MediaFormat, MediaFormat> muxerInputTrackFormatTransformer)
+            throws IOException {
         try {
-            cloneMediaUsingMuxer(srcMedia, outputMediaFile, expectedTrackCount,
-                    degrees, fmt);
+            cloneMediaUsingMuxer(
+                    srcMedia,
+                    outputMediaFile,
+                    expectedTrackCount,
+                    degrees,
+                    fmt,
+                    muxerInputTrackFormatTransformer);
             if (fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 ||
                     fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
                 verifyAttributesMatch(srcMedia, outputMediaFile, degrees);
@@ -705,11 +581,28 @@ public class MediaMuxerTest extends AndroidTestCase {
         }
     }
 
+
     /**
-     * Using the MediaMuxer to clone a media file.
+     * Clones a given file using MediaMuxer.
+     *
+     * @param srcMedia Input file path passed to extractor
+     * @param dstMediaPath Output file path passed to muxer
+     * @param expectedTrackCount Expected number of tracks in the input file
+     * @param degrees orientation hint in degrees
+     * @param fmt one of the values defined in {@link MediaMuxer.OutputFormat}.
+     * @param muxerInputTrackFormatTransformer Function applied on the MediaMuxer input formats.
+     *                                         If the function returns null for a given MediaFormat,
+     *                                         the corresponding track is discarded and not passed
+     *                                         to MediaMuxer.
+     * @throws IOException if muxer failed to open output file for write.
      */
-    private void cloneMediaUsingMuxer(final String  srcMedia, String dstMediaPath,
-            int expectedTrackCount, int degrees, int fmt)
+    private void cloneMediaUsingMuxer(
+            final String srcMedia,
+            String dstMediaPath,
+            int expectedTrackCount,
+            int degrees,
+            int fmt,
+            Function<MediaFormat, MediaFormat> muxerInputTrackFormatTransformer)
             throws IOException {
         // Set up MediaExtractor to read from the source.
         AssetFileDescriptor srcFd = getAssetFileDescriptorFor(srcMedia);
@@ -727,10 +620,13 @@ public class MediaMuxerTest extends AndroidTestCase {
         // Set up the tracks.
         HashMap<Integer, Integer> indexMap = new HashMap<Integer, Integer>(trackCount);
         for (int i = 0; i < trackCount; i++) {
-            extractor.selectTrack(i);
             MediaFormat format = extractor.getTrackFormat(i);
-            int dstIndex = muxer.addTrack(format);
-            indexMap.put(i, dstIndex);
+            MediaFormat muxedFormat = muxerInputTrackFormatTransformer.apply(format);
+            if (muxedFormat != null) {
+                extractor.selectTrack(i);
+                int dstIndex = muxer.addTrack(muxedFormat);
+                indexMap.put(i, dstIndex);
+            }
         }
 
         // Copy the samples from MediaExtractor to MediaMuxer.
@@ -1424,6 +1320,20 @@ public class MediaMuxerTest extends AndroidTestCase {
         if (srcAdvance != testAdvance) {
             fail("either audio track has not reached its last sample");
         }
+    }
+
+    /** Returns the static HDR metadata in the given {@code file}, or null if not present. */
+    private ColorInfo getVideoColorInfo(String path)
+            throws ExecutionException, InterruptedException {
+        TrackGroupArray trackGroupArray =
+                MetadataRetriever.retrieveMetadata(getContext(), MediaItem.fromUri(path)).get();
+        for (int i = 0; i < trackGroupArray.length; i++) {
+            Format format = trackGroupArray.get(i).getFormat(0);
+            if (format.sampleMimeType.startsWith("video/")) {
+                return format.colorInfo;
+            }
+        }
+        return null;
     }
 }
 

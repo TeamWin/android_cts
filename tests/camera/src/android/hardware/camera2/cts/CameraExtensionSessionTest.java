@@ -44,6 +44,7 @@ import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraExtensionSession;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
@@ -74,6 +75,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -88,6 +90,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
 
     private SurfaceTexture mSurfaceTexture = null;
     private Camera2AndroidTestRule mTestRule = null;
+    private CameraErrorCollector mCollector =  null;
 
     private DeviceReportLog mReportLog;
 
@@ -96,6 +99,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         super.setUp();
         mTestRule = new Camera2AndroidTestRule(mContext);
         mTestRule.before();
+        mCollector = new CameraErrorCollector();
     }
 
     @Override
@@ -106,6 +110,13 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         if (mSurfaceTexture != null) {
             mSurfaceTexture.release();
             mSurfaceTexture = null;
+        }
+        if (mCollector != null) {
+            try {
+                mCollector.verify();
+            } catch (Throwable e) {
+                throw new Exception(e.getMessage());
+            }
         }
         super.tearDown();
     }
@@ -396,6 +407,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                 new HandlerExecutor(mTestRule.getHandler()),
                                 sessionListener);
 
+                boolean captureResultsSupported =
+                        !extensionChars.getAvailableCaptureResultKeys(extension).isEmpty();
+
                 try {
                     mTestRule.openDevice(id);
                     CameraDevice camera = mTestRule.getCamera();
@@ -412,7 +426,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback captureCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback simpleCaptureCallback =
-                            new SimpleCaptureCallback(captureCallbackMock);
+                            new SimpleCaptureCallback(captureCallbackMock,
+                                    extensionChars.getAvailableCaptureResultKeys(extension),
+                                    mCollector);
                     CaptureRequest request = captureBuilder.build();
                     int sequenceId = extensionSession.setRepeatingRequest(request,
                             new HandlerExecutor(mTestRule.getHandler()), simpleCaptureCallback);
@@ -423,6 +439,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     verify(captureCallbackMock,
                             timeout(REPEATING_REQUEST_TIMEOUT_MS).atLeastOnce())
                             .onCaptureProcessStarted(extensionSession, request);
+                    if (captureResultsSupported) {
+                        verify(captureCallbackMock,
+                                timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).atLeastOnce())
+                                .onCaptureResultAvailable(eq(extensionSession), eq(request),
+                                        any(TotalCaptureResult.class));
+                    }
 
                     extensionSession.stopRepeating();
 
@@ -513,6 +535,8 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     mReportLog.addValue("extension_id", extension, ResultType.NEUTRAL,
                             ResultUnit.NONE);
                     double[] captureTimes = new double[IMAGE_COUNT];
+                    boolean captureResultsSupported =
+                            !extensionChars.getAvailableCaptureResultKeys(extension).isEmpty();
 
                     try {
                         mTestRule.openDevice(id);
@@ -527,8 +551,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                 mTestRule.getCamera().createCaptureRequest(
                                         CameraDevice.TEMPLATE_STILL_CAPTURE);
                         captureBuilder.addTarget(imageReaderSurface);
-                        CameraExtensionSession.ExtensionCaptureCallback captureCallback =
+                        CameraExtensionSession.ExtensionCaptureCallback captureMockCallback =
                                 mock(CameraExtensionSession.ExtensionCaptureCallback.class);
+                        SimpleCaptureCallback captureCallback =
+                                new SimpleCaptureCallback(captureMockCallback,
+                                        extensionChars.getAvailableCaptureResultKeys(extension),
+                                        mCollector);
 
                         for (int i = 0; i < IMAGE_COUNT; i++) {
                             int jpegOrientation = (i * 90) % 360; // degrees [0..270]
@@ -552,14 +580,20 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             }
                             img.close();
 
-                            verify(captureCallback, times(1))
+                            verify(captureMockCallback, times(1))
                                     .onCaptureStarted(eq(extensionSession), eq(request), anyLong());
-                            verify(captureCallback,
+                            verify(captureMockCallback,
                                     timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                                     .onCaptureProcessStarted(extensionSession, request);
-                            verify(captureCallback,
+                            verify(captureMockCallback,
                                     timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                                     .onCaptureSequenceCompleted(extensionSession, sequenceId);
+                            if (captureResultsSupported) {
+                                verify(captureMockCallback,
+                                        timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
+                                        .onCaptureResultAvailable(eq(extensionSession), eq(request),
+                                                any(TotalCaptureResult.class));
+                            }
                         }
 
                         long avgCaptureLatency = (long) Stat.getAverage(captureTimes);
@@ -568,10 +602,10 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                         mReportLog.addValue(resultFormat, avgCaptureLatency,
                                 ResultType.LOWER_BETTER, ResultUnit.MS);
 
-                        verify(captureCallback, times(0))
+                        verify(captureMockCallback, times(0))
                                 .onCaptureSequenceAborted(any(CameraExtensionSession.class),
                                         anyInt());
-                        verify(captureCallback, times(0))
+                        verify(captureMockCallback, times(0))
                                 .onCaptureFailed(any(CameraExtensionSession.class),
                                         any(CaptureRequest.class));
                         Range<Long> latencyRange =
@@ -587,7 +621,6 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                     latencyRange.getLower(), latencyRange.getUpper());
                             assertTrue(msg, latencyRange.contains(avgCaptureLatency));
                         }
-
 
                         extensionSession.close();
 
@@ -810,6 +843,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     }
                 }
 
+                boolean captureResultsSupported =
+                        !extensionChars.getAvailableCaptureResultKeys(extension).isEmpty();
+
                 mSurfaceTexture.setDefaultBufferSize(maxRepeatingSize.getWidth(),
                         maxRepeatingSize.getHeight());
                 Surface texturedSurface = new Surface(mSurfaceTexture);
@@ -839,7 +875,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock);
+                            new SimpleCaptureCallback(repeatingCallbackMock,
+                                    extensionChars.getAvailableCaptureResultKeys(extension),
+                                    mCollector);
                     CaptureRequest repeatingRequest = captureBuilder.build();
                     int repeatingSequenceId =
                             extensionSession.setRepeatingRequest(repeatingRequest,
@@ -853,6 +891,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                     anyLong());
                     verify(repeatingCallbackMock, atLeastOnce())
                             .onCaptureProcessStarted(extensionSession, repeatingRequest);
+                    if (captureResultsSupported) {
+                        verify(repeatingCallbackMock,
+                                timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).atLeastOnce())
+                                .onCaptureResultAvailable(eq(extensionSession),
+                                        eq(repeatingRequest), any(TotalCaptureResult.class));
+                    }
 
                     captureBuilder = mTestRule.getCamera().createCaptureRequest(
                             android.hardware.camera2.CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -875,6 +919,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                     anyLong());
                     verify(captureCallback, timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                             .onCaptureProcessStarted(extensionSession, captureRequest);
+                    if (captureResultsSupported) {
+                        verify(captureCallback,
+                                timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
+                                .onCaptureResultAvailable(eq(extensionSession),
+                                        eq(captureRequest), any(TotalCaptureResult.class));
+                    }
                     verify(captureCallback, timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                             .onCaptureSequenceCompleted(extensionSession,
                                     captureSequenceId);
@@ -988,9 +1038,14 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         private int mNumFramesFailed = 0;
         private boolean mNonIncreasingTimestamps = false;
         private final CameraExtensionSession.ExtensionCaptureCallback mProxy;
+        private final HashSet<CaptureResult.Key> mSupportedResultKeys;
+        private final CameraErrorCollector mCollector;
 
-        public SimpleCaptureCallback(CameraExtensionSession.ExtensionCaptureCallback proxy) {
+        public SimpleCaptureCallback(CameraExtensionSession.ExtensionCaptureCallback proxy,
+                Set<CaptureResult.Key> supportedResultKeys, CameraErrorCollector errorCollector) {
             mProxy = proxy;
+            mSupportedResultKeys = new HashSet<>(supportedResultKeys);
+            mCollector = errorCollector;
         }
 
         @Override
@@ -1038,6 +1093,42 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                                                int sequenceId) {
             if (mProxy != null) {
                 mProxy.onCaptureSequenceCompleted(session, sequenceId);
+            }
+        }
+
+        @Override
+        public void  onCaptureResultAvailable(CameraExtensionSession session,
+                CaptureRequest request, TotalCaptureResult result) {
+            if (mSupportedResultKeys.isEmpty()) {
+                mCollector.addMessage("Capture results not supported, but " +
+                        "onCaptureResultAvailable still got triggered!");
+                return;
+            }
+
+            List<CaptureResult.Key<?>> resultKeys = result.getKeys();
+            for (CaptureResult.Key<?> resultKey : resultKeys) {
+                mCollector.expectTrue("Capture result " + resultKey + " is not among the"
+                        + " supported result keys!", mSupportedResultKeys.contains(resultKey));
+            }
+
+            Integer jpegOrientation = request.get(CaptureRequest.JPEG_ORIENTATION);
+            if (jpegOrientation != null) {
+                Integer resultJpegOrientation = result.get(CaptureResult.JPEG_ORIENTATION);
+                mCollector.expectTrue("Request Jpeg orientation: " + jpegOrientation +
+                        " doesn't match with result: " + resultJpegOrientation,
+                        jpegOrientation.equals(resultJpegOrientation));
+            }
+
+            Byte jpegQuality = request.get(CaptureRequest.JPEG_QUALITY);
+            if (jpegQuality != null) {
+                Byte resultJpegQuality = result.get(CaptureResult.JPEG_QUALITY);
+                mCollector.expectTrue("Request Jpeg quality: " + jpegQuality +
+                        " doesn't match with result: " + resultJpegQuality,
+                        jpegQuality.equals(resultJpegQuality));
+            }
+
+            if (mProxy != null) {
+                mProxy.onCaptureResultAvailable(session, request, result);
             }
         }
 
@@ -1198,7 +1289,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     CameraExtensionSession.ExtensionCaptureCallback repeatingCallbackMock =
                             mock(CameraExtensionSession.ExtensionCaptureCallback.class);
                     SimpleCaptureCallback repeatingCaptureCallback =
-                            new SimpleCaptureCallback(repeatingCallbackMock);
+                            new SimpleCaptureCallback(repeatingCallbackMock,
+                                    extensionChars.getAvailableCaptureResultKeys(extension),
+                                    mCollector);
                     CaptureRequest repeatingRequest = captureBuilder.build();
                     try {
                         extensionSession.setRepeatingRequest(repeatingRequest,

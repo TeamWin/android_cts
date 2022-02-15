@@ -16,6 +16,8 @@
 
 package android.keystore.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -42,6 +44,9 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.ObjectArrays;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.security.AlgorithmParameters;
@@ -49,10 +54,10 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStoreException;
 import java.security.Provider;
+import java.security.Provider.Service;
 import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
-import java.security.Provider.Service;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -73,9 +78,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * Tests for algorithm-agnostic functionality of {@code Cipher} implementations backed by Android
@@ -1205,6 +1207,7 @@ public class CipherTest {
                 fail("Importing auth bound keys to an insecure device should fail");
             } catch (KeyStoreException e) {
                 // Expected behavior
+                assertThat(e.getCause()).isInstanceOf(IllegalStateException.class);
             }
         }
     }

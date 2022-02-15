@@ -16,11 +16,14 @@
 
 package com.android.bedstead.nene;
 
+import com.android.bedstead.nene.accessibility.Accessibility;
 import com.android.bedstead.nene.activities.Activities;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
+import com.android.bedstead.nene.location.Locations;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
@@ -81,6 +84,24 @@ public final class TestApis {
     /** Access Test APIs related to the device. */
     public static Device device() {
         return Device.sInstance;
+    }
+
+    /** Access Test APIs related to location. */
+    @Experimental
+    public static Locations location() {
+        return Locations.sInstance;
+    }
+
+    /** Access Test APIs related to accessibility. */
+    @Experimental
+    public static Accessibility accessibility() {
+        return Accessibility.sInstance;
+    }
+
+    /** Access Test APIs related to bluetooth. */
+    @Experimental
+    public static Bluetooth bluetooth() {
+        return Bluetooth.sInstance;
     }
 
     /** @deprecated Use statically */

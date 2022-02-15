@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -321,10 +322,17 @@ public final class Processor extends AbstractProcessor {
             }
             logicLambda.unindent().add("}");
 
+            String terminalExceptionCode = Stream.concat(
+                            Stream.of(CodeBlock.of("e instanceof $T",
+                                    PROFILE_RUNTIME_EXCEPTION_CLASSNAME)),
+                            method.getThrownTypes().stream().map(
+                                    t -> CodeBlock.of("e instanceof $T", t)))
+                    .map(CodeBlock::toString).collect(Collectors.joining(" || "));
+
             CodeBlock runLogic = CodeBlock.of(
-                    "$1T.logic($2L).terminalException(e -> e instanceof $3T).run()",
+                    "$1T.logic($2L).terminalException(e -> $3L).run()",
                     RETRY_CLASSNAME,
-                    logicLambda.build().toString(), PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
+                    logicLambda.build().toString(), terminalExceptionCode);
 
             methodBuilder.beginControlFlow("try");
 
@@ -431,10 +439,17 @@ public final class Processor extends AbstractProcessor {
             }
             logicLambda.unindent().add("}");
 
+            String terminalExceptionCode = Stream.concat(
+                            Stream.of(CodeBlock.of("e instanceof $T",
+                                    PROFILE_RUNTIME_EXCEPTION_CLASSNAME)),
+                            method.getThrownTypes().stream().map(
+                                    t -> CodeBlock.of("e instanceof $T", t)))
+                    .map(CodeBlock::toString).collect(Collectors.joining(" || "));
+
             CodeBlock runLogic = CodeBlock.of(
-                    "$1T.logic($2L).terminalException(e -> e instanceof $3T).run()",
+                    "$1T.logic($2L).terminalException(e -> $3L).run()",
                     RETRY_CLASSNAME,
-                    logicLambda.build().toString(), PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
+                    logicLambda.build().toString(), terminalExceptionCode);
 
             methodBuilder.beginControlFlow("try");
 
@@ -581,10 +596,17 @@ public final class Processor extends AbstractProcessor {
             }
             logicLambda.unindent().add("}");
 
+            String terminalExceptionCode = Stream.concat(
+                            Stream.of(CodeBlock.of("e instanceof $T",
+                                    PROFILE_RUNTIME_EXCEPTION_CLASSNAME)),
+                            method.getThrownTypes().stream().map(
+                                    t -> CodeBlock.of("e instanceof $T", t)))
+                    .map(CodeBlock::toString).collect(Collectors.joining(" || "));
+
             CodeBlock runLogic = CodeBlock.of(
-                    "$1T.logic($2L).terminalException(e -> e instanceof $3T).run()",
+                    "$1T.logic($2L).terminalException(e -> $3L).run()",
                     RETRY_CLASSNAME,
-                    logicLambda.build().toString(), PROFILE_RUNTIME_EXCEPTION_CLASSNAME);
+                    logicLambda.build().toString(), terminalExceptionCode);
 
             methodBuilder.beginControlFlow("try");
 

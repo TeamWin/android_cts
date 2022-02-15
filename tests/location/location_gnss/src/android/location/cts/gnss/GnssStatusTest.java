@@ -1,38 +1,67 @@
 package android.location.cts.gnss;
 
+
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+
+import android.app.UiAutomation;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.location.GnssStatus;
 import android.location.cts.common.GnssTestCase;
 import android.location.cts.common.SoftAssert;
+import android.location.cts.common.TestGnssStatusCallback;
 import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GnssStatusTest extends GnssTestCase  {
 
     private static final String TAG = "GnssStatusTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 1;
     private static final int STATUS_TO_COLLECT_COUNT = 3;
+    private UiAutomation mUiAutomation;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     mTestLocationManager = new TestLocationManager(getContext());
+    mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
   }
 
   /**
    * Tests that one can listen for {@link GnssStatus}.
    */
+  @AppModeFull(reason = "Instant apps cannot access package manager to scan for permissions")
   public void testGnssStatusChanges() throws Exception {
     // Checks if GPS hardware feature is present, skips test (pass) if not
     if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
       return;
     }
 
-    // Register Gps Status Listener.
-    TestGnssStatusCallback testGnssStatusCallback =
-        new TestGnssStatusCallback(TAG, STATUS_TO_COLLECT_COUNT);
-    checkGnssChange(testGnssStatusCallback);
+    // Revoke location permissions from packages before running GnssStatusTest stops
+    // active location requests, allowing this test to receive all necessary Gnss callbacks.
+    List<String> courseLocationPackages = revokePermissions(ACCESS_COARSE_LOCATION);
+    List<String> fineLocationPackages = revokePermissions(ACCESS_FINE_LOCATION);
+
+    try {
+        // Register Gps Status Listener.
+        TestGnssStatusCallback testGnssStatusCallback =
+            new TestGnssStatusCallback(TAG, STATUS_TO_COLLECT_COUNT);
+        checkGnssChange(testGnssStatusCallback);
+    } finally {
+        // For each location package, re-grant the permission
+        grantLocationPermissions(ACCESS_COARSE_LOCATION, courseLocationPackages);
+        grantLocationPermissions(ACCESS_FINE_LOCATION, fineLocationPackages);
+    }
   }
 
   private void checkGnssChange(TestGnssStatusCallback testGnssStatusCallback)
@@ -124,6 +153,57 @@ public class GnssStatusTest extends GnssTestCase  {
       Log.i(TAG, "hasAlmanacData: " + status.hasAlmanacData(i));
       Log.i(TAG, "hasEphemerisData: " + status.hasEphemerisData(i));
       Log.i(TAG, "usedInFix: " + status.usedInFix(i));
+    }
+  }
+
+  private List<String> getPackagesWithPermissions(String permission) {
+    Context context = InstrumentationRegistry.getTargetContext();
+    PackageManager pm = context.getPackageManager();
+
+    ArrayList<String> packagesWithPermission = new ArrayList<>();
+    List<ApplicationInfo> packages = pm.getInstalledApplications(/*flags=*/ 0);
+
+    for (ApplicationInfo applicationInfo : packages) {
+      String packageName = applicationInfo.packageName;
+      if (packageName.equals(context.getPackageName())) {
+        // Don't include this test package.
+        continue;
+      }
+
+      if (pm.checkPermission(permission, packageName) == PackageManager.PERMISSION_GRANTED) {
+        final int flags;
+        mUiAutomation.adoptShellPermissionIdentity("android.permission.GET_RUNTIME_PERMISSIONS");
+        try {
+          flags = pm.getPermissionFlags(permission, packageName,
+                    android.os.Process.myUserHandle());
+        } finally {
+          mUiAutomation.dropShellPermissionIdentity();
+        }
+
+        final boolean fixed = (flags & (PackageManager.FLAG_PERMISSION_USER_FIXED
+            | PackageManager.FLAG_PERMISSION_POLICY_FIXED
+            | PackageManager.FLAG_PERMISSION_SYSTEM_FIXED)) != 0;
+        if (!fixed) {
+          packagesWithPermission.add(packageName);
+        }
+      }
+    }
+    return packagesWithPermission;
+  }
+
+  private List<String> revokePermissions(String permission) {
+    List<String> packages = getPackagesWithPermissions(permission);
+    for (String packageWithPermission : packages) {
+      Log.i(TAG, "Revoking permissions from: " + packageWithPermission);
+      mUiAutomation.revokeRuntimePermission(packageWithPermission, permission);
+    }
+    return packages;
+  }
+
+  private void grantLocationPermissions(String permission, List<String> packages) {
+    for (String packageToGivePermission : packages) {
+      Log.i(TAG, "Granting permissions (back) to: " + packageToGivePermission);
+      mUiAutomation.grantRuntimePermission(packageToGivePermission, permission);
     }
   }
 }

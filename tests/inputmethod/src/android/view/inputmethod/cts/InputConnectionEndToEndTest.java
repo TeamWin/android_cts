@@ -1976,7 +1976,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         final int expectedNewCursorPosition = 123;
         final ArrayList<String> expectedSuggestions = new ArrayList<>();
         expectedSuggestions.add("test");
-        final TextAttribute expectedTextAttribute = new TextAttribute.TextAttributeBuilder()
+        final TextAttribute expectedTextAttribute = new TextAttribute.Builder()
                 .setTextConversionSuggestions(expectedSuggestions).build();
         // Intentionally let the app return "false" to confirm that IME still receives "true".
         final boolean returnedResult = false;
@@ -2055,7 +2055,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             // Now IC#getTextAfterCursor() for the memorized IC should fail fast.
             final ImeEvent result = expectCommand(stream,
                     session.callCommitText("text", 1,
-                            new TextAttribute.TextAttributeBuilder().setTextConversionSuggestions(
+                            new TextAttribute.Builder().setTextConversionSuggestions(
                                     Collections.singletonList("test")).build()),
                     TIMEOUT);
             // CAVEAT: this behavior is a bit questionable and may change in a future version.
@@ -2169,7 +2169,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         final int expectedNewCursorPosition = 123;
         final ArrayList<String> expectedSuggestions = new ArrayList<>();
         expectedSuggestions.add("test");
-        final TextAttribute expectedTextAttribute = new TextAttribute.TextAttributeBuilder()
+        final TextAttribute expectedTextAttribute = new TextAttribute.Builder()
                 .setTextConversionSuggestions(expectedSuggestions).build();
         // Intentionally let the app return "false" to confirm that IME still receives "true".
         final boolean returnedResult = false;
@@ -2247,7 +2247,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
             // Now this API call on the memorized IC should fail fast.
             final ImeCommand command = session.callSetComposingText(
-                    "text", 1, new TextAttribute.TextAttributeBuilder()
+                    "text", 1, new TextAttribute.Builder()
                             .setTextConversionSuggestions(Collections.singletonList("test"))
                             .build());
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
@@ -2373,7 +2373,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
         final int expectedEnd = 17;
         final ArrayList<String> expectedSuggestions = new ArrayList<>();
         expectedSuggestions.add("test");
-        final TextAttribute expectedTextAttribute = new TextAttribute.TextAttributeBuilder()
+        final TextAttribute expectedTextAttribute = new TextAttribute.Builder()
                 .setTextConversionSuggestions(expectedSuggestions).build();
         // Intentionally let the app return "false" to confirm that IME still receives "true".
         final boolean returnedResult = false;
@@ -2449,7 +2449,7 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
 
             // Now this API call on the memorized IC should fail fast.
             final ImeCommand command = session.callSetComposingRegion(1, 23,
-                    new TextAttribute.TextAttributeBuilder().setTextConversionSuggestions(
+                    new TextAttribute.Builder().setTextConversionSuggestions(
                             Collections.singletonList("test")).build());
             final ImeEvent result = expectCommand(stream, command, TIMEOUT);
             // CAVEAT: this behavior is a bit questionable and may change in a future version.

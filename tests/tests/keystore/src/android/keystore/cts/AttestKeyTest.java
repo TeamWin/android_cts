@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
@@ -142,8 +143,10 @@ public class AttestKeyTest {
     }
 
     @Test
-    public void testAttestKeySecurityLevelMismatch() throws Exception {
-        TestUtils.assumeStrongBox();
+    public void testStrongBoxCannotAttestToTeeKey() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assumeTrue("Can only test with strongbox keymint",
+                TestUtils.getFeatureVersionKeystoreStrongBox(context) >= Attestation.KM_VERSION_KEYMINT_1);
 
         final String strongBoxAttestKeyAlias = "nonAttestKey";
         final String attestedKeyAlias = "attestedKey";
@@ -165,6 +168,28 @@ public class AttestKeyTest {
         }
     }
 
+    @Test
+    public void testTeeCannotAttestToStrongBoxKey() throws Exception {
+        TestUtils.assumeStrongBox();
+
+        final String teeAttestKeyAlias = "nonAttestKey";
+        generateKeyPair(KEY_ALGORITHM_EC,
+                new KeyGenParameterSpec.Builder(teeAttestKeyAlias, PURPOSE_ATTEST_KEY).build());
+
+        try {
+            generateKeyPair(KEY_ALGORITHM_EC,
+                    new KeyGenParameterSpec.Builder("attestedKey", PURPOSE_SIGN)
+                            .setAttestationChallenge("challenge".getBytes())
+                            .setAttestKeyAlias(teeAttestKeyAlias)
+                            .setIsStrongBoxBacked(true)
+                            .build());
+            fail("Expected exception.");
+        } catch (InvalidAlgorithmParameterException e) {
+            assertThat(e.getMessage(),
+                    is("Invalid security level: Cannot sign StrongBox key with non-StrongBox "
+                            + "attestKey"));
+        }
+    }
     private void assumeAttestKey() {
         PackageManager packageManager =
                 InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();

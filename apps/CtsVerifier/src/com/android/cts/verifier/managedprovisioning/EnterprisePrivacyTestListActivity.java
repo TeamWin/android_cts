@@ -23,6 +23,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.provider.Settings;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
@@ -30,6 +31,7 @@ import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
+import com.android.cts.verifier.features.FeatureUtil;
 
 /**
  * Test class to verify privacy information is shown for devices managed by a Device Owner.
@@ -145,15 +147,17 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 R.string.enterprise_privacy_security_logging_info,
                 R.string.enterprise_privacy_retrieve_security_logs,
                 CommandReceiverActivity.COMMAND_RETRIEVE_SECURITY_LOGS));
+        int installedAppsInfoResId = UserManager.isHeadlessSystemUserMode()
+                ? R.string.enterprise_privacy_enterprise_installed_apps_info_headless_system_user
+                : R.string.enterprise_privacy_enterprise_installed_apps_info;
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_ENTERPRISE_INSTALLED_APPS,
-                R.string.enterprise_privacy_enterprise_installed_apps,
-                R.string.enterprise_privacy_enterprise_installed_apps_info,
+                R.string.enterprise_privacy_enterprise_installed_apps, installedAppsInfoResId,
                 new ButtonInfo[] {
                         new ButtonInfo(R.string.enterprise_privacy_install,
-                                buildCommandIntent(
+                                buildCommandIntentForCurrentUser(
                                         CommandReceiverActivity.COMMAND_INSTALL_HELPER_PACKAGE)),
                         new ButtonInfo(R.string.enterprise_privacy_uninstall,
-                                buildCommandIntent(CommandReceiverActivity
+                                buildCommandIntentForCurrentUser(CommandReceiverActivity
                                         .COMMAND_UNINSTALL_HELPER_PACKAGE)),
                         new ButtonInfo(R.string.enterprise_privacy_open_settings,
                                 new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS))}));
@@ -175,11 +179,11 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 new ButtonInfo[] {
                         new ButtonInfo(R.string.enterprise_privacy_open_settings,
                                 new Intent(Settings.ACTION_ENTERPRISE_PRIVACY_SETTINGS)),
-                        new ButtonInfo(R.string.enterprise_privacy_reset, buildCommandIntent(
-                                CommandReceiverActivity
+                        new ButtonInfo(R.string.enterprise_privacy_reset,
+                                buildCommandIntentForCurrentUser(CommandReceiverActivity
                                         .COMMAND_CLEAR_PERSISTENT_PREFERRED_ACTIVITIES)),
                         new ButtonInfo(R.string.enterprise_privacy_set_default_apps,
-                                buildCommandIntent(CommandReceiverActivity
+                                buildCommandIntentForCurrentUser(CommandReceiverActivity
                                         .COMMAND_ADD_PERSISTENT_PREFERRED_ACTIVITIES))}));
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_DEFAULT_IME,
                 R.string.enterprise_privacy_default_ime,
@@ -257,7 +261,8 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                                         CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
                                         .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
                                                 "Foo, Inc."))}));
-        if (Utils.isLockscreenSupported(this)) {
+        if (Utils.isLockscreenSupported(this)
+                && FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)) {
             adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_KEYGUARD,
                     R.string.enterprise_privacy_keyguard,
                     R.string.enterprise_privacy_keyguard_info,

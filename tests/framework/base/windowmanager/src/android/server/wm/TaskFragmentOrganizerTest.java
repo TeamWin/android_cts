@@ -19,10 +19,11 @@ package android.server.wm;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -35,6 +36,8 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowContextTests.TestActivity;
 import android.server.wm.WindowManagerState.Task;
 import android.server.wm.WindowManagerState.TaskFragment;
+import android.server.wm.jetpack.second.Components;
+import android.view.SurfaceControl;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
@@ -42,10 +45,15 @@ import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tests that verify the behavior of {@link TaskFragmentOrganizer}.
  *
@@ -230,22 +238,16 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testDeleteTaskFragment() {
-        final TaskFragmentCreationParams params = generateTaskFragCreationParams();
-        final IBinder taskFragToken = params.getFragmentToken();
-
-        WindowContainerTransaction wct = new WindowContainerTransaction()
-                .createTaskFragment(params);
-        mTaskFragmentOrganizer.applyTransaction(wct);
-        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
-
-        TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
-        assertEmptyTaskFragment(info, taskFragToken);
+        final TaskFragmentInfo taskFragmentInfo = createTaskFragment(null);
+        final IBinder taskFragToken = taskFragmentInfo.getFragmentToken();
+        assertEmptyTaskFragment(taskFragmentInfo, taskFragmentInfo.getFragmentToken());
 
         mWmState.computeState(mOwnerActivityName);
         final int originalTaskFragCount = mWmState.getRootTask(mOwnerTaskId).getTaskFragments()
                 .size();
 
-        wct = new WindowContainerTransaction().deleteTaskFragment(info.getToken());
+        WindowContainerTransaction wct = new WindowContainerTransaction()
+                .deleteTaskFragment(taskFragmentInfo.getToken());
         mTaskFragmentOrganizer.applyTransaction(wct);
 
         mTaskFragmentOrganizer.waitForTaskFragmentRemoved();
@@ -284,6 +286,86 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         // must be resumed.
         embeddedActivity.finish();
         waitAndAssertResumedActivity(mOwnerActivityName, "Activity must be resumed");
+    }
+
+    /**
+     * Verifies the that config changing transactions are allowed for task fragments embedded by the
+     * same UID.
+     */
+    @Test
+    public void testTaskFragmentConfigChange_allowedTrustedMode_sameUid() {
+        final TaskFragmentInfo taskFragmentInfo = createTaskFragment(mLaunchingActivity);
+
+        List<WindowContainerTransaction> transactions = createConfigChangingTransactions(
+                taskFragmentInfo);
+        for (WindowContainerTransaction wct : transactions) {
+            mTaskFragmentOrganizer.applyTransaction(wct);
+        }
+    }
+
+    /**
+     * Verifies the that config changing transactions are not allowed for task fragments embedded in
+     * untrusted mode.
+     */
+    @Test
+    public void testTaskFragmentConfigChange_disallowedUntrustedMode() {
+        final TaskFragmentInfo taskFragmentInfo = createTaskFragment(
+                Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
+
+        List<WindowContainerTransaction> transactions = createConfigChangingTransactions(
+                taskFragmentInfo);
+        for (WindowContainerTransaction wct : transactions) {
+            boolean exceptionTriggered = false;
+            try {
+                mTaskFragmentOrganizer.applyTransaction(wct);
+            } catch (SecurityException e) {
+                exceptionTriggered = true;
+            }
+            assertTrue(exceptionTriggered);
+        }
+    }
+
+    /**
+     * Builds, runs and waits for completion of task fragment creation transaction.
+     * @param componentName name of the activity to launch in the TF, or {@code null} if none.
+     * @return token of the created task fragment.
+     */
+    private TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName) {
+        final TaskFragmentCreationParams params = generateTaskFragCreationParams();
+        final IBinder taskFragToken = params.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(params);
+        if (componentName != null) {
+            wct.startActivityInTaskFragment(taskFragToken, mOwnerToken,
+                    new Intent().setComponent(componentName), null /* activityOptions */);
+        }
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+
+        if (componentName != null) {
+            mWmState.waitForActivityState(componentName, WindowManagerState.STATE_RESUMED);
+        }
+
+        return mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+    }
+
+    private List<WindowContainerTransaction> createConfigChangingTransactions(
+            @NonNull TaskFragmentInfo taskFragmentInfo) {
+        final WindowContainerToken wct = taskFragmentInfo.getToken();
+        List<WindowContainerTransaction> transactionList = new ArrayList<>();
+
+        // Transaction that puts the task fragment outside of parent bounds
+        Task parentTask = mWmState.getRootTask(mOwnerActivity.getTaskId());
+        Rect outOfBoundsRect = new Rect(parentTask.mBounds);
+        outOfBoundsRect.offset(10, 10);
+        transactionList.add(new WindowContainerTransaction()
+                .setBounds(wct, outOfBoundsRect));
+
+        // SurfaceControl transactions
+        transactionList.add(new WindowContainerTransaction()
+                .setBoundsChangeTransaction(wct, new SurfaceControl.Transaction()));
+
+        return transactionList;
     }
 
     @NonNull

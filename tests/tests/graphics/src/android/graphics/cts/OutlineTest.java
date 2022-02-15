@@ -162,17 +162,17 @@ public class OutlineTest {
         Rect outRect = new Rect();
         outline.setOval(0, 0, 50, 51); // different x & y radii, so not round rect
         assertFalse(outline.getRect(outRect)); // not round rect, doesn't work
-        assertFalse(outline.canClip()); // not round rect, doesn't work
+        assertTrue(outline.canClip());
         assertFalse(outline.isEmpty());
 
         outline.setOval(0, 0, 50, 50); // same x & y radii, so round rect
         assertTrue(outline.getRect(outRect)); // is round rect, so works
-        assertTrue(outline.canClip()); // is round rect, so works
+        assertTrue(outline.canClip());
         assertFalse(outline.isEmpty());
 
         outline.setOval(new Rect(0, 0, 50, 50)); // same x & y radii, so round rect
         assertTrue(outline.getRect(outRect)); // is round rect, so works
-        assertTrue(outline.canClip()); // is round rect, so works
+        assertTrue(outline.canClip());
         assertFalse(outline.isEmpty());
     }
 
@@ -187,6 +187,8 @@ public class OutlineTest {
 
         path.addCircle(50, 50, 50, Path.Direction.CW);
         outline.setPath(path);
+        assertTrue(outline.canClip());
+
         assertFalse(outline.isEmpty());
     }
 

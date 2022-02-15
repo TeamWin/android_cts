@@ -45,7 +45,10 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
 
     val sensorPrivacyManager = context.getSystemService(SensorPrivacyManager::class.java)!!
     val locationManager = context.getSystemService(LocationManager::class.java)!!
-    lateinit var originalEnabledValue: String
+    private val originalEnabledValue = callWithShellPermissionIdentity {
+        DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
+                WARNING_BANNER_ENABLED, false.toString())
+    }
 
     private val permToLabel = mapOf(CAMERA to "privdash_label_camera",
             MICROPHONE to "privdash_label_microphone",
@@ -56,17 +59,15 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
             LOCATION to "blocked_location_title")
 
     @Before
-    fun install() {
+    fun setup() {
+        Assume.assumeFalse(isTv)
+        // TODO(b/203784852) Auto will eventually support the blocked sensor banner, but there won't
+        // be support in T or below
+        Assume.assumeFalse(isAutomotive)
         installPackage(APP_APK_PATH_31)
-    }
-
-    @Before
-    fun enableWarningBanner() {
         runWithShellPermissionIdentity {
-            originalEnabledValue = DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
-                    WARNING_BANNER_ENABLED, false.toString())
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    WARNING_BANNER_ENABLED, true.toString(), false)
+                WARNING_BANNER_ENABLED, true.toString(), false)
         }
     }
 
@@ -102,6 +103,7 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
             setSensor(sensor, false)
         }
     }
+
     @Test
     fun testCameraCardDisplayed() {
         Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(CAMERA))
@@ -123,20 +125,19 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
         if (sensor == LOCATION) {
             runWithShellPermissionIdentity {
                 locationManager.setLocationEnabledForUser(!enable,
-                        android.os.Process.myUserHandle())
-            }
-            if (!enable) {
-                try {
-                    waitFindObject(By.text("CLOSE"))
-                    click(By.text("CLOSE"))
-                } catch (e: Exception) {
-                    // Do nothing, warning didn't show up so test can proceed
+                    android.os.Process.myUserHandle())
+                if (enable) {
+                    try {
+                        waitFindObjectOrNull(By.text("CLOSE"))?.click()
+                    } catch (e: Exception) {
+                        // Do nothing, warning didn't show up so test can proceed
+                    }
                 }
             }
         } else {
             runWithShellPermissionIdentity {
                 sensorPrivacyManager.setSensorPrivacy(SensorPrivacyManager.Sources.OTHER,
-                        sensor, enable)
+                    sensor, enable)
             }
         }
     }

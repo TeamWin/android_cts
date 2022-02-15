@@ -34,6 +34,7 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).GenericDeviceInfo \
   $(DEVICE_INFO_PACKAGE).GlesStubActivity \
   $(DEVICE_INFO_PACKAGE).GraphicsDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).HapticsDeviceInfo \
   $(DEVICE_INFO_PACKAGE).LocaleDeviceInfo \
   $(DEVICE_INFO_PACKAGE).MediaDeviceInfo \
   $(DEVICE_INFO_PACKAGE).MemoryDeviceInfo \

@@ -19,11 +19,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import androidx.annotation.Nullable;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
+import androidx.annotation.Nullable;
+
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -78,23 +77,31 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
         return create(context, intentFilter, /* checker= */ null);
     }
 
-    public static BlockingBroadcastReceiver create(Context context, String expectedAction, Function<Intent, Boolean> checker) {
+    public static BlockingBroadcastReceiver create(Context context, String expectedAction,
+            Function<Intent, Boolean> checker) {
         return create(context, new IntentFilter(expectedAction), checker);
     }
 
-    public static BlockingBroadcastReceiver create(Context context, IntentFilter intentFilter, Function<Intent, Boolean> checker) {
+    public static BlockingBroadcastReceiver create(Context context, IntentFilter intentFilter,
+            Function<Intent, Boolean> checker) {
         return create(context, Set.of(intentFilter), checker);
     }
 
-    public static BlockingBroadcastReceiver create(Context context, Set<IntentFilter> intentFilters) {
+    public static BlockingBroadcastReceiver create(Context context,
+            Set<IntentFilter> intentFilters) {
         return create(context, intentFilters, /* checker= */ null);
     }
 
-    public static BlockingBroadcastReceiver create(Context context, Set<IntentFilter> intentFilters, Function<Intent, Boolean> checker) {
+    public static BlockingBroadcastReceiver create(Context context, Set<IntentFilter> intentFilters,
+            Function<Intent, Boolean> checker) {
         BlockingBroadcastReceiver blockingBroadcastReceiver =
                 new BlockingBroadcastReceiver(context, intentFilters, checker);
 
         return blockingBroadcastReceiver;
+    }
+
+    public BlockingBroadcastReceiver(Context context) {
+        this(context, Set.of());
     }
 
     public BlockingBroadcastReceiver(Context context, String expectedAction) {
@@ -143,7 +150,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
 
     public BlockingBroadcastReceiver register() {
         for (IntentFilter intentFilter : mIntentFilters) {
-            mContext.registerReceiver(this, intentFilter);
+            mContext.registerReceiver(this, intentFilter,
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
         }
 
         return this;
@@ -153,7 +161,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
         for (IntentFilter intentFilter : mIntentFilters) {
             mContext.registerReceiverForAllUsers(
                     this, intentFilter, /* broadcastPermission= */ null,
-                    /* scheduler= */ null);
+                    /* scheduler= */ null,
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
         }
 
         return this;
@@ -173,7 +182,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
      * Wait until the broadcast and return the received broadcast intent. {@code null} is returned
      * if no broadcast with expected action is received within 60 seconds.
      */
-    public @Nullable Intent awaitForBroadcast() {
+    public @Nullable
+    Intent awaitForBroadcast() {
         return awaitForBroadcast(DEFAULT_TIMEOUT_SECONDS * 1000);
     }
 
@@ -193,7 +203,8 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver implements Auto
      * Wait until the broadcast and return the received broadcast intent. {@code null} is returned
      * if no broadcast with expected action is received within the given timeout.
      */
-    public @Nullable Intent awaitForBroadcast(long timeoutMillis) {
+    public @Nullable
+    Intent awaitForBroadcast(long timeoutMillis) {
         if (mReceivedIntent != null) {
             return mReceivedIntent;
         }

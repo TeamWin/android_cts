@@ -35,6 +35,14 @@
     <application
         android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory">
 
+        <activity android:name="android.testapp.MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.testapp.activity" android:exported="true" />
 
         <activity android:name="android.testapp.CrossProfileSharingActivity"

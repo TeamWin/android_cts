@@ -18,6 +18,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.tv.cts">
 
+    <permission android:name="android.media.tv.cts.TvInputManagerTest.PERMISSION_GRANTED"/>
+    <permission android:name="android.media.tv.cts.TvInputManagerTest.PERMISSION_UNGRANTED"/>
+    <uses-permission android:name="android.media.tv.cts.TvInputManagerTest.PERMISSION_GRANTED"/>
+
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.INJECT_EVENTS"/>
 
@@ -90,6 +94,17 @@
                  android:resource="@xml/stub_tv_input_service"/>
         </service>
 
+        <service android:name="android.media.tv.cts.TvInputManagerTest$StubHardwareTvInputService"
+             android:enabled="false"
+             android:permission="android.permission.BIND_TV_INPUT"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.tv.TvInputService" />
+            </intent-filter>
+            <meta-data android:name="android.media.tv.input"
+                       android:resource="@xml/stub_tv_input_service" />
+        </service>
+
         <service android:name="android.media.tv.cts.TvInputServiceTest$CountingTvInputService"
              android:permission="android.permission.BIND_TV_INPUT"
              android:exported="true">
@@ -121,10 +136,21 @@
                  android:resource="@xml/stub_tv_input_service"/>
         </service>
 
-        <service android:name="android.media.tv.interactive.cts.StubTvIAppService"
+        <service android:name="android.media.tv.interactive.cts.StubTvInputService2"
+             android:permission="android.permission.BIND_TV_INPUT"
              android:exported="true">
             <intent-filter>
-                <action android:name="android.media.tv.interactive.TvIAppService"/>
+                <action android:name="android.media.tv.TvInputService"/>
+            </intent-filter>
+            <meta-data android:name="android.media.tv.input"
+                 android:resource="@xml/stub_tv_input_service"/>
+        </service>
+
+        <service android:name="android.media.tv.interactive.cts.StubTvInteractiveAppService"
+             android:permission="android.permission.BIND_TV_INTERACTIVE_APP"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.tv.interactive.TvInteractiveAppService"/>
             </intent-filter>
             <meta-data android:name="android.media.tv.interactive.app"
                  android:resource="@xml/stub_tv_iapp_service"/>
@@ -145,7 +171,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.media.tv.cts.interactive.TvIAppViewStubActivity"
+        <activity android:name="android.media.tv.interactive.cts.TvInteractiveAppViewStubActivity"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

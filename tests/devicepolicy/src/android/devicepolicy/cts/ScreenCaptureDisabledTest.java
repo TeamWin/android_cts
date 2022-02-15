@@ -37,8 +37,8 @@ import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.utils.Poll;
@@ -87,7 +87,7 @@ public final class ScreenCaptureDisabledTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = ScreenCaptureDisabled.class)
+    @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_false_works() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
@@ -105,7 +105,7 @@ public final class ScreenCaptureDisabledTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = ScreenCaptureDisabled.class)
+    @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_true_works() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
@@ -123,7 +123,7 @@ public final class ScreenCaptureDisabledTest {
     }
 
     @Test
-    @NegativePolicyTest(policy = ScreenCaptureDisabled.class)
+    @PolicyDoesNotApplyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_true_doesNotApply() {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, true);
@@ -132,7 +132,7 @@ public final class ScreenCaptureDisabledTest {
     }
 
     @Test
-    @NegativePolicyTest(policy = ScreenCaptureDisabled.class)
+    @PolicyDoesNotApplyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @EnsureScreenIsOn
     public void setScreenCaptureDisabled_true_screenCaptureWorks() {
@@ -142,7 +142,7 @@ public final class ScreenCaptureDisabledTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = ScreenCaptureDisabled.class)
+    @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @SlowApiTest("Screenshot policy can take minutes to propagate")
     @EnsureScreenIsOn
@@ -153,7 +153,7 @@ public final class ScreenCaptureDisabledTest {
     }
 
     @Test
-    @PositivePolicyTest(policy = ScreenCaptureDisabled.class)
+    @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @EnsureScreenIsOn
     public void setScreenCaptureDisabled_false_screenCaptureWorks() {

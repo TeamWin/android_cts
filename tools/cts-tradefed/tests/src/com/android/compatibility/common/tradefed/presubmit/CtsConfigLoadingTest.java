@@ -112,8 +112,6 @@ public class CtsConfigLoadingTest {
                             // test/suite_harness/OWNERS.
                             "CtsSliceTestCases.config",
                             "CtsSampleDeviceTestCases.config",
-                            "CtsSampleMultiDeviceTestCases.config",
-                            "CtsSampleMoblyTestCases.config",
                             "CtsUsbTests.config",
                             "CtsGpuToolsHostTestCases.config",
                             "CtsEdiHostTestCases.config",

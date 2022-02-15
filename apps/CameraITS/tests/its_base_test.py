@@ -38,8 +38,7 @@ NOT_YET_MANDATED_ALL = 100
 NOT_YET_MANDATED = {
     'scene0': [['test_test_patterns', 30],
                ['test_tonemap_curve', 30]],
-    'scene1_1': [['test_ae_precapture_trigger', 28],
-                 ['test_channel_saturation', 29]],
+    'scene1_1': [['test_ae_precapture_trigger', 28]],
     'scene1_2': [],
     'scene2_a': [['test_jpeg_quality', 30]],
     'scene2_b': [['test_auto_per_frame_control', NOT_YET_MANDATED_ALL]],
@@ -84,10 +83,6 @@ class ItsBaseTest(base_test.BaseTestClass):
     else:
       self.lighting_cntl = 'None'
       self.lighting_ch = '1'
-    if self.user_params.get('chart_loc_arg'):
-      self.chart_loc_arg = self.user_params['chart_loc_arg']
-    else:
-      self.chart_loc_arg = ''
     if self.user_params.get('debug_mode'):
       self.debug_mode = True if self.user_params[
           'debug_mode'] == 'True' else False
@@ -128,8 +123,6 @@ class ItsBaseTest(base_test.BaseTestClass):
       lighting_control_utils.set_light_brightness(
       self.lighting_ch, 255, arduino_serial_port)
       logging.debug('Light is turned ON.')
-    else:
-      logging.info('Ensure lights ON')
 
   def _setup_devices(self, num):
     """Sets up each device in parallel if more than one device."""

@@ -30,9 +30,11 @@ java_library {
     srcs: ["src/java/**/*.java"],
     sdk_version: "test_current",
     static_libs: [
+        // androidx.test.runner depends on android.test classes from this library.
+        "android.test.base-minus-junit",
+        "androidx.test.runner",
+        "compatibility-device-util-axt",
         "cts-signature-common",
-        "repackaged.android.test.base",
-        "repackaged.android.test.runner",
     ],
 }
 
@@ -53,15 +55,13 @@ java_defaults {
     compile_multilib: "both",
 }
 
-// Defaults for signature api checks with dynamic config.
-java_defaults {
-    name: "signature-api-check-dynamic-config-defaults",
-    defaults: ["signature-api-check-defaults"],
-    defaults_visibility: [
-        "//cts/tests/signature:__subpackages__",
-    ],
-    static_libs: [
-        "cts-signature-with-dynamic-config",
+// Filegroup containing the jarjar rules that need to be applied to any test that checks for
+// accessibility (or inaccesibility) of android.test and junit classes from the android.test.base
+// and android.test.runner libraries.
+filegroup {
+    name: "cts-android-test-jarjar-rules",
+    srcs: [
+        "android-test-jarjar-rules.txt",
     ],
 }
 
@@ -99,5 +99,14 @@ java_defaults {
     ],
     jni_libs: [
         "libcts_dexchecker",
+    ],
+}
+
+// The CtsHiddenApiBlocklistApiDynamicConfig file is intended to be used by
+// multiple CtsHiddenApiBlocklist...TestCases.
+filegroup {
+    name: "CtsHiddenApiBlocklistApiDynamicConfig",
+    srcs: [
+      "CtsHiddenApiBlocklistApiDynamicConfig.dynamic",
     ],
 }

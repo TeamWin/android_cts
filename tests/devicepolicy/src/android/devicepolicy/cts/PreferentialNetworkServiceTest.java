@@ -37,7 +37,7 @@ import android.util.Range;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PreferentialNetworkService;
 import com.android.bedstead.nene.TestApis;
 import com.android.testutils.TestableNetworkCallback;
@@ -93,7 +93,7 @@ public final class PreferentialNetworkServiceTest {
      */
     @Test
     @EnsureHasPermission({ACCESS_NETWORK_STATE, NETWORK_SETTINGS})
-    @PositivePolicyTest(policy = PreferentialNetworkService.class)
+    @PolicyAppliesTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceEnabled_enableService_issueRequest() {
         // Expect a regular default network.
         final Network defaultNetwork = Objects.requireNonNull(sCm.getActiveNetwork(),
@@ -131,7 +131,7 @@ public final class PreferentialNetworkServiceTest {
      */
     @Test
     @EnsureHasPermission({ACCESS_NETWORK_STATE, NETWORK_SETTINGS})
-    @PositivePolicyTest(policy = PreferentialNetworkService.class)
+    @PolicyAppliesTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceEnabled_disableService_noIssueRequest() {
         // Expect a regular default network.
         final Network defaultNetwork = Objects.requireNonNull(sCm.getActiveNetwork(),

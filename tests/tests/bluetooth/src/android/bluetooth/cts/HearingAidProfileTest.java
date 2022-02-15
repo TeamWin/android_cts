@@ -16,6 +16,11 @@
 
 package android.bluetooth.cts;
 
+import static android.Manifest.permission.BLUETOOTH_CONNECT;
+
+import static org.junit.Assert.assertThrows;
+
+import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHearingAid;
@@ -30,13 +35,14 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 
-import java.io.IOException;
-import java.util.List;
+import androidx.test.InstrumentationRegistry;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test cases for {@link BluetoothHearingAid}.
@@ -61,6 +67,7 @@ public class HearingAidProfileTest extends AndroidTestCase {
     private BluetoothHearingAid mService;
     private BluetoothAdapter mBluetoothAdapter;
     private BroadcastReceiver mIntentReceiver;
+    private UiAutomation mUiAutomation;;
 
     private Condition mConditionProfileIsConnected;
     private ReentrantLock mProfileConnectedlock;
@@ -76,15 +83,14 @@ public class HearingAidProfileTest extends AndroidTestCase {
         if (!isBleSupported()) return;
         mIsBleSupported = true;
 
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+
         BluetoothManager manager = (BluetoothManager) mContext.getSystemService(
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
 
-        if (!BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext)) {
-            Log.e(TAG, "Unable to enable Bluetooth Adapter!");
-            assertTrue(mBluetoothAdapter.isEnabled());
-        }
-
+        assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
         mProfileConnectedlock = new ReentrantLock();
         mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
         mIsProfileReady = false;
@@ -99,10 +105,8 @@ public class HearingAidProfileTest extends AndroidTestCase {
     public void tearDown() {
         if (!mIsBleSupported) return;
 
-        if (!BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext)) {
-            Log.e(TAG, "Unable to disable Bluetooth Adapter!");
-            assertTrue(mBluetoothAdapter.isEnabled());
-        }
+        assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     /**
@@ -138,6 +142,24 @@ public class HearingAidProfileTest extends AndroidTestCase {
         // Dummy device should be disconnected
         assertEquals(connectionState, BluetoothProfile.STATE_DISCONNECTED);
     }
+
+    /**
+     * Basic test case to make sure that a fictional device is disconnected.
+     */
+    @MediumTest
+    public void test_setVolume() {
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
+            return;
+        }
+
+        waitForProfileConnect();
+        assertTrue(mIsProfileReady);
+        assertNotNull(mService);
+
+        // This should throw a SecurityException because no BLUETOOTH_PRIVILEGED permission
+        assertThrows(SecurityException.class, () -> mService.setVolume(42));
+    }
+
 
     /**
      * Basic test case to get the list of connected Hearing Aid devices.

@@ -38,11 +38,11 @@ android_test {
         "cts",
         "general-tests",
         "mts-permission",
-        "sts",
     ],
 
     data: [
         ":CtsRoleTestApp",
         ":CtsRoleTestApp28",
+        ":CtsRoleTestApp33WithoutInCallService",
     ],
 }

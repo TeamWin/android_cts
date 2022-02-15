@@ -17,6 +17,7 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -36,6 +37,7 @@ import java.util.Locale;
 /**
  * Tests for APK signature verification during installation.
  */
+@Presubmit
 public class PkgInstallSignatureVerificationTest extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
@@ -1480,7 +1482,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
         // non-incremental upgrade with a mismatching key.
         assertInstallFailsWithError("v4-inc-to-v3-noninc-ec-p384-appv2.apk",
-                "signatures do not match previously installed version");
+                "signatures do not match newer version");
     }
 
     public void testV4IncToV3NonIncRotatedKeyUpgradeSucceeds() throws Exception {
@@ -1509,7 +1511,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
         // non-incremental upgrade with key rotation mismatch with key used in app v1.
         assertInstallFailsWithError("v4-inc-to-v3-noninc-ec-p384-rotated-ec-p256-appv2.apk",
-                "signatures do not match previously installed version");
+                "signatures do not match newer version");
     }
 
     public void testV4IncToV2NonIncSameKeyUpgradeSucceeds() throws Exception {
@@ -1538,7 +1540,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
         // non-incremental upgrade with a mismatching key.
         assertInstallFailsWithError("v4-inc-to-v2-noninc-ec-p384-appv2.apk",
-                "signatures do not match previously installed version");
+                "signatures do not match newer version");
     }
 
     public void testInstallV4UpdateAfterRotation() throws Exception {

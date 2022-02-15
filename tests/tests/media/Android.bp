@@ -14,66 +14,16 @@
 
 package {
     // See: http://go/android-license-faq
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // all of the 'license_kinds' from "cts_license"
-    // to get the below license kinds:
-    //   SPDX-license-identifier-Apache-2.0
-    //   SPDX-license-identifier-CC-BY
-    //   legacy_unencumbered
-    default_applicable_licenses: ["cts_license"],
+    default_applicable_licenses: [
+        "Android-Apache-2.0",
+        "cts_tests_tests_media_license",
+    ],
 }
 
-java_library {
-    name: "ctsmediautil",
-    srcs: [
-        "common/src/android/media/cts/CodecImage.java",
-        "common/src/android/media/cts/YUVImage.java",
-        "common/src/android/media/cts/CodecUtils.java",
-        "common/src/android/media/cts/CodecState.java",
-        "common/src/android/media/cts/MediaCodecTunneledPlayer.java",
-        "common/src/android/media/cts/MediaTimeProvider.java",
-        "common/src/android/media/cts/NonBlockingAudioTrack.java",
-    ],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "platform-test-annotations",
-    ],
-    platform_apis: true,
-    min_sdk_version: "29",
-    target_sdk_version: "31",
-}
-
-// Build the res and asset library to
-// share with android.mediadrm.cts package.
-android_library {
-    name: "cts-media-res-lib",
-    asset_dirs: ["assets"],
-    resource_dirs: ["res"],
-    min_sdk_version: "29",
-    target_sdk_version: "31",
-}
-
-android_library {
-    name: "cts-media-common",
-    srcs: [
-        "common/src/**/*.java",
-    ],
-    static_libs: [
-        "androidx.heifwriter_heifwriter",
-        "androidx.test.core",
-        "androidx.test.ext.junit",
-        "compatibility-device-util-axt",
-        "junit",
-        "platform-test-annotations",
-    ],
-    platform_apis: true,
-    libs: [
-        "org.apache.http.legacy",
-        "android.test.base",
-        "android.test.runner",
-    ],
-    min_sdk_version: "29",
-    target_sdk_version: "31",
+license {
+    name: "cts_tests_tests_media_license",
+    license_kinds: ["SPDX-license-identifier-CC-BY-3.0"],
+    license_text: ["LICENSE_CC_BY"],
 }
 
 android_test {
@@ -91,10 +41,8 @@ android_test {
         "hamcrest-library",
         "ctstestserver",
         "cts-media-common",
-        "cts-media-res-lib",
         "junit",
         "junit-params",
-        "ndkaudio",
         "testng",
         "truth-prebuilt",
         "mockito-target-minus-junit4",
@@ -104,17 +52,14 @@ android_test {
     jni_libs: [
         "libctscodecutils_jni",
         "libctsimagereader_jni",
-        "libctsmediadrm_jni",
         "libctsmediacodec_jni",
+        "libctsmediacommon_jni",
         "libnativehelper_compat_libc++",
-        "libndkaudioLib",
     ],
     asset_dirs: ["assets"],
     resource_dirs: ["res"],
     aaptflags: [
         "--auto-add-overlay",
-        // Give com.android.mediadrm.cts Java files access to the R class
-        "--extra-packages com.android.mediadrm.cts",
 
         // Do not compress these files:
         "-0 .vp9",

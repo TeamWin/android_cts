@@ -45,9 +45,11 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
+
+import com.android.compatibility.common.util.PropertyUtil;
+
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.android.compatibility.common.util.PropertyUtil;
 
 import junit.framework.Assert;
 
@@ -223,6 +225,81 @@ public class SensorTest extends SensorTestCase {
                 + " " + sensor.getName(), sensor.getMaximumRange() <= 360);
         } else {
             assertNull(sensor);
+        }
+
+        validateLimitedAxesImuSensorType(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES,
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES);
+
+        validateLimitedAxesImuSensorType(Sensor.TYPE_GYROSCOPE_LIMITED_AXES,
+                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES);
+
+        validateLimitedAxesImuSensorType(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED,
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED);
+
+        validateLimitedAxesImuSensorType(Sensor.TYPE_GYROSCOPE_LIMITED_AXES_UNCALIBRATED,
+                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
+
+        sensor =  mSensorManager.getDefaultSensor(Sensor.TYPE_HEADING);
+        boolean hasHeadingSensor = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_HEADING);
+        if (hasHeadingSensor) {
+            assertNotNull(sensor);
+            assertEquals(Sensor.TYPE_HEADING, sensor.getType());
+            assertSensorValues(sensor);
+            assertTrue("Max range must not be greater or equal to 360. Range="
+                    + sensor.getMaximumRange() + " " + sensor.getName(),
+                    sensor.getMaximumRange() < 360);
+        } else {
+            assertNull(sensor);
+        }
+    }
+
+    private void validateLimitedAxesImuSensorType(int sensorType, String systemFeature) {
+        Sensor sensor = mSensorManager.getDefaultSensor(sensorType);
+        boolean hasSensorFeature = getContext().getPackageManager().hasSystemFeature(systemFeature);
+        if (hasSensorFeature) {
+            assertNotNull(sensor);
+        }
+
+        // Virtual sensors might exist but not have a package manager feature defined.
+        if (sensor != null) {
+            assertEquals(sensorType, sensor.getType());
+            assertSensorValues(sensor);
+        }
+    }
+
+    public void testLimitedAxesImuConfiguration() {
+        boolean hasAccelerometer = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER);
+        boolean hasLimitedAxesAccelerometer = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES);
+        boolean hasLimitedAxesAccelerometerUncalibrated =
+                getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED);
+
+        // Only the 3-axis accelerometer or the limited axes accelerometer should be implemented
+        // by the system at the same time. The composite sensors for limited axes accelerometer can
+        // still be present when a 3-axis accelerometer is supported.
+        if (hasAccelerometer) {
+            assertFalse(hasLimitedAxesAccelerometer);
+            assertFalse(hasLimitedAxesAccelerometerUncalibrated);
+        }
+
+        boolean hasGyroscope = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_GYROSCOPE);
+        boolean hasLimitedAxesGyroscope = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES);
+        boolean hasLimitedAxesGyroscopeUncalibrated =
+                getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
+
+
+        // Only the 3-axis gyroscope or the limited axes gyroscope should be implemented by the
+        // system at the same time. The composite sensors for limited axes gyroscope can still be
+        // present when a 3-axis gyroscope is supported.
+        if (hasGyroscope) {
+            assertFalse(hasLimitedAxesGyroscope);
+            assertFalse(hasLimitedAxesGyroscopeUncalibrated);
         }
     }
 

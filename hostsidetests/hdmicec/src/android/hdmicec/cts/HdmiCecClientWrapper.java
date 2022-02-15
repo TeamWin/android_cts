@@ -205,7 +205,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * through the output console of the cec-communication channel.
      */
     public void sendCecMessage(CecOperand message) throws CecClientWrapperException {
-        sendCecMessage(LogicalAddress.BROADCAST, targetDevice, message, "");
+        sendCecMessage(message, "");
+    }
+
+    /**
+     * Sends a CEC message with source marked as broadcast to the device passed in the constructor
+     * through the output console of the cec-communication channel.
+     */
+    public void sendCecMessage(CecOperand message, String params) throws CecClientWrapperException {
+        sendCecMessage(LogicalAddress.BROADCAST, targetDevice, message, params);
     }
 
     /**
@@ -316,6 +324,31 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         }
     }
 
+    public void sendMultipleUserControlPressAndRelease(
+            LogicalAddress source, List<Integer> keycodes) throws CecClientWrapperException {
+        try {
+            for (int keycode : keycodes) {
+                String key = String.format("%02x", keycode);
+                mOutputConsole.write(
+                        "tx "
+                                + source
+                                + targetDevice
+                                + ":"
+                                + CecOperand.USER_CONTROL_PRESSED
+                                + ":"
+                                + key);
+                mOutputConsole.newLine();
+                mOutputConsole.write(
+                        "tx " + source + targetDevice + ":" + CecOperand.USER_CONTROL_RELEASED);
+                mOutputConsole.newLine();
+                mOutputConsole.flush();
+                TimeUnit.MILLISECONDS.sleep(200);
+            }
+        } catch (InterruptedException | IOException ioe) {
+            throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
+        }
+    }
+
     /**
      * Sends a <USER_CONTROL_PRESSED> and <USER_CONTROL_RELEASED> from source to device through the
      * output console of the cec-communication channel with the mentioned keycode.
@@ -340,6 +373,37 @@ public final class HdmiCecClientWrapper extends ExternalResource {
                     "tx " + source + destination + ":" + CecOperand.USER_CONTROL_RELEASED);
             mOutputConsole.flush();
         } catch (IOException | InterruptedException ioe) {
+            throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
+        }
+    }
+
+    /**
+     * Sends a {@code <UCP>} with and additional param. This is used to check that the DUT ignores
+     * additional params in an otherwise correct message.
+     */
+    public void sendUserControlPressAndReleaseWithAdditionalParams(
+            LogicalAddress source, LogicalAddress destination, int keyCode, int additionalParam)
+            throws CecClientWrapperException {
+        String key = String.format("%02x", keyCode);
+        String command =
+                "tx "
+                        + source
+                        + destination
+                        + ":"
+                        + CecOperand.USER_CONTROL_PRESSED
+                        + ":"
+                        + key
+                        + ":"
+                        + additionalParam;
+
+        try {
+            mOutputConsole.write(command);
+            mOutputConsole.newLine();
+            mOutputConsole.write(
+                    "tx " + source + destination + ":" + CecOperand.USER_CONTROL_RELEASED);
+            mOutputConsole.newLine();
+            mOutputConsole.flush();
+        } catch (IOException ioe) {
             throw new CecClientWrapperException(ErrorCodes.WriteConsole, ioe);
         }
     }
@@ -729,6 +793,38 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             endTime = System.currentTimeMillis();
         }
         throw new CecClientWrapperException(ErrorCodes.CecMessageNotFound, expectedMessage.name());
+    }
+
+    public void checkNoMessagesSentFromDevice(int timeoutMillis)
+            throws CecClientWrapperException {
+        checkCecClient();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        Pattern pattern =
+                Pattern.compile("(.*>>)(.*?)("
+                                + targetDevice
+                                + "\\p{XDigit}):(.*)",
+                        Pattern.CASE_INSENSITIVE);
+        while ((endTime - startTime <= timeoutMillis)) {
+            try {
+                if (mInputConsole.ready()) {
+                    String line = mInputConsole.readLine();
+                    if (pattern.matcher(line).matches()) {
+                        CLog.v("Found unexpected message in " + line);
+                        throw new CecClientWrapperException(
+                                ErrorCodes.CecMessageFound,
+                                CecMessage.getOperand(line)
+                                        + " from "
+                                        + targetDevice
+                                        + " with params "
+                                        + CecMessage.getParamsAsString(line));
+                    }
+                }
+            } catch (IOException ioe) {
+                throw new CecClientWrapperException(ErrorCodes.ReadConsole, ioe);
+            }
+            endTime = System.currentTimeMillis();
+        }
     }
 
     /**

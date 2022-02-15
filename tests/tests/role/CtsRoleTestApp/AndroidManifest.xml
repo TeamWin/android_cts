@@ -20,7 +20,6 @@
      xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.app.role.cts.app">
 
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.SEND_SMS" />
 
     <application android:label="CtsRoleTestApp">
@@ -55,7 +54,20 @@
                 <data android:scheme="tel" />
             </intent-filter>
         </activity>
-
+        <service
+            android:name=".DialerInCallService"
+            android:permission="android.permission.BIND_INCALL_SERVICE"
+            android:exported="true">
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_UI"
+                android:value="true"/>
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_CAR_MODE_UI"
+                android:value="false"/>
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
         <!-- Sms -->
         <activity
             android:name=".SmsSendToActivity"

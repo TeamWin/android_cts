@@ -23,10 +23,11 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-import static com.android.bedstead.harrier.DeviceState.UserType.ANY;
-import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 import static com.android.bedstead.harrier.OptionalBoolean.FALSE;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
+import static com.android.bedstead.harrier.UserType.ANY;
+import static com.android.bedstead.harrier.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.UserType.SECONDARY_USER;
 import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE_PACKAGE;
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.DEVICE_OWNER;
@@ -45,6 +46,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
+import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
@@ -56,6 +59,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -368,14 +372,14 @@ public class DeviceStateTest {
     }
 
     @EnsureHasSecondaryUser
-    @EnsureHasProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    @EnsureHasProfileOwner(onUser = UserType.SECONDARY_USER)
     public void ensureHasProfileOwnerAnnotation_otherUser_setsProfileOwner() {
         assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser()))
                 .isNotNull();
     }
 
     @EnsureHasSecondaryUser
-    @EnsureHasNoProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    @EnsureHasNoProfileOwner(onUser = UserType.SECONDARY_USER)
     public void ensureHasNoProfileOwnerAnnotation_otherUser_profileOwnerIsNotSet() {
         assertThat(TestApis.devicePolicy().getProfileOwner(sDeviceState.secondaryUser())).isNull();
     }
@@ -394,14 +398,14 @@ public class DeviceStateTest {
     }
 
     @EnsureHasSecondaryUser
-    @EnsureHasProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    @EnsureHasProfileOwner(onUser = UserType.SECONDARY_USER)
     public void profileOwner_otherUser_profileOwnerIsSet_returnsProfileOwner() {
         assertThat(sDeviceState.profileOwner(sDeviceState.secondaryUser())).isNotNull();
     }
 
     @Test
     @EnsureHasSecondaryUser
-    @EnsureHasNoProfileOwner(onUser = DeviceState.UserType.SECONDARY_USER)
+    @EnsureHasNoProfileOwner(onUser = UserType.SECONDARY_USER)
     public void profileOwner_otherUser_profileOwnerIsNotSet_throwsException() {
         assertThrows(IllegalStateException.class, sDeviceState::profileOwner);
     }
@@ -409,7 +413,7 @@ public class DeviceStateTest {
     @Test
     public void profileOwner_userType_onUserIsNull_throwsException() {
         assertThrows(NullPointerException.class,
-                () -> sDeviceState.profileOwner((DeviceState.UserType) null));
+                () -> sDeviceState.profileOwner((UserType) null));
     }
 
     @Test
@@ -825,5 +829,29 @@ public class DeviceStateTest {
                     .setRequiredStrongAuthTimeout(
                             sDeviceState.dpc().componentName(), previousRequiredStrongAuthTimeout);
         }
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    @OtherUser(SECONDARY_USER)
+    public void otherUserAnnotation_otherUserReturnsCorrectType() {
+        assertThat(sDeviceState.otherUser()).isEqualTo(sDeviceState.secondaryUser());
+    }
+
+    @Test
+    public void otherUser_noOtherUserSpecified_throwsException() {
+        assertThrows(IllegalStateException.class, () -> sDeviceState.otherUser());
+    }
+
+    @Test
+    @EnsureBluetoothEnabled
+    public void ensureBluetoothEnabledAnnotation_bluetoothIsEnabled() {
+        assertThat(TestApis.bluetooth().isEnabled()).isTrue();
+    }
+
+    @Test
+    @EnsureBluetoothDisabled
+    public void ensureBluetoothDisabledAnnotation_bluetoothIsDisabled() {
+        assertThat(TestApis.bluetooth().isEnabled()).isFalse();
     }
 }

@@ -36,6 +36,7 @@ android_test {
         "mockito-target-minus-junit4",
         "permission-test-util-lib",
         "testng",
+        "device_time_shell_utils",
     ],
     host_required: ["CtsBackupHostTestCases"],
     srcs: ["src/**/*.java"],

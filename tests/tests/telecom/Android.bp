@@ -76,6 +76,7 @@ android_test {
         "Api29InCallServiceTestApp/**/I*.aidl",
         "ThirdPtyDialerTestApp/**/*.java",
         "ThirdPtyDialerTestAppTwo/**/*.java",
+        "CarModeTestAppSelfManaged/**/*.java",
         "CarModeTestAppTwo/**/*.java",
     ],
     exclude_srcs: [

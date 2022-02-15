@@ -16,9 +16,6 @@
 
 package android.hdmicec.cts.playback;
 
-import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -28,15 +25,15 @@ import android.hdmicec.cts.LogicalAddress;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HDMI CEC tests verifying power status related messages of the device (CEC 2.0 CTS Section 7.6)
@@ -52,16 +49,16 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
     private static final List<String> UCP_POWER_MSGS = new ArrayList<>(Arrays.asList(
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
-                    CecOperand.USER_CONTROL_PRESSED, HdmiCecConstants.CEC_CONTROL_POWER),
+                    CecOperand.USER_CONTROL_PRESSED, HdmiCecConstants.CEC_KEYCODE_POWER),
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
                     CecOperand.USER_CONTROL_PRESSED,
-                    HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION),
+                    HdmiCecConstants.CEC_KEYCODE_POWER_TOGGLE_FUNCTION),
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
                     CecOperand.USER_CONTROL_PRESSED,
-                    HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION),
+                    HdmiCecConstants.CEC_KEYCODE_POWER_OFF_FUNCTION),
             CecMessage.buildCecMessage(LogicalAddress.PLAYBACK_1, LogicalAddress.TV,
                     CecOperand.USER_CONTROL_PRESSED,
-                    HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION)));
+                    HdmiCecConstants.CEC_KEYCODE_POWER_ON_FUNCTION)));
 
     private static final List<CecOperand> VIEW_ON_MSGS =
             new ArrayList<>(Arrays.asList(CecOperand.TEXT_VIEW_ON, CecOperand.IMAGE_VIEW_ON));
@@ -113,31 +110,66 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_hf4_6_7_setStreamPath_powerOn() throws Exception {
-        ITestDevice device = getDevice();
-
         try {
             sendDeviceToSleep();
-
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
-
-            String wakeStateBefore = device.executeShellCommand(
-                    "dumpsys power | grep mWakefulness=");
-            assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
-
             hdmiCecClient.sendCecMessage(
                     LogicalAddress.TV,
                     LogicalAddress.BROADCAST,
                     CecOperand.SET_STREAM_PATH,
                     CecMessage.formatParams(getDumpsysPhysicalAddress(),
                             HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
-
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
-            String wakeStateAfter = device.executeShellCommand(
-                    "dumpsys power | grep mWakefulness=");
-            assertWithMessage("Device should wake up on <Set Stream Path>")
-                    .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
+            assertDeviceWakefulness(HdmiCecConstants.WAKEFULNESS_AWAKE);
         } finally {
             wakeUpDevice();
+        }
+    }
+
+    /**
+     * Test HF4-6-16
+     *
+     * <p>Verify that the DUT initially sends a {@code <Standby>} message to the TV when system
+     * standby feature is enabled, before sending any {@code <User Control Pressed>} with
+     * power-related operands. (Ref section 11.5.1 in CEC 2.1 specification)
+     */
+    @Test
+    public void cect_hf4_6_16_standby_tvBeforeUcp_20() throws Exception {
+        setCec20();
+        String previousPowerControlMode =
+                setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_TV);
+
+        try {
+            sendDeviceToSleepWithoutWait();
+            hdmiCecClient.checkMessagesInOrder(
+                    LogicalAddress.TV,
+                    new ArrayList<>(Arrays.asList(CecOperand.STANDBY)),
+                    UCP_POWER_MSGS);
+        } finally {
+            wakeUpDevice();
+            setPowerControlMode(previousPowerControlMode);
+        }
+    }
+
+    /**
+     * Test HF4-6-19
+     *
+     * <p>Verify that the DUT initially broadcasts a {@code <Standby>} message when the system
+     * standby feature is enabled, before sending any {@code <User Control Pressed>} with
+     * power-related operands.
+     */
+    @Test
+    public void cect_hf4_6_19_standby_broadcastBeforeUcp_20() throws Exception {
+        setCec20();
+        String previousPowerControlMode =
+                setPowerControlMode(HdmiCecConstants.POWER_CONTROL_MODE_BROADCAST);
+        try {
+            sendDeviceToSleepWithoutWait();
+            hdmiCecClient.checkMessagesInOrder(
+                    LogicalAddress.BROADCAST,
+                    new ArrayList<>(Arrays.asList(CecOperand.STANDBY)),
+                    UCP_POWER_MSGS);
+        } finally {
+            wakeUpDevice();
+            setPowerControlMode(previousPowerControlMode);
         }
     }
 }

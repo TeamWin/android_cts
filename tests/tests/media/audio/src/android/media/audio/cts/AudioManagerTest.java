@@ -61,9 +61,11 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioProfile;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
+import android.media.audio.cts.R;
 import android.media.audiopolicy.AudioProductStrategy;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.Utils;
@@ -122,6 +124,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
             add(AudioDescriptor.STANDARD_NONE);
             add(AudioDescriptor.STANDARD_EDID);
     }};
+    private static final HashMap<Integer, Integer> DIRECT_OFFLOAD_MAP = new HashMap<>() {{
+            put(AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED,
+                    AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED);
+            put(AudioManager.PLAYBACK_OFFLOAD_SUPPORTED,
+                    AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED);
+            put(AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED,
+                    AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
+        }};
+    private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
     private NotificationManager mNm;
     private boolean mHasVibrator;
@@ -1044,6 +1055,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     private void testStreamMuting(int stream) {
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.QUERY_AUDIO_STATE);
+
+        final int streamVolume = mAudioManager.getLastAudibleStreamVolume(stream);
+
         // Voice call requires MODIFY_PHONE_STATE, so we should not be able to mute
         if (stream == STREAM_VOICE_CALL) {
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
@@ -1054,21 +1070,31 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertTrue("Muting stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
 
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
             assertFalse("Unmuting stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
+
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
 
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
             assertTrue("Toggling mute on stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
 
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
             assertFalse("Toggling mute on stream " + stream + " failed.",
                     mAudioManager.isStreamMute(stream));
 
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
             mAudioManager.setStreamMute(stream, true);
             assertTrue("Muting stream " + stream + " using setStreamMute failed",
                     mAudioManager.isStreamMute(stream));
+
+            assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
 
             // mute it three more times to verify the ref counting is gone.
             mAudioManager.setStreamMute(stream, true);
@@ -1079,6 +1105,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertFalse("Unmuting stream " + stream + " using setStreamMute failed.",
                     mAudioManager.isStreamMute(stream));
         }
+        assertEquals(streamVolume, mAudioManager.getLastAudibleStreamVolume(stream));
+
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     public void testSetInvalidRingerMode() {
@@ -1661,6 +1690,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
         Log.i(TAG, "isHapticPlaybackSupported: " + AudioManager.isHapticPlaybackSupported());
     }
 
+    public void testIsUltrasoundSupported() {
+        // Calling the API to make sure it doesn't crash.
+        Log.i(TAG, "isUltrasoundSupported: " + AudioManager.isUltrasoundSupported());
+    }
+
     public void testGetAudioHwSyncForSession() {
         // AudioManager.getAudioHwSyncForSession is not supported before S
         if (ApiLevelUtil.isAtMost(Build.VERSION_CODES.R)) {
@@ -1902,6 +1936,85 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertEquals(channelMasks, channelMasksFromProfile);
             assertEquals(channelIndexMasks, channelIndexMasksFromProfile);
             assertEquals(sampleRates, sampleRatesFromProfile);
+        }
+    }
+
+    public void testGetDirectPlaybackSupport() {
+        assertEquals(AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
+                AudioManager.getDirectPlaybackSupport(
+                        new AudioFormat.Builder().build(),
+                        new AudioAttributes.Builder().build()));
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        AudioAttributes attr = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setLegacyStreamType(STREAM_MUSIC).build();
+        for (AudioDeviceInfo device : devices) {
+            for (int encoding : device.getEncodings()) {
+                for (int channelMask : device.getChannelMasks()) {
+                    for (int sampleRate : device.getSampleRates()) {
+                        AudioFormat format = new AudioFormat.Builder()
+                                .setEncoding(encoding)
+                                .setChannelMask(channelMask)
+                                .setSampleRate(sampleRate).build();
+                        final int directPlaybackSupport =
+                                AudioManager.getDirectPlaybackSupport(format, attr);
+                        assertEquals(
+                                AudioTrack.isDirectPlaybackSupported(format, attr),
+                                directPlaybackSupport
+                                        != AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED);
+                        if (directPlaybackSupport == AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED) {
+                            assertEquals(
+                                    DIRECT_OFFLOAD_MAP.getOrDefault(
+                                            AudioManager.getPlaybackOffloadSupport(format, attr),
+                                            INVALID_DIRECT_PLAYBACK_MODE).intValue(),
+                                    directPlaybackSupport);
+                        } else if ((directPlaybackSupport
+                                & AudioManager.DIRECT_PLAYBACK_OFFLOAD_SUPPORTED)
+                                != AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED) {
+                            // AudioManager.getPlaybackOffloadSupport can only query offload
+                            // support but not other direct support like passthrough.
+                            assertNotEquals(
+                                    AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
+                                    DIRECT_OFFLOAD_MAP.getOrDefault(
+                                            AudioManager.getPlaybackOffloadSupport(format, attr),
+                                            AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED)
+                                            & directPlaybackSupport);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void testAssistantUidRouting() {
+        try {
+            mAudioManager.addAssistantServicesUids(new ArrayList<>(0));
+            fail("addAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            mAudioManager.removeAssistantServicesUids(new ArrayList<>(0));
+            fail("removeAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            List<Integer> uids = mAudioManager.getAssistantServicesUids();
+            fail("getAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            mAudioManager.setActiveAssistantServiceUids(new ArrayList<>(0));
+            fail("setActiveAssistantServiceUids must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+
+        try {
+            List<Integer> uids = mAudioManager.getActiveAssistantServicesUids();
+            fail("getActiveAssistantServicesUids must fail due to no permission");
+        } catch (SecurityException e) {
         }
     }
 

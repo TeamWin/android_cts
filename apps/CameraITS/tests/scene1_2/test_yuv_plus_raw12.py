@@ -70,8 +70,12 @@ class YuvPlusRaw12Test(its_base_test.ItsBaseTest):
 
       max_raw12_size = capture_request_utils.get_available_output_sizes(
           'raw12', props)[0]
-      w, h = capture_request_utils.get_available_output_sizes(
-          'yuv', props, MAX_IMG_SIZE, max_raw12_size)[0]
+      if capture_request_utils.is_common_aspect_ratio(max_raw12_size):
+        w, h = capture_request_utils.get_available_output_sizes(
+            'yuv', props, MAX_IMG_SIZE, max_raw12_size)[0]
+      else:
+        w, h = capture_request_utils.get_available_output_sizes(
+            'yuv', props, max_size=MAX_IMG_SIZE)[0]
       out_surfaces = [{'format': 'raw12'},
                       {'format': 'yuv', 'width': w, 'height': h}]
       cap_raw, cap_yuv = cam.do_capture(req, out_surfaces)

@@ -188,9 +188,6 @@ public class Install {
             session.commit(sender.getIntentSender());
             Intent result = sender.getResult();
             InstallUtils.assertStatusSuccess(result);
-            if (mIsStaged) {
-                InstallUtils.waitForSessionReady(sessionId);
-            }
             return sessionId;
         }
     }

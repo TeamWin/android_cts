@@ -17,8 +17,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.media.tv.interactive.TvIAppView
+    <android.media.tv.interactive.TvInteractiveAppView
         android:id="@+id/tviappview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <android.media.tv.TvView
+        android:id="@+id/tviapp_tvview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 </LinearLayout>

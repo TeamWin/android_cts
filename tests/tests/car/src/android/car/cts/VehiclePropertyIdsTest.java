@@ -113,6 +113,22 @@ public class VehiclePropertyIdsTest {
                 .isEqualTo("EV_CHARGE_PORT_CONNECTED");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_PORT_OPEN))
                 .isEqualTo("EV_CHARGE_PORT_OPEN");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_CURRENT_DRAW_LIMIT))
+                .isEqualTo("EV_CHARGE_CURRENT_DRAW_LIMIT");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_PERCENT_LIMIT))
+                .isEqualTo("EV_CHARGE_PERCENT_LIMIT");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_SWITCH))
+                .isEqualTo("EV_CHARGE_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_STATE))
+                .isEqualTo("EV_CHARGE_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_CHARGE_TIME_REMAINING))
+                .isEqualTo("EV_CHARGE_TIME_REMAINING");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.EV_REGENERATIVE_BRAKING_STATE))
+                .isEqualTo("EV_REGENERATIVE_BRAKING_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.VEHICLE_CURB_WEIGHT))
+                .isEqualTo("VEHICLE_CURB_WEIGHT");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TRAILER_PRESENT))
+                .isEqualTo("TRAILER_PRESENT");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.RANGE_REMAINING))
                 .isEqualTo("RANGE_REMAINING");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.TIRE_PRESSURE)).
@@ -291,6 +307,14 @@ public class VehiclePropertyIdsTest {
                 .isEqualTo("FOG_LIGHTS_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.FOG_LIGHTS_SWITCH))
                 .isEqualTo("FOG_LIGHTS_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.FRONT_FOG_LIGHTS_STATE))
+                .isEqualTo("FRONT_FOG_LIGHTS_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.FRONT_FOG_LIGHTS_SWITCH))
+                .isEqualTo("FRONT_FOG_LIGHTS_SWITCH");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.REAR_FOG_LIGHTS_STATE))
+                .isEqualTo("REAR_FOG_LIGHTS_STATE");
+        assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.REAR_FOG_LIGHTS_SWITCH))
+                .isEqualTo("REAR_FOG_LIGHTS_SWITCH");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HAZARD_LIGHTS_STATE))
                 .isEqualTo("HAZARD_LIGHTS_STATE");
         assertThat(VehiclePropertyIds.toString(VehiclePropertyIds.HAZARD_LIGHTS_SWITCH))

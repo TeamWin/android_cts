@@ -23,6 +23,11 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
 /**
+ * WARNING: This sample test is out of date. Newer tests should be written using
+ * androidx testing libraries. See SampleJUnit4DeviceTest.java
+ *
+ * TODO(b/211678773): Update the test to use androidx testing libraries.
+ *
  * A simple compatibility test which includes results in the report.
  *
  * This class has 3 no-op tests that create report logs and log fake metrics.

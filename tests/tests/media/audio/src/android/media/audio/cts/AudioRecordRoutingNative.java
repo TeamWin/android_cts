@@ -27,8 +27,6 @@ import android.media.cts.NonMediaMainlineTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.android.ndkaudio.AudioRecorder;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -38,7 +36,7 @@ public class AudioRecordRoutingNative extends AndroidTestCase {
     private AudioManager mAudioManager;
 
     static {
-        System.loadLibrary("ndkaudioLib");
+        System.loadLibrary("audiocts_jni");
     }
 
     @Override

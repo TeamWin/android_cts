@@ -23,6 +23,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
@@ -34,8 +35,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -59,22 +59,24 @@ import java.util.List;
  * An activity for showing the camera preview and taking a picture.
  */
 public class PhotoCaptureActivity extends Activity
-        implements PictureCallback, SurfaceHolder.Callback {
+        implements PictureCallback, TextureView.SurfaceTextureListener {
     private static final String TAG = PhotoCaptureActivity.class.getSimpleName();
     private static final int FOV_REQUEST_CODE = 1006;
     private static final String PICTURE_FILENAME = "photo.jpg";
     private static float mReportedFovDegrees = 0;
     private float mReportedFovPrePictureTaken = -1;
 
-    private SurfaceView mPreview;
-    private SurfaceHolder mSurfaceHolder;
+    private TextureView mPreviewView;
+    private SurfaceTexture mPreviewTexture;
+    private int mPreviewTexWidth;
+    private int mPreviewTexHeight;
+
     private Spinner mResolutionSpinner;
     private List<SelectableResolution> mSupportedResolutions;
     private ArrayAdapter<SelectableResolution> mAdapter;
 
     private SelectableResolution mSelectedResolution;
     private Camera mCamera;
-    private Size mSurfaceSize;
     private boolean mCameraInitialized = false;
     private boolean mPreviewActive = false;
     private boolean mTakingPicture = false;
@@ -114,12 +116,8 @@ public class PhotoCaptureActivity extends Activity
             }
         }
 
-        mPreview = (SurfaceView) findViewById(R.id.camera_fov_camera_preview);
-        mSurfaceHolder = mPreview.getHolder();
-        mSurfaceHolder.addCallback(this);
-
-        // This is required for older versions of Android hardware.
-        mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        mPreviewView = (TextureView) findViewById(R.id.camera_fov_camera_preview);
+        mPreviewView.setSurfaceTextureListener(this);
 
         TextView textView = (TextView) findViewById(R.id.camera_fov_tap_to_take_photo);
         textView.setTextColor(Color.WHITE);
@@ -365,20 +363,27 @@ public class PhotoCaptureActivity extends Activity
     }
 
     @Override
-    public void surfaceChanged(
-            SurfaceHolder holder, int format, int width, int height) {
-        mSurfaceSize = new Size(width, height);
+    public void onSurfaceTextureAvailable(SurfaceTexture surface,
+            int width, int height) {
+        mPreviewTexture = surface;
+        mPreviewTexWidth = width;
+        mPreviewTexHeight = height;
         initializeCamera();
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        // Nothing to do.
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+        // Ignored, Camera does all the work for us
     }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        // Nothing to do.
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        return true;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        // Invoked every time there's a new Camera preview frame
     }
 
     private void showNextDialogToChoosePreviewSize() {
@@ -432,14 +437,14 @@ public class PhotoCaptureActivity extends Activity
     }
 
     private void initializeCamera(boolean startPreviewAfterInit) {
-        if (mCamera == null || mSurfaceHolder.getSurface() == null) {
+        if (mCamera == null || mPreviewTexture == null) {
             return;
         }
 
         try {
-            mCamera.setPreviewDisplay(mSurfaceHolder);
+            mCamera.setPreviewTexture(mPreviewTexture);
         } catch (Throwable t) {
-            Log.e(TAG, "Could not set preview display", t);
+            Log.e(TAG, "Could not set preview texture", t);
             Toast.makeText(this, t.getMessage(), Toast.LENGTH_LONG).show();
             return;
         }
@@ -452,13 +457,13 @@ public class PhotoCaptureActivity extends Activity
         Size selectedPreviewSize = null;
         if (mPreviewSizes != null) {
             selectedPreviewSize = mPreviewSizes[mSelectedResolution.cameraId];
-        } else if (mSurfaceSize != null) {
+        } else {
             if (mPreviewOrientation == 0 || mPreviewOrientation == 180) {
                 selectedPreviewSize = getBestPreviewSize(
-                        mSurfaceSize.width, mSurfaceSize.height, params);
+                        mPreviewTexWidth, mPreviewTexHeight, params);
             } else {
                 selectedPreviewSize = getBestPreviewSize(
-                        mSurfaceSize.height, mSurfaceSize.width, params);
+                        mPreviewTexHeight, mPreviewTexWidth, params);
             }
         }
 

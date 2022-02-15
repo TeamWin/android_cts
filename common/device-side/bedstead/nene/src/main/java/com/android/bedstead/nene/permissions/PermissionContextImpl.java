@@ -67,11 +67,7 @@ public final class PermissionContextImpl implements PermissionContext {
      * See {@link Permissions#withPermissionOnVersion(int, String...)}
      */
     public PermissionContextImpl withPermissionOnVersion(int sdkVersion, String... permissions) {
-        if (Versions.meetsSdkVersionRequirements(sdkVersion, sdkVersion)) {
-            return withPermission(permissions);
-        }
-
-        return this;
+        return withPermissionOnVersionBetween(sdkVersion, sdkVersion, permissions);
     }
 
     /**
@@ -79,7 +75,23 @@ public final class PermissionContextImpl implements PermissionContext {
      */
     public PermissionContextImpl withPermissionOnVersionAtLeast(
             int sdkVersion, String... permissions) {
-        if (Versions.meetsMinimumSdkVersionRequirement(sdkVersion)) {
+        return withPermissionOnVersionBetween(sdkVersion, Versions.ANY, permissions);
+    }
+
+    /**
+     * See {@link Permissions#withPermissionOnVersionAtMost(int, String...)}
+     */
+    public PermissionContextImpl withPermissionOnVersionAtMost(
+            int sdkVersion, String... permissions) {
+        return withPermissionOnVersionBetween(Versions.ANY, sdkVersion, permissions);
+    }
+
+    /**
+     * See {@link Permissions#withPermissionOnVersionBetween(int, String...)}
+     */
+    public PermissionContextImpl withPermissionOnVersionBetween(
+            int minSdkVersion, int maxSdkVersion, String... permissions) {
+        if (Versions.meetsSdkVersionRequirements(minSdkVersion, maxSdkVersion)) {
             return withPermission(permissions);
         }
 

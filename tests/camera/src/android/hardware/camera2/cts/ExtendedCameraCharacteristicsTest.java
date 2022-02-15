@@ -16,7 +16,26 @@
 
 package android.hardware.camera2.cts;
 
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContains;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContainsAnyOf;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertCollectionContainsAnyOf;
+import static android.hardware.cts.helpers.CameraUtils.matchParametersToCharacteristics;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -32,44 +51,50 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Rational;
-import android.util.Range;
-import android.util.Size;
 import android.util.Pair;
 import android.util.Patterns;
+import android.util.Range;
+import android.util.Rational;
+import android.util.Size;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
+
+import androidx.test.rule.ActivityTestRule;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Set;
 
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
-import org.junit.Test;
-
-import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
-import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
-import static android.hardware.cts.helpers.CameraUtils.matchParametersToCharacteristics;
-
-import static junit.framework.Assert.*;
-
-import static org.mockito.Mockito.*;
+import static android.hardware.camera2.cts.CameraTestUtils.MPC_REPORT_LOG_NAME;
+import static android.hardware.camera2.cts.CameraTestUtils.MPC_STREAM_NAME;
 
 /**
  * Extended tests for static camera characteristics.
@@ -141,6 +166,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME;
     private static final int HIGH_SPEED_FPS_LOWER_MIN = 30;
     private static final int HIGH_SPEED_FPS_UPPER_MIN = 120;
+
+    @Rule
+    public final ActivityTestRule<EmptyActivity> mActivityRule = new ActivityTestRule<>(
+            EmptyActivity.class, false, false);
 
     @Override
     public void setUp() throws Exception {
@@ -817,7 +846,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             try {
                 RecommendedStreamConfigurationMap map = c.getRecommendedStreamConfigurationMap(
-                        RecommendedStreamConfigurationMap.USECASE_LOW_LATENCY_SNAPSHOT + 1);
+                        RecommendedStreamConfigurationMap.USECASE_10BIT_OUTPUT + 1);
                 fail("Recommended configuration map shouldn't be available for invalid " +
                         "use case!");
             } catch (IllegalArgumentException e) {
@@ -845,6 +874,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             RecommendedStreamConfigurationMap lowLatencyConfig =
                     c.getRecommendedStreamConfigurationMap(
                     RecommendedStreamConfigurationMap.USECASE_LOW_LATENCY_SNAPSHOT);
+            RecommendedStreamConfigurationMap dynamic10BitOutputConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                            RecommendedStreamConfigurationMap.USECASE_10BIT_OUTPUT);
             if ((previewConfig == null) && (videoRecordingConfig == null) &&
                     (videoSnapshotConfig == null) && (snapshotConfig == null) &&
                     (rawConfig == null) && (zslConfig == null) && (lowLatencyConfig == null)) {
@@ -885,6 +917,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             if (lowLatencyConfig != null) {
                 verifyRecommendedLowLatencyConfiguration(mAllCameraIds[i], c, lowLatencyConfig);
+            }
+
+            if (dynamic10BitOutputConfig != null) {
+                verifyCommonRecommendedConfiguration(mAllCameraIds[i], c, dynamic10BitOutputConfig,
+                        /*checkNoInput*/ true, /*checkNoHighRes*/ false,
+                        /*checkNoHighSpeed*/ false, /*checkNoPrivate*/ false,
+                        /*checkNoDepth*/ true);
             }
         }
     }
@@ -1778,6 +1817,76 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         }
     }
 
+    /**
+     * Check 10-Bit output capability
+     */
+    @Test
+    public void test10BitOutputCharacteristics() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "test10BitOutputCharacteristics: Testing camera ID " + mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supports10BitOutput = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+            if (!supports10BitOutput) {
+                continue;
+            }
+
+            DynamicRangeProfiles dynamicProfiles = c.get(
+                    CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
+            mCollector.expectNotNull("Dynamic range profile must always be present in case " +
+                    "of 10-bit capable devices!", dynamicProfiles);
+            Set<Integer> supportedProfiles = dynamicProfiles.getSupportedProfiles();
+            mCollector.expectTrue("Dynamic range profiles not present!",
+                    !supportedProfiles.isEmpty());
+            // STANDARD and HLG10 must always be present in the supported profiles
+            mCollector.expectContains(supportedProfiles.toArray(), DynamicRangeProfiles.STANDARD);
+            mCollector.expectContains(supportedProfiles.toArray(), DynamicRangeProfiles.HLG10);
+
+            Integer recommendedProfile = c.get(
+                    CameraCharacteristics.REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE);
+            assertNotNull(recommendedProfile);
+            mCollector.expectContains(supportedProfiles.toArray(), recommendedProfile);
+            mCollector.expectTrue("The recommended 10-bit dynamic range profile must " +
+                            "not be the same as standard",
+                    recommendedProfile != DynamicRangeProfiles.STANDARD);
+
+            // Verify constraints validity. For example if HLG10 advertises support for HDR10, then
+            // there shouldn't be any HDR10 constraints related to HLG10.
+            for (Integer profile : supportedProfiles) {
+                Set<Integer> currentConstraints =
+                        dynamicProfiles.getProfileCaptureRequestConstraints(profile);
+                boolean isSameProfilePresent = false;
+                for (Integer concurrentProfile : currentConstraints) {
+                    if (concurrentProfile == profile) {
+                        isSameProfilePresent = true;
+                        continue;
+                    }
+                    String msg = String.format("Dynamic profile %d supports profile %d " +
+                                    "in the same capture request, however profile %d is not" +
+                                    "advertised as supported!", profile, concurrentProfile,
+                                    concurrentProfile);
+                    mCollector.expectTrue(msg, supportedProfiles.contains(concurrentProfile));
+
+                    Set<Integer> supportedConstraints =
+                            dynamicProfiles.getProfileCaptureRequestConstraints(concurrentProfile);
+                    msg = String.format("Dynamic range profile %d advertises support " +
+                                    "for profile %d, however the opposite is not true!",
+                                    profile, concurrentProfile);
+                    mCollector.expectTrue(msg, supportedConstraints.isEmpty() ||
+                            supportedConstraints.contains(profile));
+                }
+
+                String msg = String.format("Dynamic profile %d not present in its advertised " +
+                        "capture request constraints!", profile);
+                mCollector.expectTrue(msg, isSameProfilePresent || currentConstraints.isEmpty());
+            }
+        }
+    }
+
     private void verifyLensCalibration(float[] poseRotation, float[] poseTranslation,
             Integer poseReference, float[] cameraIntrinsics, float[] distortion,
             Rect precorrectionArray, Integer facing) {
@@ -2567,28 +2676,45 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check camera orientation against device orientation
      */
-    @CddTest(requirement="7.5.5/C-1-1")
+    @AppModeFull(reason = "DeviceStateManager is not accessible to instant apps")
+    @CddTest(requirement = "7.5.5/C-1-1")
     @Test
     public void testCameraOrientationAlignedWithDevice() {
-        WindowManager windowManager =
-                (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        Display display = windowManager.getDefaultDisplay();
-        DisplayMetrics metrics = new DisplayMetrics();
-        display.getMetrics(metrics);
+        if (CameraUtils.isDeviceFoldable(mContext)) {
+            // CDD 7.5.5/C-1-1 does not apply to devices with folding displays as the display aspect
+            // ratios might change with the device's folding state.
+            // Skip this test in foldables until the CDD is updated to include foldables.
+            Log.i(TAG, "CDD 7.5.5/C-1-1 does not apply to foldables, skipping"
+                    + " testCameraOrientationAlignedWithDevice");
+            return;
+        }
+
+        // Start the empty activty to check the display we're testing.
+        mActivityRule.launchActivity(new Intent());
+        Context foregroundActivity = mActivityRule.getActivity();
+
+        WindowManager windowManager = foregroundActivity.getSystemService(WindowManager.class);
+        assertNotNull("Could not get window manager for test activity.", windowManager);
+
+        WindowMetrics metrics = windowManager.getMaximumWindowMetrics();
+        Rect displayBounds = metrics.getBounds();
+        int widthPixels = displayBounds.width();
+        int heightPixels = displayBounds.height();
 
         // For square screen, test is guaranteed to pass
-        if (metrics.widthPixels == metrics.heightPixels) {
+        if (widthPixels == heightPixels) {
             return;
         }
 
         // Handle display rotation
+        Display display = foregroundActivity.getDisplay();
         int displayRotation = display.getRotation();
         if (displayRotation == Surface.ROTATION_90 || displayRotation == Surface.ROTATION_270) {
-            int tmp = metrics.widthPixels;
-            metrics.widthPixels = metrics.heightPixels;
-            metrics.heightPixels = tmp;
+            int tmp = widthPixels;
+            widthPixels = heightPixels;
+            heightPixels = tmp;
         }
-        boolean isDevicePortrait = metrics.widthPixels < metrics.heightPixels;
+        boolean isDevicePortrait = widthPixels < heightPixels;
 
         for (int i = 0; i < mAllCameraIds.length; i++) {
             CameraCharacteristics c = mCharacteristics.get(i);
@@ -2613,9 +2739,37 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             boolean isCameraPortrait =
                     adjustedSensorSize.getWidth() < adjustedSensorSize.getHeight();
-            assertFalse("Camera " + mAllCameraIds[i] + "'s long dimension must "
-                    + "align with screen's long dimension", isDevicePortrait^isCameraPortrait);
+
+            // device and camera orientation should either be both portrait, or both landscape
+            assertEquals("Camera " + mAllCameraIds[i] + "'s long dimension must "
+                    + "align with screen's long dimension", isDevicePortrait, isCameraPortrait);
         }
+    }
+
+    /**
+     * If meetPerfClass is true, return perfClassLevel.
+     * Otherwise, return NOT_MET.
+     */
+    private int updatePerfClassLevel(boolean meetPerfClass, int perfClassLevel) {
+        if (!meetPerfClass) {
+            return CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+        } else {
+            return perfClassLevel;
+        }
+    }
+
+    /**
+     * Update perf class level based on meetSPerfClass and meetRPerfClass.
+     */
+    private int updatePerfClassLevel(boolean meetSPerfClass, boolean meetRPerfClass,
+            int perfClassLevel) {
+        if (!meetRPerfClass) {
+            return CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+        } else if (!meetSPerfClass &&
+                perfClassLevel > CameraTestUtils.PERFORMANCE_CLASS_R) {
+            return CameraTestUtils.PERFORMANCE_CLASS_R;
+        }
+        return perfClassLevel;
     }
 
     /**
@@ -2623,18 +2777,24 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * in CDD camera section 7.5
      */
     @Test
-    @CddTest(requirement="7.5")
+    @CddTest(requirement="7.5/H-1-1,H-1-2,H-1-3,H-1-4,H-1-8")
     public void testCameraPerfClassCharacteristics() throws Exception {
         if (mAdoptShellPerm) {
             // Skip test for system camera. Performance class is only applicable for public camera
             // ids.
             return;
         }
-        boolean isRPerfClass = CameraTestUtils.isRPerfClass();
-        boolean isSPerfClass = CameraTestUtils.isSPerfClass();
-        if (!isRPerfClass && !isSPerfClass) {
-            return;
-        }
+        boolean assertRPerfClass = CameraTestUtils.isRPerfClass();
+        boolean assertSPerfClass = CameraTestUtils.isSPerfClass();
+        boolean assertPerfClass = (assertRPerfClass || assertSPerfClass);
+
+        int perfClassLevelH11 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
+        int perfClassLevelH12 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
+        int perfClassLevelH13 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
+        int perfClassLevelH14 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
+        int perfClassLevelH18 = CameraTestUtils.PERFORMANCE_CLASS_CURRENT;
+
+        DeviceReportLog reportLog = new DeviceReportLog(MPC_REPORT_LOG_NAME, MPC_STREAM_NAME);
 
         boolean hasPrimaryRear = false;
         boolean hasPrimaryFront = false;
@@ -2663,78 +2823,145 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             if (isPrimaryRear) {
                 hasPrimaryRear = true;
-                mCollector.expectTrue("Primary rear camera resolution should be at least " +
-                        MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION + " pixels, is "+
-                        sensorResolution,
-                        sensorResolution >= MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION);
+                if (sensorResolution < MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION) {
+                    mCollector.expectTrue("Primary rear camera resolution should be at least " +
+                            MIN_BACK_SENSOR_PERF_CLASS_RESOLUTION + " pixels, is "+
+                            sensorResolution, !assertPerfClass);
+                    perfClassLevelH11 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+                }
+                reportLog.addValue("rear camera resolution", sensorResolution,
+                        ResultType.NEUTRAL, ResultUnit.NONE);
 
                 // 4K @ 30fps
                 boolean supportUHD = videoSizes.contains(UHD);
                 boolean supportDC4K = videoSizes.contains(DC4K);
-                mCollector.expectTrue("Primary rear camera should support 4k video recording",
-                        supportUHD || supportDC4K);
-                if (supportUHD || supportDC4K) {
+                reportLog.addValue("rear camera 4k support", supportUHD | supportDC4K,
+                        ResultType.NEUTRAL, ResultUnit.NONE);
+                if (!supportUHD && !supportDC4K) {
+                    mCollector.expectTrue("Primary rear camera should support 4k video recording",
+                            !assertPerfClass);
+                    perfClassLevelH11 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+                } else {
                     long minFrameDuration = config.getOutputMinFrameDuration(
                             android.media.MediaRecorder.class, supportDC4K ? DC4K : UHD);
-                    mCollector.expectTrue("Primary rear camera should support 4k video @ 30fps",
-                            minFrameDuration < (1e9 / 29.9));
+                    reportLog.addValue("rear camera 4k frame duration", minFrameDuration,
+                        ResultType.NEUTRAL, ResultUnit.NONE);
+                    if (minFrameDuration >= (1e9 / 29.9)) {
+                        mCollector.expectTrue("Primary rear camera should support 4k video @ 30fps",
+                                !assertPerfClass);
+                        perfClassLevelH11 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+                    }
                 }
             } else {
                 hasPrimaryFront = true;
-                if (isSPerfClass) {
+                if (sensorResolution < MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION) {
+                    mCollector.expectTrue("Primary front camera resolution should be at least " +
+                        MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION + " pixels, is "+
+                        sensorResolution, !assertSPerfClass);
+                    perfClassLevelH12 = Math.min(
+                            perfClassLevelH12, CameraTestUtils.PERFORMANCE_CLASS_R);
+                }
+                if (sensorResolution < MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION) {
                     mCollector.expectTrue("Primary front camera resolution should be at least " +
                             MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION + " pixels, is "+
-                            sensorResolution,
-                            sensorResolution >= MIN_FRONT_SENSOR_S_PERF_CLASS_RESOLUTION);
-                } else {
-                    mCollector.expectTrue("Primary front camera resolution should be at least " +
-                            MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION + " pixels, is "+
-                            sensorResolution,
-                            sensorResolution >= MIN_FRONT_SENSOR_R_PERF_CLASS_RESOLUTION);
+                            sensorResolution, !assertRPerfClass);
+                    perfClassLevelH12 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
                 }
+                reportLog.addValue("front camera resolution", sensorResolution,
+                        ResultType.NEUTRAL, ResultUnit.NONE);
+
                 // 1080P @ 30fps
                 boolean supportFULLHD = videoSizes.contains(FULLHD);
-                mCollector.expectTrue("Primary front camera should support 1080P video recording",
-                        supportFULLHD);
-                if (supportFULLHD) {
+                reportLog.addValue("front camera 1080p support", supportFULLHD,
+                        ResultType.NEUTRAL, ResultUnit.NONE);
+                if (!supportFULLHD) {
+                    mCollector.expectTrue(
+                            "Primary front camera should support 1080P video recording",
+                            !assertPerfClass);
+                    perfClassLevelH12 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+                } else {
                     long minFrameDuration = config.getOutputMinFrameDuration(
                             android.media.MediaRecorder.class, FULLHD);
-                    mCollector.expectTrue("Primary front camera should support 1080P video @ 30fps",
-                            minFrameDuration < (1e9 / 29.9));
+                    if (minFrameDuration >= (1e9 / 29.9)) {
+                        mCollector.expectTrue(
+                                "Primary front camera should support 1080P video @ 30fps",
+                                !assertPerfClass);
+                        perfClassLevelH12 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+                    }
+                    reportLog.addValue("front camera 1080p frame duration", minFrameDuration,
+                        ResultType.NEUTRAL, ResultUnit.NONE);
                 }
             }
 
-            String facingString = hasPrimaryRear ? "rear" : "front";
+            String facingString = isPrimaryRear ? "rear" : "front";
             // H-1-3
-            if (isSPerfClass || (isRPerfClass && isPrimaryRear)) {
+            if (assertSPerfClass || (assertRPerfClass && isPrimaryRear)) {
                 mCollector.expectTrue("Primary " + facingString +
                         " camera should be at least FULL, but is " +
                         toStringHardwareLevel(staticInfo.getHardwareLevelChecked()),
                         staticInfo.isHardwareLevelAtLeastFull());
-            } else {
+            } else if (assertRPerfClass) {
                 mCollector.expectTrue("Primary " + facingString +
                         " camera should be at least LIMITED, but is " +
                         toStringHardwareLevel(staticInfo.getHardwareLevelChecked()),
                         staticInfo.isHardwareLevelAtLeastLimited());
             }
 
+            reportLog.addValue(facingString + " camera hardware level",
+                    staticInfo.getHardwareLevelChecked(), ResultType.NEUTRAL, ResultUnit.NONE);
+            if (isPrimaryRear) {
+                perfClassLevelH13 = updatePerfClassLevel(staticInfo.isHardwareLevelAtLeastFull(),
+                        perfClassLevelH13);
+            } else {
+                perfClassLevelH13 = updatePerfClassLevel(staticInfo.isHardwareLevelAtLeastFull(),
+                        staticInfo.isHardwareLevelAtLeastLimited(), perfClassLevelH13);
+            }
+
             // H-1-4
             Integer timestampSource = c.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
+            reportLog.addValue(facingString + " timestampSource",
+                    timestampSource, ResultType.NEUTRAL, ResultUnit.NONE);
+            boolean realtimeTimestamp = (timestampSource != null &&
+                    timestampSource.equals(CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME));
             mCollector.expectTrue(
                     "Primary " + facingString + " camera should support real-time timestamp source",
-                    timestampSource != null &&
-                    timestampSource.equals(CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME));
+                    !assertPerfClass || realtimeTimestamp);
+            perfClassLevelH14 = updatePerfClassLevel(realtimeTimestamp, perfClassLevelH14);
 
             // H-1-8
-            if (isSPerfClass && isPrimaryRear) {
+            if (isPrimaryRear) {
+                boolean supportRaw = staticInfo.isCapabilitySupported(RAW);
+                reportLog.addValue(facingString + " camera raw support",
+                        supportRaw, ResultType.NEUTRAL, ResultUnit.NONE);
                 mCollector.expectTrue("Primary rear camera should support RAW capability",
-                        staticInfo.isCapabilitySupported(RAW));
+                        !assertSPerfClass || supportRaw);
+                perfClassLevelH18 = updatePerfClassLevel(supportRaw, true /*R*/, perfClassLevelH18);
             }
         }
-        mCollector.expectTrue("There must be a primary rear camera for performance class.",
-                hasPrimaryRear);
-        mCollector.expectTrue("There must be a primary front camera for performance class.",
-                hasPrimaryFront);
+        if (!hasPrimaryRear) {
+            mCollector.expectTrue("There must be a primary rear camera for performance class.",
+                    !assertPerfClass);
+            perfClassLevelH11 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+        }
+        if (!hasPrimaryFront) {
+            mCollector.expectTrue("There must be a primary front camera for performance class.",
+                    !assertPerfClass);
+            perfClassLevelH12 = CameraTestUtils.PERFORMANCE_CLASS_NOT_MET;
+        }
+
+        reportLog.addValue("Version", "0.0.1", ResultType.NEUTRAL, ResultUnit.NONE);
+        final String PERF_CLASS_REQ_NUM_PREFIX = "2.2.7.2/7.5/";
+        reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-1",
+                perfClassLevelH11, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-2",
+                perfClassLevelH12, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-3",
+                perfClassLevelH13, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-4",
+                perfClassLevelH14, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue(PERF_CLASS_REQ_NUM_PREFIX + "H-1-8",
+                perfClassLevelH18, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.submit(InstrumentationRegistry.getInstrumentation());
     }
 
     /**

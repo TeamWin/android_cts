@@ -60,6 +60,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
@@ -584,41 +585,6 @@ abstract class CodecTestBase {
         codecPrefix = args.getString(CODEC_PREFIX_KEY);
     }
 
-    static boolean isTv() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
-    }
-
-    static boolean hasMicrophone() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE);
-    }
-
-    static boolean hasCamera() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
-    }
-
-    static boolean isWatch() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
-    }
-
-    static boolean isAutomotive() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
-    }
-
-    static boolean isPc() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_PC);
-    }
-
-    static boolean hasAudioOutput() {
-        return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
-    }
-
-    static boolean isHandheld() {
-        // handheld nature is not exposed to package manager, for now
-        // we check for touchscreen and NOT watch and NOT tv and NOT pc
-        return pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) && !isWatch() && !isTv() &&
-                !isAutomotive() && !isPc();
-    }
-
     static boolean hasDecoder(String mime) {
         return CodecTestBase.selectCodecs(mime, null, null, false).size() != 0;
     }
@@ -710,7 +676,7 @@ abstract class CodecTestBase {
             boolean needVideo) {
         Set<String> list = new HashSet<>();
         if (!isEncoder) {
-            if (hasAudioOutput() && needAudio) {
+            if (MediaUtils.hasAudioOutput() && needAudio) {
                 // sec 5.1.2
                 list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
                 list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
@@ -719,7 +685,8 @@ abstract class CodecTestBase {
                 list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
                 list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
             }
-            if (isHandheld() || isTv() || isAutomotive()) {
+            if (MediaUtils.isHandheld() || MediaUtils.isTablet() || MediaUtils.isTv() ||
+                    MediaUtils.isAutomotive()) {
                 // sec 2.2.2, 2.3.2, 2.5.2
                 if (needAudio) {
                     list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
@@ -732,7 +699,7 @@ abstract class CodecTestBase {
                     list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
                 }
             }
-            if (isHandheld()) {
+            if (MediaUtils.isHandheld() || MediaUtils.isTablet()) {
                 // sec 2.2.2
                 if (needAudio) {
                     list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
@@ -742,20 +709,21 @@ abstract class CodecTestBase {
                     list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
                 }
             }
-            if (isTv() && needVideo) {
+            if (MediaUtils.isTv() && needVideo) {
                 // sec 2.3.2
                 list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
                 list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
             }
         } else {
-            if (hasMicrophone() && needAudio) {
+            if (MediaUtils.hasMicrophone() && needAudio) {
                 // sec 5.1.1
                 // TODO(b/154423550)
                 // list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
                 list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
                 list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
             }
-            if (isHandheld() || isTv() || isAutomotive()) {
+            if (MediaUtils.isHandheld() || MediaUtils.isTablet() || MediaUtils.isTv() ||
+                    MediaUtils.isAutomotive()) {
                 // sec 2.2.2, 2.3.2, 2.5.2
                 if (needAudio) {
                     list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
@@ -765,7 +733,7 @@ abstract class CodecTestBase {
                     list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
                 }
             }
-            if (isHandheld() && needAudio) {
+            if ((MediaUtils.isHandheld() || MediaUtils.isTablet()) && needAudio) {
                 // sec 2.2.2
                 list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
                 list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
@@ -794,11 +762,14 @@ abstract class CodecTestBase {
                     }
                 }
             }
-            // TODO(b/154423708): add checks for video o/p port and display length >= 2.5"
+            // feature_video_output is not exposed to package manager. Testing for video output
+            // ports, such as VGA, HDMI, DisplayPort, or a wireless port for display is also not
+            // direct.
             /* sec 5.2: device implementations include an embedded screen display with the
-            diagonal length of at least 2.5inches or include a video output port or declare the
+            diagonal length of at least 2.5 inches or include a video output port or declare the
             support of a camera */
-            if (isEncoder && hasCamera() && needVideo &&
+            if (isEncoder && needVideo &&
+                    (MediaUtils.hasCamera() || MediaUtils.getScreenSizeInInches() >= 2.5) &&
                     !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
                     !mimes.contains(MediaFormat.MIMETYPE_VIDEO_VP8)) {
                 // Add required cdd mimes here so that respective codec tests fail.

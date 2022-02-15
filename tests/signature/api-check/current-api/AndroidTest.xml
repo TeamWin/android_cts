@@ -27,10 +27,9 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.signature.cts.api.current" />
-        <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
+        <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="class" value="android.signature.cts.api.current.SignatureTest" />
         <option name="instrumentation-arg" key="expected-api-files" value="current.api.gz" />
-        <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-base-current.api.gz,android-test-mock-current.api.gz,android-test-runner-current.api.gz" />
         <option name="runtime-hint" value="30s" />
         <!-- Disable hidden API checks (http://b/171459260). -->
         <option name="hidden-api-checks" value="false" />

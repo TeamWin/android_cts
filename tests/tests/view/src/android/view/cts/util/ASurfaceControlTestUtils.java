@@ -171,6 +171,8 @@ public class ASurfaceControlTestUtils {
             long surfaceTransaction, boolean waitForFence, TransactionCompleteListener listener);
     public static native void nSurfaceTransaction_setOnCommitCallbackWithoutContext(
             long surfaceTransaction, TransactionCompleteListener listener);
+    public static native void nSurfaceTransaction_setFrameTimeline(long surfaceTransaction,
+            long vsyncId);
 
     public static native HardwareBuffer getSolidBuffer(int width, int height, int color);
     public static native HardwareBuffer getQuadrantBuffer(int width, int height,

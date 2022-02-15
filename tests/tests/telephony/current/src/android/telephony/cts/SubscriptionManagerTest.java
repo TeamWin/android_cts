@@ -30,9 +30,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
 import android.app.UiAutomation;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
@@ -49,7 +54,6 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
-import android.telephony.cts.util.CarrierPrivilegeUtils;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
@@ -59,11 +63,13 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestThread;
 import com.android.internal.util.ArrayUtils;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -103,10 +109,59 @@ public class SubscriptionManagerTest {
     private static final int SUBSCRIPTION_DISABLE_WAIT_MS = 5000;
     private static final int SUBSCRIPTION_ENABLE_WAIT_MS = 50000;
 
+    // time to wait for subscription plans to expire
+    private static final int SUBSCRIPTION_PLAN_EXPIRY_MS = 50;
+    private static final int SUBSCRIPTION_PLAN_CLEAR_WAIT_MS = 5000;
+
     private int mSubId;
     private int mDefaultVoiceSubId;
     private String mPackageName;
     private SubscriptionManager mSm;
+    private SubscriptionManagerTest.CarrierConfigReceiver mReceiver;
+
+    private static class CarrierConfigReceiver extends BroadcastReceiver {
+        private CountDownLatch mLatch = new CountDownLatch(1);
+        private final int mSubId;
+
+        CarrierConfigReceiver(int subId) {
+            mSubId = subId;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED.equals(intent.getAction())) {
+                int subId = intent.getIntExtra(CarrierConfigManager.EXTRA_SUBSCRIPTION_INDEX,
+                        SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+                if (mSubId == subId) {
+                    mLatch.countDown();
+                }
+            }
+        }
+
+        void clearQueue() {
+            mLatch = new CountDownLatch(1);
+        }
+
+        void waitForCarrierConfigChanged() throws Exception {
+            mLatch.await(5000, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private void overrideCarrierConfig(PersistableBundle bundle, int subId) throws Exception {
+        mReceiver = new CarrierConfigReceiver(subId);
+        IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
+        // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
+        InstrumentationRegistry.getContext().registerReceiver(mReceiver, filter);
+        mReceiver.waitForCarrierConfigChanged();
+        mReceiver.clearQueue();
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                InstrumentationRegistry.getContext().getSystemService(CarrierConfigManager.class),
+                (cm) -> cm.overrideConfig(subId, bundle));
+        mReceiver.waitForCarrierConfigChanged();
+        InstrumentationRegistry.getContext().unregisterReceiver(mReceiver);
+        mReceiver = null;
+    }
 
     /**
      * Callback used in testRegisterNetworkCallback that allows caller to block on
@@ -155,12 +210,21 @@ public class SubscriptionManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        if (!isSupported()) return;
+        assumeTrue(isSupported());
 
         mSm = InstrumentationRegistry.getContext().getSystemService(SubscriptionManager.class);
         mSubId = SubscriptionManager.getDefaultDataSubscriptionId();
         mDefaultVoiceSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         mPackageName = InstrumentationRegistry.getContext().getPackageName();
+
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (mReceiver != null) {
+            InstrumentationRegistry.getContext().unregisterReceiver(mReceiver);
+            mReceiver = null;
+        }
     }
 
     /**
@@ -170,34 +234,25 @@ public class SubscriptionManagerTest {
      */
     @Test
     public void testCorrectness() throws Exception {
-        if (!isSupported()) return;
-
         final boolean hasCellular = findCellularNetwork() != null;
-        if (isSupported() && !hasCellular) {
+        if (!hasCellular) {
             fail("Device claims to support " + PackageManager.FEATURE_TELEPHONY
                     + " but has no active cellular network, which is required for validation");
-        } else if (!isSupported() && hasCellular) {
-            fail("Device has active cellular network, but claims to not support "
-                    + PackageManager.FEATURE_TELEPHONY);
         }
 
-        if (isSupported()) {
-            if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-                fail("Device must have a valid default data subId for validation");
-            }
+        if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            fail("Device must have a valid default data subId for validation");
         }
     }
 
     @Test
     public void testGetActiveSubscriptionInfoCount() throws Exception {
-        if (!isSupported()) return;
         assertTrue(mSm.getActiveSubscriptionInfoCount() <=
                 mSm.getActiveSubscriptionInfoCountMax());
     }
 
     @Test
     public void testGetActiveSubscriptionInfoForIcc() throws Exception {
-        if (!isSupported()) return;
         SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveSubscriptionInfo(mSubId));
         assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
@@ -206,13 +261,11 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testIsActiveSubscriptionId() throws Exception {
-        if (!isSupported()) return;
         assertTrue(mSm.isActiveSubscriptionId(mSubId));
     }
 
     @Test
     public void testGetSubscriptionIds() throws Exception {
-        if (!isSupported()) return;
         int slotId = SubscriptionManager.getSlotIndex(mSubId);
         int[] subIds = mSm.getSubscriptionIds(slotId);
         assertNotNull(subIds);
@@ -221,7 +274,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testGetResourcesForSubId() {
-        if (!isSupported()) return;
         Resources r = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getResourcesForSubId(InstrumentationRegistry.getContext(), mSubId));
         // this is an old method which returns mcc/mnc as ints, so use the old SM.getMcc/Mnc methods
@@ -232,14 +284,11 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testIsUsableSubscriptionId() throws Exception {
-        if (!isSupported()) return;
         assertTrue(SubscriptionManager.isUsableSubscriptionId(mSubId));
     }
 
     @Test
     public void testActiveSubscriptions() throws Exception {
-        if (!isSupported()) return;
-
         List<SubscriptionInfo> subList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveSubscriptionInfoList());
         int[] idList = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
@@ -265,8 +314,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlans() throws Exception {
-        if (!isSupported()) return;
-
         // Make ourselves the owner
         setSubPlanOwner(mSubId, mPackageName);
 
@@ -278,6 +325,12 @@ public class SubscriptionManagerTest {
         final SubscriptionPlan plan = buildValidSubscriptionPlan(System.currentTimeMillis());
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
         assertEquals(Arrays.asList(plan), mSm.getSubscriptionPlans(mSubId));
+
+        // Push plan with expiration time and verify that it expired
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan), SUBSCRIPTION_PLAN_EXPIRY_MS);
+        Thread.sleep(SUBSCRIPTION_PLAN_EXPIRY_MS);
+        Thread.sleep(SUBSCRIPTION_PLAN_CLEAR_WAIT_MS);
+        assertTrue(mSm.getSubscriptionPlans(mSubId).isEmpty());
 
         // Now revoke our access
         setSubPlanOwner(mSubId, null);
@@ -295,8 +348,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlansOverrideCongested() throws Exception {
-        if (!isSupported()) return;
-
         final ConnectivityManager cm = InstrumentationRegistry.getContext()
                 .getSystemService(ConnectivityManager.class);
         final Network net = findCellularNetwork();
@@ -351,7 +402,7 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionInfoRecord() {
-        if (!isSupported() || !isAutomotive()) return;
+        if (!isAutomotive()) return;
 
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity();
@@ -380,8 +431,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetDefaultVoiceSubId() {
-        if (!isSupported()) return;
-
         int oldSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity();
@@ -399,8 +448,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlansOverrideUnmetered() throws Exception {
-        if (!isSupported()) return;
-
         final ConnectivityManager cm = InstrumentationRegistry.getContext()
                 .getSystemService(ConnectivityManager.class);
         final Network net = findCellularNetwork();
@@ -436,8 +483,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlansUnmetered() throws Exception {
-        if (!isSupported()) return;
-
         final ConnectivityManager cm = InstrumentationRegistry.getContext()
                 .getSystemService(ConnectivityManager.class);
         final Network net = findCellularNetwork();
@@ -485,8 +530,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlansInvalid() throws Exception {
-        if (!isSupported()) return;
-
         // Make ourselves the owner
         setSubPlanOwner(mSubId, mPackageName);
 
@@ -526,8 +569,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlansNetworkTypeValidation() throws Exception {
-        if (!isSupported()) return;
-
         // Make ourselves the owner
         setSubPlanOwner(mSubId, mPackageName);
 
@@ -584,8 +625,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionGrouping() throws Exception {
-        if (!isSupported()) return;
-
         // Set subscription group with current sub Id. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
         List<Integer> subGroup = new ArrayList();
@@ -629,8 +668,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionGroupingWithPermission() throws Exception {
-        if (!isSupported()) return;
-
         // Set subscription group with current sub Id.
         List<Integer> subGroup = new ArrayList();
         subGroup.add(mSubId);
@@ -686,8 +723,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testAddSubscriptionIntoNewGroupWithPermission() throws Exception {
-        if (!isSupported()) return;
-
         // Set subscription group with current sub Id.
         List<Integer> subGroup = new ArrayList();
         subGroup.add(mSubId);
@@ -718,8 +753,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSettingOpportunisticSubscription() throws Exception {
-        if (!isSupported()) return;
-
         // Set subscription to be opportunistic. This should fail
         // because we don't have MODIFY_PHONE_STATE or carrier privilege permission.
         try {
@@ -735,8 +768,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testMccMncString() {
-        if (!isSupported()) return;
-
         SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
         String mcc = info.getMccString();
         String mnc = info.getMncString();
@@ -746,8 +777,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetUiccApplicationsEnabled() throws Exception {
-        if (!isSupported()) return;
-
         boolean canDisable = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.canDisablePhysicalSubscription());
         if (canDisable) {
@@ -825,8 +854,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionInfoCarrierId() {
-        if (!isSupported()) return;
-
         SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
         int carrierId = info.getCarrierId();
         assertTrue(carrierId >= TelephonyManager.UNKNOWN_CARRIER_ID);
@@ -834,8 +861,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testGetOpportunisticSubscriptions() throws Exception {
-        if (!isSupported()) return;
-
         List<SubscriptionInfo> infoList = mSm.getOpportunisticSubscriptions();
 
         for (SubscriptionInfo info : infoList) {
@@ -845,7 +870,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testGetEnabledSubscriptionId() {
-        if (!isSupported()) return;
         int slotId = SubscriptionManager.getSlotIndex(mSubId);
         if (!SubscriptionManager.isValidSlotIndex(slotId)) {
             fail("Invalid slot id " + slotId + " for subscription id " + mSubId);
@@ -857,7 +881,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetAndCheckSubscriptionEnabled() {
-        if (!isSupported()) return;
         boolean enabled = executeWithShellPermissionAndDefault(false, mSm,
                 (sm) -> sm.isSubscriptionEnabled(mSubId));
 
@@ -946,8 +969,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testGetActiveDataSubscriptionId() {
-        if (!isSupported()) return;
-
         int activeDataSubIdCurrent = executeWithShellPermissionAndDefault(
                 SubscriptionManager.INVALID_SUBSCRIPTION_ID, mSm,
                 (sm) -> sm.getActiveDataSubscriptionId());
@@ -962,7 +983,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetPreferredDataSubscriptionId() {
-        if (!isSupported()) return;
         int preferredSubId = executeWithShellPermissionAndDefault(-1, mSm,
                 (sm) -> sm.getPreferredDataSubscriptionId());
         if (preferredSubId != SubscriptionManager.DEFAULT_SUBSCRIPTION_ID) {
@@ -984,8 +1004,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testRestoreAllSimSpecificSettingsFromBackup() throws Exception {
-        if (!isSupported()) return;
-
         int activeDataSubId = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveDataSubscriptionId());
         assertNotEquals(activeDataSubId, SubscriptionManager.INVALID_SUBSCRIPTION_ID);
@@ -1089,8 +1107,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetAndGetD2DStatusSharing() {
-        if (!isSupported()) return;
-
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharingPreference(mSubId);
@@ -1107,8 +1123,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetAndGetD2DSharingContacts() {
-        if (!isSupported()) return;
-
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         List<Uri> originalD2DSharingContacts = mSm.getDeviceToDeviceStatusSharingContacts(mSubId);
@@ -1120,8 +1134,6 @@ public class SubscriptionManagerTest {
 
     @Test
     public void tetsSetAndGetPhoneNumber() throws Exception {
-        if (!isSupported()) return;
-
         // The phone number may be anything depends on the state of SIM and device.
         // Simply call the getter and make sure no exception.
 
@@ -1205,6 +1217,48 @@ public class SubscriptionManagerTest {
         }
     }
 
+    @Test
+    public void testCellularUsageSetting() throws Exception {
+        if (!isSupported()) return;
+
+        boolean isUsageSettingSupported = true;
+        int defaultUsageSetting = SubscriptionManager.USAGE_SETTING_DEFAULT;
+        int[] supportedUsageSettings;
+        final Context context = InstrumentationRegistry.getContext();
+
+        //  Load the resources to provide the device capability
+        try {
+            defaultUsageSetting = context.getResources().getInteger(
+                com.android.internal.R.integer.config_default_cellular_usage_setting);
+            supportedUsageSettings = context.getResources().getIntArray(
+                com.android.internal.R.array.config_supported_cellular_usage_settings);
+            // If usage settings are not supported, return the default setting, which is UNKNOWN.
+            if (supportedUsageSettings.length < 1) {
+                isUsageSettingSupported = false;
+                fail("Usage Setting resources empty");
+            }
+        } catch (Resources.NotFoundException nfe) {
+            fail("Usage Setting resources not found");
+            isUsageSettingSupported = false;
+        }
+
+        int[] settingsToTest = new int[] {
+                SubscriptionManager.USAGE_SETTING_DEFAULT,
+                defaultUsageSetting};
+
+        for (int setting : settingsToTest) {
+            PersistableBundle bundle = new PersistableBundle();
+            bundle.putInt(CarrierConfigManager.KEY_CELLULAR_USAGE_SETTING_INT, setting);
+            overrideCarrierConfig(bundle, mSubId);
+            SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                    (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+            assertEquals(
+                    isUsageSettingSupported ? setting :
+                            SubscriptionManager.USAGE_SETTING_UNKNOWN,
+                    info.getUsageSetting());
+        }
+    }
+
     @Nullable
     private PersistableBundle getBundleFromBackupData(byte[] data) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(data)) {
@@ -1212,13 +1266,6 @@ public class SubscriptionManagerTest {
         } catch (IOException e) {
             return null;
         }
-    }
-
-    private void overrideCarrierConfig(PersistableBundle bundle, int subId) throws Exception {
-        CarrierConfigManager carrierConfigManager = InstrumentationRegistry.getContext()
-                .getSystemService(CarrierConfigManager.class);
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(carrierConfigManager,
-                (m) -> m.overrideConfig(subId, bundle));
     }
 
     private void setPreferredDataSubId(int subId) {
@@ -1337,8 +1384,8 @@ public class SubscriptionManagerTest {
     }
 
     private static boolean isSupported() {
-        return InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+        return InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION);
     }
 
     private static boolean isAutomotive() {

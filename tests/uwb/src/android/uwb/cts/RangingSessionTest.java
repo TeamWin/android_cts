@@ -16,6 +16,8 @@
 
 package android.uwb.cts;
 
+import static android.uwb.RangingSession.Callback.REASON_BAD_PARAMETERS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -73,6 +75,29 @@ public class RangingSessionTest {
         verify(callback, times(1)).onOpened(eq(session));
         verify(callback, times(0)).onClosed(anyInt(), any());
     }
+
+    @Test
+    public void testOnRangingOpened_OnServiceDiscoveredConnectedCalled() {
+        SessionHandle handle = new SessionHandle(123);
+        RangingSession.Callback callback = mock(RangingSession.Callback.class);
+        IUwbAdapter2 adapter = mock(IUwbAdapter2.class);
+        RangingSession session = new RangingSession(EXECUTOR, callback, adapter, handle);
+        verifyOpenState(session, false);
+
+        session.onRangingOpened();
+        verifyOpenState(session, true);
+
+        // Verify that the onOpenSuccess callback was invoked
+        verify(callback, times(1)).onOpened(eq(session));
+        verify(callback, times(0)).onClosed(anyInt(), any());
+
+        session.onServiceDiscovered(PARAMS);
+        verify(callback, times(1)).onServiceDiscovered(eq(PARAMS));
+
+        session.onServiceConnected(PARAMS);
+        verify(callback, times(1)).onServiceConnected(eq(PARAMS));
+    }
+
 
     @Test
     public void testOnRangingOpened_CannotOpenClosedSession() {
@@ -182,11 +207,33 @@ public class RangingSessionTest {
     }
 
     @Test
+    public void testStop_CannotStopIfOpenFailed() throws RemoteException {
+        SessionHandle handle = new SessionHandle(123);
+        RangingSession.Callback callback = mock(RangingSession.Callback.class);
+        IUwbAdapter2 adapter = mock(IUwbAdapter2.class);
+        RangingSession session = new RangingSession(EXECUTOR, callback, adapter, handle);
+        doAnswer(new StartAnswer(session)).when(adapter).startRanging(any(), any());
+        doAnswer(new StopAnswer(session)).when(adapter).stopRanging(any());
+        session.onRangingOpened();
+        session.start(PARAMS);
+
+        verifyNoThrowIllegalState(() -> session.onRangingOpenFailed(REASON_BAD_PARAMETERS, PARAMS));
+        verify(callback, times(1)).onOpenFailed(
+                REASON_BAD_PARAMETERS, PARAMS);
+
+        // Calling stop again should throw an illegal state
+        verifyThrowIllegalState(session::stop);
+        verify(callback, times(0)).onStopped(anyInt(), any());
+    }
+
+    @Test
     public void testCallbacks_OnlyWhenOpened() throws RemoteException {
         SessionHandle handle = new SessionHandle(123);
         RangingSession.Callback callback = mock(RangingSession.Callback.class);
         IUwbAdapter2 adapter = mock(IUwbAdapter2.class);
         RangingSession session = new RangingSession(EXECUTOR, callback, adapter, handle);
+        doAnswer(new OpenAnswer(session)).when(adapter).openRanging(
+                any(), any(), any(), any(), any());
         doAnswer(new StartAnswer(session)).when(adapter).startRanging(any(), any());
         doAnswer(new ReconfigureAnswer(session)).when(adapter).reconfigureRanging(any(), any());
         doAnswer(new SuspendAnswer(session)).when(adapter).suspend(any(), any());
@@ -194,12 +241,16 @@ public class RangingSessionTest {
         doAnswer(new ControleeAddAnswer(session)).when(adapter).addControlee(any(), any());
         doAnswer(new ControleeRemoveAnswer(session)).when(adapter).removeControlee(any(), any());
         doAnswer(new DataSendAnswer(session)).when(adapter).sendData(any(), any(), any(), any());
+        doAnswer(new StopAnswer(session)).when(adapter).stopRanging(any());
+        doAnswer(new CloseAnswer(session)).when(adapter).closeRanging(any());
 
         verifyThrowIllegalState(() -> session.reconfigure(PARAMS));
         verify(callback, times(0)).onReconfigured(any());
         verifyOpenState(session, false);
 
         session.onRangingOpened();
+        verifyOpenState(session, true);
+        verify(callback, times(1)).onOpened(any());
         verifyNoThrowIllegalState(() -> session.reconfigure(PARAMS));
         verify(callback, times(1)).onReconfigured(any());
         verifyThrowIllegalState(() -> session.suspend(PARAMS));
@@ -213,28 +264,58 @@ public class RangingSessionTest {
         verifyThrowIllegalState(() -> session.sendData(
                 UWB_ADDRESS, PARAMS, new byte[] {0x05, 0x1}));
         verify(callback, times(0)).onDataSent(any(), any());
+
+        session.onRangingStartFailed(REASON_BAD_PARAMETERS, PARAMS);
         verifyOpenState(session, true);
+        verify(callback, times(1)).onStartFailed(
+                REASON_BAD_PARAMETERS, PARAMS);
 
         session.onRangingStarted(PARAMS);
+        verifyOpenState(session, true);
         verifyNoThrowIllegalState(() -> session.reconfigure(PARAMS));
         verify(callback, times(2)).onReconfigured(any());
+        verifyNoThrowIllegalState(() -> session.reconfigure(null));
+        verify(callback, times(1)).onReconfigureFailed(
+                eq(REASON_BAD_PARAMETERS), any());
         verifyNoThrowIllegalState(() -> session.suspend(PARAMS));
         verify(callback, times(1)).onSuspended(any());
+        verifyNoThrowIllegalState(() -> session.suspend(null));
+        verify(callback, times(1)).onSuspendFailed(
+                eq(REASON_BAD_PARAMETERS), any());
         verifyNoThrowIllegalState(() -> session.resume(PARAMS));
         verify(callback, times(1)).onResumed(any());
+        verifyNoThrowIllegalState(() -> session.resume(null));
+        verify(callback, times(1)).onResumeFailed(
+                eq(REASON_BAD_PARAMETERS), any());
         verifyNoThrowIllegalState(() -> session.addControlee(PARAMS));
         verify(callback, times(2)).onControleeAdded(any());
+        verifyNoThrowIllegalState(() -> session.addControlee(null));
+        verify(callback, times(1)).onControleeAddFailed(
+                eq(REASON_BAD_PARAMETERS), any());
         verifyNoThrowIllegalState(() -> session.removeControlee(PARAMS));
         verify(callback, times(2)).onControleeRemoved(any());
+        verifyNoThrowIllegalState(() -> session.removeControlee(null));
+        verify(callback, times(1)).onControleeRemoveFailed(
+                eq(REASON_BAD_PARAMETERS), any());
         verifyNoThrowIllegalState(() -> session.sendData(
                 UWB_ADDRESS, PARAMS, new byte[] {0x05, 0x1}));
         verify(callback, times(1)).onDataSent(any(), any());
-        verifyOpenState(session, true);
+        verifyNoThrowIllegalState(() -> session.sendData(
+                null, PARAMS, new byte[] {0x05, 0x1}));
+        verify(callback, times(1)).onDataSendFailed(
+                eq(null), eq(REASON_BAD_PARAMETERS), any());
 
         session.onDataReceived(UWB_ADDRESS, PARAMS, new byte[] {0x5, 0x7});
-        verify(callback, times(1)).onDataReceived(any(), any(), any());
+        verify(callback, times(1)).onDataReceived(
+                UWB_ADDRESS, PARAMS, new byte[] {0x5, 0x7});
+        session.onDataReceiveFailed(UWB_ADDRESS, REASON_BAD_PARAMETERS, PARAMS);
+        verify(callback, times(1)).onDataReceiveFailed(
+                UWB_ADDRESS, REASON_BAD_PARAMETERS, PARAMS);
 
-        session.onRangingStopped(REASON, PARAMS);
+        session.stop();
+        verifyOpenState(session, true);
+        verify(callback, times(1)).onStopped(REASON, PARAMS);
+
         verifyNoThrowIllegalState(() -> session.reconfigure(PARAMS));
         verify(callback, times(3)).onReconfigured(any());
         verifyThrowIllegalState(() -> session.suspend(PARAMS));
@@ -248,9 +329,11 @@ public class RangingSessionTest {
         verifyThrowIllegalState(() -> session.sendData(
                 UWB_ADDRESS, PARAMS, new byte[] {0x05, 0x1}));
         verify(callback, times(1)).onDataSent(any(), any());
-        verifyOpenState(session, true);
 
-        session.onRangingClosed(REASON, PARAMS);
+        session.close();
+        verifyOpenState(session, false);
+        verify(callback, times(1)).onClosed(REASON, PARAMS);
+
         verifyThrowIllegalState(() -> session.reconfigure(PARAMS));
         verify(callback, times(3)).onReconfigured(any());
         verifyThrowIllegalState(() -> session.suspend(PARAMS));
@@ -264,7 +347,6 @@ public class RangingSessionTest {
         verifyThrowIllegalState(() -> session.sendData(
                 UWB_ADDRESS, PARAMS, new byte[] {0x05, 0x1}));
         verify(callback, times(1)).onDataSent(any(), any());
-        verifyOpenState(session, false);
     }
 
     @Test
@@ -385,6 +467,23 @@ public class RangingSessionTest {
         }
     }
 
+    class OpenAnswer extends AdapterAnswer {
+        OpenAnswer(RangingSession session) {
+            super(session);
+        }
+
+        @Override
+        public Object answer(InvocationOnMock invocation) {
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onRangingOpened();
+            } else {
+                mSession.onRangingOpenFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
+            return null;
+        }
+    }
+
     class StartAnswer extends AdapterAnswer {
         StartAnswer(RangingSession session) {
             super(session);
@@ -392,7 +491,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onRangingStarted(PARAMS);
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onRangingStarted(PARAMS);
+            } else {
+                mSession.onRangingStartFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }
@@ -404,7 +508,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onRangingReconfigured(PARAMS);
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onRangingReconfigured(PARAMS);
+            } else {
+                mSession.onRangingReconfigureFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }
@@ -416,7 +525,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onRangingSuspended(PARAMS);
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onRangingSuspended(PARAMS);
+            } else {
+                mSession.onRangingSuspendFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }
@@ -428,7 +542,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onRangingResumed(PARAMS);
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onRangingResumed(PARAMS);
+            } else {
+                mSession.onRangingResumeFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }
@@ -440,7 +559,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onControleeAdded(PARAMS);
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onControleeAdded(PARAMS);
+            } else {
+                mSession.onControleeAddFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }
@@ -452,7 +576,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onControleeRemoved(PARAMS);
+            PersistableBundle argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onControleeRemoved(PARAMS);
+            } else {
+                mSession.onControleeRemoveFailed(REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }
@@ -464,7 +593,12 @@ public class RangingSessionTest {
 
         @Override
         public Object answer(InvocationOnMock invocation) {
-            mSession.onDataSent(UWB_ADDRESS, PARAMS);
+            UwbAddress argParams = invocation.getArgument(1);
+            if (argParams != null) {
+                mSession.onDataSent(UWB_ADDRESS, PARAMS);
+            } else {
+                mSession.onDataSendFailed(null, REASON_BAD_PARAMETERS, PARAMS);
+            }
             return null;
         }
     }

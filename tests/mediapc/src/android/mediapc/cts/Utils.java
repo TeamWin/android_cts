@@ -17,6 +17,7 @@
 package android.mediapc.cts;
 
 import static android.util.DisplayMetrics.DENSITY_400;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -27,11 +28,9 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
-import static org.junit.Assume.assumeTrue;
-
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 
 /**
@@ -53,6 +52,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
     // Media performance requires 6 GB minimum RAM, but keeping the following to 5 GB
     // as activityManager.getMemoryInfo() returns around 5.4 GB on a 6 GB device.
     public static final long MIN_MEMORY_PERF_CLASS_CANDIDATE_MB = 5 * 1024;
+    // Android T Media performance requires 8 GB min RAM, so setting lower as above
+    public static final long MIN_MEMORY_PERF_CLASS_T_MB = 7 * 1024;
 
     static {
         sPc = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) ? Build.VERSION.MEDIA_PERFORMANCE_CLASS
@@ -86,10 +87,14 @@ import androidx.test.platform.app.InstrumentationRegistry;
         return sPc == Build.VERSION_CODES.S;
     }
 
+    public static boolean isTPerfClass() {
+        return sPc == Build.VERSION_CODES.TIRAMISU;
+    }
+
     /**
      * Latest defined media performance class.
      */
-    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.S;
+    private static final int LAST_PERFORMANCE_CLASS = Build.VERSION_CODES.TIRAMISU;
 
     public static boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now

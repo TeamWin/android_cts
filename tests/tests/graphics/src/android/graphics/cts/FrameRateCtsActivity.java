@@ -230,16 +230,25 @@ public class FrameRateCtsActivity extends Activity {
 
             int rc = 0;
             if (mApi == Api.SURFACE) {
-                mSurface.setFrameRate(frameRate, compatibility, changeFrameRateStrategy);
+                if (changeFrameRateStrategy == Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS) {
+                    mSurface.setFrameRate(frameRate, compatibility);
+                } else {
+                    mSurface.setFrameRate(frameRate, compatibility, changeFrameRateStrategy);
+                }
             } else if (mApi == Api.ANATIVE_WINDOW) {
                 rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility,
                         changeFrameRateStrategy);
             } else if (mApi == Api.SURFACE_CONTROL) {
                 try (SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()) {
-                    transaction
-                            .setFrameRate(mSurfaceControl, frameRate, compatibility,
-                                    changeFrameRateStrategy)
-                            .apply();
+                    if (changeFrameRateStrategy == Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS) {
+                        transaction
+                                .setFrameRate(mSurfaceControl, frameRate, compatibility);
+                    } else {
+                        transaction
+                                .setFrameRate(mSurfaceControl, frameRate, compatibility,
+                                        changeFrameRateStrategy);
+                    }
+                    transaction.apply();
                 }
             } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
                 nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility,

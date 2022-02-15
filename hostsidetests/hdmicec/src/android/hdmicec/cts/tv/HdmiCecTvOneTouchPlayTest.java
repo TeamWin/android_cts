@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
-    private static final int WAIT_TIME_MS = 300;
+    private static final int WAIT_TIME_MS = 1000;
 
     private static final int SLEEP_TIMESTEP_SECONDS = 1;
     private static final int POWER_TRANSITION_WAIT_TIME = 10;
@@ -128,10 +128,10 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
              */
             hdmiCecClient.broadcastActiveSource(
                     LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+            TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
         }
         // Make the TV device the active source.
-        HdmiControlManagerUtility.setActiveSource(
-                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        HdmiControlManagerUtility.selectDevice(this, getDevice(), LogicalAddress.TV.toString());
         hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
     }
 
@@ -208,4 +208,3 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
                 .isEqualTo(powerStatus);
     }
 }
-

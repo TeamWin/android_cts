@@ -20,6 +20,7 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
 
+import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -44,6 +45,9 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
+import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
+import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
+import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
@@ -51,6 +55,7 @@ import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
@@ -60,6 +65,7 @@ import com.android.bedstead.harrier.annotations.RequireNotLowRamDevice;
 import com.android.bedstead.harrier.annotations.RequirePackageInstalled;
 import com.android.bedstead.harrier.annotations.RequirePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
+import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.TestTag;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
@@ -103,7 +109,6 @@ import com.google.common.base.Objects;
 import junit.framework.AssertionFailedError;
 
 import org.junit.AssumptionViolatedException;
-import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -137,7 +142,7 @@ import java.util.function.Function;
  *
  * {@code assumeTrue} will be used, so tests which do not meet preconditions will be skipped.
  */
-public final class DeviceState implements TestRule {
+public final class DeviceState extends HarrierRule {
 
     private static final ComponentName REMOTE_DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -176,13 +181,6 @@ public final class DeviceState implements TestRule {
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
-    /**
-     * The password to be used in tests.
-     *
-     * The infrastructure will use this password when a password exists and is required.
-     */
-    public static final String DEFAULT_PASSWORD = "1234";
-
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
         mSkipTestTeardown = Boolean.parseBoolean(
@@ -201,10 +199,12 @@ public final class DeviceState implements TestRule {
         }
     }
 
+    @Override
     void setSkipTestTeardown(boolean skipTestTeardown) {
         mSkipTestTeardown = skipTestTeardown;
     }
 
+    @Override
     void setUsingBedsteadJUnit4(boolean usingBedsteadJUnit4) {
         mUsingBedsteadJUnit4 = usingBedsteadJUnit4;
     }
@@ -266,6 +266,7 @@ public final class DeviceState implements TestRule {
     private PermissionContextImpl applyAnnotations(List<Annotation> annotations, boolean isTest)
             throws Throwable {
         PermissionContextImpl permissionContext = null;
+        Log.i(LOG_TAG, "Applying annotations: " + annotations);
         for (Annotation annotation : annotations) {
             Log.i(LOG_TAG, "Applying annotation " + annotation);
 
@@ -475,6 +476,18 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
+            if (annotation instanceof RequireTargetSdkVersion) {
+                RequireTargetSdkVersion requireTargetSdkVersionAnnotation =
+                        (RequireTargetSdkVersion) annotation;
+
+                requireTargetSdkVersion(
+                        requireTargetSdkVersionAnnotation.min(),
+                        requireTargetSdkVersionAnnotation.max(),
+                        requireTargetSdkVersionAnnotation.failureMode());
+
+                continue;
+            }
+
             if (annotation instanceof RequireSdkVersion) {
                 RequireSdkVersion requireSdkVersionAnnotation =
                         (RequireSdkVersion) annotation;
@@ -536,9 +549,31 @@ public final class DeviceState implements TestRule {
                 continue;
             }
 
+            if (annotation instanceof EnsureCanGetPermission) {
+                EnsureCanGetPermission ensureCanGetPermissionAnnotation =
+                        (EnsureCanGetPermission) annotation;
+
+                if (!meetsSdkVersionRequirements(
+                        ensureCanGetPermissionAnnotation.minVersion(),
+                        ensureCanGetPermissionAnnotation.maxVersion())) {
+                    continue;
+                }
+
+                for (String permission : ensureCanGetPermissionAnnotation.value()) {
+                    ensureCanGetPermission(permission);
+                }
+                continue;
+            }
+
             if (annotation instanceof EnsureHasPermission) {
                 EnsureHasPermission ensureHasPermissionAnnotation =
                         (EnsureHasPermission) annotation;
+
+                if (!meetsSdkVersionRequirements(
+                        ensureHasPermissionAnnotation.minVersion(),
+                        ensureHasPermissionAnnotation.maxVersion())) {
+                    continue;
+                }
 
                 for (String permission : ensureHasPermissionAnnotation.value()) {
                     ensureCanGetPermission(permission);
@@ -598,6 +633,22 @@ public final class DeviceState implements TestRule {
                 ensurePasswordNotSet(ensurePasswordNotSetAnnotation.forUser());
                 continue;
             }
+
+            if (annotation instanceof OtherUser) {
+                OtherUser otherUserAnnotation = (OtherUser) annotation;
+                mOtherUserType = otherUserAnnotation.value();
+                continue;
+            }
+
+            if (annotation instanceof EnsureBluetoothEnabled) {
+                ensureBluetoothEnabled();
+                continue;
+            }
+
+            if (annotation instanceof EnsureBluetoothDisabled) {
+                ensureBluetoothDisabled();
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
@@ -605,7 +656,7 @@ public final class DeviceState implements TestRule {
 
         if (isTest && mPermissionsInstrumentationPackage != null
                 && !mHasRequirePermissionInstrumentation) {
-            requireNoPermissionsInstrumentation();
+            requireNoPermissionsInstrumentation("No reason to use instrumentation");
         }
 
         return permissionContext;
@@ -845,7 +896,7 @@ public final class DeviceState implements TestRule {
                 !TestApis.packages().features().contains(feature), failureMode);
     }
 
-    private void requireNoPermissionsInstrumentation() {
+    private void requireNoPermissionsInstrumentation(String reason) {
         boolean instrumentingPermissions =
                 TestApis.context()
                         .instrumentedContext().getPackageName()
@@ -853,13 +904,13 @@ public final class DeviceState implements TestRule {
 
         checkFailOrSkip(
                 "This test never runs using permissions instrumentation on this version"
-                        + " of Android",
+                        + " of Android: " + reason,
                 !instrumentingPermissions,
                 FailureMode.SKIP
         );
     }
 
-    private void requirePermissionsInstrumentation() {
+    private void requirePermissionsInstrumentation(String reason) {
         mHasRequirePermissionInstrumentation = true;
         boolean instrumentingPermissions =
                 TestApis.context()
@@ -868,9 +919,22 @@ public final class DeviceState implements TestRule {
 
         checkFailOrSkip(
                 "This test only runs when using permissions instrumentation on this"
-                        + " version of Android",
+                        + " version of Android: " + reason,
                 instrumentingPermissions,
                 FailureMode.SKIP
+        );
+    }
+
+    private void requireTargetSdkVersion(
+            int min, int max, FailureMode failureMode) {
+
+        int targetSdkVersion = TestApis.packages().instrumented().targetSdkVersion();
+
+        checkFailOrSkip(
+                "TargetSdkVersion must be between " + min + " and " + max
+                        + " (inclusive) (version is " + targetSdkVersion + ")",
+                min <= targetSdkVersion && max >= targetSdkVersion,
+                failureMode
         );
     }
 
@@ -922,17 +986,6 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    public enum UserType {
-        /** Only to be used with annotations. */
-        ANY,
-        SYSTEM_USER,
-        CURRENT_USER,
-        PRIMARY_USER,
-        SECONDARY_USER,
-        WORK_PROFILE,
-        TV_PROFILE,
-    }
-
     private static final String LOG_TAG = "DeviceState";
 
     private static final Context sContext = TestApis.context().instrumentedContext();
@@ -944,6 +997,7 @@ public final class DeviceState implements TestRule {
     private DevicePolicyController mDeviceOwner;
     private Map<UserReference, DevicePolicyController> mProfileOwners = new HashMap<>();
     private RemotePolicyManager mPrimaryPolicyManager;
+    private UserType mOtherUserType;
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
@@ -953,9 +1007,10 @@ public final class DeviceState implements TestRule {
     private DevicePolicyController mOriginalDeviceOwner;
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
     private UserReference mOriginalSwitchedUser;
+    private Boolean mOriginalBluetoothEnabled;
 
     /**
-     * Get the {@link UserReference} of the work profile for the current user.
+     * Get the {@link UserReference} of the work profile for the primary user.
      *
      * <p>If the current user is a work profile, then the current user will be returned.
      *
@@ -965,7 +1020,8 @@ public final class DeviceState implements TestRule {
      * @throws IllegalStateException if there is no harrier-managed work profile
      */
     public UserReference workProfile() {
-        return workProfile(/* forUser= */ UserType.CURRENT_USER);
+        // Work profiles are currently only supported on the primary user
+        return workProfile(/* forUser= */ UserType.PRIMARY_USER);
     }
 
     /**
@@ -1126,6 +1182,19 @@ public final class DeviceState implements TestRule {
      */
     public UserReference secondaryUser() {
         return user(SECONDARY_USER_TYPE_NAME);
+    }
+
+    /**
+     * Get the user marked as "other" by use of the {@code @OtherUser} annotation.
+     *
+     * @throws IllegalStateException if there is no "other" user
+     */
+    public UserReference otherUser() {
+        if (mOtherUserType == null) {
+            throw new IllegalStateException("No other user specified. Use @OtherUser");
+        }
+
+        return resolveUserTypeToUser(mOtherUserType);
     }
 
     /**
@@ -1360,6 +1429,7 @@ public final class DeviceState implements TestRule {
         }
         mRegisteredBroadcastReceivers.clear();
         mPrimaryPolicyManager = null;
+        mOtherUserType = null;
     }
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
@@ -1384,7 +1454,9 @@ public final class DeviceState implements TestRule {
                     mDeviceOwner.remove();
                 }
             } else if (!mOriginalDeviceOwner.equals(mDeviceOwner)) {
-                mDeviceOwner.remove();
+                if (mDeviceOwner != null) {
+                    mDeviceOwner.remove();
+                }
                 TestApis.devicePolicy().setDeviceOwner(
                         mOriginalDeviceOwner.componentName());
             }
@@ -1443,6 +1515,11 @@ public final class DeviceState implements TestRule {
             uninstalledTestApp.testApp().install(uninstalledTestApp.user());
         }
         mUninstalledTestApps.clear();
+
+        if (mOriginalBluetoothEnabled != null) {
+            TestApis.bluetooth().setEnabled(mOriginalBluetoothEnabled);
+            mOriginalBluetoothEnabled = null;
+        }
     }
 
     private UserReference createProfile(
@@ -1902,18 +1979,27 @@ public final class DeviceState implements TestRule {
                 return;
             }
 
+            if (TestApis.packages().instrumented().isInstantApp()) {
+                // Instant Apps aren't able to know the permissions of shell so we can't know if we
+                // can adopt it - we'll assume we can adopt and log
+                Log.i(LOG_TAG,
+                        "Assuming we can get permission " + permission
+                                + " as running on instant app");
+                return;
+            }
+
             TestApis.permissions().throwPermissionException(
                     "Can not get required permission", permission);
         }
 
         if (TestApis.permissions().adoptablePermissions().contains(permission)) {
-            requireNoPermissionsInstrumentation();
+            requireNoPermissionsInstrumentation("Requires permission " + permission);
         } else if (mPermissionsInstrumentationPackagePermissions.contains(permission)) {
-            requirePermissionsInstrumentation();
+            requirePermissionsInstrumentation("Requires permission " + permission);
         } else {
             // Can't get permission at all - error (including the permissions for both)
             TestApis.permissions().throwPermissionException(
-                    "Can not get permission including by instrumenting "
+                    "Can not get permission " + permission + " including by instrumenting "
                             + mPermissionsInstrumentationPackage
                             + "\n " + mPermissionsInstrumentationPackage + " permissions: "
                             + mPermissionsInstrumentationPackagePermissions,
@@ -2016,11 +2102,26 @@ public final class DeviceState implements TestRule {
 
         try {
             user.clearPassword(DEFAULT_PASSWORD);
-        } catch (NeneException e) {
+        } catch (NeneException e
+        ) {
             throw new AssertionError(
                     "Test requires user " + user + " does not have a password. "
                             + "Password is set and is not DEFAULT_PASSWORD.");
         }
         mUsersSetPasswords.remove(user);
+    }
+
+    private void ensureBluetoothEnabled() {
+        if (mOriginalBluetoothEnabled == null) {
+            mOriginalBluetoothEnabled = TestApis.bluetooth().isEnabled();
+        }
+        TestApis.bluetooth().setEnabled(true);
+    }
+
+    private void ensureBluetoothDisabled() {
+        if (mOriginalBluetoothEnabled == null) {
+            mOriginalBluetoothEnabled = TestApis.bluetooth().isEnabled();
+        }
+        TestApis.bluetooth().setEnabled(false);
     }
 }

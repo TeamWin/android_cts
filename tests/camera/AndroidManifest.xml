@@ -89,6 +89,9 @@
             android:screenOrientation="locked"
             android:configChanges="keyboardHidden|orientation|screenSize">
         </activity>
+        <activity android:name="android.hardware.camera2.cts.EmptyActivity"
+            android:label="EmptyActivity">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

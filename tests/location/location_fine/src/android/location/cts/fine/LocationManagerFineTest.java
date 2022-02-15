@@ -16,7 +16,7 @@
 
 package android.location.cts.fine;
 
-import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
+import static android.Manifest.permission.LOCATION_BYPASS;
 import static android.app.AppOpsManager.OPSTR_MONITOR_HIGH_POWER_LOCATION;
 import static android.app.AppOpsManager.OPSTR_MONITOR_LOCATION;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
@@ -816,7 +816,7 @@ public class LocationManagerFineTest {
                     mContext.getPackageName());
 
             getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+                    .adoptShellPermissionIdentity(LOCATION_BYPASS);
             try {
                 mManager.requestLocationUpdates(
                         TEST_PROVIDER,

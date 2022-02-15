@@ -610,6 +610,17 @@
              android:exported="true"
              android:colorMode="wideColorGamut"
              android:theme="@style/BadBlurryDialog"/>
+        <activity android:name=".CustomTransitionExitActivity"
+            android:theme="@style/Theme.CustomTransitionTheme"
+            android:exported="true"
+            android:colorMode="wideColorGamut"/>
+        <activity android:name=".CustomTransitionEnterActivity"
+            android:theme="@style/Theme.CustomTransitionTheme"
+            android:exported="true"
+            android:colorMode="wideColorGamut"/>
+        <activity android:name=".KeepClearRectsActivity"
+            android:exported="true"
+            android:theme="@style/NoInsetsTheme"/>
 
         <!-- Splash Screen Test Activities -->
         <activity android:name=".HandleSplashScreenExitActivity"
@@ -624,6 +635,10 @@
         <activity android:name=".SplashScreenReplaceThemeActivity"
                   android:exported="true"
                   android:theme="@style/ReplaceIconTheme"
+                  android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
+        <activity android:name=".SplashScreenStyleThemeActivity"
+                  android:exported="true"
+                  android:theme="@style/SplashScreenStyleTheme"
                   android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
 
         <service android:name=".OverlayTestService"

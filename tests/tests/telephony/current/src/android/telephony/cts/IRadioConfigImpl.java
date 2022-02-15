@@ -23,10 +23,11 @@ import android.hardware.radio.config.IRadioConfig;
 import android.hardware.radio.config.IRadioConfigIndication;
 import android.hardware.radio.config.IRadioConfigResponse;
 import android.hardware.radio.config.PhoneCapability;
-import android.hardware.radio.config.SimPortInfo;
 import android.hardware.radio.config.SimSlotStatus;
 import android.hardware.radio.config.SlotPortMapping;
-import android.hardware.radio.sim.CardStatus;
+import android.os.AsyncResult;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -34,18 +35,88 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     private static final String TAG = "MRCFG";
 
     private final MockModemService mService;
-    private byte mNumOfLiveModems = 1;
     private IRadioConfigResponse mRadioConfigResponse;
     private IRadioConfigIndication mRadioConfigIndication;
+    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
+    private Object mCacheUpdateMutex;
+    private final Handler mHandler;
+    private int mSubId;
 
+    // ***** Events
+    static final int EVENT_NUM_OF_LIVE_MODEM_CHANGED = 1;
+    static final int EVENT_PHONE_CAPABILITY_CHANGED = 2;
+    static final int EVENT_SIM_SLOT_STATUS_CHANGED = 3;
+
+    // ***** Cache of modem attributes/status
     private int mSlotNum = 1;
-    private boolean mSimStatePresent = false;
+    private byte mNumOfLiveModems = 1;
+    private PhoneCapability mPhoneCapability = new PhoneCapability();
+    private SimSlotStatus[] mSimSlotStatus;
 
-    public IRadioConfigImpl(MockModemService service) {
+    public IRadioConfigImpl(
+            MockModemService service, MockModemConfigInterface[] interfaces, int instanceId) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
+        sMockModemConfigInterfaces = interfaces;
         mSlotNum = mService.getNumPhysicalSlots();
+        mSimSlotStatus = new SimSlotStatus[mSlotNum];
+        mCacheUpdateMutex = new Object();
+        mHandler = new IRadioConfigHandler();
+        mSubId = instanceId;
+
+        // Register events
+        sMockModemConfigInterfaces[mSubId].registerForNumOfLiveModemChanged(
+                mHandler, EVENT_NUM_OF_LIVE_MODEM_CHANGED, null);
+        sMockModemConfigInterfaces[mSubId].registerForPhoneCapabilityChanged(
+                mHandler, EVENT_PHONE_CAPABILITY_CHANGED, null);
+        sMockModemConfigInterfaces[mSubId].registerForSimSlotStatusChanged(
+                mHandler, EVENT_SIM_SLOT_STATUS_CHANGED, null);
+    }
+
+    /** Handler class to handle callbacks */
+    private final class IRadioConfigHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            AsyncResult ar;
+            synchronized (mCacheUpdateMutex) {
+                switch (msg.what) {
+                    case EVENT_NUM_OF_LIVE_MODEM_CHANGED:
+                        Log.d(TAG, "Received EVENT_NUM_OF_LIVE_MODEM_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mNumOfLiveModems = (byte) ar.result;
+                            Log.i(TAG, "Number of live modem: " + mNumOfLiveModems);
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                    case EVENT_PHONE_CAPABILITY_CHANGED:
+                        Log.d(TAG, "Received EVENT_PHONE_CAPABILITY_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mPhoneCapability = (PhoneCapability) ar.result;
+                            Log.i(TAG, "Phone capability: " + mPhoneCapability);
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                    case EVENT_SIM_SLOT_STATUS_CHANGED:
+                        Log.d(TAG, "Received EVENT_SIM_SLOT_STATUS_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mSimSlotStatus = (SimSlotStatus[]) ar.result;
+                            for (int i = 0; i < mSlotNum; i++) {
+                                Log.i(TAG, "Sim slot status: " + mSimSlotStatus[i]);
+                            }
+                            unsolSimSlotsStatusChanged();
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     // Implementation of IRadioConfig functions
@@ -68,10 +139,15 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     @Override
     public void getNumOfLiveModems(int serial) {
         Log.d(TAG, "getNumOfLiveModems");
+        byte numoflivemodem;
+
+        synchronized (mCacheUpdateMutex) {
+            numoflivemodem = mNumOfLiveModems;
+        }
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioConfigResponse.getNumOfLiveModemsResponse(rsp, mNumOfLiveModems);
+            mRadioConfigResponse.getNumOfLiveModemsResponse(rsp, numoflivemodem);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to invoke getNumOfLiveModemsResponse from AIDL. Exception" + ex);
         }
@@ -80,10 +156,11 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
     @Override
     public void getPhoneCapability(int serial) {
         Log.d(TAG, "getPhoneCapability");
+        PhoneCapability phoneCapability;
 
-        PhoneCapability phoneCapability = new PhoneCapability();
-        phoneCapability.logicalModemIds = new byte[2];
-        convertMockPhoneCapToHal(phoneCapability);
+        synchronized (mCacheUpdateMutex) {
+            phoneCapability = mPhoneCapability;
+        }
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -98,14 +175,13 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         Log.d(TAG, "getSimSlotsStatus");
         SimSlotStatus[] slotStatus;
 
-        if (mSlotNum < 1) {
-            Log.d(TAG, "No slot information is retured.");
-            slotStatus = null;
-        } else {
-            slotStatus = new SimSlotStatus[mSlotNum];
-
-            for (int i = 0; i < mSlotNum; i++) slotStatus[i] = new SimSlotStatus();
-            convertMockSimSlotStatusToHal(slotStatus);
+        synchronized (mCacheUpdateMutex) {
+            if (mSlotNum < 1) {
+                Log.d(TAG, "No slot information is retured.");
+                slotStatus = null;
+            } else {
+                slotStatus = mSimSlotStatus;
+            }
         }
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
@@ -170,15 +246,13 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         SimSlotStatus[] slotStatus;
 
         if (mRadioConfigIndication != null) {
-
-            if (mSlotNum < 1) {
-                Log.d(TAG, "No slot information is retured.");
-                slotStatus = null;
-            } else {
-                slotStatus = new SimSlotStatus[mSlotNum];
-
-                for (int i = 0; i < mSlotNum; i++) slotStatus[i] = new SimSlotStatus();
-                convertMockSimSlotStatusToHal(slotStatus);
+            synchronized (mCacheUpdateMutex) {
+                if (mSlotNum < 1) {
+                    Log.d(TAG, "No slot information is retured.");
+                    slotStatus = null;
+                } else {
+                    slotStatus = mSimSlotStatus;
+                }
             }
 
             try {
@@ -190,65 +264,5 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
         } else {
             Log.e(TAG, "null mRadioConfigIndication");
         }
-    }
-
-    private void convertMockSimSlotStatusToHal(SimSlotStatus[] slotStatus) {
-
-        int portInfoListLen = 1;
-
-        if (mSlotNum >= 1) {
-            if (mSimStatePresent) {
-                slotStatus[0].cardState = CardStatus.STATE_PRESENT;
-            } else {
-                slotStatus[0].cardState = CardStatus.STATE_ABSENT;
-            }
-            slotStatus[0].atr = "";
-            slotStatus[0].eid = "";
-            SimPortInfo[] portInfoList0 = new SimPortInfo[portInfoListLen];
-            for (int i = 0; i < portInfoListLen; i++) portInfoList0[i] = new SimPortInfo();
-            portInfoList0[0].portActive = true;
-            portInfoList0[0].logicalSlotId = 0;
-            portInfoList0[0].iccId = "";
-            slotStatus[0].portInfo = portInfoList0;
-        }
-
-        if (mSlotNum >= 2) {
-            slotStatus[1].cardState = CardStatus.STATE_PRESENT;
-            slotStatus[1].atr = "3B9F97C00A3FC6828031E073FE211F65D002341512810F51";
-            slotStatus[1].eid = "89033023426200000000005430099507";
-            SimPortInfo[] portInfoList1 = new SimPortInfo[portInfoListLen];
-            for (int i = 0; i < portInfoListLen; i++) portInfoList1[i] = new SimPortInfo();
-            portInfoList1[0].portActive = false;
-            portInfoList1[0].logicalSlotId = -1;
-            portInfoList1[0].iccId = "";
-            slotStatus[1].portInfo = portInfoList1;
-        }
-
-        if (mSlotNum >= 3) {
-            slotStatus[2].cardState = CardStatus.STATE_ABSENT;
-            slotStatus[2].atr = "";
-            slotStatus[2].eid = "";
-            SimPortInfo[] portInfoList2 = new SimPortInfo[portInfoListLen];
-            for (int i = 0; i < portInfoListLen; i++) portInfoList2[i] = new SimPortInfo();
-            portInfoList2[0].portActive = false;
-            portInfoList2[0].logicalSlotId = -1;
-            portInfoList2[0].iccId = "";
-            slotStatus[2].portInfo = portInfoList2;
-        }
-    }
-
-    private void convertMockPhoneCapToHal(PhoneCapability phoneCapability) {
-
-        phoneCapability.maxActiveData = 2;
-        phoneCapability.maxActiveInternetData = 1;
-        phoneCapability.isInternetLingeringSupported = false;
-        phoneCapability.logicalModemIds[0] = 0;
-        phoneCapability.logicalModemIds[1] = 1;
-    }
-
-    // TODO: use helper function to handle
-    public void setSimPresent(int slotId) {
-        // TODO: check  slotId and Phone ID
-        mSimStatePresent = true;
     }
 }

@@ -63,13 +63,10 @@ import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
-import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -521,7 +518,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testHideOnCreate() throws Exception {
-        final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
+        final TestHideOnCreateActivity activity =
+                startActivityInWindowingModeFullScreen(TestHideOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing();
         PollingCheck.waitFor(TIMEOUT,
@@ -641,7 +639,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testWindowInsetsController_availableAfterAddView() throws Exception {
-        final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
+        final TestHideOnCreateActivity activity =
+                startActivityInWindowingModeFullScreen(TestHideOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing();
         PollingCheck.waitFor(TIMEOUT,

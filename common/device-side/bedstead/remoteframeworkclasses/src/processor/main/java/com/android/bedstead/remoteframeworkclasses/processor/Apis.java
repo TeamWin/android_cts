@@ -137,7 +137,11 @@ public final class Apis {
             try {
                 // Strip "method" and semicolon
                 methodLine = methodLine.substring(7, methodLine.length() - 1);
-                methodSignatures.add(MethodSignature.forApiString(methodLine, types, elements));
+                MethodSignature signature =
+                        MethodSignature.forApiString(methodLine, types, elements);
+                if (signature != null) {
+                    methodSignatures.add(signature);
+                }
             } catch (RuntimeException e) {
                 throw new IllegalStateException("Error parsing method " + line, e);
             }

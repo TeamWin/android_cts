@@ -31,7 +31,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 
-import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -41,6 +40,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +52,6 @@ import java.util.List;
  * Photo Picker Device only tests for cross profile interaction flows.
  */
 @RunWith(BedsteadJUnit4.class)
-@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -107,6 +106,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
 
     @Test
     @EnsureHasWorkProfile
+    @Ignore("Enable after b/216475844 is fixed")
     public void testPersonalApp_canAccessWorkProfileContents() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, sDeviceState.workProfile().id(), mUriList);

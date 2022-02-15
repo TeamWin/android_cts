@@ -86,6 +86,7 @@ android_test {
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
+    per_testcase_directory: true,
 }
 
 genrule {

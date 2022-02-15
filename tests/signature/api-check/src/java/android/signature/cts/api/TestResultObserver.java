@@ -21,8 +21,8 @@ import android.signature.cts.ResultObserver;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import repackaged.junit.framework.Assert;
-import repackaged.junit.framework.TestCase;
+import junit.framework.Assert;
+import junit.framework.TestCase;
 
 /**
  * Keeps track of any reported failures.

@@ -381,14 +381,29 @@ public class SystemFeaturesTest {
                 Sensor.TYPE_RELATIVE_HUMIDITY);
         assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HINGE_ANGLE,
                 Sensor.TYPE_HINGE_ANGLE);
-
+        assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_DYNAMIC_HEAD_TRACKER,
+                Sensor.TYPE_HEAD_TRACKER);
+        assertFeatureForSensor(featuresLeft,
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES,
+                Sensor.TYPE_ACCELEROMETER_LIMITED_AXES);
+        assertFeatureForSensor(featuresLeft,
+                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES,
+                Sensor.TYPE_GYROSCOPE_LIMITED_AXES);
+        assertFeatureForSensor(featuresLeft,
+                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED,
+                Sensor.TYPE_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED);
+        assertFeatureForSensor(featuresLeft,
+                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES_UNCALIBRATED,
+                Sensor.TYPE_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
+        assertFeatureForSensor(featuresLeft, PackageManager.FEATURE_SENSOR_HEADING,
+                Sensor.TYPE_HEADING);
 
         /*
          * We have three cases to test for :
          * Case 1:  Device does not have an HRM
          * FEATURE_SENSOR_HEART_RATE               false
          * FEATURE_SENSOR_HEART_RATE_ECG           false
-         * assertFeatureForSensor(TYPE_HEART_RATE) false
+         * assertFeatureForSensor(TßYPE_HEART_RATE) false
          *
          * Case 2:  Device has a PPG HRM
          * FEATURE_SENSOR_HEART_RATE               true
@@ -508,7 +523,7 @@ public class SystemFeaturesTest {
     @Test
     public void testTelephonyFeatures() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) ||
-            !mPackageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE)) {
+                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELECOM)) {
                 return;
         }
 

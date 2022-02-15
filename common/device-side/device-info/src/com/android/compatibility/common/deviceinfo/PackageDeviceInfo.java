@@ -25,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.Process;
+
 import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.PackageUtil;
 
@@ -58,6 +59,7 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String PERMISSION_GROUP = "permission_group";
     private static final String PERMISSION_PROTECTION = "protection_level";
     private static final String PERMISSION_PROTECTION_FLAGS = "protection_level_flags";
+    private static final String PERMISSION_IS_GRANTED = "is_granted";
 
     private static final String PERMISSION_TYPE = "type";
     private static final int PERMISSION_TYPE_SYSTEM = 1;
@@ -164,6 +166,10 @@ public class PackageDeviceInfo extends DeviceInfo {
                     } else {
                       store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_CUSTOM);
                     }
+
+                    boolean isGranted = pm.checkPermission(
+                            permission, pkg.packageName) == pm.PERMISSION_GRANTED;
+                    store.addResult(PERMISSION_IS_GRANTED, isGranted);
 
                     store.endGroup();
                 } catch (PackageManager.NameNotFoundException e) {

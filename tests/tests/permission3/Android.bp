@@ -48,6 +48,7 @@ android_test {
         ":CtsUsePermissionApp30WithBackground",
         ":CtsUsePermissionApp30WithBluetooth",
         ":CtsUsePermissionApp31",
+        ":CtsUsePermissionApp32",
         ":CtsUsePermissionAppLatest",
         ":CtsUsePermissionAppLatestNone",
         ":CtsUsePermissionAppWithOverlay",
@@ -55,10 +56,12 @@ android_test {
         ":CtsAccessMicrophoneApp2",
         ":CtsAccessMicrophoneAppLocationProvider",
         ":CtsHelperAppOverlay",
+        ":CtsCreateNotificationChannelsApp31",
+        ":CtsCreateNotificationChannelsApp33",
     ],
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
 }

@@ -19,6 +19,7 @@ package {
 
 cc_test {
     name: "CtsNNAPITestCases",
+    host_supported: true,
     compile_multilib: "both",
     multilib: {
         lib32: {
@@ -30,23 +31,40 @@ cc_test {
     },
     whole_static_libs: ["CtsNNAPITests_static"],
     shared_libs: [
-        "libandroid",
         "liblog",
         "libneuralnetworks",
-        "libvulkan",
     ],
-    static_libs: [
-        "libbase_ndk",
-        "libgtest_ndk_c++",
-        "libgmock_ndk",
-    ],
-    // Tag this module as a cts test artifact
     test_suites: [
-        "cts",
-        "mts",
-        "mts-neuralnetworks",
         "general-tests",
     ],
+    target: {
+        android: {
+            shared_libs: [
+                "libandroid",
+                "libvulkan",
+            ],
+            static_libs: [
+                "libbase_ndk",
+                "libgtest_ndk_c++",
+                "libgmock_ndk",
+            ],
+            // Tag this module as a cts test artifact
+            test_suites: [
+                "cts",
+                "mts",
+                "mts-neuralnetworks",
+            ],
+            test_config: "AndroidTestDevice.xml",
+        },
+        host: {
+            static_libs: [
+                "libbase",
+                "libgmock",
+                "libgtest",
+            ],
+            test_config: "AndroidTestHost.xml",
+        },
+    },
     sdk_version: "current",
     stl: "c++_static",
     min_sdk_version: "30",

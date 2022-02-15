@@ -22,7 +22,7 @@ android_test {
     test_config: "AndroidTest.xml",
     srcs: ["src/**/*.java", "helper/**/*.java", ":CtsProviderTestUtils",],
     compile_multilib: "both",
-    test_suites: ["device-tests", "mts-mediaprovider", "cts"],
+    test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     sdk_version: "core_current",
     min_sdk_version: "30",
     libs: [

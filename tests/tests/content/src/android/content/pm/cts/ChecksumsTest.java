@@ -609,7 +609,8 @@ public class ChecksumsTest {
 
         // Using the installer's certificate(s).
         PackageManager pm = getPackageManager();
-        PackageInfo packageInfo = pm.getPackageInfo(CTS_PACKAGE_NAME, GET_SIGNING_CERTIFICATES);
+        PackageInfo packageInfo = pm.getPackageInfo(CTS_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(GET_SIGNING_CERTIFICATES));
         final List<Certificate> signatures = convertSignaturesToCertificates(
                 packageInfo.signingInfo.getApkContentsSigners());
 
@@ -733,7 +734,8 @@ public class ChecksumsTest {
 
         // Using certificates from a security app, not the installer (us).
         PackageManager pm = getPackageManager();
-        PackageInfo packageInfo = pm.getPackageInfo(FIXED_PACKAGE_NAME, GET_SIGNING_CERTIFICATES);
+        PackageInfo packageInfo = pm.getPackageInfo(FIXED_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(GET_SIGNING_CERTIFICATES));
         final List<Certificate> signatures = convertSignaturesToCertificates(
                 packageInfo.signingInfo.getApkContentsSigners());
 
@@ -1118,7 +1120,8 @@ public class ChecksumsTest {
         installPackageIncrementally(TEST_FIXED_APK);
 
         PackageManager pm = getPackageManager();
-        PackageInfo packageInfo = pm.getPackageInfo(FIXED_PACKAGE_NAME, 0);
+        PackageInfo packageInfo = pm.getPackageInfo(FIXED_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0));
         final String inPath = packageInfo.applicationInfo.getBaseCodePath();
 
         installApkWithChecksumsIncrementally(inPath);
@@ -1152,7 +1155,8 @@ public class ChecksumsTest {
 
         installPackageIncrementally(TEST_FIXED_APK);
 
-        PackageInfo packageInfo = getPackageManager().getPackageInfo(FIXED_PACKAGE_NAME, 0);
+        PackageInfo packageInfo = getPackageManager().getPackageInfo(FIXED_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0));
         final String inPath = packageInfo.applicationInfo.getBaseCodePath();
 
         final byte[] signature = readSignature();
@@ -1191,7 +1195,8 @@ public class ChecksumsTest {
 
         installPackageIncrementally(TEST_FIXED_APK);
 
-        PackageInfo packageInfo = getPackageManager().getPackageInfo(FIXED_PACKAGE_NAME, 0);
+        PackageInfo packageInfo = getPackageManager().getPackageInfo(FIXED_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0));
         final String inPath = packageInfo.applicationInfo.getBaseCodePath();
 
         installApkWithChecksumsIncrementally(inPath);
@@ -1444,7 +1449,7 @@ public class ChecksumsTest {
     private Certificate getInstallerCertificate() throws Exception {
         PackageManager pm = getPackageManager();
         PackageInfo installerPackageInfo = pm.getPackageInfo(CTS_PACKAGE_NAME,
-                GET_SIGNING_CERTIFICATES);
+                PackageManager.PackageInfoFlags.of(GET_SIGNING_CERTIFICATES));
         final List<Certificate> signatures = convertSignaturesToCertificates(
                 installerPackageInfo.signingInfo.getApkContentsSigners());
         return signatures.get(0);

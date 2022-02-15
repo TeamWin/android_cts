@@ -38,8 +38,8 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
 import com.android.bedstead.harrier.policies.ApplicationRestrictionsManagingPackage;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
@@ -105,7 +105,7 @@ public final class ApplicationRestrictionsTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_applicationRestrictionsAreSet() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()
@@ -130,7 +130,7 @@ public final class ApplicationRestrictionsTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_applicationRestrictionsAlreadySet_setsNewRestrictions() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()
@@ -237,7 +237,7 @@ public final class ApplicationRestrictionsTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @NegativePolicyTest(policy = ApplicationRestrictions.class)
+    @PolicyDoesNotApplyTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_policyDoesNotApply_applicationRestrictionsAreNotSet() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager().getApplicationRestrictions(
@@ -295,7 +295,7 @@ public final class ApplicationRestrictionsTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_restrictionsChangedBroadcastIsReceived() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()
@@ -358,7 +358,7 @@ public final class ApplicationRestrictionsTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = ApplicationRestrictions.class)
+    @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_logged() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()

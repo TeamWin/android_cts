@@ -26,14 +26,24 @@ import android.stats.mediametrics.Mediametrics;
 
 import com.android.os.AtomsProto;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+
 
 import java.util.List;
 
 public class MediaCapabilitiesTests extends DeviceTestCase implements IBuildReceiver {
     private static final String FEATURE_TV = "android.hardware.type.television";
     private IBuildInfo mCtsBuild;
+
+    // Cache original settings which are modified during test
+    String mIsDtsEnabled;
+    String mIsDolbyTrueHdEnabled;
+    String mEncodedSurroundMode;
+    String mUserPrefDisplayMode;
+    String mMatchContentFrameRatePref;
+    String mUserDisabledHdrTypes;
 
     @Override
     protected void setUp() throws Exception {
@@ -43,10 +53,12 @@ public class MediaCapabilitiesTests extends DeviceTestCase implements IBuildRece
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        cacheOriginalSettings();
     }
 
     @Override
     protected void tearDown() throws Exception {
+        restoreOriginalSettings();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
@@ -64,14 +76,6 @@ public class MediaCapabilitiesTests extends DeviceTestCase implements IBuildRece
 
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.MEDIA_CAPABILITIES_FIELD_NUMBER);
-
-        // Store the original value of settings
-        String isDtsEnabled = getDevice().executeShellCommand(
-                "cmd audio get-is-surround-format-enabled 7").split(":")[1].trim();
-        String isDolbyTrueHdEnabled = getDevice().executeShellCommand(
-                "cmd audio get-is-surround-format-enabled 14").split(":")[1].trim();
-        String encodedSurroundMode = getDevice().executeShellCommand(
-                "cmd audio get-encoded-surround-mode").split(":")[1].trim();
 
         // Setting the values of audio setting via shell commands
         getDevice().executeShellCommand(
@@ -100,14 +104,6 @@ public class MediaCapabilitiesTests extends DeviceTestCase implements IBuildRece
                     atom.getMediaCapabilities()
                             .getUserEnabledSurroundEncodings().getAudioEncodingsList());
         }
-
-        // Restore the original value of settings
-        getDevice().executeShellCommand(
-                "cmd audio set-surround-format-enabled 7 " + isDtsEnabled);
-        getDevice().executeShellCommand(
-                "cmd audio set-surround-format-enabled 14 " + isDolbyTrueHdEnabled);
-        getDevice().executeShellCommand(
-                "cmd audio set-encoded-surround-mode " + encodedSurroundMode);
     }
 
     public void testDisplayCapabilities() throws Exception {
@@ -117,21 +113,11 @@ public class MediaCapabilitiesTests extends DeviceTestCase implements IBuildRece
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.MEDIA_CAPABILITIES_FIELD_NUMBER);
 
-        // Store the original value of settings
-        String userPrefDisplayMode = getDevice().executeShellCommand(
-                "cmd display get-user-preferred-display-mode").split(":")[1].trim();
-        String matchContentFrameRatePref = getDevice().executeShellCommand(
-                "cmd display get-match-content-frame-rate-pref").split(":")[1].trim();
-        String userDisabledHdrTypes = getDevice().executeShellCommand(
-                "cmd display get-user-disabled-hdr-types").split(":")[1].trim();
-        userDisabledHdrTypes.replaceAll(", ", " ");
-
-
         // Setting the values of display setting via shell commands
         getDevice().executeShellCommand(
                 "cmd display set-user-preferred-display-mode 720 1020 60.0f");
         getDevice().executeShellCommand("cmd display set-match-content-frame-rate-pref 2");
-        getDevice().executeShellCommand("cmd display set-user-disabled-hdr-types 0 1");
+        getDevice().executeShellCommand("cmd display set-user-disabled-hdr-types 1 2");
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Trigger atom pull.
@@ -161,18 +147,47 @@ public class MediaCapabilitiesTests extends DeviceTestCase implements IBuildRece
                             Mediametrics.HdrFormat.HDR_TYPE_DOLBY_VISION,
                             Mediametrics.HdrFormat.HDR_TYPE_HDR10);
         }
+    }
 
-        // Restore the original value of settings
-        if (userPrefDisplayMode.equals("null")) {
+    private void cacheOriginalSettings() throws DeviceNotAvailableException {
+        mIsDtsEnabled = getDevice().executeShellCommand(
+                "cmd audio get-is-surround-format-enabled 7").split(":")[1].trim();
+        mIsDolbyTrueHdEnabled = getDevice().executeShellCommand(
+                "cmd audio get-is-surround-format-enabled 14").split(":")[1].trim();
+        mEncodedSurroundMode = getDevice().executeShellCommand(
+                "cmd audio get-encoded-surround-mode").split(":")[1].trim();
+
+        // Store the original value of settings
+        mUserPrefDisplayMode = getDevice().executeShellCommand(
+                "cmd display get-user-preferred-display-mode").split(":")[1].trim();
+        mMatchContentFrameRatePref = getDevice().executeShellCommand(
+                "cmd display get-match-content-frame-rate-pref").split(":")[1].trim();
+        mUserDisabledHdrTypes = getDevice().executeShellCommand(
+                "cmd display get-user-disabled-hdr-types").split(":")[1].trim();
+        mUserDisabledHdrTypes = mUserDisabledHdrTypes.replace("[", "");
+        mUserDisabledHdrTypes = mUserDisabledHdrTypes.replace("]", "");
+        mUserDisabledHdrTypes = mUserDisabledHdrTypes.replace(",", " ");
+
+    }
+
+    private void restoreOriginalSettings() throws DeviceNotAvailableException {
+        getDevice().executeShellCommand(
+                "cmd audio set-surround-format-enabled 7 " + mIsDtsEnabled);
+        getDevice().executeShellCommand(
+                "cmd audio set-surround-format-enabled 14 " + mIsDolbyTrueHdEnabled);
+        getDevice().executeShellCommand(
+                "cmd audio set-encoded-surround-mode " + mEncodedSurroundMode);
+
+        if (mUserPrefDisplayMode.equals("null")) {
             getDevice().executeShellCommand(
                     "cmd display clear-user-preferred-display-mode");
         } else {
             getDevice().executeShellCommand(
-                    "cmd display set-user-preferred-display-mode " + userPrefDisplayMode);
+                    "cmd display set-user-preferred-display-mode " + mUserPrefDisplayMode);
         }
         getDevice().executeShellCommand("cmd display set-match-content-frame-rate-pref "
-                + matchContentFrameRatePref);
+                + mMatchContentFrameRatePref);
         getDevice().executeShellCommand("cmd display set-user-disabled-hdr-types "
-                + userDisabledHdrTypes);
+                + mUserDisabledHdrTypes);
     }
 }

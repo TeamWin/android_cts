@@ -64,6 +64,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.os.IBinder;
 import android.os.ResultReceiver;
+import android.os.SystemProperties;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.SystemUserOnly;
@@ -500,7 +501,13 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @Test
     public void testPendingIntentBroadcastTimeout_delay12s() throws Exception {
-        assertPendingIntentBroadcastTimeoutTest(12000, false);
+        // This test is testing that activity start is blocked after broadcast allowlist token
+        // timeout. Before the timeout, the start would be allowed because app B (the PI sender) was
+        // in the foreground during PI send, so app A (the PI creator) would have
+        // (10s * hw_multiplier) to start background activity starts.
+        assertPendingIntentBroadcastTimeoutTest(
+                12000 * SystemProperties.getInt("ro.hw_timeout_multiplier", 1),
+                false);
     }
 
     @Test

@@ -204,7 +204,7 @@ public class LocationTimeZoneManagerStatsTest extends BaseHostJUnit4Test {
                 primaryProviderStarted, primaryProviderFailed,
                 secondaryProviderStarted, secondaryProviderStopped,
                 secondaryProviderStarted, secondaryProviderStopped);
-        AtomTestUtils.assertStatesOccurred(stateSets, data,
+        AtomTestUtils.assertStatesOccurredInOrder(stateSets, data,
                 0 /* wait */, eventToStateFunction);
     }
 

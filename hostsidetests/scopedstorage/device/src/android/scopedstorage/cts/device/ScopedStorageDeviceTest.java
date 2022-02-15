@@ -45,6 +45,7 @@ import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
+import static android.scopedstorage.cts.lib.TestUtils.deleteRecursivelyAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
@@ -211,7 +212,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             "CtsScopedStorageTestAppFileManager.apk");
     // A legacy targeting app with RES and WES permissions
     private static final TestApp APP_D_LEGACY_HAS_RW = new TestApp("TestAppDLegacy",
-            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
+            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppDLegacy.apk");
 
     // The following apps are not installed at test startup - please install before using.
     private static final TestApp APP_C = new TestApp("TestAppC",
@@ -525,7 +526,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     public void testCreateAndDeleteEmptyDir() throws Exception {
         final File externalFilesDir = getExternalFilesDir();
         // Remove directory in order to create it again
-        externalFilesDir.delete();
+        deleteRecursively(externalFilesDir);
 
         // Can create own external files dir
         assertThat(externalFilesDir.mkdir()).isTrue();
@@ -539,9 +540,9 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         assertThat(dir2.mkdir()).isTrue();
 
         // And can delete them all
-        assertThat(dir2.delete()).isTrue();
-        assertThat(dir1.delete()).isTrue();
-        assertThat(externalFilesDir.delete()).isTrue();
+        assertThat(deleteRecursively(dir2)).isTrue();
+        assertThat(deleteRecursively(dir1)).isTrue();
+        assertThat(deleteRecursively(externalFilesDir)).isTrue();
 
         // Can't create external dir for other apps
         final File nonexistentPackageFileDir = new File(
@@ -619,7 +620,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             // At this point, we're not sure who created this file, so we'll have both apps
             // deleting it
             mediaFile.delete();
-            dirInDownload.delete();
+            deleteRecursively(dirInDownload);
         }
     }
 
@@ -756,7 +757,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(dir.list()).asList().doesNotContain(videoFileName);
         } finally {
             deleteFileAsNoThrow(APP_B_NO_PERMS, videoFile.getPath());
-            dir.delete();
+            deleteRecursively(dir);
         }
     }
 
@@ -788,7 +789,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(listAs(APP_A_HAS_RES, dir.getPath())).doesNotContain(pdfFileName);
         } finally {
             deleteFileAsNoThrow(APP_B_NO_PERMS, pdfFile.getPath());
-            dir.delete();
+            deleteRecursively(dir);
         }
     }
 
@@ -1217,7 +1218,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             // Delete the directory if it already exists
             if (podcastsDir.exists()) {
-                deleteAsLegacyApp(podcastsDir);
+                deleteRecursivelyAsLegacyApp(podcastsDir);
             }
             assertThat(podcastsDir.exists()).isFalse();
             assertThat(podcastsDirLowerCase.exists()).isFalse();
@@ -1638,7 +1639,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             videoFile1.delete();
             videoFile2.delete();
             videoFile3.delete();
-            nonMediaDir.delete();
+            deleteRecursively(nonMediaDir);
         }
     }
 
@@ -1814,15 +1815,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
         } finally {
             pdfFile.delete();
-            nonMediaDirectory.delete();
+            deleteRecursively(nonMediaDirectory);
 
             videoFile1.delete();
             videoFile2.delete();
             videoFile3.delete();
-            mediaDirectory1.delete();
-            mediaDirectory2.delete();
-            mediaDirectory3.delete();
-            mediaDirectory4.delete();
+            deleteRecursively(mediaDirectory1);
+            deleteRecursively(mediaDirectory2);
+            deleteRecursively(mediaDirectory3);
+            deleteRecursively(mediaDirectory4);
         }
     }
 
@@ -1848,7 +1849,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(deleteFileAs(APP_B_NO_PERMS, videoFile.getAbsolutePath())).isTrue();
         } finally {
             deleteFileAsNoThrow(APP_B_NO_PERMS, videoFile.getAbsolutePath());
-            mediaDirectory1.delete();
+            deleteRecursively(mediaDirectory1);
+            deleteRecursively(mediaDirectory2);
         }
     }
 
@@ -1867,8 +1869,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(emptyDirectoryOldPath.mkdirs()).isTrue();
             assertCanRenameDirectory(emptyDirectoryOldPath, emptyDirectoryNewPath, null, null);
         } finally {
-            emptyDirectoryOldPath.delete();
-            emptyDirectoryNewPath.delete();
+            deleteRecursively(emptyDirectoryOldPath);
+            deleteRecursively(emptyDirectoryNewPath);
         }
     }
 
@@ -1992,8 +1994,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } finally {
             hiddenImageFile.delete();
             imageFile.delete();
-            hiddenDir.delete();
-            nonHiddenDir.delete();
+            deleteRecursively(hiddenDir);
+            deleteRecursively(nonHiddenDir);
         }
     }
 
@@ -2032,7 +2034,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             noMediaFile.delete();
             imageFile.delete();
             videoFile.delete();
-            directoryNoMedia.delete();
+            deleteRecursively(directoryNoMedia);
         }
     }
 
@@ -2410,8 +2412,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             otherAppVideoFile2.delete();
             otherAppPdfFile1.delete();
             otherAppPdfFile2.delete();
-            dirInDcim.delete();
-            dirInPictures.delete();
+            deleteRecursively(dirInDcim);
+            deleteRecursively(dirInPictures);
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }
@@ -2535,8 +2537,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             fileSpecialChars.delete();
             fileSpecialChars1.delete();
             fileSpecialChars2.delete();
-            dirSpecialChars.delete();
-            renamedDir.delete();
+            deleteRecursively(dirSpecialChars);
+            deleteRecursively(renamedDir);
         }
     }
 
@@ -2606,7 +2608,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } finally {
             deleteAsLegacyApp(topLevelDir1);
             deleteAsLegacyApp(topLevelDir2);
-            nonTopLevelDir.delete();
+            deleteRecursively(nonTopLevelDir);
         }
     }
 
@@ -3435,5 +3437,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         // Use a legacy app to delete this file, since it could be outside shared storage.
         Log.d(TAG, "Deleting file " + file);
         deleteFileAs(APP_D_LEGACY_HAS_RW, file.getAbsolutePath());
+    }
+
+    /**
+     * Deletes the given file/directory recursively. If the file is a directory, then deletes all
+     * of its children (files or directories) recursively.
+     */
+    private void deleteRecursivelyAsLegacyApp(File dir) throws Exception {
+        // Use a legacy app to delete this directory, since it could be outside shared storage.
+        Log.d(TAG, "Deleting directory " + dir);
+        deleteRecursivelyAs(APP_D_LEGACY_HAS_RW, dir.getAbsolutePath());
     }
 }

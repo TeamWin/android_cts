@@ -39,6 +39,7 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
+import android.app.PendingIntent;
 import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
@@ -122,6 +123,12 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
+        if (!isAutomotive) {
+            tests.add(new SendUserToChangeFilter());
+            tests.add(new AskIfFilterChanged());
+            tests.add(new NotificationTypeFilterTest());
+            tests.add(new ResetChangeFilter());
+        }
         tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
@@ -146,6 +153,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new RequestBindTest());
         tests.add(new MessageBundleTest());
         tests.add(new ConversationOrderingTest());
+        tests.add(new HunDisplayTest());
         tests.add(new EnableHintsTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
@@ -1691,6 +1699,114 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void test() {
             status = WAIT_FOR_USER;
             next();
+        }
+    }
+
+    /**
+     * Tests that heads-up notifications appear with the view, resources, and actions provided
+     * in Notification.Builder.
+     */
+    private class HunDisplayTest extends InteractiveTestCase {
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            sendNotifications();
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            deleteChannels();
+            delay();
+        }
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent, R.string.hun_display);
+        }
+
+        private void sendNotifications() {
+            mTag1 = UUID.randomUUID().toString();
+            mId1 = NOTIFICATION_ID + 1;
+
+            Notification n1 = new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("HunDisplayTest")
+                    .setContentText(mTag1)
+                    .setSmallIcon(R.drawable.ic_stat_alice)
+                    .setLargeIcon(Icon.createWithResource(mContext, R.drawable.test_pass_gradient))
+                    .addAction(generateAction(1))
+                    .addAction(generateAction(2))
+                    .build();
+            mNm.notify(mTag1, mId1, n1);
+        }
+
+        private Notification.Action generateAction(int num) {
+            PendingIntent pi = PendingIntent.getActivity(mContext, num,
+                    new Intent(Settings.ACTION_ALL_APPS_NOTIFICATION_SETTINGS),
+                    PendingIntent.FLAG_IMMUTABLE);
+            return new Notification.Action.Builder(
+                    Icon.createWithResource(mContext, R.drawable.ic_android),
+                    mContext.getString(R.string.action, num), pi)
+                    .build();
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
+        }
+    }
+
+    /**
+     * Sends the user to settings filter out silent notifications for this notification listener.
+     * Sends silent and not silent notifs and makes sure only the non silent is received
+     */
+    private class NotificationTypeFilterTest extends InteractiveTestCase {
+        int mRetries = 3;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_filter_test);
+
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            sendNotifications();
+            sendNoisyNotification();
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            MockListener.getInstance().resetData();
+            deleteChannels();
+        }
+
+        @Override
+        protected void test() {
+            if (MockListener.getInstance().getPosted(mTag4) == null) {
+                Log.d(TAG, "Could not find " + mTag4);
+                if (--mRetries > 0) {
+                    sleep(100);
+                    status = RETEST;
+                } else {
+                    status = FAIL;
+                }
+            } else if (MockListener.getInstance().getPosted(mTag2) != null) {
+                logFail("Found" + mTag2);
+                status = FAIL;
+            } else {
+                status = PASS;
+            }
         }
     }
 

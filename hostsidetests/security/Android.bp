@@ -36,8 +36,8 @@ java_test_host {
         "compatibility-host-util",
     ],
     java_resources: [
-        ":plat_seapp_contexts_rule",
-        ":plat_seapp_neverallows_rule",
+        ":plat_seapp_contexts",
+        ":plat_seapp_neverallows",
         ":plat_file_contexts",
         ":plat_property_contexts",
         ":plat_service_contexts",

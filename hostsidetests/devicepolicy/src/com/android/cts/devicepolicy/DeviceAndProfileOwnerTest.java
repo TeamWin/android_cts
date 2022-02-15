@@ -241,7 +241,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".CertInstallDelegateTest", null);
         result.put(".BlockUninstallDelegateTest", null);
         result.put(".PermissionGrantDelegateTest", null);
         result.put(".PackageAccessDelegateTest", null);
@@ -267,11 +266,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 DELEGATION_BLOCK_UNINSTALL,
                 DELEGATION_PERMISSION_GRANT,
                 DELEGATION_PACKAGE_ACCESS,
-                DELEGATION_ENABLE_SYSTEM_APP,
-                // CERT_SELECTION scope is in the list so it still participates GeneralDelegateTest.
-                // But its main functionality test is driven by testDelegationCertSelection() and
-                // hence missing from getDelegationTests() on purpose.
-                DELEGATION_CERT_SELECTION
+                DELEGATION_ENABLE_SYSTEM_APP
                 ));
         result.addAll(getAdditionalDelegationScopes());
         return result;
@@ -314,8 +309,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Granting the appropriate delegation scopes makes APIs accessible.
             final List<String> scopes = getDelegationScopes();
             setDelegatedScopes(DELEGATE_APP_PKG, scopes);
-            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".GeneralDelegateTest", null, mUserId,
-                    ImmutableMap.of("scopes", String.join(",", scopes)));
             executeDelegationTests(delegationTests, true /* positive result */);
 
             // APIs are not accessible after revoking delegations.
@@ -1037,14 +1030,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build());
     }
 
-    /** Test for resetPassword for all devices. */
-    @Test
-    public void testResetPasswordDeprecated() throws Exception {
-        assumeHasSecureLockScreenFeature();
-
-        executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
-    }
-
     @Test
     public void testPasswordSufficientInitially() throws Exception {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
@@ -1277,6 +1262,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPasswordMethodsLogged() throws Exception {
+        if (isAutomotive()) {
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_COMPLEXITY_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setInt(0x50000)
+                    .setBoolean(false)
+                    .build());
+            return;
+        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testPasswordMethodsLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_QUALITY_VALUE)
@@ -1625,39 +1620,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         assumeHasWifiFeature();
 
         executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_notGranted");
-    }
-
-    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
-    @Test
-    public void testGetNearbyNotificationStreamingPolicy_defaultToSameManagedAccountOnly()
-            throws Exception {
-        executeDeviceTestMethod(
-                ".NearbyNotificationStreamingPolicyTest",
-                "testGetNearbyNotificationStreamingPolicy_defaultToSameManagedAccountOnly");
-    }
-
-    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
-    @Test
-    public void testSetNearbyNotificationStreamingPolicy_changesPolicy() throws Exception {
-        executeDeviceTestMethod(
-                ".NearbyNotificationStreamingPolicyTest",
-                "testSetNearbyNotificationStreamingPolicy_changesPolicy");
-    }
-
-    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
-    @Test
-    public void testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault()
-            throws Exception {
-        executeDeviceTestMethod(
-                ".NearbyAppStreamingPolicyTest",
-                "testGetNearbyAppStreamingPolicy_getsNearbyStreamingDisabledAsDefault");
-    }
-
-    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
-    @Test
-    public void testSetNearbyAppStreamingPolicy_changesPolicy() throws Exception {
-        executeDeviceTestMethod(
-                ".NearbyAppStreamingPolicyTest", "testSetNearbyAppStreamingPolicy_changesPolicy");
     }
 
     /**

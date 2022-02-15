@@ -47,6 +47,7 @@ import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
@@ -100,6 +101,9 @@ public final class MockIme extends InputMethodService {
     private static final String TAG = "MockIme";
 
     private static final String PACKAGE_NAME = "com.android.cts.mockime";
+    private ArrayList<MotionEvent> mEvents;
+
+    private View mExtractView;
 
     static ComponentName getComponentName() {
         return new ComponentName(PACKAGE_NAME, MockIme.class.getName());
@@ -116,6 +120,8 @@ public final class MockIme extends InputMethodService {
     private final HandlerThread mHandlerThread = new HandlerThread("CommandReceiver");
 
     private final Handler mMainHandler = new Handler();
+
+    private final Configuration mLastDispatchedConfiguration = new Configuration();
 
     private static final class CommandReceiver extends BroadcastReceiver {
         @NonNull
@@ -404,6 +410,17 @@ public final class MockIme extends InputMethodService {
                     case "setInlineSuggestionsExtras":
                         mInlineSuggestionsExtras = command.getExtras();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    case "verifyExtractViewNotNull":
+                        if (mExtractView == null) {
+                            return false;
+                        } else {
+                            return mExtractView.findViewById(android.R.id.inputExtractAction)
+                                    != null
+                                    && mExtractView.findViewById(
+                                            android.R.id.inputExtractAccessories) != null
+                                    && mExtractView.findViewById(
+                                            android.R.id.inputExtractEditText) != null;
+                        }
                     case "verifyGetDisplay":
                         try {
                             return verifyGetDisplay();
@@ -464,6 +481,32 @@ public final class MockIme extends InputMethodService {
                                 new GestureDetector(displayContext, listener);
 
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "getStylusHandwritingWindowVisibility": {
+                        View decorView = getStylusHandwritingWindow().getDecorView();
+                        return decorView != null && decorView.isAttachedToWindow()
+                                && decorView.getVisibility() == View.VISIBLE;
+                    }
+                    case "setStylusHandwritingWindowTouchListener": {
+                        View decorView = getStylusHandwritingWindow().getDecorView();
+                        if (decorView != null && decorView.getVisibility() == View.VISIBLE) {
+                            mEvents = new ArrayList<>();
+                            decorView.setOnTouchListener((view, event) ->
+                                    mEvents.add(MotionEvent.obtain(event)));
+                            return true;
+                        }
+                        return false;
+                    }
+                    case "getStylusHandwritingWindowEvents": {
+                        return mEvents;
+                    }
+                    case "finishStylusHandwriting": {
+                        finishStylusHandwriting();
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "getCurrentWindowMetricsBounds": {
+                        return getSystemService(WindowManager.class)
+                                .getCurrentWindowMetrics().getBounds();
                     }
                 }
             }
@@ -611,6 +654,10 @@ public final class MockIme extends InputMethodService {
             if (mSettings.hasNavigationBarColor()) {
                 getWindow().getWindow().setNavigationBarColor(mSettings.getNavigationBarColor());
             }
+
+            // Initialize to current Configuration to prevent unexpected configDiff value dispatched
+            // in IME event.
+            mLastDispatchedConfiguration.setTo(getResources().getConfiguration());
         });
     }
 
@@ -636,6 +683,12 @@ public final class MockIme extends InputMethodService {
                     return false;
             }
         });
+    }
+
+    @Override
+    public View onCreateExtractTextView() {
+        mExtractView =  super.onCreateExtractTextView();
+        return mExtractView;
     }
 
     private static final class KeyboardLayoutView extends LinearLayout {
@@ -837,6 +890,24 @@ public final class MockIme extends InputMethodService {
         getTracer().onStartInputView(editorInfo, restarting,
                 () -> super.onStartInputView(editorInfo, restarting));
     }
+
+
+    @Override
+    public void onPrepareStylusHandwriting() {
+        getTracer().onPrepareStylusHandwriting(() -> super.onPrepareStylusHandwriting());
+    }
+
+    @Override
+    public boolean onStartStylusHandwriting() {
+        getTracer().onStartStylusHandwriting(() -> super.onStartStylusHandwriting());
+        return true;
+    }
+
+    @Override
+    public void onFinishStylusHandwriting() {
+        getTracer().onFinishStylusHandwriting(() -> super.onFinishStylusHandwriting());
+    }
+
 
     @Override
     public void onFinishInputView(boolean finishingInput) {
@@ -1060,6 +1131,7 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onConfigurationChanged(Configuration configuration) {
         getTracer().onConfigurationChanged(() -> {}, configuration);
+        mLastDispatchedConfiguration.setTo(configuration);
     }
 
     /**
@@ -1204,6 +1276,24 @@ public final class MockIme extends InputMethodService {
             recordEventInternal("onStartInputView", runnable, arguments);
         }
 
+        void onPrepareStylusHandwriting(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
+            recordEventInternal("onPrepareStylusHandwriting", runnable, arguments);
+        }
+
+        void onStartStylusHandwriting(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
+            recordEventInternal("onStartStylusHandwriting", runnable, arguments);
+        }
+
+        void onFinishStylusHandwriting(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("editorInfo", mIme.getCurrentInputEditorInfo());
+            recordEventInternal("onFinishStylusHandwriting", runnable, arguments);
+        }
+
         void onFinishInputView(boolean finishingInput, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putBoolean("finishingInput", finishingInput);
@@ -1343,6 +1433,8 @@ public final class MockIme extends InputMethodService {
         void onConfigurationChanged(@NonNull Runnable runnable, Configuration configuration) {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("Configuration", configuration);
+            arguments.putInt("ConfigUpdates", configuration.diff(
+                    mIme.mLastDispatchedConfiguration));
             recordEventInternal("onConfigurationChanged", runnable, arguments);
         }
     }

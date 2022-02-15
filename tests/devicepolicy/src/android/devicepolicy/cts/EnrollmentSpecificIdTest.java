@@ -33,7 +33,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.EnrollmentSpecificId;
 import com.android.bedstead.nene.TestApis;
 
@@ -63,7 +63,7 @@ public final class EnrollmentSpecificIdTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = EnrollmentSpecificId.class)
+    @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
     public void emptyOrganizationId_throws() {
         assertThrows(IllegalArgumentException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setOrganizationId(""));
@@ -71,7 +71,7 @@ public final class EnrollmentSpecificIdTest {
 
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = EnrollmentSpecificId.class)
+    @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
     public void reSetOrganizationId_throws() {
         try {
             sDeviceState.dpc().devicePolicyManager().setOrganizationId(ORGANIZATION_ID);
@@ -90,7 +90,7 @@ public final class EnrollmentSpecificIdTest {
      */
     @Test
     @Postsubmit(reason = "New test")
-    @PositivePolicyTest(policy = EnrollmentSpecificId.class)
+    @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
     @EnsureHasPermission({READ_PRIVILEGED_PHONE_STATE, NETWORK_SETTINGS, LOCAL_MAC_ADDRESS})
     public void enrollmentSpecificId_CorrectlyCalculated() {
         try {

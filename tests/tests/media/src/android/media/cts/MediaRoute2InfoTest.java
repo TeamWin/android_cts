@@ -17,7 +17,6 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -29,14 +28,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import java.util.Set;
 
 /**
  * Tests {@link MediaRoute2Info} and its {@link MediaRoute2Info.Builder builder}.
@@ -50,6 +50,7 @@ public class MediaRoute2InfoTest {
     public static final String TEST_NAME = "test_name";
     public static final String TEST_ROUTE_TYPE_0 = "test_route_type_0";
     public static final String TEST_ROUTE_TYPE_1 = "test_route_type_1";
+    public static final Set<String> TEST_DEDUPLICATION_IDS = Set.of("test_deduplication_id");
     public static final Uri TEST_ICON_URI = Uri.parse("https://developer.android.com");
     public static final String TEST_DESCRIPTION = "test_description";
     public static final int TEST_CONNECTION_STATE = MediaRoute2Info.CONNECTION_STATE_CONNECTING;
@@ -120,6 +121,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .setExtras(extras)
                 .build();
 
@@ -137,6 +139,7 @@ public class MediaRoute2InfoTest {
         assertEquals(TEST_VOLUME_HANDLING, routeInfo.getVolumeHandling());
         assertEquals(TEST_VOLUME_MAX, routeInfo.getVolumeMax());
         assertEquals(TEST_VOLUME, routeInfo.getVolume());
+        assertEquals(TEST_DEDUPLICATION_IDS, routeInfo.getDeduplicationIds());
 
         Bundle extrasOut = routeInfo.getExtras();
         assertNotNull(extrasOut);
@@ -196,6 +199,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .setExtras(extras)
                 .build();
 
@@ -209,6 +213,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .setExtras(extras)
                 .build();
 
@@ -231,6 +236,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .setExtras(extras)
                 .build();
 
@@ -255,6 +261,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .setExtras(extras)
                 .build();
 
@@ -283,6 +290,9 @@ public class MediaRoute2InfoTest {
         assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
                 .setVolume(TEST_VOLUME + 10)
                 .build());
+        assertNotEquals(routeInfo, new MediaRoute2Info.Builder(routeInfo)
+                .setDeduplicationIds(Set.of("randomDeduplicationId"))
+                .build());
         // Note: Extras will not affect the equals.
     }
 
@@ -301,6 +311,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .setExtras(extras)
                 .build();
 
@@ -337,6 +348,7 @@ public class MediaRoute2InfoTest {
                 .setVolumeHandling(TEST_VOLUME_HANDLING)
                 .setVolumeMax(TEST_VOLUME_MAX)
                 .setVolume(TEST_VOLUME)
+                .setDeduplicationIds(TEST_DEDUPLICATION_IDS)
                 .build();
         assertEquals(0, routeInfo.describeContents());
     }

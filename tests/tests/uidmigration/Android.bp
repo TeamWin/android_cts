@@ -24,12 +24,13 @@ android_test {
         "androidx.test.rules",
         "ctstestrunner-axt",
         "permission-test-util-lib",
+        "CtsSharedUserMigrationTestLibs",
     ],
     libs: [
         "android.test.runner",
         "android.test.base",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.kt"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

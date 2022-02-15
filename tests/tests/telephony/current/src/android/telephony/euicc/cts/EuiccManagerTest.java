@@ -219,21 +219,16 @@ public class EuiccManagerTest {
             return;
         }
 
-        // set up CountDownLatch and callback
+        // set up CountDownLatch and receiver
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        EuiccManager.ResultListener callback = new EuiccManager.ResultListener() {
-            @Override
-            public void onComplete(int resultCode, Intent resultIntent) {
-                // verify correct result code is received
-                assertEquals(
-                        EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, resultCode);
-                countDownLatch.countDown();
-            }
-        };
+        mCallbackReceiver = new CallbackReceiver(countDownLatch);
+        getContext()
+                .registerReceiver(
+                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
 
-        // call switchToSubscription
-        mEuiccManager.switchToSubscription(4, TelephonyManager.DEFAULT_PORT_INDEX,
-                getContext().getMainExecutor(), callback);
+        // call deleteSubscription()
+        PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
+        mEuiccManager.switchToSubscription(4, TelephonyManager.DEFAULT_PORT_INDEX, callbackIntent);
 
         // wait for callback
         try {
@@ -241,6 +236,10 @@ public class EuiccManagerTest {
         } catch (InterruptedException e) {
             fail(e.toString());
         }
+
+        // verify correct result code is received
+        assertEquals(
+                EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, mCallbackReceiver.getResultCode());
     }
 
     @Test

@@ -155,8 +155,10 @@ public class MetricQueryBuilder implements Queryable {
     public String describeQuery(String fieldName) {
         return "{" + Queryable.joinQueryStrings(
                 mAdminPackageNameQuery.describeQuery("adminPackageName"),
-                        mBooleanQuery.describeQuery("boolean"),
-                        mStringsQuery.describeQuery("strings")
+                mTypeQuery.describeQuery("type"),
+                mBooleanQuery.describeQuery("boolean"),
+                mStringsQuery.describeQuery("strings"),
+                mIntegerQuery.describeQuery("integer")
         ) + "}";
     }
 

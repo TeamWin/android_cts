@@ -95,7 +95,29 @@ public final class PackageManagerHelperTest {
         assertThat(PackageManagerHelper.isProductApp(ctsApp)).isFalse();
     }
 
-    //TODO (b/201822684) Add more test cases to cover more PackageManagerHelper APIs
+    @Test
+    public void testGetSystemUiPackageName() throws Exception {
+        // TODO (b/201822684): implement this test case to test getSystemUiPackageName()
+        // builtin API
+    }
+
+    @Test
+    public void testGetNamesForUids() throws Exception {
+        // TODO (b/201822684): implement this test case to test getNamesForUids()
+        // builtin API
+    }
+
+    @Test
+    public void testGetPackageUidAsUser() throws Exception {
+        // TODO (b/201822684): implement this test case to test getPackageUidAsUser()
+        // builtin API
+    }
+
+    @Test
+    public void testGetComponentName() throws Exception {
+        // TODO (b/201822684): implement this test case to test getComponentName()
+        // builtin API
+    }
 
     private boolean hasActivity(String activityName, ActivityInfo[] activities) {
         return Arrays.stream(activities).anyMatch(a -> activityName.equals(a.name));

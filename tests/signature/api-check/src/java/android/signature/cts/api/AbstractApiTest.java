@@ -15,6 +15,7 @@
  */
 package android.signature.cts.api;
 
+import android.app.Instrumentation;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.signature.cts.ApiDocumentParser;
@@ -29,6 +30,10 @@ import android.signature.cts.VirtualPath.LocalFilePath;
 import android.signature.cts.VirtualPath.ResourcePath;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.DynamicConfigDeviceSide;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -40,12 +45,17 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
-import repackaged.android.test.InstrumentationTestCase;
-import repackaged.android.test.InstrumentationTestRunner;
+import junit.framework.TestCase;
 
 /**
  */
-public class AbstractApiTest extends InstrumentationTestCase {
+public class AbstractApiTest extends TestCase {
+
+    /**
+     * The name of the optional instrumentation option that contains the name of the dynamic config
+     * data set that contains the expected failures.
+     */
+    private static final String DYNAMIC_CONFIG_NAME_OPTION = "dynamic-config-name";
 
     private static final String TAG = "SignatureTest";
 
@@ -57,6 +67,10 @@ public class AbstractApiTest extends InstrumentationTestCase {
      * The list of expected failures.
      */
     private Collection<String> expectedFailures = Collections.emptyList();
+
+    public Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
 
     protected String getGlobalExemptions() {
         return Settings.Global.getString(
@@ -76,8 +90,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
         mResultObserver = new TestResultObserver();
 
         // Get the arguments passed to the instrumentation.
-        Bundle instrumentationArgs =
-                ((InstrumentationTestRunner) getInstrumentation()).getArguments();
+        Bundle instrumentationArgs = InstrumentationRegistry.getArguments();
 
         // Check that the device is in the correct state for running this test.
         assertEquals(
@@ -100,17 +113,25 @@ public class AbstractApiTest extends InstrumentationTestCase {
                 new BootClassPathClassesProvider(),
                 name -> name != null && name.startsWith("com.android.internal.R."));
 
+        String dynamicConfigName = instrumentationArgs.getString(DYNAMIC_CONFIG_NAME_OPTION);
+        if (dynamicConfigName != null) {
+            // Get the DynamicConfig.xml contents and extract the expected failures list.
+            DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(dynamicConfigName);
+            Collection<String> expectedFailures = dcds.getValues("expected_failures");
+            initExpectedFailures(expectedFailures);
+        }
+
         initializeFromArgs(instrumentationArgs);
     }
 
     /**
      * Initialize the expected failures.
      *
-     * <p>Call from with {@code #initializeFromArgs}</p>
+     * <p>Call from with {@link #setUp()}</p>
      *
      * @param expectedFailures the expected failures.
      */
-    protected void initExpectedFailures(Collection<String> expectedFailures) {
+    private void initExpectedFailures(Collection<String> expectedFailures) {
         this.expectedFailures = expectedFailures;
         String tag = getClass().getName();
         Log.d(tag, "Expected failure count: " + expectedFailures.size());
@@ -124,7 +145,6 @@ public class AbstractApiTest extends InstrumentationTestCase {
     }
 
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
-
     }
 
     protected interface RunnableWithResultObserver {

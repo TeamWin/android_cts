@@ -32,6 +32,9 @@ android_test_helper_app {
         "sts",
         "mts",
         "vts",
+        "catbox",
+        "gcatbox",
+        "ats",
     ],
     static_libs: [
         "compatibility-device-info",
@@ -70,6 +73,7 @@ genrule {
         " -a com.android.compatibility.common.deviceinfo.GenericDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.GlesStubActivity " +
         " -a com.android.compatibility.common.deviceinfo.GraphicsDeviceInfo " +
+        " -a com.android.compatibility.common.deviceinfo.HapticsDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.LocaleDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.MediaDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.MemoryDeviceInfo " +

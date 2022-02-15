@@ -1,9 +1,6 @@
 {
   "presubmit": [
     {
-      "name": "CtsCodePathHostTestCases"
-    },
-    {
       "name": "CtsDomainVerificationHostTestCases"
     },
     {
@@ -23,6 +20,9 @@
     },
     {
       "name": "CtsPackageManagerStatsHostTestCases"
+    },
+    {
+      "name": "CtsPackageSettingHostTestCases"
     }
   ],
   "presubmit-large": [

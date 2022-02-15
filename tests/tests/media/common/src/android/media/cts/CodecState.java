@@ -70,6 +70,7 @@ public class CodecState {
     private long mFirstSampleTimeUs;
     private long mPlaybackStartTimeUs;
     private long mLastPresentTimeUs;
+    private long mOffsetTimestampUs = 0;
     private MediaCodec mCodec;
     private MediaTimeProvider mMediaTimeProvider;
     private MediaExtractor mExtractor;
@@ -194,7 +195,7 @@ public class CodecState {
     public long getCurrentPositionUs() {
         // Use decoded frame time when available, otherwise default to render time (typically, in
         // tunnel mode).
-        if (mDecodedFramePresentationTimeUs > 0) {
+        if (mDecodedFramePresentationTimeUs != UNINITIALIZED_TIMESTAMP) {
             return mDecodedFramePresentationTimeUs;
         } else {
             return mRenderedVideoFramePresentationTimeUs;
@@ -364,7 +365,7 @@ public class CodecState {
                 sampleTime -= mFirstSampleTimeUs;
             }
 
-            mLastPresentTimeUs = mPlaybackStartTimeUs + sampleTime;
+            mLastPresentTimeUs = mPlaybackStartTimeUs + sampleTime + mOffsetTimestampUs;
 
             if ((sampleFlags & MediaExtractor.SAMPLE_FLAG_ENCRYPTED) != 0) {
                 MediaCodec.CryptoInfo info = new MediaCodec.CryptoInfo();
@@ -654,5 +655,26 @@ public class CodecState {
             return mAudioTrack.getAudioTrack();
         }
         return null;
+    }
+
+    /**
+     * Seek media extractor to the beginning of the configured track.
+     *
+     * @param shouldContinuePts  a boolean that controls whether timestamps keep increasing
+     */
+    public void seekToBeginning(boolean shouldContinuePts) {
+        mExtractor.seekTo(UNINITIALIZED_TIMESTAMP, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        if (shouldContinuePts) {
+            if (mDecodedFramePresentationTimeUs != UNINITIALIZED_TIMESTAMP) {
+                mOffsetTimestampUs = mDecodedFramePresentationTimeUs;
+                return;
+            }
+            if (mRenderedVideoFramePresentationTimeUs != UNINITIALIZED_TIMESTAMP) {
+                mOffsetTimestampUs = mRenderedVideoFramePresentationTimeUs;
+                return;
+            }
+        } else {
+            mOffsetTimestampUs = 0;
+        }
     }
 }

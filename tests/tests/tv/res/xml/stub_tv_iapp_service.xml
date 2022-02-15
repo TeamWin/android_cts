@@ -14,6 +14,6 @@
      limitations under the License.
 -->
 
-<tv-iapp xmlns:android="http://schemas.android.com/apk/res/android"
+<tv-interactive-app xmlns:android="http://schemas.android.com/apk/res/android"
     android:supportedTypes="@array/sub_iapp_service_types"
     android:canPauseRecording="true" />

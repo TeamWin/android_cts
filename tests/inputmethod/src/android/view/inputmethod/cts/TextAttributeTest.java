@@ -48,7 +48,7 @@ public class TextAttributeTest {
 
     @Test
     public void testTextAttribute() {
-        final TextAttribute textAttribute = new TextAttribute.TextAttributeBuilder()
+        final TextAttribute textAttribute = new TextAttribute.Builder()
                 .setTextConversionSuggestions(SUGGESTIONS)
                 .setExtras(EXTRA_BUNDLE)
                 .build();
@@ -57,7 +57,7 @@ public class TextAttributeTest {
 
     @Test
     public void testWriteToParcel() {
-        final TextAttribute textAttribute = new TextAttribute.TextAttributeBuilder()
+        final TextAttribute textAttribute = new TextAttribute.Builder()
                 .setTextConversionSuggestions(SUGGESTIONS)
                 .setExtras(EXTRA_BUNDLE)
                 .build();

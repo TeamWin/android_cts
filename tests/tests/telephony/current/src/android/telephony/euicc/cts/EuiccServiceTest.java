@@ -324,6 +324,7 @@ public class EuiccServiceTest {
 
         mEuiccServiceBinder.downloadSubscription(
                 MOCK_SLOT_ID,
+                MOCK_PORT_ID,
                 subscription,
                 true /*switchAfterDownload*/,
                 true /*forceDeactivateSim*/,
@@ -431,7 +432,34 @@ public class EuiccServiceTest {
                     public void onComplete(int result) {
                         assertEquals(EuiccService.RESULT_OK, result);
                     }
-                });
+                },
+                false /* usePortIndex */);
+
+        try {
+            mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        assertTrue(mCallback.isMethodCalled());
+    }
+
+    @Test
+    public void testOnSwitchToSubscriptionWithPort() throws Exception {
+        mCountDownLatch = new CountDownLatch(1);
+
+        mEuiccServiceBinder.switchToSubscription(
+                MOCK_SLOT_ID,
+                MOCK_PORT_ID,
+                MOCK_ICCID,
+                true /*forceDeactivateSim*/,
+                new ISwitchToSubscriptionCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        assertEquals(EuiccService.RESULT_OK, result);
+                    }
+                },
+                true /* usePortIndex */);
 
         try {
             mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);

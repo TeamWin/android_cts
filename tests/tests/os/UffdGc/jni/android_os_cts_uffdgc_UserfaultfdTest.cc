@@ -227,6 +227,7 @@ JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMremapD
 
 extern "C"
 JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMinorUffd(JNIEnv*) {
+  uint64_t req_features;
   int ret = 0;
   int uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK | UFFD_USER_MODE_ONLY);
   if (uffd < 0) {
@@ -236,14 +237,14 @@ JNIEXPORT jint JNICALL Java_android_os_cts_uffdgc_UserfaultfdTest_performMinorUf
   struct uffdio_api api;
   std::memset(&api, '\0', sizeof api);
   api.api = UFFD_API;
-  // TODO: Remove the following define once its definition is available in
-  // linux/userfaultfd.h header file.
-#ifndef UFFD_FEATURE_MINOR_SHMEM
-#define UFFD_FEATURE_MINOR_SHMEM (1 << 10)
-#endif
-  api.features = UFFD_FEATURE_MINOR_SHMEM;
+  req_features = UFFD_FEATURE_MINOR_SHMEM;
+  api.features = req_features;
   if (ioctl(uffd, UFFDIO_API, &api) < 0) {
     ret = errno;
+  }
+  // Minor feature is not supported by this kernel.
+  if ((api.features & req_features) != req_features) {
+    ret = -EINVAL;
   }
   close(uffd);
 out:

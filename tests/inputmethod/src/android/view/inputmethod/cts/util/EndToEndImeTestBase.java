@@ -20,8 +20,10 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
@@ -96,5 +98,16 @@ public class EndToEndImeTestBase {
                 .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
+    }
+
+    protected static boolean isPreventImeStartup() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        try {
+            return context.getResources().getBoolean(
+                    android.R.bool.config_preventImeStartupUnlessTextEditor);
+        } catch (Resources.NotFoundException e) {
+            // Assume this is not enabled.
+            return false;
+        }
     }
 }

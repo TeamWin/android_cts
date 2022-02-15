@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
+import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.WAIT_TIMEOUT_S;
 import static android.view.cts.util.ASurfaceControlTestUtils.applyAndDeleteSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
@@ -30,6 +31,7 @@ import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_releaseBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDamageRegion;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDesiredPresentTime;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setFrameTimeline;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setOnCommitCallback;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setOnCommitCallbackWithoutContext;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setOnCompleteCallback;
@@ -48,14 +50,17 @@ import static android.view.cts.util.ASurfaceControlTestUtils.setPosition;
 import static android.view.cts.util.ASurfaceControlTestUtils.setScale;
 import static android.view.cts.util.ASurfaceControlTestUtils.setVisibility;
 import static android.view.cts.util.ASurfaceControlTestUtils.setZOrder;
+import static android.view.cts.util.FrameCallbackData.nGetFrameTimelines;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.SystemClock;
+import android.os.Trace;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
@@ -65,11 +70,14 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.util.ASurfaceControlTestUtils;
+import android.view.cts.util.FrameCallbackData;
+import android.view.cts.util.FrameCallbackData.FrameTimeline;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -669,7 +677,6 @@ public class ASurfaceControlTest {
                         setGeometry(surfaceControl2, 0, 0, 100, 100, 70, 20, 90, 50, 0);
                     }
                 },
-
                 new MultiRectChecker(DEFAULT_RECT) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
@@ -697,7 +704,6 @@ public class ASurfaceControlTest {
                                 PixelColor.MAGENTA, PixelColor.GREEN);
                     }
                 },
-
                 new MultiRectChecker(DEFAULT_RECT) {
                     @Override
                     public PixelColor getExpectedColor(int x, int y) {
@@ -1806,6 +1812,147 @@ public class ASurfaceControlTest {
                         }
                     }
                 });
+    }
+
+    private void verifySetFrameTimeline(boolean mUsePreferredIndex, SurfaceHolder holder) {
+        TimedTransactionListener onCompleteCallback = new TimedTransactionListener();
+        long surfaceControl = nSurfaceControl_createFromWindow(holder.getSurface());
+        assertTrue("failed to create surface control", surfaceControl != 0);
+        long surfaceTransaction = createSurfaceTransaction();
+        long buffer = nSurfaceTransaction_setSolidBuffer(surfaceControl, surfaceTransaction,
+                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+        assertTrue("failed to set buffer", buffer != 0);
+
+        // Get choreographer frame timelines.
+        FrameCallbackData frameCallbackData = nGetFrameTimelines();
+        FrameTimeline[] frameTimelines = frameCallbackData.getFrameTimelines();
+        assertTrue("Frame timelines length needs to be greater than 1", frameTimelines
+                .length > 1);
+        long interval = frameTimelines[1].getDeadline() - frameTimelines[0].getDeadline();
+
+        int timelineIndex = frameCallbackData.getPreferredFrameTimelineIndex();
+        if (!mUsePreferredIndex) {
+            assertNotEquals("Preferred frame timeline index should not be last index",
+                    frameTimelines.length - 1,
+                    frameCallbackData.getPreferredFrameTimelineIndex());
+            timelineIndex = frameTimelines.length - 1;
+        }
+        long vsyncId = frameTimelines[timelineIndex].getVsyncId();
+        Trace.beginSection("Surface transaction created " + vsyncId);
+        nSurfaceTransaction_setFrameTimeline(surfaceTransaction, vsyncId);
+        nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
+                true /* waitForFence */, onCompleteCallback);
+        applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        Trace.endSection();
+
+        Trace.beginSection("Wait for complete callback " + vsyncId);
+        // Wait for callbacks to fire.
+        try {
+            onCompleteCallback.mLatch.await(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+        if (onCompleteCallback.mLatch.getCount() > 0) {
+            Log.e(TAG, "Failed to wait for callback");
+        }
+        Trace.endSection();
+
+        assertEquals(0, onCompleteCallback.mLatch.getCount());
+        assertTrue(onCompleteCallback.mCallbackTime > 0);
+        assertTrue(onCompleteCallback.mLatchTime > 0);
+
+        FrameTimeline frameTimeline = frameTimelines[timelineIndex];
+        long lowerThreshold = frameTimeline.getExpectedPresentTime() - interval / 2;
+        assertTrue("Presented too early using frame timeline index=" + timelineIndex
+                        + " (preferred index="
+                        + frameCallbackData.getPreferredFrameTimelineIndex()
+                        + "), vsyncId=" + frameTimeline.getVsyncId() + ", presentTime="
+                        + onCompleteCallback.mPresentTime + ", expectedPresentTime="
+                        + frameTimeline.getExpectedPresentTime()
+                        + ", diff (ns)="
+                        + (frameTimeline.getExpectedPresentTime()
+                        - onCompleteCallback.mPresentTime),
+                frameTimeline.getExpectedPresentTime() >= lowerThreshold);
+        long upperThreshold = frameTimeline.getExpectedPresentTime() + interval / 2;
+        assertTrue("Present too late using frame timeline index=" + timelineIndex
+                        + " (preferred index="
+                        + frameCallbackData.getPreferredFrameTimelineIndex()
+                        + "), vsyncId=" + frameTimeline.getVsyncId() + ", presentTime="
+                        + onCompleteCallback.mPresentTime + ", expectedPresentTime="
+                        + frameTimeline.getExpectedPresentTime()
+                        + ", diff (ns)="
+                        + (frameTimeline.getExpectedPresentTime()
+                        - onCompleteCallback.mPresentTime),
+                frameTimeline.getExpectedPresentTime() < upperThreshold);
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    public void testSurfaceTransaction_setFrameTimeline_preferredIndex() {
+        Trace.beginSection(
+                "testSurfaceTransaction_setFrameTimeline_preferredIndex");
+        Trace.endSection();
+
+        BasicSurfaceHolderCallback basicSurfaceHolderCallback = new BasicSurfaceHolderCallback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                // Noop.
+            }
+        };
+        final CountDownLatch readyFence = new CountDownLatch(1);
+        ASurfaceControlTestActivity.SurfaceHolderCallback surfaceHolderCallback =
+                new ASurfaceControlTestActivity.SurfaceHolderCallback(
+                        new SurfaceHolderCallback(basicSurfaceHolderCallback), readyFence,
+                        mActivity.getParentFrameLayout().getViewTreeObserver());
+        mActivity.createSurface(surfaceHolderCallback);
+        try {
+            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            Assert.fail("interrupted");
+        }
+        verifySetFrameTimeline(true, mActivity.getSurfaceView().getHolder());
+        mActivity.verifyScreenshot(
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, mName);
+
+    }
+
+    @Test
+    @RequiresDevice // emulators can't support sync fences
+    public void testSurfaceTransaction_setFrameTimeline_notPreferredIndex() {
+        Trace.beginSection(
+                "testSurfaceTransaction_setFrameTimeline_notPreferredIndex");
+        Trace.endSection();
+
+        BasicSurfaceHolderCallback basicSurfaceHolderCallback = new BasicSurfaceHolderCallback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                // Noop.
+            }
+        };
+        final CountDownLatch readyFence = new CountDownLatch(1);
+        ASurfaceControlTestActivity.SurfaceHolderCallback surfaceHolderCallback =
+                new ASurfaceControlTestActivity.SurfaceHolderCallback(
+                        new SurfaceHolderCallback(basicSurfaceHolderCallback), readyFence,
+                        mActivity.getParentFrameLayout().getViewTreeObserver());
+        mActivity.createSurface(surfaceHolderCallback);
+        try {
+            assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            Assert.fail("interrupted");
+        }
+        verifySetFrameTimeline(false, mActivity.getSurfaceView().getHolder());
+        mActivity.verifyScreenshot(
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                }, mName);
+
     }
 
     static class TimedTransactionListener implements

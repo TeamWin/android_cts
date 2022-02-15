@@ -290,7 +290,7 @@ public final class IntentDrivenTestActivity extends PassFailButtons.Activity
                                 ? context.getString(intent.getIntExtra(EXTRA_TITLE, -1))
                                 : "N/A")
                 .append(intent.hasExtra(EXTRA_INFO) ? ", has_info" : ", no_info")
-                .append(", numberButtons=").append(intent.hasExtra(EXTRA_INFO)
+                .append(", numberButtons=").append(intent.hasExtra(EXTRA_BUTTONS)
                                 ? intent.getParcelableArrayExtra(EXTRA_BUTTONS).length
                                 : 0)
                 .append(", rawIntent=").append(intent)

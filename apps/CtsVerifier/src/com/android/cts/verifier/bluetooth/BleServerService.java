@@ -41,11 +41,7 @@ import android.widget.Toast;
 
 import com.android.cts.verifier.R;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.UUID;
@@ -212,8 +208,8 @@ public class BleServerService extends Service {
     private static final long NOTIFICATION_DELAY_OF_SECURE_TEST_FAILURE = 5 * 1000;
 
     public static final String WRITE_VALUE = "SERVER_TEST";
-    private static final String NOTIFY_VALUE = "NOTIFY_TEST";
-    private static final String INDICATE_VALUE = "INDICATE_TEST";
+    public static final String NOTIFY_VALUE = "NOTIFY_TEST";
+    public static final String INDICATE_VALUE = "INDICATE_TEST";
     public static final String READ_NO_PERMISSION = "READ_NO_CHAR";
     public static final String WRITE_NO_PERMISSION = "WRITE_NO_CHAR";
     public static final String DESCRIPTOR_READ_NO_PERMISSION = "READ_NO_DESC";
@@ -1160,27 +1156,28 @@ public class BleServerService extends Service {
                 Log.d(TAG, "   characteristic uuid = " + uid);
             }
 
-            descriptor.setValue(value);
             UUID duid = descriptor.getUuid();
             // If there is a written request to the CCCD for Notify.
             if (duid.equals(UPDATE_DESCRIPTOR_UUID)) {
                 if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
-                    mGattServer.notifyCharacteristicChanged(mDevice, descriptor.getCharacteristic(), false);
+                    mGattServer.notifyCharacteristicChanged(
+                            mDevice, descriptor.getCharacteristic(), false, value);
                     mIndicated = false;
                 } else if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
-                    mGattServer.notifyCharacteristicChanged(mDevice, descriptor.getCharacteristic(), true);
+                    mGattServer.notifyCharacteristicChanged(
+                            mDevice, descriptor.getCharacteristic(), true, value);
                     mIndicated = true;
                 }
             } else if (duid.equals(DESCRIPTOR_NEED_ENCRYPTED_WRITE_UUID)) {
                 // verify
-                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), descriptor.getValue())) {
+                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), value)) {
                     notifyDescriptorWriteRequestNeedEncrypted();
                 } else {
                     showMessage("Written data is not correct");
                 }
             } else {
                 // verify
-                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), descriptor.getValue())) {
+                if (Arrays.equals(BleClientService.WRITE_VALUE.getBytes(), value)) {
                     notifyDescriptorWriteRequest();
                 } else {
                     showMessage("Written data is not correct");

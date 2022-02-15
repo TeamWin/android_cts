@@ -20,6 +20,38 @@
 <application android:label="Photo Picker Device Tests">
     <uses-library android:name="android.test.runner" />
     <activity android:name="android.photopicker.cts.GetResultActivity" />
+
+    <provider android:name="android.photopicker.cts.cloudproviders.CloudProviderPrimary"
+              android:authorities="android.photopicker.cts.cloudproviders.cloud_primary"
+              android:permission="com.android.providers.media.permission.MANAGE_CLOUD_MEDIA_PROVIDERS"
+              android:exported="true">
+      <intent-filter>
+        <action android:name="android.content.action.CLOUD_MEDIA_PROVIDER" />
+      </intent-filter>
+    </provider>
+
+    <provider android:name="android.photopicker.cts.cloudproviders.CloudProviderSecondary"
+              android:authorities="android.photopicker.cts.cloudproviders.cloud_secondary"
+              android:permission="com.android.providers.media.permission.MANAGE_CLOUD_MEDIA_PROVIDERS"
+              android:exported="true">
+      <intent-filter>
+        <action android:name="android.content.action.CLOUD_MEDIA_PROVIDER" />
+      </intent-filter>
+    </provider>
+
+    <provider android:name="android.photopicker.cts.cloudproviders.CloudProviderNoPermission"
+              android:authorities="android.photopicker.cts.cloudproviders.cloud_no_permission"
+              android:exported="true">
+      <intent-filter>
+        <action android:name="android.content.action.CLOUD_MEDIA_PROVIDER" />
+      </intent-filter>
+    </provider>
+
+    <provider android:name="android.photopicker.cts.cloudproviders.CloudProviderNoIntentFilter"
+              android:authorities="android.photopicker.cts.cloudproviders.cloud_no_intent_filter"
+              android:permission="com.android.providers.media.permission.MANAGE_CLOUD_MEDIA_PROVIDERS"
+              android:exported="true">
+    </provider>
 </application>
 
 <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

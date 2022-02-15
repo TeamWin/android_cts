@@ -44,6 +44,8 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -70,6 +72,26 @@ import java.util.TreeSet;
 @AppModeFull(reason = "This test test platform properties, not capabilities of an apps")
 @RunWith(AndroidJUnit4.class)
 public class PrivappPermissionsTest {
+
+    // TODO(b/191740932): Migrate APK-in-APEX priv-app allowlists inside their respective modules,
+    // so that {@code adb shell cmd package get-privapp-permissions <packageName>} lists them.
+    private static final Set<String> APK_IN_APEX_ALLOWLIST_MIGRATION_BURNDOWN_LIST =
+            ImmutableSet.of(
+                // Updatable APEX packages
+                "com.google.android.networkstack.tethering",
+                "com.google.android.ext.services",
+                "com.google.android.providers.media.module",
+                "com.google.android.permissioncontroller",
+                "com.google.android.cellbroadcastreceiver",
+                "com.google.android.cellbroadcastservice",
+                // AOSP APEX packages
+                "com.android.networkstack.tethering",
+                "com.android.ext.services",
+                "com.android.providers.media.module",
+                "com.android.permissioncontroller",
+                "com.android.cellbroadcastreceiver.module",
+                "com.android.cellbroadcastservice"
+            );
 
     private static final String TAG = "PrivappPermissionsTest";
 
@@ -108,9 +130,9 @@ public class PrivappPermissionsTest {
                 continue;
             }
 
-            // Exempt apk-in-apex as there is currently no way to get the PackageInfo of the
-            // preinstalled APK
-            if (pkg.applicationInfo.sourceDir.startsWith("/apex")) {
+            // Exempt apk-in-apexes that have not had their priv-app permission allowlist .xml
+            // migrated inside their respective APEXes.
+            if (APK_IN_APEX_ALLOWLIST_MIGRATION_BURNDOWN_LIST.contains(packageName)) {
                 continue;
             }
 

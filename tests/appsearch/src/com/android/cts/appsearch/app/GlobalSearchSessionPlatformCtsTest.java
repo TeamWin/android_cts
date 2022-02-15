@@ -15,14 +15,18 @@
  */
 package android.app.appsearch.cts.app;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_GLOBAL_APP_SEARCH_DATA;
+import static android.Manifest.permission.READ_SMS;
 import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
+import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
@@ -32,9 +36,12 @@ import android.app.appsearch.SearchResult;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.observer.DocumentChangeInfo;
+import android.app.appsearch.observer.ObserverSpec;
 import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
+import android.app.appsearch.testutil.TestObserverCallback;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -50,6 +57,7 @@ import com.android.cts.appsearch.ICommandReceiver;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,8 +66,10 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This doesn't extend {@link android.app.appsearch.cts.app.GlobalSearchSessionCtsTestBase} since
@@ -105,15 +115,18 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     private static final String TEXT = "foo";
 
+    private static final String NAMESPACE_NAME = "namespace";
+
     private static final AppSearchEmail EMAIL_DOCUMENT =
-            new AppSearchEmail.Builder("namespace", "id1")
+            new AppSearchEmail.Builder(NAMESPACE_NAME, "id1")
                     .setFrom("from@example.com")
                     .setTo("to1@example.com", "to2@example.com")
                     .setSubject(TEXT)
                     .setBody("this is the body of the email")
                     .build();
 
-    private static final String DB_NAME = "";
+    private static final String DB_NAME = "database";
+
 
     private GlobalSearchSessionShim mGlobalSearchSession;
     private AppSearchSessionShim mDb;
@@ -139,8 +152,8 @@ public class GlobalSearchSessionPlatformCtsTest {
     private void cleanup() throws Exception {
         mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
 
-        clearData(PKG_A);
-        clearData(PKG_B);
+        clearData(PKG_A, DB_NAME);
+        clearData(PKG_B, DB_NAME);
     }
 
     @Test
@@ -299,9 +312,227 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     @Test
+    public void testAllowPermissionAccess() throws Exception {
+        // index a global searchable document in pkg_A and set it needs READ_SMS to read it.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
+                SetSchemaRequest.READ_SMS);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).hasSize(1);
+                },
+                READ_SMS);
+    }
+
+    @Test
+    public void testRequireAllPermissionsToAccess() throws Exception {
+        // index a global searchable document in pkg_A and set it needs both READ_SMS and
+        // READ_EXTERNAL_STORAGE to read it.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
+                SetSchemaRequest.READ_SMS, SetSchemaRequest.READ_EXTERNAL_STORAGE);
+        // Only has READ_SMS cannot access the document.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).isEmpty();
+                },
+                READ_SMS);
+
+        // Has both permission can access the document.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).hasSize(1);
+                },
+                READ_SMS, READ_EXTERNAL_STORAGE);
+    }
+
+    @Test
+    public void testAllowPermissions_sameError() throws Exception {
+        // Try to get document before we put them, this is not found error.
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+        AppSearchBatchResult<String, GenericDocument> nonExistentResult = mGlobalSearchSession
+                .getByDocumentId(PKG_A, "database",
+                        new GetByDocumentIdRequest.Builder("namespace")
+                                .addIds("id1")
+                                .build()).get();
+        assertThat(nonExistentResult.isSuccess()).isFalse();
+        assertThat(nonExistentResult.getSuccesses()).isEmpty();
+        assertThat(nonExistentResult.getFailures()).containsKey("id1");
+
+        // Index a global searchable document in pkg_A and set it needs READ_SMS to read it.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
+                SetSchemaRequest.READ_SMS);
+
+        // Try to get document w/o permission, this is unAuthority error.
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+        AppSearchBatchResult<String, GenericDocument> unAuthResult = mGlobalSearchSession
+                .getByDocumentId(PKG_A, "database",
+                        new GetByDocumentIdRequest.Builder("namespace")
+                                .addIds("id1")
+                                .build()).get();
+        assertThat(unAuthResult.isSuccess()).isFalse();
+        assertThat(unAuthResult.getSuccesses()).isEmpty();
+        assertThat(unAuthResult.getFailures()).containsKey("id1");
+
+        // The error messages must be same.
+        assertThat(unAuthResult.getFailures().get("id1").getErrorMessage())
+                .isEqualTo(nonExistentResult.getFailures().get("id1").getErrorMessage());
+    }
+
+    @Test
+    public void testGlobalGetById_withAccess() throws Exception {
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, DB_NAME,
+                                    new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
+                                            .addIds("id1")
+                                            .build()).get();
+
+                    assertThat(result.getSuccesses()).hasSize(1);
+
+                    // Can't get non existent document
+                    AppSearchBatchResult<String, GenericDocument> nonExistent = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, DB_NAME,
+                                    new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
+                                            .addIds("id2")
+                                            .build()).get();
+
+                    assertThat(nonExistent.isSuccess()).isFalse();
+                    assertThat(nonExistent.getSuccesses()).hasSize(0);
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+    @Test
+    public void testGlobalGetById_withoutAccess() throws Exception {
+        indexNotGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can't get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, DB_NAME,
+                                    new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.isSuccess()).isFalse();
+                    assertThat(result.getSuccesses()).hasSize(0);
+                    assertThat(result.getFailures()).containsKey("id1");
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+    @Test
+    public void testGlobalGetById_sameErrorMessages() throws Exception {
+        AtomicReference<String> errorMessageNonExistent = new AtomicReference<>();
+        AtomicReference<String> errorMessageUnauth = new AtomicReference<>();
+
+        // Can't get the document because we haven't added it yet
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    AppSearchBatchResult<String, GenericDocument> nonExistentResult =
+                            mGlobalSearchSession.getByDocumentId(PKG_A, DB_NAME,
+                                    new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(nonExistentResult.isSuccess()).isFalse();
+                    assertThat(nonExistentResult.getSuccesses()).hasSize(0);
+                    assertThat(nonExistentResult.getFailures()).containsKey("id1");
+                    errorMessageNonExistent.set(
+                            nonExistentResult.getFailures().get("id1").getErrorMessage());
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+
+        indexNotGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+
+        // Can't get the document because the document is not globally searchable
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    AppSearchBatchResult<String, GenericDocument> unAuthResult =
+                            mGlobalSearchSession.getByDocumentId(PKG_A, DB_NAME,
+                                    new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(unAuthResult.isSuccess()).isFalse();
+                    assertThat(unAuthResult.getSuccesses()).hasSize(0);
+                    assertThat(unAuthResult.getFailures()).containsKey("id1");
+                    errorMessageUnauth.set(
+                            unAuthResult.getFailures().get("id1").getErrorMessage());
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+
+        // try adding a global doc here to make sure non-global querier can't get it
+        // and same error message
+        clearData(PKG_A, DB_NAME);
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+
+        // Can't get the document because we don't have global permissions
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+        AppSearchBatchResult<String, GenericDocument> noGlobalResult = mGlobalSearchSession
+                .getByDocumentId(PKG_A, DB_NAME,
+                        new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
+                                .addIds("id1")
+                                .build()).get();
+        assertThat(noGlobalResult.isSuccess()).isFalse();
+        assertThat(noGlobalResult.getSuccesses()).hasSize(0);
+        assertThat(noGlobalResult.getFailures()).containsKey("id1");
+
+        // compare error messages
+        assertThat(errorMessageNonExistent.get()).isEqualTo(errorMessageUnauth.get());
+        assertThat(errorMessageNonExistent.get())
+                .isEqualTo(noGlobalResult.getFailures().get("id1").getErrorMessage());
+    }
+
+    @Test
     public void testGlobalSearch_withAccess() throws Exception {
-        indexGloballySearchableDocument(PKG_A);
-        indexGloballySearchableDocument(PKG_B);
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+        indexGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
 
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
@@ -328,8 +559,8 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testGlobalSearch_withPartialAccess() throws Exception {
-        indexGloballySearchableDocument(PKG_A);
-        indexNotGloballySearchableDocument(PKG_B);
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+        indexNotGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
 
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
@@ -353,8 +584,8 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testGlobalSearch_withPackageFilters() throws Exception {
-        indexGloballySearchableDocument(PKG_A);
-        indexGloballySearchableDocument(PKG_B);
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+        indexGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
 
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
@@ -378,8 +609,8 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testGlobalSearch_withoutAccess() throws Exception {
-        indexGloballySearchableDocument(PKG_A);
-        indexGloballySearchableDocument(PKG_B);
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+        indexGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
 
         mGlobalSearchSession =
                 GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
@@ -403,27 +634,27 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Insert two docs
         GenericDocument document1 =
-                new GenericDocument.Builder<>("namespace", "id1", AppSearchEmail.SCHEMA_TYPE)
+                new GenericDocument.Builder<>(NAMESPACE_NAME, "id1", AppSearchEmail.SCHEMA_TYPE)
                         .build();
         GenericDocument document2 =
-                new GenericDocument.Builder<>("namespace", "id2", AppSearchEmail.SCHEMA_TYPE)
+                new GenericDocument.Builder<>(NAMESPACE_NAME, "id2", AppSearchEmail.SCHEMA_TYPE)
                         .build();
         mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(document1, document2).build())
                 .get();
 
         // Report some usages. id1 has 2 app and 1 system usage, id2 has 1 app and 2 system usage.
         mDb.reportUsage(
-                new ReportUsageRequest.Builder("namespace", "id1")
+                new ReportUsageRequest.Builder(NAMESPACE_NAME, "id1")
                         .setUsageTimestampMillis(10)
                         .build())
                 .get();
         mDb.reportUsage(
-                new ReportUsageRequest.Builder("namespace", "id1")
+                new ReportUsageRequest.Builder(NAMESPACE_NAME, "id1")
                         .setUsageTimestampMillis(20)
                         .build())
                 .get();
         mDb.reportUsage(
-                new ReportUsageRequest.Builder("namespace", "id2")
+                new ReportUsageRequest.Builder(NAMESPACE_NAME, "id2")
                         .setUsageTimestampMillis(100)
                         .build())
                 .get();
@@ -434,21 +665,21 @@ public class GlobalSearchSessionPlatformCtsTest {
             mGlobalSearchSession
                     .reportSystemUsage(
                             new ReportSystemUsageRequest.Builder(
-                                    mContext.getPackageName(), DB_NAME, "namespace", "id1")
+                                    mContext.getPackageName(), DB_NAME, NAMESPACE_NAME, "id1")
                                     .setUsageTimestampMillis(1000)
                                     .build())
                     .get();
             mGlobalSearchSession
                     .reportSystemUsage(
                             new ReportSystemUsageRequest.Builder(
-                                    mContext.getPackageName(), DB_NAME, "namespace", "id2")
+                                    mContext.getPackageName(), DB_NAME, NAMESPACE_NAME, "id2")
                                     .setUsageTimestampMillis(200)
                                     .build())
                     .get();
             mGlobalSearchSession
                     .reportSystemUsage(
                             new ReportSystemUsageRequest.Builder(
-                                    mContext.getPackageName(), DB_NAME, "namespace", "id2")
+                                    mContext.getPackageName(), DB_NAME, NAMESPACE_NAME, "id2")
                                     .setUsageTimestampMillis(150)
                                     .build())
                     .get();
@@ -511,6 +742,89 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
     }
 
+    @Test
+    public void testRemoveObserver_otherPackagesNotRemoved() throws Exception {
+        final String fakePackage = "com.android.appsearch.fake.package";
+        TestObserverCallback observer = new TestObserverCallback();
+
+        // Set up schema
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+        mDb.setSchema(new SetSchemaRequest.Builder()
+                .addSchemas(AppSearchEmail.SCHEMA).build()).get();
+
+        // Register this observer twice, on different packages.
+        Executor executor = MoreExecutors.directExecutor();
+        mGlobalSearchSession.addObserver(
+                mContext.getPackageName(),
+                new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
+                executor,
+                observer);
+        mGlobalSearchSession.addObserver(
+                /*observedPackage=*/fakePackage,
+                new ObserverSpec.Builder().addFilterSchemas("Gift").build(),
+                executor,
+                observer);
+
+        // Make sure everything is empty
+        assertThat(observer.getSchemaChanges()).isEmpty();
+        assertThat(observer.getDocumentChanges()).isEmpty();
+
+        // Index some documents
+        AppSearchEmail email1 = new AppSearchEmail.Builder(NAMESPACE_NAME, "id1").build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder(NAMESPACE_NAME, "id2").setBody("caterpillar").build();
+        AppSearchEmail email3 =
+                new AppSearchEmail.Builder(NAMESPACE_NAME, "id3").setBody("foo").build();
+
+        checkIsBatchResultSuccess(
+                mDb.put(new PutDocumentsRequest.Builder()
+                        .addGenericDocuments(email1).build()));
+
+        // Make sure the notifications were received.
+        observer.waitForNotificationCount(1);
+
+        assertThat(observer.getSchemaChanges()).isEmpty();
+        assertThat(observer.getDocumentChanges()).containsExactly(
+                new DocumentChangeInfo(
+                        mContext.getPackageName(),
+                        DB_NAME,
+                        NAMESPACE_NAME,
+                        AppSearchEmail.SCHEMA_TYPE,
+                        ImmutableSet.of("id1")));
+        observer.clear();
+
+        // Unregister observer from com.example.package
+        mGlobalSearchSession.removeObserver("com.example.package", observer);
+
+        // Index some more documents
+        assertThat(observer.getDocumentChanges()).isEmpty();
+        checkIsBatchResultSuccess(
+                mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
+
+        // Make sure data was still received
+        observer.waitForNotificationCount(1);
+        assertThat(observer.getDocumentChanges()).containsExactly(
+                new DocumentChangeInfo(
+                        mContext.getPackageName(),
+                        DB_NAME,
+                        NAMESPACE_NAME,
+                        AppSearchEmail.SCHEMA_TYPE,
+                        ImmutableSet.of("id2")));
+        observer.clear();
+
+        // Unregister the final observer
+        mGlobalSearchSession.removeObserver(mContext.getPackageName(), observer);
+
+        // Index some more documents
+        assertThat(observer.getDocumentChanges()).isEmpty();
+        checkIsBatchResultSuccess(
+                mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(email3).build()));
+
+        // Make sure there have been no further notifications
+        assertThat(observer.getDocumentChanges()).isEmpty();
+    }
+
     private void assertPackageCannotAccess(String pkg) throws Exception {
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
@@ -536,34 +850,38 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
     }
 
-    private void indexGloballySearchableDocument(String pkg) throws Exception {
+    private void indexGloballySearchableDocument(String pkg, String databaseName, String namespace,
+            String id, int... requiredPermissions) throws Exception {
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
             ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
-            assertThat(commandReceiver.indexGloballySearchableDocument()).isTrue();
+            assertThat(commandReceiver.indexGloballySearchableDocument(
+                    databaseName, namespace, id, requiredPermissions)).isTrue();
         } finally {
             serviceConnection.unbind();
         }
     }
 
-    private void indexNotGloballySearchableDocument(String pkg) throws Exception {
+    private void indexNotGloballySearchableDocument(
+            String pkg, String databaseName, String namespace, String id) throws Exception {
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
             ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
-            assertThat(commandReceiver.indexNotGloballySearchableDocument()).isTrue();
+            assertThat(commandReceiver
+                    .indexNotGloballySearchableDocument(databaseName, namespace, id)).isTrue();
         } finally {
             serviceConnection.unbind();
         }
     }
 
-    private void clearData(String pkg) throws Exception {
+    private void clearData(String pkg, String databaseName) throws Exception {
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
             ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
-            assertThat(commandReceiver.clearData()).isTrue();
+            assertThat(commandReceiver.clearData(databaseName)).isTrue();
         } finally {
             serviceConnection.unbind();
         }

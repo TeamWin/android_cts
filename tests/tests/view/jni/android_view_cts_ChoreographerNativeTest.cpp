@@ -15,6 +15,7 @@
  *
  */
 
+#include <ChoreographerTestUtils.h>
 #include <android/choreographer.h>
 #include <android/looper.h>
 #include <jni.h>
@@ -36,18 +37,8 @@
 
 #define LOG_TAG "ChoreographerNativeTest"
 
-#define ASSERT(condition, format, args...) \
-        if (!(condition)) { \
-            fail(env, format, ## args); \
-            return; \
-        }
-
 
 using namespace std::chrono_literals;
-
-static constexpr std::chrono::nanoseconds NOMINAL_VSYNC_PERIOD{16ms};
-static constexpr std::chrono::nanoseconds DELAY_PERIOD{NOMINAL_VSYNC_PERIOD * 5};
-static constexpr std::chrono::nanoseconds ZERO{std::chrono::nanoseconds::zero()};
 
 struct {
     struct {
@@ -56,73 +47,7 @@ struct {
     } choreographerNativeTest;
 } gJni;
 
-static std::mutex gLock;
 static std::set<int64_t> gSupportedRefreshPeriods;
-struct Callback {
-    Callback(const char* name): name(name) {}
-    std::string name;
-    int count{0};
-    std::chrono::nanoseconds frameTime{0LL};
-};
-
-static void fail(JNIEnv* env, const char* format, ...) {
-    va_list args;
-
-    va_start(args, format);
-    char* msg;
-    int rc = vasprintf(&msg, format, args);
-    va_end(args);
-
-    jclass exClass;
-    const char* className = "java/lang/AssertionError";
-    exClass = env->FindClass(className);
-    env->ThrowNew(exClass, msg);
-    free(msg);
-}
-
-struct ExtendedCallback : Callback {
-    ExtendedCallback(const char* name, JNIEnv* env) : Callback(name), env(env) {}
-
-    struct FrameTime {
-        FrameTime(const AChoreographerFrameCallbackData* callbackData, int index)
-              : vsyncId(AChoreographerFrameCallbackData_getFrameTimelineVsyncId(callbackData,
-                                                                                index)),
-                expectedPresentTime(
-                        AChoreographerFrameCallbackData_getFrameTimelineExpectedPresentTime(
-                                callbackData, index)),
-                deadline(AChoreographerFrameCallbackData_getFrameTimelineDeadline(callbackData,
-                                                                                  index)) {}
-
-        const int64_t vsyncId{-1};
-        const int64_t expectedPresentTime{-1};
-        const int64_t deadline{-1};
-    };
-
-    void populate(const AChoreographerFrameCallbackData* callbackData) {
-        size_t index = AChoreographerFrameCallbackData_getPreferredFrameTimelineIndex(callbackData);
-        preferredFrameTimelineIndex = index;
-
-        size_t length = AChoreographerFrameCallbackData_getFrameTimelinesLength(callbackData);
-        {
-            std::lock_guard<std::mutex> _l{gLock};
-            ASSERT(length >= 1, "Frame timelines should not be empty");
-            ASSERT(index < length, "Frame timeline index must be less than length");
-        }
-        timeline.reserve(length);
-
-        for (int i = 0; i < length; i++) {
-            timeline.push_back(FrameTime(callbackData, i));
-        }
-    }
-
-    size_t getPreferredFrameTimelineIndex() const { return preferredFrameTimelineIndex; }
-    const std::vector<FrameTime>& getTimeline() const { return timeline; }
-
-private:
-    JNIEnv* env;
-    size_t preferredFrameTimelineIndex{std::numeric_limits<size_t>::max()};
-    std::vector<FrameTime> timeline;
-};
 
 struct RefreshRateCallback {
     RefreshRateCallback(const char* name): name(name) {}
@@ -141,28 +66,6 @@ struct RefreshRateCallbackWithDisplayManager {
     std::chrono::nanoseconds vsyncPeriod{0LL};
 };
 
-static void extendedFrameCallback(int64_t frameTimeNanos, void* data) {
-    std::lock_guard<std::mutex> _l(gLock);
-    Callback* cb = static_cast<Callback*>(data);
-    cb->count++;
-    cb->frameTime = std::chrono::nanoseconds{frameTimeNanos};
-}
-
-static void extendedFrameCallback(const AChoreographerFrameCallbackData* callbackData, void* data) {
-    extendedFrameCallback(AChoreographerFrameCallbackData_getFrameTimeNanos(callbackData), data);
-
-    ExtendedCallback* cb = static_cast<ExtendedCallback*>(data);
-    cb->populate(callbackData);
-}
-
-static void frameCallback64(int64_t frameTimeNanos, void* data) {
-    extendedFrameCallback(frameTimeNanos, data);
-}
-
-static void frameCallback(long frameTimeNanos, void* data) {
-    extendedFrameCallback((int64_t)frameTimeNanos, data);
-}
-
 static void refreshRateCallback(int64_t vsyncPeriodNanos, void* data) {
     std::lock_guard<std::mutex> _l(gLock);
     RefreshRateCallback* cb = static_cast<RefreshRateCallback*>(data);
@@ -179,22 +82,6 @@ static void refreshRateCallbackWithDisplayManager(int64_t vsyncPeriodNanos, void
     cb->env->CallVoidMethod(cb->clazz,
                             gJni.choreographerNativeTest.checkRefreshRateIsCurrentAndSwitch,
                             static_cast<int>(std::round(1e9f / cb->vsyncPeriod.count())));
-}
-
-static std::chrono::nanoseconds now() {
-    return std::chrono::steady_clock::now().time_since_epoch();
-}
-
-static void verifyCallback(JNIEnv* env, const Callback& cb, int expectedCount,
-                           std::chrono::nanoseconds startTime, std::chrono::nanoseconds maxTime) {
-    std::lock_guard<std::mutex> _l{gLock};
-    ASSERT(cb.count == expectedCount, "Choreographer failed to invoke '%s' %d times - actual: %d",
-           cb.name.c_str(), expectedCount, cb.count);
-    if (maxTime > ZERO) {
-        auto duration = cb.frameTime - startTime;
-        ASSERT(duration < maxTime, "Callback '%s' has incorrect frame time in invocation %d",
-               cb.name.c_str(), expectedCount);
-    }
 }
 
 static std::string dumpSupportedRefreshPeriods() {

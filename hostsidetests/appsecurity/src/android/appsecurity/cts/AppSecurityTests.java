@@ -23,8 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
-import android.platform.test.annotations.RestrictedBuildTest;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RestrictedBuildTest;
 
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -41,6 +42,7 @@ import java.util.Map;
  * Set of tests that verify various security checks involving multiple apps are
  * properly enforced.
  */
+@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class AppSecurityTests extends BaseAppSecurityTest {
 
@@ -84,6 +86,15 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             "CtsDuplicatePermissionDeclareApp.apk";
     private static final String DUPLICATE_DECLARE_PERMISSION_PKG =
             "com.android.cts.duplicatepermissiondeclareapp";
+
+    private static final String DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_APK =
+            "CtsDuplicatePermissionDeclareApp_DifferentProtectionLevel.apk";
+    private static final String DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_PKG =
+            "com.android.cts.duplicatepermission.differentprotectionlevel";
+    private static final String DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_APK =
+            "CtsDuplicatePermissionDeclareApp_SameProtectionLevel.apk";
+    private static final String DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_PKG =
+            "com.android.cts.duplicatepermission.sameprotectionlevel";
 
     private static final String LOG_TAG = "AppSecurityTests";
 
@@ -356,6 +367,36 @@ public class AppSecurityTests extends BaseAppSecurityTest {
         while (result.contains("No operations")) {
             result = getDevice().executeShellCommand(
                     "appops get " + pkgName + " android:system_alert_window");
+        }
+    }
+
+    /**
+     * Tests that a single APK declaring duplicate permissions with different protection levels
+     * cannot be installed.
+     */
+    @Test
+    public void testInstallDuplicatePermission_differentProtectionLevel_fail() throws Exception {
+        try {
+            new InstallMultiple(false /* instant */)
+                    .addFile(DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_APK)
+                    .runExpectingFailure("INSTALL_PARSE_FAILED_MANIFEST_MALFORMED");
+        } finally {
+            getDevice().uninstallPackage(DUPLICATE_PERMISSION_DIFFERENT_PROTECTION_LEVEL_PKG);
+        }
+    }
+
+    /**
+     * Tests that a single APK declaring duplicate permissions with the same protection level
+     * can be installed.
+     */
+    @Test
+    public void testInstallDuplicatePermission_sameProtectionLevel_success() throws Exception {
+        try {
+            new InstallMultiple(false /* instant */)
+                    .addFile(DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_APK)
+                    .run(true /* expectingSuccess */);
+        } finally {
+            getDevice().uninstallPackage(DUPLICATE_PERMISSION_SAME_PROTECTION_LEVEL_PKG);
         }
     }
 }

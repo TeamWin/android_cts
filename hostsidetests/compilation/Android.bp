@@ -31,5 +31,6 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
         "guava",
+        "truth-prebuilt",
     ],
 }

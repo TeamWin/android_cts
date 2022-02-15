@@ -21,6 +21,9 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils.ACTION_DISABLE_SELF;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -33,10 +36,13 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
+import java.time.Duration;
 import java.util.Objects;
 
 /**
@@ -66,22 +72,6 @@ public final class DeviceOwner extends DevicePolicyController {
 
     @Override
     public void remove() {
-        if (TEST_APP_APP_COMPONENT_FACTORY.equals(mPackage.appComponentFactory())) {
-            // Special case for removing TestApp DPCs - this works even when not testOnly
-            Intent intent = new Intent(ACTION_DISABLE_SELF);
-            intent.setComponent(new ComponentName(pkg().packageName(),
-                    "com.android.bedstead.testapp.TestAppBroadcastController"));
-            try (PermissionContext p =
-                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-                TestApis.context().androidContextAsUser(mUser).sendBroadcast(intent);
-            }
-
-            Poll.forValue("Device Owner", () -> TestApis.devicePolicy().getDeviceOwner())
-                    .toBeNull()
-                    .errorOnFail().await();
-            return;
-        }
-
         if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)
                 || TestApis.packages().instrumented().isInstantApp()) {
             removePreS();
@@ -95,7 +85,18 @@ public final class DeviceOwner extends DevicePolicyController {
         try (PermissionContext p =
                      TestApis.permissions().withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
             devicePolicyManager.forceRemoveActiveAdmin(mComponentName, mUser.id());
+        } catch (SecurityException e) {
+            if (e.getMessage().contains("Attempt to remove non-test admin")
+                    && TEST_APP_APP_COMPONENT_FACTORY.equals(mPackage.appComponentFactory())) {
+                removeTestApp();
+            } else {
+                throw e;
+            }
         }
+
+        Poll.forValue("Device Owner", () -> TestApis.devicePolicy().getDeviceOwner())
+                .toBeNull()
+                .errorOnFail().await();
     }
 
     private void removePreS() {
@@ -105,7 +106,39 @@ public final class DeviceOwner extends DevicePolicyController {
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
         } catch (AdbException e) {
-            throw new NeneException("Error removing device owner " + this, e);
+            if (mPackage.appComponentFactory().equals(TEST_APP_APP_COMPONENT_FACTORY)
+                    && user().parent() == null) {
+                // We can't see why it failed so we'll try the test app version
+                removeTestApp();
+            } else {
+                throw new NeneException("Error removing device owner " + this, e);
+            }
+        }
+    }
+
+    private void removeTestApp() {
+        // Special case for removing TestApp DPCs - this works even when not testOnly
+        Intent intent = new Intent(ACTION_DISABLE_SELF);
+        intent.setComponent(new ComponentName(pkg().packageName(),
+                "com.android.bedstead.testapp.TestAppBroadcastController"));
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            // If the profile isn't ready then the broadcast won't be sent and the profile owner
+            // will not be removed. So we can retry until the broadcast has been dealt with.
+            Retry.logic(() -> {
+                BlockingBroadcastReceiver b = new BlockingBroadcastReceiver(
+                        TestApis.context().instrumentedContext());
+
+                TestApis.context().androidContextAsUser(mUser).sendOrderedBroadcast(
+                        intent, /* receiverPermission= */ null, b, /* scheduler= */
+                        null, /* initialCode= */
+                        Activity.RESULT_CANCELED, /* initialData= */ null, /* initialExtras= */
+                        null);
+
+                b.awaitForBroadcastOrFail(Duration.ofSeconds(30).toMillis());
+                assertThat(b.getResultCode()).isEqualTo(Activity.RESULT_OK);
+            }).timeout(Duration.ofMinutes(5)).runAndWrapException();
         }
     }
 

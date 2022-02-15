@@ -80,15 +80,6 @@ static const std::vector<std::string> kOtherLoadableLibrariesInSearchPaths = {
 
 static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_support.so";
 
-static bool is_directory(const char* path) {
-  struct stat sb;
-  if (stat(path, &sb) != -1) {
-    return S_ISDIR(sb.st_mode);
-  }
-
-  return false;
-}
-
 static bool not_accessible(const std::string& err) {
   return err.find("dlopen failed: library \"") == 0 &&
          err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos;
@@ -305,11 +296,19 @@ static bool check_path(JNIEnv* env,
       }
 
       std::string path = dir + "/" + dp->d_name;
-      if (is_directory(path.c_str())) {
-        dirs.push(path);
-      } else if (!check_lib(env, clazz, path, library_search_paths, public_library_basenames,
-                            test_system_load_library, check_absence, errors)) {
-        success = false;
+      struct stat sb;
+      // Use lstat to not dereference a symlink. If it links out of library_path
+      // it can be ignored because the Bionic linker derefences symlinks before
+      // checking the path. If it links inside library_path we'll get to the
+      // link target anyway.
+      if (lstat(path.c_str(), &sb) != -1) {
+        if (S_ISDIR(sb.st_mode)) {
+          dirs.push(path);
+        } else if (!S_ISLNK(sb.st_mode) &&
+                   !check_lib(env, clazz, path, library_search_paths, public_library_basenames,
+                              test_system_load_library, check_absence, errors)) {
+          success = false;
+        }
       }
     }
   }

@@ -17,9 +17,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.media.extractor.cts"
      android:targetSandboxVersion="2">
-
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.INSTANT_APP_FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 

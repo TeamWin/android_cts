@@ -44,7 +44,6 @@ public class PropertyUtil {
     private static final String CAMERAX_EXTENSIONS_ENABLED = "ro.camerax.extensions.enabled";
     private static final String MANUFACTURER_PROPERTY = "ro.product.manufacturer";
     private static final String TAG_DEV_KEYS = "dev-keys";
-    private static final String VENDOR_BUILD_VERSION_SDK = "ro.vendor.build.version.sdk";
     private static final String VNDK_VERSION = "ro.vndk.version";
 
     public static final String GOOGLE_SETTINGS_QUERY =
@@ -91,12 +90,12 @@ public class PropertyUtil {
 
     /**
      * Return the API level that the VSR requirement must be fulfilled. It reads
-     * ro.product.first_api_level, ro.board.first_api_level, and ro.board.api_level
-     * to find the minimum required VSR api_level for the DUT.
+     * ro.product.first_api_level and ro.board.first_api_level to find the minimum required VSR
+     * api_level for the DUT.
      */
     public static int getVsrApiLevel() {
         // Api level properties of the board. The order of the properties must be kept.
-        String[] boardApiLevelProps = { BOARD_API_LEVEL, BOARD_FIRST_API_LEVEL, VENDOR_BUILD_VERSION_SDK };
+        String[] boardApiLevelProps = {BOARD_API_LEVEL, BOARD_FIRST_API_LEVEL};
         for (String apiLevelProp : boardApiLevelProps) {
             int apiLevel = getPropertyInt(apiLevelProp);
             if (apiLevel != INT_VALUE_IF_UNSET) {

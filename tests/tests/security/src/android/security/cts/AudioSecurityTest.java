@@ -58,30 +58,33 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
 
     private static void testAllEffects(String testName, TestEffect testEffect) throws Exception {
         int failures = 0;
-        for (AudioEffect.Descriptor descriptor : AudioEffect.queryEffects()) {
-            final AudioEffect audioEffect;
-            try {
-                audioEffect = (AudioEffect)AudioEffect.class.getConstructor(
-                        UUID.class, UUID.class, int.class, int.class).newInstance(
-                                descriptor.type,
-                                descriptor.uuid, // uuid overrides type
-                                0 /* priority */, 0 /* audioSession */);
-            } catch (Exception e) {
-                Log.w(TAG, "effect " + testName + " " + descriptor.name
-                        + " cannot be created (ignoring)");
-                continue; // OK;
-            }
-            try {
-                testEffect.test(audioEffect);
-                Log.d(TAG, "effect " + testName + " " + descriptor.name + " success");
-            } catch (Exception e) {
-                Log.e(TAG, "effect " + testName + " " + descriptor.name + " exception failed!",
-                        e);
-                ++failures;
-            } catch (AssertionError e) {
-                Log.e(TAG, "effect " + testName + " " + descriptor.name + " assert failed!",
-                        e);
-                ++failures;
+        AudioEffect.Descriptor[] descriptors = AudioEffect.queryEffects();
+        if (descriptors != null) {
+            for (AudioEffect.Descriptor descriptor : descriptors) {
+                final AudioEffect audioEffect;
+                try {
+                    audioEffect = (AudioEffect)AudioEffect.class.getConstructor(
+                            UUID.class, UUID.class, int.class, int.class).newInstance(
+                                    descriptor.type,
+                                    descriptor.uuid, // uuid overrides type
+                                    0 /* priority */, 0 /* audioSession */);
+                } catch (Exception e) {
+                    Log.w(TAG, "effect " + testName + " " + descriptor.name
+                            + " cannot be created (ignoring)");
+                    continue; // OK;
+                }
+                try {
+                    testEffect.test(audioEffect);
+                    Log.d(TAG, "effect " + testName + " " + descriptor.name + " success");
+                } catch (Exception e) {
+                    Log.e(TAG, "effect " + testName + " " + descriptor.name + " exception failed!",
+                            e);
+                    ++failures;
+                } catch (AssertionError e) {
+                    Log.e(TAG, "effect " + testName + " " + descriptor.name + " assert failed!",
+                            e);
+                    ++failures;
+                }
             }
         }
         assertEquals("found " + testName + " " + failures + " failures",
@@ -371,89 +374,93 @@ public class AudioSecurityTest extends CtsAndroidTestCase {
         final int bufferSize = bufferSamples * 2; // bytes per sample for 16 bits
         final short data[] = new short[bufferSamples]; // zero data
 
-        for (AudioEffect.Descriptor descriptor : AudioEffect.queryEffects()) {
-            if (descriptor.type.compareTo(UUID.fromString(VISUALIZER_TYPE)) != 0) {
-                continue;
-            }
-
-            AudioEffect audioEffect = null;
-            AudioTrack audioTrack = null;
-
-            try {
-                // create track and play
-                {
-                    audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
-                            AudioFormat.CHANNEL_OUT_STEREO, format, bufferSize,
-                            AudioTrack.MODE_STATIC);
-                    assertEquals("Cannot write to audio track",
-                            bufferSamples,
-                            audioTrack.write(data, 0 /* offsetInBytes */, data.length));
-                    assertEquals("AudioTrack not initialized",
-                            AudioTrack.STATE_INITIALIZED,
-                            audioTrack.getState());
-                    assertEquals("Cannot set loop points",
-                            android.media.AudioTrack.SUCCESS,
-                            audioTrack.setLoopPoints(0 /* startInFrames */, bufferFrames, loops));
-                    audioTrack.play();
+        AudioEffect.Descriptor[] descriptors = AudioEffect.queryEffects();
+        if (descriptors != null) {
+            for (AudioEffect.Descriptor descriptor : descriptors) {
+                if (descriptor.type.compareTo(UUID.fromString(VISUALIZER_TYPE)) != 0) {
+                    continue;
                 }
 
-                // wait for track to really begin playing
-                Thread.sleep(200 /* millis */);
+                AudioEffect audioEffect = null;
+                AudioTrack audioTrack = null;
 
-                // create effect
-                {
-                    audioEffect = (AudioEffect) AudioEffect.class.getConstructor(
-                            UUID.class, UUID.class, int.class, int.class).newInstance(
-                                    descriptor.type, descriptor.uuid, 0 /* priority */,
-                                    audioTrack.getAudioSessionId());
-                }
+                try {
+                    // create track and play
+                    {
+                        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
+                                AudioFormat.CHANNEL_OUT_STEREO, format, bufferSize,
+                                AudioTrack.MODE_STATIC);
+                        assertEquals("Cannot write to audio track",
+                                bufferSamples,
+                                audioTrack.write(data, 0 /* offsetInBytes */, data.length));
+                        assertEquals("AudioTrack not initialized",
+                                AudioTrack.STATE_INITIALIZED,
+                                audioTrack.getState());
+                        assertEquals("Cannot set loop points",
+                                android.media.AudioTrack.SUCCESS,
+                                audioTrack.setLoopPoints(
+                                        0 /* startInFrames */, bufferFrames, loops));
+                        audioTrack.play();
+                    }
 
-                // set capture size
-                {
-                    byte command[] = ByteBuffer.allocate(5 * 4 /* capacity */)
-                            .order(ByteOrder.nativeOrder())
-                            .putInt(0)                             // status (unused)
-                            .putInt(4)                             // psize (sizeof(param))
-                            .putInt(4)                             // vsize (sizeof(value))
-                            .putInt(VISUALIZER_PARAM_CAPTURE_SIZE) // data[0] (param)
-                            .putInt(CAPTURE_SIZE)                  // data[4] (value)
-                            .array();
+                    // wait for track to really begin playing
+                    Thread.sleep(200 /* millis */);
 
-                    Integer ret = (Integer) AudioEffect.class.getDeclaredMethod(
-                            "command", int.class, byte[].class, byte[].class).invoke(
-                                    audioEffect,
-                                    EFFECT_CMD_SET_PARAM,
-                                    command, new byte[4] /* reply */);
-                    Log.d(TAG, "setparam returns " + ret);
-                    assertTrue("Audio server might have crashed", ret != ERROR_DEAD_OBJECT);
-                }
+                    // create effect
+                    {
+                        audioEffect = (AudioEffect) AudioEffect.class.getConstructor(
+                                UUID.class, UUID.class, int.class, int.class).newInstance(
+                                        descriptor.type, descriptor.uuid, 0 /* priority */,
+                                        audioTrack.getAudioSessionId());
+                    }
 
-                // enable effect
-                {
-                    final int ret = audioEffect.setEnabled(true);
-                    assertEquals("Cannot enable audio effect", 0 /* expected */, ret);
-                }
+                    // set capture size
+                    {
+                        byte command[] = ByteBuffer.allocate(5 * 4 /* capacity */)
+                                .order(ByteOrder.nativeOrder())
+                                .putInt(0)                             // status (unused)
+                                .putInt(4)                             // psize (sizeof(param))
+                                .putInt(4)                             // vsize (sizeof(value))
+                                .putInt(VISUALIZER_PARAM_CAPTURE_SIZE) // data[0] (param)
+                                .putInt(CAPTURE_SIZE)                  // data[4] (value)
+                                .array();
 
-                // wait for track audio data to be processed, otherwise capture
-                // will not really return audio data.
-                Thread.sleep(200 /* millis */);
+                        Integer ret = (Integer) AudioEffect.class.getDeclaredMethod(
+                                "command", int.class, byte[].class, byte[].class).invoke(
+                                        audioEffect,
+                                        EFFECT_CMD_SET_PARAM,
+                                        command, new byte[4] /* reply */);
+                        Log.d(TAG, "setparam returns " + ret);
+                        assertTrue("Audio server might have crashed", ret != ERROR_DEAD_OBJECT);
+                    }
 
-                // capture data
-                {
-                    Integer ret = (Integer) AudioEffect.class.getDeclaredMethod(
-                            "command", int.class, byte[].class, byte[].class).invoke(
-                                    audioEffect,
-                                    VISUALIZER_CMD_CAPTURE,
-                                    new byte[0] /* command */, captureBuf /* reply */);
-                    Log.d(TAG, "capture returns " + ret);
-                    assertTrue("Audio server might have crashed", ret != ERROR_DEAD_OBJECT);
-                }
-            } finally {
-                if (audioEffect != null) {
-                    audioEffect.release();
-                }
-                if (audioTrack != null) {
-                    audioTrack.release();
+                    // enable effect
+                    {
+                        final int ret = audioEffect.setEnabled(true);
+                        assertEquals("Cannot enable audio effect", 0 /* expected */, ret);
+                    }
+
+                    // wait for track audio data to be processed, otherwise capture
+                    // will not really return audio data.
+                    Thread.sleep(200 /* millis */);
+
+                    // capture data
+                    {
+                        Integer ret = (Integer) AudioEffect.class.getDeclaredMethod(
+                                "command", int.class, byte[].class, byte[].class).invoke(
+                                        audioEffect,
+                                        VISUALIZER_CMD_CAPTURE,
+                                        new byte[0] /* command */, captureBuf /* reply */);
+                        Log.d(TAG, "capture returns " + ret);
+                        assertTrue("Audio server might have crashed", ret != ERROR_DEAD_OBJECT);
+                    }
+                } finally {
+                    if (audioEffect != null) {
+                        audioEffect.release();
+                    }
+                    if (audioTrack != null) {
+                        audioTrack.release();
+                    }
                 }
             }
         }

@@ -39,7 +39,7 @@ public class NdkMediaCodec implements MediaCodecWrapper {
 
     static {
         Log.i("@@@", "before loadlibrary");
-        System.loadLibrary("ctsmediacodec_jni");
+        System.loadLibrary("ctsmediacommon_jni");
         Log.i("@@@", "after loadlibrary");
     }
 

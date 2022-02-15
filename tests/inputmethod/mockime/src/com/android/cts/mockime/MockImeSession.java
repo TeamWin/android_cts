@@ -1336,6 +1336,11 @@ public class MockImeSession implements AutoCloseable {
     }
 
     @NonNull
+    public ImeCommand callVerifyExtractViewNotNull() {
+        return callCommandInternal("verifyExtractViewNotNull", new Bundle());
+    }
+
+    @NonNull
     public ImeCommand callVerifyGetDisplay() {
         return callCommandInternal("verifyGetDisplay", new Bundle());
     }
@@ -1373,5 +1378,30 @@ public class MockImeSession implements AutoCloseable {
     @NonNull
     public ImeCommand callVerifyGetGestureDetectorOnDisplayContext() {
         return callCommandInternal("verifyGetGestureDetectorOnDisplayContext", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callGetStylusHandwritingWindowVisibility() {
+        return callCommandInternal("getStylusHandwritingWindowVisibility", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callSetStylusHandwritingWindowTouchListener() {
+        return callCommandInternal("setStylusHandwritingWindowTouchListener", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callGetStylusHandwritingWindowEvents() {
+        return callCommandInternal("getStylusHandwritingWindowEvents", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callFinishStylusHandwriting() {
+        return callCommandInternal("finishStylusHandwriting", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callGetCurrentWindowMetricsBounds() {
+        return callCommandInternal("getCurrentWindowMetricsBounds", new Bundle());
     }
 }

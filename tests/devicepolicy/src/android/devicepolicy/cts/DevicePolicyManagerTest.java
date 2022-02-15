@@ -27,6 +27,7 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_PASS
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECURITY_TYPE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
+import static android.app.admin.ProvisioningException.ERROR_PRE_CONDITION_FAILED;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
@@ -35,14 +36,19 @@ import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.annotation.RequiresFeature;
 import android.app.AppOpsManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
+import android.app.admin.PreferentialNetworkServiceConfig;
+import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -51,8 +57,10 @@ import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
+import android.os.BaseBundle;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -61,6 +69,7 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -77,9 +86,12 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -89,8 +101,10 @@ import org.junit.runner.RunWith;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -132,6 +146,8 @@ public final class DevicePolicyManagerTest {
             "dpm set-device-owner --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
     private static final String REMOVE_ACTIVE_ADMIN_COMMAND =
             "dpm remove-active-admin --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
+    private static final String SET_PROFILE_OWNER_COMMAND =
+            "dpm set-profile-owner --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
 
     private static final String NFC_INTENT_COMPONENT_NAME =
             "com.test.dpc/com.test.dpc.DeviceAdminReceiver";
@@ -156,6 +172,26 @@ public final class DevicePolicyManagerTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
+    private static final String TEST_KEY = "test_key";
+    private static final String TEST_VALUE = "test_value";
+
+    @Before
+    public void setUp() {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            sDevicePolicyManager.setDpcDownloaded(false);
+        }
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)) {
+            sDevicePolicyManager.setDpcDownloaded(false);
+        }
+    }
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
@@ -308,7 +344,7 @@ public final class DevicePolicyManagerTest {
             ManagedProfileProvisioningParams params =
                     createManagedProfileProvisioningParamsBuilder()
                             .setAccountToMigrate(TEST_ACCOUNT)
-                            .setKeepAccountMigrated(true)
+                            .setKeepingAccountOnMigration(true)
                             .build();
             profile = provisionManagedProfile(params);
 
@@ -371,6 +407,23 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Postsubmit(reason = "new test")
+    @Test
+    public void createAndProvisionManagedProfile_withExistingProfile_preconditionFails()
+            throws Exception {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder().build();
+
+        ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
+                provisionManagedProfile(params));
+        assertThat(exception.getProvisioningError()).isEqualTo(ERROR_PRE_CONDITION_FAILED);
+    }
+
     private void assertIsCrossProfilePackageIfInstalled(String packageName) throws Exception {
         if (!isPackageInstalledOnCurrentUser(packageName)) {
             return;
@@ -422,8 +475,17 @@ public final class DevicePolicyManagerTest {
     }
 
     private Set<String> getInstalledPackagesOnUser(Set<String> packages, UserHandle user) {
-        return packages.stream().filter(p -> isPackageInstalledOnUser(p, user))
-                .collect(Collectors.toSet());
+        Set<String> installedPackagesOnUser = new HashSet<>();
+
+        UserReference userRef = TestApis.users().find(user);
+        Collection<Package> packageInUser = TestApis.packages().installedForUser(userRef);
+        for (Package pkg : packageInUser) {
+            if (packages.contains(pkg.packageName())) {
+                installedPackagesOnUser.add(pkg.packageName());
+            }
+        }
+
+        return installedPackagesOnUser;
     }
 
     private boolean isPackageInstalledOnCurrentUser(String packageName) {
@@ -539,7 +601,7 @@ public final class DevicePolicyManagerTest {
 
             FullyManagedDeviceProvisioningParams params =
                     createDefaultManagedDeviceProvisioningParamsBuilder()
-                            .setDeviceOwnerCanGrantSensorsPermissions(false)
+                            .setCanDeviceOwnerGrantSensorsPermissions(false)
                             .build();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
@@ -587,6 +649,38 @@ public final class DevicePolicyManagerTest {
         assertWithMessage("list of policy-exempt apps")
                 .that(sDevicePolicyManager.getPolicyExemptApps())
                 .isEmpty();
+    }
+
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setPreferentialNetworkServiceConfig_withoutRequiredPermission() {
+        PreferentialNetworkServiceConfig preferentialNetworkServiceConfigEnabled =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true).build();
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                        preferentialNetworkServiceConfigEnabled));
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                        PreferentialNetworkServiceConfig.DEFAULT));
+        assertThrows(SecurityException.class,
+                () -> sDevicePolicyManager.getPreferentialNetworkServiceConfig());
+    }
+
+    @Test
+    public void setPreferentialNetworkServiceConfig_withRequiredPermission() {
+        SystemUtil.runShellCommand(SET_PROFILE_OWNER_COMMAND);
+        PreferentialNetworkServiceConfig preferentialNetworkServiceConfigEnabled =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true).build();
+        sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                preferentialNetworkServiceConfigEnabled);
+        assertTrue(sDevicePolicyManager.getPreferentialNetworkServiceConfig().isEnabled());
+        sDevicePolicyManager.setPreferentialNetworkServiceConfig(
+                PreferentialNetworkServiceConfig.DEFAULT);
+        assertFalse(sDevicePolicyManager.getPreferentialNetworkServiceConfig().isEnabled());
+        sDevicePolicyManager.clearProfileOwner(DEVICE_ADMIN_COMPONENT_NAME);
+        SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
     }
 
     FullyManagedDeviceProvisioningParams.Builder
@@ -1091,6 +1185,7 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnSecondaryUser
     @EnsureHasNoProfileOwner
     @RequireNotHeadlessSystemUserMode
+    @RequiresFeature(FEATURE_DEVICE_ADMIN)
     public void checkProvisioningPreCondition_actionDO_onNonSystemUser_returnsNotSystemUser() {
         boolean setupComplete = TestApis.users().current().getSetupComplete();
         TestApis.users().current().setSetupComplete(false);
@@ -1208,5 +1303,171 @@ public final class DevicePolicyManagerTest {
 
         assertThat(sDevicePolicyManager.getUserProvisioningState())
                 .isEqualTo(DevicePolicyManager.STATE_USER_PROFILE_FINALIZED);
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_works() {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(ADMIN_EXTRAS_BUNDLE)
+                        .build();
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_modifyBundle_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        adminExtrasBundle.putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void getAdminExtras_managedProfileParams_modifyResult_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        params.getAdminExtras().putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_emptyBundle_works() {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(new PersistableBundle())
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void setAdminExtras_managedProfileParams_nullBundle_works() {
+        ManagedProfileProvisioningParams params =
+                createManagedProfileProvisioningParamsBuilder()
+                        .setAdminExtras(null)
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_works() {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(ADMIN_EXTRAS_BUNDLE)
+                        .build();
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_modifyBundle_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        adminExtrasBundle.putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void getAdminExtras_fullyManagedParams_modifyResult_internalBundleNotModified() {
+        PersistableBundle adminExtrasBundle = new PersistableBundle(ADMIN_EXTRAS_BUNDLE);
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(adminExtrasBundle)
+                        .build();
+
+        params.getAdminExtras().putString(TEST_KEY, TEST_VALUE);
+
+        assertBundlesEqual(params.getAdminExtras(), ADMIN_EXTRAS_BUNDLE);
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_emptyBundle_works() {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(new PersistableBundle())
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void setAdminExtras_fullyManagedParams_nullBundle_works() {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setAdminExtras(null)
+                        .build();
+
+        assertThat(params.getAdminExtras().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void getDeviceManagerRoleHolderPackageName_doesNotCrash() {
+        sDevicePolicyManager.getDeviceManagerRoleHolderPackageName();
+    }
+
+    private static PersistableBundle createAdminExtrasBundle() {
+        PersistableBundle result = new PersistableBundle();
+        result.putString("key1", "value1");
+        result.putInt("key2", 2);
+        result.putBoolean("key3", true);
+        return result;
+    }
+
+    private static void assertBundlesEqual(BaseBundle bundle1, BaseBundle bundle2) {
+        if (bundle1 != null) {
+            assertWithMessage("Intent bundles are not equal")
+                    .that(bundle2).isNotNull();
+            assertWithMessage("Intent bundles are not equal")
+                    .that(bundle1.keySet().size()).isEqualTo(bundle2.keySet().size());
+            for (String key : bundle1.keySet()) {
+                assertWithMessage("Intent bundles are not equal")
+                        .that(bundle1.get(key))
+                        .isEqualTo(bundle2.get(key));
+            }
+        } else {
+            assertWithMessage("Intent bundles are not equal").that(bundle2).isNull();
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setDpcDownloaded_withoutRequiredPermission_throwsSecurityException() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.setDpcDownloaded(true));
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void setDpcDownloaded_withRequiredPermission_doesNotThrowSecurityException() {
+        sDevicePolicyManager.setDpcDownloaded(true);
+
+        // Doesn't throw exception
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void isDpcDownloaded_returnsResultOfSetDpcDownloaded() {
+        sDevicePolicyManager.setDpcDownloaded(true);
+
+        assertThat(sDevicePolicyManager.isDpcDownloaded()).isTrue();
     }
 }
