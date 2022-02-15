@@ -96,6 +96,9 @@ public class VideoCodecTest extends VideoCodecTestBase {
     // Maximum allowed key frame interval variation from the target value.
     private static final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
 
+    private static final String CODEC_PREFIX_KEY = "codec-prefix";
+    private static final String mCodecPrefix;
+
     @Parameterized.Parameter(0)
     public String mCodecName;
 
@@ -105,14 +108,22 @@ public class VideoCodecTest extends VideoCodecTestBase {
     @Parameterized.Parameter(2)
     public int mBitRateMode;
 
+    static {
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
+    }
+
     static private List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList) {
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
             String[] encodersForMime = MediaUtils.getEncoderNamesForMime((String) arg[0]);
-            if (encodersForMime.length > 0) {
+            for (String encoder : encodersForMime) {
+                if (mCodecPrefix != null && !encoder.startsWith(mCodecPrefix)) {
+                    continue;
+                }
                 Object[] testArgs = new Object[argLength + 1];
-                testArgs[0] = encodersForMime[0];
+                testArgs[0] = encoder;
                 System.arraycopy(arg, 0, testArgs, 1, argLength);
                 argsList.add(testArgs);
             }
