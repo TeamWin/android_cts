@@ -480,11 +480,13 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      */
     @Test
     public void testRemovingAbstractFromAClass() {
-        JDiffClassDescription clz = new JDiffClassDescription(
-                "android.signature.cts.tests.data", "NormalClass");
-        clz.setType(JDiffClassDescription.JDiffType.CLASS);
-        clz.setModifier(Modifier.PUBLIC | Modifier.ABSTRACT);
-        checkSignatureCompliance(clz);
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = new JDiffClassDescription(
+                    "android.signature.cts.tests.data", "NormalClass");
+            clz.setType(JDiffClassDescription.JDiffType.CLASS);
+            clz.setModifier(Modifier.PUBLIC | Modifier.ABSTRACT);
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
