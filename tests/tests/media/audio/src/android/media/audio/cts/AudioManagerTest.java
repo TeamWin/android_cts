@@ -1692,8 +1692,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testIsUltrasoundSupported() {
-        // Calling the API to make sure it doesn't crash.
-        Log.i(TAG, "isUltrasoundSupported: " + AudioManager.isUltrasoundSupported());
+        // Calling the API to make sure it must crash due to no permission.
+        try {
+            mAudioManager.isUltrasoundSupported();
+            fail("isUltrasoundSupported must fail due to no permission");
+        } catch (SecurityException e) {
+        }
     }
 
     public void testGetAudioHwSyncForSession() {
