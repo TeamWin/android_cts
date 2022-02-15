@@ -127,7 +127,7 @@ public abstract class ApiPresenceCheckerTest<T extends ApiPresenceChecker> {
         }
     }
 
-    protected static class ExpectFailure implements ResultObserver {
+    protected static class ExpectFailure implements ResultObserver, AutoCloseable {
 
         private FailureType expectedType;
 
@@ -150,6 +150,11 @@ public abstract class ApiPresenceCheckerTest<T extends ApiPresenceChecker> {
             } else {
                 Assert.fail("Saw unexpected test failure: " + name + " failure type: " + type);
             }
+        }
+
+        @Override
+        public void close() {
+            validate();
         }
 
         void validate() {
