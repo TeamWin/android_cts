@@ -19,9 +19,9 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.smartspace.uitemplatedata.SmartspaceIcon;
-import android.app.smartspace.uitemplatedata.SmartspaceSubImageUiTemplateData;
-import android.app.smartspace.uitemplatedata.SmartspaceText;
+import android.app.smartspace.uitemplatedata.Icon;
+import android.app.smartspace.uitemplatedata.SubImageTemplateData;
+import android.app.smartspace.uitemplatedata.Text;
 import android.os.Parcel;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -33,44 +33,44 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tests for {@link SmartspaceSubImageUiTemplateData}
+ * Tests for {@link SubImageTemplateData}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class SmartspaceSubImageUiTemplateDataTest {
+public class SubImageTemplateDataTest {
 
-    private static final String TAG = "SmartspaceSubImageUiTemplateDataTest";
+    private static final String TAG = "SubImageTemplateDataTest";
 
     @Test
-    public void testCreateSmartspaceSubImageUiTemplateData() {
-        List<SmartspaceText> texts = new ArrayList<>();
-        texts.add(new SmartspaceText.Builder("text1").build());
-        texts.add(new SmartspaceText.Builder("text2").build());
+    public void testCreateSubImageTemplateData() {
+        List<Text> texts = new ArrayList<>();
+        texts.add(new Text.Builder("text1").build());
+        texts.add(new Text.Builder("text2").build());
 
-        List<SmartspaceIcon> images = new ArrayList<>();
+        List<Icon> images = new ArrayList<>();
         images.add(SmartspaceTestUtils.createSmartspaceIcon("icon1"));
         images.add(SmartspaceTestUtils.createSmartspaceIcon("icon2"));
         images.add(SmartspaceTestUtils.createSmartspaceIcon("icon3"));
 
-        SmartspaceSubImageUiTemplateData subImageUiTemplateData =
-                new SmartspaceSubImageUiTemplateData.Builder(texts, images)
+        SubImageTemplateData subImageTemplateData =
+                new SubImageTemplateData.Builder(texts, images)
                         .setSubImageAction(
                                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(), "tap"))
                         .build();
 
-        assertThat(subImageUiTemplateData.getSubImageTexts()).isEqualTo(texts);
-        assertThat(subImageUiTemplateData.getSubImages()).isEqualTo(images);
-        assertThat(subImageUiTemplateData.getSubImageAction()).isEqualTo(
+        assertThat(subImageTemplateData.getSubImageTexts()).isEqualTo(texts);
+        assertThat(subImageTemplateData.getSubImages()).isEqualTo(images);
+        assertThat(subImageTemplateData.getSubImageAction()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(), "tap"));
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
-        subImageUiTemplateData.writeToParcel(parcel, 0);
+        subImageTemplateData.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        SmartspaceSubImageUiTemplateData copyData =
-                SmartspaceSubImageUiTemplateData.CREATOR.createFromParcel(parcel);
-        assertThat(subImageUiTemplateData).isEqualTo(copyData);
+        SubImageTemplateData copyData =
+                SubImageTemplateData.CREATOR.createFromParcel(parcel);
+        assertThat(subImageTemplateData).isEqualTo(copyData);
         parcel.recycle();
     }
 }

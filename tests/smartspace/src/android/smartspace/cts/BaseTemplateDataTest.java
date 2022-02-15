@@ -20,8 +20,8 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.smartspace.SmartspaceTarget;
-import android.app.smartspace.uitemplatedata.SmartspaceDefaultUiTemplateData;
-import android.app.smartspace.uitemplatedata.SmartspaceText;
+import android.app.smartspace.uitemplatedata.BaseTemplateData;
+import android.app.smartspace.uitemplatedata.Text;
 import android.os.Parcel;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -30,64 +30,62 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for {@link SmartspaceDefaultUiTemplateData}
+ * Tests for {@link BaseTemplateDataTest}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class SmartspaceDefaultUiTemplateDataTest {
+public class BaseTemplateDataTest {
 
-    private static final String TAG = "SmartspaceDefaultUiTemplateDataTest";
+    private static final String TAG = "BaseTemplateDataTest";
 
     @Test
-    public void testCreateSmartspaceDefaultUiTemplateData() {
-        SmartspaceDefaultUiTemplateData defaultUiTemplateData =
-                new SmartspaceDefaultUiTemplateData.Builder(SmartspaceTarget.UI_TEMPLATE_DEFAULT)
-                        .setTitleText(new SmartspaceText.Builder("title").build())
+    public void testCreateBaseTemplateData() {
+        BaseTemplateData baseTemplateData =
+                new BaseTemplateData.Builder(SmartspaceTarget.UI_TEMPLATE_DEFAULT)
+                        .setTitleText(new Text.Builder("title").build())
                         .setTitleIcon(SmartspaceTestUtils.createSmartspaceIcon("title icon"))
-                        .setSubtitleText(new SmartspaceText.Builder("subtitle").build())
+                        .setSubtitleText(new Text.Builder("subtitle").build())
                         .setSubtitleIcon(SmartspaceTestUtils.createSmartspaceIcon("subtitle icon"))
                         .setPrimaryTapAction(
                                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                                         "primary action"))
                         .setSupplementalSubtitleText(
-                                new SmartspaceText.Builder("supplemental subtitle").build())
+                                new Text.Builder("supplemental subtitle").build())
                         .setSupplementalSubtitleIcon(
                                 SmartspaceTestUtils.createSmartspaceIcon(
                                         "supplemental subtitle icon"))
                         .setSupplementalSubtitleTapAction(
                                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                                         "supplemental tap action"))
-                        .setSupplementalAlarmText(new SmartspaceText.Builder(
+                        .setSupplementalAlarmText(new Text.Builder(
                                 "supplemental alarm text").build()).build();
 
-        assertThat(defaultUiTemplateData.getTitleText()).isEqualTo(
-                new SmartspaceText.Builder("title").build());
-        assertThat(defaultUiTemplateData.getTitleIcon()).isEqualTo(
+        assertThat(baseTemplateData.getTitleText()).isEqualTo(new Text.Builder("title").build());
+        assertThat(baseTemplateData.getTitleIcon()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceIcon("title icon"));
-        assertThat(defaultUiTemplateData.getSubtitleText()).isEqualTo(
-                new SmartspaceText.Builder("subtitle").build());
-        assertThat(defaultUiTemplateData.getSubtitleIcon()).isEqualTo(
+        assertThat(baseTemplateData.getSubtitleText()).isEqualTo(
+                new Text.Builder("subtitle").build());
+        assertThat(baseTemplateData.getSubtitleIcon()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceIcon("subtitle icon"));
-        assertThat(defaultUiTemplateData.getPrimaryTapAction()).isEqualTo(
+        assertThat(baseTemplateData.getPrimaryTapAction()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(), "primary action"));
-        assertThat(defaultUiTemplateData.getSupplementalSubtitleText()).isEqualTo(
-                new SmartspaceText.Builder("supplemental subtitle").build());
-        assertThat(defaultUiTemplateData.getSupplementalSubtitleIcon()).isEqualTo(
+        assertThat(baseTemplateData.getSupplementalSubtitleText()).isEqualTo(
+                new Text.Builder("supplemental subtitle").build());
+        assertThat(baseTemplateData.getSupplementalSubtitleIcon()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceIcon("supplemental subtitle icon"));
-        assertThat(defaultUiTemplateData.getSupplementalSubtitleTapAction()).isEqualTo(
+        assertThat(baseTemplateData.getSupplementalSubtitleTapAction()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                         "supplemental tap action"));
-        assertThat(defaultUiTemplateData.getSupplementalAlarmText()).isEqualTo(
-                new SmartspaceText.Builder("supplemental alarm text").build());
+        assertThat(baseTemplateData.getSupplementalAlarmText()).isEqualTo(
+                new Text.Builder("supplemental alarm text").build());
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
-        defaultUiTemplateData.writeToParcel(parcel, 0);
+        baseTemplateData.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        SmartspaceDefaultUiTemplateData copyUiTemplateData =
-                SmartspaceDefaultUiTemplateData.CREATOR.createFromParcel(parcel);
-        assertThat(defaultUiTemplateData).isEqualTo(copyUiTemplateData);
+        BaseTemplateData copyData = BaseTemplateData.CREATOR.createFromParcel(parcel);
+        assertThat(baseTemplateData).isEqualTo(copyData);
         parcel.recycle();
     }
 }

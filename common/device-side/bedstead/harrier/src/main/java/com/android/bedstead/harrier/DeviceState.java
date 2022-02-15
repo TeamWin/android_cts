@@ -45,6 +45,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.BeforeClass;
+import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
+import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -637,6 +639,16 @@ public final class DeviceState extends HarrierRule {
                 mOtherUserType = otherUserAnnotation.value();
                 continue;
             }
+
+            if (annotation instanceof EnsureBluetoothEnabled) {
+                ensureBluetoothEnabled();
+                continue;
+            }
+
+            if (annotation instanceof EnsureBluetoothDisabled) {
+                ensureBluetoothDisabled();
+                continue;
+            }
         }
 
         requireSdkVersion(/* min= */ mMinSdkVersionCurrentTest,
@@ -995,6 +1007,7 @@ public final class DeviceState extends HarrierRule {
     private DevicePolicyController mOriginalDeviceOwner;
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
     private UserReference mOriginalSwitchedUser;
+    private Boolean mOriginalBluetoothEnabled;
 
     /**
      * Get the {@link UserReference} of the work profile for the primary user.
@@ -1502,6 +1515,11 @@ public final class DeviceState extends HarrierRule {
             uninstalledTestApp.testApp().install(uninstalledTestApp.user());
         }
         mUninstalledTestApps.clear();
+
+        if (mOriginalBluetoothEnabled != null) {
+            TestApis.bluetooth().setEnabled(mOriginalBluetoothEnabled);
+            mOriginalBluetoothEnabled = null;
+        }
     }
 
     private UserReference createProfile(
@@ -2091,5 +2109,19 @@ public final class DeviceState extends HarrierRule {
                             + "Password is set and is not DEFAULT_PASSWORD.");
         }
         mUsersSetPasswords.remove(user);
+    }
+
+    private void ensureBluetoothEnabled() {
+        if (mOriginalBluetoothEnabled == null) {
+            mOriginalBluetoothEnabled = TestApis.bluetooth().isEnabled();
+        }
+        TestApis.bluetooth().setEnabled(true);
+    }
+
+    private void ensureBluetoothDisabled() {
+        if (mOriginalBluetoothEnabled == null) {
+            mOriginalBluetoothEnabled = TestApis.bluetooth().isEnabled();
+        }
+        TestApis.bluetooth().setEnabled(false);
     }
 }

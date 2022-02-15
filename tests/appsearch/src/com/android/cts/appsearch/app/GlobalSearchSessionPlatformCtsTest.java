@@ -15,7 +15,9 @@
  */
 package android.app.appsearch.cts.app;
 
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_GLOBAL_APP_SEARCH_DATA;
+import static android.Manifest.permission.READ_SMS;
 import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -307,6 +309,102 @@ public class GlobalSearchSessionPlatformCtsTest {
                                 .addGenericDocuments(EMAIL_DOCUMENT)
                                 .build()));
         assertPackageCannotAccess(PKG_A);
+    }
+
+    @Test
+    public void testAllowPermissionAccess() throws Exception {
+        // index a global searchable document in pkg_A and set it needs READ_SMS to read it.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
+                SetSchemaRequest.READ_SMS);
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).hasSize(1);
+                },
+                READ_SMS);
+    }
+
+    @Test
+    public void testRequireAllPermissionsToAccess() throws Exception {
+        // index a global searchable document in pkg_A and set it needs both READ_SMS and
+        // READ_EXTERNAL_STORAGE to read it.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
+                SetSchemaRequest.READ_SMS, SetSchemaRequest.READ_EXTERNAL_STORAGE);
+        // Only has READ_SMS cannot access the document.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).isEmpty();
+                },
+                READ_SMS);
+
+        // Has both permission can access the document.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).hasSize(1);
+                },
+                READ_SMS, READ_EXTERNAL_STORAGE);
+    }
+
+    @Test
+    public void testAllowPermissions_sameError() throws Exception {
+        // Try to get document before we put them, this is not found error.
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+        AppSearchBatchResult<String, GenericDocument> nonExistentResult = mGlobalSearchSession
+                .getByDocumentId(PKG_A, "database",
+                        new GetByDocumentIdRequest.Builder("namespace")
+                                .addIds("id1")
+                                .build()).get();
+        assertThat(nonExistentResult.isSuccess()).isFalse();
+        assertThat(nonExistentResult.getSuccesses()).isEmpty();
+        assertThat(nonExistentResult.getFailures()).containsKey("id1");
+
+        // Index a global searchable document in pkg_A and set it needs READ_SMS to read it.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
+                SetSchemaRequest.READ_SMS);
+
+        // Try to get document w/o permission, this is unAuthority error.
+        mGlobalSearchSession =
+                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+        AppSearchBatchResult<String, GenericDocument> unAuthResult = mGlobalSearchSession
+                .getByDocumentId(PKG_A, "database",
+                        new GetByDocumentIdRequest.Builder("namespace")
+                                .addIds("id1")
+                                .build()).get();
+        assertThat(unAuthResult.isSuccess()).isFalse();
+        assertThat(unAuthResult.getSuccesses()).isEmpty();
+        assertThat(unAuthResult.getFailures()).containsKey("id1");
+
+        // The error messages must be same.
+        assertThat(unAuthResult.getFailures().get("id1").getErrorMessage())
+                .isEqualTo(nonExistentResult.getFailures().get("id1").getErrorMessage());
     }
 
     @Test
@@ -752,14 +850,14 @@ public class GlobalSearchSessionPlatformCtsTest {
         }
     }
 
-    private void indexGloballySearchableDocument(
-            String pkg, String databaseName, String namespace, String id) throws Exception {
+    private void indexGloballySearchableDocument(String pkg, String databaseName, String namespace,
+            String id, int... requiredPermissions) throws Exception {
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
             ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
-            assertThat(commandReceiver
-                    .indexGloballySearchableDocument(databaseName, namespace, id)).isTrue();
+            assertThat(commandReceiver.indexGloballySearchableDocument(
+                    databaseName, namespace, id, requiredPermissions)).isTrue();
         } finally {
             serviceConnection.unbind();
         }

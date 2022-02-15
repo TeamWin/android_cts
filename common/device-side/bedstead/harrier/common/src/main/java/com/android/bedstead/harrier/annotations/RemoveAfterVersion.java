@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceowner;
+package com.android.bedstead.harrier.annotations;
 
-
-public class DeviceOwnerSetupTest extends BaseDeviceOwnerTest {
-
-    // This test verifies that the setup assertions are working to verify
-    // we are the device owner and have a valid active admin.
-    public void testEmptyTest() {
-    }
-
+/** Mark that a test should be removed after a certain Android Version is no longer supported. */
+public @interface RemoveAfterVersion {
+    int value();
 }

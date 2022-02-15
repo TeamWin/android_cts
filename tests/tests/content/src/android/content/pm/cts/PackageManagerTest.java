@@ -2198,4 +2198,32 @@ public class PackageManagerTest {
                         "Waiting for the process " + STUB_PACKAGE_NAME + " to die",
                         10 /* timeoutSecond */, () -> killed.get()));
     }
+
+    @Test
+    public void testPackageInfoFlags() {
+        final long rawFlags = PackageManager.GET_ACTIVITIES | PackageManager.GET_GIDS
+                | PackageManager.GET_CONFIGURATIONS;
+        assertEquals(rawFlags, PackageManager.PackageInfoFlags.of(rawFlags).getValue());
+    }
+
+    @Test
+    public void testApplicationInfoFlags() {
+        final long rawFlags = PackageManager.GET_SHARED_LIBRARY_FILES
+                | PackageManager.MATCH_UNINSTALLED_PACKAGES;
+        assertEquals(rawFlags, PackageManager.ApplicationInfoFlags.of(rawFlags).getValue());
+    }
+
+    @Test
+    public void testResolveInfoFlags() {
+        final long rawFlags = PackageManager.MATCH_DIRECT_BOOT_AWARE
+                | PackageManager.MATCH_DIRECT_BOOT_UNAWARE
+                | PackageManager.MATCH_SYSTEM_ONLY;
+        assertEquals(rawFlags, PackageManager.ResolveInfoFlags.of(rawFlags).getValue());
+    }
+
+    @Test
+    public void testComponentInfoFlags() {
+        final long rawFlags = PackageManager.GET_META_DATA;
+        assertEquals(rawFlags, PackageManager.ComponentInfoFlags.of(rawFlags).getValue());
+    }
 }

@@ -19,13 +19,12 @@ package android.smartspace.cts;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.app.smartspace.SmartspaceTarget;
-import android.app.smartspace.uitemplatedata.SmartspaceIcon;
-import android.app.smartspace.uitemplatedata.SmartspaceTapAction;
+import android.app.smartspace.uitemplatedata.Icon;
+import android.app.smartspace.uitemplatedata.TapAction;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.UserHandle;
@@ -40,12 +39,13 @@ public class SmartspaceTestUtils {
         return new ComponentName("package name", "class name");
     }
 
-    public static SmartspaceIcon createSmartspaceIcon(String contentDescription) {
-        Icon icon = Icon.createWithBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
-        return new SmartspaceIcon.Builder(icon).setContentDescription(contentDescription).build();
+    public static Icon createSmartspaceIcon(String contentDescription) {
+        android.graphics.drawable.Icon icon = android.graphics.drawable.Icon.createWithBitmap(
+                Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
+        return new Icon.Builder(icon).setContentDescription(contentDescription).build();
     }
 
-    public static SmartspaceTapAction createSmartspaceTapAction(Context context, CharSequence id) {
+    public static TapAction createSmartspaceTapAction(Context context, CharSequence id) {
         Bundle extras = new Bundle();
         extras.putString("key", "value");
 
@@ -54,7 +54,7 @@ public class SmartspaceTestUtils {
                 .addNextIntent(intent)
                 .getPendingIntent(0, PendingIntent.FLAG_IMMUTABLE);
 
-        return new SmartspaceTapAction.Builder(id)
+        return new TapAction.Builder(id)
                 .setIntent(intent)
                 .setPendingIntent(pendingIntent)
                 .setUserHandle(Process.myUserHandle())
