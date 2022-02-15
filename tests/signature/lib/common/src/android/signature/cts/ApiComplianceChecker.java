@@ -485,16 +485,6 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
     @Override
     protected void checkMethod(JDiffClassDescription classDescription, Class<?> runtimeClass,
             JDiffClassDescription.JDiffMethod methodDescription, Method method) {
-        if (method.isVarArgs()) {
-            methodDescription.mModifier |= METHOD_MODIFIER_VAR_ARGS;
-        }
-        if (method.isBridge()) {
-            methodDescription.mModifier |= METHOD_MODIFIER_BRIDGE;
-        }
-        if (method.isSynthetic()) {
-            methodDescription.mModifier |= METHOD_MODIFIER_SYNTHETIC;
-        }
-
         // FIXME: A workaround to fix the final mismatch on enumeration
         if (runtimeClass.isEnum() && methodDescription.mName.equals("values")) {
             return;
@@ -503,12 +493,6 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
         String reason;
         if ((reason = areMethodsModifierCompatible(
                 classDescription, methodDescription, method)) != null) {
-            // Allow previous API method to be changed to abstract
-            if (isAllowedClassAbstractionFromPreviousSystemApi(classDescription, runtimeClass)
-                    && (method.getModifiers() & ~(Modifier.ABSTRACT))
-                    == methodDescription.mModifier) {
-                return;
-            }
             resultObserver.notifyFailure(FailureType.MISMATCH_METHOD,
                     methodDescription.toReadableString(classDescription.getAbsoluteClassName()),
                     String.format("Non-compatible method found when looking for %s - because %s",
@@ -532,9 +516,12 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
             JDiffClassDescription.JDiffMethod apiMethod,
             Method reflectedMethod) {
 
-        // Mask off NATIVE since it is a don't care.  Also mask off
-        // SYNCHRONIZED since it is not considered API significant (b/112626813)
-        int ignoredMods = (Modifier.NATIVE | Modifier.SYNCHRONIZED | Modifier.STRICT);
+        // Mask off NATIVE since it is a don't care.
+        // Mask off SYNCHRONIZED since it is not considered API significant (b/112626813)
+        // Mask off STRICT as it has no effect (b/26082535)
+        // Mask off SYNTHETIC, VARARGS and BRIDGE as they are not represented in the API.
+        int ignoredMods = (Modifier.NATIVE | Modifier.SYNCHRONIZED | Modifier.STRICT |
+                METHOD_MODIFIER_SYNTHETIC | METHOD_MODIFIER_VAR_ARGS | METHOD_MODIFIER_BRIDGE);
         int reflectionModifiers = reflectedMethod.getModifiers() & ~ignoredMods;
         int apiModifiers = apiMethod.mModifier & ~ignoredMods;
 
@@ -550,9 +537,17 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
         }
 
         String genericString = reflectedMethod.toGenericString();
-        if (IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.contains(genericString)) {
-            reflectionModifiers &= ~Modifier.ABSTRACT;
-            apiModifiers &= ~Modifier.ABSTRACT;
+        if (classDescription.isPreviousApi()) {
+            if (IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.contains(genericString)) {
+                reflectionModifiers &= ~Modifier.ABSTRACT;
+                apiModifiers &= ~Modifier.ABSTRACT;
+            }
+
+            // Allow previous API method to be changed to abstract
+            if (isAllowedClassAbstractionFromPreviousSystemApi(
+                    classDescription, reflectedMethod.getDeclaringClass())) {
+                reflectionModifiers &= ~Modifier.ABSTRACT;
+            }
         }
 
         if (reflectionModifiers == apiModifiers) {
