@@ -118,10 +118,10 @@ class ItsBaseTest(base_test.BaseTestClass):
     self._setup_devices(num_devices)
 
     arduino_serial_port = lighting_control_utils.lighting_control(
-      self.lighting_cntl, self.lighting_ch)
+        self.lighting_cntl, self.lighting_ch)
     if arduino_serial_port:
       lighting_control_utils.set_light_brightness(
-      self.lighting_ch, 255, arduino_serial_port)
+          self.lighting_ch, 255, arduino_serial_port)
       logging.debug('Light is turned ON.')
 
   def _setup_devices(self, num):
