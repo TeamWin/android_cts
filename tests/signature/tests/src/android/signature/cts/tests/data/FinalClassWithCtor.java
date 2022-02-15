@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2007 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
 package android.signature.cts.tests.data;
 
 /**
-* This class is used as reference data for the JDiffClassDescriptionTest tests.
-*/
-public abstract class AbstractClass {
-    public abstract void abstractMethod();
-    public final void finalMethod() {};
-
-    public static class StaticNestedClass {
-    }
-
-    public static class StaticNestedClassWithCtor {
-        public StaticNestedClassWithCtor() {
-        }
-    }
+ * This class is used as reference data for the
+ * JDiffClassDescriptionTest tests.  These classes will actually be
+ * examined through reflection and Class.forName as part of testing
+ * JDiffClassDescription.  That is why there is no implementation for
+ * any of these methods.
+ */
+public final class FinalClassWithCtor {
+    public FinalClassWithCtor() { }
+    public final void finalMethod() { }
+    public void nonFinalMethod() { }
 }
