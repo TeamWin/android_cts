@@ -33,9 +33,9 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
@@ -81,6 +81,8 @@ public class BluetoothLeBroadcastAssistantTest {
         if (!mHasBluetooth) {
             return;
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
         BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
         mAdapter = manager.getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -123,6 +125,8 @@ public class BluetoothLeBroadcastAssistantTest {
             }
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
         }
     }
 

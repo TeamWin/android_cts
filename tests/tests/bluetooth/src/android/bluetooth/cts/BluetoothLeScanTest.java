@@ -27,7 +27,6 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.ParcelUuid;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
@@ -76,6 +75,8 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
         BluetoothManager manager = (BluetoothManager) mContext.getSystemService(
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
@@ -102,6 +103,8 @@ public class BluetoothLeScanTest extends AndroidTestCase {
             TestUtils.disableLocation(getContext());
         }
         assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            .dropShellPermissionIdentity();
     }
 
     /**
