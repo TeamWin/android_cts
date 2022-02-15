@@ -27,6 +27,8 @@ import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import java.util.List;
@@ -57,6 +59,8 @@ public class BluetoothHapClientTest extends AndroidTestCase {
                     PackageManager.FEATURE_BLUETOOTH);
 
             if (!mHasBluetooth) return;
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(android.Manifest.permission.BLUETOOTH_CONNECT);
             BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
             mAdapter = manager.getAdapter();
             assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -90,6 +94,8 @@ public class BluetoothHapClientTest extends AndroidTestCase {
             }
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
         }
     }
 
