@@ -235,6 +235,15 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
                 apiModifiers &= ~Modifier.FINAL;
                 reflectionModifiers &= ~(Modifier.ABSTRACT | Modifier.STATIC);
             }
+
+            // Changing a class from being previously final to not being final is forwards
+            // compatible.
+            if ((apiModifiers & Modifier.FINAL) != 0
+                    && (reflectionModifiers & Modifier.FINAL) == 0) {
+                // Ignore final modifiers.
+                reflectionModifiers &= ~Modifier.FINAL;
+                apiModifiers &= ~Modifier.FINAL;
+            }
         }
 
         if ((reflectionModifiers == apiModifiers)
