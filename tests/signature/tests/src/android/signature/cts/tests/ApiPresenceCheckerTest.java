@@ -112,6 +112,10 @@ public abstract class ApiPresenceCheckerTest<T extends ApiPresenceChecker> {
         return clz;
     }
 
+    protected static JDiffClassDescription.JDiffConstructor ctor(String name, int modifiers) {
+        return new JDiffClassDescription.JDiffConstructor(name, modifiers);
+    }
+
     protected static JDiffClassDescription.JDiffMethod method(
             String name, int modifiers, String returnType) {
         return new JDiffClassDescription.JDiffMethod(name, modifiers, returnType);
