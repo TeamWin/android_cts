@@ -46,6 +46,7 @@ import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATI
 
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
+import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.AppOp;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedProfileOwnerSecondaryUser;
@@ -304,6 +305,14 @@ public final class Policy {
                 annotations.addAll(annotation.getKey().apply(enterprisePolicy));
             }
         }
+
+        for (AppOp appOp : enterprisePolicy.appOps()) {
+            Annotation[] withAppOpAnnotations = new Annotation[]{};
+            annotations.add(
+                    new DynamicParameterizedAnnotation(
+                            "AppOp:" + appOp.appliedWith(), withAppOpAnnotations));
+        }
+
 
         if (annotations.isEmpty()) {
             // Don't run the original test unparameterized

@@ -102,6 +102,8 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDpc;
+import com.android.bedstead.testapp.NotFoundException;
+import com.android.bedstead.testapp.TestApp;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -125,6 +127,13 @@ public class DeviceStateTest {
 
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+
+    // Expects that this package name matches an actual test app
+    private static final String TEST_APP_PACKAGE_NAME = "com.android.bedstead.testapp.EmptyTestApp";
+    private static final String TEST_APP_USED_IN_FIELD_NAME =
+            "com.android.bedstead.testapp.NotEmptyTestApp";
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
+            .wherePackageName().isEqualTo(TEST_APP_USED_IN_FIELD_NAME).get();
 
     private static final long TIMEOUT = 4000000;
 
@@ -869,5 +878,31 @@ public class DeviceStateTest {
     @EnsureDoesNotHaveAppOp(APP_OP)
     public void ensureDoesNotHaveAppOpAnnotation_appOpIsNotAllowed() {
         assertThat(TestApis.permissions().hasAppOpAllowed(APP_OP)).isFalse();
+    }
+
+    // We run this test twice to ensure that teardown doesn't change behaviour
+    @Test
+    public void testApps_testAppsAreAvailableToMultipleTests_1() {
+        assertThat(sDeviceState.testApps().query()
+                .wherePackageName().isEqualTo(TEST_APP_PACKAGE_NAME).get()).isNotNull();
+    }
+
+    @Test
+    public void testApps_testAppsAreAvailableToMultipleTests_2() {
+        assertThat(sDeviceState.testApps().query()
+                .wherePackageName().isEqualTo(TEST_APP_PACKAGE_NAME).get()).isNotNull();
+    }
+
+    // We run this test twice to ensure that teardown doesn't change behaviour
+    @Test
+    public void testApps_staticTestAppsAreNotReleased_1() {
+        assertThrows(NotFoundException.class, () -> sDeviceState.testApps().query()
+                .wherePackageName().isEqualTo(TEST_APP_USED_IN_FIELD_NAME).get());
+    }
+
+    @Test
+    public void testApps_staticTestAppsAreNotReleased_2() {
+        assertThrows(NotFoundException.class, () -> sDeviceState.testApps().query()
+                .wherePackageName().isEqualTo(TEST_APP_USED_IN_FIELD_NAME).get());
     }
 }

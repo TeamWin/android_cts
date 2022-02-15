@@ -67,7 +67,6 @@ import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityEvents;
 import com.android.queryable.queries.ActivityQuery;
@@ -93,13 +92,12 @@ public final class CrossProfileAppsTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
-    private static final TestApp sCrossProfileTestApp = sTestAppProvider.query()
+    private static final TestApp sCrossProfileTestApp = sDeviceState.testApps().query()
             .wherePermissions().contains("android.permission.INTERACT_ACROSS_PROFILES").get();
-    private static final TestApp sNonCrossProfileTestApp = sTestAppProvider.query()
+    private static final TestApp sNonCrossProfileTestApp = sDeviceState.testApps().query()
             .wherePermissions().doesNotContain("android.permission.INTERACT_ACROSS_PROFILES").get();
-    private static final TestApp sTestAppWithMainActivity = sTestAppProvider.query()
+    private static final TestApp sTestAppWithMainActivity = sDeviceState.testApps().query()
             .whereActivities().contains(
                     ActivityQuery.activity().intentFilters().contains(
                             IntentFilterQuery.intentFilter().actions().contains(Intent.ACTION_MAIN))

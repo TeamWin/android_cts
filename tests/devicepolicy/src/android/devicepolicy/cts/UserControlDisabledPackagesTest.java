@@ -42,11 +42,9 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.UserControlDisabledPackages;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
-import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.queryable.queries.StringQuery;
 
 import org.junit.ClassRule;
@@ -62,9 +60,11 @@ import java.util.List;
 public final class UserControlDisabledPackagesTest {
     private static final String TAG = "UserControlDisabledPackagesTest";
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
     private static final TestApp sTestApp =
-            sTestAppProvider.query().whereActivities().isNotEmpty().get();
+            sDeviceState.testApps().query().whereActivities().isNotEmpty().get();
 
     private static final ActivityManager sActivityManager =
             TestApis.context().instrumentedContext().getSystemService(ActivityManager.class);
@@ -72,10 +72,6 @@ public final class UserControlDisabledPackagesTest {
             TestApis.context().instrumentedContext().getPackageManager();
 
     private static final String PACKAGE_NAME = "com.android.foo.bar.baz";
-
-    @ClassRule
-    @Rule
-    public static final DeviceState sDeviceState = new DeviceState();
 
     @Test
     @CanSetPolicyTest(policy = UserControlDisabledPackages.class)

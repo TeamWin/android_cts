@@ -63,8 +63,7 @@ public class TestAppInstanceTest {
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserReference sUser = TestApis.users().instrumented();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.query()
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().isNotEmpty()
             .get();
     private static final TestApp sTestApp2 = sTestAppProvider.any();
@@ -76,7 +75,6 @@ public class TestAppInstanceTest {
     private static final IntentFilter INTENT_FILTER_2 = new IntentFilter(INTENT_ACTION_2);
     private static final Intent INTENT_2 = new Intent(INTENT_ACTION_2);
     private static final Duration SHORT_TIMEOUT = Duration.ofSeconds(5);
-    private TestAppProvider mTestAppProvider;
 
     @Test
     public void user_returnsUserReference() {

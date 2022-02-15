@@ -40,7 +40,6 @@ import com.android.bedstead.testapp.BaseTestAppActivity;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -58,9 +57,7 @@ public class ActivityTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-
-    private static final TestApp sTestApp = sTestAppProvider.query()
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities()
             .contains(activity().exported().isTrue())
             .get();

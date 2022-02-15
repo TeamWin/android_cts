@@ -16,8 +16,6 @@
 
 package com.android.bedstead.testapp;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrimaryUser;
@@ -27,7 +25,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.activities.Activity;
 import com.android.bedstead.nene.users.UserReference;
 
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,19 +38,12 @@ public class TestAppActivityReferenceTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private TestAppProvider mTestAppProvider;
-
-    @Before
-    public void setup() {
-        mTestAppProvider = new TestAppProvider();
-    }
-
     @Test
     @IncludeRunOnPrimaryUser
     @IncludeRunOnSecondaryUser
     @IncludeRunOnProfileOwnerProfileWithNoDeviceOwner
     public void start_activityIsStarted() {
-        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
+        TestApp testApp = sDeviceState.testApps().query().whereActivities().isNotEmpty().get();
         try (TestAppInstance testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 
@@ -64,7 +54,7 @@ public class TestAppActivityReferenceTest {
 
     @Test
     public void remote_executes() {
-        TestApp testApp = mTestAppProvider.query().whereActivities().isNotEmpty().get();
+        TestApp testApp = sDeviceState.testApps().query().whereActivities().isNotEmpty().get();
         try (TestAppInstance testAppInstance = testApp.install(sUser)) {
             Activity<TestAppActivity> activity = testAppInstance.activities().any().start();
 

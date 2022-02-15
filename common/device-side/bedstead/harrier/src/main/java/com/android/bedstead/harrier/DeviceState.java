@@ -53,6 +53,7 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasTestApp;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
@@ -104,6 +105,7 @@ import com.android.bedstead.remotedpc.RemoteDpcUsingParentInstance;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.eventlib.EventLogs;
 
@@ -266,6 +268,7 @@ public final class DeviceState extends HarrierRule {
         try {
             Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
 
+            testApps().snapshot();
             Tags.clearTags();
             Tags.addTag(Tags.USES_DEVICESTATE);
             assumeFalse(mSkipTestsReason, mSkipTests);
@@ -1097,6 +1100,8 @@ public final class DeviceState extends HarrierRule {
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
     private UserReference mOriginalSwitchedUser;
     private Boolean mOriginalBluetoothEnabled;
+    private TestAppProvider mTestAppProvider = new TestAppProvider();
+    private Map<String, TestAppInstance> mTestApps = new HashMap<>();
 
     /**
      * Get the {@link UserReference} of the work profile for the primary user.
@@ -1519,6 +1524,8 @@ public final class DeviceState extends HarrierRule {
         mRegisteredBroadcastReceivers.clear();
         mPrimaryPolicyManager = null;
         mOtherUserType = null;
+
+        mTestAppProvider.restore();
     }
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
@@ -2057,6 +2064,30 @@ public final class DeviceState extends HarrierRule {
         }
 
         throw new IllegalStateException("No Harrier-managed profile owner or device owner.");
+    }
+
+    /**
+     * Get a {@link TestAppProvider} which is cleared between tests.
+     *
+     * <p>Note that you must still manage the test apps manually. To have the infrastructure
+     * automatically remove test apps use the {@link EnsureHasTestApp} annotation.
+     */
+    public TestAppProvider testApps() {
+        return mTestAppProvider;
+    }
+
+    /**
+     * Get a test app installed with @EnsureHasTestApp with no key.
+     */
+    public TestAppInstance testApp() {
+        return null;
+    }
+
+    /**
+     * Get a test app installed with `@EnsureHasTestApp` with the given key.
+     */
+    public TestAppInstance testApp(String key) {
+        return null;
     }
 
     private void ensureCanGetPermission(String permission) {
