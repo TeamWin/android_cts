@@ -17,10 +17,10 @@
 package android.safetycenter.cts
 
 import android.os.Build.VERSION_CODES.TIRAMISU
+import android.safetycenter.config.Parser
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
-import com.android.safetycenter.config.Parser
 import com.android.safetycenter.resources.SafetyCenterResourcesContext
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
