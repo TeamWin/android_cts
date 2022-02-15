@@ -581,11 +581,6 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
         int reflectionModifiers = reflectedMethod.getModifiers() & ~ignoredMods;
         int apiModifiers = apiMethod.mModifier & ~ignoredMods;
 
-        // A method can become non-abstract
-        if ((reflectionModifiers & Modifier.ABSTRACT) == 0) {
-            apiModifiers &= ~Modifier.ABSTRACT;
-        }
-
         // We can ignore FINAL for classes
         if ((classDescription.getModifier() & Modifier.FINAL) != 0) {
             reflectionModifiers &= ~Modifier.FINAL;
