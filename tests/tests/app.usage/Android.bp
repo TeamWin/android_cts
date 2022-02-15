@@ -33,10 +33,76 @@ android_test {
         "android.test.base",
         "android.test.runner",
     ],
-    srcs: ["src/**/*.java", "TestApp1/**/*.java", "TestApp1/**/*.aidl", "TestApp2/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "TestApp1/**/*.java",
+        "TestApp1/**/*.aidl",
+        "TestApp2/**/*.java",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
+    ],
+}
+
+java_defaults {
+    name: "test_app_defaults",
+    defaults: ["cts_defaults"],
+    platform_apis: true,
+    static_libs: [
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "cts-wm-util",
+        "junit",
+        "ub-uiautomator",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+    srcs: [
+        "TestApp1/src/**/*.java",
+        "TestApp1/aidl/**/*.aidl",
+    ],
+    manifest: "TestApp1/AndroidManifest.xml",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsUsageStatsTestApp1",
+    resource_dirs: [
+        "TestApp1/res",
+    ],
+    defaults: ["test_app_defaults"],
+}
+
+android_test_helper_app {
+    name: "CtsUsageStatsTestApp3",
+    defaults: ["test_app_defaults"],
+    resource_dirs: [
+        "TestApp1/res",
+        "TestApp3/res",
+    ],
+    aaptflags: [
+        "--rename-manifest-package android.app.usage.cts.test3",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsUsageStatsTestApp4",
+    defaults: ["test_app_defaults"],
+    resource_dirs: [
+        "TestApp1/res",
+        "TestApp4/res",
+    ],
+    aaptflags: [
+        "--rename-manifest-package android.app.usage.cts.test4",
     ],
 }
