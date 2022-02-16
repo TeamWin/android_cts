@@ -27,6 +27,8 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertThrows;
+
 import android.annotation.Nullable;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
@@ -71,7 +73,8 @@ public class CreateVirtualDisplayTest {
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
-    @Nullable private VirtualDevice mVirtualDevice;
+    @Nullable
+    private VirtualDevice mVirtualDevice;
     @Mock
     private VirtualDisplay.Callback mVirtualDisplayCallback;
 
@@ -138,5 +141,40 @@ public class CreateVirtualDisplayTest {
                         displayFlags))
                 .that(displayFlags & Display.FLAG_ALWAYS_UNLOCKED)
                 .isNotEqualTo(0);
+    }
+
+    @Test
+    public void createVirtualDisplay_nullExecutorAndCallback_shouldSucceed() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                /* width= */ 100,
+                /* height= */ 100,
+                /* densityDpi= */ 240,
+                /* surface= */ null,
+                /* flags= */ 0,
+                /* executor= */ null,
+                /* callback= */ null);
+        assertThat(virtualDisplay).isNotNull();
+    }
+
+    @Test
+    public void createVirtualDisplay_nullExecutorButNonNullCallback_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThrows(NullPointerException.class, () ->
+                mVirtualDevice.createVirtualDisplay(
+                        /* width= */ 100,
+                        /* height= */ 100,
+                        /* densityDpi= */ 240,
+                        /* surface= */ null,
+                        /* flags= */ 0,
+                        /* executor= */ null,
+                        mVirtualDisplayCallback));
     }
 }
