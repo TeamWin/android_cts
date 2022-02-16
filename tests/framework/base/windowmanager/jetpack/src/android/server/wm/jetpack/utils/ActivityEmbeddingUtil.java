@@ -273,6 +273,16 @@ public class ActivityEmbeddingUtil {
         return false;
     }
 
+    public static boolean waitForFinishing(@NonNull Activity activity) {
+        final long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
+            if (activity.isFinishing()) {
+                return true;
+            }
+        }
+        return activity.isFinishing();
+    }
+
     @Nullable
     public static Activity getPrimaryStackTopActivity(SplitInfo splitInfo) {
         List<Activity> primaryActivityStack = splitInfo.getPrimaryActivityStack().getActivities();
