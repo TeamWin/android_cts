@@ -87,12 +87,6 @@ public final class GameServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        GameManager gameManager =
-                getInstrumentation().getContext().getSystemService(GameManager.class);
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
-                manager -> manager.setGameServiceProvider(
-                        getInstrumentation().getContext().getPackageName()));
-
         mServiceConnection = new ServiceConnection();
         assertThat(
                 getInstrumentation().getContext().bindService(
@@ -109,6 +103,12 @@ public final class GameServiceTest {
                         SYSTEM_BAR_VERIFIER_PACKAGE_NAME,
                         TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME,
                         TOUCH_VERIFIER_PACKAGE_NAME));
+
+        GameManager gameManager =
+                getInstrumentation().getContext().getSystemService(GameManager.class);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
+                manager -> manager.setGameServiceProvider(
+                        getInstrumentation().getContext().getPackageName()));
     }
 
     @After
@@ -122,19 +122,46 @@ public final class GameServiceTest {
         forceStop(TAKE_SCREENSHOT_VERIFIER_PACKAGE_NAME);
         forceStop(TOUCH_VERIFIER_PACKAGE_NAME);
 
-        getTestService().resetState();
-
         GameManager gameManager =
                 getInstrumentation().getContext().getSystemService(GameManager.class);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(gameManager,
                 manager -> manager.setGameServiceProvider(""));
+
+        getTestService().resetState();
     }
 
     @Test
     public void gameService_connectsOnStartup() throws Exception {
         assumeGameServiceFeaturePresent();
 
-        assertThat(getTestService().isGameServiceConnected()).isTrue();
+        waitForGameServiceConnected();
+        assertThat(isGameServiceConnected()).isTrue();
+    }
+
+    @Test
+    public void gameService_connectsWhenGameServiceComponentIsEnabled() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        waitForGameServiceConnected();
+
+        getTestService().setGameServiceComponentEnabled(false);
+        waitForGameServiceDisconnected();
+
+        getTestService().setGameServiceComponentEnabled(true);
+        waitForGameServiceConnected();
+    }
+
+    @Test
+    public void gameService_connectsWhenGameSessionServiceComponentIsEnabled() throws Exception {
+        assumeGameServiceFeaturePresent();
+
+        waitForGameServiceConnected();
+
+        getTestService().setGameSessionServiceComponentEnabled(false);
+        waitForGameServiceDisconnected();
+
+        getTestService().setGameSessionServiceComponentEnabled(true);
+        waitForGameServiceConnected();
     }
 
     @Test
@@ -241,7 +268,6 @@ public final class GameServiceTest {
                 getTestService().getOnSystemBarVisibilityChangedInfo().getTimesShown())
                 .isEqualTo(0);
     }
-
 
     @Test
     public void onTransientSystemBarVisibilityFromRevealGestureChanged_dispatchesHideEvent()
@@ -457,6 +483,24 @@ public final class GameServiceTest {
                 uiDevice.getDisplayWidth() / 2, 20,
                 uiDevice.getDisplayWidth() / 2, uiDevice.getDisplayHeight() / 2,
                 10);
+    }
+
+    private void waitForGameServiceConnected() {
+        PollingCheck.waitFor(() -> isGameServiceConnected(),
+                "Timed out waiting for game service to connect");
+    }
+
+    private void waitForGameServiceDisconnected() {
+        PollingCheck.waitFor(() -> !isGameServiceConnected(),
+                "Timed out waiting for game service to disconnect");
+    }
+
+    private boolean isGameServiceConnected() {
+        try {
+            return getTestService().isGameServiceConnected();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Rect waitForTouchableOverlayBounds() {

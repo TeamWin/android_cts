@@ -46,4 +46,8 @@ interface IGameServiceTestService {
     Bitmap getBitmapScreenshotForFocusedGameSession();
 
     OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo();
+
+    void setGameServiceComponentEnabled(boolean enabled);
+
+    void setGameSessionServiceComponentEnabled(boolean enabled);
 }
