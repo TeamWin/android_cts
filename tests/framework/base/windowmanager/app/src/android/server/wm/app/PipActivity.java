@@ -51,7 +51,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
-import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
+import static android.server.wm.app.Components.PipActivity.UI_STATE_STASHED_RESULT;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
@@ -363,7 +363,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     public void onPictureInPictureUiStateChanged(PictureInPictureUiState pipState) {
         Bundle res = new Bundle();
-        res.putBoolean(PIP_CALLBACK_RESULT_KEY, pipState.isStashed());
+        res.putBoolean(UI_STATE_STASHED_RESULT, pipState.isStashed());
         mCb.sendResult(res);
     }
 
