@@ -19,13 +19,15 @@ package android.security.cts;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.AndroidTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
+import static org.junit.Assert.*;
 
 import java.io.InputStream;
 
 import android.security.cts.R;
 
-public class AllocatePixelRefIntOverflowTest extends AndroidTestCase {
+public class AllocatePixelRefIntOverflowTest extends StsExtraBusinessLogicTestCase {
 
     /**
      * Verifies that the device is not vulnerable to ANDROID-19270126: Android
@@ -33,7 +35,7 @@ public class AllocatePixelRefIntOverflowTest extends AndroidTestCase {
      */
     @AsbSecurityTest(cveBugId = 19394591)
     public void testAllocateJavaPixelRefIntOverflow() {
-        InputStream exploitImage = mContext.getResources().openRawResource(
+        InputStream exploitImage = getInstrumentation().getContext().getResources().openRawResource(
                 R.raw.cve_2015_1531_b_19270126);
         /**
          * The decodeStream method results in SIGSEGV (Segmentation fault) on unpatched devices

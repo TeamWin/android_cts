@@ -20,13 +20,13 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.platform.test.annotations.AsbSecurityTest;
 
-import junit.framework.TestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import java.lang.Class;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class NetdTest extends TestCase {
+public class NetdTest extends StsExtraBusinessLogicTestCase {
 
     /**
      * Detect if netd has unsanitized system call in Throttle API.
