@@ -978,7 +978,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
         List<ScanResult.InformationElement> ies = new ArrayList<>();
         ies.add(new ScanResult.InformationElement(221, 0,
-                new byte[WifiP2pManager.getP2pMaxAllowedVendorElementsLength() + 1]));
+                new byte[WifiP2pManager.getP2pMaxAllowedVendorElementsLengthBytes() + 1]));
         resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
             try {
