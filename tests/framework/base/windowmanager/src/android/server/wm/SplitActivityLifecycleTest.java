@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -387,7 +388,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     private void testActivityLaunchInExpandedTaskFragmentInternal() {
 
         final TaskFragmentCreationParams fullScreenParamsC = mTaskFragmentOrganizer
-                .generateTaskFragParams(mOwnerToken);
+                .generateTaskFragParams(mOwnerToken, new Rect(), WINDOWING_MODE_FULLSCREEN);
         final IBinder taskFragTokenC = fullScreenParamsC.getFragmentToken();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .createTaskFragment(fullScreenParamsC)
