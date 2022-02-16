@@ -1290,7 +1290,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} can be called with proper permissions.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1306,8 +1306,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
-                        ssids, frequencies, callback));
+                () -> mWifiManager.setExternalPnoScanRequest(
+                        ssids, frequencies, Executors.newSingleThreadExecutor(), callback));
 
         callback.latch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS);
         if (mWifiManager.isPreferredNetworkOffloadSupported()) {
@@ -1324,7 +1324,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} can be called with null frequency.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1338,13 +1338,13 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
-                        ssids, null, callback));
+                () -> mWifiManager.setExternalPnoScanRequest(
+                        ssids, null, Executors.newSingleThreadExecutor(), callback));
         mWifiManager.clearExternalPnoScanRequest();
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many SSIDs.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1363,12 +1363,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertThrows(IllegalArgumentException.class, () -> {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.setExternalPnoScanRequest(
-                            Executors.newSingleThreadExecutor(), ssids, null, callback));
+                            ssids, null, Executors.newSingleThreadExecutor(), callback));
         });
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many frequencies.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1387,12 +1387,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertThrows(IllegalArgumentException.class, () -> {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.setExternalPnoScanRequest(
-                            Executors.newSingleThreadExecutor(), ssids, frequencies, callback));
+                            ssids, frequencies, Executors.newSingleThreadExecutor(), callback));
         });
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} cannot be called without permission.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1408,7 +1408,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         assertThrows(SecurityException.class,
-                () -> mWifiManager.setExternalPnoScanRequest(executor, ssids, null, callback));
+                () -> mWifiManager.setExternalPnoScanRequest(ssids, null, executor, callback));
     }
 
     /**
