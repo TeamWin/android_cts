@@ -25,6 +25,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
+import static android.server.wm.app.Components.PipActivity.EXTRA_CLOSE_ACTION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
@@ -215,6 +216,15 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         if (getIntent().hasExtra(EXTRA_SUBTITLE)) {
             sharedBuilder.setSubtitle(getIntent().getStringExtra(EXTRA_SUBTITLE));
+            sharedBuilderChanged = true;
+        }
+
+        if (getIntent().hasExtra(EXTRA_CLOSE_ACTION)) {
+            if (getIntent().getBooleanExtra(EXTRA_CLOSE_ACTION, false)) {
+                sharedBuilder.setCloseAction(createRemoteAction(0));
+            } else {
+                sharedBuilder.setCloseAction(null);
+            }
             sharedBuilderChanged = true;
         }
 

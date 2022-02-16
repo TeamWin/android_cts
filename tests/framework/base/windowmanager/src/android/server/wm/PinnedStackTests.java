@@ -51,6 +51,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
+import static android.server.wm.app.Components.PipActivity.EXTRA_CLOSE_ACTION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR;
@@ -1451,6 +1452,20 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
 
         assertNumberOfActions(PIP_ACTIVITY, maxNumberActions);
+    }
+
+    @Test
+    public void testCloseActionIsSet() {
+        launchActivity(PIP_ACTIVITY, extraBool(EXTRA_CLOSE_ACTION, true));
+        enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
+
+        runWithShellPermission(() -> {
+            final Task task = mWmState.getTaskByActivity(PIP_ACTIVITY);
+            final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
+            final PictureInPictureParams params = info.getPictureInPictureParams();
+
+            assertNotNull(params.getCloseAction());
+        });
     }
 
     @Test
