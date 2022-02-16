@@ -88,7 +88,6 @@ class AppHibernationIntegrationTest {
 
     private lateinit var packageManager: PackageManager
     private lateinit var permissionControllerManager: PermissionControllerManager
-    private lateinit var appHibernationManager: AppHibernationManager
     private var oldHibernationValue: String? = null
 
     @get:Rule
@@ -109,7 +108,6 @@ class AppHibernationIntegrationTest {
         packageManager = context.packageManager
         permissionControllerManager =
             context.getSystemService(PermissionControllerManager::class.java)!!
-        appHibernationManager = context.getSystemService(AppHibernationManager::class.java)!!
 
         // Collapse notifications
         assertThat(
@@ -249,6 +247,7 @@ class AppHibernationIntegrationTest {
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testGetHibernationStatsForUser_getsStatsForIndividualPackages() {
+        val appHibernationManager = context.getSystemService(AppHibernationManager::class.java)!!
         withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
             runWithShellPermissionIdentity {
                 val stats =
@@ -263,6 +262,7 @@ class AppHibernationIntegrationTest {
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     fun testGetHibernationStatsForUser_getsStatsForAllPackages() {
+        val appHibernationManager = context.getSystemService(AppHibernationManager::class.java)!!
         withApp(APK_PATH_S_APP, APK_PACKAGE_NAME_S_APP) {
             runWithShellPermissionIdentity {
                 val stats = appHibernationManager.getHibernationStatsForUser()
