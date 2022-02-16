@@ -549,6 +549,10 @@ public class Components extends ComponentsBase {
         // Sets seamless resize enabled on the activity picture-in-picture params.
         public static final String EXTRA_IS_SEAMLESS_RESIZE_ENABLED =
                 "enter_pip_is_seamless_resize_enabled";
+        // Sets the given title on the activity picture-in-picture params.
+        public static final String EXTRA_TITLE = "set_pip_title";
+        // Sets the given subtitle on the activity picture-in-picture params.
+        public static final String EXTRA_SUBTITLE = "set_pip_subtitle";
         // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
         public static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}

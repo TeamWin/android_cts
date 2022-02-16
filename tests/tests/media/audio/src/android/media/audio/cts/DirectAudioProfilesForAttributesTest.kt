@@ -50,23 +50,22 @@ class DirectAudioProfilesForAttributesTest {
 
     /**
      * Test that all returned AudioProfiles from getDirectProfilesForAttributes are contained in
-     * the AudioProfiles from all AudioDeviceInfos from getAudioDevicesForAttributes
+     * the AudioProfiles from all output AudioDeviceInfos
      */
     @Test
     fun testNoUnexpectedDirectProfilesForAttributes() {
+        val allProfiles = audioManager
+            .getDevices(AudioManager.GET_DEVICES_OUTPUTS).map { it.audioProfiles }.flatten()
         for (usage in AudioAttributes.getSdkUsages()) {
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(usage)
                 .build()
-            val allProfilesForAttributes =
-                audioManager.getAudioDevicesForAttributes(audioAttributes).map { it.audioProfiles }
-                    .flatten()
             val directProfiles = audioManager.getDirectProfilesForAttributes(audioAttributes)
 
             assertTrue(
                 "Direct AudioProfiles ($directProfiles) not found in AudioDeviceInfos " +
-                        "($allProfilesForAttributes) for attributes ($audioAttributes).",
-                allProfilesForAttributes.includesAll(directProfiles)
+                        "($allProfiles).",
+                allProfiles.includesAll(directProfiles)
             )
         }
     }

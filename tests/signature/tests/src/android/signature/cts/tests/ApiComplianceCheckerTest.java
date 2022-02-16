@@ -25,6 +25,8 @@ import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ResultObserver;
 import android.signature.cts.tests.data.AbstractClass;
+import android.signature.cts.tests.data.AbstractClassWithCtor;
+import android.signature.cts.tests.data.ComplexEnum;
 import android.signature.cts.tests.data.ExtendedNormalInterface;
 import android.signature.cts.tests.data.NormalClass;
 import android.signature.cts.tests.data.NormalInterface;
@@ -68,19 +70,18 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
 
     @Test
     public void testMissingClass() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISSING_CLASS);
-        JDiffClassDescription clz = new JDiffClassDescription(
-                "android.signature.cts.tests.data", "NoSuchClass");
-        clz.setType(JDiffClassDescription.JDiffType.CLASS);
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISSING_CLASS)) {
+            JDiffClassDescription clz = new JDiffClassDescription(
+                    "android.signature.cts.tests.data", "NoSuchClass");
+            clz.setType(JDiffClassDescription.JDiffType.CLASS);
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     @Test
     public void testSimpleConstructor() {
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffConstructor constructor =
-                new JDiffClassDescription.JDiffConstructor("NormalClass", Modifier.PUBLIC);
+        JDiffClassDescription.JDiffConstructor constructor = ctor("NormalClass", Modifier.PUBLIC);
         clz.addConstructor(constructor);
         checkSignatureCompliance(clz);
         assertEquals(constructor.toSignatureString(), "public NormalClass()");
@@ -89,8 +90,7 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
     @Test
     public void testOneArgConstructor() {
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffConstructor constructor =
-                new JDiffClassDescription.JDiffConstructor("NormalClass", Modifier.PRIVATE);
+        JDiffClassDescription.JDiffConstructor constructor = ctor("NormalClass", Modifier.PRIVATE);
         constructor.addParam("java.lang.String");
         clz.addConstructor(constructor);
         checkSignatureCompliance(clz);
@@ -100,8 +100,7 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
     @Test
     public void testConstructorThrowsException() {
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffConstructor constructor =
-                new JDiffClassDescription.JDiffConstructor("NormalClass", Modifier.PROTECTED);
+        JDiffClassDescription.JDiffConstructor constructor = ctor("NormalClass", Modifier.PROTECTED);
         constructor.addParam("java.lang.String");
         constructor.addParam("java.lang.String");
         constructor.addException("android.signature.cts.tests.data.NormalException");
@@ -115,8 +114,7 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
     @Test
     public void testPackageProtectedConstructor() {
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffConstructor constructor =
-                new JDiffClassDescription.JDiffConstructor("NormalClass", 0);
+        JDiffClassDescription.JDiffConstructor constructor = ctor("NormalClass", 0);
         constructor.addParam("java.lang.String");
         constructor.addParam("java.lang.String");
         constructor.addParam("java.lang.String");
@@ -281,15 +279,16 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
 
     @Test
     public void testFieldValueChanged() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_FIELD);
-        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffField field = new JDiffClassDescription.JDiffField(
-                "VALUE_FIELD", "java.lang.String",
-                Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC, "\"&#9992;\"");
-        clz.addField(field);
-        checkSignatureCompliance(clz, observer);
-        assertEquals(field.toSignatureString(), "public static final java.lang.String VALUE_FIELD");
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_FIELD)) {
+            JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+            JDiffClassDescription.JDiffField field = new JDiffClassDescription.JDiffField(
+                    "VALUE_FIELD", "java.lang.String",
+                    Modifier.PUBLIC | Modifier.FINAL | Modifier.STATIC, "\"&#9992;\"");
+            clz.addField(field);
+            checkSignatureCompliance(clz, observer);
+            assertEquals(field.toSignatureString(),
+                    "public static final java.lang.String VALUE_FIELD");
+        }
     }
 
     @Test
@@ -335,6 +334,25 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         assertEquals(clz.toSignatureString(), "public interface NormalInterface");
     }
 
+    /**
+     * Always treat interfaces as if they are abstract, even when the modifiers do not specify that.
+     */
+    @Test
+    public void testInterfaceAlwaysTreatAsAbstract() {
+        JDiffClassDescription clz = createInterface("NormalInterface");
+        clz.setModifier(Modifier.PUBLIC);
+        clz.addMethod(method("doSomething", Modifier.ABSTRACT | Modifier.PUBLIC, "void"));
+        checkSignatureCompliance(clz);
+    }
+
+    @Test
+    public void testComplexEnum() {
+        JDiffClassDescription clz = createClass(ComplexEnum.class.getSimpleName());
+        clz.setExtendsClass(Enum.class.getName());
+        clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+        checkSignatureCompliance(clz);
+    }
+
     @Test
     public void testFinalClass() {
         JDiffClassDescription clz = new JDiffClassDescription(
@@ -343,6 +361,70 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
         checkSignatureCompliance(clz);
         assertEquals(clz.toSignatureString(), "public final class FinalClass");
+    }
+
+    @Test
+    public void testRemovingFinalFromAClass() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+            clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    @Test
+    public void testRemovingFinalFromAClass_PreviousApi() {
+        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+        clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
+    }
+
+    /**
+     * Test that if the API class is final but the runtime is abstract (and not final) that it is
+     * an error.
+     *
+     * http://b/181019981
+     */
+    @Test
+    public void testRemovingFinalFromAClassSwitchToAbstract() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = createClass(AbstractClass.class.getSimpleName());
+            clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    /**
+     * Test that if the API class in a previous release is final but the runtime is abstract (and
+     * not final) that it is not an error.
+     *
+     * http://b/181019981
+     */
+    @Test
+    public void testRemovingFinalFromAClassSwitchToAbstract_PreviousApi() {
+        JDiffClassDescription clz = createClass(AbstractClass.class.getSimpleName());
+        clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
+    }
+
+    /**
+     * Test that if the API class in a previous release is final but the runtime is abstract (and
+     * not final) and has constructors then it is an error.
+     * 
+     * http://b/181019981
+     */
+    @Test
+    public void testRemovingFinalFromAClassWithCtorSwitchToAbstract_PreviousApi() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            String simpleName = AbstractClassWithCtor.class.getSimpleName();
+            JDiffClassDescription clz = createClass(simpleName);
+            clz.setModifier(Modifier.PUBLIC | Modifier.FINAL);
+            clz.setPreviousApiFlag(true);
+            clz.addConstructor(ctor(simpleName, Modifier.PUBLIC));
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
@@ -396,10 +478,25 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      */
     @Test
     public void testRemovingAbstractFromAClass() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = new JDiffClassDescription(
+                    "android.signature.cts.tests.data", "NormalClass");
+            clz.setType(JDiffClassDescription.JDiffType.CLASS);
+            clz.setModifier(Modifier.PUBLIC | Modifier.ABSTRACT);
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    /**
+     * Previous API lists class as abstract, reflection does not. http://b/1839622
+     */
+    @Test
+    public void testRemovingAbstractFromAClass_PreviousApi() {
         JDiffClassDescription clz = new JDiffClassDescription(
                 "android.signature.cts.tests.data", "NormalClass");
         clz.setType(JDiffClassDescription.JDiffType.CLASS);
         clz.setModifier(Modifier.PUBLIC | Modifier.ABSTRACT);
+        clz.setPreviousApiFlag(true);
         checkSignatureCompliance(clz);
     }
 
@@ -408,10 +505,10 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      */
     @Test
     public void testAddingAbstractToAClass() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS);
-        JDiffClassDescription clz = createClass("AbstractClass");
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = createClass("AbstractClass");
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
@@ -456,8 +553,9 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         JDiffClassDescription.JDiffMethod method = method("finalMethod",
                 Modifier.PUBLIC | Modifier.ABSTRACT, "void");
         clz.addMethod(method);
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        checkSignatureCompliance(clz, observer);
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
@@ -472,8 +570,9 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         JDiffClassDescription.JDiffMethod method = method("abstractMethod",
                 Modifier.PUBLIC, "void");
         clz.addMethod(method);
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        checkSignatureCompliance(clz, observer);
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     @Test
@@ -523,12 +622,13 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      */
     @Test
     public void testAddingFinalToAMethodInANonFinalClass() {
-        ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD);
-        JDiffClassDescription clz = createClass("NormalClass");
-        JDiffClassDescription.JDiffMethod method = method("finalMethod", Modifier.PUBLIC, "void");
-        clz.addMethod(method);
-        checkSignatureCompliance(clz, observer);
-        observer.validate();
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            JDiffClassDescription clz = createClass("NormalClass");
+            JDiffClassDescription.JDiffMethod method = method("finalMethod", Modifier.PUBLIC,
+                    "void");
+            clz.addMethod(method);
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     @Test

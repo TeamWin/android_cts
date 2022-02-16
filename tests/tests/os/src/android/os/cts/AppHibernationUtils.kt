@@ -56,7 +56,7 @@ const val CLEAR_ALL_BUTTON_ID = "dismiss_text"
 // Time to find a notification. Unlikely, but in cases with a lot of notifications, it may take
 // time to find the notification we're looking for
 const val NOTIF_FIND_TIMEOUT = 20000L
-const val VIEW_WAIT_TIMEOUT = 1000L
+const val VIEW_WAIT_TIMEOUT = 3000L
 
 const val CMD_EXPAND_NOTIFICATIONS = "cmd statusbar expand-notifications"
 const val CMD_COLLAPSE = "cmd statusbar collapse"

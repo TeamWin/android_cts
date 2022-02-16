@@ -31,6 +31,7 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 
 /**
  * An activity that uses SpeechRecognition APIs. SpeechRecognition will bind the RecognitionService
@@ -89,7 +90,8 @@ public class SpeechRecognitionActivity extends Activity {
     }
 
     public void checkRecognitionSupport(Intent intent, RecognitionSupportCallback rsc) {
-        mHandler.post(() -> mRecognizer.checkRecognitionSupport(intent, rsc));
+        mHandler.post(() -> mRecognizer.checkRecognitionSupport(intent,
+                Executors.newSingleThreadExecutor(), rsc));
     }
 
     public void triggerModelDownload(Intent intent) {

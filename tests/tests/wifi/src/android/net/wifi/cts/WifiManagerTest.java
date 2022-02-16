@@ -29,6 +29,7 @@ import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -2572,11 +2573,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         testSoftApConfig.isIeee80211beEnabled());
                 assertEquals(currentConfig.getVendorElements(),
                         testSoftApConfig.getVendorElements());
-                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ),
+                assertArrayEquals(
+                        currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ));
-                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ),
+                assertArrayEquals(
+                        currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ));
-                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ),
+                assertArrayEquals(
+                        currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ));
                 assertEquals(currentConfig.getMaxChannelBandwidth(),
                         testSoftApConfig.getMaxChannelBandwidth());

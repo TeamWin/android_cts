@@ -67,7 +67,9 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
+import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
 import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
 import static android.server.wm.app.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -1459,6 +1461,40 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             final PictureInPictureParams params = info.getPictureInPictureParams();
 
             assertEquals(expected, params.isSeamlessResizeEnabled());
+        });
+    }
+
+    @Test
+    public void testTitleIsSet() {
+        // Launch the PIP activity with given title
+        String title = "PipTitle";
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_TITLE, title));
+        enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
+
+        // Assert the title was set.
+        runWithShellPermission(() -> {
+            final Task task = mWmState.getTaskByActivity(PIP_ACTIVITY);
+            final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
+            final PictureInPictureParams params = info.getPictureInPictureParams();
+
+            assertEquals(title, params.getTitle().toString());
+        });
+    }
+
+    @Test
+    public void testSubtitleIsSet() {
+        // Launch the PIP activity with given subtitle
+        String subtitle = "PipSubtitle";
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_SUBTITLE, subtitle));
+        enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
+
+        // Assert the subtitle was set.
+        runWithShellPermission(() -> {
+            final Task task = mWmState.getTaskByActivity(PIP_ACTIVITY);
+            final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
+            final PictureInPictureParams params = info.getPictureInPictureParams();
+
+            assertEquals(subtitle, params.getSubtitle().toString());
         });
     }
 

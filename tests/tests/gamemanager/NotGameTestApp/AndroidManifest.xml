@@ -22,6 +22,7 @@
         <uses-library android:name="android.test.runner"/>
         <activity android:name=".NotGameTestAppMainActivity"
                   android:label="NotGameTestAppMainActivity"
+                  android:visibleToInstantApps="true"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

@@ -191,22 +191,11 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
         int reflectionModifiers = runtimeClass.getModifiers();
         int apiModifiers = classDescription.getModifier();
 
-        // If the api class isn't abstract
-        if (((apiModifiers & Modifier.ABSTRACT) == 0) &&
-                // but the reflected class is
-                ((reflectionModifiers & Modifier.ABSTRACT) != 0) &&
-                // interfaces are implicitly abstract (JLS 9.1.1.1)
-                classDescription.getClassType() != JDiffClassDescription.JDiffType.INTERFACE &&
-                // and it isn't an enum
-                !classDescription.isEnumType() &&
-                // and it isn't allowed previous api final class with no visible ctor
-                !isAllowedClassAbstractionFromPreviousSystemApi(classDescription, runtimeClass)) {
-            // that is a problem
-            return "description is abstract but class is not and is not an enum";
+        // If the api class is an interface then always treat it as abstract.
+        // interfaces are implicitly abstract (JLS 9.1.1.1)
+        if (classDescription.getClassType() == JDiffClassDescription.JDiffType.INTERFACE) {
+            apiModifiers |= Modifier.ABSTRACT;
         }
-        // ABSTRACT check passed, so mask off ABSTRACT
-        reflectionModifiers &= ~Modifier.ABSTRACT;
-        apiModifiers &= ~Modifier.ABSTRACT;
 
         if (classDescription.isAnnotation()) {
             reflectionModifiers &= ~CLASS_MODIFIER_ANNOTATION;
@@ -221,21 +210,44 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
             // override a method from the class cannot be marked as final because those constants
             // are represented as a subclass. As enum classes cannot be extended (except for its own
             // constants) there is no benefit in checking final modifier so just ignore them.
-            reflectionModifiers &= ~Modifier.FINAL;
-            apiModifiers &= ~Modifier.FINAL;
+            //
+            // Ditto for abstract.
+            reflectionModifiers &= ~(Modifier.FINAL | Modifier.ABSTRACT);
+            apiModifiers &= ~(Modifier.FINAL | Modifier.ABSTRACT);
         }
 
-        // Allow previous final API to be changed to abstract or static, and other modifiers should
-        // not be changed.
-        boolean isAllowedPreviousApiModifierChange =
-                isAllowedClassAbstractionFromPreviousSystemApi(classDescription, runtimeClass)
-                && (apiModifiers & ~Modifier.FINAL) != 0
-                && (reflectionModifiers & ~(Modifier.ABSTRACT | Modifier.STATIC))
-                == (apiModifiers & ~Modifier.FINAL);
+        if (classDescription.isPreviousApi()) {
+
+            // Changing a class from being previously abstract to concrete is forwards compatible.
+            if ((apiModifiers & Modifier.ABSTRACT) != 0
+                    && (reflectionModifiers & Modifier.ABSTRACT) == 0) {
+                // Ignore abstract modifiers.
+                reflectionModifiers &= ~Modifier.ABSTRACT;
+                apiModifiers &= ~Modifier.ABSTRACT;
+            }
+
+            if (isAllowedClassAbstractionFromPreviousSystemApi(classDescription, runtimeClass)) {
+                // A previously final class with no accessible constructors has been converted to an
+                // abstract class. So, clear the appropriate modifiers.
+                //
+                // If the final class was an inner class of another then it is also ok for it to
+                // become static as it had no accessible constructors so ignore that modifier too.
+                apiModifiers &= ~Modifier.FINAL;
+                reflectionModifiers &= ~(Modifier.ABSTRACT | Modifier.STATIC);
+            }
+
+            // Changing a class from being previously final to not being final is forwards
+            // compatible.
+            if ((apiModifiers & Modifier.FINAL) != 0
+                    && (reflectionModifiers & Modifier.FINAL) == 0) {
+                // Ignore final modifiers.
+                reflectionModifiers &= ~Modifier.FINAL;
+                apiModifiers &= ~Modifier.FINAL;
+            }
+        }
 
         if ((reflectionModifiers == apiModifiers)
-                && (classDescription.isEnumType() == runtimeClass.isEnum())
-                || isAllowedPreviousApiModifierChange) {
+                && (classDescription.isEnumType() == runtimeClass.isEnum())) {
             return null;
         } else {
             return String.format("modifier mismatch - description (%s), class (%s)",

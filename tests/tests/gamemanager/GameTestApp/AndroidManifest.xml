@@ -24,6 +24,7 @@
                    android:resource="@xml/game_mode_config" />
         <activity android:name=".GameTestAppMainActivity"
                   android:label="GameTestAppMainActivity"
+                  android:visibleToInstantApps="true"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

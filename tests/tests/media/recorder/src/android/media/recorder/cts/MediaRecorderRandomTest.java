@@ -40,7 +40,7 @@ import java.util.Random;
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaRecorderRandomTest extends ActivityInstrumentationTestCase2<MediaStubActivity> {
     private static final String TAG = "MediaRecorderRandomTest";
-
+    private static final int MAX_PARAM = 1000000;
     private static final String OUTPUT_FILE =
             Environment.getExternalStorageDirectory().toString() + "/record.3gp";
 
@@ -115,7 +115,7 @@ public class MediaRecorderRandomTest extends ActivityInstrumentationTestCase2<Me
             watchDog.start();
             for (int i = 0; i < NUMBER_OF_RECORDER_RANDOM_ACTIONS; i++) {
                 int action = r.nextInt(14);
-                int param = r.nextInt(1000000);
+                int param = r.nextInt(MAX_PARAM);
 
                 Log.d(TAG, "Action: " + action + " Param: " + param);
                 watchDog.reset();
@@ -132,9 +132,9 @@ public class MediaRecorderRandomTest extends ActivityInstrumentationTestCase2<Me
                             break;
                         }
                         case 1:
-                            // XXX:
-                            // Fix gralloc source and change
-                            // mRecorder.setVideoSource(param % 3);
+                            // Limiting the random test to test default and camera source
+                            // and not include video surface as required setInputSurface isn't
+                            // done in this test.
                             mRecorder.setVideoSource(param % 2);
                             break;
                         case 2:
@@ -154,7 +154,7 @@ public class MediaRecorderRandomTest extends ActivityInstrumentationTestCase2<Me
                             mRecorder.setVideoSize(width[index], height[index]);
                             break;
                         case 7:
-                            mRecorder.setVideoFrameRate(param % 40 - 5);
+                            mRecorder.setVideoFrameRate((param % 40) - 1);
                             break;
                         case 8:
                             mRecorder.setOutputFile(OUTPUT_FILE);

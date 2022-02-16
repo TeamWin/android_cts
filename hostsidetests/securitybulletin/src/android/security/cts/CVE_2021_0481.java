@@ -22,7 +22,7 @@ import android.util.Log;
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.After;
@@ -42,7 +42,7 @@ import static org.hamcrest.CoreMatchers.*;
  * collected from the hostside and reported accordingly.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0481 extends BaseHostJUnit4Test {
+public class CVE_2021_0481 extends StsExtraBusinessLogicHostTestBase {
     private static final String TEST_PKG = "android.security.cts.CVE_2021_0481";
     private static final String TEST_CLASS = TEST_PKG + "." + "DeviceTest";
     private static final String TEST_APP = "CVE-2021-0481.apk";

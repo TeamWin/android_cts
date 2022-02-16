@@ -42,9 +42,10 @@ import java.util.Random;
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerRandomTest extends ActivityInstrumentationTestCase2<MediaStubActivity> {
+    private static final int MAX_PARAM = 1000000;
     private static final String TAG = "MediaPlayerRandomTest";
 
-    static final String mInpPrefix = WorkDir.getMediaDirString();
+    private static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private static final int NUMBER_OF_PLAYER_RANDOM_ACTIONS = 100000;
 
@@ -146,9 +147,10 @@ public class MediaPlayerRandomTest extends ActivityInstrumentationTestCase2<Medi
 
             watchDog.start();
             for (int i = 0; i < NUMBER_OF_PLAYER_RANDOM_ACTIONS; i++) {
-                int action = r.nextInt() % 12;
-                int param = r.nextInt() % 1000000;
-                Log.d(TAG, "Action: " + action + " Param: " + param);
+                int action = r.nextInt(12);
+                int param1 = r.nextInt(MAX_PARAM);
+                int param2 = r.nextInt(MAX_PARAM);
+                Log.d(TAG, "Action: " + action + " Param1: " + param1 + " Param2: " + param2);
                 watchDog.reset();
                 assertTrue(!mMediaServerDied);
 
@@ -180,20 +182,20 @@ public class MediaPlayerRandomTest extends ActivityInstrumentationTestCase2<Medi
                             mPlayer.prepareAsync();
                             break;
                         case 7:
-                            mPlayer.seekTo((int) (param));
+                            mPlayer.seekTo(param1);
                             break;
                         case 8:
-                            mPlayer.setLooping(param % 2 == 0);
+                            mPlayer.setLooping(param1 % 2 == 0);
                             break;
                         case 9:
-                            mPlayer.setVolume((param % 1000) / 500.0f,
-                                    (param / 1000) / 500.0f);
+                            mPlayer.setVolume((param1 * 2.0f) / MAX_PARAM,
+                                    (param2 * 2.0f) / MAX_PARAM);
                             break;
                         case 10:
                             mPlayer.start();
                             break;
                         case 11:
-                            Thread.sleep(param % 20);
+                            Thread.sleep(param1 % 20);
                             break;
                     }
                 } catch (Exception e) {

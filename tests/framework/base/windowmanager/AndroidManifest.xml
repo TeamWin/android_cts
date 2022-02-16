@@ -34,7 +34,8 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
 
     <application android:label="CtsWindowManagerDeviceTestCases"
-         android:requestLegacyExternalStorage="true">
+         android:requestLegacyExternalStorage="true"
+         android:enableOnBackInvokedCallback="true">
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
@@ -533,6 +534,8 @@
             android:theme="@style/WhiteBackgroundTheme"
             android:exported="true">
         </activity>
+        <activity android:name="android.server.wm.BackNavigationActivity"
+                  android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

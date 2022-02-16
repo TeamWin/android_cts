@@ -26,6 +26,7 @@
                    android:value="true"/>
         <activity android:name=".LegacyGameTestAppMainActivity"
                   android:label="LegacyGameTestAppMainActivity"
+                  android:visibleToInstantApps="true"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
