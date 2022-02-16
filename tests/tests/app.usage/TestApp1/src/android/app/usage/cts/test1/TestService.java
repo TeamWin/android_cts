@@ -58,6 +58,11 @@ public class TestService extends Service {
             getNotificationManager().cancel(notificationId);
         }
 
+        @Override
+        public void cancelAll() {
+            getNotificationManager().cancelAll();
+        }
+
         private NotificationManager getNotificationManager() {
             return getSystemService(NotificationManager.class);
         }
