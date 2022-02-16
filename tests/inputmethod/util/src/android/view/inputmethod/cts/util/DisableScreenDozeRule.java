@@ -16,15 +16,18 @@
 
 package android.view.inputmethod.cts.util;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static android.os.UserHandle.USER_SYSTEM;
+
+import android.content.Context;
+import android.hardware.display.AmbientDisplayConfiguration;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * {@link TestRule} class that disables screen doze settings before each test method running and
@@ -32,40 +35,31 @@ import java.util.Map;
  */
 public class DisableScreenDozeRule implements TestRule {
 
-    /** Copied from ActivityManagerTestBase since these keys are hidden. */
-    private static final String[] DOZE_SETTINGS = {
-            "doze_enabled",
-            "doze_always_on",
-            "doze_pulse_on_pick_up",
-            "doze_pulse_on_long_press",
-            "doze_pulse_on_double_tap",
-            "doze_wake_screen_gesture",
-            "doze_wake_display_gesture",
-            "doze_tap_gesture"
-    };
+    private final AmbientDisplayConfiguration mConfig;
+    private final Context mContext;
 
-    private String getSecureSetting(String key) {
-        return runShellCommand("settings get secure " + key).trim();
-    }
-
-    private void putSecureSetting(String key, String value) {
-        runShellCommand("settings put secure " + key + " " + value);
+    public DisableScreenDozeRule() {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mConfig = new AmbientDisplayConfiguration(mContext);
     }
 
     @Override
-    public Statement apply(Statement base, Description description) {
+    public Statement apply(final Statement base, final Description description) {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                final Map<String, String> initialValues = new HashMap<>();
-                Arrays.stream(DOZE_SETTINGS).forEach(
-                        k -> initialValues.put(k, getSecureSetting(k)));
                 try {
-                    Arrays.stream(DOZE_SETTINGS).forEach(k -> putSecureSetting(k, "0"));
+                    SystemUtil.runWithShellPermissionIdentity(() -> {
+                        // disable current doze settings
+                        mConfig.disableDozeSettings(true /* shouldDisableNonUserConfigurable */,
+                                USER_SYSTEM);
+                    });
                     base.evaluate();
                 } finally {
-                    Arrays.stream(DOZE_SETTINGS).forEach(
-                            k -> putSecureSetting(k, initialValues.get(k)));
+                    SystemUtil.runWithShellPermissionIdentity(() -> {
+                        // restore doze settings
+                        mConfig.restoreDozeSettings(USER_SYSTEM);
+                    });
                 }
             }
         };
