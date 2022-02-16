@@ -20,11 +20,9 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
-import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_MANAGE_CREDENTIALS;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_CERT_INSTALL;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
-import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.AppOp;
 
 /**
  * Policies around installing/uninstalling CaCerts
@@ -37,7 +35,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.AppO
         dpc = {
                 APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER
                         | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED},
-        delegatedScopes = DELEGATION_CERT_INSTALL,
-        appOps = @AppOp(appliedWith = OPSTR_MANAGE_CREDENTIALS, appliesTo = APPLIES_TO_OWN_USER))
+        delegatedScopes = DELEGATION_CERT_INSTALL)
 public final class CaCertManagement {
 }

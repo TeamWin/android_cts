@@ -44,6 +44,9 @@ import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATI
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PERMISSION_GRANT;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_SECURITY_LOGGING;
 
+import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
+import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.AppOp;
@@ -81,6 +84,9 @@ import java.util.stream.Collectors;
  * Utility class for enterprise policy tests.
  */
 public final class Policy {
+
+    // TODO(b/219750042): If we leave over appops and permissions then the delegate will have them
+    private static final String DELEGATE_PACKAGE_NAME = "com.android.Delegate";
 
     // Delegate scopes to be used for a "CannotSet" state. All delegate scopes except the ones which
     // should allow use of the API will be granted
@@ -157,6 +163,22 @@ public final class Policy {
 
     private Policy() {
 
+    }
+
+    @AutoAnnotation
+    private static EnsureTestAppInstalled ensureTestAppInstalled(
+            String packageName, UserType onUser, boolean isPrimary) {
+        return new AutoAnnotation_Policy_ensureTestAppInstalled(packageName, onUser, isPrimary);
+    }
+
+    @AutoAnnotation
+    private static EnsureTestAppHasPermission ensureTestAppHasPermission(String[] value) {
+        return new AutoAnnotation_Policy_ensureTestAppHasPermission(value);
+    }
+
+    @AutoAnnotation
+    private static EnsureTestAppHasAppOp ensureTestAppHasAppOp(String[] value) {
+        return new AutoAnnotation_Policy_ensureTestAppHasAppOp(value);
     }
 
     @AutoAnnotation
@@ -287,7 +309,6 @@ public final class Policy {
         };
     }
 
-
     /**
      * Get parameterized test runs for the given policy.
      *
@@ -307,7 +328,12 @@ public final class Policy {
         }
 
         for (AppOp appOp : enterprisePolicy.appOps()) {
-            Annotation[] withAppOpAnnotations = new Annotation[]{};
+            // TODO(b/219750042): Currently we only test that app ops apply to the current user
+            Annotation[] withAppOpAnnotations = new Annotation[]{
+                    ensureTestAppInstalled(DELEGATE_PACKAGE_NAME,
+                            UserType.CURRENT_USER, /* isPrimary= */ true),
+                    ensureTestAppHasAppOp(new String[]{appOp.appliedWith()})
+            };
             annotations.add(
                     new DynamicParameterizedAnnotation(
                             "AppOp:" + appOp.appliedWith(), withAppOpAnnotations));
@@ -468,6 +494,20 @@ public final class Policy {
             // Don't run the original test unparameterized
             annotations.add(includeNone());
         }
+
+        for (AppOp appOp : enterprisePolicy.appOps()) {
+            // TODO(b/219750042): Currently we only test that app ops can be set as the primary user
+            Annotation[] withAppOpAnnotations = new Annotation[]{
+                    ensureTestAppInstalled(
+                            DELEGATE_PACKAGE_NAME, UserType.CURRENT_USER,
+                            /* isPrimary= */ true),
+                    ensureTestAppHasAppOp(new String[]{appOp.appliedWith()})
+            };
+            annotations.add(
+                    new DynamicParameterizedAnnotation(
+                            "AppOp:" + appOp.appliedWith(), withAppOpAnnotations));
+        }
+
 
         List<Annotation> annotationList = new ArrayList<>(annotations);
 

@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
+import static android.app.AppOpsManager.OPSTR_START_FOREGROUND;
 import static android.app.admin.DevicePolicyManager.DELEGATION_APP_RESTRICTIONS;
 import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
@@ -33,6 +34,8 @@ import static com.android.bedstead.harrier.annotations.RequireAospBuild.GMS_CORE
 import static com.android.bedstead.harrier.annotations.RequireCnGmsBuild.CHINA_GOOGLE_SERVICES_FEATURE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDelegate.AdminType.PRIMARY;
+import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
+import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
@@ -43,6 +46,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
+import android.content.PermissionChecker;
 import android.os.Build;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -62,6 +66,8 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
+import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
@@ -132,7 +138,7 @@ public class DeviceStateTest {
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
     // Expects that this package name matches an actual test app
-    private static final String TEST_APP_PACKAGE_NAME = "com.android.bedstead.testapp.EmptyTestApp";
+    private static final String TEST_APP_PACKAGE_NAME = "com.android.bedstead.testapp.LockTaskApp";
     private static final String TEST_APP_PACKAGE_NAME2 = "com.android.bedstead.testapp.SmsApp";
     private static final String TEST_APP_USED_IN_FIELD_NAME =
             "com.android.bedstead.testapp.NotEmptyTestApp";
@@ -953,4 +959,19 @@ public class DeviceStateTest {
         assertThat(sDeviceState.dpc().packageName()).isEqualTo(TEST_APP_PACKAGE_NAME);
     }
 
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)
+    @EnsureTestAppHasPermission(READ_CONTACTS)
+    @Test
+    public void ensureTestAppHasPermissionAnnotation_testAppHasPermission() {
+        assertThat(sDeviceState.testApp().context().checkSelfPermission(
+                READ_CONTACTS)).isEqualTo(PermissionChecker.PERMISSION_GRANTED);
+    }
+
+    @EnsureTestAppInstalled(packageName = TEST_APP_PACKAGE_NAME)
+    @EnsureTestAppHasAppOp(OPSTR_START_FOREGROUND)
+    @Test
+    public void ensureTestAppHasAppOpAnnotation_testAppHasAppOp() {
+        assertThat(sDeviceState.testApp()
+                .testApp().pkg().appOps().get(OPSTR_START_FOREGROUND)).isEqualTo(ALLOWED);
+    }
 }
