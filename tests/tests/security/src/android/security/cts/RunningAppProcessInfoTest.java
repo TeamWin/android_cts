@@ -19,11 +19,13 @@ package android.security.cts;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.AndroidTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
+import static org.junit.Assert.*;
 
 import java.util.List;
 
-public class RunningAppProcessInfoTest extends AndroidTestCase {
+public class RunningAppProcessInfoTest extends StsExtraBusinessLogicTestCase {
     /*
      * This test verifies severity vulnerability: apps can bypass the L restrictions in
      * getRunningTasks()is fixed. The test tries to get current RunningAppProcessInfo and passes
@@ -33,7 +35,7 @@ public class RunningAppProcessInfoTest extends AndroidTestCase {
     @AsbSecurityTest(cveBugId = 20034603)
     public void testRunningAppProcessInfo() {
         ActivityManager amActivityManager =
-                (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+                (ActivityManager) getInstrumentation().getContext().getSystemService(Context.ACTIVITY_SERVICE);
         List<ActivityManager.RunningAppProcessInfo> appList =
                 amActivityManager.getRunningAppProcesses();
         // The test will pass if it is able to get only its process info
