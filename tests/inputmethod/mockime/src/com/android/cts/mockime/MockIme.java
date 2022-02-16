@@ -761,7 +761,7 @@ public final class MockIme extends InputMethodService {
                     imageView.setImageBitmap(bitmap);
                     secondaryLayout.addView(imageView,
                             new FrameLayout.LayoutParams(bitmap.getWidth(), bitmap.getHeight(),
-                                    Gravity.CENTER));
+                                    mSettings.getWatermarkGravity(Gravity.CENTER)));
                 }
 
                 mLayout.addView(secondaryLayout);
