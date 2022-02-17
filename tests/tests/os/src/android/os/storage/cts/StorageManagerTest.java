@@ -34,7 +34,6 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.ProxyFileDescriptorCallback;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.cts.R;
 import android.os.storage.OnObbStateChangeListener;
@@ -103,11 +102,6 @@ public class StorageManagerTest extends AndroidTestCase {
             Log.d(TAG, "Testing path " + target);
             doMountAndUnmountObbNormal(target);
         }
-    }
-
-    // b/215354735 - certain tests fail with fuse-bpf, so temporarily disable
-    private boolean isFuseBpf() throws Exception {
-        return SystemProperties.getBoolean("persist.sys.fuse.bpf.enable", false);
     }
 
     private void doMountAndUnmountObbNormal(File outFile) throws IOException {
@@ -366,7 +360,6 @@ public class StorageManagerTest extends AndroidTestCase {
 
     @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testCallback() throws Exception {
-        if (isFuseBpf()) return; // b/215354735
         final CountDownLatch mounted = new CountDownLatch(1);
         final CountDownLatch unmounted = new CountDownLatch(1);
         final StorageVolumeCallback callback = new StorageVolumeCallback() {

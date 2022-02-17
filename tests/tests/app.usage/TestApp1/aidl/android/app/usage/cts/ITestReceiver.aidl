@@ -22,4 +22,5 @@ interface ITestReceiver {
     void createNotificationChannel(String channelId, String channelName, String channelDescription);
     void postNotification(int notificationId, in Notification notification);
     void cancelNotification(int notificationId);
+    void cancelAll();
 }

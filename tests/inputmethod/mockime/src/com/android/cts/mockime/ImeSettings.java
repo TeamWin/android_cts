@@ -52,6 +52,7 @@ public class ImeSettings {
     private static final String FULLSCREEN_MODE_POLICY = "FullscreenModePolicy";
     private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
     private static final String WATERMARK_ENABLED = "WatermarkEnabled";
+    private static final String WATERMARK_GRAVITY = "WatermarkGravity";
     private static final String HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED =
             "HardKeyboardConfigurationBehaviorAllowed";
     private static final String INLINE_SUGGESTIONS_ENABLED = "InlineSuggestionsEnabled";
@@ -154,6 +155,10 @@ public class ImeSettings {
 
     public boolean isWatermarkEnabled(boolean defaultValue) {
         return mBundle.getBoolean(WATERMARK_ENABLED, defaultValue);
+    }
+
+    public int getWatermarkGravity(int defaultValue) {
+        return mBundle.getInt(WATERMARK_GRAVITY, defaultValue);
     }
 
     public boolean getHardKeyboardConfigurationBehaviorAllowed(boolean defaultValue) {
@@ -281,6 +286,18 @@ public class ImeSettings {
          */
         public Builder setWatermarkEnabled(boolean enabled) {
             mBundle.putBoolean(WATERMARK_ENABLED, enabled);
+            return this;
+        }
+
+        /**
+         * Sets the {@link android.view.Gravity} flags for the watermark image.
+         *
+         * <p>{@link android.view.Gravity#CENTER} will be used if not set.</p>
+         *
+         * @param gravity {@code true} {@link android.view.Gravity} flags to be set.
+         */
+        public Builder setWatermarkGravity(int gravity) {
+            mBundle.putInt(WATERMARK_GRAVITY, gravity);
             return this;
         }
 

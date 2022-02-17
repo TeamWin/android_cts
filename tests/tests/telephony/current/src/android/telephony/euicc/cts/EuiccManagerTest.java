@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.TelephonyUtils;
 import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccCardManager;
 import android.telephony.euicc.EuiccInfo;
@@ -70,6 +71,8 @@ public class EuiccManagerTest {
                     ACTION_ERASE_SUBSCRIPTIONS,
                     ACTION_START_TEST_RESOLUTION_ACTIVITY,
             };
+    private static final String SWITCH_WITHOUT_PORT_INDEX_EXCEPTION_ON_DISABLE_STRING =
+            "SWITCH_WITHOUT_PORT_INDEX_EXCEPTION_ON_DISABLE";
 
     private EuiccManager mEuiccManager;
     private CallbackReceiver mCallbackReceiver;
@@ -183,6 +186,63 @@ public class EuiccManagerTest {
     }
 
     @Test
+    public void testSwitchToSubscritionDisableWithNoPortAndChangesCompatDisabled()
+            throws Exception {
+        // test disabled state only for now
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
+        // disable compact change
+        TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SWITCH_WITHOUT_PORT_INDEX_EXCEPTION_ON_DISABLE_STRING);
+
+        // set up CountDownLatch and receiver
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        mCallbackReceiver = new CallbackReceiver(countDownLatch);
+        getContext()
+                .registerReceiver(
+                        mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
+
+        // call switchToSubscription()
+        PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
+        mEuiccManager.switchToSubscription(-1, callbackIntent);
+
+        // wait for callback
+        try {
+            countDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        // verify correct result code is received
+        assertEquals(
+                EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, mCallbackReceiver.getResultCode());
+
+        // reset compat change
+        TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                SWITCH_WITHOUT_PORT_INDEX_EXCEPTION_ON_DISABLE_STRING);
+    }
+
+    @Test
+    public void testSwitchToSubscriptionDisableWithNoPort() throws Exception {
+        // test disabled state only for now
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
+
+        try {
+            mEuiccManager.switchToSubscription(-1, callbackIntent);
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            // expected for android T and beyond
+        }
+    }
+
+    @Test
     public void testSwitchToSubscription() {
         // test disabled state only for now
         if (mEuiccManager.isEnabled()) {
@@ -196,7 +256,7 @@ public class EuiccManagerTest {
                 .registerReceiver(
                         mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
 
-        // call deleteSubscription()
+        // call switchToSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
         mEuiccManager.switchToSubscription(4, callbackIntent);
 
@@ -226,7 +286,7 @@ public class EuiccManagerTest {
                 .registerReceiver(
                         mCallbackReceiver, new IntentFilter(ACTION_SWITCH_TO_SUBSCRIPTION));
 
-        // call deleteSubscription()
+        // call switchToSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
         mEuiccManager.switchToSubscription(4, TelephonyManager.DEFAULT_PORT_INDEX, callbackIntent);
 

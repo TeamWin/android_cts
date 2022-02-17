@@ -536,6 +536,8 @@
         </activity>
         <activity android:name="android.server.wm.BackNavigationActivity"
                   android:exported="true"/>
+        <activity android:name="android.server.wm.PinnedStackTests$TestActivity"
+                  android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -67,7 +67,8 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private val POSITIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_positive")
         private val NEGATIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_negative")
 
-        private val DEVICE_LIST = By.pkg(PACKAGE_NAME).clazz(".ListView")
+        private val DEVICE_LIST = By.pkg(PACKAGE_NAME)
+            .clazz("androidx.recyclerview.widget.RecyclerView")
                 .res(PACKAGE_NAME, "device_list")
         private val DEVICE_LIST_ITEM = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "list_item_device")
