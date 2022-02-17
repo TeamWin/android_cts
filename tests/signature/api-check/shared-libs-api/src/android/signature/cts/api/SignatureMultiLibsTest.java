@@ -16,13 +16,19 @@
 
 package android.signature.cts.api;
 
+import android.app.Instrumentation;
 import android.signature.cts.ApiComplianceChecker;
 import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.VirtualPath;
 import android.signature.cts.VirtualPath.LocalFilePath;
+import androidx.test.platform.app.InstrumentationRegistry;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -38,6 +44,21 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 public class SignatureMultiLibsTest extends SignatureTest {
 
     private static final String TAG = SignatureMultiLibsTest.class.getSimpleName();
+
+    private static Set<String> libraries;
+
+    /**
+     * Obtain a list of shared libraries from the device.
+     */
+    @BeforeClass
+    public static void retrieveListOfSharedLibrariesOnDevice() throws Exception {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        String result = runShellCommand(instrumentation, "cmd package list libraries");
+        libraries = Arrays.stream(result.split("\n")).map(line -> line.split(":")[1])
+                .peek(library -> System.out.printf("%s: Found library: %s%n",
+                        SignatureMultiLibsTest.class.getSimpleName(), library))
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
 
     /**
      * Tests that the device's API matches the expected set defined in xml.
@@ -81,22 +102,6 @@ public class SignatureMultiLibsTest extends SignatureTest {
     }
 
     /**
-     * Get all the shared libraries available on the device.
-     *
-     * @return a stream of available shared library names.
-     */
-    private Stream<String> getLibraries() {
-        try {
-            String result = runShellCommand(getInstrumentation(), "cmd package list libraries");
-            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1])
-                    .peek(library -> System.out.printf("%s: Found library: %s%n",
-                            getClass().getSimpleName(), library));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * Check to see if the supplied name is an API file for a shared library that is available on
      * this device.
      *
@@ -105,7 +110,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
      */
     private boolean checkLibrary (String name) {
         String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
-        boolean matched = getLibraries().anyMatch(libraryName::equals);
+        boolean matched = libraries.contains(libraryName);
         if (matched) {
             System.out.printf("%s: Processing API file %s, from library %s as it does match a"
                             + " shared library on this device%n",
