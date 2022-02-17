@@ -140,6 +140,13 @@ public final class DeviceOwner extends DevicePolicyController {
                 assertThat(b.getResultCode()).isEqualTo(Activity.RESULT_OK);
             }).timeout(Duration.ofMinutes(5)).runAndWrapException();
         }
+
+//        TODO(b/219894175) Expose isRemovingAdmin as a TestAPI for U.
+//        DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+//
+//        Poll.forValue(() -> dpm.isRemovingAdmin(mComponentName, mUser.id()))
+//                .toNotBeEqualTo(true)
+//                .await();
     }
 
     @Override
