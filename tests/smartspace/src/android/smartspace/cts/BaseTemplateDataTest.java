@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.smartspace.SmartspaceTarget;
 import android.app.smartspace.uitemplatedata.BaseTemplateData;
+import android.app.smartspace.uitemplatedata.BaseTemplateData.SubItemLoggingInfo;
 import android.app.smartspace.uitemplatedata.Text;
 import android.os.Parcel;
 
@@ -50,16 +51,28 @@ public class BaseTemplateDataTest {
                         .setPrimaryTapAction(
                                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                                         "primary action"))
+                        .setPrimaryLoggingInfo(new SubItemLoggingInfo.Builder(0, 0).build())
                         .setSupplementalSubtitleText(
-                                new Text.Builder("supplemental subtitle").build())
+                                new Text.Builder("supplemental subtitle text").build())
                         .setSupplementalSubtitleIcon(
                                 SmartspaceTestUtils.createSmartspaceIcon(
                                         "supplemental subtitle icon"))
                         .setSupplementalSubtitleTapAction(
                                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                                        "supplemental subtitle tap action"))
+                        .setSupplementalSubtitleLoggingInfo(
+                                new SubItemLoggingInfo.Builder(1, 1).build())
+                        .setSupplementalText(new Text.Builder("supplemental text").build())
+                        .setSupplementalIcon(
+                                SmartspaceTestUtils.createSmartspaceIcon("supplemental icon"))
+                        .setSupplementalTapAction(
+                                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                                         "supplemental tap action"))
+                        .setSupplementalLoggingInfo(new SubItemLoggingInfo.Builder(2, 2).build())
                         .setSupplementalAlarmText(new Text.Builder(
-                                "supplemental alarm text").build()).build();
+                                "supplemental alarm text").build())
+                        .setLayoutWeight(1)
+                        .build();
 
         assertThat(baseTemplateData.getTitleText()).isEqualTo(new Text.Builder("title").build());
         assertThat(baseTemplateData.getTitleIcon()).isEqualTo(
@@ -70,15 +83,29 @@ public class BaseTemplateDataTest {
                 SmartspaceTestUtils.createSmartspaceIcon("subtitle icon"));
         assertThat(baseTemplateData.getPrimaryTapAction()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(), "primary action"));
+        assertThat(baseTemplateData.getPrimaryLoggingInfo()).isEqualTo(
+                new SubItemLoggingInfo.Builder(0, 0).build());
         assertThat(baseTemplateData.getSupplementalSubtitleText()).isEqualTo(
-                new Text.Builder("supplemental subtitle").build());
+                new Text.Builder("supplemental subtitle text").build());
         assertThat(baseTemplateData.getSupplementalSubtitleIcon()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceIcon("supplemental subtitle icon"));
         assertThat(baseTemplateData.getSupplementalSubtitleTapAction()).isEqualTo(
                 SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                        "supplemental subtitle tap action"));
+        assertThat(baseTemplateData.getSupplementalSubtitleLoggingInfo()).isEqualTo(
+                new SubItemLoggingInfo.Builder(1, 1).build());
+        assertThat(baseTemplateData.getSupplementalText()).isEqualTo(
+                new Text.Builder("supplemental text").build());
+        assertThat(baseTemplateData.getSupplementalIcon()).isEqualTo(
+                SmartspaceTestUtils.createSmartspaceIcon("supplemental icon"));
+        assertThat(baseTemplateData.getSupplementalTapAction()).isEqualTo(
+                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
                         "supplemental tap action"));
+        assertThat(baseTemplateData.getSupplementalLoggingInfo()).isEqualTo(
+                new SubItemLoggingInfo.Builder(2, 2).build());
         assertThat(baseTemplateData.getSupplementalAlarmText()).isEqualTo(
                 new Text.Builder("supplemental alarm text").build());
+        assertThat(baseTemplateData.getLayoutWeight()).isEqualTo(1);
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
