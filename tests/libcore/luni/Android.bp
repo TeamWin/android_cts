@@ -39,11 +39,6 @@ android_test {
         enabled: false,
     },
     dxflags: ["--multi-dex"],
-    // Exclude apache harmony tests from coverage instrumentation, since it breaks
-    // the tests of reflection APIs by adding fields and methods to the test classes.
-    jacoco: {
-        exclude_filter: ["org.apache.harmony.tests.**"],
-    },
     optimize: {
         enabled: false,
     },
