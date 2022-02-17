@@ -139,6 +139,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -5000,6 +5001,149 @@ public class TelephonyManagerTest {
             }
         }
         return true;
+    }
+
+    private static class ServiceStateListener extends TelephonyCallback
+            implements TelephonyCallback.ServiceStateListener {
+        CountDownLatch mLatch;
+        Predicate<ServiceState> mStateToWaitFor;
+
+        ServiceStateListener(Predicate<ServiceState> stateToWaitFor) {
+            mLatch = new CountDownLatch(1);
+            mStateToWaitFor = stateToWaitFor;
+        }
+
+        @Override
+        public void onServiceStateChanged(ServiceState ss) {
+            if (mStateToWaitFor.test(ss)) {
+                mLatch.countDown();
+            }
+        }
+
+        public void waitForServiceStateChange(long timeout, TimeUnit unit) throws Exception {
+            if (!mLatch.await(timeout, unit)) {
+                throw new IllegalStateException("ServiceState did not change to satisfy condition");
+            }
+        }
+    }
+
+    private void waitForServiceState(Predicate<ServiceState> condition, long timeout, TimeUnit unit)
+            throws Exception {
+        ServiceStateListener callback = new ServiceStateListener(condition);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                tm -> tm.registerTelephonyCallback(Runnable::run, callback));
+        try {
+            callback.waitForServiceStateChange(timeout, unit);
+        } finally {
+            mTelephonyManager.unregisterTelephonyCallback(callback);
+        }
+    }
+
+    private static class RadioPowerStateListener extends TelephonyCallback
+            implements TelephonyCallback.RadioPowerStateListener {
+        CountDownLatch mLatch;
+        @RadioPowerState int mStateToWaitFor;
+
+        RadioPowerStateListener(@RadioPowerState int stateToWaitFor) {
+            mLatch = new CountDownLatch(1);
+            mStateToWaitFor = stateToWaitFor;
+        }
+
+        @Override
+        public void onRadioPowerStateChanged(@RadioPowerState int state) {
+            if (state == mStateToWaitFor) {
+                mLatch.countDown();
+            }
+        }
+
+        public void waitForRadioPowerStateChange() throws Exception {
+            if (!mLatch.await(10, TimeUnit.SECONDS)) {
+                throw new IllegalStateException(
+                        "Radio power state did not change to " + mStateToWaitFor);
+            }
+        }
+    }
+
+    private void setRadioPower(boolean powerOn) throws Exception {
+        RadioPowerStateListener callback =
+                new RadioPowerStateListener(
+                        powerOn
+                                ? TelephonyManager.RADIO_POWER_ON
+                                : TelephonyManager.RADIO_POWER_OFF);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                tm -> tm.registerTelephonyCallback(Runnable::run, callback),
+                permission.READ_PRIVILEGED_PHONE_STATE);
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    tm -> tm.setRadioEnabled(powerOn),
+                    permission.MODIFY_PHONE_STATE);
+            callback.waitForRadioPowerStateChange();
+        } finally {
+            mTelephonyManager.unregisterTelephonyCallback(callback);
+        }
+    }
+
+    @Test
+    public void testSetVoiceServiceStateOverride() throws Exception {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_CALLING));
+
+        boolean turnedRadioOff = false;
+        boolean setServiceStateOverride = false;
+        try {
+            if (mTelephonyManager.getServiceState().getState() == ServiceState.STATE_IN_SERVICE) {
+                Log.i(TAG, "testSetVoiceServiceStateOverride: turning radio off to force OOS");
+                setRadioPower(false);
+                turnedRadioOff = true;
+                // Wait until ServiceState reflects the power change
+                waitForServiceState(
+                        ss -> ss.getState() != ServiceState.STATE_IN_SERVICE, 10, TimeUnit.SECONDS);
+            }
+            // This could be OUT_OF_SERVICE or POWER_OFF, it doesn't really matter for this test as
+            // long as it's not IN_SERVICE
+            int originalServiceState = mTelephonyManager.getServiceState().getState();
+            Log.i(TAG, "testSetVoiceServiceStateOverride: originalSS = " + originalServiceState);
+            assertNotEquals(ServiceState.STATE_IN_SERVICE, originalServiceState);
+
+            // We should see the override reflected by both ServiceStateListener and getServiceState
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    tm -> tm.setVoiceServiceStateOverride(true),
+                    permission.BIND_TELECOM_CONNECTION_SERVICE);
+            setServiceStateOverride = true;
+            waitForServiceState(
+                    ss -> ss.getState() == ServiceState.STATE_IN_SERVICE, 5, TimeUnit.SECONDS);
+            assertEquals(
+                    ServiceState.STATE_IN_SERVICE, mTelephonyManager.getServiceState().getState());
+
+            // When we take away the override, things flip back to the original state since there
+            // were no other material changes made to the device that would impact ServiceState
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    tm -> tm.setVoiceServiceStateOverride(false),
+                    permission.BIND_TELECOM_CONNECTION_SERVICE);
+            waitForServiceState(ss -> ss.getState() == originalServiceState, 5, TimeUnit.SECONDS);
+            assertEquals(originalServiceState, mTelephonyManager.getServiceState().getState());
+        } finally {
+            if (setServiceStateOverride) {
+                // No harm in calling this again if we already did, but call just in case we failed
+                // an assertion related to setOverride(true)
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                        mTelephonyManager,
+                        tm -> tm.setVoiceServiceStateOverride(false),
+                        permission.BIND_TELECOM_CONNECTION_SERVICE);
+            }
+            if (turnedRadioOff) {
+                // Turn the radio back on and wait for ServiceState to become stable again so we
+                // don't cause flakes in other tests
+                Log.i(TAG, "testSetVoiceServiceStateOverride: turning radio back on");
+                setRadioPower(true);
+                waitForServiceState(
+                        ss -> ss.getState() == ServiceState.STATE_IN_SERVICE, 30, TimeUnit.SECONDS);
+            }
+        }
     }
 }
 
