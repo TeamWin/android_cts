@@ -2,4 +2,4 @@
 per-file CrateInfoTest.java = felkachang@google.com
 per-file StorageCrateTest.java = felkachang@google.com
 per-file StorageStatsManagerTest.java = felkachang@google.com
-
+per-file StorageManagerTest.java = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
