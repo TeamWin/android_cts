@@ -67,6 +67,8 @@ public class VirtualDeviceParamsTest {
         assertThat(params.getAllowedActivities()).containsExactly(
                 new ComponentName("test", "test.Activity1"),
                 new ComponentName("test", "test.Activity2"));
+        assertThat(params.getDefaultActivityPolicy())
+                .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_BLOCKED);
     }
 
     @Test
@@ -81,6 +83,8 @@ public class VirtualDeviceParamsTest {
         assertThat(params.getBlockedActivities()).containsExactly(
                 new ComponentName("test", "test.Activity1"),
                 new ComponentName("test", "test.Activity2"));
+        assertThat(params.getDefaultActivityPolicy())
+                .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_ALLOWED);
     }
 
     @Test
