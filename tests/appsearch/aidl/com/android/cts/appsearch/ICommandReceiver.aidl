@@ -24,7 +24,7 @@ interface ICommandReceiver {
         in String id);
 
     boolean indexGloballySearchableDocument(in String databaseName, in String namespace,
-        in String id, in int[] requiredPermissions);
+        in String id, in List<Bundle> permissionBundles);
 
     boolean indexNotGloballySearchableDocument(in String databaseName, in String namespace,
         in String id);
