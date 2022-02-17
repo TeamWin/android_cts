@@ -295,7 +295,7 @@ public class CameraTestUtils extends Assert {
             int format, Size targetSize, int numBuffers, String overridePhysicalCameraId,
             MultiResolutionStreamConfigurationMap multiResStreamConfig,
             boolean createMultiResiStreamConfig, ImageDropperListener listener, Handler handler,
-            int dynamicRangeProfile, int streamUseCase) {
+            long dynamicRangeProfile, int streamUseCase) {
         if (createMultiResiStreamConfig) {
             Collection<MultiResolutionStreamInfo> multiResolutionStreams =
                     multiResStreamConfig.getOutputInfo(format);
@@ -406,7 +406,7 @@ public class CameraTestUtils extends Assert {
             List<Surface> outputSurfaces, List<Surface> uhSurfaces, int numBuffers,
             boolean substituteY8, boolean substituteHeic, String overridePhysicalCameraId,
             MultiResolutionStreamConfigurationMap multiResStreamConfig, Handler handler,
-            List<Integer> dynamicRangeProfiles) {
+            List<Long> dynamicRangeProfiles) {
 
         Random rnd = new Random();
         // 10-bit output capable streams will use a fixed dynamic range profile in case
@@ -435,7 +435,7 @@ public class CameraTestUtils extends Assert {
                 format = ImageFormat.HEIC;
             }
 
-            int dynamicRangeProfile = DynamicRangeProfiles.STANDARD;
+            long dynamicRangeProfile = DynamicRangeProfiles.STANDARD;
             if (streamInfo.is10BitCapable() && use10BitRandomProfile) {
                 boolean override10bit = rnd.nextBoolean();
                 if (!override10bit) {

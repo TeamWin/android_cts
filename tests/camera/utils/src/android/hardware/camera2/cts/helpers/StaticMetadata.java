@@ -798,12 +798,12 @@ public class StaticMetadata {
      *
      * @return the available dynamic range profiles
      */
-    public Set<Integer> getAvailableDynamicRangeProfilesChecked() {
+    public Set<Long> getAvailableDynamicRangeProfilesChecked() {
         DynamicRangeProfiles profiles = mCharacteristics.get(
                 CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
 
         if (profiles == null) {
-            return new ArraySet<Integer>();
+            return new ArraySet<Long>();
         }
 
         return profiles.getSupportedProfiles();
