@@ -20,6 +20,9 @@
 
     <uses-permission android:name="android.permission.MANAGE_GAME_ACTIVITY"/>
     <uses-permission android:name="android.service.games.cts.TEST_START_ACTIVITY"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_MEDIA"/>
 
     <application android:label="CtsGameServiceTestApp">
 
@@ -47,6 +50,7 @@
         </service>
 
         <uses-library android:name="android.test.runner" />
+        <activity android:name="android.service.games.testing.GetResultActivity"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
