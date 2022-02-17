@@ -95,6 +95,21 @@ class SafetyCenterManagerTest {
         SafetySourceBroadcastReceiver.reset()
     }
 
+    @Before
+    fun addCtsSafetySourceBroadcastReceiver() {
+        runWithShellPermissionIdentity {
+        safetyCenterManager.addAdditionalSafetySource(sourceId, CTS_PACKAGE_NAME,
+                CTS_BROADCAST_RECEIVER_NAME)
+        }
+    }
+
+    @After
+    fun clearAddedSafetySourceBroadcastReceiver() {
+        runWithShellPermissionIdentity {
+            safetyCenterManager.clearAdditionalSafetySources()
+        }
+    }
+
     @Test
     fun getLastSafetyCenterUpdate_noUpdate_returnsNull() {
         val lastSafetyCenterUpdate =
@@ -360,6 +375,9 @@ class SafetyCenterManagerTest {
     companion object {
         /** Name of the flag that determines whether SafetyCenter is enabled. */
         const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
+        const val CTS_PACKAGE_NAME = "android.safetycenter.cts"
+        const val CTS_BROADCAST_RECEIVER_NAME =
+                "android.safetycenter.cts.SafetySourceBroadcastReceiver"
         private val BROADCAST_TIMEOUT_LONG: Duration = Duration.ofMillis(5000)
         private val BROADCAST_TIMEOUT_SHORT: Duration = Duration.ofMillis(1000)
     }
