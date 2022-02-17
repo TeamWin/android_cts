@@ -18,9 +18,11 @@ package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
-import junit.framework.TestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
-public class NativeCodeTest extends TestCase {
+import static org.junit.Assert.*;
+
+public class NativeCodeTest extends StsExtraBusinessLogicTestCase {
 
     static {
         System.loadLibrary("ctssecurity_jni");

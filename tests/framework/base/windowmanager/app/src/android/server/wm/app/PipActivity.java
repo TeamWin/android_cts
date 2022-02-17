@@ -25,6 +25,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
+import static android.server.wm.app.Components.PipActivity.EXTRA_CLOSE_ACTION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
@@ -47,8 +48,10 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_CALLBAC
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_STASHED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
-import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
+import static android.server.wm.app.Components.PipActivity.UI_STATE_STASHED_RESULT;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
@@ -206,6 +209,25 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             sharedBuilderChanged = true;
         }
 
+        if (getIntent().hasExtra(EXTRA_TITLE)) {
+            sharedBuilder.setTitle(getIntent().getStringExtra(EXTRA_TITLE));
+            sharedBuilderChanged = true;
+        }
+
+        if (getIntent().hasExtra(EXTRA_SUBTITLE)) {
+            sharedBuilder.setSubtitle(getIntent().getStringExtra(EXTRA_SUBTITLE));
+            sharedBuilderChanged = true;
+        }
+
+        if (getIntent().hasExtra(EXTRA_CLOSE_ACTION)) {
+            if (getIntent().getBooleanExtra(EXTRA_CLOSE_ACTION, false)) {
+                sharedBuilder.setCloseAction(createRemoteAction(0));
+            } else {
+                sharedBuilder.setCloseAction(null);
+            }
+            sharedBuilderChanged = true;
+        }
+
         // Enable tap to finish if necessary
         if (getIntent().hasExtra(EXTRA_TAP_TO_FINISH)) {
             setContentView(R.layout.tap_to_finish_pip_layout);
@@ -341,7 +363,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     @Override
     public void onPictureInPictureUiStateChanged(PictureInPictureUiState pipState) {
         Bundle res = new Bundle();
-        res.putBoolean(PIP_CALLBACK_RESULT_KEY, pipState.isStashed());
+        res.putBoolean(UI_STATE_STASHED_RESULT, pipState.isStashed());
         mCb.sendResult(res);
     }
 

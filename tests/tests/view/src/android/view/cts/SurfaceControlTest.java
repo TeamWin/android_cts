@@ -20,6 +20,7 @@ import static android.server.wm.ActivityManagerTestBase.createFullscreenActivity
 import static android.view.cts.util.ASurfaceControlTestUtils.getQuadrantBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.getSolidBuffer;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -30,13 +31,16 @@ import android.graphics.Rect;
 import android.graphics.Region;
 import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
+import android.hardware.SyncFence;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.util.Log;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
+import android.view.cts.util.SyncFenceUtil;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -156,6 +160,16 @@ public class SurfaceControlTest {
             new SurfaceControl.Transaction()
                     .setBuffer(surfaceControl, buffer)
                     .setDataSpace(surfaceControl, dataSpace)
+                    .apply();
+            mBuffers.add(buffer);
+        }
+
+        public void setSolidBuffer(SurfaceControl surfaceControl,
+                int width, int height, int color, SyncFence fence) {
+            HardwareBuffer buffer = getSolidBuffer(width, height, color);
+            assertNotNull("failed to make solid buffer", buffer);
+            new SurfaceControl.Transaction()
+                    .setBuffer(surfaceControl, buffer, fence)
                     .apply();
             mBuffers.add(buffer);
         }
@@ -1132,6 +1146,78 @@ public class SurfaceControlTest {
                     }
                 },
                 new PixelChecker(asABGR) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_nullSyncFence() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.BLUE, null);
+                    }
+                },
+                new PixelChecker(PixelColor.BLUE) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_invalidSyncFence() {
+        SyncFence fence = SyncFenceUtil.createUselessFence();
+        if (fence == null) {
+            // Extension not supported
+            Log.d(TAG, "Skipping test, EGL_ANDROID_native_fence_sync not available");
+            return;
+        }
+        fence.close();
+        assertFalse(fence.isValid());
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.BLUE, fence);
+                    }
+                },
+                new PixelChecker(PixelColor.BLUE) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_withSyncFence() {
+        SyncFence fence = SyncFenceUtil.createUselessFence();
+        if (fence == null) {
+            // Extension not supported
+            Log.d(TAG, "Skipping test, EGL_ANDROID_native_fence_sync not available");
+            return;
+        }
+        assertTrue(fence.isValid());
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.BLUE, fence);
+                    }
+                },
+                new PixelChecker(PixelColor.BLUE) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;

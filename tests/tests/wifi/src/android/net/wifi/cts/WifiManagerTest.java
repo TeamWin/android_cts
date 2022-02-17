@@ -29,6 +29,7 @@ import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -1311,7 +1312,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} can be called with proper permissions.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1327,8 +1328,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
-                        ssids, frequencies, callback));
+                () -> mWifiManager.setExternalPnoScanRequest(
+                        ssids, frequencies, Executors.newSingleThreadExecutor(), callback));
 
         callback.latch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS);
         if (mWifiManager.isPreferredNetworkOffloadSupported()) {
@@ -1345,7 +1346,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} can be called with null frequency.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1359,13 +1360,13 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         ssids.add(WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8)));
 
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setExternalPnoScanRequest(Executors.newSingleThreadExecutor(),
-                        ssids, null, callback));
+                () -> mWifiManager.setExternalPnoScanRequest(
+                        ssids, null, Executors.newSingleThreadExecutor(), callback));
         mWifiManager.clearExternalPnoScanRequest();
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many SSIDs.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1384,12 +1385,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertThrows(IllegalArgumentException.class, () -> {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.setExternalPnoScanRequest(
-                            Executors.newSingleThreadExecutor(), ssids, null, callback));
+                            ssids, null, Executors.newSingleThreadExecutor(), callback));
         });
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} throws an Exception if called with too many frequencies.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1408,12 +1409,12 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         assertThrows(IllegalArgumentException.class, () -> {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.setExternalPnoScanRequest(
-                            Executors.newSingleThreadExecutor(), ssids, frequencies, callback));
+                            ssids, frequencies, Executors.newSingleThreadExecutor(), callback));
         });
     }
 
     /**
-     * Verify {@link WifiManager#setExternalPnoScanRequest(Executor, List, int[],
+     * Verify {@link WifiManager#setExternalPnoScanRequest(List, int[], Executor,
      * WifiManager.PnoScanResultsCallback)} cannot be called without permission.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
@@ -1429,7 +1430,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         assertFalse("Callback should be initialized unregistered", callback.isRegisterSuccess());
         assertThrows(SecurityException.class,
-                () -> mWifiManager.setExternalPnoScanRequest(executor, ssids, null, callback));
+                () -> mWifiManager.setExternalPnoScanRequest(ssids, null, executor, callback));
     }
 
     /**
@@ -2572,11 +2573,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                         testSoftApConfig.isIeee80211beEnabled());
                 assertEquals(currentConfig.getVendorElements(),
                         testSoftApConfig.getVendorElements());
-                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ),
+                assertArrayEquals(
+                        currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_2GHZ));
-                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ),
+                assertArrayEquals(
+                        currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_5GHZ));
-                assertEquals(currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ),
+                assertArrayEquals(
+                        currentConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ),
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ));
                 assertEquals(currentConfig.getMaxChannelBandwidth(),
                         testSoftApConfig.getMaxChannelBandwidth());

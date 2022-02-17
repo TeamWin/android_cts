@@ -32,7 +32,7 @@
                   android:exported="true"
         />
         <provider android:name=".TestContentProvider"
-            android:authorities="android.app.usage.cts.test1.provider"
+            android:authorities="@string/authority"
             android:exported="true"
         />
     </application>

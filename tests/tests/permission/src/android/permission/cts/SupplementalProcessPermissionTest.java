@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith;
 /**
  * Tests for permission handling for supplemental process uid range.
  */
+@AppModeFull(reason = "Instant apps can't access PermissionManager")
 @RunWith(AndroidJUnit4ClassRunner.class)
 public class SupplementalProcessPermissionTest {
 

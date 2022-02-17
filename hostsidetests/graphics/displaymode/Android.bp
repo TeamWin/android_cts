@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,27 +16,20 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsUsageStatsTestApp1",
+java_test_host {
+    name: "CtsBootDisplayModeTestCases",
     defaults: ["cts_defaults"],
-    platform_apis: true,
-    static_libs: [
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "cts-wm-util",
-        "junit",
-        "ub-uiautomator",
-    ],
+    srcs: ["src/**/*.java"],
     libs: [
-        "android.test.base",
-        "android.test.runner",
+        "cts-tradefed",
+        "tradefed",
+        "guava",
     ],
-    srcs: ["src/**/*.java", "aidl/**/*.aidl"],
-    // Tag this module as a cts test artifact
+    static_libs: ["CompatChangeGatingTestBase"],
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    sdk_version: "test_current"
+    java_resources: [":cts-global-compat-config"],
 }

@@ -93,8 +93,8 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
         mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
 
         setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
-        assertThat(MediaStore.getCloudProvider(mContext.getContentResolver()))
-                .isEqualTo(CloudProviderPrimary.AUTHORITY);
+        assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
+                        CloudProviderPrimary.AUTHORITY)).isTrue();
 
         mSurfaceControllerListener = CloudProviderPrimary.getMockSurfaceControllerListener();
         mAssertInOrder = Mockito.inOrder(mSurfaceControllerListener);

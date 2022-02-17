@@ -1267,7 +1267,6 @@ def validate_lighting(y_plane, scene, state='ON'):
     boolean True if lighting validated, else raise AssertionError
   """
   logging.debug('Validating lighting levels.')
-  image_processing_utils.write_image(y_plane, f'validate_lighting_{scene}.jpg')
 
   # Test patches from each corner.
   for location, coordinates in _VALIDATE_LIGHTING_REGIONS.items():
@@ -1281,12 +1280,16 @@ def validate_lighting(y_plane, scene, state='ON'):
         logging.debug('Lights ON in test rig.')
         return True
       else:
+        image_processing_utils.write_image(
+            y_plane, f'validate_lighting_{scene}.jpg')
         raise AssertionError('Lights OFF in test rig. Turn ON and retry.')
     elif state == 'OFF':
       if y_mean < _VALIDATE_LIGHTING_THRESH:
         logging.debug('Lights OFF in test rig.')
         return True
       else:
+        image_processing_utils.write_image(
+            y_plane, f'validate_lighting_{scene}.jpg')
         raise AssertionError('Lights ON in test rig. Turn OFF and retry.')
     else:
       raise AssertionError('Invalid lighting state string. '
