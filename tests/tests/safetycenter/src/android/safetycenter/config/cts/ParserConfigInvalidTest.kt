@@ -27,7 +27,7 @@ import org.junit.runners.Parameterized
 import org.junit.runner.RunWith
 
 @RunWith(Parameterized::class)
-class ConfigInvalidTest {
+class ParserConfigInvalidTest {
     private val context: Context = getApplicationContext()
 
     data class Params(

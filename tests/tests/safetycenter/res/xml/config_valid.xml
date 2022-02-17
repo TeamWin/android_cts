@@ -67,6 +67,7 @@
                 id="issue_only_all_optional"
                 packageName="package"
                 profile="all_profiles"
+                maxSeverityLevel="300"
                 broadcastReceiverClassName="broadcast"
                 allowLogging="false"
                 allowRefreshOnPageOpen="true"/>
