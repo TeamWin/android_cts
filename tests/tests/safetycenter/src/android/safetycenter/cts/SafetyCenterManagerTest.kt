@@ -157,6 +157,7 @@ class SafetyCenterManagerTest {
             )
                 .addAction(
                     SafetySourceIssue.Action.Builder(
+                        "action_id",
                         "Solve issue",
                         somePendingIntent
                     ).build()
