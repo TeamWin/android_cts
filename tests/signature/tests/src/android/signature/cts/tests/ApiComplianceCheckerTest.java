@@ -573,15 +573,13 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      *
      * <p>While adding a final modifier to a class is not strictly backwards compatible it is when
      * the class has no accessible constructors and so cannot be instantiated or extended, as is the
-     * case in this test. A follow up change will fix this test.</p>
+     * case in this test.</p>
      */
     @Test
     public void testAddingFinalToAClassNoCtor_PreviousApi() {
-        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
-            JDiffClassDescription clz = createClass("FinalClass");
-            clz.setPreviousApiFlag(true);
-            checkSignatureCompliance(clz, observer);
-        }
+        JDiffClassDescription clz = createClass("FinalClass");
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
     }
 
     /**
@@ -619,15 +617,13 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
      *
      * <p>While adding a static modifier to a class is not strictly backwards compatible it is when
      * the class has no accessible constructors and so cannot be instantiated or extended, as is the
-     * case in this test. A follow up change will fix this test.</p>
+     * case in this test.</p>
      */
     @Test
     public void testAddingStaticToInnerClassNoCtor_PreviousApi() {
-        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
-            JDiffClassDescription clz = createClass("AbstractClass.StaticNestedClass");
-            clz.setPreviousApiFlag(true);
-            checkSignatureCompliance(clz, observer);
-        }
+        JDiffClassDescription clz = createClass("AbstractClass.StaticNestedClass");
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
     }
 
     /**
