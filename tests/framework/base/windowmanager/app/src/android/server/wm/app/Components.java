@@ -530,6 +530,9 @@ public class Components extends ComponentsBase {
         // Intent action that will request the host activity of launch-into-pip to finish itself
         public static final String ACTION_FINISH_LAUNCH_INTO_PIP_HOST =
                 "android.server.wm.app.LaunchIntoPip.finish_host_activity";
+        // Intent action that will request the activity to change the PiP aspect ratio
+        public static final String ACTION_CHANGE_ASPECT_RATIO =
+                "android.server.wm.app.LaunchIntoPip.change_aspect_ratio";
 
         // Adds an assertion that we do not ever get onStop() before we enter picture in picture
         public static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP =
