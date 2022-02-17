@@ -38,6 +38,7 @@ import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pGroupList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.WifiP2pManager.ExternalApproverRequestListener;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
 import android.os.Build;
@@ -87,6 +88,23 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         public String deviceName;
         public WifiP2pGroupList persistentGroups;
         public WifiP2pGroup group = new WifiP2pGroup();
+
+        // External approver
+        public boolean isAttached;
+        public boolean isDetached;
+
+        public void reset() {
+            valid = false;
+
+            networkInfo = null;
+            p2pInfo = null;
+            deviceName = null;
+            persistentGroups = null;
+            group = null;
+
+            isAttached = false;
+            isDetached = false;
+        }
     }
 
     private WifiManager mWifiManager;
@@ -281,12 +299,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
     private void resetResponse(MyResponse responseObj) {
         synchronized (responseObj) {
-            responseObj.valid = false;
-            responseObj.networkInfo = null;
-            responseObj.p2pInfo = null;
-            responseObj.deviceName = null;
-            responseObj.persistentGroups = null;
-            responseObj.group = null;
+            responseObj.reset();
         }
     }
 
@@ -976,5 +989,69 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                 return;
             }
         });
+    }
+
+    /** Test that external approver APIs. */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testP2pExternalApprover() {
+        final MacAddress peer = MacAddress.fromString("11:22:33:44:55:66");
+        if (!setupWifiP2p()) {
+            return;
+        }
+
+        ExternalApproverRequestListener listener =
+                new ExternalApproverRequestListener() {
+                    @Override
+                    public void onAttached(MacAddress deviceAddress) {
+                        synchronized (mMyResponse) {
+                            assertEquals(peer, deviceAddress);
+                            mMyResponse.valid = true;
+                            mMyResponse.isAttached = true;
+                            mMyResponse.notify();
+                        }
+                    }
+                    @Override
+                    public void onDetached(MacAddress deviceAddress, int reason) {
+                        synchronized (mMyResponse) {
+                            assertEquals(peer, deviceAddress);
+                            assertEquals(
+                                    ExternalApproverRequestListener.APPROVER_DETACH_REASON_REMOVE,
+                                    reason);
+                            mMyResponse.valid = true;
+                            mMyResponse.isDetached = true;
+                            mMyResponse.notify();
+                        }
+                    }
+                    @Override
+                    public void onConnectionRequested(int requestType, WifiP2pConfig config,
+                            WifiP2pDevice device) {
+                    }
+                    @Override
+                    public void onPinGenerated(MacAddress deviceAddress, String pin) {
+                    }
+            };
+
+        resetResponse(mMyResponse);
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            mWifiP2pManager.addExternalApprover(mWifiP2pChannel, peer, listener);
+        });
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(mMyResponse.isAttached);
+        assertFalse(mMyResponse.isDetached);
+
+        // Just ignore the result as there is no real incoming request.
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
+                    WifiP2pManager.CONNECTION_REQUEST_ACCEPT, null);
+        });
+
+        resetResponse(mMyResponse);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            mWifiP2pManager.removeExternalApprover(mWifiP2pChannel, peer, null);
+        });
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertTrue(mMyResponse.isDetached);
+        assertFalse(mMyResponse.isAttached);
     }
 }
