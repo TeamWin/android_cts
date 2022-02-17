@@ -136,7 +136,7 @@ public class AccessibilityServiceInfoTest {
                 | AccessibilityServiceInfo.CAPABILITY_CAN_REQUEST_TOUCH_EXPLORATION
                 | AccessibilityServiceInfo.CAPABILITY_CAN_RETRIEVE_WINDOW_CONTENT);
         assertEquals("foo.bar.Activity", speakingService.getSettingsActivityName());
-        assertEquals("foo.bar.TileService", speakingService.getTileServiceClassName());
+        assertEquals("foo.bar.TileService", speakingService.getTileServiceName());
         assertEquals(/* expected= */ "Some description",
                 speakingService.loadDescription(mPackageManager));
         assertEquals(/* expected= */ "Some summary",
