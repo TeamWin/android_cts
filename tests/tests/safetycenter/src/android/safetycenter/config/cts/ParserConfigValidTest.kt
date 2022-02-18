@@ -29,7 +29,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class ConfigValidTest {
+class ParserConfigValidTest {
     private val context: Context = getApplicationContext()
 
     @Test
@@ -110,6 +110,7 @@ class ConfigValidTest {
                     .setId("issue_only_all_optional")
                     .setPackageName("package")
                     .setProfile(SafetySource.PROFILE_ALL)
+                    .setMaxSeverityLevel(300)
                     .setBroadcastReceiverClassName("broadcast")
                     .setAllowLogging(false)
                     .setAllowRefreshOnPageOpen(true)
