@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureTestAppsInstalled.class)
+@Repeatable(EnsureTestAppInstalledGroup.class)
 public @interface EnsureTestAppInstalled {
 
     int ENSURE_TEST_APP_INSTALLED_WEIGHT = MIDDLE;
@@ -49,7 +49,7 @@ public @interface EnsureTestAppInstalled {
     String packageName();
 
     /** The user the testApp should be installed on. */
-    UserType onUser() default UserType.CURRENT_USER;
+    UserType onUser() default UserType.INSTRUMENTED_USER;
 
     /**
      * Whether this testApp should be returned by calls to {@code DeviceState#policyManager()}.

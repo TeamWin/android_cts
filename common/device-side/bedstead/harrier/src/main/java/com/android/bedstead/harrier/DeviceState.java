@@ -96,6 +96,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
@@ -1206,7 +1207,7 @@ public final class DeviceState extends HarrierRule {
      * @throws IllegalStateException if there is no harrier-managed profile
      */
     public UserReference profile(String profileType) {
-        return profile(profileType, /* forUser= */ UserType.CURRENT_USER);
+        return profile(profileType, /* forUser= */ UserType.INSTRUMENTED_USER);
     }
 
     /**
@@ -1270,7 +1271,7 @@ public final class DeviceState extends HarrierRule {
      * @throws IllegalStateException if there is no harrier-managed tv profile
      */
     public UserReference tvProfile() {
-        return tvProfile(/* forUser= */ UserType.CURRENT_USER);
+        return tvProfile(/* forUser= */ UserType.INSTRUMENTED_USER);
     }
 
     /**
@@ -1533,12 +1534,68 @@ public final class DeviceState extends HarrierRule {
         return broadcastReceiver;
     }
 
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
+            UserReference user, String action) {
+        return registerBroadcastReceiverForUser(user, action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
+            UserReference user, String action, Function<Intent, Boolean> checker) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(
+                            TestApis.context().androidContextAsUser(user), action, checker);
+            broadcastReceiver.register();
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+            return broadcastReceiver;
+        }
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(String action) {
+        return registerBroadcastReceiverForAllUsers(action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(
+            String action, Function<Intent, Boolean> checker) {
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(mContext, action, checker);
+            broadcastReceiver.registerForAllUsers();
+
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+            return broadcastReceiver;
+        }
+    }
+
     private UserReference resolveUserTypeToUser(UserType userType) {
         switch (userType) {
             case SYSTEM_USER:
                 return TestApis.users().system();
-            case CURRENT_USER:
+            case INSTRUMENTED_USER:
                 return TestApis.users().instrumented();
+            case CURRENT_USER:
+                return TestApis.users().current();
             case PRIMARY_USER:
                 return primaryUser();
             case SECONDARY_USER:
@@ -1547,6 +1604,8 @@ public final class DeviceState extends HarrierRule {
                 return workProfile();
             case TV_PROFILE:
                 return tvProfile();
+            case DPC_USER:
+                return dpc().user();
             case ANY:
                 throw new IllegalStateException("ANY UserType can not be used here");
             default:
@@ -2023,7 +2082,7 @@ public final class DeviceState extends HarrierRule {
      * <p>If the profile owner is not a RemoteDPC then an exception will be thrown.
      */
     public RemoteDpc profileOwner() {
-        return profileOwner(UserType.CURRENT_USER);
+        return profileOwner(UserType.INSTRUMENTED_USER);
     }
 
     /**

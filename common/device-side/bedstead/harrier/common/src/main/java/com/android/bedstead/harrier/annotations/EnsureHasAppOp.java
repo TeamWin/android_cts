@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureHasAppOps.class)
+@Repeatable(EnsureHasAppOpGroup.class)
 public @interface EnsureHasAppOp {
     String value();
 

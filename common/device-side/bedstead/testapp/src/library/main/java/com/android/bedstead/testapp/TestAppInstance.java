@@ -22,6 +22,9 @@ import android.accounts.RemoteAccountManagerWrapper;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.RemoteBluetoothManager;
+import android.bluetooth.RemoteBluetoothManagerWrapper;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -385,6 +388,15 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteKeyChain keyChain() {
         return new RemoteKeyChainWrapper(mConnector);
+    }
+
+    /**
+     * Access the {@link BluetoothManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteBluetoothManager bluetoothManager() {
+        return new RemoteBluetoothManagerWrapper(mConnector);
     }
 
     /**

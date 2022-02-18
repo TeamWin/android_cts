@@ -18,7 +18,7 @@ package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
 import static com.android.bedstead.harrier.OptionalBoolean.TRUE;
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import com.android.bedstead.harrier.OptionalBoolean;
@@ -42,7 +42,7 @@ import java.lang.annotation.Target;
 @EnsureHasProfileAnnotation("com.android.tv.profile")
 public @interface EnsureHasTvProfile {
     /** Which user type the tv profile should be attached to. */
-    UserType forUser() default CURRENT_USER;
+    UserType forUser() default INSTRUMENTED_USER;
 
     /** Whether the instrumented test app should be installed in the tv profile. */
     OptionalBoolean installInstrumentedApp() default TRUE;

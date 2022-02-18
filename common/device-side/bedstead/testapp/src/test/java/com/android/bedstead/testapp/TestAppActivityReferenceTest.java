@@ -16,6 +16,8 @@
 
 package com.android.bedstead.testapp;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrimaryUser;

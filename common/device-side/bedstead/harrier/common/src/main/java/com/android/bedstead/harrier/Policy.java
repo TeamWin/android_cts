@@ -331,7 +331,7 @@ public final class Policy {
             // TODO(b/219750042): Currently we only test that app ops apply to the current user
             Annotation[] withAppOpAnnotations = new Annotation[]{
                     ensureTestAppInstalled(DELEGATE_PACKAGE_NAME,
-                            UserType.CURRENT_USER, /* isPrimary= */ true),
+                            UserType.INSTRUMENTED_USER, /* isPrimary= */ true),
                     ensureTestAppHasAppOp(new String[]{appOp.appliedWith()})
             };
             annotations.add(
@@ -499,7 +499,7 @@ public final class Policy {
             // TODO(b/219750042): Currently we only test that app ops can be set as the primary user
             Annotation[] withAppOpAnnotations = new Annotation[]{
                     ensureTestAppInstalled(
-                            DELEGATE_PACKAGE_NAME, UserType.CURRENT_USER,
+                            DELEGATE_PACKAGE_NAME, UserType.INSTRUMENTED_USER,
                             /* isPrimary= */ true),
                     ensureTestAppHasAppOp(new String[]{appOp.appliedWith()})
             };

@@ -28,8 +28,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RepeatingAnnotation
-public @interface EnsurePackagesNotInstalled {
-    EnsurePackageNotInstalled[] value();
+public @interface EnsureHasPermissionGroup {
+    EnsureHasPermission[] value();
 
     /**
      * Weight sets the order that annotations will be resolved.

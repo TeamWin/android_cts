@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureTestAppHasPermissions.class)
+@Repeatable(EnsureTestAppHasPermissionGroup.class)
 public @interface EnsureTestAppHasPermission {
     String[] value();
 
