@@ -47,15 +47,32 @@ public class SignatureMultiLibsTest extends SignatureTest {
     @Test
     public void testSignature() {
         runWithTestResultObserver(mResultObserver -> {
-
             ApiComplianceChecker complianceChecker =
                     new ApiComplianceChecker(mResultObserver, mClassProvider);
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            parseApiResourcesAsStream(apiDocumentParser,
-                    Stream.concat(Arrays.stream(expectedApiFiles), Arrays.stream(previousApiFiles))
-                    .toArray(String[]::new))
+            parseApiResourcesAsStream(apiDocumentParser, expectedApiFiles)
+                    .forEach(complianceChecker::checkSignatureCompliance);
+
+            // After done parsing all expected API files, perform any deferred checks.
+            complianceChecker.checkDeferred();
+        });
+    }
+
+    /**
+     * Tests that the device's API matches the previous APIs defined in xml.
+     */
+    @Test
+    public void testPreviousSignatures() {
+        runWithTestResultObserver(mResultObserver -> {
+            ApiComplianceChecker complianceChecker =
+                    new ApiComplianceChecker(mResultObserver, mClassProvider);
+
+            ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
+
+            parseApiResourcesAsStream(apiDocumentParser, previousApiFiles)
+                    .map(clazz -> clazz.setPreviousApiFlag(true))
                     .forEach(complianceChecker::checkSignatureCompliance);
 
             // After done parsing all expected API files, perform any deferred checks.
@@ -71,7 +88,9 @@ public class SignatureMultiLibsTest extends SignatureTest {
     private Stream<String> getLibraries() {
         try {
             String result = runShellCommand(getInstrumentation(), "cmd package list libraries");
-            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1]);
+            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1])
+                    .peek(library -> System.out.printf("%s: Found library: %s%n",
+                            getClass().getSimpleName(), library));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -86,7 +105,17 @@ public class SignatureMultiLibsTest extends SignatureTest {
      */
     private boolean checkLibrary (String name) {
         String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
-        return getLibraries().anyMatch(libraryName::equals);
+        boolean matched = getLibraries().anyMatch(libraryName::equals);
+        if (matched) {
+            System.out.printf("%s: Processing API file %s, from library %s as it does match a"
+                            + " shared library on this device%n",
+                    getClass().getSimpleName(), name, libraryName);
+        } else {
+            System.out.printf("%s: Ignoring API file %s, from library %s as it does not match a"
+                    + " shared library on this device%n",
+                    getClass().getSimpleName(), name, libraryName);
+        }
+        return matched;
     }
 
     /**
