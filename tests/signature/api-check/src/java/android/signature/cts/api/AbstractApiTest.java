@@ -31,6 +31,7 @@ import android.signature.cts.VirtualPath.ResourcePath;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 
@@ -38,18 +39,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
+ * Base class for the signature tests.
  */
-public class AbstractApiTest extends TestCase {
+@RunWith(AndroidJUnit4.class)
+public abstract class AbstractApiTest {
 
     /**
      * The name of the optional instrumentation option that contains the name of the dynamic config
@@ -84,9 +88,8 @@ public class AbstractApiTest extends TestCase {
                 Settings.Global.HIDDEN_API_POLICY);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mResultObserver = new TestResultObserver();
 
         // Get the arguments passed to the instrumentation.
@@ -98,10 +101,9 @@ public class AbstractApiTest extends TestCase {
                         Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS),
                 getExpectedBlocklistExemptions(),
                 getGlobalExemptions());
-        assertEquals(
+        assertNull(
                 String.format("Device in bad state: %s is not as expected",
                         Settings.Global.HIDDEN_API_POLICY),
-                null,
                 getGlobalHiddenApiPolicy());
 
 

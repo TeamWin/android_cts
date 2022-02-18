@@ -18,9 +18,11 @@ package android.signature.cts.api.blocklist.debug;
 
 import android.signature.cts.DexMemberChecker;
 
+import static org.junit.Assert.assertFalse;
+
 public class DebugClassHiddenApiTest extends android.signature.cts.api.HiddenApiTest {
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
 
         // Try to exempt DexMemberChecker class from hidden API checks.
