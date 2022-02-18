@@ -25,6 +25,7 @@ import android.graphics.Bitmap;
 import android.os.BadParcelableException;
 import android.os.IBinder;
 import android.platform.test.annotations.AsbSecurityTest;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @RunWith(AndroidJUnit4.class)
-public class BitmapTest {
+public class BitmapTest extends StsExtraBusinessLogicTestCase {
 
     private Instrumentation mInstrumentation;
     private PeerConnection mRemoteConnection;
