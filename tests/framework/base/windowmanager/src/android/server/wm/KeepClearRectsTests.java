@@ -38,6 +38,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.cts.R;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
@@ -275,6 +276,20 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
             v2.setVisibility(View.VISIBLE);
         });
         assertSameElements(expected, getKeepClearRectsForActivity(activity));
+    }
+
+    @Test
+    public void testIgnoreKeepClearRectsFromDetachedViews() {
+        mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
+        final TestActivity activity = mTestSession.getActivity();
+
+        final Rect viewBounds = new Rect(0, 0, 60, 60);
+        final View v = createTestViewInActivity(activity, viewBounds);
+        mTestSession.runOnMainSyncAndWait(() -> v.setPreferKeepClear(true));
+        assertSameElements(Arrays.asList(viewBounds), getKeepClearRectsForActivity(activity));
+
+        mTestSession.runOnMainSyncAndWait(() -> ((ViewGroup) v.getParent()).removeView(v));
+        assertSameElements(EMPTY_LIST, getKeepClearRectsForActivity(activity));
     }
 
     @Test
