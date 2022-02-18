@@ -102,7 +102,7 @@ public final class TestUtils {
      * {@link #assumeMainlineModuleAtLeast(String, long)} instead.
      */
     @Deprecated
-    public static boolean skipTestIfMainlineLessThan(String module, long minVersion) {
+    static boolean skipTestIfMainlineLessThan(String module, long minVersion) {
         try {
             long actualVersion = getModuleVersion(module);
             if (actualVersion < minVersion) {
