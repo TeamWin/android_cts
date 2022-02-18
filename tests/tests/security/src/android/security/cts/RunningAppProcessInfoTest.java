@@ -19,12 +19,16 @@ package android.security.cts;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.platform.test.annotations.AsbSecurityTest;
+import androidx.test.runner.AndroidJUnit4;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 import java.util.List;
 
+@RunWith(AndroidJUnit4.class)
 public class RunningAppProcessInfoTest extends StsExtraBusinessLogicTestCase {
     /*
      * This test verifies severity vulnerability: apps can bypass the L restrictions in
@@ -33,6 +37,7 @@ public class RunningAppProcessInfoTest extends StsExtraBusinessLogicTestCase {
      */
 
     @AsbSecurityTest(cveBugId = 20034603)
+    @Test
     public void testRunningAppProcessInfo() {
         ActivityManager amActivityManager =
                 (ActivityManager) getInstrumentation().getContext().getSystemService(Context.ACTIVITY_SERVICE);
