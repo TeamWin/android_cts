@@ -87,22 +87,17 @@ TEST_F(TagSocketTest, TagSocket) {
   uint64_t cookie = getSocketCookie(sock);
   EXPECT_NE(NONEXISTENT_COOKIE, cookie);
 
-  // TODO(b/214338829): Uncomment lines that check tagging result from BPF map when the
-  // connectivity service is in charge of dumping BPF maps. Currently, it
-  // doesn't work because BPF maps are dumped by netd. The shell does not have
-  // permission to find netd service in user build. So, it only verify API
-  // return codes for now.
-  // EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
+  EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
 
   EXPECT_EQ(0, android_tag_socket(sock, TEST_TAG));
-  // EXPECT_TRUE(socketIsTagged(mBinder, cookie, geteuid(), TEST_TAG));
+  EXPECT_TRUE(socketIsTagged(mBinder, cookie, geteuid(), TEST_TAG));
   EXPECT_EQ(0, android_untag_socket(sock));
-  // EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
+  EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
 
   EXPECT_EQ(0, android_tag_socket_with_uid(sock, TEST_TAG, TEST_UID));
-  // EXPECT_TRUE(socketIsTagged(mBinder, cookie, TEST_UID, TEST_TAG));
+  EXPECT_TRUE(socketIsTagged(mBinder, cookie, TEST_UID, TEST_TAG));
   EXPECT_EQ(0, android_untag_socket(sock));
-  // EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
+  EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
 }
 
 TEST_F(TagSocketTest, TagSocketErrors) {
@@ -113,7 +108,7 @@ TEST_F(TagSocketTest, TagSocketErrors) {
 
   // Untag an untagged socket.
   EXPECT_EQ(-ENOENT, android_untag_socket(sock));
-  // EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
+  EXPECT_TRUE(socketIsNotTagged(mBinder, cookie));
 
   // Untag a closed socket.
   close(sock);
