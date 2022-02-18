@@ -46,11 +46,6 @@ public class CloudProviderSecondary extends CloudMediaProvider {
     }
 
     @Override
-    public Cursor onQueryMedia(String mediaId) {
-        throw new UnsupportedOperationException("onQueryMedia by id not supported");
-    }
-
-    @Override
     public Cursor onQueryMedia(Bundle extras) {
         final QueryExtras queryExtras = new QueryExtras(extras);
 
