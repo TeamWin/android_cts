@@ -18,6 +18,16 @@ package android.virtualdevice.streamedtestapp;
 
 import static android.hardware.camera2.CameraAccessException.CAMERA_DISABLED;
 import static android.hardware.camera2.CameraAccessException.CAMERA_DISCONNECTED;
+import static android.virtualdevice.cts.common.ActivityResultReceiver.ACTION_SEND_ACTIVITY_RESULT;
+import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_POWER_SPECTRUM_AT_FREQUENCY;
+import static android.virtualdevice.cts.common.ActivityResultReceiver.EXTRA_POWER_SPECTRUM_NOT_FREQUENCY;
+import static android.virtualdevice.cts.common.AudioHelper.ACTION_PLAY_AUDIO;
+import static android.virtualdevice.cts.common.AudioHelper.ACTION_RECORD_AUDIO;
+import static android.virtualdevice.cts.common.AudioHelper.AMPLITUDE;
+import static android.virtualdevice.cts.common.AudioHelper.BUFFER_SIZE_IN_BYTES;
+import static android.virtualdevice.cts.common.AudioHelper.CHANNEL_COUNT;
+import static android.virtualdevice.cts.common.AudioHelper.FREQUENCY;
+import static android.virtualdevice.cts.common.AudioHelper.SAMPLE_RATE;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
@@ -29,9 +39,18 @@ import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
+import android.virtualdevice.cts.common.AudioHelper;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Test activity to be streamed in the virtual device.
@@ -39,7 +58,7 @@ import android.util.Log;
 public class MainActivity extends Activity {
 
     private static final String TAG = "StreamedTestApp";
-    static final String PACKAGE_NAME  = "android.virtualdevice.streamedtestapp";
+    static final String PACKAGE_NAME = "android.virtualdevice.streamedtestapp";
 
     /**
      * Tell this activity to call the {@link #EXTRA_ACTIVITY_LAUNCHED_RECEIVER} with
@@ -123,6 +142,12 @@ public class MainActivity extends Activity {
                     setResult(RESULT_OK, resultData);
                     finish();
                     break;
+                case ACTION_PLAY_AUDIO:
+                    playAudio();
+                    break;
+                case ACTION_RECORD_AUDIO:
+                    recordAudio();
+                    break;
                 default:
                     Log.w(TAG, "Unknown action: " + action);
             }
@@ -139,7 +164,7 @@ public class MainActivity extends Activity {
             clipboardManager.setPrimaryClip(
                     new ClipData(
                             "CTS clip data",
-                            new String[] { "application/text" },
+                            new String[]{"application/text"},
                             new ClipData.Item(clipboardContent)));
             Log.d(TAG, "Wrote \"" + clipboardContent + "\" to clipboard");
         } else {
@@ -192,5 +217,53 @@ public class MainActivity extends Activity {
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "IllegalArgumentException - maybe invalid camera id? (" + cameraId + ")", e);
         }
+    }
+
+    private void playAudio() {
+        int numSamples = AudioHelper.computeNumSamples(/* timeMs= */ 1000, SAMPLE_RATE,
+                CHANNEL_COUNT);
+        ByteBuffer audioData = AudioHelper.createAudioData(
+                SAMPLE_RATE, numSamples, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
+
+        int bufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize,
+                AudioTrack.MODE_STREAM);
+        audioTrack.play();
+
+        // Write to the audio track asynchronously to avoid ANRs.
+        CompletableFuture.runAsync(() -> {
+            int remainingSamples = numSamples;
+            while (remainingSamples > 0) {
+                remainingSamples -= audioTrack.write(
+                        audioData,
+                        audioData.remaining(),
+                        AudioTrack.WRITE_BLOCKING);
+            }
+            audioTrack.release();
+            finish();
+        });
+    }
+
+    private void recordAudio() {
+        AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE_IN_BYTES);
+        audioRecord.startRecording();
+
+        // Read from the audio record asynchronously to avoid ANRs.
+        CompletableFuture.runAsync(() -> {
+            AudioHelper.CapturedAudio capturedAudio = new AudioHelper.CapturedAudio(audioRecord);
+            double powerSpectrumNotFrequency = capturedAudio.getPowerSpectrum(FREQUENCY + 100);
+            double powerSpectrumAtFrequency = capturedAudio.getPowerSpectrum(FREQUENCY);
+
+            Intent intent = new Intent(ACTION_SEND_ACTIVITY_RESULT);
+            intent.putExtra(EXTRA_POWER_SPECTRUM_NOT_FREQUENCY, powerSpectrumNotFrequency);
+            intent.putExtra(EXTRA_POWER_SPECTRUM_AT_FREQUENCY, powerSpectrumAtFrequency);
+            sendBroadcast(intent);
+
+            audioRecord.release();
+            finish();
+        });
     }
 }
