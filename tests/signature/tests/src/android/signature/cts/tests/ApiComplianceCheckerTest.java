@@ -660,18 +660,20 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
     }
 
     /**
-     * Compatible (provide implementation for previous abstract method):
+     * Incompatible (provide implementation for abstract method):
      *
      * public abstract void Normal#notSyncMethod()
      * -> public void Normal#notSyncMethod()
      */
     @Test
     public void testRemovingAbstractFromMethod() {
-        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
-        JDiffClassDescription.JDiffMethod method = method("notSyncMethod",
-                Modifier.PUBLIC | Modifier.ABSTRACT, "void");
-        clz.addMethod(method);
-        checkSignatureCompliance(clz);
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_METHOD)) {
+            JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+            JDiffClassDescription.JDiffMethod method = method("notSyncMethod",
+                    Modifier.PUBLIC | Modifier.ABSTRACT, "void");
+            clz.addMethod(method);
+            checkSignatureCompliance(clz, observer);
+        }
     }
 
     /**
