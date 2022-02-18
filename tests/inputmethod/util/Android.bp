@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,23 +16,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsInputMethodTestCases",
+android_library {
+    name: "cts-inputmethod-util",
     defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
-    compile_multilib: "both",
-    libs: ["android.test.runner"],
     static_libs: [
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "cts-wm-util",
-        "cts-inputmethod-util",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
         "CtsMockSpellCheckerLib",
