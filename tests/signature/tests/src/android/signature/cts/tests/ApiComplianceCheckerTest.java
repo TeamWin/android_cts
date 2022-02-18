@@ -194,6 +194,51 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         assertEquals(method.toSignatureString(), "public native void nativeMethod()");
     }
 
+    /**
+     * Check that a varargs method is treated as compliant.
+     */
+    @Test
+    public void testVarargsMethod() {
+        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+        JDiffClassDescription.JDiffMethod method = method("varargs",
+                Modifier.PUBLIC, "void");
+        method.addParam("java.lang.String...");
+        clz.addMethod(method);
+        assertEquals(method.toSignatureString(), "public void varargs(java.lang.String...)");
+
+        checkSignatureCompliance(clz);
+    }
+
+    /**
+     * Check that a clone method (which produces a special method that is marked as {@code bridge}
+     * and {@code synthetic}) is treated as compliant.
+     */
+    @Test
+    public void testCloneMethod() {
+        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+        // The generic method:
+        //     NormalClass clone() throws CloneNotSupportedException
+        JDiffClassDescription.JDiffMethod method = method("clone",
+                Modifier.PUBLIC, NormalClass.class.getName());
+        method.addException(CloneNotSupportedException.class.getName());
+        clz.addMethod(method);
+        assertEquals(method.toSignatureString(),
+                "public android.signature.cts.tests.data.NormalClass clone()"
+                        + " throws java.lang.CloneNotSupportedException");
+
+        // The synthetic bridge method:
+        //     Object clone() throws CloneNotSupportedException
+        method = method("clone",
+                Modifier.PUBLIC, Object.class.getName());
+        method.addException(CloneNotSupportedException.class.getName());
+        clz.addMethod(method);
+        assertEquals(method.toSignatureString(),
+                "public java.lang.Object clone()"
+                        + " throws java.lang.CloneNotSupportedException");
+
+        checkSignatureCompliance(clz);
+    }
+
     @Test
     public void testFinalField() {
         JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
@@ -512,6 +557,94 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
     }
 
     /**
+     * The current API lists the class as being final but the runtime class does not so they are
+     * incompatible.
+     */
+    @Test
+    public void testAddingFinalToAClass() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = createClass("FinalClass");
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    /**
+     * A previously released API lists the class as being final but the runtime class does not.
+     *
+     * <p>While adding a final modifier to a class is not strictly backwards compatible it is when
+     * the class has no accessible constructors and so cannot be instantiated or extended, as is the
+     * case in this test.</p>
+     */
+    @Test
+    public void testAddingFinalToAClassNoCtor_PreviousApi() {
+        JDiffClassDescription clz = createClass("FinalClass");
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
+    }
+
+    /**
+     * A previously released API lists the class as being final but the runtime class does not.
+     *
+     * <p>Adding a final modifier to a class is not backwards compatible when the class has some
+     * accessible constructors and so could be instantiated and/or extended, as is the case of this
+     * class.</p>
+     */
+    @Test
+    public void testAddingFinalToAClassWithCtor_PreviousApi() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            String simpleName = "FinalClassWithCtor";
+            JDiffClassDescription clz = createClass(simpleName);
+            clz.setPreviousApiFlag(true);
+            clz.addConstructor(ctor(simpleName, Modifier.PUBLIC));
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    /**
+     * The current API lists the class as being static but the runtime class does not so they are
+     * incompatible.
+     */
+    @Test
+    public void testAddingStaticToInnerClass() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            JDiffClassDescription clz = createClass("AbstractClass.StaticNestedClass");
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    /**
+     * A previously released API lists the class as being static but the runtime class does not.
+     *
+     * <p>While adding a static modifier to a class is not strictly backwards compatible it is when
+     * the class has no accessible constructors and so cannot be instantiated or extended, as is the
+     * case in this test.</p>
+     */
+    @Test
+    public void testAddingStaticToInnerClassNoCtor_PreviousApi() {
+        JDiffClassDescription clz = createClass("AbstractClass.StaticNestedClass");
+        clz.setPreviousApiFlag(true);
+        checkSignatureCompliance(clz);
+    }
+
+    /**
+     * A previously released API lists the class as being static but the runtime class does not.
+     *
+     * <p>Adding a static modifier to a class is not backwards compatible when the class has some
+     * accessible constructors and so could be instantiated and/or extended, as is the case of this
+     * class.</p>
+     */
+    @Test
+    public void testAddingStaticToInnerClassWithCtor_PreviousApi() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_CLASS)) {
+            String simpleName = "AbstractClass.StaticNestedClassWithCtor";
+            JDiffClassDescription clz = createClass(simpleName);
+            clz.setPreviousApiFlag(true);
+            clz.addConstructor(ctor(simpleName, Modifier.PUBLIC));
+            checkSignatureCompliance(clz, observer);
+        }
+    }
+
+    /**
      * Compatible (no change):
      *
      * public abstract void AbstractClass#abstractMethod()
@@ -538,6 +671,23 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
         JDiffClassDescription.JDiffMethod method = method("notSyncMethod",
                 Modifier.PUBLIC | Modifier.ABSTRACT, "void");
         clz.addMethod(method);
+        checkSignatureCompliance(clz);
+    }
+
+    /**
+     * A previously released API lists the method as being abstract but the runtime class does not.
+     *
+     * <p>While adding an abstract modifier to a method is not strictly backwards compatible it is 
+     * when the class has no accessible constructors and so cannot be instantiated or extended, as
+     * is the case in this test.</p>
+     */
+    @Test
+    public void testRemovingAbstractFromMethodOnClassNoCtor_PreviousApi() {
+        JDiffClassDescription clz = createClass(NormalClass.class.getSimpleName());
+        JDiffClassDescription.JDiffMethod method = method("notSyncMethod",
+                Modifier.PUBLIC | Modifier.ABSTRACT, "void");
+        clz.addMethod(method);
+        clz.setPreviousApiFlag(true);
         checkSignatureCompliance(clz);
     }
 
