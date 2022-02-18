@@ -27,6 +27,7 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import java.lang.reflect.Method;
 import java.security.KeyStore;
 import javax.crypto.KeyGenerator;
@@ -39,7 +40,7 @@ import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 
 @RunWith(AndroidJUnit4.class)
-public class CVE_2020_0105 {
+public class CVE_2020_0105 extends StsExtraBusinessLogicTestCase {
     private WakeLock mScreenLock;
 
     @Before
