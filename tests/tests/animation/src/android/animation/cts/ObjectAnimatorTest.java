@@ -38,6 +38,7 @@ import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.os.SystemClock;
+import android.platform.test.annotations.FlakyTest;
 import android.util.Property;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -141,6 +142,7 @@ public class ObjectAnimatorTest {
         assertEquals(animator.getPropertyName(), objAnimator.getPropertyName());
     }
 
+    @FlakyTest
     @Test
     public void testOfInt() throws Throwable {
         Object object = mActivity.view.newBall;
@@ -165,6 +167,7 @@ public class ObjectAnimatorTest {
         verify(mockListener, timeout(400)).onAnimationEnd(intAnimator, false);
     }
 
+    @FlakyTest
     @Test
     public void testOfObject() throws Throwable {
         Object object = mActivity.view.newBall;
@@ -296,6 +299,7 @@ public class ObjectAnimatorTest {
         assertEquals(propertyName, actualPropertyName);
     }
 
+    @FlakyTest
     @Test
     public void testSetFloatValues() throws Throwable {
         Object object = mActivity.view.newBall;
