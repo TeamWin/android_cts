@@ -28,6 +28,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.TelephonyManager;
+import android.telephony.UiccCardInfo;
+import android.telephony.UiccPortInfo;
 import android.telephony.cts.TelephonyUtils;
 import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccCardManager;
@@ -36,6 +38,8 @@ import android.telephony.euicc.EuiccManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -558,6 +562,53 @@ public class EuiccManagerTest {
         // Restore the original country list
         mEuiccManager.setSupportedCountries(originalSupportedCountry);
         mEuiccManager.setUnsupportedCountries(originalUnsupportedCountry);
+    }
+
+    @Test
+    public void testIsSimPortAvailableWithInvalidPortIndex() throws Exception {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        boolean result = mEuiccManager.isSimPortAvailable(/* portIndex= */ -1);
+
+        assertFalse(result);
+    }
+
+    @Test
+    public void testIsSimPortAvailableWithValidPorts() throws Exception {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+        // Get all the available UiccCardInfos.
+        TelephonyManager telephonyManager = getContext().getSystemService(TelephonyManager.class);
+        List<UiccCardInfo> uiccCardInfos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
+                        (tm) -> tm.getUiccCardsInfo());
+        for (UiccCardInfo cardInfo : uiccCardInfos) {
+            List<UiccPortInfo> portInfoList = (List<UiccPortInfo>) cardInfo.getPorts();
+            if (cardInfo.isEuicc()) {
+                for (UiccPortInfo portInfo : portInfoList) {
+                    // Check if port is active and no profile install on it.
+                    if (portInfo.isActive() && portInfo.getIccId() == null) {
+                        boolean result = mEuiccManager.isSimPortAvailable(portInfo.getPortIndex());
+                        assertTrue(result);
+                    } else {
+                        // Port is not available.
+                        boolean result = mEuiccManager.isSimPortAvailable(portInfo.getPortIndex());
+                        assertFalse(result);
+                    }
+                }
+            } else {
+                for (UiccPortInfo portInfo : portInfoList) {
+                    // Port is not Euicc.
+                    boolean result = mEuiccManager.isSimPortAvailable(portInfo.getPortIndex());
+                    assertFalse(result);
+                }
+            }
+        }
     }
 
     private Context getContext() {

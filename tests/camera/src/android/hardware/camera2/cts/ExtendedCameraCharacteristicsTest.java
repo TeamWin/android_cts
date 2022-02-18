@@ -1887,6 +1887,101 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         }
     }
 
+    /**
+     * The same set of HDR profiles MUST be supported by both the primary rear-facing and
+     * primary front-facing cameras.
+     */
+    @CddTest(requirement="7.5.4/C-2-1")
+    @Test
+    public void test10BitDeviceSupport() throws Exception {
+        boolean rearFacing10bitSupport = false;
+        boolean frontFacing10bitSupport = false;
+        Set<Integer> rearFacingProfiles = new ArraySet<>();
+        Set<Integer> frontFacingProfiles = new ArraySet<>();
+
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "test10BitDeviceSupport: Testing camera ID " + mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supports10BitOutput = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+            if (!supports10BitOutput) {
+                continue;
+            }
+
+            DynamicRangeProfiles dynamicProfiles = c.get(
+                    CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
+
+            if (CameraTestUtils.isPrimaryRearFacingCamera(mCameraManager, mAllCameraIds[i])) {
+                rearFacing10bitSupport = true;
+                rearFacingProfiles = dynamicProfiles.getSupportedProfiles();
+            } else if (CameraTestUtils.isPrimaryFrontFacingCamera(mCameraManager,
+                    mAllCameraIds[i])) {
+                frontFacing10bitSupport = true;
+                frontFacingProfiles = dynamicProfiles.getSupportedProfiles();
+            }
+        }
+
+        assertEquals("Primary front facing camera 10-bit support: " +
+                frontFacing10bitSupport + " must match with the rear facing 10-bit support: " +
+                rearFacing10bitSupport, frontFacing10bitSupport, rearFacing10bitSupport);
+        assertTrue("Primary front facing camera dynamic range profiles must match with " +
+                "the rear facing dynamic range profiles! ",
+                frontFacingProfiles.equals(rearFacingProfiles));
+    }
+
+    /**
+     * The same HDR profiles must be supported for all BACKWARD_COMPATIBLE-capable physical
+     * sub-cameras of a logical camera, and the logical camera itself.
+     */
+    @CddTest(requirement="7.5.4/C-2-2")
+    @Test
+    public void test10BitLogicalDeviceSupport() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "test10BitLogicalDeviceSupport: Testing camera ID " + mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            StaticMetadata staticMetadata = mAllStaticInfo.get(mAllCameraIds[i]);
+            boolean supports10BitOutput = staticMetadata.isCapabilitySupported(
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+            if (!supports10BitOutput) {
+                continue;
+            }
+
+            if (!staticMetadata.isColorOutputSupported()) {
+                continue;
+            }
+
+            if (staticMetadata.isLogicalMultiCamera()) {
+                Set<Integer> logicalProfiles =
+                        staticMetadata.getAvailableDynamicRangeProfilesChecked();
+                Set<String> physicalCameraIds = c.getPhysicalCameraIds();
+                for (String physicalId : physicalCameraIds) {
+                    StaticMetadata physicalMeta = mAllStaticInfo.get(physicalId);
+                    if (physicalMeta.isColorOutputSupported()) {
+                        boolean physical10bitOutput =
+                                physicalMeta.isCapabilitySupported(CameraCharacteristics.
+                                        REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
+                        assertTrue("The logical camera: " + mAllCameraIds[i] +
+                                " 10-bit support must match with all publicly accessible color " +
+                                "capable physical devices: " + physicalId + " !",
+                                physical10bitOutput);
+
+                        Set<Integer> physicalProfiles =
+                                physicalMeta.getAvailableDynamicRangeProfilesChecked();
+                        assertTrue("The logical camera: " + mAllCameraIds[i] +
+                                " dynamic range profiles must match with all publicly accessible " +
+                                "and color capable physical devices: " + physicalId + " !",
+                                physicalProfiles.equals(logicalProfiles));
+                    }
+                }
+            }
+        }
+    }
+
     private void verifyLensCalibration(float[] poseRotation, float[] poseTranslation,
             Integer poseReference, float[] cameraIntrinsics, float[] distortion,
             Rect precorrectionArray, Integer facing) {

@@ -15,6 +15,8 @@
  */
 package android.app.appsearch.cts.app;
 
+import static android.Manifest.permission.READ_CALENDAR;
+import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_GLOBAL_APP_SEARCH_DATA;
 import static android.Manifest.permission.READ_SMS;
@@ -46,6 +48,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -63,6 +66,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -315,7 +320,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     public void testAllowPermissionAccess() throws Exception {
         // index a global searchable document in pkg_A and set it needs READ_SMS to read it.
         indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
-                SetSchemaRequest.READ_SMS);
+                ImmutableSet.of(ImmutableSet.of(SetSchemaRequest.READ_SMS)));
 
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
@@ -333,13 +338,21 @@ public class GlobalSearchSessionPlatformCtsTest {
                 READ_SMS);
     }
 
+    //TODO(b/202194495) add test for READ_HOME_APP_SEARCH_DATA and READ_ASSISTANT_APP_SEARCH_DATA
+    // once they are available in Shell.
     @Test
-    public void testRequireAllPermissionsToAccess() throws Exception {
+    public void testRequireAllPermissionsOfAnyCombinationToAccess() throws Exception {
         // index a global searchable document in pkg_A and set it needs both READ_SMS and
-        // READ_EXTERNAL_STORAGE to read it.
+        // READ_CALENDAR or READ_HOME_APP_SEARCH_DATA only or READ_ASSISTANT_APP_SEARCH_DATA
+        // only to read it.
         indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
-                SetSchemaRequest.READ_SMS, SetSchemaRequest.READ_EXTERNAL_STORAGE);
-        // Only has READ_SMS cannot access the document.
+                ImmutableSet.of(
+                        ImmutableSet.of(SetSchemaRequest.READ_SMS,
+                                SetSchemaRequest.READ_CALENDAR),
+                        ImmutableSet.of(SetSchemaRequest.READ_CONTACTS),
+                        ImmutableSet.of(SetSchemaRequest.READ_EXTERNAL_STORAGE)));
+
+        // Has READ_SMS only cannot access the document.
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
@@ -355,7 +368,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                 },
                 READ_SMS);
 
-        // Has both permission can access the document.
+        // Has READ_SMS and READ_CALENDAR can access the document.
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
@@ -369,7 +382,39 @@ public class GlobalSearchSessionPlatformCtsTest {
                                             .build()).get();
                     assertThat(result.getSuccesses()).hasSize(1);
                 },
-                READ_SMS, READ_EXTERNAL_STORAGE);
+                READ_SMS, READ_CALENDAR);
+
+        // Has READ_CONTACTS can access the document also.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).hasSize(1);
+                },
+                READ_CONTACTS);
+
+        // Has READ_EXTERNAL_STORAGE can access the document.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+
+                    // Can get the document
+                    AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
+                            .getByDocumentId(PKG_A, "database",
+                                    new GetByDocumentIdRequest.Builder("namespace")
+                                            .addIds("id1")
+                                            .build()).get();
+                    assertThat(result.getSuccesses()).hasSize(1);
+                },
+                READ_EXTERNAL_STORAGE);
     }
 
     @Test
@@ -388,7 +433,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Index a global searchable document in pkg_A and set it needs READ_SMS to read it.
         indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1",
-                SetSchemaRequest.READ_SMS);
+                ImmutableSet.of(ImmutableSet.of(SetSchemaRequest.READ_SMS)));
 
         // Try to get document w/o permission, this is unAuthority error.
         mGlobalSearchSession =
@@ -851,13 +896,26 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     private void indexGloballySearchableDocument(String pkg, String databaseName, String namespace,
-            String id, int... requiredPermissions) throws Exception {
+            String id) throws Exception {
+        indexGloballySearchableDocument(pkg, databaseName, namespace, id, Collections.emptySet());
+    }
+
+    private void indexGloballySearchableDocument(String pkg, String databaseName, String namespace,
+            String id, Set<Set<Integer>> visibleToPermissions) throws Exception {
+        // binder won't accept Set or Integer, we need to convert to List<Bundle>.
+        List<Bundle> permissionBundles = new ArrayList<>(visibleToPermissions.size());
+        for (Set<Integer> allRequiredPermissions : visibleToPermissions) {
+            Bundle permissionBundle = new Bundle();
+            permissionBundle.putIntegerArrayList("permission",
+                    new ArrayList<>(allRequiredPermissions));
+            permissionBundles.add(permissionBundle);
+        }
         GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
                 bindToHelperService(pkg);
         try {
             ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
             assertThat(commandReceiver.indexGloballySearchableDocument(
-                    databaseName, namespace, id, requiredPermissions)).isTrue();
+                    databaseName, namespace, id, permissionBundles)).isTrue();
         } finally {
             serviceConnection.unbind();
         }

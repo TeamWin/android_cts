@@ -409,6 +409,8 @@ public class AnalogHeadsetAudioActivity
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
+        reportHeadsetPort(mHeadsetDeviceInfo != null);
+
         showConnectedDevice();
     }
 

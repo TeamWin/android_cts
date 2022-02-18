@@ -33,17 +33,17 @@ import android.app.appsearch.testutil.AppSearchEmail;
 import android.app.appsearch.testutil.AppSearchSessionShimImpl;
 import android.app.appsearch.testutil.GlobalSearchSessionShimImpl;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.util.ArraySet;
 import android.util.Log;
 
 import com.android.cts.appsearch.ICommandReceiver;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 public class AppSearchTestService extends Service {
 
@@ -121,7 +121,7 @@ public class AppSearchTestService extends Service {
 
         @Override
         public boolean indexGloballySearchableDocument(
-                String databaseName, String namespace, String id, int[] requiredPermissions) {
+                String databaseName, String namespace, String id, List<Bundle> permissionBundles) {
             try {
                 AppSearchSessionShim db =
                         AppSearchSessionShimImpl.createSearchSession(
@@ -132,19 +132,20 @@ public class AppSearchTestService extends Service {
 
                 // By default, schemas/documents are globally searchable. We don't purposely set
                 // setSchemaTypeDisplayedBySystem(false) for this schema
-                db.setSchema(
+                SetSchemaRequest.Builder setSchemaRequestBuilder =
                         new SetSchemaRequest.Builder()
                                 .setForceOverride(true)
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setRequiredPermissionsForSchemaTypeVisibility(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        Arrays.stream(requiredPermissions).boxed()
-                                                .collect(Collectors.toSet()))
-                                .build())
-                        .get();
+                                .addSchemas(AppSearchEmail.SCHEMA);
+                for (int i = 0; i < permissionBundles.size(); i++) {
+                    setSchemaRequestBuilder.addRequiredPermissionsForSchemaTypeVisibility(
+                            AppSearchEmail.SCHEMA_TYPE,
+                            new ArraySet<>(permissionBundles.get(i)
+                                    .getIntegerArrayList("permission")));
+                }
+                db.setSchema(setSchemaRequestBuilder.build()).get();
 
                 AppSearchEmail emailDocument =
-                        new AppSearchEmail.Builder("namespace", "id1")
+                        new AppSearchEmail.Builder(namespace, id)
                                 .setFrom("from@example.com")
                                 .setTo("to1@example.com", "to2@example.com")
                                 .setSubject("subject")

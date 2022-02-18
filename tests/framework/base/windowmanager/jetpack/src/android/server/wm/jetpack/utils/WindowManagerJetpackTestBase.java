@@ -82,8 +82,16 @@ public class WindowManagerJetpackTestBase {
     }
 
     public Activity startActivityNewTask(@NonNull Class activityClass) {
+        return startActivityNewTask(activityClass, null /* activityId */);
+    }
+
+    public Activity startActivityNewTask(@NonNull Class activityClass,
+            @Nullable String activityId) {
         final Intent intent = new Intent(mContext, activityClass);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        if (activityId != null) {
+            intent.putExtra(ACTIVITY_ID_LABEL, activityId);
+        }
         final Activity activity = mInstrumentation.startActivitySync(intent);
         return activity;
     }

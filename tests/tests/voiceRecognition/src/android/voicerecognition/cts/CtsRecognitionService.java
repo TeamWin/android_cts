@@ -89,7 +89,7 @@ public class CtsRecognitionService extends RecognitionService {
     }
 
     @Override
-    public void triggerModelDownload(@NonNull Intent recognizerIntent) {
+    public void onTriggerModelDownload(@NonNull Intent recognizerIntent) {
         sDownloadTriggers.add(recognizerIntent);
     }
 

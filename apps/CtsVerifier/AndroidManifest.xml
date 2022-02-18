@@ -102,6 +102,9 @@
     <!-- Needed for sensor tests -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
+    <!-- Needed for Wi-Fi Direct tests from T -->
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+
     <application android:networkSecurityConfig="@xml/network_security_config"
                  android:label="@string/app_name"
                  android:icon="@drawable/icon"

@@ -37,7 +37,7 @@ public class TextTest {
     private static final String TAG = "TextTest";
 
     @Test
-    public void testCreateText_defaultBuilder() {
+    public void testCreateText_defaultValues() {
         Text text = new Text.Builder("test").build();
 
         assertThat(text.getText()).isEqualTo("test");
@@ -54,24 +54,7 @@ public class TextTest {
     }
 
     @Test
-    public void testCreateText_builderWithMiddleTrunctAtType() {
-        Text text = new Text.Builder("test", TextUtils.TruncateAt.MIDDLE).build();
-
-        assertThat(text.getText()).isEqualTo("test");
-        assertThat(text.getTruncateAtType()).isEqualTo(TextUtils.TruncateAt.MIDDLE);
-        assertThat(text.getMaxLines()).isEqualTo(1);
-
-        Parcel parcel = Parcel.obtain();
-        parcel.setDataPosition(0);
-        text.writeToParcel(parcel, 0);
-        parcel.setDataPosition(0);
-        Text copyText = Text.CREATOR.createFromParcel(parcel);
-        assertThat(text).isEqualTo(copyText);
-        parcel.recycle();
-    }
-
-    @Test
-    public void testCreateText_defaultBuilder_marqueeTrunctAtType_maxLinesTwo() {
+    public void testCreateText_marqueeTrunctAtType_maxLinesTwo() {
         Text text = new Text.Builder("test")
                 .setTruncateAtType(TextUtils.TruncateAt.MARQUEE).setMaxLines(2).build();
 

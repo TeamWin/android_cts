@@ -23,12 +23,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.MloLink;
 import android.net.wifi.ScanResult;
 import android.net.wifi.ScanResult.InformationElement;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.net.wifi.WifiScanner;
 import android.net.wifi.WifiSsid;
+import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
@@ -379,5 +382,58 @@ public class ScanResultTest extends WifiJUnit3TestBase {
             mWifiManager.startScan();
             assertTrue("Should be throttled", waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_FAILURE));
         }
+    }
+
+    /**
+     * Test MLO Attributes in ScanResult Constructor (WiFi-7)
+     */
+    public void testScanResultMloAttributes() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        ScanResult scanResult = new ScanResult();
+        assertNull(scanResult.getApMldMacAddress());
+        assertEquals(MloLink.INVALID_MLO_LINK_ID, scanResult.getApMloLinkId());
+        assertNotNull(scanResult.getAffiliatedMloLinks());
+        assertTrue(scanResult.getAffiliatedMloLinks().isEmpty());
+    }
+
+    /**
+     * Test MLO Link Constructor (WiFi-7)
+     */
+    public void testMloLinkConstructor() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        MloLink mloLink = new MloLink();
+        assertEquals(WifiScanner.WIFI_BAND_UNSPECIFIED, mloLink.getBand());
+        assertEquals(0, mloLink.getChannel());
+        assertEquals(MloLink.INVALID_MLO_LINK_ID, mloLink.getLinkId());
+        assertNull(mloLink.getStaMacAddress());
+        assertEquals(MloLink.MLO_LINK_STATE_UNASSOCIATED, mloLink.getState());
+    }
+
+    /**
+     * Test MLO Link parcelable APIs
+     */
+    public void testMloLinkParcelable() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        Parcel p = Parcel.obtain();
+        MloLink mloLink = new MloLink();
+
+        mloLink.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        MloLink newMloLink = MloLink.CREATOR.createFromParcel(p);
+        assertEquals(mloLink, newMloLink);
+        assertEquals("hashCode() did not get right hashCode",
+                mloLink.hashCode(), newMloLink.hashCode());
     }
 }

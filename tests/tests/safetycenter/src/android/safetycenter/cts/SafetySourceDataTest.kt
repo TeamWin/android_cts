@@ -68,6 +68,7 @@ class SafetySourceDataTest {
         .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
         .addAction(
             SafetySourceIssue.Action.Builder(
+                "action_id_1",
                 "Action label 1",
                 PendingIntent.getActivity(
                     context, 0 /* requestCode= */,
@@ -85,6 +86,7 @@ class SafetySourceDataTest {
     )
         .addAction(
             SafetySourceIssue.Action.Builder(
+                "action_id_2",
                 "Action label 2",
                 PendingIntent.getService(
                     context, 0 /* requestCode= */,

@@ -16,8 +16,8 @@
 
 package android.safetycenter.cts
 
-import android.Manifest.permission.SEND_SAFETY_CENTER_UPDATE
 import android.Manifest.permission.MANAGE_SAFETY_CENTER
+import android.Manifest.permission.SEND_SAFETY_CENTER_UPDATE
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.Context
@@ -42,7 +42,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
+import com.google.common.util.concurrent.MoreExecutors.directExecutor
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -82,17 +86,36 @@ class SafetyCenterManagerTest {
             )
                 .build()
         ).build()
-
-    @Before
-    @After
-    fun clearSafetyCenterDataBetweenTest() {
-        safetyCenterManager.clearDataWithPermission()
+    private val listenerChannel = Channel<SafetyCenterData>()
+    // The lambda has to be wrapped to the right type because kotlin wraps lambdas in a new Java
+    // functional interface implementation each time they are referenced/cast to a Java interface:
+    // b/215569072.
+    private val listener = OnSafetyCenterDataChangedListener {
+        runBlockingWithTimeout {
+            listenerChannel.send(it)
+        }
     }
 
     @Before
     @After
-    fun resetBroadcastReceiver() {
+    fun clearDataBetweenTest() {
+        safetyCenterManager.removeOnSafetyCenterDataChangedListenerWithPermission(listener)
+        safetyCenterManager.clearDataWithPermission()
         SafetySourceBroadcastReceiver.reset()
+    }
+
+    @Before
+    fun addAdditionalSafetySourcesBeforeTest() {
+        safetyCenterManager.clearAdditionalSafetySourcesWithPermission()
+        safetyCenterManager.addAdditionalSafetySourceWithPermission(
+            sourceId, CTS_PACKAGE_NAME,
+            CTS_BROADCAST_RECEIVER_NAME
+        )
+    }
+
+    @After
+    fun clearAdditionalSafetySourcesAfterTest() {
+        safetyCenterManager.clearAdditionalSafetySourcesWithPermission()
     }
 
     @Test
@@ -134,6 +157,7 @@ class SafetyCenterManagerTest {
             )
                 .addAction(
                     SafetySourceIssue.Action.Builder(
+                        "action_id",
                         "Solve issue",
                         somePendingIntent
                     ).build()
@@ -250,14 +274,14 @@ class SafetyCenterManagerTest {
         SafetySourceBroadcastReceiver.safetySourceDataOnRescanClick = safetySourceDataOnRescanClick
 
         safetyCenterManager.refreshSafetySourcesWithPermission(
-                REFRESH_REASON_RESCAN_BUTTON_CLICK
+            REFRESH_REASON_RESCAN_BUTTON_CLICK
         )
 
         assertFailsWith(TimeoutCancellationException::class) {
-            SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT_SHORT)
+            SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(TIMEOUT_SHORT)
         }
         val lastSafetyCenterUpdate =
-                safetyCenterManager.getLastUpdateWithPermission(sourceId)
+            safetyCenterManager.getLastUpdateWithPermission(sourceId)
         assertThat(lastSafetyCenterUpdate).isNull()
     }
 
@@ -279,7 +303,7 @@ class SafetyCenterManagerTest {
         SafetySourceBroadcastReceiver.safetySourceDataOnPageOpen = safetySourceDataOnPageOpen
 
         safetyCenterManager.refreshSafetySourcesWithReceiverPermissionAndWait(
-                REFRESH_REASON_PAGE_OPEN
+            REFRESH_REASON_PAGE_OPEN
         )
 
         val lastSafetyCenterUpdate =
@@ -298,33 +322,83 @@ class SafetyCenterManagerTest {
     }
 
     @Test
+    fun getSafetyCenterData_returnsSafetyCenterData() {
+        val safetyCenterData = safetyCenterManager.getSafetyCenterDataWithPermission()
+
+        // TODO(b/218830137): Assert on content.
+        assertThat(safetyCenterData).isNotNull()
+    }
+
+    @Test
     fun getSafetyCenterData_whenAppDoesNotHoldPermission_methodThrows() {
         assertFailsWith(SecurityException::class) {
             safetyCenterManager.safetyCenterData
         }
     }
 
-    // Object required instead of lambda because kotlin wraps functions in a new Java functional
-    // interface implementation each time they are referenced/cast to a Java interface: b/215569072
-    private val emptyListener = object : OnSafetyCenterDataChangedListener {
-        override fun onSafetyCenterDataChanged(data: SafetyCenterData) {}
+    @Test
+    fun addOnSafetyCenterDataChangedListener_listenerCalledWithSafetyCenterData() {
+        safetyCenterManager.addOnSafetyCenterDataChangedListenerWithPermission(
+            directExecutor(), listener
+        )
+        val safetyCenterDataFromListener = receiveListenerUpdate()
+
+        // TODO(b/218830137): Assert on content.
+        assertThat(safetyCenterDataFromListener).isNotNull()
+    }
+
+    @Test
+    fun addOnSafetyCenterDataChangedListener_listenerCalledOnSafetyCenterUpdate() {
+        safetyCenterManager.addOnSafetyCenterDataChangedListenerWithPermission(
+            directExecutor(), listener
+        )
+        // Receive initial data.
+        receiveListenerUpdate()
+
+        val id = "some_known_id"
+        val safetyCenterUpdate = SafetySourceData.Builder(id).build()
+        safetyCenterManager.sendUpdateWithPermission(safetyCenterUpdate)
+        val safetyCenterDataFromListener = receiveListenerUpdate()
+
+        // TODO(b/218830137): Assert on content.
+        assertThat(safetyCenterDataFromListener).isNotNull()
+    }
+
+    @Test
+    fun removeOnSafetyCenterDataChangedListener_listenerNotCalledOnSafetyCenterUpdate() {
+        safetyCenterManager.addOnSafetyCenterDataChangedListenerWithPermission(
+            directExecutor(), listener
+        )
+        // Receive initial data.
+        receiveListenerUpdate()
+
+        safetyCenterManager.removeOnSafetyCenterDataChangedListenerWithPermission(listener)
+        val id = "some_known_id"
+        val safetyCenterUpdate = SafetySourceData.Builder(id).build()
+        safetyCenterManager.sendUpdateWithPermission(safetyCenterUpdate)
+
+        assertFailsWith(TimeoutCancellationException::class) {
+            receiveListenerUpdate(TIMEOUT_SHORT)
+        }
     }
 
     @Test
     fun addOnSafetyCenterDataChangedListener_whenAppDoesNotHoldPermission_methodThrows() {
         assertFailsWith(SecurityException::class) {
             safetyCenterManager.addOnSafetyCenterDataChangedListener(
-                    context.mainExecutor, emptyListener)
+                directExecutor(), listener
+            )
         }
     }
 
     @Test
     fun removeOnSafetyCenterDataChangedListener_whenAppDoesNotHoldPermission_methodThrows() {
         safetyCenterManager.addOnSafetyCenterDataChangedListenerWithPermission(
-                context.mainExecutor, emptyListener)
+            directExecutor(), listener
+        )
 
         assertFailsWith(SecurityException::class) {
-            safetyCenterManager.removeOnSafetyCenterDataChangedListener(emptyListener)
+            safetyCenterManager.removeOnSafetyCenterDataChangedListener(listener)
         }
     }
 
@@ -350,17 +424,35 @@ class SafetyCenterManagerTest {
         try {
             runWithShellPermissionIdentity({
                 refreshSafetySources(refreshReason)
-                SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(BROADCAST_TIMEOUT_LONG)
+                SafetySourceBroadcastReceiver.waitTillOnReceiveComplete(TIMEOUT_LONG)
             }, SEND_SAFETY_CENTER_UPDATE, MANAGE_SAFETY_CENTER)
         } catch (e: RuntimeException) {
             throw e.cause ?: e
         }
     }
 
+    private fun receiveListenerUpdate(timeout: Duration = TIMEOUT_LONG): SafetyCenterData =
+        runBlockingWithTimeout(timeout) {
+            listenerChannel.receive()
+        }
+
+    private fun <T> runBlockingWithTimeout(
+        timeout: Duration = TIMEOUT_LONG,
+        block: suspend () -> T
+    ) =
+        runBlocking {
+            withTimeout(timeout.toMillis()) {
+                block()
+            }
+        }
+
     companion object {
         /** Name of the flag that determines whether SafetyCenter is enabled. */
-        const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
-        private val BROADCAST_TIMEOUT_LONG: Duration = Duration.ofMillis(5000)
-        private val BROADCAST_TIMEOUT_SHORT: Duration = Duration.ofMillis(1000)
+        private const val PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
+        private const val CTS_PACKAGE_NAME = "android.safetycenter.cts"
+        private const val CTS_BROADCAST_RECEIVER_NAME =
+            "android.safetycenter.cts.SafetySourceBroadcastReceiver"
+        private val TIMEOUT_LONG: Duration = Duration.ofMillis(5000)
+        private val TIMEOUT_SHORT: Duration = Duration.ofMillis(1000)
     }
 }

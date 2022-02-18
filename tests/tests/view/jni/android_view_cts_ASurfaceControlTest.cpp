@@ -598,8 +598,8 @@ jobject SurfaceControlTest_getFrameTimelines(JNIEnv* env, jclass) {
 
     ExtendedCallback cb1("cb1", env);
     auto start = now();
-    ATrace_beginSection("postExtendedFrameCallback");
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb1);
+    ATrace_beginSection("postVsyncCallback");
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
     ATrace_endSection();
     auto delayPeriod = std::chrono::duration_cast<std::chrono::milliseconds>(DELAY_PERIOD).count();
     ATrace_beginSection("ALooper_pollOnce");

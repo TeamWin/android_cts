@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class CtsTestAttentionService extends AttentionService {
     private static final String TAG = "CtsTestAttentionService";
     private static AttentionCallback sCurrentAttentionCallback;
-    private static ProximityCallback sCurrentProximityCallback;
+    private static ProximityUpdateCallback sCurrentProximityUpdateCallback;
     private static  CountDownLatch sRespondLatch = new CountDownLatch(1);
 
     @Override
@@ -42,8 +42,8 @@ public class CtsTestAttentionService extends AttentionService {
     }
 
     @Override
-    public void onStartProximityUpdates(ProximityCallback callback) {
-        sCurrentProximityCallback = callback;
+    public void onStartProximityUpdates(ProximityUpdateCallback callback) {
+        sCurrentProximityUpdateCallback = callback;
         sRespondLatch.countDown();
     }
 
@@ -55,7 +55,7 @@ public class CtsTestAttentionService extends AttentionService {
 
     public static void reset() {
         sCurrentAttentionCallback = null;
-        sCurrentProximityCallback = null;
+        sCurrentProximityUpdateCallback = null;
     }
 
     public static void respondSuccess(int code) {
@@ -73,8 +73,8 @@ public class CtsTestAttentionService extends AttentionService {
     }
 
     public static void respondProximity(double distance) {
-        if (sCurrentProximityCallback != null) {
-            sCurrentProximityCallback.onProximityUpdate(distance);
+        if (sCurrentProximityUpdateCallback != null) {
+            sCurrentProximityUpdateCallback.onProximityUpdate(distance);
         }
     }
 
@@ -83,7 +83,7 @@ public class CtsTestAttentionService extends AttentionService {
     }
 
     public static boolean hasCurrentProximityUpdates() {
-        return sCurrentProximityCallback != null;
+        return sCurrentProximityUpdateCallback != null;
     }
 
     public static void onReceivedResponse() {

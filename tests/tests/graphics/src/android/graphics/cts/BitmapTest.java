@@ -2598,12 +2598,14 @@ public class BitmapTest {
                 } else {
                     assertNotNull(hwBitmap);
 
-                    // Some devices do not support F16 + HARDWARE. These fall back to 8888, and can
-                    // be identified by their use of SRGB instead of EXTENDED_SRGB.
+                    // Some devices do not support (F16 | 1010102) + HARDWARE. These fall back to
+                    // 8888. Check the HWB to confirm.
                     int tempExpectedFormat = expectedFormat;
-                    if (config == Config.RGBA_F16 && hwBitmap.getColorSpace() == ColorSpace.get(
-                            ColorSpace.Named.SRGB)) {
-                        tempExpectedFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
+                    if (config == Config.RGBA_F16 || config == Config.RGBA_1010102) {
+                        HardwareBuffer buffer = hwBitmap.getHardwareBuffer();
+                        if (buffer.getFormat() == HardwareBuffer.RGBA_8888) {
+                            tempExpectedFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
+                        }
                     }
                     nTestInfo(hwBitmap, tempExpectedFormat, width, height, hwBitmap.hasAlpha(),
                             hwBitmap.isPremultiplied(), true);

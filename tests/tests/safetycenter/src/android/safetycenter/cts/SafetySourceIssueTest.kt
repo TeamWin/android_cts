@@ -47,31 +47,38 @@ class SafetySourceIssueTest {
         context,
         0 /* requestCode= */, Intent("PendingIntent 1"), FLAG_IMMUTABLE
     )
-    private val action1 = Action.Builder("Action label 1", pendingIntent1).build()
+    private val action1 = Action.Builder("action_id_1", "Action label 1", pendingIntent1).build()
     private val pendingIntent2: PendingIntent = PendingIntent.getActivity(
         context,
         0 /* requestCode= */, Intent("PendingIntent 2"), FLAG_IMMUTABLE
     )
-    private val action2 = Action.Builder("Action label 2", pendingIntent2).build()
-    private val action3 = Action.Builder("Action label 3", pendingIntent1).build()
+    private val action2 = Action.Builder("action_id_2", "Action label 2", pendingIntent2).build()
+    private val action3 = Action.Builder("action_id_3", "Action label 3", pendingIntent1).build()
+
+    @Test
+    fun action_getId_returnsId() {
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
+
+        assertThat(action.id).isEqualTo("action_id")
+    }
 
     @Test
     fun action_getLabel_returnsLabel() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
         assertThat(action.label).isEqualTo("Action label")
     }
 
     @Test
     fun action_isResolving_withDefaultBuilder_returnsFalse() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
         assertThat(action.isResolving).isFalse()
     }
 
     @Test
     fun action_isResolving_whenSetExplicitly_returnsResolving() {
-        val action = Action.Builder("Action label", pendingIntent1)
+        val action = Action.Builder("action_id", "Action label", pendingIntent1)
             .setResolving(true)
             .build()
 
@@ -80,21 +87,21 @@ class SafetySourceIssueTest {
 
     @Test
     fun action_getPendingIntent_returnsPendingIntent() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
         assertThat(action.pendingIntent).isEqualTo(pendingIntent1)
     }
 
     @Test
     fun action_getSuccessMessage_withDefaultBuilder_returnsNull() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
         assertThat(action.successMessage).isNull()
     }
 
     @Test
     fun action_getSuccessMessage_whenSetExplicitly_returnsSuccessMessage() {
-        val action = Action.Builder("Action label", pendingIntent1)
+        val action = Action.Builder("action_id", "Action label", pendingIntent1)
             .setSuccessMessage("Action successfully completed")
             .build()
 
@@ -103,14 +110,14 @@ class SafetySourceIssueTest {
 
     @Test
     fun action_describeContents_returns0() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
         assertThat(action.describeContents()).isEqualTo(0)
     }
 
     @Test
     fun action_createFromParcel_withWriteToParcel_returnsOriginalAction() {
-        val action = Action.Builder("Action label", pendingIntent1)
+        val action = Action.Builder("action_id", "Action label", pendingIntent1)
             .setSuccessMessage("Action successfully completed")
             .build()
 
@@ -126,7 +133,7 @@ class SafetySourceIssueTest {
     // TODO(b/208473675): Use `EqualsTester` for testing `hashcode` and `equals`.
     @Test
     fun action_hashCode_equals_toString_withEqualByReferenceActions_areEqual() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
         val otherAction = action
 
         assertThat(action.hashCode()).isEqualTo(otherAction.hashCode())
@@ -136,8 +143,8 @@ class SafetySourceIssueTest {
 
     @Test
     fun action_hashCode_equals_toString_withAllFieldsEqual_areEqual() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
-        val otherAction = Action.Builder("Action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
+        val otherAction = Action.Builder("action_id", "Action label", pendingIntent1).build()
 
         assertThat(action.hashCode()).isEqualTo(otherAction.hashCode())
         assertThat(action).isEqualTo(otherAction)
@@ -145,9 +152,19 @@ class SafetySourceIssueTest {
     }
 
     @Test
+    fun action_hashCode_equals_toString_withDifferentIds_areNotEqual() {
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
+        val otherAction = Action.Builder("other_action_id", "Action label", pendingIntent1).build()
+
+        assertThat(action.hashCode()).isNotEqualTo(otherAction.hashCode())
+        assertThat(action).isNotEqualTo(otherAction)
+        assertThat(action.toString()).isNotEqualTo(otherAction.toString())
+    }
+
+    @Test
     fun action_hashCode_equals_toString_withDifferentLabels_areNotEqual() {
-        val action = Action.Builder("Action label", pendingIntent1).build()
-        val otherAction = Action.Builder("Other action label", pendingIntent1).build()
+        val action = Action.Builder("action_id", "Action label", pendingIntent1).build()
+        val otherAction = Action.Builder("action_id", "Other action label", pendingIntent1).build()
 
         assertThat(action.hashCode()).isNotEqualTo(otherAction.hashCode())
         assertThat(action).isNotEqualTo(otherAction)
@@ -157,10 +174,10 @@ class SafetySourceIssueTest {
     @Test
     fun action_hashCode_equals_toString_withDifferentResolving_areNotEqual() {
         val action =
-            Action.Builder("Action label", pendingIntent1).setResolving(false)
+            Action.Builder("action_id", "Action label", pendingIntent1).setResolving(false)
                 .build()
         val otherAction =
-            Action.Builder("Action label", pendingIntent1).setResolving(true).build()
+            Action.Builder("action_id", "Action label", pendingIntent1).setResolving(true).build()
 
         assertThat(action.hashCode()).isNotEqualTo(otherAction.hashCode())
         assertThat(action).isNotEqualTo(otherAction)
@@ -170,6 +187,7 @@ class SafetySourceIssueTest {
     @Test
     fun action_hashCode_equals_toString_withDifferentPendingIntents_areNotEqual() {
         val action = Action.Builder(
+            "action_id",
             "Action label",
             PendingIntent.getActivity(
                 context, 0 /* requestCode= */,
@@ -178,6 +196,7 @@ class SafetySourceIssueTest {
         )
             .build()
         val otherAction = Action.Builder(
+            "action_id",
             "Action label",
             PendingIntent.getActivity(
                 context, 0 /* requestCode= */,
@@ -194,11 +213,11 @@ class SafetySourceIssueTest {
     @Test
     fun action_hashCode_equals_toString_withDifferentSuccessMessages_areNotEqual() {
         val action =
-            Action.Builder("Action label", pendingIntent1)
+            Action.Builder("action_id", "Action label", pendingIntent1)
                 .setSuccessMessage("Action successfully completed")
                 .build()
         val otherAction =
-            Action.Builder("Action label", pendingIntent1)
+            Action.Builder("action_id", "Action label", pendingIntent1)
                 .setSuccessMessage("Other action successfully completed")
                 .build()
 
@@ -510,7 +529,7 @@ class SafetySourceIssueTest {
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
             .addAction(
-                Action.Builder("Action label 1", pendingIntent1)
+                Action.Builder("action_id", "Action label 1", pendingIntent1)
                     .setResolving(false)
                     .build()
             )
@@ -525,7 +544,7 @@ class SafetySourceIssueTest {
         ).setSubtitle("Issue subtitle")
             .setIssueCategory(ISSUE_CATEGORY_ACCOUNT)
             .addAction(
-                Action.Builder("Action label 1", pendingIntent1)
+                Action.Builder("action_id", "Action label 1", pendingIntent1)
                     .setResolving(false)
                     .build()
             )

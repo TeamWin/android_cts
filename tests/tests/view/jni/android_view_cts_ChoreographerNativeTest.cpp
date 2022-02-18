@@ -143,8 +143,8 @@ android_view_cts_ChoreographerNativeTest_testPostExtendedCallbackWithoutDelayEve
     ExtendedCallback cb2("cb2", env);
     auto start = now();
 
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb1);
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb2);
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb2);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -156,7 +156,7 @@ android_view_cts_ChoreographerNativeTest_testPostExtendedCallbackWithoutDelayEve
                "Callback 1 and 2 have frame times too large of a delta in frame times");
     }
 
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
     start = now();
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
     verifyCallback(env, cb1, 2, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -169,7 +169,7 @@ static void android_view_cts_ChoreographerNativeTest_testFrameCallbackDataVsyncI
     ExtendedCallback cb1("cb1", env);
     auto start = now();
 
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -191,7 +191,7 @@ static void android_view_cts_ChoreographerNativeTest_testFrameCallbackDataDeadli
     ExtendedCallback cb1("cb1", env);
     auto start = now();
 
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -212,7 +212,7 @@ android_view_cts_ChoreographerNativeTest_testFrameCallbackDataExpectedPresentTim
     ExtendedCallback cb1("cb1", env);
     auto start = now();
 
-    AChoreographer_postExtendedFrameCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);

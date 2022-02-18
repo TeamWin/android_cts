@@ -45,18 +45,19 @@ class SafetyCenterIssueTest {
             Intent("Fake Different Data"),
             PendingIntent.FLAG_IMMUTABLE)
 
-    val action1 = SafetyCenterIssue.Action.Builder()
+    val action1 = SafetyCenterIssue.Action.Builder("action_id_1")
             .setLabel("an action")
             .setPendingIntent(pendingIntent1)
             .setResolving(true)
+            .setInFlight(true)
             .setSuccessMessage("a success message")
             .build()
-    val action2 = SafetyCenterIssue.Action.Builder()
+    val action2 = SafetyCenterIssue.Action.Builder("action_id_2")
             .setLabel("another action")
             .setPendingIntent(pendingIntent2)
             .build()
 
-    val issue1 = SafetyCenterIssue.Builder("iSsUe_iD")
+    val issue1 = SafetyCenterIssue.Builder("issue_id")
             .setTitle("Everything's good")
             .setSubtitle("In the neighborhood")
             .setSummary("Please acknowledge this")
@@ -291,6 +292,12 @@ class SafetyCenterIssueTest {
     }
 
     @Test
+    fun action_getId_returnsId() {
+        assertThat(action1.id).isEqualTo("action_id_1")
+        assertThat(action2.id).isEqualTo("action_id_2")
+    }
+
+    @Test
     fun action_getLabel_returnsLabel() {
         assertThat(action1.label).isEqualTo("an action")
         assertThat(action2.label).isEqualTo("another action")
@@ -306,6 +313,12 @@ class SafetyCenterIssueTest {
     fun action_isResolving_returnsIsResolving() {
         assertThat(action1.isResolving).isTrue()
         assertThat(action2.isResolving).isFalse()
+    }
+
+    @Test
+    fun action_isInFlight_returnsIsInFlight() {
+        assertThat(action1.isInFlight).isTrue()
+        assertThat(action2.isInFlight).isFalse()
     }
 
     @Test
@@ -341,14 +354,18 @@ class SafetyCenterIssueTest {
 
     @Test
     fun action_equals_hashCode_toString_equalByValue_areEqual() {
-        val action = SafetyCenterIssue.Action.Builder()
+        val action = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
+                .setResolving(true)
+                .setInFlight(true)
                 .setSuccessMessage("a success message")
                 .build()
-        val equivalentAction = SafetyCenterIssue.Action.Builder()
+        val equivalentAction = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
+                .setResolving(true)
+                .setInFlight(true)
                 .setSuccessMessage("a success message")
                 .build()
 
@@ -357,13 +374,30 @@ class SafetyCenterIssueTest {
     }
 
     @Test
-    fun action_equals_toString_differentLabels_areNotEqual() {
-        val action = SafetyCenterIssue.Action.Builder()
+    fun action_equals_toString_differentIds_areNotEqual() {
+        val action = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
                 .setSuccessMessage("a success message")
                 .build()
-        val differentAction = SafetyCenterIssue.Action.Builder()
+        val differentAction = SafetyCenterIssue.Action.Builder("a_different_id")
+                .setLabel("a label")
+                .setPendingIntent(pendingIntent1)
+                .setSuccessMessage("a success message")
+                .build()
+
+        assertThat(action).isNotEqualTo(differentAction)
+        assertThat(action.toString()).isNotEqualTo(differentAction.toString())
+    }
+
+    @Test
+    fun action_equals_toString_differentLabels_areNotEqual() {
+        val action = SafetyCenterIssue.Action.Builder("an_id")
+                .setLabel("a label")
+                .setPendingIntent(pendingIntent1)
+                .setSuccessMessage("a success message")
+                .build()
+        val differentAction = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a different label")
                 .setPendingIntent(pendingIntent1)
                 .setSuccessMessage("a success message")
@@ -375,12 +409,12 @@ class SafetyCenterIssueTest {
 
     @Test
     fun action_equals_toString_differentPendingIntents_areNotEqual() {
-        val action = SafetyCenterIssue.Action.Builder()
+        val action = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
                 .setSuccessMessage("a success message")
                 .build()
-        val differentAction = SafetyCenterIssue.Action.Builder()
+        val differentAction = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent2)
                 .setSuccessMessage("a success message")
@@ -392,13 +426,13 @@ class SafetyCenterIssueTest {
 
     @Test
     fun action_equals_toString_differentResovlingValues_areNotEqual() {
-        val action = SafetyCenterIssue.Action.Builder()
+        val action = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
                 .setResolving(true)
                 .setSuccessMessage("a success message")
                 .build()
-        val differentAction = SafetyCenterIssue.Action.Builder()
+        val differentAction = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
                 .setResolving(false)
@@ -410,13 +444,34 @@ class SafetyCenterIssueTest {
     }
 
     @Test
+    fun action_equals_toString_differentInFlightValues_areNotEqual() {
+        val action = SafetyCenterIssue.Action.Builder("an_id")
+                .setLabel("a label")
+                .setPendingIntent(pendingIntent1)
+                .setResolving(true)
+                .setInFlight(true)
+                .setSuccessMessage("a success message")
+                .build()
+        val differentAction = SafetyCenterIssue.Action.Builder("an_id")
+                .setLabel("a label")
+                .setPendingIntent(pendingIntent1)
+                .setResolving(true)
+                .setInFlight(false)
+                .setSuccessMessage("a success message")
+                .build()
+
+        assertThat(action).isNotEqualTo(differentAction)
+        assertThat(action.toString()).isNotEqualTo(differentAction.toString())
+    }
+
+    @Test
     fun action_equals_toString_differentSuccessMessages_areNotEqual() {
-        val action = SafetyCenterIssue.Action.Builder()
+        val action = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
                 .setSuccessMessage("a success message")
                 .build()
-        val differentAction = SafetyCenterIssue.Action.Builder()
+        val differentAction = SafetyCenterIssue.Action.Builder("an_id")
                 .setLabel("a label")
                 .setPendingIntent(pendingIntent1)
                 .setSuccessMessage("a different success message")

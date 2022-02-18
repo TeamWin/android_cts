@@ -72,6 +72,7 @@ public class NotificationListenerTest {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mProfileUserId = getParam(InstrumentationRegistry.getArguments(), PARAM_PROFILE_ID);
         PermissionUtils.grantPermission(SENDER_PACKAGE, POST_NOTIFICATIONS);
+        grantProfileNotificationPermission();
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_NOTIFICATION_POSTED);
         filter.addAction(ACTION_NOTIFICATION_REMOVED);
@@ -82,6 +83,7 @@ public class NotificationListenerTest {
     @After
     public void tearDown() throws Exception {
         PermissionUtils.revokePermission(SENDER_PACKAGE, POST_NOTIFICATIONS);
+        revokeProfileNotificationPermission();
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
         toggleNotificationListener(false);
     }
@@ -152,6 +154,17 @@ public class NotificationListenerTest {
                 BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT);
 
         assertThat(actualPackageList).isEqualTo(packageList);
+    }
+
+    private void grantProfileNotificationPermission() throws IOException {
+        mDevice.executeShellCommand("pm grant --user " + mProfileUserId + " " + SENDER_PACKAGE
+                    + " " + POST_NOTIFICATIONS);
+    }
+
+    private void revokeProfileNotificationPermission() throws IOException {
+        mDevice.executeShellCommand(
+                    "pm revoke --user " + mProfileUserId + " " + SENDER_PACKAGE + " "
+                            + POST_NOTIFICATIONS);
     }
 
     private void cancelProfileNotification() throws IOException {
