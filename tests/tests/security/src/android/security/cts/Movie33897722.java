@@ -24,13 +24,20 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.AndroidTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import java.io.InputStream;
 
 import android.security.cts.R;
 
-public class Movie33897722 extends AndroidTestCase {
+import static org.junit.Assert.*;
+
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
+@RunWith(AndroidJUnit4.class)
+public class Movie33897722 extends StsExtraBusinessLogicTestCase {
     /**
      * Verifies that decoding a particular GIF file does not read out out of bounds.
      *
@@ -38,6 +45,7 @@ public class Movie33897722 extends AndroidTestCase {
      * larger than 2. Ensure that we do not attempt to read colors from beyond the end of the
      * color map, which would be reading memory that we do not control, and may be uninitialized.
      */
+    @Test
     @AsbSecurityTest(cveBugId = 33897722)
     public void test_android_bug_33897722() {
         // The image has a 10 x 10 frame on top of a transparent background. Only test the
@@ -46,6 +54,7 @@ public class Movie33897722 extends AndroidTestCase {
         test_movie(R.raw.bug_33897722, 600, 752, 10, 10);
     }
 
+    @Test
     @AsbSecurityTest(cveBugId = 37662286)
     public void test_android_bug_37662286() {
         // The image has a background color that is out of range. Arbitrarily test
@@ -62,7 +71,7 @@ public class Movie33897722 extends AndroidTestCase {
                             int drawWidth, int drawHeight) {
         assertTrue(drawWidth <= screenWidth && drawHeight <= screenHeight);
 
-        InputStream exploitImage = mContext.getResources().openRawResource(resId);
+        InputStream exploitImage = getInstrumentation().getContext().getResources().openRawResource(resId);
         Movie movie = Movie.decodeStream(exploitImage);
         assertNotNull(movie);
         assertEquals(movie.width(), screenWidth);
