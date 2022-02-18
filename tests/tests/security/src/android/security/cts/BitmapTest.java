@@ -18,6 +18,7 @@ package android.security.cts;
 
 import android.graphics.Bitmap;
 import android.platform.test.annotations.AsbSecurityTest;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -25,7 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
-public class BitmapTest {
+public class BitmapTest extends StsExtraBusinessLogicTestCase {
     /**
      * Test Bitmap.createBitmap properly throws OOME on large inputs.
      *
