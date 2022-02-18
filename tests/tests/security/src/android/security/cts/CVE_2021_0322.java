@@ -27,13 +27,15 @@ import android.os.Bundle;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
 @RunWith(AndroidJUnit4.class)
-public class CVE_2021_0322 {
+public class CVE_2021_0322 extends StsExtraBusinessLogicTestCase {
 
     private static final Uri BASE_URI = Uri.parse("content://android.security.cts.local/main");
     private final Context mContext = InstrumentationRegistry.getContext();
