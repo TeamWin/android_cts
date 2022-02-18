@@ -48,13 +48,14 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import java.io.*;
 import java.util.stream.Collectors;
 import android.security.cts.CVE_2021_0327.workprofilesetup.AdminReceiver;
 import static org.junit.Assert.assertFalse;
 
 @RunWith(AndroidJUnit4.class)
-public class CVE_2021_0327 {
+public class CVE_2021_0327 extends StsExtraBusinessLogicTestCase {
 
     private static final String SECURITY_CTS_PACKAGE_NAME = "android.security.cts";
     private static final String TAG = "CVE_2021_0327";
