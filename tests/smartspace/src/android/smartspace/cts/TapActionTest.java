@@ -56,13 +56,16 @@ public class TapActionTest {
                 .setIntent(intent)
                 .setPendingIntent(pendingIntent)
                 .setUserHandle(Process.myUserHandle())
-                .setExtras(extras).build();
+                .setExtras(extras)
+                .setShouldShowOnLockscreen(true)
+                .build();
 
         assertThat(tapAction.getId()).isEqualTo("id");
         assertThat(tapAction.getIntent()).isEqualTo(intent);
         assertThat(tapAction.getPendingIntent()).isEqualTo(pendingIntent);
         assertThat(tapAction.getUserHandle()).isEqualTo(Process.myUserHandle());
         assertThat(tapAction.getExtras()).isEqualTo(extras);
+        assertThat(tapAction.shouldShowOnLockscreen()).isEqualTo(true);
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);

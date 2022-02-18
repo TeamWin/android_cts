@@ -19,6 +19,7 @@ package android.server.wm.jetpack.utils;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
+import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.isActivityResumed;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityFromActivity;
 
 import static org.junit.Assert.assertEquals;
@@ -76,6 +77,21 @@ public class ActivityEmbeddingUtil {
     @NonNull
     public static SplitPairRule createWildcardSplitPairRule() {
         return createWildcardSplitPairRule(false /* shouldClearTop */);
+    }
+
+    public static TestActivity startActivityAndVerifyNotSplit(
+            @NonNull Activity activityLaunchingFrom) {
+        final String secondActivityId = "secondActivityId";
+        // Launch second activity
+        startActivityFromActivity(activityLaunchingFrom, TestActivityWithId.class,
+                secondActivityId);
+        // Verify both activities are in the correct lifecycle state
+        waitForResumed(secondActivityId);
+        assertFalse(isActivityResumed(activityLaunchingFrom));
+        TestActivity secondActivity = getResumedActivityById(secondActivityId);
+        // Verify the second activity is not split with the first
+        verifyFillsTask(secondActivity);
+        return secondActivity;
     }
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity activityLaunchingFrom,
@@ -235,6 +251,10 @@ public class ActivityEmbeddingUtil {
         }
     }
 
+    public static void verifyFillsTask(Activity activity) {
+        assertEquals(getMaximumActivityBounds(activity), getActivityBounds(activity));
+    }
+
     public static boolean waitForResumed(
             @NonNull List<Activity> activityList) {
         final long startTime = System.currentTimeMillis();
@@ -271,6 +291,20 @@ public class ActivityEmbeddingUtil {
             }
         }
         return false;
+    }
+
+    public static boolean waitForResumed(@NonNull Activity activity) {
+        return waitForResumed(Arrays.asList(activity));
+    }
+
+    public static boolean waitForFinishing(@NonNull Activity activity) {
+        final long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
+            if (activity.isFinishing()) {
+                return true;
+            }
+        }
+        return activity.isFinishing();
     }
 
     @Nullable

@@ -999,6 +999,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
     @EnsureHasNoDpc
+    @RequireFeature(FEATURE_MANAGED_USERS)
     public void checkProvisioningPreCondition_actionPO_returnsOk() {
         assertThat(
                 sDevicePolicyManager.checkProvisioningPreCondition(
@@ -1048,6 +1049,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasDeviceOwner
+    @RequireFeature(FEATURE_MANAGED_USERS)
     public void checkProvisioningPreCondition_actionPO_onManagedDevice_returnsCanNotAddManagedProfile() {
         assertThat(
                 sDevicePolicyManager.checkProvisioningPreCondition(

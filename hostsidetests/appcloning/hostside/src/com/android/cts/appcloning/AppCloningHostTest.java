@@ -42,6 +42,7 @@ import java.util.Map;
 public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
+    private static final int CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS = 30000;
 
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
     private static final String IMAGE_NAME_TO_BE_DISPLAYED_KEY = "imageNameToBeDisplayed";
@@ -50,7 +51,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     private static final String IMAGE_NAME_TO_BE_VERIFIED_IN_CLONE_PROFILE_KEY =
             "imageNameToBeVerifiedInCloneProfile";
     private static final String CLONE_USER_ID = "cloneUserId";
-
+    private static final String MEDIA_PROVIDER_IMAGES_PATH = "/external/images/media/";
     private ContentProviderHandler mContentProviderHandler;
 
     @Before
@@ -79,7 +80,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
             // Wait for finish.
             assertThat(isSuccessful(
                     runContentProviderCommand("query", mCloneUserId,
-                            "/sdcard", ""))).isTrue();
+                            CONTENT_PROVIDER_URL, "/sdcard", ""))).isTrue();
         }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
 
         // Create a file on the clone user storage
@@ -89,19 +90,75 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
             // Wait for finish.
             assertThat(isSuccessful(
                     runContentProviderCommand("write", mCloneUserId,
-                            "/sdcard/testFile.txt",
+                            CONTENT_PROVIDER_URL, "/sdcard/testFile.txt",
                             "< /sdcard/testFile.txt"))).isTrue();
         }, CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
 
         // Check that the above created file exists on the clone user storage
         out = runContentProviderCommand("query", mCloneUserId,
-                "/sdcard/testFile.txt", "");
+                CONTENT_PROVIDER_URL, "/sdcard/testFile.txt", "");
         assertThat(isSuccessful(out)).isTrue();
 
         // Cleanup the created file
         out = runContentProviderCommand("delete", mCloneUserId,
-                "/sdcard/testFile.txt", "");
+                CONTENT_PROVIDER_URL, "/sdcard/testFile.txt", "");
         assertThat(isSuccessful(out)).isTrue();
+    }
+
+    /**
+     * Once the clone profile is removed, the storage directory is deleted and the media provider
+     * should be cleaned of any media files associated with clone profile.
+     * This test ensures that with removal of clone profile there are no stale reference in
+     * media provider for media files related to clone profile.
+     * @throws Exception
+     */
+    @Test
+    public void testRemoveClonedProfileMediaProviderCleanup() throws Exception {
+        CommandResult out;
+        String cloneProfileImage = "cloneProfileImage.png";
+
+        // Inserting blank image in clone profile
+        eventually(() -> {
+            assertThat(isSuccessful(
+                    runContentProviderCommand("insert", mCloneUserId,
+                            MEDIA_PROVIDER_URL, MEDIA_PROVIDER_IMAGES_PATH,
+                            String.format("--bind _data:s:/storage/emulated/%s/Pictures/%s",
+                                    mCloneUserId, cloneProfileImage),
+                            String.format("--bind _user_id:s:%s", mCloneUserId)))).isTrue();
+        }, CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS);
+
+        //Ensuring that image is added to media provider
+        out = runContentProviderCommand("query", mCloneUserId,
+                MEDIA_PROVIDER_URL, MEDIA_PROVIDER_IMAGES_PATH,
+                "--projection _id",
+                String.format("--where \"_display_name=\\'%s\\'\"", cloneProfileImage));
+        assertThat(isSuccessful(out)).isTrue();
+        assertThat(out.getStdout()).doesNotContain("No result found.");
+
+        //Removing the clone profile
+        eventually(() -> {
+            assertThat(isSuccessful(executeShellV2Command("pm remove-user %s", mCloneUserId)))
+                    .isTrue();
+        }, CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS);
+
+        //Checking that added image should not be available in share media provider
+        try {
+            eventually(() -> {
+                CommandResult queryResult = runContentProviderCommand("query",
+                        String.valueOf(getCurrentUserId()),
+                        MEDIA_PROVIDER_URL, MEDIA_PROVIDER_IMAGES_PATH,
+                        "--projection _id",
+                        String.format("--where \"_display_name=\\'%s\\'\"", cloneProfileImage));
+                assertThat(isSuccessful(queryResult)).isTrue();
+                assertThat(queryResult.getStdout()).contains("No result found.");
+            }, CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS);
+        } catch (Exception exception) {
+            //If the image is available i.e. test have failed, delete the added user
+            runContentProviderCommand("delete", String.valueOf(getCurrentUserId()),
+                    MEDIA_PROVIDER_URL, MEDIA_PROVIDER_IMAGES_PATH,
+                    String.format("--where \"_display_name=\\'%s\\'\"", cloneProfileImage));
+            throw exception;
+        }
     }
 
     @Test

@@ -39,7 +39,9 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     private static final String TEST_CLASS_A = APP_A_PACKAGE + ".AppCloningDeviceTest";
     private static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 600_000; // 10min
 
-    private static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
+    protected static final String CONTENT_PROVIDER_URL =
+            "content://android.tradefed.contentprovider";
+    protected static final String MEDIA_PROVIDER_URL = "content://media";
 
     public String mCloneUserId;
 
@@ -80,10 +82,10 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     }
 
     protected CommandResult runContentProviderCommand(String commandType, String userId,
-            String relativePath, String args) throws Exception {
-        String fullUri = CONTENT_PROVIDER_URL + relativePath;
+            String provider, String relativePath, String... args) throws Exception {
+        String fullUri = provider + relativePath;
         return executeShellV2Command("content %s --user %s --uri %s %s",
-                commandType, userId, fullUri, args);
+                commandType, userId, fullUri, String.join(" ", args));
     }
 
     protected boolean usesSdcardFs() throws Exception {

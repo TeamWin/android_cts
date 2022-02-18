@@ -92,7 +92,8 @@ public class CtsAttentionServiceDeviceTest {
                 SUCCESSFUL_PROXIMITY_DISTANCE);
 
         /** From manager, verify proximity update callback was received*/
-        assertThat(getLastTestProximityCallbackCode()).isEqualTo(SUCCESSFUL_PROXIMITY_DISTANCE);
+        assertThat(getLastTestProximityUpdateCallbackCode())
+                .isEqualTo(SUCCESSFUL_PROXIMITY_DISTANCE);
     }
 
     @Test
@@ -113,7 +114,7 @@ public class CtsAttentionServiceDeviceTest {
 
         /** From manager, verify that the proximity callback was called with
          * PRXIMITY_UNKNOWN */
-        assertThat(getLastTestProximityCallbackCode()).isEqualTo(
+        assertThat(getLastTestProximityUpdateCallbackCode()).isEqualTo(
                 PROXIMITY_UNKNOWN);
     }
 
@@ -191,9 +192,9 @@ public class CtsAttentionServiceDeviceTest {
         return Integer.parseInt(runShellCommand("cmd attention getLastTestCallbackCode"));
     }
 
-    private double getLastTestProximityCallbackCode() {
+    private double getLastTestProximityUpdateCallbackCode() {
         return Double.parseDouble(
-                runShellCommand("cmd attention getLastTestProximityCallbackCode"));
+                runShellCommand("cmd attention getLastTestProximityUpdateCallbackCode"));
     }
 
     /**
