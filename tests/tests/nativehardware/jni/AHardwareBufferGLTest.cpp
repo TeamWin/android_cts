@@ -76,6 +76,7 @@ const char* AHBFormatAsString(int32_t format) {
         FORMAT_CASE(D32_FLOAT_S8_UINT);
         FORMAT_CASE(S8_UINT);
         FORMAT_CASE(Y8Cb8Cr8_420);
+        FORMAT_CASE(R8_UNORM);
         GL_FORMAT_CASE(GL_RGB8);
         GL_FORMAT_CASE(GL_RGBA8);
         GL_FORMAT_CASE(GL_RGB565);
@@ -85,6 +86,7 @@ const char* AHBFormatAsString(int32_t format) {
         GL_FORMAT_CASE(GL_DEPTH_COMPONENT16);
         GL_FORMAT_CASE(GL_DEPTH24_STENCIL8);
         GL_FORMAT_CASE(GL_STENCIL_INDEX8);
+        GL_FORMAT_CASE(GL_R8);
     }
     return "";
 }
@@ -2645,6 +2647,29 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{26, 29, 5, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{17, 23, 7, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}),
+    &GetTestName);
+
+class R8Test : public AHardwareBufferGLTest {};
+
+// Verify that if we can allocate an R8 AHB we can render to it.
+TEST_P(R8Test, Write) {
+    AHardwareBuffer_Desc desc = GetParam();
+    if (!SetUpBuffer(desc)) {
+        return;
+    }
+
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kPyramidPositions, 0.5f));
+
+    glDrawArrays(GL_TRIANGLES, 0, kPyramidVertexCount);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SingleLayer, R8Test,
+    ::testing::Values(
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_R8_UNORM, 0, 0, 0, 0}),
     &GetTestName);
 
 }  // namespace android
