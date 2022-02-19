@@ -4679,6 +4679,8 @@
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
                 <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE"/>
+                <!--  TODO(b/176993670): remove if DpmWrapperManagerWrapper goes away -->
+                <action android:name="com.android.bedstead.dpmwrapper.action.WRAPPED_MANAGER_CALL"/>
             </intent-filter>
         </receiver>
         <service android:name=".managedprovisioning.DeviceAdminTestReceiver$PrimaryUserService"
