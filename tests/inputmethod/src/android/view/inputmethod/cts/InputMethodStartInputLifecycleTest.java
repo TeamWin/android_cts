@@ -55,6 +55,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.TextSnapshot;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.MockTestActivityUtil;
 import android.view.inputmethod.cts.util.RequireImeCompatFlagRule;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
@@ -79,6 +80,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -290,6 +292,42 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
         @Override
         public final Editable getEditable() {
             return mEditable;
+        }
+    }
+
+    /**
+     * Regression test for Bug 213350732.
+     *
+     * <p>Make sure that calling {@link InputMethodManager#invalidateInput(View)} before
+     * {@link android.view.inputmethod.InputMethodSession} is delivered to the IME client does not
+     * result in {@link NullPointerException}.</p>
+     */
+    @Test
+    public void testInvalidateInputBeforeInputMethodSessionBecomesAvailable() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final boolean instant =
+                instrumentation.getTargetContext().getPackageManager().isInstantApp();
+        final String marker1 = getTestMarker();
+        try (AutoCloseable closeable = MockTestActivityUtil.launchSync(instant,
+                TIMEOUT, Map.of(MockTestActivityUtil.EXTRA_KEY_PRIVATE_IME_OPTIONS, marker1))) {
+
+            try (MockImeSession imeSession = MockImeSession.create(
+                    instrumentation.getContext(),
+                    instrumentation.getUiAutomation(),
+                    new ImeSettings.Builder())) {
+                final ImeEventStream stream = imeSession.openEventStream();
+
+                expectEvent(stream, editorMatcher("onStartInput", marker1), TIMEOUT);
+
+                expectCommand(stream, imeSession.suspendCreateSession(), TIMEOUT);
+
+                final String marker2 = getTestMarker();
+                final EditText editText = launchTestActivity(marker2);
+                TestUtils.runOnMainSync(() -> editText.getContext().getSystemService(
+                        InputMethodManager.class).invalidateInput(editText));
+
+                expectCommand(stream, imeSession.resumeCreateSession(), TIMEOUT);
+            }
         }
     }
 

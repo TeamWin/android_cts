@@ -20,13 +20,18 @@ import org.junit.Test;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.AndroidTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
-public class BluetoothIntentsTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class BluetoothIntentsTest extends StsExtraBusinessLogicTestCase {
   /**
    * b/35258579
    */
   @AsbSecurityTest(cveBugId = 35258579)
+  @Test
   public void testAcceptIntent() {
     genericIntentTest("ACCEPT");
   }
@@ -35,6 +40,7 @@ public class BluetoothIntentsTest extends AndroidTestCase {
    * b/35258579
    */
   @AsbSecurityTest(cveBugId = 35258579)
+  @Test
   public void testDeclineIntent() {
       genericIntentTest("DECLINE");
   }
@@ -47,7 +53,7 @@ public class BluetoothIntentsTest extends AndroidTestCase {
           new ComponentName("com.android.bluetooth",
             "com.android.bluetooth.opp.BluetoothOppReceiver"));
       should_be_protected_broadcast.setAction(prefix + action);
-      mContext.sendBroadcast(should_be_protected_broadcast);
+      getInstrumentation().getContext().sendBroadcast(should_be_protected_broadcast);
     }
     catch (SecurityException e) {
       return;

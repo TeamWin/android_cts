@@ -28,17 +28,24 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.SurfaceTexture;
+import android.media.Image;
+import android.media.ImageWriter;
 import android.util.Half;
 import android.view.PixelCopy;
+import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
+import android.view.cts.util.BitmapDumper;
 
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -47,6 +54,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -223,6 +231,61 @@ public class TextureViewTest {
                 screenshot.getPixel(texturePos.left + 10, texturePos.bottom - 10));
         assertEquals("Bottom right", Color.BLACK,
                 screenshot.getPixel(texturePos.right - 10, texturePos.bottom - 10));
+    }
+
+    @Test
+    public void testCropRect() throws Throwable {
+        final TextureViewCtsActivity activity = mActivityRule.launchActivity(/*startIntent*/ null);
+        activity.waitForSurface();
+        mActivityRule.runOnUiThread(activity::removeCover);
+        TextureView textureView = activity.getTextureView();
+        int textureWidth = textureView.getWidth();
+        int textureHeight = textureView.getHeight();
+        SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
+        Surface surface = new Surface(surfaceTexture);
+        assertTrue(surface.isValid());
+        ImageWriter writer = ImageWriter.newInstance(surface, /*maxImages*/ 1);
+        Image image = writer.dequeueInputImage();
+        Image.Plane plane = image.getPlanes()[0];
+        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        paint.setColor(Color.YELLOW);
+        canvas.drawRect(0f, 0f, textureWidth, textureHeight, paint);
+        paint.setColor(Color.BLACK);
+        canvas.drawRect(2f, 2f, textureWidth - 2f, textureHeight - 2f, paint);
+
+        image.setCropRect(new Rect(1, 1, textureWidth - 1, textureHeight - 1));
+        bitmap.copyPixelsToBuffer(plane.getBuffer());
+        writer.queueInputImage(image);
+
+        final Rect viewPos = new Rect();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                activity.findViewById(android.R.id.content), () -> {
+            int[] outLocation = new int[2];
+            textureView.getLocationInSurface(outLocation);
+            viewPos.left = outLocation[0];
+            viewPos.top = outLocation[1];
+            viewPos.right = viewPos.left + textureView.getWidth();
+            viewPos.bottom = viewPos.top + textureView.getHeight();
+        });
+        SynchronousPixelCopy pixelCopy = new SynchronousPixelCopy();
+        // Capture the portion of the screen that contains the texture view only.
+        Window window = activity.getWindow();
+        bitmap = Bitmap.createBitmap(viewPos.width(), viewPos.height(),
+                Bitmap.Config.ARGB_8888);
+        int result = pixelCopy.request(window, viewPos, bitmap);
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
+        assertBitmapEdgeColor(bitmap, Color.YELLOW);
+    }
+
+    private boolean pixelsAreSame(int ideal, int given, int threshold) {
+        int error = Math.abs(Color.red(ideal) - Color.red(given));
+        error += Math.abs(Color.green(ideal) - Color.green(given));
+        error += Math.abs(Color.blue(ideal) - Color.blue(given));
+        return (error < threshold);
     }
 
     @Test
@@ -592,5 +655,46 @@ public class TextureViewTest {
             int topLeft, int topRight, int bottomLeft, int bottomRight) {
         PixelCopyTest.assertBitmapQuadColor(mTestName.getMethodName(), "TextureViewTest",
                 bitmap, topLeft, topRight, bottomLeft, bottomRight);
+    }
+
+    private void assertBitmapEdgeColor(Bitmap bitmap, int edgeColor) {
+        // Just quickly sample a few pixels on the edge and assert
+        // they are edge color, then assert that just inside the edge is a different color
+        assertBitmapColor("Top edge", bitmap, edgeColor, bitmap.getWidth() / 2, 0);
+        assertBitmapNotColor("Top edge", bitmap, edgeColor, bitmap.getWidth() / 2, 2);
+
+        assertBitmapColor("Left edge", bitmap, edgeColor, 0, bitmap.getHeight() / 2);
+        assertBitmapNotColor("Left edge", bitmap, edgeColor, 2, bitmap.getHeight() / 2);
+
+        assertBitmapColor("Bottom edge", bitmap, edgeColor,
+                bitmap.getWidth() / 2, bitmap.getHeight() - 1);
+        assertBitmapNotColor("Bottom edge", bitmap, edgeColor,
+                bitmap.getWidth() / 2, bitmap.getHeight() - 3);
+
+        assertBitmapColor("Right edge", bitmap, edgeColor,
+                bitmap.getWidth() - 1, bitmap.getHeight() / 2);
+        assertBitmapNotColor("Right edge", bitmap, edgeColor,
+                bitmap.getWidth() - 3, bitmap.getHeight() / 2);
+    }
+
+    private void failBitmap(Bitmap bitmap, String message) {
+        BitmapDumper.dumpBitmap(bitmap, mTestName.getMethodName(), "TextureViewTest");
+        Assert.fail(message);
+    }
+
+    private void assertBitmapColor(String debug, Bitmap bitmap, int color, int x, int y) {
+        int pixel = bitmap.getPixel(x, y);
+        if (!pixelsAreSame(color, pixel, 10)) {
+            failBitmap(bitmap, debug + "; expected=" + Integer.toHexString(color) + ", actual="
+                    + Integer.toHexString(pixel));
+        }
+    }
+
+    private void assertBitmapNotColor(String debug, Bitmap bitmap, int color, int x, int y) {
+        int pixel = bitmap.getPixel(x, y);
+        if (pixelsAreSame(color, pixel, 10)) {
+            failBitmap(bitmap, debug + "; actual=" + Integer.toHexString(pixel)
+                    + " shouldn't have matched " + Integer.toHexString(color));
+        }
     }
 }

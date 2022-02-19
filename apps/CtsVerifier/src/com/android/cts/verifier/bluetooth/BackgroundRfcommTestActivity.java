@@ -79,7 +79,7 @@ public class BackgroundRfcommTestActivity extends PassFailButtons.Activity {
         PendingIntent pendingIntent =
                 PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
-        mBluetoothAdapter.closeRfcommServer(mUuid);
+        mBluetoothAdapter.stopRfcommServer(mUuid);
 
         if (mBluetoothAdapter.startRfcommServer("TestBackgroundRfcomm", mUuid, pendingIntent)
                 != BluetoothStatusCodes.SUCCESS) {
@@ -90,7 +90,7 @@ public class BackgroundRfcommTestActivity extends PassFailButtons.Activity {
 
     @Override
     protected void onDestroy() {
-        mBluetoothAdapter.closeRfcommServer(mUuid);
+        mBluetoothAdapter.stopRfcommServer(mUuid);
         if (mReceiver != null) {
             unregisterReceiver(mReceiver);
             mReceiver = null;

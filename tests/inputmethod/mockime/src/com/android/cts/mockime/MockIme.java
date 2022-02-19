@@ -183,6 +183,26 @@ public final class MockIme extends InputMethodService {
                 // UI component accesses on a display context must throw strict mode violations.
                 final Context displayContext = createDisplayContext(getDisplay());
                 switch (command.getName()) {
+                    case "suspendCreateSession": {
+                        if (!Looper.getMainLooper().isCurrentThread()) {
+                            return new UnsupportedOperationException("suspendCreateSession can be"
+                                    + " requested only for the main thread.");
+                        }
+                        mSuspendCreateSession = true;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "resumeCreateSession": {
+                        if (!Looper.getMainLooper().isCurrentThread()) {
+                            return new UnsupportedOperationException("resumeCreateSession can be"
+                                    + " requested only for the main thread.");
+                        }
+                        if (mSuspendedCreateSession != null) {
+                            mSuspendedCreateSession.run();
+                            mSuspendedCreateSession = null;
+                        }
+                        mSuspendCreateSession = false;
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
                     case "memorizeCurrentInputConnection": {
                         if (!Looper.getMainLooper().isCurrentThread()) {
                             return new UnsupportedOperationException(
@@ -561,6 +581,25 @@ public final class MockIme extends InputMethodService {
         return mClientPackageName.get();
     }
 
+    private boolean mDestroying;
+
+    /**
+     * {@code true} if {@link MockInputMethodImpl#createSession(InputMethod.SessionCallback)}
+     * needs to be suspended.
+     *
+     * <p>Must be touched from the main thread.</p>
+     */
+    private boolean mSuspendCreateSession = false;
+
+    /**
+     * The suspended {@link MockInputMethodImpl#createSession(InputMethod.SessionCallback)} callback
+     * operation.
+     *
+     * <p>Must be touched from the main thread.</p>
+     */
+    @Nullable
+    Runnable mSuspendedCreateSession;
+
     private class MockInputMethodImpl extends InputMethodImpl {
         @Override
         public void showSoftInput(int flags, ResultReceiver resultReceiver) {
@@ -572,6 +611,25 @@ public final class MockIme extends InputMethodService {
         public void hideSoftInput(int flags, ResultReceiver resultReceiver) {
             getTracer().hideSoftInput(flags, resultReceiver,
                     () -> super.hideSoftInput(flags, resultReceiver));
+        }
+
+        @Override
+        public void createSession(SessionCallback callback) {
+            getTracer().createSession(() -> {
+                if (mSuspendCreateSession) {
+                    if (mSuspendedCreateSession != null) {
+                        throw new IllegalStateException("suspendCreateSession() must be "
+                                + "called before receiving another createSession()");
+                    }
+                    mSuspendedCreateSession = () -> {
+                        if (!mDestroying) {
+                            super.createSession(callback);
+                        }
+                    };
+                } else {
+                    super.createSession(callback);
+                }
+            });
         }
 
         @Override
@@ -978,6 +1036,7 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onDestroy() {
         getTracer().onDestroy(() -> {
+            mDestroying = true;
             super.onDestroy();
             unregisterReceiver(mCommandReceiver);
             mHandlerThread.quitSafely();
@@ -1227,6 +1286,10 @@ public final class MockIme extends InputMethodService {
 
         void onCreate(@NonNull Runnable runnable) {
             recordEventInternal("onCreate", runnable);
+        }
+
+        void createSession(@NonNull Runnable runnable) {
+            recordEventInternal("createSession", runnable);
         }
 
         void onVerify(String name, @NonNull BooleanSupplier supplier) {

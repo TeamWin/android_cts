@@ -22,7 +22,7 @@ import android.media.audiofx.Equalizer;
 import android.media.audiofx.PresetReverb;
 import android.media.MediaPlayer;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.InstrumentationTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -31,7 +31,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 
-public class EffectBundleTest extends InstrumentationTestCase {
+import static org.junit.Assert.*;
+
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
+@RunWith(AndroidJUnit4.class)
+public class EffectBundleTest extends StsExtraBusinessLogicTestCase {
     private static final String TAG = "EffectBundleTest";
     private static final int[] INVALID_BAND_ARRAY = {Integer.MIN_VALUE, -10000, -100, -2, -1};
     private static final int mValue0 = 9999; //unlikely values. Should not change
@@ -48,6 +55,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32436341
     @AsbSecurityTest(cveBugId = 32436341)
+    @Test
     public void testEqualizer_getParamCenterFreq() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -58,6 +66,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32588352
     @AsbSecurityTest(cveBugId = 32588352)
+    @Test
     public void testEqualizer_getParamCenterFreq_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -67,6 +76,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32438598
     @AsbSecurityTest(cveBugId = 32438598)
+    @Test
     public void testEqualizer_getParamBandLevel() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -76,6 +86,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32584034
     @AsbSecurityTest(cveBugId = 32584034)
+    @Test
     public void testEqualizer_getParamBandLevel_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -85,6 +96,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32247948
     @AsbSecurityTest(cveBugId = 32247948)
+    @Test
     public void testEqualizer_getParamFreqRange() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -95,6 +107,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32588756
     @AsbSecurityTest(cveBugId = 32588756)
+    @Test
     public void testEqualizer_getParamFreqRange_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -105,6 +118,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32448258
     @AsbSecurityTest(cveBugId = 32448258)
+    @Test
     public void testEqualizer_getParamPresetName() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -114,6 +128,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 32588016
     @AsbSecurityTest(cveBugId = 32588016)
+    @Test
     public void testEqualizer_getParamPresetName_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -155,6 +170,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32095626
     @AsbSecurityTest(cveBugId = 32095626)
+    @Test
     public void testEqualizer_setParamBandLevel() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -171,6 +187,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32585400
     @AsbSecurityTest(cveBugId = 32585400)
+    @Test
     public void testEqualizer_setParamBandLevel_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -187,6 +204,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32705438
     @AsbSecurityTest(cveBugId = 32705438)
+    @Test
     public void testEqualizer_getParamFreqRangeCommand_short() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -197,6 +215,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 32703959
     @AsbSecurityTest(cveBugId = 32703959)
+    @Test
     public void testEqualizer_getParamFreqRangeCommand_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -207,6 +226,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 37563371 (short media)
     @AsbSecurityTest(cveBugId = 37563371)
+    @Test
     public void testEqualizer_setParamProperties_short() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -217,6 +237,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //testing security bug: 37563371 (long media)
     @AsbSecurityTest(cveBugId = 37563371)
+    @Test
     public void testEqualizer_setParamProperties_long() throws Exception {
         if (!hasEqualizer()) {
             return;
@@ -227,6 +248,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 63662938
     @AsbSecurityTest(cveBugId = 63662938)
+    @Test
     public void testDownmix_setParameter() throws Exception {
         verifyZeroPVSizeRejectedForSetParameter(
                 EFFECT_TYPE_DOWNMIX, new int[] { DOWNMIX_PARAM_TYPE });
@@ -243,6 +265,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 63526567
     @AsbSecurityTest(cveBugId = 63526567)
+    @Test
     public void testEnvironmentalReverb_setParameter() throws Exception {
         verifyZeroPVSizeRejectedForSetParameter(
                 AudioEffect.EFFECT_TYPE_ENV_REVERB, new int[] {
@@ -263,6 +286,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
 
     //Testing security bug: 67647856
     @AsbSecurityTest(cveBugId = 67647856)
+    @Test
     public void testPresetReverb_setParameter() throws Exception {
         verifyZeroPVSizeRejectedForSetParameter(
                 AudioEffect.EFFECT_TYPE_PRESET_REVERB, new int[] {

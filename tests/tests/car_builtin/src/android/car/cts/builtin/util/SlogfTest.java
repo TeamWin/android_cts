@@ -36,6 +36,8 @@ import org.junit.Test;
 
 public final class SlogfTest {
     private static final String TAG = SlogfTest.class.getSimpleName();
+    // Comes from Slogf.CAR_TEST_TAG;
+    private static final String CAR_TEST_TAG = "CAR.TEST";
     private static final int TIMEOUT_MS = 10_000;
     // All Slogf would be logged to system buffer.
     private static final LogcatHelper.Buffer BUFFER = LogcatHelper.Buffer.SYSTEM;
@@ -391,12 +393,37 @@ public final class SlogfTest {
         assertThat(Slogf.isLoggable(TAG, Log.VERBOSE)).isFalse();
     }
 
+    @Test
+    public void testSlogfIsfLoggableWorksSameAsLogIsLoggable() throws Exception {
+        setLogLevel(INFO);
+        // Emulate the tag as if it's not in the car tests.
+        setLogLevel(CAR_TEST_TAG, ASSERT);
+
+        assertThat(Log.isLoggable(TAG, Log.DEBUG)).isFalse();
+        assertThat(Slogf.isLoggable(TAG, Log.DEBUG)).isFalse();
+
+        assertThat(Log.isLoggable(TAG, Log.INFO)).isTrue();
+        assertThat(Slogf.isLoggable(TAG, Log.INFO)).isTrue();
+    }
+
+    @Test
+    public void testSlogfIsfLoggableEnabledInCarTests() throws Exception {
+        setLogLevel(INFO);
+
+        assertThat(Log.isLoggable(TAG, Log.DEBUG)).isFalse();
+        assertThat(Slogf.isLoggable(TAG, Log.DEBUG)).isTrue();
+    }
+
     private void clearLog() {
         LogcatHelper.clearLog();
     }
 
     private void setLogLevel(Level level) {
-        SystemUtil.runShellCommand("setprop log.tag.SlogfTest " + level.getValue());
+        setLogLevel(TAG, level);
+    }
+
+    private void setLogLevel(String tag, Level level) {
+        SystemUtil.runShellCommand("setprop log.tag." + tag + " " + level.getValue());
     }
 
     private void assertNoLogcatMessage(Level level, String format, Object... args)

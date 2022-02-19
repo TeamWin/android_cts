@@ -94,8 +94,9 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_loose() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
         assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
         assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC\u30D0",
@@ -137,8 +138,9 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_loose_text2() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
         assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 120, SAMPLE_TEXT2);
         assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 110,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B",
@@ -195,8 +197,9 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_strict() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
         assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
         assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
@@ -239,8 +242,9 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_strict_text2() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
         assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 120, SAMPLE_TEXT2);
         assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 110,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B",
@@ -298,8 +302,9 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_phrase() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NONE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
         assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
         assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC\u30D0",
@@ -341,8 +346,9 @@ public class StaticLayoutLineBreakingVariantsTest {
 
     @Test
     public void testBreakVariant_phrase_text2() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
         assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 120, SAMPLE_TEXT2);
         assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 110,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",

@@ -50,7 +50,7 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
 
         removeAllUsersExceptSystem();
 
-        reboot();
+        restartSystemServer();
 
         assertFullUserCreated();
     }
@@ -79,7 +79,7 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
             if (userId == SYSTEM_USER_ID) {
                 continue;
             }
-            removeUser(userId);
+            assertThat(removeUser(userId)).isTrue();
         }
 
         users = getAllUsers();

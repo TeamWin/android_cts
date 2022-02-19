@@ -15,10 +15,9 @@
  */
 package android.telephony.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.junit.Assert.assertEquals;
 
 import android.telephony.AccessNetworkConstants;
 import android.telephony.PhysicalChannelConfig;
@@ -67,22 +66,20 @@ public class PhysicalChannelConfigTest {
 
     @Test
     public void testInvalidPhysicalChannelConfig() {
-        try {
-            mPhysicalChannelConfig = new PhysicalChannelConfig.Builder()
-                    .setNetworkType(NETWORK_TYPE_LTE)
-                    .setPhysicalCellId(PHYSICAL_INVALID_CELL_ID)
-                    .setCellConnectionStatus(CONNECTION_STATUS)
-                    .setCellBandwidthDownlinkKhz(CELL_BANDWIDTH)
-                    .setCellBandwidthUplinkKhz(CELL_BANDWIDTH)
-                    .setContextIds(CONTEXT_IDS)
-                    .setFrequencyRange(FREQUENCY_RANGE)
-                    .setDownlinkChannelNumber(CHANNEL_NUMBER)
-                    .setUplinkChannelNumber(CHANNEL_NUMBER)
-                    .setBand(BAND)
-                    .build();
-            fail("Physical cell Id: 1008 is over limit");
-        } catch (IllegalArgumentException e) {
-        }
+        mPhysicalChannelConfig = new PhysicalChannelConfig.Builder()
+                .setNetworkType(NETWORK_TYPE_LTE)
+                .setPhysicalCellId(PHYSICAL_INVALID_CELL_ID)
+                .setCellConnectionStatus(CONNECTION_STATUS)
+                .setCellBandwidthDownlinkKhz(CELL_BANDWIDTH)
+                .setCellBandwidthUplinkKhz(CELL_BANDWIDTH)
+                .setContextIds(CONTEXT_IDS)
+                .setFrequencyRange(FREQUENCY_RANGE)
+                .setDownlinkChannelNumber(CHANNEL_NUMBER)
+                .setUplinkChannelNumber(CHANNEL_NUMBER)
+                .setBand(BAND)
+                .build();
+        assertThat(PHYSICAL_INVALID_CELL_ID)
+                .isNotEqualTo(mPhysicalChannelConfig.getPhysicalCellId());
     }
 
     @Test

@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -100,20 +99,22 @@ public class PrecomputedTextTest {
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
                 .setTextDirection(LTR).build());
 
-        LineBreakConfig lineBreakConfig = new LineBreakConfig();
-        lineBreakConfig.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
+        LineBreakConfig strictNoneConfig = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
         assertNotNull(new Params.Builder(PAINT)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
-                .setLineBreakConfig(lineBreakConfig)
+                .setLineBreakConfig(strictNoneConfig)
                 .setTextDirection(LTR).build());
 
-        LineBreakConfig lineBreakConfig2 = new LineBreakConfig();
-        lineBreakConfig.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        LineBreakConfig nonePhraseConfig = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NONE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
         assertNotNull(new Params.Builder(PAINT)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL)
-                .setLineBreakConfig(lineBreakConfig2)
+                .setLineBreakConfig(nonePhraseConfig)
                 .setTextDirection(LTR).build());
     }
 
@@ -127,9 +128,9 @@ public class PrecomputedTextTest {
         assertEquals(RTL, new Params.Builder(PAINT).setTextDirection(RTL).build()
                 .getTextDirection());
 
-        LineBreakConfig lineBreakConfig = new LineBreakConfig();
-        lineBreakConfig.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
-        lineBreakConfig.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        LineBreakConfig lineBreakConfig = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
         assertTrue(lineBreakConfig.equals(new Params.Builder(PAINT)
                 .setLineBreakConfig(lineBreakConfig).build().getLineBreakConfig()));
     }
@@ -142,16 +143,22 @@ public class PrecomputedTextTest {
                      new Params.Builder(PAINT).build().getHyphenationFrequency());
         assertEquals(TextDirectionHeuristics.FIRSTSTRONG_LTR,
                      new Params.Builder(PAINT).build().getTextDirection());
+    }
 
-        // Verify that there is no LineBreakConfig instance by default.
-        assertNull(new Params.Builder(PAINT).build().getLineBreakConfig());
+    @Test
+    public void testParams_defaultLineBreakConfig() {
+        // Verify it will return the pre-defined instance with the default value if the
+        // LineBreakConfig has not been set to Params before.
+        LineBreakConfig config = new Params.Builder(PAINT).build().getLineBreakConfig();
+        assertEquals(LineBreakConfig.LINE_BREAK_STYLE_NONE, config.getLineBreakStyle());
+        assertEquals(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE, config.getLineBreakWordStyle());
     }
 
     @Test
     public void testParams_equals() {
-        LineBreakConfig config = new LineBreakConfig();
-        config.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT);
-        config.setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE);
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
 
         final Params base = new Params.Builder(PAINT)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY)

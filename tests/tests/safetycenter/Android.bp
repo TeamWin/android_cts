@@ -38,7 +38,6 @@ android_test {
         "kotlinx-coroutines-android",
         "kotlin-test",
         "modules-utils-build_system",
-        "safety-center-config",
         "safety-center-resources-lib",
         "truth-prebuilt",
     ],

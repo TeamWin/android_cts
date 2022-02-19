@@ -5772,8 +5772,9 @@
         </activity>
 
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"
-                android:exported="true"
-                  android:label="@string/display_cutout_test">
+            android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen"
+            android:exported="true"
+            android:label="@string/display_cutout_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />

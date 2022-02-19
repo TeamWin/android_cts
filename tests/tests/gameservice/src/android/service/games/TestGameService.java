@@ -22,6 +22,7 @@ import android.Manifest;
 
 import androidx.annotation.GuardedBy;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
@@ -67,13 +68,20 @@ public final class TestGameService extends GameService {
         }
     }
 
-    public static boolean isConnected() {
+    static void reset() {
+        synchronized (sLock) {
+            sIsConnected = false;
+        }
+        setGamePackages(ImmutableList.of());
+    }
+
+    static boolean isConnected() {
         synchronized (sLock) {
             return sIsConnected;
         }
     }
 
-    public static void setGamePackages(Iterable<String> gamePackages) {
+    static void setGamePackages(Iterable<String> gamePackages) {
         synchronized (sLock) {
             sGamePackages = ImmutableSet.copyOf(gamePackages);
         }

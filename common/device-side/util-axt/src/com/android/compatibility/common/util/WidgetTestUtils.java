@@ -16,7 +16,6 @@
 
 package com.android.compatibility.common.util;
 
-import static android.view.ViewTreeObserver.OnDrawListener;
 import static android.view.ViewTreeObserver.OnGlobalLayoutListener;
 
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
@@ -214,28 +213,14 @@ public class WidgetTestUtils {
     public static void runOnMainAndDrawSync(@NonNull final ActivityTestRule activityTestRule,
             @NonNull final View view, @Nullable final Runnable runner) {
         final CountDownLatch latch = new CountDownLatch(1);
-
         try {
             activityTestRule.runOnUiThread(() -> {
-                final OnDrawListener listener = new OnDrawListener() {
-                    @Override
-                    public void onDraw() {
-                        // posting so that the sync happens after the draw that's about to happen
-                        view.post(() -> {
-                            view.getViewTreeObserver().removeOnDrawListener(this);
-                            latch.countDown();
-                        });
-                    }
-                };
-
-                view.getViewTreeObserver().addOnDrawListener(listener);
-
+                view.getViewTreeObserver().registerFrameCommitCallback(latch::countDown);
                 if (runner != null) {
                     runner.run();
                 }
                 view.invalidate();
             });
-
             Assert.assertTrue("Expected draw pass occurred within 5 seconds",
                     latch.await(5, TimeUnit.SECONDS));
         } catch (Throwable t) {

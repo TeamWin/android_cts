@@ -173,6 +173,8 @@ public class WatchUidRunner {
     }
 
     public void waitFor(int cmd, String procState, Integer capability, long timeout) {
+        Log.i(TAG, "waitFor(cmd=" + cmd + ", procState=" + procState + ", capability=" + capability
+                + ", timeout=" + timeout + ")");
         long waitUntil = SystemClock.uptimeMillis() + timeout;
         while (true) {
             String[] line = waitForNextLine(waitUntil, cmd, procState, capability);
@@ -242,6 +244,7 @@ public class WatchUidRunner {
                     try {
                         mPendingLines.wait(waitUntil - now);
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
                 }
                 String[] res = mPendingLines.remove(0);

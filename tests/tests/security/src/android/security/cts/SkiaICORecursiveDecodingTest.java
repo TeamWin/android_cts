@@ -19,26 +19,33 @@ package android.security.cts;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.platform.test.annotations.AsbSecurityTest;
+import androidx.test.runner.AndroidJUnit4;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import java.io.InputStream;
 
 import android.security.cts.R;
 import android.platform.test.annotations.AsbSecurityTest;
 
+@RunWith(AndroidJUnit4.class)
 public class SkiaICORecursiveDecodingTest extends StsExtraBusinessLogicTestCase {
 
     @AsbSecurityTest(cveBugId = 73782357)
+    @Test
     public void testAndroid_cve_2017_13318() {
         doSkiaIcoRecursiveDecodingTest(R.raw.cve_2017_13318);
     }
 
     @AsbSecurityTest(cveBugId = 17262540)
+    @Test
     public void test_android_bug_17262540() {
         doSkiaIcoRecursiveDecodingTest(R.raw.bug_17262540);
     }
 
     @AsbSecurityTest(cveBugId = 17265466)
+    @Test
     public void test_android_bug_17265466() {
         doSkiaIcoRecursiveDecodingTest(R.raw.bug_17265466);
     }

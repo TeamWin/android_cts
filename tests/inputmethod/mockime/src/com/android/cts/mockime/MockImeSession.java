@@ -354,6 +354,42 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} suspend {@link MockIme.AbstractInputMethodImpl#createSession(
+     * android.view.inputmethod.InputMethod.SessionCallback)} until {@link #resumeCreateSession()}.
+     *
+     * <p>This is useful to test a tricky timing issue that the IME client initiated the
+     * IME session but {@link android.view.inputmethod.InputMethodSession} is not available
+     * yet.</p>
+     *
+     * <p>For simplicity and stability, {@link #suspendCreateSession()} must be called before
+     * {@link MockIme.AbstractInputMethodImpl#createSession(
+     * android.view.inputmethod.InputMethod.SessionCallback)} gets called again.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand suspendCreateSession() {
+        return callCommandInternal("suspendCreateSession", new Bundle());
+    }
+
+    /**
+     * Lets {@link MockIme} resume suspended {@link MockIme.AbstractInputMethodImpl#createSession(
+     * android.view.inputmethod.InputMethod.SessionCallback)}.
+     *
+     * <p>Does nothing if {@link #suspendCreateSession()} was not called.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand resumeCreateSession() {
+        return callCommandInternal("resumeCreateSession", new Bundle());
+    }
+
+    /**
      * Lets {@link MockIme} to call
      * {@link android.inputmethodservice.InputMethodService#getCurrentInputConnection()} and
      * memorize  it for later {@link InputConnection}-related operations.

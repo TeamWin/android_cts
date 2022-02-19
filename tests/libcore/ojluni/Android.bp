@@ -45,7 +45,4 @@ android_test {
         "general-tests",
         "mts-art",
     ],
-    jacoco: {
-        exclude_filter: ["test.**"],
-    }
 }

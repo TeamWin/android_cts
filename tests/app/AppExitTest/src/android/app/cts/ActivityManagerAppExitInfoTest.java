@@ -18,6 +18,8 @@ package android.app.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -241,6 +243,7 @@ public final class ActivityManagerAppExitInfoTest {
         }
 
         if (mLatch != null) {
+            Log.d(TAG, "Counting down latch on message " + msg + " for process " + processName);
             mLatch.countDown();
         }
     }
@@ -286,14 +289,17 @@ public final class ActivityManagerAppExitInfoTest {
         final String output = executeShellCmd(
                 "pm create-user " + (guest ? "--guest " : "") + name);
         if (output.startsWith("Success")) {
-            return Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+            int userId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+            Log.i(TAG, "Created user with id " + userId);
+            return userId;
         }
         throw new IllegalStateException(String.format("Failed to create user: %s", output));
     }
 
     private boolean removeUser(final int userId) throws Exception {
-        final String output = executeShellCmd(String.format("pm remove-user %s", userId));
+        final String output = executeShellCmd("pm remove-user %s", userId);
         if (output.startsWith("Error")) {
+            Log.w(TAG, "Failed to remove user: " + output);
             return false;
         }
         return true;
@@ -304,6 +310,7 @@ public final class ActivityManagerAppExitInfoTest {
 
         final String output = executeShellCmd(cmd);
         if (output.startsWith("Error")) {
+            Log.w(TAG, "Failed to start user: " + output);
             return false;
         }
         if (waitFlag) {
@@ -335,24 +342,41 @@ public final class ActivityManagerAppExitInfoTest {
 
     private void installExistingPackageAsUser(String packageName, int userId)
             throws Exception {
-        executeShellCmd(
-                String.format("pm install-existing --user %d --wait %s", userId, packageName));
+
+        // Makes sure package doesn't exist yet, otherwise pm install will hang
+        assertWithMessage("package %s for user %s exists", packageName, userId)
+                .that(isPackageInstalledAsUser(packageName, userId)).isFalse();
+
+        Log.i(TAG, "installing existing " + packageName + " on user" + userId);
+        executeShellCmd("pm install-existing --user %d --wait %s", userId, packageName);
     }
 
-    private String executeShellCmd(String cmd) throws Exception {
-        final String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
+    private boolean isPackageInstalledAsUser(String packageName, int userId) throws Exception {
+        String output = executeShellCmd("pm list packages --user %d %s", userId, packageName);
+        return output.contains("package:" + packageName + "\n");
+    }
+
+    private String executeShellCmd(String cmdFormat, Object... args) throws Exception {
+        String cmd = String.format(cmdFormat, args);
+        String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
         Log.d(TAG, String.format("Output for '%s': %s", cmd, result));
         return result;
     }
 
-    private void awaitForLatch(CountDownLatch latch) {
-        awaitForLatch(latch, WAITFOR_MSEC);
+    private void awaitForLatch(CountDownLatch latch, String reasonFormat,
+            Object... reasonArgs) {
+        awaitForLatch(latch, WAITFOR_MSEC, reasonFormat, reasonArgs);
     }
 
-    private void awaitForLatch(CountDownLatch latch, long timeout) {
+    private void awaitForLatch(CountDownLatch latch, long timeout, String reasonFormat,
+            Object... reasonArgs) {
+        String reason = String.format(reasonFormat, reasonArgs);
+        Log.d(TAG, "waiting " + WAITFOR_MSEC + " for " + reason);
         try {
             assertTrue("Timeout for waiting", latch.await(timeout, TimeUnit.MILLISECONDS));
+            Log.d(TAG, "latch counted down");
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             fail("Interrupted");
         }
     }
@@ -375,6 +399,8 @@ public final class ActivityManagerAppExitInfoTest {
         mLatch = new CountDownLatch(1);
         UserHandle user = other ? mOtherUserHandle : mCurrentUserHandle;
         WatchUidRunner watcher = other ? mOtherUidWatcher : mWatcher;
+        Log.i(TAG, "Starting service " + serviceName + ": waitForGone=" + waitForGone
+                + ", waitForIdle=" + waitForIdle + ",intent=" + intent + ", user=" + user);
         mContext.startServiceAsUser(intent, user);
         if (waitForIdle) {
             watcher.waitFor(WatchUidRunner.CMD_IDLE, null);
@@ -382,7 +408,7 @@ public final class ActivityManagerAppExitInfoTest {
         if (waitForGone) {
             waitForGone(watcher);
         }
-        awaitForLatch(mLatch);
+        awaitForLatch(mLatch, "service %s to start on user %s", serviceName, user);
     }
 
     private void startIsolatedService(int commandCode, String serviceName) {
@@ -392,7 +418,7 @@ public final class ActivityManagerAppExitInfoTest {
         intent.putExtra(EXTRA_MESSENGER, mMessenger);
         mLatch = new CountDownLatch(1);
         mContext.startServiceAsUser(intent, mCurrentUserHandle);
-        awaitForLatch(mLatch);
+        awaitForLatch(mLatch, "service %s to start", serviceName);
     }
 
     private void waitForGone(WatchUidRunner watcher) {
@@ -579,6 +605,7 @@ public final class ActivityManagerAppExitInfoTest {
                 if (tag_anr.equals(intent.getStringExtra(DropBoxManager.EXTRA_TAG))) {
                     mAnrEntry = dbox.getNextEntry(tag_anr, intent.getLongExtra(
                             DropBoxManager.EXTRA_TIME, 0) - 1);
+                    Log.d(TAG, "Counting down latch onReceive(" + intent + ")");
                     dboxLatch.countDown();
                 }
             }
@@ -617,7 +644,8 @@ public final class ActivityManagerAppExitInfoTest {
         waitForGone(mWatcher);
         long now2 = System.currentTimeMillis();
 
-        awaitForLatch(dboxLatch);
+        awaitForLatch(dboxLatch, "broadcast for %s be received",
+                DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED);
         assertTrue(mAnrEntry != null);
 
         List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
@@ -677,6 +705,7 @@ public final class ActivityManagerAppExitInfoTest {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 holder.putBinder(keyIBinder, service);
+                Log.d(TAG, "Counting down latch onServiceConnected(" + name + ")");
                 latch.countDown();
             }
 
@@ -686,8 +715,9 @@ public final class ActivityManagerAppExitInfoTest {
         };
 
         final Intent intent = new Intent();
-        intent.setComponent(new ComponentName(servicePackage,
-                servicePackage + ".ExternalServiceWithZygote"));
+        ComponentName serviceComponent = new ComponentName(servicePackage,
+                servicePackage + ".ExternalServiceWithZygote");
+        intent.setComponent(serviceComponent);
 
         // Bind to that external service, which will become an isolated process
         // running in the current package user id.
@@ -695,7 +725,7 @@ public final class ActivityManagerAppExitInfoTest {
                 Context.BIND_AUTO_CREATE | Context.BIND_EXTERNAL_SERVICE,
                 AsyncTask.THREAD_POOL_EXECUTOR, connection));
 
-        awaitForLatch(latch);
+        awaitForLatch(latch, "service %s to bind", serviceComponent.flattenToShortString());
 
         final IBinder service = holder.getBinder(keyIBinder);
         assertNotNull(service);
@@ -1040,6 +1070,7 @@ public final class ActivityManagerAppExitInfoTest {
                     case ServiceMessages.MSG_IDENTIFY_RESPONSE:
                         msg.getData().setClassLoader(RunningServiceInfo.class.getClassLoader());
                         mInfo = msg.getData().getParcelable(ServiceMessages.IDENTIFY_INFO);
+                        Log.d(TAG, "Counting down latch on IdentifyHandler msg: " + msg);
                         latch.countDown();
                         break;
                 }
@@ -1053,22 +1084,26 @@ public final class ActivityManagerAppExitInfoTest {
         Message msg = Message.obtain(null, ServiceMessages.MSG_IDENTIFY);
         msg.replyTo = local;
         service.send(msg);
-        awaitForLatch(latch);
+        awaitForLatch(latch, "service to receive message");
 
         return handler.mInfo;
     }
 
     private void prepareTestUser() throws Exception {
+        Log.d(TAG, "prepareTestUser()");
         // Create the test user
         mOtherUserId = createUser("TestUser_" + SystemClock.uptimeMillis(), false);
+        Log.d(TAG, "user created: " + mOtherUserId);
         mOtherUserHandle = UserHandle.of(mOtherUserId);
         // Start the other user
         assertTrue(startUser(mOtherUserId, true));
+        Log.d(TAG, "user started");
         // Install the test helper APK into the other user
         installExistingPackageAsUser(STUB_PACKAGE_NAME, mOtherUserId);
         installExistingPackageAsUser(mContext.getPackageName(), mOtherUserId);
         mStubPackageOtherUid = mContext.getPackageManager().getPackageUidAsUser(
                 STUB_PACKAGE_NAME, 0, mOtherUserId);
+        Log.d(TAG, "UID of " + STUB_PACKAGE_NAME + ": " + mStubPackageOtherUid);
         mOtherUidWatcher = new WatchUidRunner(mInstrumentation, mStubPackageOtherUid,
                 WAITFOR_MSEC);
     }
@@ -1079,10 +1114,9 @@ public final class ActivityManagerAppExitInfoTest {
             assertTrue(stopUser(mOtherUserId, true, true));
             // Remove the test user
             removeUser(mOtherUserId);
-            mOtherUidWatcher.finish();
-            mOtherUserId = 0;
-            mOtherUserHandle = null;
-            mOtherUidWatcher = null;
+            if (mOtherUidWatcher != null) {
+                mOtherUidWatcher.finish();
+            }
         }
     }
 
@@ -1307,6 +1341,7 @@ public final class ActivityManagerAppExitInfoTest {
         ServiceConnection connection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
+                Log.d(TAG, "onServiceConnected(" + name + "): " + service);
                 IHeartbeat heartbeat = IHeartbeat.Stub.asInterface(service);
                 try {
                     heartbeat.monitor(mMessenger);
@@ -1344,7 +1379,7 @@ public final class ActivityManagerAppExitInfoTest {
         mContext.startActivity(intentHome);
 
         // Wait until the HeartbeatService finishes
-        awaitForLatch(mLatch, HEARTBEAT_COUNTDOWN * HEARTBEAT_INTERVAL);
+        awaitForLatch(mLatch, HEARTBEAT_COUNTDOWN * HEARTBEAT_INTERVAL, "heartbeat");
         mContext.unbindService(connection);
         sleep(1000);
 

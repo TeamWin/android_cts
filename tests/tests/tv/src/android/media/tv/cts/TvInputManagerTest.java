@@ -689,13 +689,11 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         int bgDefaultPriority = trm.getConfigPriority(PRIORITY_HINT_USE_CASE_TYPE_INVALID, false);
         boolean isForeground = checkIsForeground(android.os.Process.myPid());
 
-        int priority = mManager.getClientPriority(TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE,
-                null);
+        int priority = mManager.getClientPriority(TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
         assertTrue(priority == (isForeground ? fgLivePriority : bgLivePriority));
 
         priority = mManager.getClientPriority(
-                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
-                null);
+                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */);
         assertTrue(priority == (isForeground ? fgDefaultPriority : bgDefaultPriority));
 
         Handler handler = new Handler(Looper.getMainLooper());

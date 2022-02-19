@@ -3542,6 +3542,26 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testMultipleEnabledProfiles() {
+        if (hasFeature(PackageManager.FEATURE_TELEPHONY_EUICC_MEP)) {
+            List<UiccCardInfo> cardInfos =
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                            (tm) -> tm.getUiccCardsInfo());
+            for (UiccCardInfo cardInfo : cardInfos) {
+                // This test suppose there is no use case that OEMs will have multiple esim
+                // chipset with different MEP capabilities.
+                if (cardInfo.isEuicc()) {
+                    assertTrue(cardInfo.isMultipleEnabledProfilesSupported());
+                    List<UiccPortInfo> uiccPortInfos = (List<UiccPortInfo>)
+                            ShellIdentityUtils.invokeMethodWithShellPermissions(cardInfo,
+                                    (card) -> card.getPorts());
+                    assertTrue(uiccPortInfos.size() > 1);
+                }
+            }
+        }
+    }
+
     private boolean isDataEnabled() {
         return ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 TelephonyManager::isDataEnabled);

@@ -19,7 +19,10 @@ package android.security.cts;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.platform.test.annotations.AsbSecurityTest;
+import androidx.test.runner.AndroidJUnit4;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 
@@ -27,6 +30,7 @@ import java.io.InputStream;
 
 import android.security.cts.R;
 
+@RunWith(AndroidJUnit4.class)
 public class AllocatePixelRefIntOverflowTest extends StsExtraBusinessLogicTestCase {
 
     /**
@@ -34,6 +38,7 @@ public class AllocatePixelRefIntOverflowTest extends StsExtraBusinessLogicTestCa
      * BitmapFactory.decodeStream JPG allocPixelRef integer overflow
      */
     @AsbSecurityTest(cveBugId = 19394591)
+    @Test
     public void testAllocateJavaPixelRefIntOverflow() {
         InputStream exploitImage = getInstrumentation().getContext().getResources().openRawResource(
                 R.raw.cve_2015_1531_b_19270126);

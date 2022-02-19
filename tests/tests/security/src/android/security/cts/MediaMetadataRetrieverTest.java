@@ -22,24 +22,31 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
 import android.media.MediaMetadataRetriever;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.test.AndroidTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import java.io.IOException;
 
-public class MediaMetadataRetrieverTest extends AndroidTestCase {
+import org.junit.Before;
+import org.junit.After;
+import static org.junit.Assert.*;
+
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
+@RunWith(AndroidJUnit4.class)
+public class MediaMetadataRetrieverTest extends StsExtraBusinessLogicTestCase {
     protected Resources mResources;
     protected MediaMetadataRetriever mRetriever;
 
-    @Override
+    @Before
     protected void setUp() throws Exception {
-        super.setUp();
         mResources = getContext().getResources();
         mRetriever = new MediaMetadataRetriever();
     }
 
-    @Override
+    @After
     protected void tearDown() throws Exception {
-        super.tearDown();
         mRetriever.release();
     }
 
@@ -53,6 +60,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         }
     }
 
+    @Test
     @AsbSecurityTest(cveBugId = 24623447)
     public void testID3v2EmbeddedPicture() {
         setDataSourceFd(R.raw.id3v2_3_extended_header_overflow_padding);

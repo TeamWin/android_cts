@@ -25,14 +25,21 @@ import android.os.RemoteException;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.security.cts.IIsolatedService;
 import android.security.cts.IsolatedService;
-import android.test.AndroidTestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import android.util.Log;
 import com.android.internal.util.ArrayUtils;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import junit.framework.Assert;
+import org.junit.Before;
+import org.junit.After;
 
-public class IsolatedProcessTest extends AndroidTestCase {
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+
+@RunWith(AndroidJUnit4.class)
+public class IsolatedProcessTest extends StsExtraBusinessLogicTestCase {
     static final String TAG = IsolatedProcessTest.class.getSimpleName();
 
     private static final long BIND_SERVICE_TIMEOUT = 5000;
@@ -65,15 +72,16 @@ public class IsolatedProcessTest extends AndroidTestCase {
         }
     };
 
-    @Override
+    @Before
     public void setUp() throws InterruptedException {
         mLatch = new CountDownLatch(1);
-        Intent serviceIntent = new Intent(mContext, IsolatedService.class);
-        mContext.bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+        Intent serviceIntent = new Intent(getInstrumentation().getContext(), IsolatedService.class);
+        getInstrumentation().getContext().bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
         Assert.assertTrue("Timed out while waiting to bind to isolated service",
                 mLatch.await(BIND_SERVICE_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    @Test
     @AsbSecurityTest(cveBugId = 30202228)
     public void testGetCachedServicesFromIsolatedService() throws RemoteException {
         String[] cachedServices = mService.getCachedSystemServices();
@@ -83,6 +91,7 @@ public class IsolatedProcessTest extends AndroidTestCase {
         }
     }
 
+    @Test
     @AsbSecurityTest(cveBugId = 30202228)
     public void testGetServiceFromIsolatedService() throws RemoteException {
         for (String serviceName : RESTRICTED_SERVICES_TO_TEST) {
@@ -92,14 +101,15 @@ public class IsolatedProcessTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetProcessIsIsolated() throws RemoteException {
         Assert.assertFalse(Process.isIsolated());
         Assert.assertTrue(mService.getProcessIsIsolated());
     }
 
-    @Override
+    @After
     public void tearDown() {
-        mContext.unbindService(mServiceConnection);
+        getInstrumentation().getContext().unbindService(mServiceConnection);
     }
 
 }
