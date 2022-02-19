@@ -16,6 +16,8 @@
 
 package android.security.cts;
 
+import static org.junit.Assert.*;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -27,10 +29,10 @@ import android.platform.test.annotations.AsbSecurityTest;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import java.io.InputStream;
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import android.security.cts.R;
-
-import static org.junit.Assert.*;
 
 import androidx.test.runner.AndroidJUnit4;
 import org.junit.runner.RunWith;
@@ -45,8 +47,8 @@ public class Movie33897722 extends StsExtraBusinessLogicTestCase {
      * larger than 2. Ensure that we do not attempt to read colors from beyond the end of the
      * color map, which would be reading memory that we do not control, and may be uninitialized.
      */
-    @Test
     @AsbSecurityTest(cveBugId = 33897722)
+    @Test
     public void test_android_bug_33897722() {
         // The image has a 10 x 10 frame on top of a transparent background. Only test the
         // 10 x 10 frame, since the original bug would never have used uninitialized memory
@@ -54,8 +56,8 @@ public class Movie33897722 extends StsExtraBusinessLogicTestCase {
         test_movie(R.raw.bug_33897722, 600, 752, 10, 10);
     }
 
-    @Test
     @AsbSecurityTest(cveBugId = 37662286)
+    @Test
     public void test_android_bug_37662286() {
         // The image has a background color that is out of range. Arbitrarily test
         // the upper left corner. (Most of the image is transparent.)
