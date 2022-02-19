@@ -563,7 +563,7 @@ public class MidiEchoTest extends AndroidTestCase {
 
     // Store history of status changes.
     private class MyDeviceCallback extends MidiManager.DeviceCallback {
-        private MidiDeviceStatus mStatus;
+        private volatile MidiDeviceStatus mStatus;
         private MidiDeviceInfo mInfo;
 
         public MyDeviceCallback(MidiDeviceInfo info) {
@@ -622,7 +622,19 @@ public class MidiEchoTest extends AndroidTestCase {
             midiManager.registerDeviceCallback(deviceCallback, null);
 
             MidiDeviceStatus status = deviceCallback.waitForStatus(TIMEOUT_STATUS_MSEC);
-            assertEquals("we should not have any status yet", null, status);
+            // The DeviceStatus callback is supposed to be "sticky".
+            // That means we expect to get the status of every device that is
+            // already available when we register for the callback.
+            // If it was not "sticky" then we would only get a callback when there
+            // was a change in the available devices.
+            // TODO Often this is null. But sometimes not. Why?
+            if (status == null) {
+                Log.d(TAG, "testDeviceCallback() first status was null!");
+            } else {
+                // InputPort should be closed because we have not opened it yet.
+                assertEquals("input port should be closed before we open it.",
+                             false, status.isInputPortOpen(0));
+            }
 
             // Open input port.
             MidiInputPort echoInputPort = echoDevice.openInputPort(0);
@@ -630,13 +642,13 @@ public class MidiEchoTest extends AndroidTestCase {
 
             status = deviceCallback.waitForStatus(TIMEOUT_STATUS_MSEC);
             assertTrue("should have status by now", null != status);
-            assertEquals("input port open?", true, status.isInputPortOpen(0));
+            assertEquals("input port should be open", true, status.isInputPortOpen(0));
 
             deviceCallback.clear();
             echoInputPort.close();
             status = deviceCallback.waitForStatus(TIMEOUT_STATUS_MSEC);
             assertTrue("should have status by now", null != status);
-            assertEquals("input port closed?", false, status.isInputPortOpen(0));
+            assertEquals("input port should be closed", false, status.isInputPortOpen(0));
 
             // Make sure we do NOT get called after unregistering.
             midiManager.unregisterDeviceCallback(deviceCallback);
