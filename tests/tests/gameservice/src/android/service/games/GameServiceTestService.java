@@ -17,7 +17,9 @@
 package android.service.games;
 
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -71,8 +73,11 @@ public final class GameServiceTestService extends Service {
 
         @Override
         public void resetState() {
-            TestGameService.setGamePackages(ImmutableList.of());
+            TestGameService.reset();
             mLastActivityResult = null;
+
+            setGameServiceComponentEnabled(true);
+            setGameSessionServiceComponentEnabled(true);
         }
 
         @Override
@@ -188,6 +193,35 @@ public final class GameServiceTestService extends Service {
                 return null;
             }
             return focusedGameSession.getOnSystemBarVisibilityChangedInfo();
+        }
+
+        public void setGameServiceComponentEnabled(boolean enabled) {
+            getPackageManager().setComponentEnabledSetting(
+                    new ComponentName(getApplicationContext(), TestGameService.class),
+                    enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                            : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP | PackageManager.SYNCHRONOUS);
+
+            if (enabled) {
+                return;
+            }
+
+            // Wait for package changes to propagate and then reset the TestGameService connection
+            // state.
+            try {
+                Thread.sleep(3_000L);
+            } catch (InterruptedException e) {
+                // Do nothing.
+            }
+            TestGameService.reset();
+        }
+
+        public void setGameSessionServiceComponentEnabled(boolean enabled) {
+            getPackageManager().setComponentEnabledSetting(
+                    new ComponentName(getApplicationContext(), TestGameSessionService.class),
+                    enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                            : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP | PackageManager.SYNCHRONOUS);
         }
     };
 
