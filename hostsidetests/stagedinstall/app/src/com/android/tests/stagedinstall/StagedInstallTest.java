@@ -453,10 +453,7 @@ public class StagedInstallTest {
     public void testStagedInstallDowngrade_DowngradeRequested_Fails_Commit() throws Exception {
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         Install.single(TestApp.A2).commit();
-        int sessionId = stageDowngradeSingleApk(TestApp.A1).assertSuccessful().getSessionId();
-        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
-        PackageInstaller.SessionInfo sessionInfo = getSessionInfo(sessionId);
-        assertThat(sessionInfo).isStagedSessionFailed();
+        stageDowngradeSingleApk(TestApp.A1).assertFailure();
     }
 
     @Test

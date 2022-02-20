@@ -16,25 +16,6 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.virtualdevice.streamedtestapp">
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <application>
-        <activity android:name=".MainActivity"
-            android:allowEmbedded="true"
-            android:exported="true" />
-
-        <activity android:name=".NoEmbedActivity"
-            android:exported="true" />
-
-        <activity android:name=".CannotDisplayOnRemoteActivity"
-            android:allowEmbedded="true"
-            android:canDisplayOnRemoteDevices="false"
-            android:exported="true" />
-
-        <service android:name=".StreamedAppService"
-            android:exported="true" />
-    </application>
-
+          package="android.virtualdevice.cts.common">
+    <application />
 </manifest>
-
