@@ -2125,6 +2125,10 @@
         device was p2p device. Check the test case on the other device.</string>
     <string name="p2p_connection_error">
         Test failed.\n\nFailed to establish a p2p connection.</string>
+    <string name="p2p_connection_latency_error">
+        Test failed. \n\nConnection was expected to be established within %1$dms. But took=%2$dms.
+        \n\nPlease ensure that the Group Owner is ready on the other device before running
+        this test</string>
     <string name="p2p_detect_disconnection_error">
         Test failed.\n\nFailed to detect client disconnection.</string>
     <string name="p2p_disconnect_error">
