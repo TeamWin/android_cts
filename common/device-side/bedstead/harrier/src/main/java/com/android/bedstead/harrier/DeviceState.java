@@ -118,6 +118,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,6 +129,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 
@@ -181,6 +187,10 @@ public final class DeviceState extends HarrierRule {
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
+    // We are allowed 11 minutes before the entire test run fails
+    private static final Duration MAX_TEST_DURATION = Duration.ofMinutes(10);
+    private final ExecutorService mTestExecutor = Executors.newSingleThreadExecutor();
+
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
         mSkipTestTeardown = Boolean.parseBoolean(
@@ -223,44 +233,68 @@ public final class DeviceState extends HarrierRule {
     private Statement applyTest(Statement base, Description description) {
         return new Statement() {
             @Override public void evaluate() throws Throwable {
-                PermissionContextImpl permissionContext = null;
+
+                Future<Throwable> future = mTestExecutor.submit(() -> {
+                    try {
+                        executeTest(base, description);
+                        return null;
+                    } catch (Throwable e) {
+                        return e;
+                    }
+                });
 
                 try {
-                    Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
-
-                    Tags.clearTags();
-                    Tags.addTag(Tags.USES_DEVICESTATE);
-                    assumeFalse(mSkipTestsReason, mSkipTests);
-                    assertFalse(mFailTestsReason, mFailTests);
-
-                    // Ensure that tests only see events from the current test
-                    EventLogs.resetLogs();
-
-                    mMinSdkVersionCurrentTest = mMinSdkVersion;
-                    List<Annotation> annotations = getAnnotations(description);
-                    permissionContext = applyAnnotations(annotations, /* isTest= */ true);
-
-                    Log.d(LOG_TAG,
-                            "Finished preparing state for test " + description.getMethodName());
-
-                    base.evaluate();
-                } finally {
-                    Log.d(LOG_TAG,
-                            "Tearing down state for test " + description.getMethodName());
-
-                    if (permissionContext != null) {
-                        permissionContext.close();
+                    Throwable t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
+                    if (t != null) {
+                        throw t;
                     }
+                } catch (TimeoutException e) {
+                    future.cancel(true);
 
-                    teardownNonShareableState();
-                    if (!mSkipTestTeardown) {
-                        teardownShareableState();
-                    }
-                    Log.d(LOG_TAG,
-                            "Finished tearing down state for test "
-                                    + description.getMethodName());
+                    throw new AssertionError(
+                            "Timed out executing test " + description.getDisplayName());
                 }
             }};
+    }
+
+    private void executeTest(Statement base, Description description) throws Throwable {
+        PermissionContextImpl permissionContext = null;
+
+        try {
+            Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
+
+            Tags.clearTags();
+            Tags.addTag(Tags.USES_DEVICESTATE);
+            assumeFalse(mSkipTestsReason, mSkipTests);
+            assertFalse(mFailTestsReason, mFailTests);
+
+            // Ensure that tests only see events from the current test
+            EventLogs.resetLogs();
+
+            mMinSdkVersionCurrentTest = mMinSdkVersion;
+            List<Annotation> annotations = getAnnotations(description);
+            permissionContext = applyAnnotations(annotations, /* isTest= */ true);
+
+            Log.d(LOG_TAG,
+                    "Finished preparing state for test " + description.getMethodName());
+
+            base.evaluate();
+        } finally {
+            Log.d(LOG_TAG,
+                    "Tearing down state for test " + description.getMethodName());
+
+            if (permissionContext != null) {
+                permissionContext.close();
+            }
+
+            teardownNonShareableState();
+            if (!mSkipTestTeardown) {
+                teardownShareableState();
+            }
+            Log.d(LOG_TAG,
+                    "Finished tearing down state for test "
+                            + description.getMethodName());
+        }
     }
 
     private PermissionContextImpl applyAnnotations(List<Annotation> annotations, boolean isTest)
