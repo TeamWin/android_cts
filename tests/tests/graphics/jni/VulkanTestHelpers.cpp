@@ -107,9 +107,13 @@ bool VkInit::init() {
   instanceExt.push_back(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
   instanceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
   instanceExt.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
   deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
   deviceExt.push_back(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
-  deviceExt.push_back(VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
   VkInstanceCreateInfo createInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pNext = nullptr,
@@ -126,16 +130,6 @@ bool VkInit::init() {
   int status = vkEnumeratePhysicalDevices(mInstance, &gpuCount, &mGpu);
   ASSERT(status == VK_SUCCESS || status == VK_INCOMPLETE);
   ASSERT(gpuCount > 0);
-
-  VkPhysicalDeviceProperties physicalDeviceProperties;
-  vkGetPhysicalDeviceProperties(mGpu, &physicalDeviceProperties);
-  if (physicalDeviceProperties.apiVersion < VK_API_VERSION_1_1) {
-      deviceExt.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-      deviceExt.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
-      deviceExt.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
-      deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
-      deviceExt.push_back(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
-  }
 
   std::vector<VkExtensionProperties> supportedDeviceExtensions;
   ASSERT(enumerateDeviceExtensions(mGpu, &supportedDeviceExtensions));
@@ -1096,7 +1090,7 @@ bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
       mCmdBuffer, image, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, VK_ACCESS_SHADER_READ_BIT,
       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      VK_QUEUE_FAMILY_FOREIGN_EXT, mInit->queueFamilyIndex());
+      VK_QUEUE_FAMILY_EXTERNAL_KHR, mInit->queueFamilyIndex());
 
   // Transition the destination texture for use as a framebuffer.
   addImageTransitionBarrier(
