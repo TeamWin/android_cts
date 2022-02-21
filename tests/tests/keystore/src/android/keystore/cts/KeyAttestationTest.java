@@ -726,6 +726,21 @@ public class KeyAttestationTest {
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID, "Unable to retrieve MEID");
     }
 
+    @Test
+    public void testMandatoryDeviceidAttestation() {
+        // ID attestation is only mandatory on devices that have shipped with T and
+        // above.
+        if (Build.VERSION.DEVICE_INITIAL_SDK_INT <= Build.VERSION_CODES.S) {
+            return;
+        }
+        // ID attestation is tested by other tests (outside of this class), including negative
+        // tests that ID attestation is failing if the platform does not declare support.
+        // Hence, it's safe to only test here that the feature is supported.
+        PackageManager pm = getContext().getPackageManager();
+        assertThat("As of Android T, devices must support ID attestation",
+                pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ID_ATTESTATION),is(true));
+    }
+
     @SuppressWarnings("deprecation")
     private void testRsaAttestation(byte[] challenge, boolean includeValidityDates, int keySize,
             int purposes, String[] paddingModes, boolean devicePropertiesAttestation)
