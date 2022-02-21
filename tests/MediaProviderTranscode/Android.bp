@@ -32,6 +32,7 @@ android_test {
     ],
 
     min_sdk_version: "30",
+    target_sdk_version: "Tiramisu",
     certificate: "media",
     java_resources: [":CtsTranscodeTestAppSupportsHevc", ":CtsTranscodeTestAppSupportsSlowMotion"]
 }
