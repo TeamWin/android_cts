@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 
@@ -31,6 +32,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.policies.LockscreenPolicyWithUnifiedChallenge;
 import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
@@ -51,6 +53,7 @@ import java.util.function.BiConsumer;
  */
 // Password policies aren't supported on automotive
 @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
+@RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
 @RunWith(BedsteadJUnit4.class)
 public class NoAdminLeakingTest {
     @ClassRule
