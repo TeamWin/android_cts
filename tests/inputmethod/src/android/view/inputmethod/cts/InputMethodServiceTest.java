@@ -60,6 +60,7 @@ import android.view.inputmethod.EditorBoundsInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
+import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.SimulatedVirtualDisplaySession;
@@ -90,6 +91,7 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -790,6 +792,27 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             }
             // Verify no crash and onCreate / onDestroy keeps paired from MockIme event stream
             expectNoImeCrash(imeSession, TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testShowSoftInput_whenAllImesDisabled() {
+        final InputMethodManager inputManager =
+                mInstrumentation.getTargetContext().getSystemService(InputMethodManager.class);
+        assertNotNull(inputManager);
+        final List<InputMethodInfo> enabledImes = inputManager.getEnabledInputMethodList();
+
+        try {
+            // disable all IMEs
+            for (InputMethodInfo ime : enabledImes) {
+                SystemUtil.runShellCommand("ime disable " + ime.getId());
+            }
+
+            // start a test activity and expect it not to crash
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        } finally {
+            // restore all previous IMEs
+            SystemUtil.runShellCommand("ime reset");
         }
     }
 

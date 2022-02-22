@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 @RunWith(AndroidJUnit4.class)
 public class LocaleConfigTest {
     private static final String NOTAG_PACKAGE_NAME = "com.android.cts.nolocaleconfigtag";
-    private static final String MALFORMED_INPUT_PACKAGE_NAME = "com.android.cts.malformedinput";
     private static final List<String> EXPECT_LOCALES = Arrays.asList(
             new String[]{"en-US", "zh-TW", "pt", "fr", "zh-Hans-SG"});
 
@@ -72,18 +71,6 @@ public class LocaleConfigTest {
         assertNull(localeList);
 
         assertEquals(LocaleConfig.STATUS_NOT_SPECIFIED, localeConfig.getStatus());
-    }
-
-    @Test
-    public void testLocaleConfigMalformedInput() throws Exception {
-        Context context = InstrumentationRegistry.getTargetContext();
-        Context appContext = context.createPackageContext(MALFORMED_INPUT_PACKAGE_NAME, 0);
-        LocaleConfig localeConfig = new LocaleConfig(appContext);
-        LocaleList localeList = localeConfig.getSupportedLocales();
-
-        assertNull(localeList);
-
-        assertEquals(LocaleConfig.STATUS_PARSING_FAILED, localeConfig.getStatus());
     }
 }
 

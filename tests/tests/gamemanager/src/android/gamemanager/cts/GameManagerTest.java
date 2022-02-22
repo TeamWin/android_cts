@@ -30,7 +30,6 @@ import android.app.GameModeInfo;
 import android.app.GameState;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.os.Bundle;
 import android.support.test.uiautomator.UiDevice;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -63,6 +62,8 @@ public class GameManagerTest {
             APK_DIRECTORY + "CtsGameTestApp.apk";
     private static final String GAME_TEST_APP_PACKAGE_NAME =
             "android.gamemanager.cts.app.gametestapp";
+    private static final int TEST_LABEL = 1;
+    private static final int TEST_QUALITY = 2;
 
     private GameManagerCtsActivity mActivity;
     private Context mContext;
@@ -265,11 +266,11 @@ public class GameManagerTest {
     }
 
     /**
-     * Test that GameManager::setGameState() with an 'isLoading' state and unmodifiable metadata
+     * Test that GameManager::setGameState() with an 'isLoading' state and labels
      * actually invokes the mode on the PowerHAL when performance mode is invoked.
      */
     @Test
-    public void testSetGameStatePerformanceMode_unmodifiable()
+    public void testSetGameStatePerformanceMode_withParams()
             throws IOException, InterruptedException {
         final int gameLoadingCountBefore = getGameLoadingCount();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
@@ -277,7 +278,7 @@ public class GameManagerTest {
                         GameManager.GAME_MODE_PERFORMANCE));
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager, (gameManager) ->
                 gameManager.setGameState(
-                        new GameState(true, GameState.MODE_NONE, "unmodifiable", Bundle.EMPTY)));
+                        new GameState(true, GameState.MODE_NONE, TEST_LABEL, TEST_QUALITY)));
         Thread.sleep(500);  // Wait for change to take effect.
         assertEquals(gameLoadingCountBefore + 1, getGameLoadingCount());
     }

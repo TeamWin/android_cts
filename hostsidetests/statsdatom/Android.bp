@@ -33,6 +33,7 @@ java_test_host {
         "src/**/cpu/*.java",
         "src/**/devicepower/*.java",
         "src/**/devicestate/*.java",
+        "src/**/gamemanager/*.java",
         "src/**/gnss/*.java",
         "src/**/jobscheduler/*.java",
         "src/**/integrity/*.java",
