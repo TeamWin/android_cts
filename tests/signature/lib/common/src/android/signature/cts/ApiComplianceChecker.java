@@ -31,23 +31,6 @@ import java.util.Set;
  */
 public class ApiComplianceChecker extends ApiPresenceChecker {
 
-    /**
-     * A set of method signatures whose abstract modifier should be ignored.
-     *
-     * <p>If a class is not intended to be created or extended by application developers and all
-     * instances are created and supplied by Android itself then the abstract modifier has no
-     * impact on runtime compatibility.
-     */
-    private static final Set<String> IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST = new HashSet<>();
-    static {
-        // This method was previously abstract and is now not abstract. As the
-        // CtsSystemApiSignatureTestCases package tests both the old and new specifications, with
-        // and without the abstract modifier this needs to ignore the abstract modifier.
-        IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.add(
-                "public int android.service.euicc.EuiccService.onDownloadSubscription("
-                        + "int,android.telephony.euicc.DownloadableSubscription,boolean,boolean)");
-    }
-
     /** Indicates that the class is an annotation. */
     private static final int CLASS_MODIFIER_ANNOTATION = 0x00002000;
 
@@ -589,11 +572,6 @@ public class ApiComplianceChecker extends ApiPresenceChecker {
 
         String genericString = reflectedMethod.toGenericString();
         if (classDescription.isPreviousApi()) {
-            if (IGNORE_METHOD_ABSTRACT_MODIFIER_WHITE_LIST.contains(genericString)) {
-                reflectionModifiers &= ~Modifier.ABSTRACT;
-                apiModifiers &= ~Modifier.ABSTRACT;
-            }
-
             // If the final and/or abstract modifiers have been removed since the previous API was
             // published then that is forwards compatible so remove the modifier in the previous API
             // modifiers so they match the runtime modifiers.
