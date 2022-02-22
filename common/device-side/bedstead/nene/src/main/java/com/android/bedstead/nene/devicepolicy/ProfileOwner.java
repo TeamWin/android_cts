@@ -18,7 +18,7 @@ package com.android.bedstead.nene.devicepolicy;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 
-import static com.android.bedstead.nene.permissions.Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils.ACTION_DISABLE_SELF;
 
 import static com.google.common.truth.Truth.assertThat;

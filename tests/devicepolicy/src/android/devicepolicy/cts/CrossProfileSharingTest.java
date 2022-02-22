@@ -47,7 +47,6 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
@@ -65,14 +64,13 @@ public final class CrossProfileSharingTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
-    private static final TestApp sTestApp = sTestAppProvider.query().whereActivities().contains(
-            activity().intentFilters().contains(
-                    intentFilter().actions().contains("com.android.testapp.SOME_ACTION"),
-                    intentFilter().actions().contains("android.intent.action.PICK")
-            )
-    ).get();
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
+            .whereActivities().contains(
+                    activity().intentFilters().contains(
+                            intentFilter().actions().contains("com.android.testapp.SOME_ACTION"),
+                            intentFilter().actions().contains("android.intent.action.PICK")
+                    )).get();
 
     // Known action that is handled in the opposite profile, used to query forwarder activity.
     private static final String CROSS_PROFILE_ACTION = "com.android.testapp.SOME_ACTION";

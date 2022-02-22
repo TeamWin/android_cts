@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
 
 import com.android.bedstead.harrier.UserType;
@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasNoProfileOwner {
     /** Which user type the profile owner should not be attached to. */
-    UserType onUser() default CURRENT_USER;
+    UserType onUser() default INSTRUMENTED_USER;
 
     /**
      * Weight sets the order that annotations will be resolved.

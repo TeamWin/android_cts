@@ -32,7 +32,6 @@ import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -43,9 +42,11 @@ import org.junit.runner.RunWith;
 @RunWith(BedsteadJUnit4.class)
 public class ProfileOwnerTest {
 
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
     private static final ComponentName DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sNonTestOnlyDpc = sTestAppProvider.query()
+    private static final TestApp sNonTestOnlyDpc = sDeviceState.testApps().query()
             .whereIsDeviceAdmin().isTrue()
             .whereTestOnly().isFalse()
             .get();
@@ -55,9 +56,6 @@ public class ProfileOwnerTest {
     );
 
     private static UserReference sProfile;
-
-    @ClassRule @Rule
-    public static final DeviceState sDeviceState = new DeviceState();
 
     @Before
     public void setUp() {

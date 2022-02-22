@@ -34,38 +34,6 @@ import com.android.bedstead.nene.utils.Versions;
 /** Manage AppOps for a package. */
 public final class AppOps {
 
-    /** Valid modes for an AppOp. */
-    public enum AppOpsMode {
-        ALLOWED(AppOpsManager.MODE_ALLOWED),
-        IGNORED(AppOpsManager.MODE_IGNORED),
-        ERRORED(AppOpsManager.MODE_ERRORED),
-        DEFAULT(AppOpsManager.MODE_DEFAULT),
-        FOREGROUND(AppOpsManager.MODE_FOREGROUND);
-
-        final int mValue;
-
-        AppOpsMode(int value) {
-            this.mValue = value;
-        }
-
-        static AppOpsMode forValue(int value) {
-            switch (value) {
-                case AppOpsManager.MODE_ALLOWED:
-                    return ALLOWED;
-                case AppOpsManager.MODE_IGNORED:
-                    return IGNORED;
-                case AppOpsManager.MODE_ERRORED:
-                    return ERRORED;
-                case AppOpsManager.MODE_DEFAULT:
-                    return DEFAULT;
-                case AppOpsManager.MODE_FOREGROUND:
-                    return FOREGROUND;
-                default:
-                    throw new IllegalStateException("Unknown AppOpsMode");
-            }
-        }
-    }
-
     private static final AppOpsManager sAppOpsManager =
             TestApis.context().instrumentedContext().getSystemService(AppOpsManager.class);
     private final Package mPackage;

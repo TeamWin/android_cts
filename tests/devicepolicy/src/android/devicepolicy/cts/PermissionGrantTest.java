@@ -53,7 +53,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.notifications.NotificationListener;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -120,8 +119,7 @@ public final class PermissionGrantTest {
     private static final String NON_EXISTING_PACKAGE_NAME = "non.existing.package";
     private static final String NOT_DECLARED_PERMISSION = "not.declared.permission";
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.query()
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
             .wherePermissions().contains(
                     READ_SMS,
                     CAMERA,

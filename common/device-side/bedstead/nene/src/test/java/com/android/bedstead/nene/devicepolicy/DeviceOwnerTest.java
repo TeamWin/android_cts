@@ -28,7 +28,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -44,8 +43,7 @@ public class DeviceOwnerTest {
     public static DeviceState sDeviceState = new DeviceState();
 
     private static final ComponentName DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sNonTestOnlyDpc = sTestAppProvider.query()
+    private static final TestApp sNonTestOnlyDpc = sDeviceState.testApps().query()
             .whereIsDeviceAdmin().isTrue()
             .whereTestOnly().isFalse()
             .get();
