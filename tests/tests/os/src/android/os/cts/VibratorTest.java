@@ -232,6 +232,9 @@ public class VibratorTest {
 
     @Test
     public void testVibratorStateCallback() throws Exception {
+	if (!mVibrator.hasVibrator()) {
+		return;
+	}
         final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
         // Add listener1
