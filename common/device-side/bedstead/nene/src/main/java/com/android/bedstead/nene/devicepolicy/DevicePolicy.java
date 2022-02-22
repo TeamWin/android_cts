@@ -182,8 +182,8 @@ public final class DevicePolicy {
                         },
                         () -> checkForTerminalDeviceOwnerFailures(
                                 user, deviceOwnerComponent, /* allowAdditionalUsers= */ true),
-                        NeneException.class);
-            } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
+                        NeneException.class, IllegalArgumentException.class);
+            } catch (IllegalStateException | SecurityException e) {
                 throw new NeneException("Error setting device owner", e);
             }
         } finally {
