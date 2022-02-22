@@ -457,11 +457,11 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getDrawableCallingPackageResourceId_returnsCorrectValue() {
+    public void devicePolicyDrawableResource_getResourceIdInCallingPackage_returnsCorrectValue() {
         DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
                 sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1);
 
-        assertThat(resource.getCallingPackageResourceId()).isEqualTo(R.drawable.test_drawable_1);
+        assertThat(resource.getResourceIdInCallingPackage()).isEqualTo(R.drawable.test_drawable_1);
     }
 
     // TODO(b/16348282): extract to a common place to make it reusable.
@@ -734,11 +734,11 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getStringCallingPackageResourceId_returnsCorrectValue() {
+    public void devicePolicyStringResource_getResourceIdInCallingPackage_returnsCorrectValue() {
         DevicePolicyStringResource resource = new  DevicePolicyStringResource(
                 sContext, UPDATABLE_STRING_ID_1, R.string.test_string_1);
 
-        assertThat(resource.getCallingPackageResourceId()).isEqualTo(R.string.test_string_1);
+        assertThat(resource.getResourceIdInCallingPackage()).isEqualTo(R.string.test_string_1);
     }
 
     private Set<DevicePolicyStringResource> createString(
