@@ -340,6 +340,7 @@ public class Camera2MultiViewTestCase extends Camera2ParameterizedTestCase {
 
     public static class CameraPreviewListener implements TextureView.SurfaceTextureListener {
         private boolean mFirstPreviewAvailable = false;
+        private float[] mTransformMatrix = new float[16];
         private final ConditionVariable mPreviewDone = new ConditionVariable();
 
         @Override
@@ -371,6 +372,10 @@ public class Camera2MultiViewTestCase extends Camera2ParameterizedTestCase {
                 mFirstPreviewAvailable = true;
                 mPreviewDone.open();
             }
+
+            synchronized(this) {
+                surface.getTransformMatrix(mTransformMatrix);
+            }
         }
 
         /** Waits until the camera preview is up running */
@@ -382,6 +387,10 @@ public class Camera2MultiViewTestCase extends Camera2ParameterizedTestCase {
             }
             mPreviewDone.close();
             return true;
+        }
+
+        public synchronized float[] getPreviewTransform() {
+            return mTransformMatrix;
         }
 
         /** Reset the Listener */
