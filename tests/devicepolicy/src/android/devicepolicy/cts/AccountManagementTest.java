@@ -46,7 +46,6 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -61,8 +60,8 @@ public final class AccountManagementTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sAccountManagementApp = sTestAppProvider
+
+    private static final TestApp sAccountManagementApp = sDeviceState.testApps()
             .query()
             // TODO(b/198590265) Filter for the correct account type.
             .whereServices().contains(
