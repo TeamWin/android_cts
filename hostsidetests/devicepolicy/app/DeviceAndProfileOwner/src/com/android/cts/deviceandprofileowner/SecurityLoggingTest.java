@@ -331,8 +331,10 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                     assertEquals(userId, getInt(event, USERID_INDEX));
                     break;
                 case TAG_KEY_INTEGRITY_VIOLATION:
-                case TAG_PASSWORD_CHANGED:
                     assertEquals(userId, UserHandle.getUserId(getInt(event, 1)));
+                    break;
+                case TAG_PASSWORD_CHANGED:
+                    assertEquals(userId, getInt(event, 1));
                     break;
             }
         }
