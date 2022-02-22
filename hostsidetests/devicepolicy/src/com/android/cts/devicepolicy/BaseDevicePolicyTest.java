@@ -1366,7 +1366,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     void sleep(int timeMs) throws InterruptedException {
-        CLog.d("Sleeping %d ms");
+        CLog.d("Sleeping %d ms", timeMs);
         Thread.sleep(timeMs);
     }
 }

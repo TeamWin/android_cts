@@ -32,6 +32,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.PersistableBundle;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
@@ -199,6 +200,63 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 .containsExactly(userHandle, userHandle);
     }
 
+    public void testCreateAndManageUser_newUserDisclaimer() throws Exception {
+        // First check that the current user doesn't need it
+        UserHandle currentUser = getCurrentUser();
+        Log.d(TAG, "Checking if current user (" + currentUser + ") is acked");
+        assertWithMessage("isNewUserDisclaimerAcknowledged() for current user %s", currentUser)
+                .that(mDevicePolicyManager.isNewUserDisclaimerAcknowledged()).isTrue();
+
+        UserHandle newUser = runCrossUserVerificationSwitchingUser("newUserDisclaimer");
+        PrimaryUserService.assertCrossUserCallArrived();
+    }
+
+    @SuppressWarnings("unused")
+    private static void newUserDisclaimer(Context context, DevicePolicyManager dpm,
+            ComponentName componentName) {
+
+        // Need to wait until host-side granted INTERACT_ACROSS_USERS - use getCurrentUser() to
+        // check
+        int currentUserId = UserHandle.USER_NULL;
+        long maxAttempts = ON_ENABLED_TIMEOUT_SECONDS;
+        int waitingTimeMs = 1_000;
+        int attempt = 0;
+        int myUserId = context.getUserId();
+        do {
+            attempt++;
+            try {
+                Log.d(TAG, "checking if user " + myUserId + " is current user");
+                currentUserId = ActivityManager.getCurrentUser();
+                Log.d(TAG, "currentUserId: " + currentUserId);
+            } catch (SecurityException e) {
+                Log.d(TAG, "Got exception (" + e.getMessage() + ") on attempt #" + attempt
+                        + ", waiting " + waitingTimeMs + "ms until app is authorized");
+                SystemClock.sleep(waitingTimeMs);
+
+            }
+        } while (currentUserId != myUserId && attempt < maxAttempts);
+        Log.v(TAG, "Out of the loop, let's hope for the best...");
+
+        if (currentUserId == UserHandle.USER_NULL) {
+            throw new IllegalStateException("App could was not authorized to check current user");
+        }
+        assertWithMessage("current user").that(currentUserId).isEqualTo(myUserId);
+
+        // Now that the plumbing is done, go back to work...
+        Log.d(TAG, "Calling isNewUserDisclaimerAcknowledged()");
+        boolean isAcked = dpm.isNewUserDisclaimerAcknowledged();
+
+        Log.d(TAG, "is it: " + isAcked);
+        assertWithMessage("isNewUserDisclaimerAcknowledged()").that(isAcked).isFalse();
+        Log.d(TAG, "Calling acknowledgeNewUserDisclaimer()");
+        dpm.acknowledgeNewUserDisclaimer();
+
+        Log.d(TAG, "Calling isNewUserDisclaimerAcknowledged() again");
+        isAcked = dpm.isNewUserDisclaimerAcknowledged();
+        Log.d(TAG, "is it now: " + isAcked);
+        assertWithMessage("isNewUserDisclaimerAcknowledged()").that(isAcked).isTrue();
+    }
+
     @SuppressWarnings("unused")
     private static void assertAffiliatedUser(Context context,
             DevicePolicyManager devicePolicyManager, ComponentName componentName) {
@@ -291,6 +349,17 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     private UserHandle runCrossUserVerification(UserActionCallback callback,
             int createAndManageUserFlags, String methodName,
             Set<String> currentUserPackages) throws Exception {
+        return runCrossUserVerification(callback, createAndManageUserFlags, methodName,
+                /* switchUser= */ false, currentUserPackages);
+    }
+    private UserHandle runCrossUserVerificationSwitchingUser(String methodName) throws Exception {
+        return runCrossUserVerification(/* callback= */ null, /* createAndManageUserFlags= */ 0,
+                methodName, /* switchUser= */ true, /* currentUserPackages= */ null);
+    }
+
+    private UserHandle runCrossUserVerification(UserActionCallback callback,
+            int createAndManageUserFlags, String methodName, boolean switchUser,
+            Set<String> currentUserPackages) throws Exception {
         Log.d(TAG, "runCrossUserVerification(): flags=" + createAndManageUserFlags
                 + ", method=" + methodName);
         String testUserName = "TestUser_" + System.currentTimeMillis();
@@ -313,7 +382,9 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         Log.d(TAG, "creating user with PO " + profileOwner);
 
         UserHandle userHandle = createAndManageUser(profileOwner, bundle, createAndManageUserFlags);
-        if (callback != null) {
+        if (switchUser) {
+            switchUserAndWaitForBroadcasts(userHandle);
+        } else if (callback != null) {
             startUserInBackgroundAndWaitForBroadcasts(callback, userHandle);
         } else {
             startUserInBackgroundAndWaitForBroadcasts(userHandle);
@@ -474,7 +545,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
     public static final class PrimaryUserService extends Service {
         private static final Semaphore sSemaphore = new Semaphore(0);
-        private static String sError = null;
+        private static String sError;
 
         private final ICrossUserService.Stub mBinder = new ICrossUserService.Stub() {
             public void onEnabledCalled(String error) {
@@ -493,6 +564,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         }
 
         static void assertCrossUserCallArrived() throws Exception {
+            Log.v(TAG, "assertCrossUserCallArrived(): waiting " + ON_ENABLED_TIMEOUT_SECONDS
+                    + " seconds for callback");
             assertWithMessage("cross-user call arrived in %ss", ON_ENABLED_TIMEOUT_SECONDS)
                     .that(sSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                     .isTrue();
@@ -504,11 +577,10 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public static final class SecondaryUserAdminReceiver extends DeviceAdminReceiver {
-
         @Override
         public void onEnabled(Context context, Intent intent) {
             Log.d(TAG, "SecondaryUserAdminReceiver.onEnabled() called on user "
-                    + context.getUserId());
+                    + context.getUserId() + " and thread " + Thread.currentThread());
 
             DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
             ComponentName who = getComponentName(context);
@@ -547,9 +619,13 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
             } catch (InvocationTargetException e) {
                 error = e.getCause().toString();
             }
+            if (error != null) {
+                Log.e(TAG, "Error calling method: " + error);
+            }
 
             // Call all affiliated users
             final List<UserHandle> targetUsers = dpm.getBindDeviceAdminTargetUsers(who);
+            Log.d(TAG, "target users: " + targetUsers);
             assertWithMessage("target users").that(targetUsers).hasSize(1);
 
             pingTargetUser(context, dpm, targetUsers.get(0), error);
