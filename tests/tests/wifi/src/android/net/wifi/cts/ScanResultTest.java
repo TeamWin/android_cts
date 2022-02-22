@@ -414,6 +414,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         assertEquals(0, mloLink.getChannel());
         assertEquals(MloLink.INVALID_MLO_LINK_ID, mloLink.getLinkId());
         assertNull(mloLink.getStaMacAddress());
+        assertNull(mloLink.getApMacAddress());
         assertEquals(MloLink.MLO_LINK_STATE_UNASSOCIATED, mloLink.getState());
     }
 
