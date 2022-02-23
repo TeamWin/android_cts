@@ -220,7 +220,7 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
     }
 
     @Test
-    public void testSetPreferKeepClearOverridesMultipleRects() {
+    public void testSetPreferKeepClearCombinesWithMultipleRects() {
         mTestSession.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
         final TestActivity activity = mTestSession.getActivity();
         final ComponentName componentName = activity.getComponentName();
@@ -232,7 +232,9 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
                            getKeepClearRectsForActivity(activity));
 
         mTestSession.runOnMainSyncAndWait(() -> v.setPreferKeepClear(true));
-        assertSameElements(getRectsInScreenSpace(Arrays.asList(viewBounds), componentName),
+        final List<Rect> combinedRects = new ArrayList<>(TEST_KEEP_CLEAR_RECTS);
+        combinedRects.add(viewBounds);
+        assertSameElements(getRectsInScreenSpace(combinedRects, componentName),
                            getKeepClearRectsForActivity(activity));
 
         mTestSession.runOnMainSyncAndWait(() -> v.setPreferKeepClear(false));
