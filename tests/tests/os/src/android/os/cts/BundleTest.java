@@ -62,6 +62,7 @@ import java.util.concurrent.Callable;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertFalse;
@@ -552,6 +553,30 @@ public class BundleTest {
         assertBundleEquals(bundle, (Bundle) mBundle.getParcelable(KEY1));
     }
 
+    @Test
+    public void testGetParcelableTypeSafe_withMismatchingType_returnsNull() {
+        mBundle.putParcelable(KEY1, new CustomParcelable(42, "don't panic"));
+        roundtrip();
+        assertNull(mBundle.getParcelable(KEY1, Intent.class));
+        assertFalse(CustomParcelable.sDeserialized);
+    }
+
+    @Test
+    public void testGetParcelableTypeSafe_withMatchingType_returnsObject() {
+        final CustomParcelable original = new CustomParcelable(42, "don't panic");
+        mBundle.putParcelable(KEY1, original);
+        roundtrip();
+        assertEquals(original, mBundle.getParcelable(KEY1, CustomParcelable.class));
+    }
+
+    @Test
+    public void testGetParcelableTypeSafe_withBaseType_returnsObject() {
+        final CustomParcelable original = new CustomParcelable(42, "don't panic");
+        mBundle.putParcelable(KEY1, original);
+        roundtrip();
+        assertEquals(original, mBundle.getParcelable(KEY1, Parcelable.class));
+    }
+
     // getParcelableArray should only return the ParcelableArray set by putParcelableArray
     @Test
     public void testGetParcelableArray() {
@@ -570,6 +595,38 @@ public class BundleTest {
         assertEquals(2, parcelableArray.length);
         assertBundleEquals(bundle1, (Bundle) parcelableArray[0]);
         assertBundleEquals(bundle2, (Bundle) parcelableArray[1]);
+    }
+
+    @Test
+    public void testGetParcelableArrayTypeSafe_withMismatchingType_returnsNull() {
+        mBundle.putParcelableArray(KEY1, new CustomParcelable[] {
+                new CustomParcelable(42, "don't panic")
+        });
+        roundtrip();
+        assertNull(mBundle.getParcelableArray(KEY1, Intent.class));
+        assertFalse(CustomParcelable.sDeserialized);
+    }
+
+    @Test
+    public void testGetParcelableArrayTypeSafe_withMatchingType_returnsObject() {
+        final CustomParcelable[] original = new CustomParcelable[] {
+                new CustomParcelable(42, "don't panic"),
+                new CustomParcelable(1961, "off we go")
+        };
+        mBundle.putParcelableArray(KEY1, original);
+        roundtrip();
+        assertArrayEquals(original, mBundle.getParcelableArray(KEY1, CustomParcelable.class));
+    }
+
+    @Test
+    public void testGetParcelableArrayTypeSafe_withBaseType_returnsObject() {
+        final CustomParcelable[] original = new CustomParcelable[] {
+                new CustomParcelable(42, "don't panic"),
+                new CustomParcelable(1961, "off we go")
+        };
+        mBundle.putParcelableArray(KEY1, original);
+        roundtrip();
+        assertArrayEquals(original, mBundle.getParcelableArray(KEY1, Parcelable.class));
     }
 
     // getParcelableArrayList should only return the parcelableArrayList set by putParcelableArrayList
@@ -591,6 +648,60 @@ public class BundleTest {
         assertEquals(2, ret.size());
         assertBundleEquals(bundle1, (Bundle) ret.get(0));
         assertBundleEquals(bundle2, (Bundle) ret.get(1));
+    }
+
+    @Test
+    public void testGetParcelableArrayListTypeSafe_withMismatchingType_returnsNull() {
+        final ArrayList<CustomParcelable> originalObjects = new ArrayList<>();
+        originalObjects.add(new CustomParcelable(42, "don't panic"));
+        mBundle.putParcelableArrayList(KEY1, originalObjects);
+        roundtrip();
+        assertNull(mBundle.getParcelableArrayList(KEY1, Intent.class));
+        assertFalse(CustomParcelable.sDeserialized);
+    }
+
+    @Test
+    public void testGetParcelableArrayListTypeSafe_withMatchingType_returnsObject() {
+        final ArrayList<CustomParcelable> original = new ArrayList<>();
+        original.add(new CustomParcelable(42, "don't panic"));
+        original.add(new CustomParcelable(1961, "off we go"));
+        mBundle.putParcelableArrayList(KEY1, original);
+        roundtrip();
+        assertEquals(original, mBundle.getParcelableArrayList(KEY1, CustomParcelable.class));
+    }
+
+    @Test
+    public void testGetParcelableArrayListTypeSafe_withBaseType_returnsObject() {
+        final ArrayList<CustomParcelable> original = new ArrayList<>();
+        original.add(new CustomParcelable(42, "don't panic"));
+        original.add(new CustomParcelable(1961, "off we go"));
+        mBundle.putParcelableArrayList(KEY1, original);
+        roundtrip();
+        assertEquals(original, mBundle.getParcelableArrayList(KEY1, Parcelable.class));
+    }
+
+    @Test
+    public void testGetSerializableTypeSafe_withMismatchingType_returnsNull() {
+        mBundle.putSerializable(KEY1, new CustomSerializable());
+        roundtrip();
+        assertNull(mBundle.getSerializable(KEY1, AnotherSerializable.class));
+        assertFalse(CustomSerializable.sDeserialized);
+    }
+
+    @Test
+    public void testGetSerializableTypeSafe_withMatchingType_returnsObject() {
+        mBundle.putSerializable(KEY1, new CustomSerializable());
+        roundtrip();
+        assertNotNull(mBundle.getSerializable(KEY1, CustomSerializable.class));
+        assertTrue(CustomSerializable.sDeserialized);
+    }
+
+    @Test
+    public void testGetSerializableTypeSafe_withBaseType_returnsObject() {
+        mBundle.putSerializable(KEY1, new CustomSerializable());
+        roundtrip();
+        assertNotNull(mBundle.getSerializable(KEY1, Serializable.class));
+        assertTrue(CustomSerializable.sDeserialized);
     }
 
     @Test
@@ -692,6 +803,49 @@ public class BundleTest {
         assertNull(ret.get(1008));
         assertBundleEquals(bundle, (Bundle) ret.get(1006));
         assertIntentEquals(intent, (Intent) ret.get(1007));
+    }
+
+    @Test
+    public void testGetSparseParcelableArrayTypeSafe_withMismatchingType_returnsNull() {
+        final SparseArray<CustomParcelable> originalObjects = new SparseArray<>();
+        originalObjects.put(42, new CustomParcelable(42, "don't panic"));
+        mBundle.putSparseParcelableArray(KEY1, originalObjects);
+        roundtrip();
+        assertNull(mBundle.getSparseParcelableArray(KEY1, Intent.class));
+        assertFalse(CustomParcelable.sDeserialized);
+    }
+
+    @Test
+    public void testGetSparseParcelableArrayTypeSafe_withMatchingType_returnsObject() {
+        final SparseArray<CustomParcelable> original = new SparseArray<>();
+        original.put(42, new CustomParcelable(42, "don't panic"));
+        original.put(1961, new CustomParcelable(1961, "off we go"));
+        mBundle.putSparseParcelableArray(KEY1, original);
+        roundtrip();
+        assertTrue(original.contentEquals(mBundle.getSparseParcelableArray(KEY1, CustomParcelable.class)));
+    }
+
+    @Test
+    public void testGetSparseParcelableArrayTypeSafe_withBaseType_returnsObject() {
+        final SparseArray<CustomParcelable> original = new SparseArray<>();
+        original.put(42, new CustomParcelable(42, "don't panic"));
+        original.put(1961, new CustomParcelable(1961, "off we go"));
+        mBundle.putSparseParcelableArray(KEY1, original);
+        roundtrip();
+        assertTrue(original.contentEquals(mBundle.getSparseParcelableArray(KEY1, Parcelable.class)));
+    }
+
+    @Test
+    public void testGetSparseParcelableArrayTypeSafe_withMixedTypes_returnsObject() {
+        final SparseArray<Parcelable> original = new SparseArray<>();
+        original.put(42, new CustomParcelable(42, "don't panic"));
+        original.put(1961, new Intent("action"));
+        mBundle.putSparseParcelableArray(KEY1, original);
+        roundtrip();
+        final SparseArray<Parcelable> received = mBundle.getSparseParcelableArray(KEY1, Parcelable.class);
+        assertEquals(original.size(), received.size());
+        assertEquals(original.get(42), received.get(42));
+        assertIntentEquals((Intent) original.get(1961), (Intent) received.get(1961));
     }
 
     @Test
@@ -1336,6 +1490,9 @@ public class BundleTest {
             in.defaultReadObject();
             sDeserialized = true;
         }
+    }
+
+    private static class AnotherSerializable implements Serializable {
     }
 
     private static class CustomParcelable implements Parcelable {
