@@ -350,38 +350,20 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return mObjectTracker.manage(new DisplayMetricsSession(displayId));
     }
 
-    public static class LetterboxAspectRatioSession implements AutoCloseable {
-        private static final String WM_SET_IGNORE_ORIENTATION_REQUEST =
-                "wm set-ignore-orientation-request ";
-        private static final String WM_GET_IGNORE_ORIENTATION_REQUEST =
-                "wm get-ignore-orientation-request";
-        private static final Pattern IGNORE_ORIENTATION_REQUEST_PATTERN =
-                Pattern.compile("ignoreOrientationRequest (true|false) for displayId=\\d+");
-
+    public static class LetterboxAspectRatioSession extends IgnoreOrientationRequestSession {
         private static final String WM_SET_LETTERBOX_STYLE_ASPECT_RATIO =
                 "wm set-letterbox-style --aspectRatio ";
-        private static final String WM_RESET_LETTERBOX_STYLE_ASPECT_RATIO
-                = "wm reset-letterbox-style aspectRatio";
-
-        final int mDisplayId;
-        final boolean mInitialIgnoreOrientationRequest;
+        private static final String WM_RESET_LETTERBOX_STYLE_ASPECT_RATIO =
+                "wm reset-letterbox-style aspectRatio";
 
         LetterboxAspectRatioSession(int displayId, float aspectRatio) {
-            mDisplayId = displayId;
-            Matcher matcher = IGNORE_ORIENTATION_REQUEST_PATTERN.matcher(
-                    executeShellCommand(WM_GET_IGNORE_ORIENTATION_REQUEST + " -d " + mDisplayId));
-            assertTrue("get-ignore-orientation-request should match pattern", matcher.find());
-            mInitialIgnoreOrientationRequest = Boolean.parseBoolean(matcher.group(1));
-
-            executeShellCommand("wm set-ignore-orientation-request true -d " + mDisplayId);
+            super(displayId, true);
             executeShellCommand(WM_SET_LETTERBOX_STYLE_ASPECT_RATIO + aspectRatio);
         }
 
         @Override
         public void close() {
-            executeShellCommand(
-                    WM_SET_IGNORE_ORIENTATION_REQUEST + mInitialIgnoreOrientationRequest + " -d "
-                            + mDisplayId);
+            super.close();
             executeShellCommand(WM_RESET_LETTERBOX_STYLE_ASPECT_RATIO);
         }
     }
