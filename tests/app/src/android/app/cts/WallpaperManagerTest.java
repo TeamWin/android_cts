@@ -52,6 +52,8 @@ import android.view.WindowManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -467,6 +469,7 @@ public class WallpaperManagerTest {
         assertDimAmountEqualsTo(1f);
     }
 
+    @CddTest(requirement = "3.8.7.1/H-1-2")
     @Test
     public void setWallpaperDimAmount_changingWallpaperShouldRemainDimmed() throws IOException {
         ensureSetWallpaperDimAmountPermissionIsGranted();
