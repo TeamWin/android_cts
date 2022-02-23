@@ -15,23 +15,26 @@
  */
 package android.security.cts;
 
+import static org.junit.Assert.*;
+
 import android.app.ActivityManager;
 import android.os.IBinder;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.util.Log;
+import androidx.test.runner.AndroidJUnit4;
 
-import junit.framework.TestCase;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import java.lang.reflect.InvocationTargetException;
 
-public class ActivityManagerTest extends TestCase {
+import org.junit.runner.RunWith;
+import org.junit.Test;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+@RunWith(AndroidJUnit4.class)
+public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
 
     @AsbSecurityTest(cveBugId = 19394591)
+    @Test
     public void testActivityManager_injectInputEvents() throws ClassNotFoundException {
         try {
             /*
@@ -50,6 +53,7 @@ public class ActivityManagerTest extends TestCase {
 
     // b/144285917
     @AsbSecurityTest(cveBugId = 144285917)
+    @Test
     public void testActivityManager_attachNullApplication() {
         SecurityException securityException = null;
         Exception unexpectedException = null;
