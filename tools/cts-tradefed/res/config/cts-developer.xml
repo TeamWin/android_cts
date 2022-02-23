@@ -16,7 +16,7 @@
   -->
 <configuration description="Runs the CTS developer added tests">
 
-    <include name="cts" />
+    <include name="cts-common" />
 
     <option name="plan" value="cts-developer" />
 
