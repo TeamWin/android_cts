@@ -1126,9 +1126,6 @@ public class KeyAttestationTest extends AndroidTestCase {
                         + attestation.getAttestationSecurityLevel());
                 break;
         }
-
-        assertNull("Software-enforced list must not contain root of trust",
-                softwareEnforced.getRootOfTrust());
     }
 
     private void checkDeviceLocked(Attestation attestation) {
