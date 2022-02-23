@@ -516,8 +516,10 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                         && editTextRef.get().hasFocus(), TIMEOUT);
                 expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
                 expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
-                expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
-                expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                // Copy the event stream to verify both events in case expectEvent missed the
+                // event verification if the actual event sequence has flipped.
+                expectEvent(stream.copy(), editorMatcher("onStartInputView", marker), TIMEOUT);
+                expectEventWithKeyValue(stream.copy(), "onWindowVisibilityChanged", "visible",
                         View.VISIBLE, TIMEOUT);
                 expectImeVisible(TIMEOUT);
 
