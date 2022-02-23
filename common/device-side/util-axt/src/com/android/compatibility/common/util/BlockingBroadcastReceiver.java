@@ -55,7 +55,9 @@ import java.util.function.Function;
  *     // Code which should be executed after broadcast is received
  * </pre>
  *
- * If the broadcast is not receiver an exception will be thrown.
+ * If the broadcast is not received an exception will be thrown. Note that if an exception is thrown
+ * within the try block which results in the broadcast not being sent, then that exception will be
+ * hidden by the not-received exception.
  */
 public class BlockingBroadcastReceiver extends BroadcastReceiver implements AutoCloseable {
     private static final String TAG = "BlockingBroadcast";

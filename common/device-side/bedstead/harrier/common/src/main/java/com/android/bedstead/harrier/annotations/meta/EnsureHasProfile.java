@@ -17,7 +17,7 @@
 package com.android.bedstead.harrier.annotations.meta;
 
 import static com.android.bedstead.harrier.OptionalBoolean.ANY;
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 
 import com.android.bedstead.harrier.OptionalBoolean;
 import com.android.bedstead.harrier.UserType;
@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
 @Target({})
 public @interface EnsureHasProfile {
     /** Which user type the profile should be attached to. */
-    UserType forUser() default CURRENT_USER;
+    UserType forUser() default INSTRUMENTED_USER;
 
     /** Whether the test app should be installed in the profile. */
     boolean installTestApp() default true;

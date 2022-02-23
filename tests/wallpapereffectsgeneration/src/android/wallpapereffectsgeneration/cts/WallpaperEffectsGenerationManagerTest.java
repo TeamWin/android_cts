@@ -190,7 +190,7 @@ public class WallpaperEffectsGenerationManagerTest {
                     == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_TOO_MANY_REQUESTS) {
                 mWatcher.tooManyRequestsResponse.countDown();
             } else if (cinematicEffectResponse.getStatusCode()
-                    == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_UNKNOWN) {
+                    == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_NOT_READY) {
                 // This case is used to check the 1st request in the "Setup" method finishes.
                 mWatcher.initialCallReturned.countDown();
             } else if (cinematicEffectResponse.getStatusCode()

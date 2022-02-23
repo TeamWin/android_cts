@@ -38,10 +38,10 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsurePackagesNotInstalled.class)
+@Repeatable(EnsurePackageNotInstalledGroup.class)
 public @interface EnsurePackageNotInstalled {
     String value();
-    UserType onUser() default UserType.CURRENT_USER;
+    UserType onUser() default UserType.INSTRUMENTED_USER;
 
     /**
      * Weight sets the order that annotations will be resolved.

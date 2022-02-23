@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import com.android.bedstead.harrier.UserType;
@@ -40,7 +40,7 @@ import java.lang.annotation.Target;
 @RequireFeature("android.software.managed_users")
 public @interface EnsureHasNoWorkProfile {
     /** Which user type the work profile should not be attached to. */
-    UserType forUser() default CURRENT_USER;
+    UserType forUser() default INSTRUMENTED_USER;
 
     /**
      * Weight sets the order that annotations will be resolved.

@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
 
 import com.android.bedstead.harrier.UserType;
@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
 public @interface EnsurePasswordNotSet {
 
     /** The user who must not have a password. */
-    UserType forUser() default CURRENT_USER;
+    UserType forUser() default INSTRUMENTED_USER;
 
     /**
      * Weight sets the order that annotations will be resolved.

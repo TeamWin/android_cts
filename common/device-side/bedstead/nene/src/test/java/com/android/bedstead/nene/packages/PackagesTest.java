@@ -43,7 +43,6 @@ import com.android.bedstead.nene.utils.Versions;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.ClassRule;
@@ -70,8 +69,7 @@ public class PackagesTest {
     private static final File NON_EXISTING_APK_FILE =
             new File("/data/local/tmp/ThisApkDoesNotExist.apk");
     private static final byte[] TEST_APP_BYTES = loadBytes(TEST_APP_APK_FILE);
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.query()
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(
                     activity().exported().isTrue()
             ).get();

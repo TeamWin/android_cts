@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureHasPermissions.class)
+@Repeatable(EnsureHasPermissionGroup.class)
 public @interface EnsureHasPermission {
     String[] value();
 

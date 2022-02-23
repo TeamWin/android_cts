@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(RequireUsersSupported.class)
+@Repeatable(RequireUserSupportedGroup.class)
 public @interface RequireUserSupported {
     String value();
     FailureMode failureMode() default FailureMode.SKIP;

@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(EnsureCanGetPermissions.class)
+@Repeatable(EnsureCanGetPermissionGroup.class)
 public @interface EnsureCanGetPermission {
     String[] value();
 

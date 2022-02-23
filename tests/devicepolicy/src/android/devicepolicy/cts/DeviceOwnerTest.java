@@ -43,7 +43,6 @@ import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -57,8 +56,7 @@ public final class DeviceOwnerTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sAccountManagementApp = sTestAppProvider
+    private static final TestApp sAccountManagementApp = sDeviceState.testApps()
             .query()
             // TODO(b/198417584): Support Querying XML resources in TestApp.
             // TODO(b/198590265) Filter for the correct account type.
@@ -67,7 +65,7 @@ public final class DeviceOwnerTest {
                             .isEqualTo("com.android.bedstead.testapp.AccountManagementApp"
                                     + ".TestAppAccountAuthenticatorService"))
             .get();
-    private static final TestApp sDpcApp = sTestAppProvider
+    private static final TestApp sDpcApp = sDeviceState.testApps()
             .query().whereIsDeviceAdmin().isTrue()
             .get();
 

@@ -16,7 +16,7 @@
 
 package android.devicepolicy.cts;
 
-import static android.Manifest.permission.SEND_LOST_MODE_LOCATION_UPDATES;
+import static android.Manifest.permission.TRIGGER_LOST_MODE;
 import static android.app.admin.DevicePolicyManager.ACTION_LOST_MODE_LOCATION_UPDATE;
 import static android.app.admin.DevicePolicyManager.EXTRA_LOST_MODE_LOCATION;
 import static android.content.Context.RECEIVER_EXPORTED;
@@ -86,7 +86,7 @@ public final class LostModeLocationTest {
     @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = LostMode.class)
-    @EnsureDoesNotHavePermission(SEND_LOST_MODE_LOCATION_UPDATES)
+    @EnsureDoesNotHavePermission(TRIGGER_LOST_MODE)
     public void sendLostModeLocationUpdate_withoutPermission_throwsException() throws Exception {
         assertThrows(SecurityException.class,
                 () -> sLocalDevicePolicyManager.sendLostModeLocationUpdate(
@@ -162,8 +162,7 @@ public final class LostModeLocationTest {
     private void sendLostModeLocationUpdate(boolean expected) throws InterruptedException {
         Locations.BlockingLostModeLocationUpdateCallback callback =
                 new Locations.BlockingLostModeLocationUpdateCallback();
-        try (PermissionContext p = TestApis.permissions().withPermission(
-                SEND_LOST_MODE_LOCATION_UPDATES)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(TRIGGER_LOST_MODE)) {
             sLocalDevicePolicyManager.sendLostModeLocationUpdate(sContext.getMainExecutor(),
                     callback);
         }

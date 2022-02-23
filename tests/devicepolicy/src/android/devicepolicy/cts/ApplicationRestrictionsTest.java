@@ -45,7 +45,6 @@ import com.android.bedstead.harrier.policies.ApplicationRestrictionsManagingPack
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -67,10 +66,9 @@ public final class ApplicationRestrictionsTest {
             "<JSON>\"{ \\\"One\\\": { \\\"OneOne\\\": \\\"11\\\", \\\""
                     + "OneTwo\\\": \\\"12\\\" }, \\\"Two\\\": \\\"2\\\" } <JSON/>\""
     };
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
 
-    private static final TestApp sTestApp = sTestAppProvider.any();
-    private static final TestApp sDifferentTestApp = sTestAppProvider.any();
+    private static final TestApp sTestApp = sDeviceState.testApps().any();
+    private static final TestApp sDifferentTestApp = sDeviceState.testApps().any();
 
     // Should be consistent with assertEqualToBundle
     private static Bundle createBundle(String id) {

@@ -16,8 +16,8 @@
 
 package com.android.bedstead.nene.location;
 
-import static com.android.bedstead.nene.appops.AppOps.AppOpsMode.ALLOWED;
-import static com.android.bedstead.nene.appops.AppOps.AppOpsMode.DEFAULT;
+import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
+import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
 
 import android.app.AppOpsManager;
 import android.content.Context;

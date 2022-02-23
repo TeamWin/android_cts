@@ -103,6 +103,34 @@ public class TestAppProviderTest {
     }
 
     @Test
+    public void query_afterRestore_returnsTestAppAgain() {
+        mTestAppProvider.snapshot();
+        mTestAppProvider.query().wherePackageName().isEqualTo(EXISTING_PACKAGENAME).get();
+
+        mTestAppProvider.restore();
+
+        assertThat(mTestAppProvider.query().wherePackageName()
+                .isEqualTo(EXISTING_PACKAGENAME).get()).isNotNull();
+    }
+
+    @Test
+    public void query_afterRestoreWithAppAlreadyUsed_doesNotReturnTestAppAgain() {
+        mTestAppProvider.query().wherePackageName().isEqualTo(EXISTING_PACKAGENAME).get();
+        mTestAppProvider.snapshot();
+
+        mTestAppProvider.restore();
+
+        TestAppQueryBuilder query =
+                mTestAppProvider.query().wherePackageName().isEqualTo(EXISTING_PACKAGENAME);
+        assertThrows(NotFoundException.class, query::get);
+    }
+
+    @Test
+    public void restore_noSnapshot_throwsException() {
+        assertThrows(IllegalStateException.class, mTestAppProvider::restore);
+    }
+
+    @Test
     public void any_doesNotReturnPackageQueryOnlyTestApps() {
         Set<String> testAppPackageNames = new HashSet<>();
 

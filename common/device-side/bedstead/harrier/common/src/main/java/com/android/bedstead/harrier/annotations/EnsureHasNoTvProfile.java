@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import com.android.bedstead.harrier.UserType;
@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
 @EnsureHasNoProfileAnnotation("com.android.tv.profile")
 public @interface EnsureHasNoTvProfile {
     /** Which user type the tv profile should not be attached to. */
-    UserType forUser() default CURRENT_USER;
+    UserType forUser() default INSTRUMENTED_USER;
 
     /**
      * Weight sets the order that annotations will be resolved.

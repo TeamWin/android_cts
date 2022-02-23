@@ -38,7 +38,6 @@ import com.android.bedstead.harrier.policies.LockscreenPolicyWithUnifiedChalleng
 import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -62,8 +61,7 @@ public class NoAdminLeakingTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.any();
+    private static final TestApp sTestApp = sDeviceState.testApps().any();
 
     @Test
     @Postsubmit(reason = "new test")

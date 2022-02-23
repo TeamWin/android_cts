@@ -38,7 +38,11 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.policies.Bluetooth;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
@@ -67,35 +71,49 @@ public final class BluetoothTest {
             new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 
     @Test
-    @RequireRunOnWorkProfile
-    @EnsureHasPermission(BLUETOOTH_CONNECT)
     @Postsubmit(reason = "new test")
     @EnsureBluetoothEnabled
-    public void disable_inManagedProfile_bluetoothIsDisabled() {
-        TestApis.bluetooth().setEnabled(true);
+    @PolicyAppliesTest(policy = Bluetooth.class)
+    public void disable_bluetoothIsDisabled() {
+        BlockingBroadcastReceiver r = sDeviceState.registerBroadcastReceiverForUser(
+                sDeviceState.dpc().user(), BluetoothAdapter.ACTION_STATE_CHANGED,
+                this::isStateDisabled);
 
-        try (BlockingBroadcastReceiver r = sDeviceState.registerBroadcastReceiver(
-                BluetoothAdapter.ACTION_STATE_CHANGED, this::isStateDisabled).register()) {
-            assertThat(sBluetoothAdapter.disable()).isTrue();
+        try (PermissionContext p =
+                     sDeviceState.dpc().permissions().withPermission(BLUETOOTH_CONNECT)) {
+            assertThat(sDeviceState.dpc().bluetoothManager().getAdapter().disable()).isTrue();
+            r.awaitForBroadcast();
+
+            Poll.forValue("Bluetooth Enabled for DPC",
+                    () -> sDeviceState.dpc().bluetoothManager().getAdapter().isEnabled())
+                    .toBeEqualTo(false)
+                    .errorOnFail()
+                    .await();
+            assertThat(TestApis.bluetooth().isEnabled()).isFalse();
         }
-
-        assertThat(TestApis.bluetooth().isEnabled()).isFalse();
     }
 
     @Test
-    @RequireRunOnWorkProfile
-    @EnsureHasPermission(BLUETOOTH_CONNECT)
     @Postsubmit(reason = "new test")
     @EnsureBluetoothDisabled
-    public void enable_inManagedProfile_bluetoothIsEnabled() {
-        TestApis.bluetooth().setEnabled(false);
+    @PolicyAppliesTest(policy = Bluetooth.class)
+    public void enable_bluetoothIsEnabled() {
+        BlockingBroadcastReceiver r = sDeviceState.registerBroadcastReceiverForUser(
+                sDeviceState.dpc().user(), BluetoothAdapter.ACTION_STATE_CHANGED,
+                this::isStateEnabled);
 
-        try (BlockingBroadcastReceiver r = sDeviceState.registerBroadcastReceiver(
-                BluetoothAdapter.ACTION_STATE_CHANGED, this::isStateEnabled).register()) {
-            assertThat(sBluetoothAdapter.enable()).isTrue();
+        try (PermissionContext p =
+                     sDeviceState.dpc().permissions().withPermission(BLUETOOTH_CONNECT)) {
+            assertThat(sDeviceState.dpc().bluetoothManager().getAdapter().enable()).isTrue();
+            r.awaitForBroadcast();
+
+            Poll.forValue("Bluetooth Enabled for DPC",
+                    () -> sDeviceState.dpc().bluetoothManager().getAdapter().isEnabled())
+                    .toBeEqualTo(true)
+                    .errorOnFail()
+                    .await();
+            assertThat(TestApis.bluetooth().isEnabled()).isTrue();
         }
-
-        assertThat(TestApis.bluetooth().isEnabled()).isTrue();
     }
 
     @Test
@@ -107,8 +125,6 @@ public final class BluetoothTest {
             throws IOException {
         BluetoothServerSocket socket = null;
         try {
-            TestApis.bluetooth().setEnabled(true);
-
             socket = sBluetoothAdapter.listenUsingRfcommWithServiceRecord(
                     "test", UUID.randomUUID());
 
@@ -134,6 +150,7 @@ public final class BluetoothTest {
     @RequireRunOnWorkProfile
     @EnsureHasPermission({LOCAL_MAC_ADDRESS, BLUETOOTH_CONNECT})
     @Postsubmit(reason = "new test")
+    @EnsureBluetoothEnabled
     public void getAddress_inManagedProfile_returnsValidAddress() {
         assertThat(BluetoothAdapter.checkBluetoothAddress(sBluetoothAdapter.getAddress())).isTrue();
     }

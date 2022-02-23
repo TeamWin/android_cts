@@ -26,6 +26,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsCallSessionListener;
+import android.telephony.ims.ImsConferenceState;
 import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.ImsStreamMediaProfile;
 import android.telephony.ims.stub.ImsCallSessionImplBase;
@@ -40,8 +41,8 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     private static final String LOG_TAG = "CtsTestImsCallSessionImpl";
     private static final int LATCH_WAIT = 0;
     private static final int LATCH_MAX = 1;
-    private static final int WAIT_FOR_STATE_CHANGE = 2000;
-    private static final int WAIT_FOR_ESTABLISHING = 5000;
+    private static final int WAIT_FOR_STATE_CHANGE = 1500;
+    private static final int WAIT_FOR_ESTABLISHING = 2500;
 
     private final String mCallId = String.valueOf(this.hashCode());
     private final Object mLock = new Object();
@@ -65,8 +66,15 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     public static final int TEST_TYPE_MO_FAILED = 0x00000002;
     public static final int TEST_TYPE_HOLD_FAILED = 0x00000004;
     public static final int TEST_TYPE_RESUME_FAILED = 0x00000008;
+    public static final int TEST_TYPE_CONFERENCE_FAILED = 0x00000010;
 
     private int mTestType = TEST_TYPE_NONE;
+    private boolean mIsOnHold = false;
+
+    private TestImsCallSessionImpl mConfSession = null;
+    private ImsCallProfile mConfCallProfile = null;
+    private ConferenceHelper mConferenceHelper = null;
+    private String mCallee = null;
 
     public boolean imsCallSessionLatchCountdown(int latchIndex, int waitMs) {
         boolean complete = false;
@@ -126,13 +134,21 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
     }
 
     @Override
+    public boolean isMultiparty() {
+        boolean isMultiparty = (mCallProfile != null)
+                ? mCallProfile.getCallExtraBoolean(ImsCallProfile.EXTRA_CONFERENCE) : false;
+        return isMultiparty;
+    }
+
+    @Override
     public void start(String callee, ImsCallProfile profile) {
+        mCallee = callee;
         mLocalCallProfile = profile;
         int state = getState();
 
         if ((state != ImsCallSessionImplBase.State.IDLE)
-                || (state != ImsCallSessionImplBase.State.INITIATED)) {
-            Log.d(LOG_TAG, "start :: Illegal state; callId= " + getCallId()
+                && (state != ImsCallSessionImplBase.State.INITIATED)) {
+            Log.d(LOG_TAG, "start :: Illegal state; callId = " + getCallId()
                     + ", state=" + getState());
         }
 
@@ -353,6 +369,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     }
                     Log.d(LOG_TAG, "invokeHeld mCallId = " + mCallId);
                     mListener.callSessionHeld(mCallProfile);
+                    mIsOnHold = true;
                 } catch (Throwable t) {
                     Throwable cause = t.getCause();
                     if (t instanceof DeadObjectException
@@ -392,6 +409,7 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     }
                     Log.d(LOG_TAG, "invokeResume mCallId = " + mCallId);
                     mListener.callSessionResumed(mCallProfile);
+                    mIsOnHold = false;
                 } catch (Throwable t) {
                     Throwable cause = t.getCause();
                     if (t instanceof DeadObjectException
@@ -450,6 +468,139 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
             });
             setState(ImsCallSessionImplBase.State.ESTABLISHED);
         }
+    }
+
+    @Override
+    public void merge() {
+        if (isTestType(TEST_TYPE_CONFERENCE_FAILED)) {
+            mergeFailed();
+        } else {
+            createConferenceSession();
+            imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+            mConfSession.setState(ImsCallSessionImplBase.State.ESTABLISHED);
+
+            postAndRunTask(() -> {
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    invokeSessionTerminated();
+                    mConferenceHelper.getBackGroundSession().invokeSessionTerminated();
+                    Log.d(LOG_TAG, "invokeCallSessionMergeComplete");
+                    mListener.callSessionMergeComplete(mConfSession);
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+
+            postAndRunTask(() -> {
+                try {
+                    if (mListener == null) {
+                        return;
+                    }
+                    mConfSession.sendConferenceStateUpdatd("connected");
+                } catch (Throwable t) {
+                    Throwable cause = t.getCause();
+                    if (t instanceof DeadObjectException
+                            || (cause != null && cause instanceof DeadObjectException)) {
+                        fail("starting cause Throwable to be thrown: " + t);
+                    }
+                }
+            });
+        }
+    }
+
+    private void mergeFailed() {
+        createConferenceSession();
+        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_ESTABLISHING);
+
+        postAndRunTask(() -> {
+            try {
+                if (mListener == null) {
+                    return;
+                }
+
+                Log.d(LOG_TAG, "invokeCallSessionMergeStarted");
+                mListener.callSessionMergeStarted(mConfSession, mConfCallProfile);
+                imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
+                Log.d(LOG_TAG, "invokeCallSessionMergeFailed");
+                mListener.callSessionMergeFailed(getReasonInfo(
+                        ImsReasonInfo.CODE_REJECT_ONGOING_CONFERENCE_CALL,
+                        ImsReasonInfo.CODE_UNSPECIFIED));
+            } catch (Throwable t) {
+                Throwable cause = t.getCause();
+                if (t instanceof DeadObjectException
+                        || (cause != null && cause instanceof DeadObjectException)) {
+                    fail("starting cause Throwable to be thrown: " + t);
+                }
+            }
+        });
+    }
+
+    private void createConferenceSession() {
+        mConferenceHelper.setForeGroundSession(this);
+        mConferenceHelper.setBackGroundSession(mConferenceHelper.getHoldSession());
+
+        ImsStreamMediaProfile mediaProfile = new ImsStreamMediaProfile(
+                ImsStreamMediaProfile.AUDIO_QUALITY_AMR,
+                ImsStreamMediaProfile.DIRECTION_SEND_RECEIVE,
+                ImsStreamMediaProfile.VIDEO_QUALITY_NONE,
+                ImsStreamMediaProfile.DIRECTION_INVALID,
+                ImsStreamMediaProfile.RTT_MODE_DISABLED);
+
+        mConfCallProfile = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE, new Bundle(), mediaProfile);
+        mConfCallProfile.setCallExtraBoolean(ImsCallProfile.EXTRA_CONFERENCE, true);
+
+        mConfSession = new TestImsCallSessionImpl(mConfCallProfile);
+        mConfSession.setConferenceHelper(mConferenceHelper);
+        mConferenceHelper.addSession(mConfSession);
+        mConferenceHelper.setConferenceSession(mConfSession);
+    }
+
+    private void invokeSessionTerminated() {
+        Log.d(LOG_TAG, "invokeCallSessionTerminated");
+        mListener.callSessionTerminated(getReasonInfo(
+                ImsReasonInfo.CODE_LOCAL_ENDED_BY_CONFERENCE_MERGE,
+                ImsReasonInfo.CODE_UNSPECIFIED));
+    }
+
+    public void sendConferenceStateUpdatd(String state) {
+        ImsConferenceState confState = new ImsConferenceState();
+        int counter = 5553639;
+        for (int i = 0; i < 2; ++i) {
+            confState.mParticipants.put((String.valueOf(++counter)),
+                    createConferenceParticipant(("tel:" + String.valueOf(++counter)),
+                    ("tel:" + String.valueOf(++counter)), (String.valueOf(++counter)), state, 200));
+        }
+
+        imsCallSessionLatchCountdown(LATCH_WAIT, WAIT_FOR_STATE_CHANGE);
+        Log.d(LOG_TAG, "invokeCallSessionConferenceStateUpdated");
+        mListener.callSessionConferenceStateUpdated(confState);
+    }
+
+    public Bundle createConferenceParticipant(String user, String endpoint,
+            String displayText, String status, int sipStatusCode) {
+        Bundle participant = new Bundle();
+
+        participant.putString(ImsConferenceState.STATUS, status);
+        participant.putString(ImsConferenceState.USER, user);
+        participant.putString(ImsConferenceState.ENDPOINT, endpoint);
+        participant.putString(ImsConferenceState.DISPLAY_TEXT, displayText);
+        participant.putInt(ImsConferenceState.SIP_STATUS_CODE, sipStatusCode);
+        return participant;
+    }
+
+    public void setConferenceHelper(ConferenceHelper confHelper) {
+        mConferenceHelper = confHelper;
+    }
+
+    public boolean isSessionOnHold() {
+        return mIsOnHold;
     }
 
     private void setState(int state) {

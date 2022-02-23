@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.meta;
 
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 
 import com.android.bedstead.harrier.UserType;
 
@@ -28,5 +28,5 @@ import java.lang.annotation.Target;
  */
 @Target({})
 public @interface EnsureHasNoProfile {
-    UserType forUser() default CURRENT_USER;
+    UserType forUser() default INSTRUMENTED_USER;
 }

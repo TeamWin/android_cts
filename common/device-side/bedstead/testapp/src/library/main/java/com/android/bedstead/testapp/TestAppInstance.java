@@ -22,6 +22,9 @@ import android.accounts.RemoteAccountManagerWrapper;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.RemoteBluetoothManager;
+import android.bluetooth.RemoteBluetoothManagerWrapper;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
@@ -49,6 +52,7 @@ import android.security.RemoteKeyChain;
 import android.security.RemoteKeyChainWrapper;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -77,6 +81,8 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
     private final ProfileTestAppController mTestAppController;
     private final TestAppActivities mTestAppActivities;
     private boolean mKeepAliveManually = false;
+    private final TestAppInstancePermissions mTestAppInstancePermissions =
+            new TestAppInstancePermissions(this);
 
     /**
      * Use {@link TestApp#install} or {@link TestApp#instance} to get an instance of
@@ -245,26 +251,25 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
         return this;
     }
 
-    // TODO(b/203758521): Restore functionality of killing process
-//    /**
-//     * Immediately force stops the app.
-//     *
-//     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
-//     */
-//    public TestAppInstance stop() {
-//        stopKeepAlive();
-//
-//        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
-//        if (process != null) {
-//            try {
-//                process.kill();
-//            } catch (NeneException e) {
-//                throw new NeneException("Error killing process... process is " + process(), e);
-//            }
-//        }
-//
-//        return this;
-//    }
+    /**
+     * Immediately force stops the app.
+     *
+     * <p>This will also stop keeping the target app alive (see {@link #stopKeepAlive()}.
+     */
+    public TestAppInstance stop() {
+        stopKeepAlive();
+
+        ProcessReference process = mTestApp.pkg().runningProcess(mUser);
+        if (process != null) {
+            try {
+                process.kill();
+            } catch (NeneException e) {
+                throw new NeneException("Error killing process... process is " + process(), e);
+            }
+        }
+
+        return this;
+    }
 
     /**
      * Gets the {@link ProcessReference} of the app, if any.
@@ -383,6 +388,22 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteKeyChain keyChain() {
         return new RemoteKeyChainWrapper(mConnector);
+    }
+
+    /**
+     * Access the {@link BluetoothManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteBluetoothManager bluetoothManager() {
+        return new RemoteBluetoothManagerWrapper(mConnector);
+    }
+
+    /**
+     * Access permissions for this test app.
+     */
+    public TestAppInstancePermissions permissions() {
+        return mTestAppInstancePermissions;
     }
 
     @Override

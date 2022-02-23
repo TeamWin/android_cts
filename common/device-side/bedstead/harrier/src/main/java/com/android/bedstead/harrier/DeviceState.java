@@ -19,8 +19,10 @@ package com.android.bedstead.harrier;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
+import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.harrier.Defaults.DEFAULT_PASSWORD;
+import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.DEFAULT_TEST_APP_KEY;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 import static com.android.bedstead.nene.utils.Versions.meetsSdkVersionRequirements;
@@ -48,12 +50,17 @@ import com.android.bedstead.harrier.annotations.BeforeClass;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureCanGetPermission;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
 import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
+import com.android.bedstead.harrier.annotations.EnsureTestAppHasAppOp;
+import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -89,6 +96,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
@@ -99,8 +107,10 @@ import com.android.bedstead.remotedpc.RemoteDelegate;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.remotedpc.RemoteDpcUsingParentInstance;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
+import com.android.bedstead.remotedpc.RemoteTestApp;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.eventlib.EventLogs;
 
@@ -199,7 +209,7 @@ public final class DeviceState extends HarrierRule {
                 arguments.getString(SKIP_CLASS_TEARDOWN_KEY, "false"));
         mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
         mSkipTests = !mSkipTestsReason.isEmpty();
-        mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, Build.VERSION.SDK_INT);
+        mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, SDK_INT);
         mPermissionsInstrumentationPackage =
                 arguments.getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
         if (mPermissionsInstrumentationPackage != null) {
@@ -263,6 +273,7 @@ public final class DeviceState extends HarrierRule {
         try {
             Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
 
+            testApps().snapshot();
             Tags.clearTags();
             Tags.addTag(Tags.USES_DEVICESTATE);
             assumeFalse(mSkipTestsReason, mSkipTests);
@@ -415,6 +426,42 @@ public final class DeviceState extends HarrierRule {
                         requireRunOnProfileAnnotation.hasProfileOwner(),
                         /* useParentInstance= */ false,
                         dpcIsPrimary, switchedToParentUser, affiliationIds);
+                continue;
+            }
+
+            if (annotation instanceof EnsureTestAppInstalled) {
+                EnsureTestAppInstalled ensureTestAppInstalledAnnotation =
+                        (EnsureTestAppInstalled) annotation;
+                ensureTestAppInstalled(
+                        ensureTestAppInstalledAnnotation.key(),
+                        ensureTestAppInstalledAnnotation.packageName(),
+                        ensureTestAppInstalledAnnotation.onUser(),
+                        ensureTestAppInstalledAnnotation.isPrimary()
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsureTestAppHasPermission) {
+                EnsureTestAppHasPermission ensureTestAppHasPermissionAnnotation =
+                        (EnsureTestAppHasPermission) annotation;
+                ensureTestAppHasPermission(
+                        ensureTestAppHasPermissionAnnotation.testAppKey(),
+                        ensureTestAppHasPermissionAnnotation.value(),
+                        ensureTestAppHasPermissionAnnotation.minVersion(),
+                        ensureTestAppHasPermissionAnnotation.maxVersion()
+                );
+                continue;
+            }
+
+            if (annotation instanceof EnsureTestAppHasAppOp) {
+                EnsureTestAppHasAppOp ensureTestAppHasAppOpAnnotation =
+                        (EnsureTestAppHasAppOp) annotation;
+                ensureTestAppHasAppOp(
+                        ensureTestAppHasAppOpAnnotation.testAppKey(),
+                        ensureTestAppHasAppOpAnnotation.value(),
+                        ensureTestAppHasAppOpAnnotation.minVersion(),
+                        ensureTestAppHasAppOpAnnotation.maxVersion()
+                );
                 continue;
             }
 
@@ -590,11 +637,60 @@ public final class DeviceState extends HarrierRule {
                 if (!meetsSdkVersionRequirements(
                         ensureCanGetPermissionAnnotation.minVersion(),
                         ensureCanGetPermissionAnnotation.maxVersion())) {
+                    Log.d(LOG_TAG,
+                            "Version " + SDK_INT +  " does not need to get permissions "
+                                    + Arrays.toString(ensureCanGetPermissionAnnotation.value()));
                     continue;
                 }
 
                 for (String permission : ensureCanGetPermissionAnnotation.value()) {
                     ensureCanGetPermission(permission);
+                }
+                continue;
+            }
+
+            if (annotation instanceof EnsureHasAppOp) {
+                EnsureHasAppOp ensureHasAppOpAnnotation = (EnsureHasAppOp) annotation;
+
+                if (!meetsSdkVersionRequirements(
+                        ensureHasAppOpAnnotation.minVersion(),
+                        ensureHasAppOpAnnotation.maxVersion())) {
+                    Log.d(LOG_TAG,
+                            "Version " + SDK_INT +  " does not need to get appOp "
+                                    + ensureHasAppOpAnnotation.value());
+                    continue;
+                }
+
+                try {
+                    if (permissionContext == null) {
+                        permissionContext = TestApis.permissions().withAppOp(
+                                ensureHasAppOpAnnotation.value());
+                    } else {
+                        permissionContext = permissionContext.withAppOp(
+                                ensureHasAppOpAnnotation.value());
+                    }
+                } catch (NeneException e) {
+                    failOrSkip("Error getting appOp: " + e,
+                            ensureHasAppOpAnnotation.failureMode());
+                }
+                continue;
+            }
+
+            if (annotation instanceof EnsureDoesNotHaveAppOp) {
+                EnsureDoesNotHaveAppOp ensureDoesNotHaveAppOpAnnotation =
+                        (EnsureDoesNotHaveAppOp) annotation;
+
+                try {
+                    if (permissionContext == null) {
+                        permissionContext = TestApis.permissions().withoutAppOp(
+                                ensureDoesNotHaveAppOpAnnotation.value());
+                    } else {
+                        permissionContext = permissionContext.withoutAppOp(
+                                ensureDoesNotHaveAppOpAnnotation.value());
+                    }
+                } catch (NeneException e) {
+                    failOrSkip("Error denying appOp: " + e,
+                            ensureDoesNotHaveAppOpAnnotation.failureMode());
                 }
                 continue;
             }
@@ -606,6 +702,9 @@ public final class DeviceState extends HarrierRule {
                 if (!meetsSdkVersionRequirements(
                         ensureHasPermissionAnnotation.minVersion(),
                         ensureHasPermissionAnnotation.maxVersion())) {
+                    Log.d(LOG_TAG,
+                            "Version " + SDK_INT +  " does not need to get permission "
+                                    + Arrays.toString(ensureHasPermissionAnnotation.value()));
                     continue;
                 }
 
@@ -981,7 +1080,7 @@ public final class DeviceState extends HarrierRule {
             int min, int max, FailureMode failureMode, String failureMessage) {
         mMinSdkVersionCurrentTest = min;
         checkFailOrSkip(
-                failureMessage + " (version is " + Build.VERSION.SDK_INT + ")",
+                failureMessage + " (version is " + SDK_INT + ")",
                 meetsSdkVersionRequirements(min, max),
                 failureMode
         );
@@ -1042,6 +1141,8 @@ public final class DeviceState extends HarrierRule {
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
     private UserReference mOriginalSwitchedUser;
     private Boolean mOriginalBluetoothEnabled;
+    private TestAppProvider mTestAppProvider = new TestAppProvider();
+    private Map<String, TestAppInstance> mTestApps = new HashMap<>();
 
     /**
      * Get the {@link UserReference} of the work profile for the primary user.
@@ -1106,7 +1207,7 @@ public final class DeviceState extends HarrierRule {
      * @throws IllegalStateException if there is no harrier-managed profile
      */
     public UserReference profile(String profileType) {
-        return profile(profileType, /* forUser= */ UserType.CURRENT_USER);
+        return profile(profileType, /* forUser= */ UserType.INSTRUMENTED_USER);
     }
 
     /**
@@ -1170,7 +1271,7 @@ public final class DeviceState extends HarrierRule {
      * @throws IllegalStateException if there is no harrier-managed tv profile
      */
     public UserReference tvProfile() {
-        return tvProfile(/* forUser= */ UserType.CURRENT_USER);
+        return tvProfile(/* forUser= */ UserType.INSTRUMENTED_USER);
     }
 
     /**
@@ -1433,12 +1534,68 @@ public final class DeviceState extends HarrierRule {
         return broadcastReceiver;
     }
 
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
+            UserReference user, String action) {
+        return registerBroadcastReceiverForUser(user, action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForUser(
+            UserReference user, String action, Function<Intent, Boolean> checker) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(
+                            TestApis.context().androidContextAsUser(user), action, checker);
+            broadcastReceiver.register();
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+            return broadcastReceiver;
+        }
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(String action) {
+        return registerBroadcastReceiverForAllUsers(action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(
+            String action, Function<Intent, Boolean> checker) {
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(mContext, action, checker);
+            broadcastReceiver.registerForAllUsers();
+
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
+
+            return broadcastReceiver;
+        }
+    }
+
     private UserReference resolveUserTypeToUser(UserType userType) {
         switch (userType) {
             case SYSTEM_USER:
                 return TestApis.users().system();
-            case CURRENT_USER:
+            case INSTRUMENTED_USER:
                 return TestApis.users().instrumented();
+            case CURRENT_USER:
+                return TestApis.users().current();
             case PRIMARY_USER:
                 return primaryUser();
             case SECONDARY_USER:
@@ -1447,6 +1604,8 @@ public final class DeviceState extends HarrierRule {
                 return workProfile();
             case TV_PROFILE:
                 return tvProfile();
+            case DPC_USER:
+                return dpc().user();
             case ANY:
                 throw new IllegalStateException("ANY UserType can not be used here");
             default:
@@ -1464,6 +1623,9 @@ public final class DeviceState extends HarrierRule {
         mRegisteredBroadcastReceivers.clear();
         mPrimaryPolicyManager = null;
         mOtherUserType = null;
+        mTestApps.clear();
+
+        mTestAppProvider.restore();
     }
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
@@ -1599,7 +1761,6 @@ public final class DeviceState extends HarrierRule {
             EnsureHasDelegate.AdminType adminType, List<String> scopes, boolean isPrimary) {
         RemotePolicyManager dpc = getDeviceAdmin(adminType);
 
-
         boolean specifiesAdminType = adminType != EnsureHasDelegate.AdminType.PRIMARY;
         boolean currentPrimaryPolicyManagerIsNotDelegator = mPrimaryPolicyManager != dpc;
 
@@ -1643,6 +1804,49 @@ public final class DeviceState extends HarrierRule {
         ensureTestAppNotInstalled(RemoteDelegate.sTestApp, dpc.user());
     }
 
+    private void ensureTestAppInstalled(
+            String key, String packageName, UserType onUser, boolean isPrimary) {
+        TestApp testApp = mTestAppProvider.query()
+                .wherePackageName().isEqualTo(packageName)
+                .get();
+
+        TestAppInstance testAppInstance = ensureTestAppInstalled(
+                testApp, resolveUserTypeToUser(onUser));
+
+        mTestApps.put(key, testAppInstance);
+
+        if (isPrimary) {
+            if (mPrimaryPolicyManager != null) {
+                throw new IllegalStateException(
+                        "Only one DPC can be marked as primary per test (current primary is "
+                                + mPrimaryPolicyManager + ")");
+            }
+
+            mPrimaryPolicyManager = new RemoteTestApp(testAppInstance);
+        }
+    }
+
+    private void ensureTestAppHasPermission(
+            String testAppKey, String[] permissions, int minVersion, int maxVersion) {
+        if (!mTestApps.containsKey(testAppKey)) {
+            throw new NeneException("No testapp with given key. Use @EnsureTestAppInstalled");
+        }
+
+        mTestApps.get(testAppKey).permissions()
+                .withPermissionOnVersionBetween(minVersion, maxVersion, permissions);
+
+    }
+
+    private void ensureTestAppHasAppOp(
+            String testAppKey, String[] appOps, int minVersion, int maxVersion) {
+        if (!mTestApps.containsKey(testAppKey)) {
+            throw new NeneException("No testapp with given key. Use @EnsureTestAppInstalled");
+        }
+
+        mTestApps.get(testAppKey).permissions()
+                .withAppOpOnVersionBetween(minVersion, maxVersion, appOps);
+    }
+
     private RemotePolicyManager getDeviceAdmin(EnsureHasDelegate.AdminType adminType) {
         switch (adminType) {
             case DEVICE_OWNER:
@@ -1656,16 +1860,20 @@ public final class DeviceState extends HarrierRule {
         }
     }
 
-    private void ensureTestAppInstalled(TestApp testApp, UserReference user) {
-        if (TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
-            return;
+    private TestAppInstance ensureTestAppInstalled(TestApp testApp, UserReference user) {
+        Package pkg = TestApis.packages().find(testApp.packageName());
+        if (pkg != null && TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
+            return testApp.instance(user);
         }
 
-        mInstalledTestApps.add(testApp.install(user));
+        TestAppInstance testAppInstance = testApp.install(user);
+        mInstalledTestApps.add(testAppInstance);
+        return testAppInstance;
     }
 
     private void ensureTestAppNotInstalled(TestApp testApp, UserReference user) {
-        if (!TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
+        Package pkg = TestApis.packages().find(testApp.packageName());
+        if (pkg == null || !TestApis.packages().find(testApp.packageName()).installedOnUser(user)) {
             return;
         }
 
@@ -1874,7 +2082,7 @@ public final class DeviceState extends HarrierRule {
      * <p>If the profile owner is not a RemoteDPC then an exception will be thrown.
      */
     public RemoteDpc profileOwner() {
-        return profileOwner(UserType.CURRENT_USER);
+        return profileOwner(UserType.INSTRUMENTED_USER);
     }
 
     /**
@@ -2003,6 +2211,34 @@ public final class DeviceState extends HarrierRule {
         }
 
         throw new IllegalStateException("No Harrier-managed profile owner or device owner.");
+    }
+
+    /**
+     * Get a {@link TestAppProvider} which is cleared between tests.
+     *
+     * <p>Note that you must still manage the test apps manually. To have the infrastructure
+     * automatically remove test apps use the {@link EnsureTestAppInstalled} annotation.
+     */
+    public TestAppProvider testApps() {
+        return mTestAppProvider;
+    }
+
+    /**
+     * Get a test app installed with @EnsureTestAppInstalled with no key.
+     */
+    public TestAppInstance testApp() {
+        return testApp(DEFAULT_TEST_APP_KEY);
+    }
+
+    /**
+     * Get a test app installed with `@EnsureTestAppInstalled` with the given key.
+     */
+    public TestAppInstance testApp(String key) {
+        if (!mTestApps.containsKey(key)) {
+            throw new NeneException("No testapp with given key. Use @EnsureTestAppInstalled");
+        }
+
+        return mTestApps.get(key);
     }
 
     private void ensureCanGetPermission(String permission) {

@@ -36,6 +36,7 @@ public class InCallServiceStateValidator  extends InCallService {
     private static CountDownLatch sLatch  = new CountDownLatch(1);
 
     private final List<Call> mCalls = Collections.synchronizedList(new ArrayList<>());
+    private final List<Call> mConferenceCalls = Collections.synchronizedList(new ArrayList<>());
     private final Object mLock = new Object();
     private boolean mIsServiceBound = false;
 
@@ -46,6 +47,7 @@ public class InCallServiceStateValidator  extends InCallService {
         public void onCallAdded(Call call, int numCalls) {};
         public void onCallRemoved(Call call, int numCalls) {};
         public void onCallStateChanged(Call call, int state) {};
+        public void onChildrenChanged(Call call, List<Call> children) {};
 
         public InCallServiceStateValidator getService() {
             if (mService == null) {
@@ -95,6 +97,14 @@ public class InCallServiceStateValidator  extends InCallService {
                 getCallbacks().onCallStateChanged(call, state);
             }
         }
+
+        @Override
+        public void onChildrenChanged(Call call, List<Call> children) {
+            super.onChildrenChanged(call, children);
+            if (getCallbacks() != null) {
+                getCallbacks().onChildrenChanged(call, children);
+            }
+        }
     };
 
     @Override
@@ -117,9 +127,16 @@ public class InCallServiceStateValidator  extends InCallService {
     @Override
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
-        if (!mCalls.contains(call)) {
-            mCalls.add(call);
-            call.registerCallback(mCallCallback);
+        if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
+            if (!mConferenceCalls.contains(call)) {
+                mConferenceCalls.add(call);
+                call.registerCallback(mCallCallback);
+            }
+        } else {
+            if (!mCalls.contains(call)) {
+                mCalls.add(call);
+                call.registerCallback(mCallCallback);
+            }
         }
 
         if (getCallbacks() != null) {
@@ -130,7 +147,11 @@ public class InCallServiceStateValidator  extends InCallService {
     @Override
     public void onCallRemoved(Call call) {
         super.onCallRemoved(call);
-        mCalls.remove(call);
+        if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
+            mConferenceCalls.remove(call);
+        } else {
+            mCalls.remove(call);
+        }
 
         if (getCallbacks() != null) {
             getCallbacks().onCallRemoved(call, mCalls.size());
@@ -151,5 +172,23 @@ public class InCallServiceStateValidator  extends InCallService {
 
     public boolean isServiceUnBound() {
         return !mIsServiceBound;
+    }
+
+    /**
+     * @return the number of conference calls currently added to the {@code InCallService}.
+     */
+    public int getConferenceCallCount() {
+        Log.d(LOG_TAG, "getConferenceCallCount = " + mConferenceCalls.size());
+        return mConferenceCalls.size();
+    }
+
+    /**
+     * @return the most recently added conference call that exists inside the {@code InCallService}
+     */
+    public Call getLastConferenceCall() {
+        if (!mConferenceCalls.isEmpty()) {
+            return mConferenceCalls.get(mConferenceCalls.size() - 1);
+        }
+        return null;
     }
 }

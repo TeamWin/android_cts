@@ -556,6 +556,9 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                     "addCrossProfileIntents", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
                     "startSwitchToOtherProfileIntent_chooser", mProfileUserId);
+
+            Thread.sleep(30000);
+
             assertChooserActivityInForeground(mProfileUserId);
         } finally {
             pressHome();

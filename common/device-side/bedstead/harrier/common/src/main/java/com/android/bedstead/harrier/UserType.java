@@ -20,9 +20,11 @@ public enum UserType {
     /** Only to be used with annotations. */
     ANY,
     SYSTEM_USER,
-    CURRENT_USER,
+    INSTRUMENTED_USER,
     PRIMARY_USER,
     SECONDARY_USER,
     WORK_PROFILE,
-    TV_PROFILE;
+    CURRENT_USER,
+    TV_PROFILE,
+    DPC_USER;
 }

@@ -103,7 +103,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     @After
     public void tearDown() throws Exception {
         for (Uri uri : mUriList) {
-            deleteMedia(uri, mContext.getUserId());
+            deleteMedia(uri, mContext);
         }
         mUriList.clear();
         mActivity.finish();

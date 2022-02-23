@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.harrier.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
 import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_ADMIN;
 
@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
 @RequireFeature(FEATURE_DEVICE_ADMIN)
 public @interface EnsureHasProfileOwner {
     /** Which user type the work profile should be attached to. */
-    UserType onUser() default CURRENT_USER;
+    UserType onUser() default INSTRUMENTED_USER;
 
     /**
      * Whether this DPC should be returned by calls to {@code Devicestate#dpc()} or

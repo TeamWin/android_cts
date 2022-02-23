@@ -40,7 +40,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -56,8 +55,7 @@ public final class DefaultSmsApplicationTest {
     public static DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sSmsApp = sTestAppProvider
+    private static final TestApp sSmsApp = sDeviceState.testApps()
             .query()
             .wherePackageName()
             // TODO(b/198420874): Query for the intent filters relevant to the SMS tests

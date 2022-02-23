@@ -37,10 +37,10 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(RequirePackagesInstalled.class)
+@Repeatable(RequirePackageInstalledGroup.class)
 public @interface RequirePackageInstalled {
     String value();
-    UserType onUser() default UserType.CURRENT_USER;
+    UserType onUser() default UserType.INSTRUMENTED_USER;
     FailureMode failureMode() default FailureMode.SKIP;
 
     /**

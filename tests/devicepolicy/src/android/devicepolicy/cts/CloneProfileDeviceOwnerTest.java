@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -30,7 +32,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.permissions.Permissions;
 import com.android.bedstead.nene.users.UserReference;
 
 import org.junit.ClassRule;
@@ -49,7 +50,7 @@ public class CloneProfileDeviceOwnerTest {
      */
     @Test
     @EnsureHasDeviceOwner
-    @EnsureHasPermission(Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
     public void createCloneProfile_hasDeviceOwner_fails() {
         assertThrows(NeneException.class,
@@ -64,7 +65,7 @@ public class CloneProfileDeviceOwnerTest {
      */
     @Test
     @EnsureHasNoDeviceOwner
-    @EnsureHasPermission(Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @RequireRunOnPrimaryUser
     public void createCloneProfile_noDeviceOwner_succeeds() {
         UserReference cloneUser = TestApis.users().createUser()

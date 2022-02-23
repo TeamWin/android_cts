@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
+import static com.android.bedstead.harrier.annotations.EnsureTestAppInstalled.ENSURE_TEST_APP_INSTALLED_WEIGHT;
 
 import com.android.bedstead.harrier.annotations.meta.RepeatingAnnotation;
 
@@ -28,8 +28,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RepeatingAnnotation
-public @interface EnsureCanGetPermissions {
-    EnsureCanGetPermission[] value();
+public @interface EnsureTestAppInstalledGroup {
+    EnsureTestAppInstalled[] value();
 
     /**
      * Weight sets the order that annotations will be resolved.
@@ -41,5 +41,5 @@ public @interface EnsureCanGetPermissions {
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default EARLY;
+    int weight() default ENSURE_TEST_APP_INSTALLED_WEIGHT;
 }

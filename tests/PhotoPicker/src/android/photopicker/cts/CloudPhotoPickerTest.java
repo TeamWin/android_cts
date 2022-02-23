@@ -101,7 +101,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     @After
     public void tearDown() throws Exception {
         for (Uri uri : mUriList) {
-            deleteMedia(uri, mContext.getUserId());
+            deleteMedia(uri, mContext);
         }
         mActivity.finish();
         mUriList.clear();
