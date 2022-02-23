@@ -44,6 +44,7 @@ import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -290,6 +291,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/218794887 is fixed")
     public void testMultiSelect_PreviewVideoPlayPause() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 4);
 
@@ -314,6 +316,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/218794887 is fixed")
     public void testMultiSelect_PreviewVideoMuteButton() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 4);
 
@@ -374,6 +377,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/218794887 is fixed")
     public void testMultiSelect_PreviewVideoControlsVisibility() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
 
