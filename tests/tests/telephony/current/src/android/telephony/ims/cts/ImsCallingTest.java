@@ -339,8 +339,8 @@ public class ImsCallingTest {
         MmTelFeature.MmTelCapabilities capabilities = new MmTelFeature.MmTelCapabilities(
                 MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE);
         // Set Registered and VoLTE capable
-        sServiceConnector.getCarrierService().getImsService().getRegistration(0).onRegistered(
-                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        sServiceConnector.getCarrierService().getImsService().getRegistrationForSubscription(
+                sTestSlot, sTestSub).onRegistered(ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
         sServiceConnector.getCarrierService().getMmTelFeature().setCapabilities(capabilities);
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .notifyCapabilitiesStatusChanged(capabilities);
