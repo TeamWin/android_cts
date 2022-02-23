@@ -802,6 +802,17 @@ public class SmsManagerTest {
     }
 
     @Test
+    public void testResetAllCellBroadcastRanges() {
+        try {
+            executeWithShellPermissionIdentity(() -> {
+                getSmsManager().resetAllCellBroadcastRanges();
+            });
+        } catch (Exception e) {
+            // expected
+        }
+    }
+
+    @Test
     public void testCreateForSubscriptionId() {
         int testSubId = 123;
         SmsManager smsManager = mContext.getSystemService(SmsManager.class)

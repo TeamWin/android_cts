@@ -70,7 +70,6 @@ import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppActivityReference;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -110,15 +109,14 @@ public final class LockTaskTest {
     private @interface SettableWithHomeFlagTestParameter {
     }
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sLockTaskTestApp = sTestAppProvider.query()
+    private static final TestApp sLockTaskTestApp = sDeviceState.testApps().query()
             .wherePackageName().isEqualTo("com.android.bedstead.testapp.LockTaskApp")
             .get(); // TODO(scottjonathan): filter by containing activity not by package name
     private static final TestApp sTestApp =
-            sTestAppProvider.query().whereActivities().isNotEmpty().get();
+            sDeviceState.testApps().query().whereActivities().isNotEmpty().get();
 
     private static final TestApp sSecondTestApp =
-            sTestAppProvider.query().whereActivities().isNotEmpty().get();
+            sDeviceState.testApps().query().whereActivities().isNotEmpty().get();
 
     private static final ComponentReference BLOCKED_ACTIVITY_COMPONENT =
             TestApis.packages().component(new ComponentName(

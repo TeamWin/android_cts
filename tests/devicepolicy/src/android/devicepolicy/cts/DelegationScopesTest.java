@@ -47,7 +47,6 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.bedstead.testapp.TestAppProvider;
 import com.android.eventlib.truth.EventLogsSubject;
 
 import org.junit.ClassRule;
@@ -80,10 +79,9 @@ public final class DelegationScopesTest {
     private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
 
-    private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider
+    private static final TestApp sTestApp = sDeviceState.testApps()
             .query().whereActivities().isNotEmpty().get();
-    private static final TestApp sTestApp2 = sTestAppProvider.any();
+    private static final TestApp sTestApp2 = sDeviceState.testApps().any();
 
     @Test
     @CanSetPolicyTest(policy = Delegation.class)

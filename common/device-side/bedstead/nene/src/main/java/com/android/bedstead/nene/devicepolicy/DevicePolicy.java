@@ -21,8 +21,8 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 
-import static com.android.bedstead.nene.permissions.Permissions.MANAGE_DEVICE_ADMINS;
-import static com.android.bedstead.nene.permissions.Permissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_ADMINS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -182,8 +182,8 @@ public final class DevicePolicy {
                         },
                         () -> checkForTerminalDeviceOwnerFailures(
                                 user, deviceOwnerComponent, /* allowAdditionalUsers= */ true),
-                        NeneException.class);
-            } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
+                        NeneException.class, IllegalArgumentException.class);
+            } catch (IllegalStateException | SecurityException e) {
                 throw new NeneException("Error setting device owner", e);
             }
         } finally {

@@ -30,6 +30,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Process
 import android.os.UserHandle
+import android.util.Log
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
@@ -42,6 +43,8 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
+
+private const val LOG_TAG = "PermissionTest30WithBluetooth"
 
 /**
  * Runtime Bluetooth-permission behavior of apps targeting API 30
@@ -115,29 +118,39 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         }
     }
 
+    // TODO:(b/220030722) Remove verbose logging (after test is stabilized)
     @Test
     fun testGivenBluetoothIsDeniedWhenScanIsAttemptedThenThenGetEmptyScanResult() {
+
         assertTrue("Please enable location to run this test. Bluetooth scanning " +
                 "requires location to be enabled.", locationManager.isLocationEnabled())
-
         assertBluetoothRevokedCompatState(revoked = false)
-        // Should return empty while the app does not have location
+
+        Log.v(LOG_TAG, "Testing for: Given {BLUETOOTH_SCAN, !BLUETOOTH_SCAN.COMPAT_REVOKE, " +
+                "!ACCESS_*_LOCATION}, expect EMPTY")
         assertEquals(BluetoothScanResult.EMPTY, scanForBluetoothDevices())
 
+        Log.v(LOG_TAG, "Testing for: Given {BLUETOOTH_SCAN, !BLUETOOTH_SCAN.COMPAT_REVOKE, " +
+                "ACCESS_*_LOCATION}, expect FULL")
         uiAutomation.grantRuntimePermission(TEST_APP_PKG, ACCESS_FINE_LOCATION)
         uiAutomation.grantRuntimePermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION)
-        runWithShellPermissionIdentity {
-            context.getSystemService(AppOpsManager::class.java)!!.setUidMode(
-                AppOpsManager.OPSTR_FINE_LOCATION,
-                packageManager.getPackageUid(context.packageName, 0), AppOpsManager.MODE_ALLOWED)
-        }
-
+        setAppOp(context.packageName, AppOpsManager.OPSTR_FINE_LOCATION, AppOpsManager.MODE_ALLOWED)
         assertEquals(BluetoothScanResult.FULL, scanForBluetoothDevices())
+
+        Log.v(LOG_TAG, "Testing for: Given {BLUETOOTH_SCAN, BLUETOOTH_SCAN.COMPAT_REVOKE, " +
+                "ACCESS_*_LOCATION}, expect ERROR")
         revokeAppPermissions(BLUETOOTH_SCAN, isLegacyApp = true)
         assertBluetoothRevokedCompatState(revoked = true)
         val res = scanForBluetoothDevices()
         if (res != BluetoothScanResult.ERROR && res != BluetoothScanResult.EMPTY) {
             throw AssertionFailedError("Expected to be EMPTY or ERROR, but was $res")
+        }
+    }
+
+    private fun setAppOp(packageName: String, appOp: String, appOpMode: Int) {
+        runWithShellPermissionIdentity {
+            context.getSystemService(AppOpsManager::class.java)!!.setUidMode(
+                    appOp, packageManager.getPackageUid(packageName, 0), appOpMode)
         }
     }
 
@@ -163,6 +176,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
             }
         }
     }
+
     private fun scanForBluetoothDevices(): BluetoothScanResult {
         val resolver = InstrumentationRegistry.getTargetContext().getContentResolver()
         val result = resolver.call(TEST_APP_AUTHORITY, "", null, null)

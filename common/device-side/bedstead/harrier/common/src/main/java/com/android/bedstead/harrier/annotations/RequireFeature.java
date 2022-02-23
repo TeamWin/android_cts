@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Repeatable(RequireFeatures.class)
+@Repeatable(RequireFeatureGroup.class)
 public @interface RequireFeature {
     String value();
     FailureMode failureMode() default FailureMode.SKIP;
