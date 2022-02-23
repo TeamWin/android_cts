@@ -233,6 +233,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
     }
 
     public void testGetOutputSizeInDecryptionMode() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         int blockSize = getBlockSize();
         createCipher();
         try {
@@ -560,6 +564,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
     }
 
     public void testDoFinalResets() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         assertDoFinalResetsCipher(Cipher.DECRYPT_MODE);
         assertDoFinalResetsCipher(Cipher.ENCRYPT_MODE);
     }
@@ -633,6 +641,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
     }
 
     public void testUpdateDoesNotProduceOutputWhenInsufficientInput() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         if (isStreamCipher()) {
             // Stream ciphers always produce output for non-empty input.
             return;
@@ -715,6 +727,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
     }
 
     public void testKatEncryptOneByteAtATime() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         createCipher();
         initKat(Cipher.ENCRYPT_MODE);
         byte[] plaintext = getKatPlaintext();
@@ -771,6 +787,10 @@ abstract class BlockCipherTestBase extends AndroidTestCase {
     }
 
     public void testKatDecryptOneByteAtATime() throws Exception {
+        if (!TestUtils.isAttestationSupported()) {
+            return;
+        }
+
         createCipher();
         initKat(Cipher.DECRYPT_MODE);
         byte[] ciphertext = getKatCiphertext();
