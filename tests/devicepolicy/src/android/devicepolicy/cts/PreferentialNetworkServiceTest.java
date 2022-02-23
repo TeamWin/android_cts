@@ -47,7 +47,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
@@ -91,7 +90,6 @@ public final class PreferentialNetworkServiceTest {
      * Enable PreferentialNetworkService, verify the provider that provides enterprise slice can
      * see the enterprise slice requests.
      */
-    @Test
     @EnsureHasPermission({ACCESS_NETWORK_STATE, NETWORK_SETTINGS})
     @PolicyAppliesTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceEnabled_enableService_issueRequest() {
@@ -129,7 +127,6 @@ public final class PreferentialNetworkServiceTest {
      * Disable PreferentialNetworkService, verify the provider that provides enterprise slice cannot
      * see the enterprise slice requests.
      */
-    @Test
     @EnsureHasPermission({ACCESS_NETWORK_STATE, NETWORK_SETTINGS})
     @PolicyAppliesTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceEnabled_disableService_noIssueRequest() {

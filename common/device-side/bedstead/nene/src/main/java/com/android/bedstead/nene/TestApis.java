@@ -23,6 +23,7 @@ import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
+import com.android.bedstead.nene.inputmethods.InputMethods;
 import com.android.bedstead.nene.location.Locations;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
@@ -102,6 +103,12 @@ public final class TestApis {
     @Experimental
     public static Bluetooth bluetooth() {
         return Bluetooth.sInstance;
+    }
+
+    /** Access Test APIs related to input methods. */
+    @Experimental
+    public static InputMethods inputMethods() {
+        return InputMethods.sInstance;
     }
 
     /** @deprecated Use statically */

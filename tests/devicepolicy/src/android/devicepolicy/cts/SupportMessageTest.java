@@ -37,7 +37,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
@@ -78,7 +77,6 @@ public final class SupportMessageTest {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, /* charSequence= */ null);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_validText_works() {
@@ -88,7 +86,6 @@ public final class SupportMessageTest {
                 .isEqualTo(VALID_SUPPORT_MESSAGE);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_validText_works() {
@@ -98,7 +95,6 @@ public final class SupportMessageTest {
                 .isEqualTo(VALID_SUPPORT_MESSAGE);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_emptyText_works() {
@@ -108,7 +104,6 @@ public final class SupportMessageTest {
                 .isEqualTo(EMPTY_SUPPORT_MESSAGE);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_nullText_clearsOldText() {
@@ -118,7 +113,6 @@ public final class SupportMessageTest {
         assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin)).isEqualTo("null");
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_nullText_clearsOldText() {
@@ -128,7 +122,6 @@ public final class SupportMessageTest {
         assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin)).isEqualTo("null");
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_emptyText_works() {
@@ -138,7 +131,6 @@ public final class SupportMessageTest {
                 .isEqualTo(EMPTY_SUPPORT_MESSAGE);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_tooLongText_isTruncated() {
@@ -148,7 +140,6 @@ public final class SupportMessageTest {
                 .isEqualTo(SHORT_SUPPORT_MESSAGE_TOO_LONG_TRUNCATED);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_longText_notTruncated() {
@@ -158,7 +149,6 @@ public final class SupportMessageTest {
                 .isEqualTo(LONG_SUPPORT_MESSAGE_REASONABLY_LONG);
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_nullAdmin_throwsNullPointerException() {
@@ -167,7 +157,6 @@ public final class SupportMessageTest {
                         /* componentName= */ null, VALID_SUPPORT_MESSAGE));
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_nullAdmin_throwsNullPointerException() {
@@ -176,7 +165,6 @@ public final class SupportMessageTest {
                         /* componentName= */ null, VALID_SUPPORT_MESSAGE));
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void getShortSupportMessage_nullAdmin_throwsNullPointerException() {
@@ -185,7 +173,6 @@ public final class SupportMessageTest {
                         /* componentName= */ null));
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void getLongSupportMessage_nullAdmin_throwsNullPointerException() {
@@ -194,7 +181,6 @@ public final class SupportMessageTest {
                         /* componentName= */ null));
     }
 
-    @Test
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -203,7 +189,6 @@ public final class SupportMessageTest {
                 mDevicePolicyManager.getLongSupportMessage(mAdmin));
     }
 
-    @Test
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -212,7 +197,6 @@ public final class SupportMessageTest {
                 mDevicePolicyManager.setLongSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE));
     }
 
-    @Test
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -221,7 +205,6 @@ public final class SupportMessageTest {
                 mDevicePolicyManager.getShortSupportMessage(mAdmin));
     }
 
-    @Test
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = SupportMessage.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -230,7 +213,6 @@ public final class SupportMessageTest {
                 mDevicePolicyManager.setShortSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE));
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setShortSupportMessage_validText_logged() {
@@ -245,7 +227,6 @@ public final class SupportMessageTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
     public void setLongSupportMessage_validText_logged() {

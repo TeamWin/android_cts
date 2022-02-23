@@ -285,11 +285,24 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         return annotation.annotationType().equals(IncludeNone.class);
     }
 
+    private static List<FrameworkMethod> getBasicTests(TestClass testClass) {
+        Set<FrameworkMethod> methods = new HashSet<>();
+
+        methods.addAll(testClass.getAnnotatedMethods(Test.class));
+        methods.addAll(testClass.getAnnotatedMethods(PolicyAppliesTest.class));
+        methods.addAll(testClass.getAnnotatedMethods(PolicyDoesNotApplyTest.class));
+        methods.addAll(testClass.getAnnotatedMethods(CanSetPolicyTest.class));
+        methods.addAll(testClass.getAnnotatedMethods(CannotSetPolicyTest.class));
+        methods.addAll(testClass.getAnnotatedMethods(UserTest.class));
+        methods.addAll(testClass.getAnnotatedMethods(CrossUserTest.class));
+        methods.addAll(testClass.getAnnotatedMethods(PermissionTest.class));
+
+        return new ArrayList<>(methods);
+    }
+
     @Override
     protected List<FrameworkMethod> computeTestMethods() {
-        TestClass testClass = getTestClass();
-
-        List<FrameworkMethod> basicTests = testClass.getAnnotatedMethods(Test.class);
+        List<FrameworkMethod> basicTests = getBasicTests(getTestClass());
         List<FrameworkMethod> modifiedTests = new ArrayList<>();
 
         for (FrameworkMethod m : basicTests) {
