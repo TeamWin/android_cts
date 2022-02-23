@@ -44,7 +44,7 @@
 
     <!-- Add a network security config that trusts user added CAs for tests -->
     <application android:networkSecurityConfig="@xml/network_security_config"
-         android:testOnly="true">
+         android:testOnly="true" android:debuggable="true">
 
         <uses-library android:name="android.test.runner"/>
         <receiver android:name="com.android.cts.deviceandprofileowner.BaseDeviceAdminTest$BasicAdminReceiver"
