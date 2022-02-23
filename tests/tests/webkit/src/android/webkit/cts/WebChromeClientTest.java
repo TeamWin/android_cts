@@ -24,6 +24,7 @@ import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.webkit.ConsoleMessage;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
@@ -437,6 +438,7 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         private boolean mHadOnCreateWindow;
         private boolean mHadOnRequestFocus;
         private boolean mHadOnReceivedIcon;
+        private WebView mChildWebView;
 
         public MockWebChromeClient() {
             super(mOnUiThread);
@@ -548,6 +550,15 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
         public void onCloseWindow(WebView window) {
             super.onCloseWindow(window);
             mHadOnCloseWindow = true;
+
+            if (mChildWebView != null) {
+                ViewParent parent =  mChildWebView.getParent();
+                if (parent instanceof ViewGroup) {
+                    ((ViewGroup) parent).removeView(mChildWebView);
+                }
+                mChildWebView.destroy();
+            }
+
         }
 
         @Override
@@ -561,12 +572,12 @@ public class WebChromeClientTest extends ActivityInstrumentationTestCase2<WebVie
             if (mBlockWindowCreationAsync) {
                 transport.setWebView(null);
             } else {
-                WebView childView = new WebView(getActivity());
-                final WebSettings settings = childView.getSettings();
+                mChildWebView = new WebView(getActivity());
+                final WebSettings settings = mChildWebView.getSettings();
                 settings.setJavaScriptEnabled(true);
-                childView.setWebChromeClient(this);
-                transport.setWebView(childView);
-                getActivity().addContentView(childView, new ViewGroup.LayoutParams(
+                mChildWebView.setWebChromeClient(this);
+                transport.setWebView(mChildWebView);
+                getActivity().addContentView(mChildWebView, new ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             resultMsg.sendToTarget();
