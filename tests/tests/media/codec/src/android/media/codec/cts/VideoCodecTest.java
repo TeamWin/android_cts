@@ -175,7 +175,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                     targetBitrate,
                     true);
             ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
-            ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params, codecConfigs);
+            VideoEncodeOutput videoEncodeOutput = encode(params, codecConfigs);
+            ArrayList<MediaCodec.BufferInfo> bufInfo = videoEncodeOutput.bufferInfo;
             if (bufInfo == null) {
                 continue;
             }
@@ -236,7 +237,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                 BITRATE,
                 syncEncoding);
         ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
-        ArrayList<MediaCodec.BufferInfo> bufInfos = encodeAsync(params, codecConfigs);
+        VideoEncodeOutput videoEncodeOutput = encodeAsync(params, codecConfigs);
+        ArrayList<MediaCodec.BufferInfo> bufInfos = videoEncodeOutput.bufferInfo;
         if (bufInfos == null) {
             Log.i(TAG, "SKIPPING testAsyncEncoding(): no suitable encoder found");
             return;
@@ -263,7 +265,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
                 BITRATE,
                 syncEncoding);
         codecConfigs.clear();
-        bufInfos = encode(params, codecConfigs);
+        videoEncodeOutput = encode(params, codecConfigs);
+        bufInfos = videoEncodeOutput.bufferInfo;
         if (bufInfos == null) {
             Log.i(TAG, "SKIPPING testAsyncEncoding(): no suitable encoder found");
             return;
@@ -312,7 +315,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
         params.syncFrameInterval = encodeSeconds * FPS;
         params.syncForceFrameInterval = FPS;
         params.useNdk = useNdk;
-        ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
+        VideoEncodeOutput videoEncodeOutput = encode(params);
+        ArrayList<MediaCodec.BufferInfo> bufInfo = videoEncodeOutput.bufferInfo;
         if (bufInfo == null) {
             Log.i(TAG, "SKIPPING testSyncFrame(): no suitable encoder found");
             return;
@@ -376,7 +380,8 @@ public class VideoCodecTest extends VideoCodecTestBase {
         }
 
         params.useNdk = useNdk;
-        ArrayList<MediaCodec.BufferInfo> bufInfo = encode(params);
+        VideoEncodeOutput videoEncodeOutput = encode(params);
+        ArrayList<MediaCodec.BufferInfo> bufInfo = videoEncodeOutput.bufferInfo;
         if (bufInfo == null) {
             Log.i(TAG, "SKIPPING testDynamicBitrateChange(): no suitable encoder found");
             return;
@@ -453,9 +458,11 @@ public class VideoCodecTest extends VideoCodecTestBase {
                  try {
                      ArrayList<MediaCodec.BufferInfo> bufInfo;
                      if (codecConfigs.isEmpty()) {
-                         bufInfo = encode(params, codecConfigs);
+                         VideoEncodeOutput videoEncodeOutput = encode(params, codecConfigs);
+                         bufInfo = videoEncodeOutput.bufferInfo;
                      } else {
-                         bufInfo = encode(params);
+                         VideoEncodeOutput videoEncodeOutput = encode(params);
+                         bufInfo = videoEncodeOutput.bufferInfo;
                      }
                      VideoEncodingStatistics statistics = computeEncodingStatistics(bufInfo);
                      bitrate[0] = statistics.mAverageBitrate;
