@@ -50,7 +50,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 // TODO(b/208084779): Add more cts tests to cover setting different styles and sources, also
 //  add more tests to cover calling from other packages after adding support for the new APIs in
@@ -320,7 +320,7 @@ public class EnterpriseResourcesTests {
         assertThrows(NullPointerException.class, () -> sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1,
                 DRAWABLE_STYLE_1,
-                (Callable<Drawable>) /* default= */ null));
+                /* default= */ (Supplier<Drawable>) null));
     }
 
     @Test
