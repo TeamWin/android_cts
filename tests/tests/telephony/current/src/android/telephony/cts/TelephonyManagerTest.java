@@ -1006,6 +1006,10 @@ public class TelephonyManagerTest {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
             return;
         }
+        if (!mTelephonyManager.isVoiceCapable()) {
+            Log.d(TAG, "Skipping test that requires config_voice_capable is true");
+            return;
+        }
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);

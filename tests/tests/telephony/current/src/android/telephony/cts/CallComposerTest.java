@@ -29,6 +29,7 @@ import android.os.ParcelUuid;
 import android.os.UserHandle;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -62,6 +63,8 @@ public class CallComposerTest {
     private String mPreviousDefaultDialer;
     private Context mContext;
     private boolean mPreviousTestMode;
+    private boolean mIsVoiceSupport;
+    private static final String TAG = "CallComposerTest";
 
     @Rule
     public final RequiredFeatureRule mTelephonyRequiredRule =
@@ -76,6 +79,7 @@ public class CallComposerTest {
                         "cmd phone callcomposer test-mode query"));
         TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
                 "cmd phone callcomposer test-mode enable");
+        mIsVoiceSupport = mContext.getSystemService(TelephonyManager.class).isVoiceCapable();
     }
 
     @After
@@ -89,6 +93,10 @@ public class CallComposerTest {
 
     @Test
     public void testUploadPictureWithFile() throws Exception {
+        if (!mIsVoiceSupport) {
+            Log.d(TAG, "Skipping test that requires config_voice_capable is true");
+            return;
+        }
         Path testFile = mContext.getFilesDir().toPath().resolve(TEST_FILE_NAME);
         byte[] imageData = getSamplePictureAsBytes();
         Files.write(testFile, imageData);
@@ -99,6 +107,10 @@ public class CallComposerTest {
 
     @Test
     public void testUploadPictureAsStream() throws Exception {
+        if (!mIsVoiceSupport) {
+            Log.d(TAG, "Skipping test that requires config_voice_capable is true");
+            return;
+        }
         byte[] imageData = getSamplePictureAsBytes();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(imageData);
 
@@ -108,6 +120,10 @@ public class CallComposerTest {
 
     @Test
     public void testExcessivelyLargePictureAsFile() throws Exception {
+        if (!mIsVoiceSupport) {
+            Log.d(TAG, "Skipping test that requires config_voice_capable is true");
+            return;
+        }
         int targetSize = (int) TelephonyManager.getMaximumCallComposerPictureSize() + 1;
         byte[] imageData = getSamplePictureAsBytes();
         byte[] paddedData = new byte[targetSize];
@@ -121,6 +137,10 @@ public class CallComposerTest {
 
     @Test
     public void testExcessivelyLargePictureAsStream() throws Exception {
+        if (!mIsVoiceSupport) {
+            Log.d(TAG, "Skipping test that requires config_voice_capable is true");
+            return;
+        }
         int targetSize = (int) TelephonyManager.getMaximumCallComposerPictureSize() + 1;
         byte[] imageData = getSamplePictureAsBytes();
         byte[] paddedData = new byte[targetSize];
