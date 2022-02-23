@@ -28,6 +28,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -387,6 +388,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
 
     private void assertTextChange() throws Exception {
         assertAutoFilled();
+    }
+
+    /**
+     * Get insets of the root window
+     */
+    public WindowInsets getRootWindowInsets() {
+        return mUsernameLabel.getRootWindowInsets();
     }
 
     /**

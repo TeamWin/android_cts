@@ -20,7 +20,11 @@ import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
 import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
+import static android.autofillservice.cts.testcore.Helper.isImeShowing;
 import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
+
+
+import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
@@ -37,6 +41,64 @@ import org.junit.Test;
  * This is the test cases for the fill dialog UI.
  */
 public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLaunch {
+
+    @Test
+    public void testTextView_withoutFillDialog_clickTwice_showIme() throws Exception {
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        // Waits a while
+        mUiBot.waitForIdleSync();
+
+        // Click on password field again
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        // Waits a while
+        mUiBot.waitForIdleSync();
+
+        // Verify IME is shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isTrue();
+    }
+
+    @Test
+    public void testTextView_clickTwiceWithShowFillDialog_showIme() throws Exception {
+        // Enable feature and test service
+        enableFillDialogFeature(sContext);
+        enableService();
+
+        // Set response with a dataset > fill dialog should have two buttons
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("Dropdown Presentation"))
+                        .setDialogPresentation(createPresentation("Dialog Presentation"))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertFillDialogDatasets("Dialog Presentation");
+
+        // Click on password field again
+        mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Verify IME is shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isTrue();
+    }
 
     @Test
     public void testShowFillDialog() throws Exception {
@@ -68,6 +130,9 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         // Click on password field to trigger fill dialog
         mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
         mUiBot.waitForIdleSync();
+
+        // Verify IME is not shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
 
         // Verify the content of fill dialog, and then select dataset in fill dialog
         mUiBot.assertFillDialogHeader("Dialog Header");
@@ -117,6 +182,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
         mUiBot.waitForIdleSync();
 
+        // Verify IME is not shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
         // Verify the content of fill dialog
         mUiBot.assertFillDialogHeader("Dialog Header");
         mUiBot.assertFillDialogRejectButton();
@@ -160,12 +227,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.waitForIdleSync();
 
         mUiBot.assertFillDialogDatasets("Dialog presentation");
+        // Verify IME is not shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
 
         // Click on username field, and verify dropdown UI is shown
         mUiBot.selectByRelativeIdFromUiDevice(ID_USERNAME);
         mUiBot.waitForIdleSync();
 
         mUiBot.assertDatasets("Dropdown Presentation");
+        // Verify IME is shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isTrue();
 
         // Verify dropdown UI works
         activity.expectAutoFill("dude", "sweet");
@@ -204,11 +275,16 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.waitForIdleSync();
 
         mUiBot.assertDatasets("Dropdown Presentation");
+        // Verify IME is shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isTrue();
 
         // Click on password field and verify dropdown is still shown
         // can't use mUiBot.selectByRelativeId(ID_PASSWORD), because will click on dropdown UI
         activity.onPassword(View::requestFocus);
         mUiBot.waitForIdleSync();
+
+        // Verify IME is shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isTrue();
 
         // Verify dropdown UI actually works in this case.
         activity.expectAutoFill("dude", "sweet");
@@ -250,7 +326,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
         mUiBot.selectByRelativeIdFromUiDevice(ID_PASSWORD);
         mUiBot.waitForIdleSync();
         activity.expectAutoFill("dude", "sweet");
-
         mUiBot.selectFillDialogDataset("Dialog Presentation");
 
         activity.assertAutoFilled();
