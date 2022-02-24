@@ -16,11 +16,13 @@
 package com.android.cts.graphics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
@@ -38,6 +40,8 @@ public class GpuWorkDumpsysTest extends BaseHostJUnit4Test {
   private static final String DUMPSYS_COMMAND = "dumpsys gpu --gpuwork";
   private static final String TEST_PKG = "com.android.cts.framestatstestapp";
   private static final int PAUSE_MILLIS = 3000;
+  private static final String GPU_WORK_PERIOD_TRACEPOINT_FORMAT_PATH =
+      "/sys/kernel/tracing/events/power/gpu_work_period/format";
 
   private CommandResult assertShellCommand(String command) throws DeviceNotAvailableException {
     CommandResult commandResult = getDevice().executeShellV2Command(command);
@@ -68,16 +72,21 @@ public class GpuWorkDumpsysTest extends BaseHostJUnit4Test {
     return appUid;
   }
 
+  @CddTest(requirement = "6.1/C-6-1")
   @Test
   public void testOutputFormat() throws Exception {
-    // Execute dumpsys command.
-    CommandResult commandResult = assertShellCommand(DUMPSYS_COMMAND);
+    CommandResult commandResult =
+        getDevice()
+            .executeShellV2Command(String.format("cat %s", GPU_WORK_PERIOD_TRACEPOINT_FORMAT_PATH));
 
-    // If the dumpsys command output indicates that the GPU information is not available then the
-    // test ends here.
-    assumeFalse(
-        "GPU time in state information was not available.",
-        commandResult.getStdout().contains("GPU time in state information is not available"));
+    // If we fail to cat the tracepoint format then the test ends here. If the tracing file system
+    // is inaccessible, then this test won't fail. We rely on VTS tests to ensure that the tracing
+    // file system is accessible.
+    assumeTrue(
+        String.format(
+            "Failed to cat the gpu_work_period tracepoint format at %s",
+            GPU_WORK_PERIOD_TRACEPOINT_FORMAT_PATH),
+        commandResult.getStatus().equals(CommandStatus.SUCCESS));
 
     // Turn screen on.
     assertShellCommand("input keyevent KEYCODE_WAKEUP");
@@ -94,30 +103,43 @@ public class GpuWorkDumpsysTest extends BaseHostJUnit4Test {
     // Get the UID of the test app.
     long appUid = getTestAppUid();
 
-    // Execute dumpsys command again.
+    // Execute dumpsys command.
     commandResult = assertShellCommand(DUMPSYS_COMMAND);
 
-    LogUtil.CLog.i("dumpsys output:\n%s", commandResult.getStdout());
+    assertFalse(
+        String.format(
+            "The command shows errors.\nCommand: %s\nOutput:\n%s\n",
+            DUMPSYS_COMMAND, commandResult.getStdout()),
+        commandResult.getStdout().contains("[errors:"));
 
     String[] lines = commandResult.getStdout().trim().split("\n");
     int i = 0;
     for (; i < lines.length; ++i) {
-      if (lines[i].startsWith("uid/freq: 0MHz")) {
+      if (lines[i].startsWith("gpu_id uid")) {
         break;
       }
     }
-    assertTrue("Could not find uid/freq header in output", i < lines.length);
+    assertTrue(
+        String.format(
+            "Could not find \"gpu_id uid ...\" header in output:\n%s\n", commandResult.getStdout()),
+        i < lines.length);
 
-    Pattern uidInfoPattern = Pattern.compile(String.format("(%d): \\d+", appUid));
+    Pattern uidInfoPattern = Pattern.compile(String.format("\\d+ (%d) (\\d+) (\\d+)", appUid));
     for (; i < lines.length; ++i) {
       Matcher matcher = uidInfoPattern.matcher(lines[i]);
       if (!matcher.lookingAt()) {
         continue;
       }
-      if (appUid == Long.parseLong(matcher.group(1))) {
-        break;
+      if (appUid == Long.parseLong(matcher.group(1))
+          && Long.parseLong(matcher.group(2)) > 0
+          && Long.parseLong(matcher.group(3)) > 0) {
+        // Success!
+        return;
       }
     }
-    assertTrue(String.format("Could not find UID %d in output", appUid), i < lines.length);
+    fail(
+        String.format(
+            "Could not find UID %d with non-zero active and inactive GPU time in output:\n%s\n",
+            appUid, commandResult.getStdout()));
   }
 }
