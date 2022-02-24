@@ -1380,11 +1380,12 @@ public class TelephonyManagerTest {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
-        assertServiceStateSanitization(mServiceState, mTelephonyManager.getServiceState(true,
-                true));
+        assertServiceStateSanitization(mServiceState, mTelephonyManager.getServiceState(
+                TelephonyManager.INCLUDE_LOCATION_DATA_NONE));
         assertServiceStateFineLocationSanitization(mServiceState,
-                mTelephonyManager.getServiceState(true, false));
-        assertEquals(mServiceState, mTelephonyManager.getServiceState(false, true));
+                mTelephonyManager.getServiceState(TelephonyManager.INCLUDE_LOCATION_DATA_COARSE));
+        assertEquals(mServiceState, mTelephonyManager.getServiceState(
+                TelephonyManager.INCLUDE_LOCATION_DATA_FINE));
     }
 
     private void assertServiceStateSanitization(ServiceState expectedServiceState,
