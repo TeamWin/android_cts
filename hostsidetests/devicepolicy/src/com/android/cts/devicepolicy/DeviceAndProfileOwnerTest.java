@@ -1270,8 +1270,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     }
 
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
-            reason = "Will be migrated to new test infra")
     @Test
     public void testSetKeyPairCertificateLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
