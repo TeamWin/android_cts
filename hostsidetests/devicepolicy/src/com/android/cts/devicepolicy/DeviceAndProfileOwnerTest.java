@@ -474,10 +474,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnPackageLogged() throws Exception {
+        int userId = getUserIdForAlwaysOnVpnTests();
         // Will be uninstalled in tearDown().
-        installAppAsUser(VPN_APP_APK, mUserId);
+        installAppAsUser(VPN_APP_APK, userId);
         assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn");
+            executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn",
+                    userId);
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_ALWAYS_ON_VPN_PACKAGE_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setStrings(VPN_APP_PKG)
@@ -555,6 +557,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testPermissionGrantPreMApp() throws Exception {
         installAppAsUser(SIMPLE_PRE_M_APP_APK, mUserId);
+
+        if (isHeadlessSystemUserMode()) {
+            installAppAsUser(SIMPLE_PRE_M_APP_APK, mDeviceOwnerUserId);
+        }
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState_preMApp");
     }
 
@@ -1724,7 +1730,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     protected void installAppPermissionAppAsUser()
             throws FileNotFoundException, DeviceNotAvailableException {
-        installAppAsUser(PERMISSIONS_APP_APK, false, mUserId);
+        installAppPermissionAppAsUser(mUserId);
+    }
+
+    protected final void installAppPermissionAppAsUser(int userId)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        installAppAsUser(PERMISSIONS_APP_APK, false, userId);
     }
 
     private void executeSuspendPackageTestMethod(String testName) throws Exception {
