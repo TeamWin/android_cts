@@ -315,7 +315,7 @@ public class BleClientService extends Service {
     private static final int SERVICE_CHANGED_FLAG_TRIGGER_ACTION = 0x01;
     private static final int SERVICE_CHANGED_FLAG_ON_SERVICE_CHANGED = 0x02;
     private static final int SERVICE_CHANGED_FLAG_ALL = 0x03;
-    private static final int SERVOCE_CHANGED_FLAG_IGNORE = 0xFF;
+    private static final int SERVICE_CHANGED_FLAG_IGNORE = 0xFF;
     private int mServiceChangedFlag;
 
     private enum ReliableWriteState {
@@ -631,15 +631,15 @@ public class BleClientService extends Service {
         synchronized (mServiceChangedLock) {
             mServiceChangedFlag |= flag;
             if (mServiceChangedFlag == SERVICE_CHANGED_FLAG_ALL) {
-                mServiceChangedFlag |= SERVOCE_CHANGED_FLAG_IGNORE;
+                mServiceChangedFlag |= SERVICE_CHANGED_FLAG_IGNORE;
                 shouldSend = true;
             }
         }
 
         if (shouldSend) {
+            // This is to send result to the connected GATT server.
             writeCharacteristic(getCharacteristic(CHARACTERISTIC_RESULT_UUID),
                 SERVICE_CHANGED_VALUE);
-            notifyServiceChanged();
         }
     }
 
@@ -1044,7 +1044,20 @@ public class BleClientService extends Service {
             }
 
             if (BLE_CLIENT_ACTION_TRIGGER_SERVICE_CHANGED.equals(mCurrentAction)) {
-                sendServiceChangedEventIfReady(SERVICE_CHANGED_FLAG_TRIGGER_ACTION);
+                if (SERVICE_CHANGED_VALUE.equals(value)) {
+                    if (status == BluetoothGatt.GATT_SUCCESS) {
+                        // Waits until the GATT server sends the response, we can then do notify.
+                        notifyServiceChanged();
+                    } else {
+                        notifyError("Failed to send result for service changed event");
+                    }
+                } else {
+                    // The reason not to check the status code is that we know there is a service
+                    // changed event coming later, sometimes the status code will be modified by
+                    // bt stack (133), but it's ok, as long as onServiceChanged is called, we then
+                    // know the request is successfully sent during this test session.
+                    sendServiceChangedEventIfReady(SERVICE_CHANGED_FLAG_TRIGGER_ACTION);
+                }
             } else if (BLE_CLIENT_ACTION_REQUEST_MTU_512.equals(mCurrentAction) ||
                     BLE_CLIENT_ACTION_REQUEST_MTU_23.equals(mCurrentAction)) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
