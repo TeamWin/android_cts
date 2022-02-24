@@ -17,7 +17,7 @@
 #ifndef MEDIACTSNATIVE_NATIVE_CODEC_TEST_BASE_H
 #define MEDIACTSNATIVE_NATIVE_CODEC_TEST_BASE_H
 
-#include <NdkMediaCodec.h>
+#include <media/NdkMediaCodec.h>
 #include <zlib.h>
 
 #include <cmath>
