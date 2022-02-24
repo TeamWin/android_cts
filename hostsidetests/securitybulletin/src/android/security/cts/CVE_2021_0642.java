@@ -19,9 +19,9 @@ package android.security.cts;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
 
+import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_0642 extends BaseHostJUnit4Test {
+public class CVE_2021_0642 extends StsExtraBusinessLogicHostTestBase {
     static final String TEST_APP = "CVE-2021-0642.apk";
     static final String TEST_PKG = "android.security.cts.cve_2021_0642";
     static final String TEST_CLASS = TEST_PKG + "." + "DeviceTest";
