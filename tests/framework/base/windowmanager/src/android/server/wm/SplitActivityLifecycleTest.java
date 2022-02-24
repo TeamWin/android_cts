@@ -498,7 +498,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public void testLaunchEmbeddedActivityWithShowWhenLocked() {
         assumeTrue(supportsLockScreen());
 
+        // Create lock screen session and set credentials (since some devices will not show a
+        // lockscreen without credentials set).
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
         // Initialize test environment by launching Activity A and B (with showWhenLocked)
         // side-by-side.
         initializeSplitActivities(false /* verifyEmbeddedTask */, true /* showWhenLocked */);
@@ -518,7 +521,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public void testLaunchEmbeddedActivitiesWithoutShowWhenLocked() {
         assumeTrue(supportsLockScreen());
 
+        // Create lock screen session and set credentials (since some devices will not show a
+        // lockscreen without credentials set).
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
         // Initialize test environment by launching Activity A and B side-by-side.
         initializeSplitActivities(false /* verifyEmbeddedTask */, false /* showWhenLocked */);
 
@@ -538,7 +544,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public void testLaunchEmbeddedActivitiesWithShowWhenLocked() {
         assumeTrue(supportsLockScreen());
 
+        // Create lock screen session and set credentials (since some devices will not show a
+        // lockscreen without credentials set).
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
         // Initialize test environment by launching Activity A and B side-by-side.
         mOwnerActivity.setShowWhenLocked(true);
         initializeSplitActivities(false /* verifyEmbeddedTask */, true /* showWhenLocked */);
