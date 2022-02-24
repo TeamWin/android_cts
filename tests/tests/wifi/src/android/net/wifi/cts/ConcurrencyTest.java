@@ -1045,6 +1045,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
                     WifiP2pManager.CONNECTION_REQUEST_ACCEPT, null);
         });
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
+                    WifiP2pManager.CONNECTION_REQUEST_ACCEPT, "12345678", null);
+        });
 
         resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {

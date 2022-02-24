@@ -15,9 +15,14 @@
  */
 package android.cloudsearch.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.PendingIntent;
 import android.app.cloudsearch.SearchResult;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 
@@ -41,12 +46,16 @@ public class SearchResultTest {
         final String title = "title";
         final String snippet = "Good Snippet";
         final float score = 10;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.android.com"));
+        PendingIntent pendingIntent = PendingIntent.getActivity(getContext(),
+                1, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Bundle extraInfos = new Bundle();
         extraInfos.putBoolean(SearchResult.EXTRAINFO_APP_CONTAINS_IAP_DISCLAIMER,
                 false);
         extraInfos.putString(SearchResult.EXTRAINFO_APP_DEVELOPER_NAME,
                 "best_app_developer");
+        extraInfos.putParcelable(SearchResult.EXTRAINFO_INSTALL_BUTTON_ACTION, pendingIntent);
 
         SearchResult result = new SearchResult.Builder(title, extraInfos)
                 .setSnippet(snippet).setTitle(title).setExtraInfos(extraInfos)
@@ -63,6 +72,9 @@ public class SearchResultTest {
         assertThat(rExtraInfos
                 .getString(SearchResult.EXTRAINFO_APP_DEVELOPER_NAME))
                 .isEqualTo("best_app_developer");
+        assertThat((PendingIntent) rExtraInfos
+                .getParcelable(SearchResult.EXTRAINFO_INSTALL_BUTTON_ACTION))
+                .isEqualTo(pendingIntent);
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
@@ -80,6 +92,9 @@ public class SearchResultTest {
         assertThat(rExtraInfosCopy
                 .getString(SearchResult.EXTRAINFO_APP_DEVELOPER_NAME))
                 .isEqualTo("best_app_developer");
+        assertThat((PendingIntent) rExtraInfosCopy
+                .getParcelable(SearchResult.EXTRAINFO_INSTALL_BUTTON_ACTION))
+                .isEqualTo(pendingIntent);
 
         parcel.recycle();
     }

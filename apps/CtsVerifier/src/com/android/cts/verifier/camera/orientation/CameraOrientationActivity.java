@@ -57,6 +57,7 @@ implements OnClickListener, SurfaceHolder.Callback {
     private static final String STAGE_INDEX_EXTRA = "stageIndex";
     private static final int VGA_WIDTH = 640;
     private static final int VGA_HEIGHT = 480;
+    private static final double ASPECT_TOLERANCE = 0.1;
 
     private ImageButton mPassButton;
     private ImageButton mFailButton;
@@ -261,8 +262,16 @@ implements OnClickListener, SurfaceHolder.Callback {
                 + mOptimalPictureSize.width + "x" + mOptimalPictureSize.height);
         p.setPictureSize(mOptimalPictureSize.width, mOptimalPictureSize.height);
         mOptimalPreviewSize = getOptimalSize(mPreviewSizes, VGA_WIDTH, VGA_HEIGHT);
+
+        if (!aspectWithinTolerance((double) mOptimalPreviewSize.width / mOptimalPreviewSize.height,
+                (double) mOptimalPictureSize.width / mOptimalPictureSize.height)) {
+            Log.v(TAG, "Preview and picture aspect ratios do not match, overriding...");
+            mOptimalPreviewSize = getOptimalSize(mPreviewSizes, mOptimalPictureSize.width,
+                                                 mOptimalPictureSize.height);
+        }
+
         Log.v(TAG, "Initializing preview size to "
-                + mOptimalPreviewSize.width + "x" + mOptimalPreviewSize.height);
+                    + mOptimalPreviewSize.width + "x" + mOptimalPreviewSize.height);
         p.setPreviewSize(mOptimalPreviewSize.width, mOptimalPreviewSize.height);
 
         Log.v(TAG, "Setting camera parameters");
@@ -384,12 +393,15 @@ implements OnClickListener, SurfaceHolder.Callback {
         mFailButton.setEnabled(enable);
     }
 
+    private boolean aspectWithinTolerance(double ratio, double targetRatio) {
+        return Math.abs(ratio - targetRatio) <= ASPECT_TOLERANCE;
+    }
+
     // find a supported size with ratio less than tolerance threshold, and
     // which is closest to height and width of given dimensions without
     // being larger than either of given dimensions
     private Camera.Size getOptimalSize(List<Camera.Size> sizes, int w,
             int h) {
-        final double ASPECT_TOLERANCE = 0.1;
         double targetRatio = (double) w / (double) h;
         if (sizes == null) return null;
 
@@ -406,7 +418,7 @@ implements OnClickListener, SurfaceHolder.Callback {
             for (Camera.Size size : sizes) {
                 if(aspectRatio) {
                     double ratio = (double) size.width / size.height;
-                    if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) {
+                    if (!aspectWithinTolerance(ratio, targetRatio)) {
                         continue;
                     }
                 }

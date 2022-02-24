@@ -1620,6 +1620,7 @@ public class WindowManagerState {
         int procId = -1;
         public boolean translucent;
         private WindowContainer mParent;
+        private boolean mEnableRecentsScreenshot;
 
         Activity(ActivityRecordProto proto, WindowContainer parent) {
             super(proto.windowToken.windowContainer);
@@ -1634,6 +1635,7 @@ public class WindowManagerState {
                 procId = proto.procId;
             }
             translucent = proto.translucent;
+            mEnableRecentsScreenshot = proto.enableRecentsScreenshot;
             mParent = parent;
         }
 
@@ -1671,6 +1673,10 @@ public class WindowManagerState {
 
         public boolean providesMaxBounds() {
             return providesMaxBounds;
+        }
+
+        public boolean enableRecentsScreenshot() {
+            return mEnableRecentsScreenshot;
         }
 
         @Override

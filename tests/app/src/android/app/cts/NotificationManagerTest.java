@@ -3513,6 +3513,26 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 .getParcelable(Notification.EXTRA_MEDIA_REMOTE_INTENT));
     }
 
+    public void testNoPermission() throws Exception {
+        int id = 7;
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mContext.getSystemService(PermissionManager.class)
+                        .revokePostNotificationPermissionWithoutKillForTest(
+                                mContext.getPackageName(),
+                                android.os.Process.myUserHandle().getIdentifier()),
+                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                REVOKE_RUNTIME_PERMISSIONS);
+
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        StatusBarNotification sbn = findPostedNotification(id, false);
+        assertNull(sbn);
+    }
+
     private static class EventCallback extends Handler {
         private static final int BROADCAST_RECEIVED = 1;
         private static final int SERVICE_STARTED = 2;

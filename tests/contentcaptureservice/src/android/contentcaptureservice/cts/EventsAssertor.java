@@ -234,6 +234,20 @@ public class EventsAssertor {
     }
 
     /**
+     * Asserts the contents of a {@link ContentCaptureEvent#TYPE_VIEW_DISAPPEARED}
+     * event for many virtual nodes.
+     */
+    @NonNull
+    public EventsAssertor assertVirtualViewsDisappeared(AutofillId parentId,
+            ContentCaptureSession session, int... childId) {
+        final AutofillId[] ids = new AutofillId[childId.length];
+        for (int i = 0; i < childId.length; i++) {
+            ids[i] = session.newAutofillId(parentId, childId[i]);
+        }
+        return assertViewDisappeared(ids);
+    }
+
+    /**
      * Asserts the contents of a {@link ContentCaptureEvent#TYPE_VIEW_TEXT_CHANGED} event.
      */
     @NonNull
@@ -245,8 +259,9 @@ public class EventsAssertor {
         return this;
     }
 
-    private String assertTextChangedEvent(ContentCaptureEvent event, AutofillId expectedId,
-            String expectedText) {
+    @Nullable
+    private String assertTextChangedEvent(@NonNull ContentCaptureEvent event,
+            @NonNull AutofillId expectedId, @NonNull String expectedText) {
         assertWithMessage("Wrong id on %s", event).that(event.getId())
                 .isEqualTo(expectedId);
         assertWithMessage("Wrong text on %s", event).that(event.getText().toString())
@@ -259,9 +274,11 @@ public class EventsAssertor {
             @NonNull AutofillId expectedId, @Nullable String expectedText) {
         final ViewNode node = event.getViewNode();
         assertThat(node).isNotNull();
-        assertWithMessage("wrong autofill id on %s", event)
-                .that(node.getAutofillId()).isEqualTo(expectedId);
-        if (expectedText != null) {
+        if (!node.getAutofillId().equals(expectedId)) {
+            return String.format("wrong autofill id (expected %s, actual is %s) at %s",
+                    expectedId, node.getAutofillId(), event);
+        }
+        if (expectedText != null && node.getText() != null) {
             assertWithMessage("wrong text on %s", event)
                     .that(node.getText().toString()).isEqualTo(expectedText);
         } else {

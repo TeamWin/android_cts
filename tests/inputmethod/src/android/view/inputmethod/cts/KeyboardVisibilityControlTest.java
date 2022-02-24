@@ -25,11 +25,14 @@ import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VI
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
+import static android.view.inputmethod.InputMethodManager.CLEAR_SHOW_FORCED_FLAG_WHEN_LEAVING;
+import static android.view.inputmethod.InputMethodManager.SHOW_FORCED;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -43,10 +46,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.AlertDialog;
 import android.app.Instrumentation;
+import android.app.compat.CompatChanges;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.support.test.uiautomator.UiObject2;
@@ -98,6 +103,7 @@ import org.junit.runner.RunWith;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -322,6 +328,76 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
             expectImeVisible(TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testShowSoftInputWithShowForcedFlagWhenAppIsLeaving() throws Exception {
+        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().getSystemService(InputMethodManager.class);
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            // Launch a simple test activity
+            final TestActivity testActivity = TestActivity.startSync(activity -> {
+                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                return new LinearLayout(activity);
+            });
+            assertTrue("test activity should be in resume state",
+                    getOnMainSync(testActivity::hasWindowFocus));
+
+            // Launch a test editor activity
+            final String marker = getTestMarker();
+            final AtomicReference<EditText> ediTextRef = new AtomicReference<>();
+            final TestActivity testEditorActivity =
+                    TestActivity.startNewTaskSync(activity -> {
+                        final LinearLayout layout = new LinearLayout(activity);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+
+                        final EditText focusedEditText = new EditText(activity);
+                        focusedEditText.setHint("focused editText");
+                        focusedEditText.setPrivateImeOptions(marker);
+                        focusedEditText.requestFocus();
+                        layout.addView(focusedEditText);
+                        ediTextRef.set(focusedEditText);
+                        return layout;
+                    });
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), NOT_EXPECT_TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            assertTrue("isActive() must return true if the View has IME focus",
+                    getOnMainSync(() -> imm.isActive(ediTextRef.get())));
+
+            // Test showSoftInput() flow with adding SHOW_FORCED flag
+            assertTrue("showSoftInput must success if the View has IME focus",
+                    getOnMainSync(() -> imm.showSoftInput(ediTextRef.get(), SHOW_FORCED)));
+
+            expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Finish testEditorActivity
+            runOnMainSync(testEditorActivity::finish);
+
+            // Verify soft-keyboard will not visible when enabling the platform compat flag to
+            // clear SHOW_FOCED flag. Otherwise, keeping the legacy behavior of SHOW_FOCED that
+            // soft-keyboard remains visible if there is no explicit hiding request.
+            if (isClearShowForcedFlagEnabled(testActivity.getPackageName())) {
+                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                        NOT_EXPECT_TIMEOUT);
+                expectImeInvisible(TIMEOUT);
+            } else {
+                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+                expectImeVisible(TIMEOUT);
+            }
         }
     }
 
@@ -815,5 +891,19 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         // to ensure it.
         builder.setNavigationBarColor(navigationBarColor);
         return builder;
+    }
+
+    /**
+     * Whether enabling a compatibility flag to clear {@link InputMethodManager#SHOW_FORCED} flag
+     * for the given {@code packageName} of the app when it's leaving.
+     *
+     * @return {@code true} if the compatibility flag is enabled.
+     */
+    private static boolean isClearShowForcedFlagEnabled(String packageName) {
+        AtomicBoolean result = new AtomicBoolean();
+        runWithShellPermissionIdentity(() -> result.set(
+                CompatChanges.isChangeEnabled(CLEAR_SHOW_FORCED_FLAG_WHEN_LEAVING, packageName,
+                        UserHandle.CURRENT)));
+        return result.get();
     }
 }

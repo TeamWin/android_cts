@@ -2125,6 +2125,10 @@
         device was p2p device. Check the test case on the other device.</string>
     <string name="p2p_connection_error">
         Test failed.\n\nFailed to establish a p2p connection.</string>
+    <string name="p2p_connection_latency_error">
+        Test failed. \n\nConnection was expected to be established within %1$dms. But took=%2$dms.
+        \n\nPlease ensure that the Group Owner is ready on the other device before running
+        this test</string>
     <string name="p2p_detect_disconnection_error">
         Test failed.\n\nFailed to detect client disconnection.</string>
     <string name="p2p_disconnect_error">
@@ -2446,6 +2450,16 @@
         icon, large icon, notification title, notification text, and two action buttons.
         If this device does not support heads-up notifications, press Pass.</string>
     <string name="action">Action %1$d</string>
+    <string name="media_controls_title">Media Controls Test</string>
+    <string name="media_controls_info">This test checks that media controls appear in the shade for
+        applications that post a media style notification.</string>
+    <string name="media_controls_visible">Pull down the notification shade and check that the media
+        controls from the CTS Verifier app are visible.
+    </string>
+    <string name="media_controls_output_switcher_chip">Pull down the notification shade and look at
+        the media controls for the CTS Verifier app.
+        Check that it contains an affordance to switch between available media routes.
+    </string>
     <string name="tile_service_name">Tile Service for CTS Verifier</string>
     <string name="tiles_test">Tile Service Test</string>
     <string name="tiles_info">This test checks that a Tile Service added by a third party

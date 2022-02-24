@@ -202,6 +202,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
     }
 
     @Test
+    @Ignore
     fun testCameraTimelineWithMultipleApps() {
         openMicrophoneApp(INTENT_ACTION_1)
         waitFindObject(By.textContains(APP_LABEL_1))

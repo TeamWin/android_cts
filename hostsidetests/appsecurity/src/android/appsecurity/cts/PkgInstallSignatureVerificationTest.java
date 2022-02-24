@@ -20,6 +20,7 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -707,6 +708,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "verifySignatures_withRotation_succeeds");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testInstallV31UpdateAfterRotation() throws Exception {
         // This test is the same as above, but using the v3.1 signature scheme for rotation.
         assertInstallFromBuildSucceeds("CtsSignatureQueryService.apk");
@@ -724,6 +726,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "verifySignatures_withRotation_succeeds");
     }
 
+    @CddTest(requirement="4/C-0-9")
     public void testInstallV41UpdateAfterRotation() throws Exception {
         // V4 is only enabled on devices with Incremental feature
         if (!hasIncrementalFeature()) {
@@ -746,6 +749,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "verifySignatures_withRotation_succeeds");
     }
 
+    @CddTest(requirement="4/C-0-9")
     public void testInstallV41WrongBlockId() throws Exception {
         // V4 is only enabled on devices with Incremental feature
         if (!hasIncrementalFeature()) {
@@ -762,6 +766,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "Failed to find V4 signature block corresponding to V3 blockId: 462663009");
     }
 
+    @CddTest(requirement="4/C-0-9")
     public void testInstallV41LegacyV4() throws Exception {
         // V4 is only enabled on devices with Incremental feature
         if (!hasIncrementalFeature()) {
@@ -778,6 +783,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "Failed to find V4 signature block corresponding to V3 blockId: 462663009");
     }
 
+    @CddTest(requirement="4/C-0-9")
     public void testInstallV41WrongDigest() throws Exception {
         // V4 is only enabled on devices with Incremental feature
         if (!hasIncrementalFeature()) {
@@ -1077,6 +1083,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31TargetTPlatformUsesRotatedKey() throws Exception {
         // The v3.1 signature block is intended to allow applications to target T+ for APK signing
         // key rotation without needing multi-targeting APKs. This test verifies a standard APK
@@ -1088,6 +1095,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "testUsingRotatedSigner");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31TargetLaterThanDevicePlatformUsesOriginalKey() throws Exception {
         // The v3.1 signature block allows targeting SDK versions later than T for rotation; for
         // this test a target of 100001 is used assuming it will be beyond the platform's version.
@@ -1099,6 +1107,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "testUsingOriginalSigner");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31BlockStrippedWithV3StrippingProtectionAttrSet() throws Exception {
         // With the introduction of the v3.1 signature scheme, a new stripping protection attribute
         // has been added to the v3.0 signer to protect against stripping and modification of the
@@ -1107,6 +1116,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFails("v31-block-stripped-v3-attr-value-33.apk");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31BlockWithMultipleSignersUsesCorrectSigner() throws Exception {
         // All of the APKs for this test use multiple v3.1 signers; those targeting SDK versions
         // expected to be outside the version of a device under test use the original signer, and
@@ -1140,6 +1150,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "testUsingRotatedSigner");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31UpdateV3ToFromV31Succeeds() throws Exception {
         // Since the v3.1 block is just intended to allow targeting SDK versions T and later for
         // rotation, an APK signed with the rotated key in a v3.0 signing block should support
@@ -1155,6 +1166,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         uninstallPackage();
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31RotationTargetModifiedReportedByV3() throws Exception {
         // When determining if a signer in the v3.1 signing block should be applied, the min / max
         // SDK versions from the signer are compared against the device's SDK version; if the device
@@ -1166,6 +1178,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFails("v31-ec-p256_2-tgt-33-modified.apk");
     }
 
+    @CddTest(requirement="4/C-0-2")
     public void testV31RotationTargetsDevRelease() throws Exception {
         // The v3.1 signature scheme allows targeting a platform release under development through
         // the use of a rotation-targets-dev-release additional attribute. Since a platform under

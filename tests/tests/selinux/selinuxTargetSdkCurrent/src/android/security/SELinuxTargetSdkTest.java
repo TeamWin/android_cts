@@ -45,6 +45,10 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
         checkNetlinkRouteGetneigh(false);
     }
 
+    public void testNoHardwareAddress() throws Exception {
+        checkNetworkInterfaceHardwareAddress_returnsNull();
+    }
+
     public void testCanNotExecuteFromHomeDir() throws Exception {
         assertFalse(canExecuteFromHomeDir());
     }

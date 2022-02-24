@@ -34,6 +34,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -188,6 +190,7 @@ public class StatusBarManagerTest {
      *
      * @throws Exception
      */
+    @CddTest(requirement = "7.2.3/C-9-1")
     @Test
     public void testSetNavBarModeOverride_kids_doesNotThrow() throws Exception {
         int navBarModeOverrideKids = StatusBarManager.NAV_BAR_MODE_OVERRIDE_KIDS;

@@ -20,9 +20,9 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 import android.Manifest;
-import android.app.ActivityManager;
 import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.net.Uri;
@@ -38,14 +38,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedOutputStream;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class WallpaperManagerTest {
     private static final String TAG = "WallpaperManagerSTS";
+    private static final long PNG_SIZE = 7503368920L;
 
     private Context mContext;
     private WallpaperManager mWallpaperManager;
@@ -63,6 +66,7 @@ public class WallpaperManagerTest {
 
     @After
     public void tearDown() throws Exception {
+        mWallpaperManager.clear(WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
@@ -109,48 +113,56 @@ public class WallpaperManagerTest {
     }
 
     @RequiresDevice
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @AsbSecurityTest(cveBugId = 204087139)
     public void testSetMaliciousStream() {
-        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
-        mContext.getSystemService(ActivityManager.class).getMemoryInfo(memoryInfo);
-        final long exploitSize = (long) (memoryInfo.totalMem * 0.95);
-        final File maliciousImageFile = generateMaliciousImageFile(exploitSize, memoryInfo);
-        if (maliciousImageFile == null) {
-            throw new IllegalStateException(
-                    "failed generating malicious image file, size=" + exploitSize);
-        }
+        unZipMaliciousImageFile();
+        final File testImage = unZipMaliciousImageFile();
+        Assert.assertTrue(testImage.exists());
         try (InputStream s = mContext.getContentResolver()
-                .openInputStream(Uri.fromFile(maliciousImageFile))) {
-            mWallpaperManager.setStream(
-                    s, null, true, WallpaperManager.FLAG_LOCK | WallpaperManager.FLAG_SYSTEM);
-            throw new IllegalStateException(
-                    "setStream with size " + exploitSize + " shouldn't succeed!");
+                .openInputStream(Uri.fromFile(testImage))) {
+            final int oldWallpaperId = mWallpaperManager.getWallpaperId(
+                    WallpaperManager.FLAG_SYSTEM);
+            final int newWallpaperId = mWallpaperManager.setStream(
+                    s, null, true,
+                    WallpaperManager.FLAG_SYSTEM | WallpaperManager.FLAG_LOCK);
+            Assert.assertNotEquals(oldWallpaperId, newWallpaperId);
         } catch (IOException ex) {
         } finally {
-            if (maliciousImageFile.exists()) {
-                maliciousImageFile.delete();
+            if (testImage.exists()) {
+                testImage.delete();
             }
         }
     }
 
-    private File generateMaliciousImageFile(long exploitSize, ActivityManager.MemoryInfo memInfo) {
-        File maliciousFile = new File(mContext.getExternalFilesDir(null) + "/exploit.png");
-        try (BufferedOutputStream bos = new BufferedOutputStream(
-                new FileOutputStream(maliciousFile), (int) (exploitSize * 0.01))) {
-            if (!maliciousFile.exists()) {
-                maliciousFile.createNewFile();
+    private File unZipMaliciousImageFile() {
+        File png = new File(mContext.getExternalFilesDir(null) + "/exploit.png");
+        if (!png.exists() || png.length() < PNG_SIZE) {
+            AssetManager am = mContext.getAssets();
+            try {
+                InputStream is = am.open("exploit.zip");
+                try (ZipInputStream zis = new ZipInputStream(
+                        new BufferedInputStream(is))) {
+                    ZipEntry ze;
+                    int count;
+                    byte[] buffer = new byte[8192];
+                    while ((ze = zis.getNextEntry()) != null) {
+                        File file = new File(mContext.getExternalFilesDir(
+                                null), ze.getName());
+                        if (ze.isDirectory()) {
+                            continue;
+                        }
+                        try (FileOutputStream fout = new FileOutputStream(file)) {
+                            while ((count = zis.read(buffer)) != -1) {
+                                fout.write(buffer, 0, count);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "UnZip error:", e);
             }
-            Log.v(TAG, "start generating: ram=" + memInfo.totalMem + ", exploit=" + exploitSize);
-            for (long i = 0; i < exploitSize; i++) {
-                bos.write(0xFF);
-            }
-            Log.v(TAG, "Generate successfully!");
-            return maliciousFile;
-        } catch (Exception ex) {
-            Log.w(TAG, "failed at generating malicious image file, ram="
-                    + memInfo.totalMem + ", exploit=" + exploitSize, ex);
-            return null;
         }
+        return png;
     }
 }
