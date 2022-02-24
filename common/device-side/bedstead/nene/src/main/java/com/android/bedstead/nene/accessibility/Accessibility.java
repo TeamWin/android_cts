@@ -22,6 +22,7 @@ import android.view.accessibility.AccessibilityManager;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.logging.Logger;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,8 +36,10 @@ public final class Accessibility {
     private static final AccessibilityManager sAccessibilityManager =
             TestApis.context().instrumentedContext().getSystemService(AccessibilityManager.class);
 
-    private Accessibility() {
+    private final Logger mLogger = Logger.forInstance(this);
 
+    private Accessibility() {
+        mLogger.constructor();
     }
 
     /**
@@ -45,10 +48,11 @@ public final class Accessibility {
      * <p>See {@link AccessibilityManager#getInstalledAccessibilityServiceList()}.
      */
     public Set<AccessibilityService> installedAccessibilityServices() {
-        return sAccessibilityManager
-                .getInstalledAccessibilityServiceList().stream()
-                .map(AccessibilityService::new)
-                .collect(Collectors.toSet());
+        return mLogger.method("installedAccessibilityServices", () ->
+                sAccessibilityManager
+                        .getInstalledAccessibilityServiceList().stream()
+                        .map(AccessibilityService::new)
+                        .collect(Collectors.toSet()));
     }
 
     /**
@@ -57,9 +61,10 @@ public final class Accessibility {
      * <p>See {@link AccessibilityManager#getEnabledAccessibilityServiceList(int)}.
      */
     public Set<AccessibilityService> enabledAccessibilityServices() {
-        return sAccessibilityManager
-                .getEnabledAccessibilityServiceList(FEEDBACK_ALL_MASK)
-                .stream().map(AccessibilityService::new)
-                .collect(Collectors.toSet());
+        return mLogger.method("enabledAccessibilityServices", () ->
+                sAccessibilityManager
+                        .getEnabledAccessibilityServiceList(FEEDBACK_ALL_MASK)
+                        .stream().map(AccessibilityService::new)
+                        .collect(Collectors.toSet()));
     }
 }

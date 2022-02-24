@@ -19,6 +19,7 @@ package com.android.bedstead.nene.accessibility;
 import android.accessibilityservice.AccessibilityServiceInfo;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.logging.Logger;
 import com.android.bedstead.nene.packages.Package;
 
 /**
@@ -26,14 +27,18 @@ import com.android.bedstead.nene.packages.Package;
  */
 public final class AccessibilityService {
 
-    private final AccessibilityServiceInfo mServiceInfo;
+    private AccessibilityServiceInfo mServiceInfo;
+    private final Logger mLogger = Logger.forInstance(this);
 
     AccessibilityService(AccessibilityServiceInfo serviceInfo) {
-        mServiceInfo = serviceInfo;
+        mLogger.constructor(serviceInfo, () -> {
+            mServiceInfo = serviceInfo;
+        });
     }
 
     /** The package of the accessibility service. */
     public Package pkg() {
-        return TestApis.packages().find(mServiceInfo.getResolveInfo().serviceInfo.packageName);
+        return mLogger.method("pkg", () ->
+                TestApis.packages().find(mServiceInfo.getResolveInfo().serviceInfo.packageName));
     }
 }

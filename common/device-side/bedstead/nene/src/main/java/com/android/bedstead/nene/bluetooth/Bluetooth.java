@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.logging.Logger;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -46,86 +47,98 @@ public final class Bluetooth {
             sContext.getSystemService(BluetoothManager.class);
     private static final BluetoothAdapter sBluetoothAdapter = sBluetoothManager.getAdapter();
 
-    private Bluetooth() {
+    private final Logger mLogger = Logger.forInstance(this);
 
+    private Bluetooth() {
+        mLogger.constructor();
     }
 
     /** Enable or disable bluetooth on the device. */
     public void setEnabled(boolean enabled) {
-        if (isEnabled() == enabled) {
-            return;
-        }
+        mLogger.method("setEnabled", enabled, () -> {
+            if (isEnabled() == enabled) {
+                return;
+            }
 
-        if (enabled) {
-            enable();
-        } else {
-            disable();
-        }
+            if (enabled) {
+                enable();
+            } else {
+                disable();
+            }
+        });
     }
 
     private void enable() {
-        try (PermissionContext p =
-                     TestApis.permissions()
-                             .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL)
-                             .withPermissionOnVersionAtLeast(T, NETWORK_SETTINGS)) {
-            BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
-                    sContext,
-                    BluetoothAdapter.ACTION_STATE_CHANGED,
-                    this::isStateEnabled).register();
+        mLogger.method("enable", () -> {
+            try (PermissionContext p =
+                         TestApis.permissions()
+                                 .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL)
+                                 .withPermissionOnVersionAtLeast(T, NETWORK_SETTINGS)) {
+                BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
+                        sContext,
+                        BluetoothAdapter.ACTION_STATE_CHANGED,
+                        this::isStateEnabled).register();
 
-            try {
-                assertThat(sBluetoothAdapter.enable()).isTrue();
+                try {
+                    assertThat(sBluetoothAdapter.enable()).isTrue();
 
-                r.awaitForBroadcast();
-                Poll.forValue("Bluetooth Enabled", this::isEnabled)
-                        .toBeEqualTo(true)
-                        .errorOnFail()
-                        .await();
-            } finally {
-                r.unregisterQuietly();
+                    r.awaitForBroadcast();
+                    Poll.forValue("Bluetooth Enabled", this::isEnabled)
+                            .toBeEqualTo(true)
+                            .errorOnFail()
+                            .await();
+                } finally {
+                    r.unregisterQuietly();
+                }
             }
-        }
+        });
     }
 
     private void disable() {
-        try (PermissionContext p =
-                     TestApis.permissions()
-                             .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL)
-                             .withPermissionOnVersionAtLeast(T, NETWORK_SETTINGS)) {
-            BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
-                    sContext,
-                    BluetoothAdapter.ACTION_STATE_CHANGED,
-                    this::isStateDisabled).register();
+        mLogger.method("disable", () -> {
+            try (PermissionContext p =
+                         TestApis.permissions()
+                                 .withPermission(BLUETOOTH_CONNECT, INTERACT_ACROSS_USERS_FULL)
+                                 .withPermissionOnVersionAtLeast(T, NETWORK_SETTINGS)) {
+                BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
+                        sContext,
+                        BluetoothAdapter.ACTION_STATE_CHANGED,
+                        this::isStateDisabled).register();
 
-            try {
-                assertThat(sBluetoothAdapter.disable()).isTrue();
+                try {
+                    assertThat(sBluetoothAdapter.disable()).isTrue();
 
-                r.awaitForBroadcast();
-                Poll.forValue("Bluetooth Enabled", this::isEnabled)
-                        .toBeEqualTo(false)
-                        .errorOnFail()
-                        .await();
-            } finally {
-                r.unregisterQuietly();
+                    r.awaitForBroadcast();
+                    Poll.forValue("Bluetooth Enabled", this::isEnabled)
+                            .toBeEqualTo(false)
+                            .errorOnFail()
+                            .await();
+                } finally {
+                    r.unregisterQuietly();
+                }
             }
-        }
+        });
     }
 
     /** {@code true} if bluetooth is enabled. */
     public boolean isEnabled() {
-        try (PermissionContext p =
-                     TestApis.permissions().withPermissionOnVersionAtMost(R, BLUETOOTH)) {
-            return sBluetoothAdapter.isEnabled();
-        }
+        return mLogger.method("isEnabled", () -> {
+            try (PermissionContext p =
+                         TestApis.permissions().withPermissionOnVersionAtMost(R, BLUETOOTH)) {
+                return sBluetoothAdapter.isEnabled();
+            }
+        });
     }
 
     private boolean isStateEnabled(Intent intent) {
-        return intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)
-                == BluetoothAdapter.STATE_ON;
+        return mLogger.method("isStateEnabled", intent, () ->
+                intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)
+                        == BluetoothAdapter.STATE_ON);
     }
 
     private boolean isStateDisabled(Intent intent) {
-        return intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)
-                == BluetoothAdapter.STATE_OFF;
+        return mLogger.method("isStateDisabled", intent, () ->
+                intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)
+                        == BluetoothAdapter.STATE_OFF);
     }
 }
