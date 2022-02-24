@@ -199,13 +199,19 @@ public class DisplayCutoutTests {
     public void testBuilder() {
         final Insets safeInsets = Insets.of(1, 2, 1, 0);
         final Insets waterfallInsets = Insets.of(1, 0, 1, 0);
-        final Rect boundingRectTop = new Rect(10, 0, 20, 2);
+        final Rect boundingLeft = new Rect(5, 6, 7, 8);
+        final Rect boundingRectTop = new Rect(9, 0, 10, 1);
+        final Rect boundingRight = new Rect(2, 3, 4, 5);
+        final Rect boundingBottom = new Rect(6, 7, 8, 9);
         final Path cutoutPath = new Path();
 
         final DisplayCutout displayCutout = new DisplayCutout.Builder()
                 .setSafeInsets(safeInsets)
                 .setWaterfallInsets(waterfallInsets)
+                .setBoundingRectLeft(boundingLeft)
                 .setBoundingRectTop(boundingRectTop)
+                .setBoundingRectRight(boundingRight)
+                .setBoundingRectBottom(boundingBottom)
                 .setCutoutPath(cutoutPath)
                 .build();
 
@@ -214,7 +220,10 @@ public class DisplayCutoutTests {
         assertEquals(safeInsets.right, displayCutout.getSafeInsetRight());
         assertEquals(safeInsets.bottom, displayCutout.getSafeInsetBottom());
         assertEquals(waterfallInsets, displayCutout.getWaterfallInsets());
+        assertEquals(boundingLeft, displayCutout.getBoundingRectLeft());
         assertEquals(boundingRectTop, displayCutout.getBoundingRectTop());
+        assertEquals(boundingRight, displayCutout.getBoundingRectRight());
+        assertEquals(boundingBottom, displayCutout.getBoundingRectBottom());
         assertEquals(cutoutPath, displayCutout.getCutoutPath());
     }
 
