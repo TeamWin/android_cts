@@ -19,13 +19,13 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothLeBroadcastMetadata;
+import android.bluetooth.BluetoothLeAudioContentMetadata;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
@@ -43,12 +43,19 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class BluetoothLeBroadcastMetadataTest {
-    private static final String TEST_MAC_ADDRESS = "00:11:22:33:44:55";
-    private static final int TEST_BROADCAST_ID = 42;
-    private static final int TEST_ADVERTISER_SID = 1234;
-    private static final int TEST_PA_SYNC_INTERVAL = 100;
-    private static final int TEST_PRESENTATION_DELAY_MS = 345;
+public class BluetoothLeAudioContentMetadataTest {
+    // "Test" in UTF-8 is "54 65 73 74"
+    private static final String TEST_PROGRAM_INFO = "Test";
+    // German language code in ISO 639-3
+    // In byte it is ASCII, 0x64, 0x65, 0x75
+    private static final String TEST_LANGUAGE = "deu";
+    // See Page 6 of Generic Audio assigned number specification
+    private static final byte[] TEST_METADATA_BYTES = {
+            // length is 0x05, type is 0x03, data is "Test" in UTF-8 "54 65 73 74" hex
+            0x05, 0x03, 0x54, 0x65, 0x73, 0x74,
+            // length is 0x04, type is 0x04, data is "deu" in ASCII "64 65 75" hex
+            0x04, 0x04, 0x64, 0x65, 0x75
+    };
 
     private Context mContext;
     private boolean mHasBluetooth;
@@ -101,28 +108,32 @@ public class BluetoothLeBroadcastMetadataTest {
     }
 
     @Test
-    public void testCreateMetadataFromBuilder() {
+    public void testCreateCodecConfigMetadataFromBuilder() {
         if (shouldSkipTest()) {
             return;
         }
-        BluetoothDevice testDevice =
-                mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
-        BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder();
-        BluetoothLeBroadcastMetadata metadata =
-                builder.setEncrypted(false)
-                        .setSourceDevice(testDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
-                        .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
-                        .setBroadcastId(TEST_BROADCAST_ID)
-                        .setBroadcastCode(null)
-                        .setPaSyncInterval(TEST_PA_SYNC_INTERVAL)
-                        .setPresentationDelayMicros(TEST_PRESENTATION_DELAY_MS)
-                        .build();
-        assertEquals(testDevice, metadata.getSourceDevice());
-        assertEquals(BluetoothDevice.ADDRESS_TYPE_RANDOM, metadata.getSourceAddressType());
-        assertEquals(TEST_BROADCAST_ID, metadata.getBroadcastId());
-        assertNull(metadata.getBroadcastCode());
-        assertEquals(TEST_PA_SYNC_INTERVAL, metadata.getPaSyncInterval());
-        assertEquals(TEST_PRESENTATION_DELAY_MS, metadata.getPresentationDelayMicros());
+        BluetoothLeAudioContentMetadata contentMetadata =
+                new BluetoothLeAudioContentMetadata.Builder()
+                        .setProgramInfo(TEST_PROGRAM_INFO).setLanguage(TEST_LANGUAGE).build();
+        assertEquals(TEST_PROGRAM_INFO, contentMetadata.getProgramInfo());
+        assertEquals(TEST_LANGUAGE, contentMetadata.getLanguage());
+        // TODO: Implement implicit LTV byte conversion in the API class
+        // assertArrayEquals(TEST_METADATA_BYTES, contentMetadata.getRawMetadata());
+    }
+
+    @Test
+    public void testCreateCodecConfigMetadataFromBytes() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        BluetoothLeAudioContentMetadata contentMetadata =
+                BluetoothLeAudioContentMetadata.fromRawBytes(TEST_METADATA_BYTES);
+        byte[] metadataBytes = contentMetadata.getRawMetadata();
+        assertNotNull(metadataBytes);
+        assertArrayEquals(TEST_METADATA_BYTES, metadataBytes);
+        // TODO: Implement implicit LTV byte conversion in the API class
+        // assertEquals(TEST_PROGRAM_INFO, contentMetadata.getProgramInfo());
+        // assertEquals(TEST_LANGUAGE, contentMetadata.getLanguage());
     }
 
     private boolean shouldSkipTest() {
