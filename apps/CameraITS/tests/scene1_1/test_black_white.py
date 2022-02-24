@@ -151,7 +151,7 @@ class BlackWhiteTest(its_base_test.ItsBaseTest):
 
       # Assert channels saturate evenly (was test_channel_saturation)
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
-      if first_api_level >= _ANDROID10_API_LEVEL:
+      if first_api_level > _ANDROID10_API_LEVEL:
         if not math.isclose(
             np.amin(white_means), np.amax(white_means), abs_tol=CH_TOL_WHITE):
           raise AssertionError('channel saturation not equal! '

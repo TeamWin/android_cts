@@ -16,22 +16,22 @@
 
 package android.server.wm;
 
-import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
-import static android.server.wm.UiDeviceUtils.pressUnlockButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.WindowManagerTestBase.startActivity;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Activity;
-import android.app.KeyguardManager;
 import android.app.UiAutomation;
+import android.content.ComponentName;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.PowerManager;
+import android.view.SurfaceControl;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -42,26 +42,22 @@ import android.view.cts.surfacevalidator.PixelColor;
 import android.window.SplashScreen;
 
 import androidx.annotation.Nullable;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /* Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:SnapshotTaskTests
  */
-public class SnapshotTaskTests {
-
-    @Rule
-    public ActivityScenarioRule<TestActivity> mActivityRule =
-            createFullscreenActivityScenarioRule(TestActivity.class);
+public class SnapshotTaskTests extends ActivityManagerTestBase {
+    private static final String TAG = "SnapshotTaskTests";
+    private static final ComponentName TEST_ACTIVITY = new ComponentName(
+            getInstrumentation().getContext(), TestActivity.class);
 
     private TestActivity mActivity;
     private WindowManager mWindowManager;
@@ -70,18 +66,13 @@ public class SnapshotTaskTests {
     private static final int MATCHING_PIXEL_MISMATCH_ALLOWED = 100;
 
     @Before
-    public void setup() throws InterruptedException {
-        mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
+    public void setup() throws Exception {
+        super.setUp();
+        mActivity = startActivity(TestActivity.class);
+
         mWindowManager = mActivity.getSystemService(WindowManager.class);
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity();
-
-        final KeyguardManager km = mActivity.getSystemService(KeyguardManager.class);
-        if (km != null && km.isKeyguardLocked() || !Objects.requireNonNull(
-                mActivity.getSystemService(PowerManager.class)).isInteractive()) {
-            pressWakeupButton();
-            pressUnlockButton();
-        }
 
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         mActivity.waitUntilReady();
@@ -93,30 +84,58 @@ public class SnapshotTaskTests {
     }
 
     @Test
-    public void testSetDisablePreviewScreenshots() {
+    public void testSetDisablePreviewScreenshots() throws Exception {
         BitmapPixelChecker pixelChecker = new BitmapPixelChecker(PixelColor.RED);
+
+        int retries = 0;
+        boolean matchesPixels = false;
+        while (retries < 5) {
+            Bitmap bitmap = mWindowManager.snapshotTaskForRecents(mActivity.getTaskId());
+            if (bitmap != null) {
+                int expectedMatching =
+                        bitmap.getWidth() * bitmap.getHeight() - MATCHING_PIXEL_MISMATCH_ALLOWED;
+                Rect boundToCheck = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+                int matchingPixels = pixelChecker.getNumMatchingPixels(bitmap, boundToCheck);
+                matchesPixels = matchingPixels >= expectedMatching;
+            }
+            if (matchesPixels) {
+                break;
+            }
+            retries++;
+            Thread.sleep(1000);
+        }
+
+        assertTrue(matchesPixels);
+
+        mActivity.setRecentsScreenshotEnabled(false);
+
+        retries = 0;
+        WindowManagerState.Activity activityContainer = null;
+        boolean enableScreenshot = true;
+        while (retries < 3) {
+            mWmState.computeState();
+            activityContainer = mWmState.getActivity(TEST_ACTIVITY);
+            if (activityContainer != null) {
+                enableScreenshot = activityContainer.enableRecentsScreenshot();
+            }
+            if (enableScreenshot) {
+                break;
+            }
+            retries++;
+            Thread.sleep(500);
+        }
+        assertFalse("Recents screenshots should be disabled", enableScreenshot);
 
         Bitmap bitmap = mWindowManager.snapshotTaskForRecents(mActivity.getTaskId());
         assertNotNull(bitmap);
-        int expectedMatching =
-                bitmap.getWidth() * bitmap.getHeight() - MATCHING_PIXEL_MISMATCH_ALLOWED;
         Rect boundToCheck = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
         int matchingPixels = pixelChecker.getNumMatchingPixels(bitmap, boundToCheck);
-        assertTrue("Expected >=" + expectedMatching + " actual=" + matchingPixels,
-                matchingPixels >= expectedMatching);
-
-
-        mActivity.setRecentsScreenshotEnabled(false);
-        bitmap = mWindowManager.snapshotTaskForRecents(mActivity.getTaskId());
-        assertNotNull(bitmap);
-        boundToCheck.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        matchingPixels = pixelChecker.getNumMatchingPixels(bitmap, boundToCheck);
         assertTrue("Expected <=" + MATCHING_PIXEL_MISMATCH_ALLOWED + " matched " + matchingPixels,
                 matchingPixels <= MATCHING_PIXEL_MISMATCH_ALLOWED);
     }
 
-    public static class TestActivity extends Activity {
-        private final CountDownLatch mReadyToStart = new CountDownLatch(2);
+    public static class TestActivity extends WindowManagerTestBase.FocusableActivity {
+        private final CountDownLatch mReadyToStart = new CountDownLatch(3);
 
         @Override
         public void onEnterAnimationComplete() {
@@ -125,6 +144,16 @@ public class SnapshotTaskTests {
 
         public void waitUntilReady() throws InterruptedException {
             mReadyToStart.await(5, TimeUnit.SECONDS);
+        }
+
+        @Override
+        public void onAttachedToWindow() {
+            super.onAttachedToWindow();
+
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.addTransactionCommittedListener(getMainExecutor(),
+                    mReadyToStart::countDown);
+            getWindow().getDecorView().getRootSurfaceControl().applyTransactionOnDraw(t);
         }
 
         @Override

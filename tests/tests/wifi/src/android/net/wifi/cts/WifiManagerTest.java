@@ -113,6 +113,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1184,14 +1185,22 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         List<WifiManager.ScreenOnScanSchedule> schedules = new ArrayList<>();
-        schedules.add(new WifiManager.ScreenOnScanSchedule(20,
+        schedules.add(new WifiManager.ScreenOnScanSchedule(Duration.ofSeconds(20),
                 WifiScanner.SCAN_TYPE_HIGH_ACCURACY));
-        schedules.add(new WifiManager.ScreenOnScanSchedule(40,
+        schedules.add(new WifiManager.ScreenOnScanSchedule(Duration.ofSeconds(40),
                 WifiScanner.SCAN_TYPE_LOW_LATENCY));
+        assertEquals(20, schedules.get(0).getScanInterval().toSeconds());
+        assertEquals(40, schedules.get(1).getScanInterval().toSeconds());
+        assertEquals(WifiScanner.SCAN_TYPE_HIGH_ACCURACY, schedules.get(0).getScanType());
+        assertEquals(WifiScanner.SCAN_TYPE_LOW_LATENCY, schedules.get(1).getScanType());
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setScreenOnScanSchedule(schedules));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setScreenOnScanSchedule(null));
+
+        // Creating an invalid ScanSchedule should throw an exception
+        assertThrows(IllegalArgumentException.class, () -> new WifiManager.ScreenOnScanSchedule(
+                null, WifiScanner.SCAN_TYPE_HIGH_ACCURACY));
     }
 
     /**
@@ -1203,11 +1212,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // skip the test if WiFi is not supported
             return;
         }
-        try {
-            mWifiManager.setScreenOnScanSchedule(null);
-            fail("A normal app should not be able to call this API.");
-        } catch (SecurityException e) {
-        }
+        assertThrows(SecurityException.class, () -> mWifiManager.setScreenOnScanSchedule(null));
     }
 
     /**
