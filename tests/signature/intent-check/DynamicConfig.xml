@@ -29,6 +29,7 @@
     Bug: 206897736 android.intent.action.MANAGE_PERMISSION_USAGE
     Bug: 206897736 android.intent.action.VIEW_APP_FEATURES
     Bug: 209528070 android.intent.action.APPLICATION_LOCALE_CHANGED
+    Bug: 218245704 android.intent.action.ACTION_PACKAGE_CHANGED (fixed in TTS 20220209)
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -46,5 +47,6 @@
       <value>android.intent.action.MANAGE_PERMISSION_USAGE</value>
       <value>android.intent.action.VIEW_APP_FEATURES</value>
       <value>android.intent.action.APPLICATION_LOCALE_CHANGED</value>
+      <value>android.intent.action.ACTION_PACKAGE_CHANGED</value>
     </entry>
 </dynamicConfig>
