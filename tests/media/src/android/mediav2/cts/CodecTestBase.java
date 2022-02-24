@@ -38,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 
 import java.io.File;
@@ -513,6 +514,12 @@ class OutputManager {
 abstract class CodecTestBase {
     public static final boolean IS_AT_LEAST_R = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
+    enum SupportClass {
+        CODEC_ALL, // All codecs must support
+        CODEC_ANY, // At least one codec must support
+        CODEC_DEFAULT, // Default codec must support
+        CODEC_OPTIONAL // Codec support is optional
+    }
 
     static final String CODEC_PREFIX_KEY = "codec-prefix";
     static final String MIME_SEL_KEY = "mime-sel";
@@ -523,10 +530,6 @@ abstract class CodecTestBase {
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final int UNSPECIFIED = 0;
-    static final int CODEC_ALL = 0; // All codecs must support
-    static final int CODEC_ANY = 1; // At least one codec must support
-    static final int CODEC_DEFAULT = 2; // Default codec must support
-    static final int CODEC_OPTIONAL = 3; // Codec support is optional
     // Maintain Timeouts in sync with their counterpart in NativeMediaCommon.h
     static final long Q_DEQ_TIMEOUT_US = 5000; // block at most 5ms while looking for io buffers
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
@@ -593,6 +596,31 @@ abstract class CodecTestBase {
         return CodecTestBase.selectCodecs(mime, null, null, true).size() != 0;
     }
 
+    public static void checkFormatSupport(String codecName, String mime,
+            ArrayList<MediaFormat> formats, String[] features, SupportClass supportRequirements)
+            throws IOException {
+        if (!areFormatsSupported(codecName, mime, formats)) {
+            switch (supportRequirements) {
+                case CODEC_ALL:
+                    fail("format(s) not supported by codec: " + codecName + " for mime : " + mime);
+                    break;
+                case CODEC_ANY:
+                    if (selectCodecs(mime, formats, features, false).isEmpty())
+                        fail("format(s) not supported by any component for mime : " + mime);
+                    break;
+                case CODEC_DEFAULT:
+                    if (isDefaultCodec(codecName, mime, false))
+                        fail("format(s) not supported by default codec : " + codecName +
+                                "for mime : " + mime);
+                    break;
+                case CODEC_OPTIONAL:
+                default:
+                    Assume.assumeTrue("format(s) not supported by codec: " + codecName +
+                            " for mime : " + mime, false);
+            }
+        }
+    }
+
     static boolean isFeatureSupported(String name, String mime, String feature) throws IOException {
         MediaCodec codec = MediaCodec.createByCodecName(name);
         MediaCodecInfo.CodecCapabilities codecCapabilities =
@@ -603,38 +631,39 @@ abstract class CodecTestBase {
     }
 
     static boolean doesAnyFormatHaveHDRProfile(String mime, ArrayList<MediaFormat> formats) {
-        boolean isHDR = false;
         for (MediaFormat format : formats) {
             assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
-            if (mime.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
-                int profile = format.getInteger(MediaFormat.KEY_PROFILE);
-                if (profile == AVCProfileHigh10 || profile == AVCProfileHigh422 ||
-                        profile == AVCProfileHigh444) {
-                    isHDR = true;
-                    break;
+            switch (mime) {
+                case MediaFormat.MIMETYPE_VIDEO_AVC: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE);
+                    if (profile == AVCProfileHigh10 || profile == AVCProfileHigh422 ||
+                            profile == AVCProfileHigh444) {
+                        return true;
+                    }
                 }
-            } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
-                int profile = format.getInteger(MediaFormat.KEY_PROFILE, VP9Profile0);
-                if (profile == VP9Profile2HDR || profile == VP9Profile3HDR ||
-                        profile == VP9Profile2HDR10Plus || profile == VP9Profile3HDR10Plus) {
-                    isHDR = true;
-                    break;
+                case MediaFormat.MIMETYPE_VIDEO_VP9: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE, VP9Profile0);
+                    if (profile == VP9Profile2HDR || profile == VP9Profile3HDR ||
+                            profile == VP9Profile2HDR10Plus || profile == VP9Profile3HDR10Plus) {
+                        return true;
+                    }
                 }
-            } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
-                int profile = format.getInteger(MediaFormat.KEY_PROFILE, HEVCProfileMain);
-                if (profile == HEVCProfileMain10HDR10 || profile == HEVCProfileMain10HDR10Plus) {
-                    isHDR = true;
-                    break;
+                case MediaFormat.MIMETYPE_VIDEO_HEVC: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE, HEVCProfileMain);
+                    if (profile == HEVCProfileMain10HDR10 ||
+                            profile == HEVCProfileMain10HDR10Plus) {
+                        return true;
+                    }
                 }
-            } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_AV1)) {
-                int profile = format.getInteger(MediaFormat.KEY_PROFILE, AV1ProfileMain8);
-                if (profile == AV1ProfileMain10HDR10 || profile == AV1ProfileMain10HDR10Plus) {
-                    isHDR = true;
-                    break;
+                case MediaFormat.MIMETYPE_VIDEO_AV1: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE, AV1ProfileMain8);
+                    if (profile == AV1ProfileMain10HDR10 || profile == AV1ProfileMain10HDR10Plus) {
+                        return true;
+                    }
                 }
             }
         }
-        return isHDR;
+        return false;
     }
 
     static boolean canDisplaySupportHDRContent() {
@@ -1150,6 +1179,7 @@ class CodecDecoderTestBase extends CodecTestBase {
     private ByteBuffer flatBuffer = ByteBuffer.allocate(4 * Integer.BYTES);
 
     MediaExtractor mExtractor;
+    CodecTestActivity mActivity;
 
     CodecDecoderTestBase(String codecName, String mime, String testFile) {
         mCodecName = codecName;
