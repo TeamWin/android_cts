@@ -23,7 +23,7 @@ import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.sts.common.tradefed.testtype.StsExtraBusinessLogicHostTestBase;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_39700 extends BaseHostJUnit4Test {
+public class CVE_2021_39700 extends StsExtraBusinessLogicHostTestBase {
 
     /**
      * b/201645790
