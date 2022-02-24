@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.verifier.audio;
+package com.android.cts.verifier.audio.soundio;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
