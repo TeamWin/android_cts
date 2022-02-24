@@ -36,6 +36,7 @@ import android.system.Os;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +46,7 @@ import java.io.IOException;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class CVE_2021_39663 {
+public class CVE_2021_39663 extends StsExtraBusinessLogicTestCase {
 
     @Test
     @AsbSecurityTest(cveBugId = 200682135)
