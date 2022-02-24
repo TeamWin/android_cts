@@ -21,7 +21,7 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppA.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -37,7 +37,7 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppB.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -53,7 +53,7 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppC.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -117,7 +117,7 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppFileManager.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -133,7 +133,7 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppFileManagerBypassDB.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -149,7 +149,7 @@ android_test_helper_app {
     manifest: "ScopedStorageTestHelper/TestAppSystemGalleryBypassDB.xml",
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
     // Tag as a CTS artifact
@@ -209,7 +209,7 @@ android_test {
         "cts",
     ],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     java_resources: [
         ":CtsScopedStorageTestAppA",
@@ -345,7 +345,7 @@ android_test {
         "cts",
     ],
     sdk_version: "test_current",
-    target_sdk_version: "current",
+    target_sdk_version: "Tiramisu",
     min_sdk_version: "30",
     libs: [
         "android.test.base",
