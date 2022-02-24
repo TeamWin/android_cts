@@ -40,16 +40,16 @@ import java.io.FileNotFoundException;
 
 /**
  * Implements a cloud {@link CloudMediaProvider} interface over items generated with
- * {@link MediaGenerator}
+ * {@link MediaGenerator}.
  */
 public class CloudProviderPrimary extends CloudMediaProvider {
     public static final String AUTHORITY = "android.photopicker.cts.cloudproviders.cloud_primary";
 
     private static final String TAG = "CloudProviderPrimary";
-    private static final SurfaceControllerImpl sMockSurfaceControllerListener =
-            mock(SurfaceControllerImpl.class);
+    private static final CloudMediaSurfaceControllerImpl sMockSurfaceControllerListener =
+            mock(CloudMediaSurfaceControllerImpl.class);
 
-    private static SurfaceControllerImpl sSurfaceControllerImpl = null;
+    private static CloudMediaSurfaceControllerImpl sSurfaceControllerImpl = null;
 
     private MediaGenerator mMediaGenerator;
 
@@ -101,18 +101,19 @@ public class CloudProviderPrimary extends CloudMediaProvider {
     }
 
     @Override
-    public SurfaceController onCreateSurfaceController(@NonNull Bundle config,
-            @NonNull SurfaceEventCallback callback) {
+    public CloudMediaSurfaceController onCreateCloudMediaSurfaceController(@NonNull Bundle config,
+            @NonNull CloudMediaSurfaceEventCallback callback) {
         final boolean enableLoop = config.getBoolean(EXTRA_LOOPING_PLAYBACK_ENABLED, false);
-        sSurfaceControllerImpl = new SurfaceControllerImpl(getContext(), enableLoop, callback);
+        sSurfaceControllerImpl =
+                new CloudMediaSurfaceControllerImpl(getContext(), enableLoop, callback);
         return sSurfaceControllerImpl;
     }
 
     /**
-     * @return mock surface controller that enables us to test API calls from PhotoPicker to the
-     * {@link CloudMediaProvider}.
+     * @return mock {@link CloudMediaSurfaceController} that enables us to test API calls from
+     * PhotoPicker to the {@link CloudMediaProvider}.
      */
-    public static SurfaceControllerImpl getMockSurfaceControllerListener() {
+    public static CloudMediaSurfaceControllerImpl getMockSurfaceControllerListener() {
         return sMockSurfaceControllerListener;
     }
 
@@ -124,11 +125,12 @@ public class CloudProviderPrimary extends CloudMediaProvider {
         sSurfaceControllerImpl.sendPlaybackEvent(surfaceId, event);
     }
 
-    public static class SurfaceControllerImpl extends SurfaceController {
+    public static class CloudMediaSurfaceControllerImpl extends CloudMediaSurfaceController {
 
-        private SurfaceEventCallback mCallback;
+        private final CloudMediaSurfaceEventCallback mCallback;
 
-        SurfaceControllerImpl(Context context, boolean enableLoop, SurfaceEventCallback callback) {
+        CloudMediaSurfaceControllerImpl(Context context, boolean enableLoop,
+                CloudMediaSurfaceEventCallback callback) {
             mCallback = callback;
             Log.d(TAG, "Surface controller created.");
         }
