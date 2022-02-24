@@ -19,10 +19,12 @@ package android.photopicker.cts.util;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.FileUtils;
 import android.os.UserHandle;
 import android.photopicker.cts.R;
 import android.provider.MediaStore;
+import android.provider.cts.ProviderTestUtils;
 import android.provider.cts.media.MediaStoreUtils;
 
 import androidx.test.InstrumentationRegistry;
@@ -67,9 +69,12 @@ public class PhotoPickerFilesUtils {
         }
     }
 
-    public static void deleteMedia(Uri uri, int userId) throws Exception {
-        final String cmd = String.format("content delete --uri %s --user %d", uri, userId);
-        ShellUtils.runShellCommand(cmd);
+    public static void deleteMedia(Uri uri, Context context) throws Exception {
+        try {
+            ProviderTestUtils.setOwner(uri, context.getPackageName());
+            context.getContentResolver().delete(uri, Bundle.EMPTY);
+        } catch (Exception ignored) {
+        }
     }
 
     private static void clearMediaOwner(Uri uri, int userId) throws Exception {

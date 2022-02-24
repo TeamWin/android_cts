@@ -60,8 +60,9 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     @After
     public void tearDown() throws Exception {
         for (Uri uri : mUriList) {
-            deleteMedia(uri, mContext.getUserId());
+            deleteMedia(uri, mContext);
         }
+        mUriList.clear();
 
         if (mActivity != null) {
             mActivity.finish();
