@@ -1229,12 +1229,15 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertEquals(1000, params.getMacRandomizationIntervalSeconds());
         assertEquals(1, params.getNumSpatialStreamsInDiscovery());
         assertTrue(params.isDwEarlyTerminationEnabled());
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiAwareManager.setAwareParams(params)
-        );
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiAwareManager.setAwareParams(null)
-        );
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiAwareManager.setAwareParams(params)
+            );
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiAwareManager.setAwareParams(null)
+            );
+        }
     }
 
     /**
