@@ -93,7 +93,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
-    private static final String DELEGATION_BLOCK_UNINSTALL = "delegation-block-uninstall";
     private static final String DELEGATION_PERMISSION_GRANT = "delegation-permission-grant";
     private static final String DELEGATION_PACKAGE_ACCESS = "delegation-package-access";
     private static final String DELEGATION_ENABLE_SYSTEM_APP = "delegation-enable-system-app";
@@ -241,7 +240,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".BlockUninstallDelegateTest", null);
         result.put(".PermissionGrantDelegateTest", null);
         result.put(".PackageAccessDelegateTest", null);
         result.put(".EnableSystemAppDelegateTest", null);
@@ -263,7 +261,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final List<String> result = new ArrayList<>(Arrays.asList(
                 DELEGATION_APP_RESTRICTIONS,
                 DELEGATION_CERT_INSTALL,
-                DELEGATION_BLOCK_UNINSTALL,
                 DELEGATION_PERMISSION_GRANT,
                 DELEGATION_PACKAGE_ACCESS,
                 DELEGATION_ENABLE_SYSTEM_APP
@@ -1543,19 +1540,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
                 .setStrings("android.intent.action.MAIN")
-                .build());
-    }
-
-    @Test
-    public void testSetUninstallBlockedLogged() throws Exception {
-        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".DevicePolicyLoggingTest",
-                    "testSetUninstallBlockedLogged");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_UNINSTALL_BLOCKED_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setBoolean(false)
-                .setStrings(PERMISSIONS_APP_PKG)
                 .build());
     }
 
