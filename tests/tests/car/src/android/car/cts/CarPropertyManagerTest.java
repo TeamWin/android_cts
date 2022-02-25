@@ -31,6 +31,7 @@ import android.car.VehicleAreaWheel;
 import android.car.VehicleGear;
 import android.car.VehicleIgnitionState;
 import android.car.VehiclePropertyIds;
+import android.car.VehicleUnit;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
@@ -87,29 +88,20 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                     VehicleGear.GEAR_SEVENTH, VehicleGear.GEAR_EIGHTH,
                     VehicleGear.GEAR_NINTH).build();
     private static final ImmutableSet<Integer> DISTANCE_DISPLAY_UNITS =
-            ImmutableSet.<Integer>builder().add(/*VehicleUnit.MILLIMETER=*/
-                    0x20, /*VehicleUnit.METER=*/ 0x21,
-                    /*VehicleUnit.KILOMETER=*/0x23, /*VehicleUnit.MILE=*/0x24).build();
+            ImmutableSet.<Integer>builder().add(VehicleUnit.MILLIMETER, VehicleUnit.METER,
+                    VehicleUnit.KILOMETER, VehicleUnit.MILE).build();
     private static final ImmutableSet<Integer> VOLUME_DISPLAY_UNITS =
-            ImmutableSet.<Integer>builder().add(/*VehicleUnit.MILLILITER=*/
-                    0x40, /*VehicleUnit.LITER=*/0x41,
-                    /*VehicleUnit.US_GALLON=*/0x42, /*VehicleUnit.IMPERIAL_GALLON=*/0x43).build();
+            ImmutableSet.<Integer>builder().add(VehicleUnit.MILLILITER, VehicleUnit.LITER,
+                    VehicleUnit.US_GALLON, VehicleUnit.IMPERIAL_GALLON).build();
     private static final ImmutableSet<Integer> PRESSURE_DISPLAY_UNITS =
-            ImmutableSet.<Integer>builder().add(/*VehicleUnit.KILOPASCAL=*/
-                    0x70, /*VehicleUnit.PSI=*/0x71,
-                    /*VehicleUnit.BAR=*/0x72).build();
+            ImmutableSet.<Integer>builder().add(VehicleUnit.KILOPASCAL, VehicleUnit.PSI,
+                    VehicleUnit.BAR).build();
     private static final ImmutableSet<Integer> BATTERY_DISPLAY_UNITS =
-            ImmutableSet.<Integer>builder().add(
-                    /*VehicleUnit.MILLIAMPERE=*/ 0x61,
-                    /*VehicleUnit.MILLIVOLT=*/ 0x62,
-                    /*VehicleUnit.MILLIWATTS=*/ 0x63,
-                    /*VehicleUnit.WATT_HOUR=*/ 0x60,
-                    /*VehicleUnit.AMPERE_HOURS=*/ 0x64,
-                    /*VehicleUnit.KILOWATT_HOUR=*/ 0x65).build();
+            ImmutableSet.<Integer>builder().add(VehicleUnit.WATT_HOUR, VehicleUnit.AMPERE_HOURS,
+                    VehicleUnit.KILOWATT_HOUR).build();
     private static final ImmutableSet<Integer> SPEED_DISPLAY_UNITS =
-            ImmutableSet.<Integer>builder().add(/*VehicleUnit.METER_PER_SEC=*/0x01,
-                    /*VehicleUnit.MILES_PER_HOUR=*/ 0x90,
-                    /*VehicleUnit.KILOMETERS_PER_HOUR=*/ 0x91).build();
+            ImmutableSet.<Integer>builder().add(VehicleUnit.METER_PER_SEC,
+                    VehicleUnit.MILES_PER_HOUR, VehicleUnit.KILOMETERS_PER_HOUR).build();
     /** contains property Ids for the properties required by CDD */
     private final ArraySet<Integer> mPropertyIds = new ArraySet<>();
     private CarPropertyManager mCarPropertyManager;
@@ -293,7 +285,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                             "WHEEL_TICK config array first element specifies which wheels are"
                                     + " supported")
                             .that(supportedWheels).isGreaterThan(
-                            VehicleAreaWheel.WHEEL_UNKNOWN);
+                                    VehicleAreaWheel.WHEEL_UNKNOWN);
                     assertWithMessage(
                             "WHEEL_TICK config array first element specifies which wheels are"
                                     + " supported")
@@ -318,8 +310,7 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
                     Long[] wheelTicks = (Long[]) carPropertyValue.getValue();
                     assertWithMessage("WHEEL_TICK Long[] value must be size 5").that(
-                            wheelTicks.length)
-                            .isEqualTo(5);
+                            wheelTicks.length).isEqualTo(5);
 
                     verifyWheelTickValue(supportedWheels, VehicleAreaWheel.WHEEL_LEFT_FRONT, 1,
                             wheelTicks[1]);
@@ -501,20 +492,18 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 Integer.class).setCarPropertyValueVerifier(
                 (carPropertyConfig, carPropertyValue) -> {
                     Integer driverSeat = (Integer) carPropertyValue.getValue();
-                    assertWithMessage(
-                            "INFO_DRIVER_SEAT must be a defined front seat location: "
-                                    + driverSeat).that(
-                            driverSeat).isIn(
+                    assertWithMessage("INFO_DRIVER_SEAT must be a defined front seat location: "
+                            + driverSeat).that(driverSeat).isIn(
                             ImmutableSet.builder().add(VehicleAreaSeat.SEAT_UNKNOWN,
                                     VehicleAreaSeat.SEAT_ROW_1_LEFT,
                                     VehicleAreaSeat.SEAT_ROW_1_CENTER,
                                     VehicleAreaSeat.SEAT_ROW_1_RIGHT).build());
                 }).setAreaIdsVerifier(areaIds -> assertWithMessage(
                 "Even though INFO_DRIVER_SEAT is VEHICLE_AREA_TYPE_SEAT, it is meant to be "
-                        + "VEHICLE_AREA_TYPE_GLOBAL, so its AreaIds must contain a single 0")
-                .that(areaIds).isEqualTo(
-                        new int[]{VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL})).build()
-                .verify(mCarPropertyManager);
+                        + "VEHICLE_AREA_TYPE_GLOBAL, so its AreaIds must contain a single 0").that(
+                areaIds).isEqualTo(
+                new int[]{VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL})).build().verify(
+                mCarPropertyManager);
     }
 
     @Test
