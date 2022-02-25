@@ -179,7 +179,7 @@ public class BluetoothLeBroadcastTest {
             return;
         }
         if (mAdapter.isLeAudioBroadcastSourceSupported()
-                == BluetoothStatusCodes.ERROR_FEATURE_NOT_SUPPORTED) {
+                == BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
             assertFalse(mIsLeBroadcastSupported);
             return;
         }

@@ -186,7 +186,7 @@ public class BluetoothLeBroadcastAssistantTest {
             return;
         }
         if (mAdapter.isLeAudioBroadcastAssistantSupported()
-                == BluetoothStatusCodes.ERROR_FEATURE_NOT_SUPPORTED) {
+                == BluetoothStatusCodes.FEATURE_NOT_SUPPORTED) {
             assertFalse(mIsLeBroadcastAssistantSupported);
             return;
         }
