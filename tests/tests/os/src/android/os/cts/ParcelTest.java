@@ -3614,6 +3614,10 @@ public class ParcelTest extends AndroidTestCase {
         p.writeFixedArray(ints, 0, new int[]{2, 3});
         p.setDataPosition(0);
         assertArrayEquals(ints, p.createFixedArray(int[][].class, new int[]{2, 3}));
+        int[][] readInts = new int[2][3];
+        p.setDataPosition(0);
+        p.readFixedArray(readInts);
+        assertArrayEquals(ints, readInts);
 
         // test Parcelable[2][3]
         p.setDataPosition(0);
@@ -3623,6 +3627,10 @@ public class ParcelTest extends AndroidTestCase {
         p.writeFixedArray(signatures, 0, new int[]{2, 3});
         p.setDataPosition(0);
         assertArrayEquals(signatures, p.createFixedArray(Signature[][].class, Signature.CREATOR, new int[]{2, 3}));
+        Signature[][] readSignatures = new Signature[2][3];
+        p.setDataPosition(0);
+        p.readFixedArray(readSignatures, Signature.CREATOR);
+        assertArrayEquals(signatures, readSignatures);
 
         // test IInterface[2][3]
         p.setDataPosition(0);
@@ -3635,6 +3643,10 @@ public class ParcelTest extends AndroidTestCase {
             MockIInterface::asInterface, new int[]{2, 3});
         assertEquals(2, interfacesRead.length);
         assertEquals(3, interfacesRead[0].length);
+        MockIInterface[][] mockInterfaces = new MockIInterface[2][3];
+        p.setDataPosition(0);
+        p.readFixedArray(mockInterfaces, MockIInterface::asInterface);
+        assertArrayEquals(interfaces, mockInterfaces);
 
         // test null
         p.setDataPosition(0);
