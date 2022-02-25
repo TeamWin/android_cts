@@ -48,7 +48,6 @@ import com.android.bedstead.testapp.TestAppInstance;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
@@ -101,7 +100,6 @@ public final class ApplicationRestrictionsTest {
         return result;
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_applicationRestrictionsAreSet() {
@@ -126,7 +124,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_applicationRestrictionsAlreadySet_setsNewRestrictions() {
@@ -155,7 +152,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictions.class)
     public void getApplicationRestrictions_applicationRestrictionsAreSet_returnsApplicationRestrictions() {
@@ -181,7 +177,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictions.class)
     public void getApplicationRestrictions_differentPackage_throwsException() {
@@ -207,7 +202,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictions.class)
     public void getApplicationRestrictions_setForOtherPackage_returnsNull() {
@@ -233,7 +227,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyDoesNotApplyTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_policyDoesNotApply_applicationRestrictionsAreNotSet() {
@@ -257,7 +250,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_cannotSetPolicy_throwsException() {
@@ -270,7 +262,6 @@ public final class ApplicationRestrictionsTest {
         });
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CannotSetPolicyTest(policy = ApplicationRestrictions.class)
     public void getApplicationRestrictions_cannotSetPolicy_throwsException() {
@@ -281,7 +272,6 @@ public final class ApplicationRestrictionsTest {
         });
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictions.class, singleTestOnly = true)
     public void setApplicationRestrictions_nullComponent_throwsException() {
@@ -291,7 +281,6 @@ public final class ApplicationRestrictionsTest {
                         sTestApp.packageName(), bundle));
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_restrictionsChangedBroadcastIsReceived() {
@@ -319,7 +308,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictionsManagingPackage.class)
     public void setApplicationRestrictionsManagingPackage_applicationRestrictionsManagingPackageIsSet()
@@ -341,7 +329,6 @@ public final class ApplicationRestrictionsTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictionsManagingPackage.class)
     public void setApplicationRestrictionsManagingPackage_appNotInstalled_throwsException() {
@@ -354,7 +341,6 @@ public final class ApplicationRestrictionsTest {
                                 sDifferentTestApp.packageName()));
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = ApplicationRestrictions.class)
     public void setApplicationRestrictions_logged() {

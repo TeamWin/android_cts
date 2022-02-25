@@ -125,7 +125,6 @@ public final class CrossProfileAppsTest {
                 .forEach(ProcessReference::kill);
     }
 
-    @Test
     @CrossUserTest({
             @UserPair(from = PRIMARY_USER, to = PRIMARY_USER),
             @UserPair(from = PRIMARY_USER, to = SECONDARY_USER),
@@ -141,7 +140,6 @@ public final class CrossProfileAppsTest {
         assertThat(targetProfiles).doesNotContain(sDeviceState.otherUser().userHandle());
     }
 
-    @Test
     @CrossUserTest({
             @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
             @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
@@ -154,7 +152,6 @@ public final class CrossProfileAppsTest {
         assertThat(targetProfiles).contains(sDeviceState.otherUser().userHandle());
     }
 
-    @Test
     @CrossUserTest({
             @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
             @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
@@ -168,7 +165,6 @@ public final class CrossProfileAppsTest {
         assertThat(targetProfiles).doesNotContain(sDeviceState.otherUser().userHandle());
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @UserTest({PRIMARY_USER, WORK_PROFILE})
     public void getTargetUserProfiles_logged() {
@@ -183,7 +179,6 @@ public final class CrossProfileAppsTest {
         }
     }
 
-    @Test
     @CrossUserTest({
             @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
             @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
@@ -200,7 +195,6 @@ public final class CrossProfileAppsTest {
         ).eventOccurred();
     }
 
-    @Test
     @CrossUserTest({
             @UserPair(from = WORK_PROFILE, to = PRIMARY_USER),
             @UserPair(from = PRIMARY_USER, to = WORK_PROFILE)
@@ -346,7 +340,6 @@ public final class CrossProfileAppsTest {
                                 NOT_MAIN_ACTIVITY, sDeviceState.workProfile().userHandle())));
     }
 
-    @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @PermissionTest({
@@ -384,7 +377,6 @@ public final class CrossProfileAppsTest {
         });
     }
 
-    @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installInstrumentedApp = TRUE)
     @PermissionTest({

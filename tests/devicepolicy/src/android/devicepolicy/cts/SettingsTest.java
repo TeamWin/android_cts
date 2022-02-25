@@ -40,7 +40,6 @@ import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
@@ -57,7 +56,6 @@ public final class SettingsTest {
     private static final String DEVICE_OWNER_ONLY_SECURE_SETTING = LOCATION_MODE;
     private static final String SECURE_SETTING = SKIP_FIRST_USE_HINTS;
 
-    @Test
     @CanSetPolicyTest(policy = SetGlobalSetting.class)
     @Postsubmit(reason = "new test")
     public void setGlobalSetting_settingIsDeprecated_doesNotChangeSetting() {
@@ -76,7 +74,6 @@ public final class SettingsTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = SetGlobalSetting.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void setGlobalSetting_invalidAdmin_throwsSecurityException() {
@@ -86,7 +83,6 @@ public final class SettingsTest {
                         SUPPORTED_GLOBAL_SETTING, "1"));
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetGlobalSetting.class)
     @Postsubmit(reason = "new test")
     public void setGlobalSetting_unsupported_throwsSecurityException() {
@@ -96,7 +92,6 @@ public final class SettingsTest {
                         UNSUPPORTED_GLOBAL_SETTING, "1"));
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetGlobalSetting.class)
     @Postsubmit(reason = "new test")
     public void setGlobalSetting_supported_changesValue() {
@@ -115,7 +110,6 @@ public final class SettingsTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SetSecureSetting.class)
     @Postsubmit(reason = "new test")
     public void setSecureSetting_sets() {
@@ -138,7 +132,6 @@ public final class SettingsTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetDeviceOwnerSecureSetting.class)
     @Postsubmit(reason = "new test")
     public void setSecureSetting_deviceOwnerOnly_sets() {
@@ -161,7 +154,6 @@ public final class SettingsTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(
             policy = SetDeviceOwnerSecureSetting.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -175,7 +167,6 @@ public final class SettingsTest {
                         DEVICE_OWNER_ONLY_SECURE_SETTING, String.valueOf(newValue)));
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetSecureSetting.class)
     @Postsubmit(reason = "new test")
     public void setSecureSetting_doesNotApplyToUser_isNotSet() {
