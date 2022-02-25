@@ -52,10 +52,10 @@ import java.util.function.BiConsumer;
  * calls where "who" is null or "who" is not null and belongs to caller. SecurityExceptions that are
  * thrown otherwise shouldn't leak that data either.
  */
-@RunWith(BedsteadJUnit4.class)
 // Password policies aren't supported on automotive
 @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
 @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
+@RunWith(BedsteadJUnit4.class)
 public class NoAdminLeakingTest {
     @ClassRule
     @Rule

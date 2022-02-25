@@ -24,7 +24,7 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddButton;
-import static android.provider.CloudMediaProvider.SurfaceEventCallback.PLAYBACK_EVENT_READY;
+import static android.provider.CloudMediaProvider.CloudMediaSurfaceEventCallback.PLAYBACK_EVENT_READY;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -37,7 +37,7 @@ import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.photopicker.cts.PickerProviderMediaGenerator.MediaGenerator;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
-import android.photopicker.cts.cloudproviders.CloudProviderPrimary.SurfaceControllerImpl;
+import android.photopicker.cts.cloudproviders.CloudProviderPrimary.CloudMediaSurfaceControllerImpl;
 import android.provider.MediaStore;
 import android.util.Pair;
 
@@ -74,7 +74,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     private static final long VIDEO_SIZE_BYTES = 135600;
     private static final int VIDEO_PIXEL_FORMAT = PixelFormat.RGB_565;
 
-    private SurfaceControllerImpl mSurfaceControllerListener;
+    private CloudMediaSurfaceControllerImpl mSurfaceControllerListener;
     // This is required to assert the order in which the APIs are called.
     private InOrder mAssertInOrder;
 

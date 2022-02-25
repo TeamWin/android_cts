@@ -18,7 +18,7 @@ package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_PROFILE;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -31,7 +31,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  */
 @EnterprisePolicy(
         dpc = {
-                APPLIED_BY_DEVICE_OWNER | APPLIES_GLOBALLY,
-                APPLIED_BY_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER})
+                APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER_PROFILE
+                        | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_TO_OWN_USER})
 public final class Backup {
 }

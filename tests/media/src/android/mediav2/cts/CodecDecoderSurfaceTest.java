@@ -22,10 +22,12 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
-import androidx.test.rule.ActivityTestRule;
 
+import org.junit.After;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -86,8 +88,19 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     @Rule
-    public ActivityTestRule<CodecTestActivity> mActivityRule =
-            new ActivityTestRule<>(CodecTestActivity.class);
+    public ActivityScenarioRule<CodecTestActivity> mActivityRule =
+            new ActivityScenarioRule<>(CodecTestActivity.class);
+
+    @Before
+    public void setUp() throws IOException, InterruptedException {
+        mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
+        setUpSurface(mActivity);
+    }
+
+    @After
+    public void tearDown() {
+        tearDownSurface();
+    }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")
     public static Collection<Object[]> input() {
@@ -145,8 +158,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         OutputManager test = new OutputManager();
         final long pts = 0;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             ref = mOutputBuff;
@@ -158,7 +169,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             }
             MediaFormat format = setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
-            activity.setScreenParams(getWidth(format), getHeight(format), true);
+            mActivity.setScreenParams(getWidth(format), getHeight(format), true);
             for (boolean isAsync : boolStates) {
                 String log = String.format("codec: %s, file: %s, mode: %s:: ", mCodecName,
                         mTestFile, (isAsync ? "async" : "sync"));
@@ -187,7 +198,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             mCodec.release();
             mExtractor.release();
         }
-        tearDownSurface();
     }
 
     /**
@@ -211,8 +221,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
@@ -225,7 +233,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(mCodecName);
-            activity.setScreenParams(getWidth(format), getHeight(format), false);
+            mActivity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mTestFile, (isAsync ? "async" : "sync"));
@@ -293,7 +301,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             mCodec.release();
             mExtractor.release();
         }
-        tearDownSurface();
     }
 
     /**
@@ -313,8 +320,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
         {
             decodeAndSavePts(mTestFile, mCodecName, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
@@ -332,7 +337,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(mCodecName);
-            activity.setScreenParams(getWidth(format), getHeight(format), false);
+            mActivity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
                 setUpSource(mTestFile);
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
@@ -397,7 +402,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 setUpSource(mReconfigFile);
                 log = String.format("decoder: %s, input file: %s, mode: %s:: ", mCodecName,
                         mReconfigFile, (isAsync ? "async" : "sync"));
-                activity.setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
+                mActivity.setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
                 reConfigureCodec(newFormat, isAsync, false, false);
                 mCodec.start();
                 test.reset();
@@ -422,7 +427,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             }
             mCodec.release();
         }
-        tearDownSurface();
     }
 
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
@@ -430,17 +434,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSimpleDecodeToSurfaceNative() throws IOException, InterruptedException {
+    public void testSimpleDecodeToSurfaceNative() throws IOException {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
-        activity.setScreenParams(getWidth(format), getHeight(format), false);
-        {
-            assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mReconfigFile, -1.0f, 0L));
-        }
-        tearDownSurface();
+        mActivity.setScreenParams(getWidth(format), getHeight(format), false);
+        assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
+                mInpPrefix + mReconfigFile, -1.0f, 0L));
     }
 
     private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
@@ -448,15 +447,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testFlushNative() throws IOException, InterruptedException {
+    public void testFlushNative() throws IOException {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        CodecTestActivity activity = mActivityRule.getActivity();
-        setUpSurface(activity);
-        activity.setScreenParams(getWidth(format), getHeight(format), true);
-        {
-            assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mInpPrefix + mTestFile));
-        }
-        tearDownSurface();
+        mActivity.setScreenParams(getWidth(format), getHeight(format), true);
+        assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mInpPrefix + mTestFile));
     }
 }

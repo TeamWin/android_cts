@@ -132,7 +132,7 @@ public class Utils {
                 nm.isNotificationPolicyAccessGranted());
     }
 
-    static boolean compareRemoteUserInfo(RemoteUserInfo a, RemoteUserInfo b) {
+    public static boolean compareRemoteUserInfo(RemoteUserInfo a, RemoteUserInfo b) {
         if (a == null && b == null) {
             return true;
         } else if (a == null || b == null) {
@@ -148,7 +148,7 @@ public class Utils {
      * is created once. The playback will be stopped immediately after that.
      * <p>For a media session to receive media button events, an actual playback is needed.
      */
-    static void assertMediaPlaybackStarted(Context context) {
+    public static void assertMediaPlaybackStarted(Context context) {
         final AudioManager am = new AudioManager(context);
         final HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();

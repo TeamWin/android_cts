@@ -55,9 +55,10 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
 
     @Override
     public void tearDown() throws Exception {
-        super.tearDown();
-        // finally, cleanup any leftover accounts registered
+        // cleanup any accounts registered to the test package after testing to avoid crashing other
+        // tests.
         cleanupPhoneAccounts();
+        super.tearDown();
     }
 
     /**
@@ -68,6 +69,7 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
     public void testRegisterMaxPhoneAccountsWithoutException() {
         if (!mShouldTestTelecom) return;
 
+        // ensure the test starts without any phone accounts registered to the test package
         cleanupPhoneAccounts();
 
         //  determine the number of phone accounts that can be registered before hitting limit
@@ -93,12 +95,13 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
 
     /**
      * Tests a scenario where a single package exceeds MAX_PHONE_ACCOUNT_REGISTRATIONS and
-     * an {@link IllegalArgumentException}  is thrown
+     * an {@link IllegalArgumentException}  is thrown. Will fail if no exception is thrown.
      */
-    public void testExceptionThrownDueExceededMaxPhoneAccountsRegistrations()
+    public void testExceptionThrownDueUserExceededMaxPhoneAccountRegistrations()
             throws IllegalArgumentException {
         if (!mShouldTestTelecom) return;
 
+        // ensure the test starts without any phone accounts registered to the test package
         cleanupPhoneAccounts();
 
         // Create MAX_PHONE_ACCOUNT_REGISTRATIONS + 1 via helper function
@@ -136,6 +139,7 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
     public void testTwoPackagesRegisterMax() throws Exception {
         if (!mShouldTestTelecom) return;
 
+        // ensure the test starts without any phone accounts registered to the test package
         cleanupPhoneAccounts();
 
         //  determine the number of phone accounts that can be registered to package 1
@@ -200,7 +204,7 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
         mContext.unbindService(control);
     }
 
-    // The following are helper methods for this testing class.
+    // -- The following are helper methods for this testing class. --
 
     private TestServiceConnection setUpControl(String action, ComponentName componentName) {
         Intent bindIntent = new Intent(action);
@@ -247,22 +251,39 @@ public class PhoneAccountRegistrarTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    /**
+     * Helper that cleans up any phone accounts registered to this testing package.  Requires
+     * the permission READ_PRIVILEGED_PHONE_STATE in order to invoke the
+     * getPhoneAccountsForPackage() method.
+     */
     private void cleanupPhoneAccounts() {
-        // needed in order to call mTelecomManager.getPhoneAccountsForPackage()
-        List<PhoneAccountHandle> handles = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelecomManager, (tm) -> tm.getPhoneAccountsForPackage(),
-                "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        if (mTelecomManager != null) {
+            // Get all handles registered to the testing package
+            List<PhoneAccountHandle> handles = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelecomManager, (tm) -> tm.getPhoneAccountsForPackage(),
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
 
-        // cleanup any extra phone accounts registered to the testing package before testing
-        if (handles.size() > 0) {
-            handles.stream().forEach(
-                    d -> mTelecomManager.unregisterPhoneAccount(d));
+            // cleanup any extra phone accounts registered to the testing package
+            if (handles.size() > 0 && mTelecomManager != null) {
+                handles.stream().forEach(
+                        d -> mTelecomManager.unregisterPhoneAccount(d));
+            }
         }
     }
 
+    /**
+     * Helper that gets the number of phone accounts registered to the testing package. Requires
+     * the permission READ_PRIVILEGED_PHONE_STATE in order to invoke the
+     * getPhoneAccountsForPackage() method.
+     * @return number of phone accounts registered to the testing package.
+     */
     private int getNumberOfPhoneAccountsRegisteredToTestPackage() {
-        return ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelecomManager, (tm) -> tm.getPhoneAccountsForPackage(),
-                "android.permission.READ_PRIVILEGED_PHONE_STATE").size();
+        if (mTelecomManager != null) {
+            return ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelecomManager, (tm) -> tm.getPhoneAccountsForPackage(),
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE").size();
+        }
+        return 0;
     }
 }
+

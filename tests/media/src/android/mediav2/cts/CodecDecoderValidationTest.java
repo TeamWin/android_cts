@@ -31,8 +31,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * The following test validates decoder for the given input clip. For audio components, we check
@@ -50,16 +50,16 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     private final String mRefFile;
     private final float mRmsError;
     private final long mRefCRC;
-    private final int mSupport;
+    private final SupportClass mSupportRequirements;
 
     public CodecDecoderValidationTest(String decoder, String mime, String[] srcFiles,
-            String refFile, float rmsError, long refCRC, int support) {
+            String refFile, float rmsError, long refCRC, SupportClass supportRequirements) {
         super(decoder, mime, null);
         mSrcFiles = srcFiles;
         mRefFile = refFile;
         mRmsError = rmsError;
         mRefCRC = refCRC;
-        mSupport = support;
+        mSupportRequirements = supportRequirements;
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")
@@ -67,8 +67,8 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
         final boolean isEncoder = false;
         final boolean needAudio = true;
         final boolean needVideo = true;
-        // mime, array list of test files (underlying elementary stream is same, except they
-        // are placed in different containers), ref file, rms error, checksum
+        // mediaType, array list of test files (underlying elementary stream is same, except they
+        // are placed in different containers), ref file, rms error, checksum, SupportClass
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // vp9 test vectors with no-show frames signalled in alternate ways
                 {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{
@@ -471,19 +471,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             formats.add(setUpSource(file));
             mExtractor.release();
         }
-        if (!areFormatsSupported(mCodecName, mMime, formats)) {
-            if (mSupport == CODEC_ALL) {
-                fail("format(s) not supported by component: " + mCodecName + " for mime : " +
-                        mMime);
-            } else if (mSupport == CODEC_ANY && selectCodecs(mMime, formats, null,
-                    false).isEmpty()) {
-                fail("format(s) not supported by any component for mime : " + mMime);
-            } else if (mSupport == CODEC_DEFAULT && isDefaultCodec(mCodecName, mMime, false)) {
-                fail("format(s) not supported by " + mCodecName
-                        + " which is a default codec for mime : " + mMime);
-            }
-            return;
-        }
+        checkFormatSupport(mCodecName, mMime, formats, null, mSupportRequirements);
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         {
             OutputManager ref = null;

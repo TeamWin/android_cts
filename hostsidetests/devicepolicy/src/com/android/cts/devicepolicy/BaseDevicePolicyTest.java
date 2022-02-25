@@ -1265,9 +1265,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         allowTestApiAccess(deviceAdminPkg);
     }
 
-    protected void allowTestApiAccess(String deviceAdminPkg) throws Exception {
-        CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", deviceAdminPkg);
-        executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", deviceAdminPkg);
+    /**
+     * Grants access to APIs marked as {@code @TestApi}.
+     *
+     * <p><b>Note:</b> the {@code application} tag of the app's manifest must contain
+     * {@code android:debuggable="true"}, otherwise it won't work on {@code user} builds.
+     */
+    protected void allowTestApiAccess(String pgkName) throws Exception {
+        CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", pgkName);
+        executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", pgkName);
     }
 
     protected void grantPermission(String pkg, String permission, int userId, String reason)

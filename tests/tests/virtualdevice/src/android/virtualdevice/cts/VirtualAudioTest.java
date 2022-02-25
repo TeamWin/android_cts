@@ -60,6 +60,7 @@ import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.AudioFormat;
 import android.media.AudioTrack;
+import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.ActivityResultReceiver;
 import android.virtualdevice.cts.common.AudioHelper;
 import android.virtualdevice.cts.util.FakeAssociationRule;
@@ -85,6 +86,7 @@ import java.nio.ByteBuffer;
  * Tests for injection and capturing of audio from streamed apps
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class VirtualAudioTest {
     /**
      * Captured signal should be mostly single frequency and power of that frequency should be

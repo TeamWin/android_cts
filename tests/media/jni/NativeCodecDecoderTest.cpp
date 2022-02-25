@@ -17,9 +17,10 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NativeCodecDecoderTest"
 #include <log/log.h>
+
 #include <android/native_window_jni.h>
-#include <NdkMediaExtractor.h>
 #include <jni.h>
+#include <media/NdkMediaExtractor.h>
 #include <sys/stat.h>
 
 #include <array>

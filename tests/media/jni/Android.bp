@@ -28,9 +28,6 @@ cc_test_library {
         "liblog",
     ],
     header_libs: ["liblog_headers"],
-    include_dirs: [
-        "frameworks/av/media/ndk/include/media",
-    ],
     stl: "libc++_static",
     cflags: [
         "-Werror",
@@ -53,9 +50,6 @@ cc_test_library {
         "libz",
     ],
     header_libs: ["liblog_headers"],
-    include_dirs: [
-        "frameworks/av/media/ndk/include/media",
-    ],
     stl: "libc++_static",
     cflags: [
         "-Werror",
@@ -82,9 +76,6 @@ cc_test_library {
         "libz",
     ],
     header_libs: ["liblog_headers"],
-    include_dirs: [
-        "frameworks/av/media/ndk/include/media",
-    ],
     stl: "libc++_static",
     cflags: [
         "-Werror",
@@ -104,9 +95,6 @@ cc_test_library {
         "liblog",
     ],
     header_libs: ["liblog_headers"],
-    include_dirs: [
-        "frameworks/av/media/ndk/include/media",
-    ],
     stl: "libc++_static",
     cflags: [
         "-Werror",

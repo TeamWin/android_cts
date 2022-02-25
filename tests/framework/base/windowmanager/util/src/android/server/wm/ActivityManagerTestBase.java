@@ -1477,7 +1477,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        LockScreenSession unlockDevice() {
+        public LockScreenSession unlockDevice() {
             // Make sure the unlock button event is send to the default display.
             touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
 

@@ -1839,14 +1839,14 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
             mCollector.expectNotNull("Dynamic range profile must always be present in case " +
                     "of 10-bit capable devices!", dynamicProfiles);
-            Set<Integer> supportedProfiles = dynamicProfiles.getSupportedProfiles();
+            Set<Long> supportedProfiles = dynamicProfiles.getSupportedProfiles();
             mCollector.expectTrue("Dynamic range profiles not present!",
                     !supportedProfiles.isEmpty());
             // STANDARD and HLG10 must always be present in the supported profiles
             mCollector.expectContains(supportedProfiles.toArray(), DynamicRangeProfiles.STANDARD);
             mCollector.expectContains(supportedProfiles.toArray(), DynamicRangeProfiles.HLG10);
 
-            Integer recommendedProfile = c.get(
+            Long recommendedProfile = c.get(
                     CameraCharacteristics.REQUEST_RECOMMENDED_TEN_BIT_DYNAMIC_RANGE_PROFILE);
             assertNotNull(recommendedProfile);
             mCollector.expectContains(supportedProfiles.toArray(), recommendedProfile);
@@ -1856,11 +1856,11 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
 
             // Verify constraints validity. For example if HLG10 advertises support for HDR10, then
             // there shouldn't be any HDR10 constraints related to HLG10.
-            for (Integer profile : supportedProfiles) {
-                Set<Integer> currentConstraints =
+            for (Long profile : supportedProfiles) {
+                Set<Long> currentConstraints =
                         dynamicProfiles.getProfileCaptureRequestConstraints(profile);
                 boolean isSameProfilePresent = false;
-                for (Integer concurrentProfile : currentConstraints) {
+                for (Long concurrentProfile : currentConstraints) {
                     if (concurrentProfile == profile) {
                         isSameProfilePresent = true;
                         continue;
@@ -1871,7 +1871,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                                     concurrentProfile);
                     mCollector.expectTrue(msg, supportedProfiles.contains(concurrentProfile));
 
-                    Set<Integer> supportedConstraints =
+                    Set<Long> supportedConstraints =
                             dynamicProfiles.getProfileCaptureRequestConstraints(concurrentProfile);
                     msg = String.format("Dynamic range profile %d advertises support " +
                                     "for profile %d, however the opposite is not true!",
@@ -1896,8 +1896,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     public void test10BitDeviceSupport() throws Exception {
         boolean rearFacing10bitSupport = false;
         boolean frontFacing10bitSupport = false;
-        Set<Integer> rearFacingProfiles = new ArraySet<>();
-        Set<Integer> frontFacingProfiles = new ArraySet<>();
+        Set<Long> rearFacingProfiles = new ArraySet<>();
+        Set<Long> frontFacingProfiles = new ArraySet<>();
 
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "test10BitDeviceSupport: Testing camera ID " + mAllCameraIds[i]);
@@ -1956,7 +1956,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             }
 
             if (staticMetadata.isLogicalMultiCamera()) {
-                Set<Integer> logicalProfiles =
+                Set<Long> logicalProfiles =
                         staticMetadata.getAvailableDynamicRangeProfilesChecked();
                 Set<String> physicalCameraIds = c.getPhysicalCameraIds();
                 for (String physicalId : physicalCameraIds) {
@@ -1970,7 +1970,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                                 "capable physical devices: " + physicalId + " !",
                                 physical10bitOutput);
 
-                        Set<Integer> physicalProfiles =
+                        Set<Long> physicalProfiles =
                                 physicalMeta.getAvailableDynamicRangeProfilesChecked();
                         assertTrue("The logical camera: " + mAllCameraIds[i] +
                                 " dynamic range profiles must match with all publicly accessible " +

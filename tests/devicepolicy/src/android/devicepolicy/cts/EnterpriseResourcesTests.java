@@ -50,7 +50,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 // TODO(b/208084779): Add more cts tests to cover setting different styles and sources, also
 //  add more tests to cover calling from other packages after adding support for the new APIs in
@@ -320,7 +320,7 @@ public class EnterpriseResourcesTests {
         assertThrows(NullPointerException.class, () -> sDpm.getDrawable(
                 UPDATABLE_DRAWABLE_ID_1,
                 DRAWABLE_STYLE_1,
-                (Callable<Drawable>) /* default= */ null));
+                /* default= */ (Supplier<Drawable>) null));
     }
 
     @Test
@@ -457,11 +457,11 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getDrawableCallingPackageResourceId_returnsCorrectValue() {
+    public void devicePolicyDrawableResource_getResourceIdInCallingPackage_returnsCorrectValue() {
         DevicePolicyDrawableResource resource = new DevicePolicyDrawableResource(
                 sContext, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1);
 
-        assertThat(resource.getCallingPackageResourceId()).isEqualTo(R.drawable.test_drawable_1);
+        assertThat(resource.getResourceIdInCallingPackage()).isEqualTo(R.drawable.test_drawable_1);
     }
 
     // TODO(b/16348282): extract to a common place to make it reusable.
@@ -734,11 +734,11 @@ public class EnterpriseResourcesTests {
     @Test
     @Postsubmit(reason = "New test")
     @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
-    public void getStringCallingPackageResourceId_returnsCorrectValue() {
+    public void devicePolicyStringResource_getResourceIdInCallingPackage_returnsCorrectValue() {
         DevicePolicyStringResource resource = new  DevicePolicyStringResource(
                 sContext, UPDATABLE_STRING_ID_1, R.string.test_string_1);
 
-        assertThat(resource.getCallingPackageResourceId()).isEqualTo(R.string.test_string_1);
+        assertThat(resource.getResourceIdInCallingPackage()).isEqualTo(R.string.test_string_1);
     }
 
     private Set<DevicePolicyStringResource> createString(

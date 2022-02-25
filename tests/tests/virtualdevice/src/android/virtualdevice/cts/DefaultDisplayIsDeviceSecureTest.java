@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
 import android.virtualdevice.cts.util.TestAppHelper;
 
@@ -40,6 +41,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "KeyguardManager cannot be accessed by instant apps")
 public class DefaultDisplayIsDeviceSecureTest {
 
     @Test

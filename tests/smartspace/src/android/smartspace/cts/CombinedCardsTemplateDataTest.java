@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.smartspace.SmartspaceTarget;
 import android.app.smartspace.uitemplatedata.BaseTemplateData;
+import android.app.smartspace.uitemplatedata.BaseTemplateData.SubItemInfo;
+import android.app.smartspace.uitemplatedata.BaseTemplateData.SubItemLoggingInfo;
 import android.app.smartspace.uitemplatedata.CombinedCardsTemplateData;
 import android.app.smartspace.uitemplatedata.Text;
 import android.os.Parcel;
@@ -65,20 +67,54 @@ public class CombinedCardsTemplateDataTest {
 
     private BaseTemplateData createBaseTemplateData() {
         return new BaseTemplateData.Builder(SmartspaceTarget.UI_TEMPLATE_DEFAULT)
-                .setTitleText(new Text.Builder("title").build())
-                .setTitleIcon(SmartspaceTestUtils.createSmartspaceIcon("title icon"))
-                .setSubtitleText(new Text.Builder("subtitle").build())
-                .setSubtitleIcon(SmartspaceTestUtils.createSmartspaceIcon("subtitle icon"))
-                .setPrimaryTapAction(SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
-                        "primary action"))
-                .setSupplementalSubtitleText(
-                        new Text.Builder("supplemental subtitle").build())
-                .setSupplementalSubtitleIcon(
-                        SmartspaceTestUtils.createSmartspaceIcon("supplemental subtitle icon"))
-                .setSupplementalSubtitleTapAction(
-                        SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
-                                "supplemental tap action"))
-                .setSupplementalAlarmText(new Text.Builder(
-                        "supplemental alarm text").build()).build();
+                .setPrimaryItem(new SubItemInfo.Builder()
+                        .setText(new Text.Builder("title").build())
+                        .setIcon(SmartspaceTestUtils.createSmartspaceIcon("title icon"))
+                        .setTapAction(
+                                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                                        "primary action"))
+                        .setLoggingInfo(new SubItemLoggingInfo.Builder(0, 0).setPackageName(
+                                "package name 0").build())
+                        .build())
+                .setSubtitleItem(new SubItemInfo.Builder()
+                        .setText(new Text.Builder("subtitle").build())
+                        .setIcon(SmartspaceTestUtils.createSmartspaceIcon("subtitle icon"))
+                        .setTapAction(
+                                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                                        "subtitle action"))
+                        .setLoggingInfo(new SubItemLoggingInfo.Builder(1, 1).setPackageName(
+                                "package name 1").build())
+                        .build())
+                .setSubtitleSupplementalItem(new SubItemInfo.Builder()
+                        .setText(new Text.Builder("subtitle supplemental").build())
+                        .setIcon(SmartspaceTestUtils.createSmartspaceIcon(
+                                "subtitle supplemental icon"))
+                        .setTapAction(
+                                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                                        "subtitle supplemental action"))
+                        .setLoggingInfo(new SubItemLoggingInfo.Builder(2, 2).setPackageName(
+                                "package name 2").build())
+                        .build())
+                .setSupplementalLineItem(new SubItemInfo.Builder()
+                        .setText(new Text.Builder("supplemental line").build())
+                        .setIcon(SmartspaceTestUtils.createSmartspaceIcon(
+                                "supplemental line icon"))
+                        .setTapAction(
+                                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                                        "supplemental line action"))
+                        .setLoggingInfo(new SubItemLoggingInfo.Builder(3, 3).setPackageName(
+                                "package name 3").build())
+                        .build())
+                .setSupplementalAlarmItem(new SubItemInfo.Builder()
+                        .setText(new Text.Builder("alarm supplemental").build())
+                        .setIcon(SmartspaceTestUtils.createSmartspaceIcon("alarm icon"))
+                        .setTapAction(
+                                SmartspaceTestUtils.createSmartspaceTapAction(getContext(),
+                                        "alarm action"))
+                        .setLoggingInfo(new SubItemLoggingInfo.Builder(4, 4).setPackageName(
+                                "package name 4").build())
+                        .build())
+                .setLayoutWeight(1)
+                .build();
     }
 }
