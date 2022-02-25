@@ -25,6 +25,7 @@ import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import static org.junit.Assert.assertFalse;
 import org.junit.Test;
@@ -34,7 +35,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 
 @RunWith(AndroidJUnit4.class)
-public class AndroidFutureTest {
+public class AndroidFutureTest extends StsExtraBusinessLogicTestCase {
 
     @AsbSecurityTest(cveBugId = 197228210)
     @Test
