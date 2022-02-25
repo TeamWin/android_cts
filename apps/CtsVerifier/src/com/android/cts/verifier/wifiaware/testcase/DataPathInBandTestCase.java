@@ -192,6 +192,10 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
             } else {
                 nsBuilder.setPskPassphrase(PASSPHRASE);
             }
+            if (nsBuilder.build().getWifiAwareDataPathSecurityConfig() == null) {
+                Log.e(TAG, "executeTestSubscriber: no security config for secure request");
+                return false;
+            }
         }
         if (mForceChannel) {
             nsBuilder.setChannelFrequencyMhz(CHANNEL_IN_MHZ, true);
