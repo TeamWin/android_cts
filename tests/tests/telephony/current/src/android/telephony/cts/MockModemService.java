@@ -233,6 +233,17 @@ public class MockModemService extends Service {
         int numPhysicalSlots =
                 sContext.getResources()
                         .getInteger(com.android.internal.R.integer.config_num_physical_slots);
+        if (numPhysicalSlots > MockSimService.MOCK_SIM_SLOT_MAX) {
+            Log.d(
+                    TAG,
+                    "Number of physical Slot ("
+                            + numPhysicalSlots
+                            + ") > mock sim slot support. Reset to max number supported ("
+                            + MockSimService.MOCK_SIM_SLOT_MAX
+                            + ").");
+            numPhysicalSlots = MockSimService.MOCK_SIM_SLOT_MAX;
+        }
+
         return numPhysicalSlots;
     }
 
@@ -254,12 +265,16 @@ public class MockModemService extends Service {
         return rspInfo;
     }
 
-    public boolean initialize() {
-        Log.d(TAG, "initialize");
+    public boolean initialize(int simprofile) {
+        Log.d(TAG, "initialize simprofile = " + simprofile);
         boolean result = true;
 
         // Sync mock modem status between modules
         for (int i = 0; i < mNumOfPhone; i++) {
+            // Set initial SIM profile
+            sMockModemConfigInterfaces[i].changeSimProfile(simprofile, TAG);
+
+            // Sync modem configurations to radio modules
             sMockModemConfigInterfaces[i].notifyAllRegistrantNotifications();
         }
 
