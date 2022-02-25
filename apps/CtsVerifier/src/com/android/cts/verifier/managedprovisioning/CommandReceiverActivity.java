@@ -453,14 +453,14 @@ public class CommandReceiverActivity extends Activity {
                             PackageManager.DONT_KILL_APP);
                 } break;
                 case COMMAND_SET_ALWAYS_ON_VPN: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.setAlwaysOnVpnPackage(mAdmin, getPackageName(),
                             false /* lockdownEnabled */);
                 } break;
                 case COMMAND_CLEAR_ALWAYS_ON_VPN: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.setAlwaysOnVpnPackage(mAdmin, null /* vpnPackage */,
@@ -480,13 +480,13 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.setRecommendedGlobalProxy(mAdmin, null);
                 } break;
                 case COMMAND_INSTALL_CA_CERT: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.installCaCert(mAdmin, TEST_CA.getBytes());
                 } break;
                 case COMMAND_CLEAR_CA_CERT: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.uninstallCaCert(mAdmin, TEST_CA.getBytes());
@@ -600,6 +600,15 @@ public class CommandReceiverActivity extends Activity {
         boolean isIt = dpm.isDeviceOwnerApp(getPackageName());
         Log.v(TAG, "is " + getPackageName() + " DO, using " + dpm + "? " + isIt);
         return isIt;
+    }
+
+    /**
+     * Checks if the {@code packageName} is a device owner app, or a profile owner app in the
+     * headless system user mode.
+      */
+    private boolean isDeviceOwnerAppOrEquivalent(String packageName) {
+        return mDpm.isDeviceOwnerApp(packageName)
+                || (UserManager.isHeadlessSystemUserMode() && mDpm.isProfileOwnerApp(packageName));
     }
 
     private void installHelperPackage() throws Exception {
