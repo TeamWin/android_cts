@@ -473,9 +473,11 @@ class ItsSession(object):
     "dng", "raw", "raw10", "raw12", "rawStats" or "y8". The default is a
     YUV420 frame ("yuv") corresponding to a full sensor frame.
 
-    Optionally the out_surfaces field can specify physical camera id(s) if
+    1. Optionally the out_surfaces field can specify physical camera id(s) if
     the current camera device is a logical multi-camera. The physical camera
     id must refer to a physical camera backing this logical camera device.
+    2. Optionally The output_surfaces field can also specify the use case(s) if
+    the current camera device has STREAM_USE_CASE capability.
 
     Note that one or more surfaces can be specified, allowing a capture to
     request images back in multiple formats (e.g.) raw+yuv, raw+jpeg,

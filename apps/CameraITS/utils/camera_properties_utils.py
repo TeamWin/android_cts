@@ -580,6 +580,17 @@ def private_reprocess(props):
   return 'android.request.availableCapabilities' in props and 4 in props[
       'android.request.availableCapabilities']
 
+def stream_use_case(props):
+  """Returns whether a device has stream use case capability.
+
+  Args:
+    props: Camera properties object.
+
+  Returns:
+     Boolean. True if the device has stream use case capability.
+  """
+  return 'android.request.availableCapabilities' in props and 19 in props[
+      'android.request.availableCapabilities']
 
 def intrinsic_calibration(props):
   """Returns whether a device supports android.lens.intrinsicCalibration.

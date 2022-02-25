@@ -804,8 +804,8 @@ def stationary_lens_cap(cam, req, fmt):
   return cap[NUM_FRAMES - 1]
 
 
-def compute_image_rms_difference(rgb_x, rgb_y):
-  """Calculate the RMS difference between 2 RBG images.
+def compute_image_rms_difference_1d(rgb_x, rgb_y):
+  """Calculate the RMS difference between 2 RBG images as 1D arrays.
 
   Args:
     rgb_x: image array
@@ -822,6 +822,30 @@ def compute_image_rms_difference(rgb_x, rgb_y):
   return math.sqrt(sum([pow(rgb_x[i] - rgb_y[i], 2.0)
                         for i in range(len_rgb_x)]) / len_rgb_x)
 
+def compute_image_rms_difference_3d(rgb_x, rgb_y):
+  """Calculate the RMS difference between 2 RBG images as 3D arrays.
+
+  Args:
+    rgb_x: image array in the form of w * h * channels
+    rgb_y: image array in the form of w * h * channels
+
+  Returns:
+    rms_diff
+  """
+  shape_rgb_x = numpy.shape(rgb_x)
+  shape_rgb_y = numpy.shape(rgb_y)
+  if shape_rgb_y != shape_rgb_x:
+    raise AssertionError('RGB images have different number of planes! '
+                         f'x: {shape_rgb_x}, y: {shape_rgb_y}')
+  if len(shape_rgb_x) != 3:
+    raise AssertionError(f'RGB images dimension {len(shape_rgb_x)} is not 3!')
+
+  mean_square_sum = 0.0
+  for i in range(shape_rgb_x[0]):
+    for j in range(shape_rgb_x[1]):
+      for k in range(shape_rgb_x[2]):
+        mean_square_sum += pow(rgb_x[i][j][k] - rgb_y[i][j][k], 2.0);
+  return math.sqrt(mean_square_sum / (shape_rgb_x[0] * shape_rgb_x[1] * shape_rgb_x[2]))
 
 class ImageProcessingUtilsTest(unittest.TestCase):
   """Unit tests for this module."""
