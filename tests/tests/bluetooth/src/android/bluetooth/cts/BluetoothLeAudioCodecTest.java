@@ -85,16 +85,6 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
-    public void testGetMaxCodecType() {
-        try {
-            // Checks the supported codec is greater than zero
-            // Keeps the flexibility to allow custom codec.
-            assertTrue(BluetoothLeAudioCodecConfig.getMaxCodecType() > 0);
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
-    }
-
     public void testGetCodecPriority() {
         for (int priorityIdx = 0; priorityIdx < mCodecPriorityArray.length; priorityIdx++) {
             int codecPriority = mCodecPriorityArray[priorityIdx];
