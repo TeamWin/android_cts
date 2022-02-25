@@ -102,7 +102,8 @@ public class DefaultDisplayModeTest {
     }
 
     @Test
-    public void testDisplayChangedOnSetAndClearUserPreferredDisplayMode() throws Exception {
+    public void testSetAndClearUserPreferredDisplayModeGeneratesDisplayChangedEvents()
+            throws Exception {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
 
@@ -134,7 +135,8 @@ public class DefaultDisplayModeTest {
     }
 
     @Test
-    public void testDisplayChangedOnSetAndClearUserPreferredDisplayModeForSpecificDevice()
+    public void
+            testSetAndClearUserPreferredDisplayModeForSpecificDisplayGeneratesDisplayChangedEvents()
             throws Exception {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
@@ -167,7 +169,7 @@ public class DefaultDisplayModeTest {
     }
 
     @Test
-    public void testSetUserPreferredDisplayModeForSpecificDevice() {
+    public void testSetUserPreferredDisplayModeForSpecificDisplay() {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
 
@@ -185,7 +187,7 @@ public class DefaultDisplayModeTest {
     }
 
     @Test
-    public void testSetUserPreferredRefreshRateForSpecificDevice() {
+    public void testSetUserPreferredRefreshRateForSpecificDisplay() {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
 
@@ -206,7 +208,7 @@ public class DefaultDisplayModeTest {
     }
 
     @Test
-    public void testSetUserPreferredResolutionForSpecificDevice() {
+    public void testSetUserPreferredResolutionForSpecificDisplay() {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
 
