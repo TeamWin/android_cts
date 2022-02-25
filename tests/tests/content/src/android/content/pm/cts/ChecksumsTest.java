@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertThrows;
 
 import android.app.UiAutomation;
 import android.content.ComponentName;
@@ -184,6 +185,14 @@ public class ChecksumsTest {
         assertFalse(isAppInstalled(V4_PACKAGE_NAME));
         uninstallPackageSilently(FIXED_PACKAGE_NAME);
         assertFalse(isAppInstalled(FIXED_PACKAGE_NAME));
+    }
+
+    @Test
+    public void testNameNotFound() throws Exception {
+        LocalListener receiver = new LocalListener();
+        PackageManager pm = getPackageManager();
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver));
     }
 
     @Test
