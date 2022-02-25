@@ -252,7 +252,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                             REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
                     continue;
                 }
-                Set<Integer> availableProfiles =
+                Set<Long> availableProfiles =
                     mStaticInfo.getAvailableDynamicRangeProfilesChecked();
                 assertFalse("Absent dynamic range profiles", availableProfiles.isEmpty());
                 assertTrue("HLG10 not present in the available dynamic range profiles",
@@ -1224,7 +1224,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         public boolean mCheckSession = false;
         public boolean mValidateImageData = true;
         public String mPhysicalId = null;
-        public int mDynamicRangeProfile = DynamicRangeProfiles.STANDARD;
+        public long mDynamicRangeProfile = DynamicRangeProfiles.STANDARD;
         public int mTimestampBase = OutputConfiguration.TIMESTAMP_BASE_DEFAULT;
 
         BufferFormatTestParam(int format, boolean repeating) {

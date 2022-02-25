@@ -162,6 +162,9 @@ cc_test_library {
 cc_test_library {
     name: "libbinder_ndk_test",
     defaults: ["libbinder_ndk_test_defaults"],
+    tidy_timeout_srcs: [
+        "test_native_aidl_client.cpp",
+    ],
     srcs: [
         "test_ibinder.cpp",
         "test_ibinder_jni.cpp",

@@ -105,6 +105,9 @@
     <!-- Needed for Wi-Fi Direct tests from T -->
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
+    <!-- READ_LOGS User Consent Test from T -->
+    <uses-permission android:name="android.permission.READ_LOGS" />
+
     <application android:networkSecurityConfig="@xml/network_security_config"
                  android:label="@string/app_name"
                  android:icon="@drawable/icon"
@@ -1989,14 +1992,16 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch" />
             <meta-data android:name="display_mode" android:value="single_display_mode" />
+            <meta-data android:name="CddTest" android:value="5.7/C-1-1,C-1-2,C-1-3" />
         </activity>
 
         <activity android:name=".streamquality.PlayVideoActivity"
                 android:label="@string/streaming_video"
                 android:configChanges="keyboardHidden|orientation|screenSize"
                 android:screenOrientation="nosensor" >
-                <meta-data android:name="display_mode"
-                           android:value="multi_display_mode" />
+            <meta-data android:name="display_mode"
+                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="5.7/C-1-1,C-1-2,C-1-3" />
         </activity>
 
         <!-- FeatureSummaryActivity is replaced by CTS SystemFeaturesTest
@@ -5787,6 +5792,16 @@
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".logcat.ReadLogsTestActivity"
+            android:exported="true"
+            android:label="@string/read_logs_text">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_logcat" />
         </activity>
 
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"

@@ -674,9 +674,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                     // First we want to make sure that a fixed set of 10-bit streams
                     // is functional
-                    for (Integer profile : profiles.getSupportedProfiles()) {
+                    for (Long profile : profiles.getSupportedProfiles()) {
                         if (profile != DynamicRangeProfiles.STANDARD) {
-                            ArrayList<Integer> testProfiles = new ArrayList<Integer>() {
+                            ArrayList<Long> testProfiles = new ArrayList<Long>() {
                                 { add(profile); } };
                             testMandatory10BitStreamCombination(id, combination, profiles,
                                     testProfiles);
@@ -688,7 +688,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     // Next try out a random mix of standard 8-bit and 10-bit profiles.
                     // The number of possible combinations is quite big and testing them
                     // all on physical hardware can become unfeasible.
-                    ArrayList<Integer> testProfiles = new ArrayList<>(
+                    ArrayList<Long> testProfiles = new ArrayList<>(
                             profiles.getSupportedProfiles());
                     testMandatory10BitStreamCombination(id, combination, profiles, testProfiles);
                 }
@@ -700,7 +700,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     private void testMandatory10BitStreamCombination(String cameraId,
             MandatoryStreamCombination combination, DynamicRangeProfiles profiles,
-            List<Integer> testProfiles) {
+            List<Long> testProfiles) {
         final int TIMEOUT_FOR_RESULT_MS = 1000;
         final int MIN_RESULT_COUNT = 3;
 
@@ -736,15 +736,15 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 // the first output surface and respecting the advertised constraints
                 Iterator<OutputConfiguration> it = outputConfigs.iterator();
                 OutputConfiguration config = it.next();
-                HashSet<Integer> currentProfiles = new HashSet<>();
+                HashSet<Long> currentProfiles = new HashSet<>();
                 currentProfiles.add(config.getDynamicRangeProfile());
                 requestBuilder.addTarget(config.getSurface());
                 outputSurfaces.remove(config.getSurface());
                 it.remove();
                 while (it.hasNext()) {
                     config = it.next();
-                    Integer currentProfile = config.getDynamicRangeProfile();
-                    Set<Integer> newLimitations = profiles.getProfileCaptureRequestConstraints(
+                    Long currentProfile = config.getDynamicRangeProfile();
+                    Set<Long> newLimitations = profiles.getProfileCaptureRequestConstraints(
                             currentProfile);
                     if (newLimitations.isEmpty() || (newLimitations.containsAll(currentProfiles))) {
                         currentProfiles.add(currentProfile);

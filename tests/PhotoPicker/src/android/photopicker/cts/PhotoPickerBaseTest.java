@@ -49,7 +49,7 @@ public class PhotoPickerBaseTest {
 
         mContext = inst.getContext();
         final Intent intent = new Intent(mContext, GetResultActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         // Wake up the device and dismiss the keyguard before the test starts
         mDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");

@@ -599,6 +599,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testApplicationHidden_cannotHidePolicyExemptApps() throws Exception {
+        // Needed to access dpm.getPolicyExemptApps()
+        allowTestApiAccess(DEVICE_ADMIN_PKG);
         executeDeviceTestMethod(".ApplicationHiddenTest", "testCannotHidePolicyExemptApps");
     }
 

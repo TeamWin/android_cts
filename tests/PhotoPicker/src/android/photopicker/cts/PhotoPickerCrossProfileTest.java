@@ -20,11 +20,13 @@ import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertPick
 import static android.photopicker.cts.util.PhotoPickerAssertionsUtils.assertRedactedReadOnlyAccess;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImages;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
+import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findProfileButton;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ClipData;
 import android.content.Intent;
@@ -32,6 +34,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 
 import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -40,7 +43,6 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.After;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,8 +63,9 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
     @After
     public void tearDown() throws Exception {
         for (Uri uri : mUriList) {
-            deleteMedia(uri, mContext.getUserId());
+            deleteMedia(uri, mContext);
         }
+        mUriList.clear();
         mActivity.finish();
     }
 
@@ -106,13 +109,10 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
 
     @Test
     @EnsureHasWorkProfile
-    @Ignore("Enable after b/216475844 is fixed")
-    public void testPersonalApp_canAccessWorkProfileContents() throws Exception {
-        final int imageCount = 2;
-        createImages(imageCount, sDeviceState.workProfile().id(), mUriList);
-
+    public void testPersonalApp_cannotAccessWorkProfile_default() throws Exception {
         Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, imageCount);
+        // TODO(b/205291616): Replace 100 with MediaStore.getPickImagesMaxLimit()
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, 100);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         // Click the profile button to change to work profile
@@ -120,26 +120,21 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         profileButton.click();
         mDevice.waitForIdle();
 
-        final List<UiObject> itemList = findItemList(imageCount);
-        final int itemCount = itemList.size();
-        assertThat(itemCount).isEqualTo(imageCount);
-        for (int i = 0; i < itemCount; i++) {
-            final UiObject item = itemList.get(i);
-            item.click();
-            mDevice.waitForIdle();
-        }
+        // By default, ACTION_PICK_IMAGES is only allowlisted to access personal
+        // content from work profile, but not vice-a-versa.
+        assertBlockedByAdminDialog();
+    }
 
-        final UiObject addButton = findAddButton();
-        addButton.click();
-        mDevice.waitForIdle();
+    private void assertBlockedByAdminDialog() {
+        final String dialogTitle = "Blocked by your admin";
+        assertWithMessage("Timed out while waiting for blocked by admin dialog to appear")
+                .that(new UiObject(new UiSelector().textContains(dialogTitle))
+                        .waitForExists(SHORT_TIMEOUT))
+                .isTrue();
 
-        final ClipData clipData = mActivity.getResult().data.getClipData();
-        final int count = clipData.getItemCount();
-        assertThat(count).isEqualTo(imageCount);
-        for (int i = 0; i < count; i++) {
-            Uri uri = clipData.getItemAt(i).getUri();
-            assertPickerUriFormat(uri, sDeviceState.workProfile().id());
-            assertRedactedReadOnlyAccess(uri);
-        }
+        final String dialogDescription = "Accessing work data from a personal app is not permitted";
+        assertWithMessage("Blocked by admin description is not as expected")
+                .that(new UiObject(new UiSelector().textContains(dialogDescription)).exists())
+                .isTrue();
     }
 }

@@ -57,7 +57,6 @@ import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
 import com.android.compatibility.common.util.BroadcastMessenger.Receiver;
 import com.android.compatibility.common.util.ShellUtils;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -240,7 +239,6 @@ public class ProcessTest2 {
      * Make sure the correct app class is instantiated in the app processes.
      */
     @Test
-    @Ignore
     public void testApplicationClass() throws Exception {
         stopAllHelperApps();
 

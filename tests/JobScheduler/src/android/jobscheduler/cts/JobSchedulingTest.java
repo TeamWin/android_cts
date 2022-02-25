@@ -140,25 +140,25 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     public void testHigherPriorityJobRunsFirst() throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
 
-        setBatteryState(false, 75);
+        setStorageStateLow(true);
         final int higherPriorityJobId = JOB_ID;
         final int numMinPriorityJobs = 2 * MAX_JOB_CONTEXTS_COUNT;
         kTestEnvironment.setExpectedExecutions(1 + numMinPriorityJobs);
         for (int i = 0; i < numMinPriorityJobs; ++i) {
             JobInfo job = new JobInfo.Builder(higherPriorityJobId + 1 + i, kJobServiceComponent)
                     .setPriority(JobInfo.PRIORITY_MIN)
-                    .setRequiresCharging(true)
+                    .setRequiresStorageNotLow(true)
                     .build();
             mJobScheduler.schedule(job);
         }
         // Schedule the higher priority job last since the default sorting is by enqueue time.
         JobInfo jobMax = new JobInfo.Builder(higherPriorityJobId, kJobServiceComponent)
                 .setPriority(JobInfo.PRIORITY_DEFAULT)
-                .setRequiresCharging(true)
+                .setRequiresStorageNotLow(true)
                 .build();
         mJobScheduler.schedule(jobMax);
 
-        setBatteryState(true, 100);
+        setStorageStateLow(false);
         kTestEnvironment.awaitExecution();
 
         Event jobHigherExecution = new Event(TestEnvironment.Event.EVENT_START_JOB,
