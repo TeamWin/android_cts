@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
@@ -121,6 +122,7 @@ public final class DeviceOwner extends DevicePolicyController {
         Intent intent = new Intent(ACTION_DISABLE_SELF);
         intent.setComponent(new ComponentName(pkg().packageName(),
                 "com.android.bedstead.testapp.TestAppBroadcastController"));
+        Context context = TestApis.context().androidContextAsUser(mUser);
 
         try (PermissionContext p =
                      TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
@@ -130,7 +132,7 @@ public final class DeviceOwner extends DevicePolicyController {
                 BlockingBroadcastReceiver b = new BlockingBroadcastReceiver(
                         TestApis.context().instrumentedContext());
 
-                TestApis.context().androidContextAsUser(mUser).sendOrderedBroadcast(
+                context.sendOrderedBroadcast(
                         intent, /* receiverPermission= */ null, b, /* scheduler= */
                         null, /* initialCode= */
                         Activity.RESULT_CANCELED, /* initialData= */ null, /* initialExtras= */
@@ -139,14 +141,15 @@ public final class DeviceOwner extends DevicePolicyController {
                 b.awaitForBroadcastOrFail(Duration.ofSeconds(30).toMillis());
                 assertThat(b.getResultCode()).isEqualTo(Activity.RESULT_OK);
             }).timeout(Duration.ofMinutes(5)).runAndWrapException();
+
+            DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+
+            Poll.forValue(() -> dpm.isRemovingAdmin(mComponentName, mUser.id()))
+                    .toNotBeEqualTo(true)
+                    .errorOnFail()
+                    .await();
         }
 
-//        TODO(b/219894175) Expose isRemovingAdmin as a TestAPI for U.
-//        DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
-//
-//        Poll.forValue(() -> dpm.isRemovingAdmin(mComponentName, mUser.id()))
-//                .toNotBeEqualTo(true)
-//                .await();
     }
 
     @Override
