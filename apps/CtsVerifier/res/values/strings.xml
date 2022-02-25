@@ -51,6 +51,7 @@
     <string name="test_category_tunnel">Tunnel Mode</string>
     <string name="test_category_tv">TV</string>
     <string name="test_category_instant_apps">Instant Apps</string>
+    <string name="test_category_logcat">Read Logs</string>
     <string name="test_category_display_cutout">DisplayCutout</string>
     <string name="test_category_other">Other</string>
     <string name="clear">Clear</string>
@@ -375,6 +376,10 @@
     <string name="biometric_test_set_user_authentication_credential_duration_auth_with_credential_strongbox">time-based key with credential (strongbox)</string>
     <string name="biometric_test_set_user_authentication_credential_per_use_auth_with_biometric_strongbox">auth-per-use key with biometric (strongbox)</string>
     <string name="biometric_test_set_user_authentication_credential_duration_auth_with_biometric_strongbox">time-based key with biometric (strongbox)</string>
+
+    <!-- Strings for user consent for logs test -->
+    <string name="read_logs_text">User Consent for Device Logs Test</string>
+    <string name="read_logs_test_info">"This test verifies that user consent for per-use prompt is working properly.\nThe test assumes READ_LOGS permission is granted to the app.\nStart this test by clicking User Consent for Device Logs Test button.\nWhen the process becomes foreground, a user will see a prompt. Once a user clicks the prompt, users have an option to choose \"Only this time\" or \"Don\'t Allow\"."</string>
 
     <!-- Strings for lock bound keys test -->
     <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
