@@ -16,7 +16,7 @@
 
 package android.car.cts.builtin.util;
 
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Instrumentation;
 import android.car.builtin.util.AssistUtilsHelper;
@@ -26,10 +26,13 @@ import android.util.Log;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -42,23 +45,27 @@ public final class AssistUtilsHelperTest {
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private final Context mContext = mInstrumentation.getContext();
 
+    @Before
+    public void setUp() throws Exception {
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                PERMISSION_ACCESS_VOICE_INTERACTION_SERVICE);
+    }
+
+    @After
+    public void cleanUp() {
+        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+    }
+
     @Test
     public void testOnShownCallback() throws Exception {
-        try {
-            // setup
-            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
-                    PERMISSION_ACCESS_VOICE_INTERACTION_SERVICE);
+        SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
+        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        callbackHelperImpl.waitForCallback();
 
-            // execution
-            SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
-            AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
-            callbackHelperImpl.waitForCallbackLatch();
+        assertWithMessage("Voice session shown")
+                .that(callbackHelperImpl.isSessionOnShown()).isTrue();
 
-            // assertion
-            assertTrue(callbackHelperImpl.isSessionOnShown());
-        } finally {
-            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
-        }
+        hideSessionAndWait();
     }
 
     @Test
@@ -67,7 +74,98 @@ public final class AssistUtilsHelperTest {
         // call onFailed API
     }
 
-    private static class SessionShowCallbackHelperImpl implements
+    @Test
+    public void isSessionRunning_whenSessionIsShown_succeeds() throws Exception {
+        SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
+        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        callbackHelperImpl.waitForCallback();
+
+        assertWithMessage("Voice interaction session running")
+                .that(AssistUtilsHelper.isSessionRunning(mContext)).isTrue();
+
+        hideSessionAndWait();
+    }
+
+    @Test
+    public void registerVoiceInteractionSessionListenerHelper_onShowSession() throws Exception {
+        VoiceInteractionSessionListener listener = new VoiceInteractionSessionListener();
+        AssistUtilsHelper.registerVoiceInteractionSessionListenerHelper(mContext, listener);
+
+        SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
+        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        callbackHelperImpl.waitForCallback();
+
+        listener.waitForSessionChange();
+
+        assertWithMessage("Voice interaction session shown")
+                .that(listener.mIsSessionShown).isTrue();
+
+        hideSessionAndWait();
+    }
+
+    @Test
+    public void registerVoiceInteractionSessionListenerHelper_hideCurrentSession()
+            throws Exception {
+        VoiceInteractionSessionListener listener = new VoiceInteractionSessionListener();
+        AssistUtilsHelper.registerVoiceInteractionSessionListenerHelper(mContext, listener);
+
+        SessionShowCallbackHelperImpl callbackHelperImpl = new SessionShowCallbackHelperImpl();
+        AssistUtilsHelper.showPushToTalkSessionForActiveService(mContext, callbackHelperImpl);
+        callbackHelperImpl.waitForCallback();
+
+        listener.waitForSessionChange();
+        listener.reset();
+
+        AssistUtilsHelper.hideCurrentSession(mContext);
+        listener.waitForSessionChange();
+
+        assertWithMessage("Voice interaction session shown")
+                .that(listener.mIsSessionShown).isFalse();
+    }
+
+    private void hideSessionAndWait() throws Exception {
+        if (!AssistUtilsHelper.isSessionRunning(mContext)) {
+            return;
+        }
+        VoiceInteractionSessionListener listener = new VoiceInteractionSessionListener();
+        AssistUtilsHelper.registerVoiceInteractionSessionListenerHelper(mContext, listener);
+
+        listener.reset();
+        listener.waitForSessionChange();
+    }
+
+    private static final class VoiceInteractionSessionListener implements
+            AssistUtilsHelper.VoiceInteractionSessionListenerHelper {
+
+        private final Semaphore mChangeWait = new Semaphore(0);
+        private boolean mIsSessionShown;
+
+        @Override
+        public void onVoiceSessionShown() {
+            mIsSessionShown = true;
+            Log.d(TAG, "onVoiceSessionShown is called");
+            mChangeWait.release();
+        }
+
+        @Override
+        public void onVoiceSessionHidden() {
+            mIsSessionShown = false;
+            Log.d(TAG, "onVoiceSessionHidden is called");
+            mChangeWait.release();
+        }
+
+        private void waitForSessionChange() throws Exception {
+            if (!mChangeWait.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                throw new IllegalStateException("Timed out waiting for session change");
+            }
+        }
+
+        private void reset() {
+            mChangeWait.drainPermits();
+        }
+    }
+
+    private static final class SessionShowCallbackHelperImpl implements
             AssistUtilsHelper.VoiceInteractionSessionShowCallbackHelper {
 
         private final CountDownLatch mCallbackLatch = new CountDownLatch(1);
@@ -87,7 +185,7 @@ public final class AssistUtilsHelperTest {
             return mIsSessionOnShown;
         }
 
-        private void waitForCallbackLatch() throws Exception {
+        private void waitForCallback() throws Exception {
             mCallbackLatch.await(TIMEOUT, TimeUnit.MILLISECONDS);
         }
     }
