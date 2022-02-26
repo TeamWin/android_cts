@@ -106,8 +106,10 @@ class CodecPerformanceTestBase {
         EXCLUDE_ENCODER_MAX_RESOLUTION = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.Q;
 
         // Encoders on devices launched on Android R and lower aren't tested when operating rate
-        // that is set is > 0 and < 30 for resolution 4k
-        EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K = DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R;
+        // that is set is > 0 and < 30 for resolution 4k.
+        // This includes devices launched on Android S with R or lower vendor partition.
+        EXCLUDE_ENCODER_OPRATE_0_TO_30_FOR_4K =
+            !IS_AT_LEAST_VNDK_S || (DEVICE_INITIAL_SDK <= Build.VERSION_CODES.R);
     }
 
     @Before
