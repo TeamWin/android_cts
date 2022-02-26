@@ -41,7 +41,6 @@ import com.android.compatibility.common.util.FakeKeys;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
@@ -110,14 +109,12 @@ public final class CaCertManagementTest {
                     + "G6byGCNL/1Fz7Y+264fGqABSNTKdZwIU2K4ANEH7F+9scnhoO6OBp+gjBe5O+7jb\n"
                     + "wZmUCAoTka4hmoaOCj7cqt/IkmxozQ==\n";
 
-    @Test
     @CanSetPolicyTest(policy = CaCertManagement.class)
     public void getInstalledCaCerts_doesNotReturnNull() throws Exception {
         assertThat(sDeviceState.dpc().devicePolicyManager().getInstalledCaCerts(
                 sDeviceState.dpc().componentName())).isNotNull();
     }
 
-    @Test
     @CannotSetPolicyTest(policy = CaCertManagement.class)
     public void getInstalledCaCerts_invalidAdmin_throwsException() throws Exception {
         assertThrows(SecurityException.class, () ->
@@ -125,7 +122,6 @@ public final class CaCertManagementTest {
                 sDeviceState.dpc().componentName()));
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void installCaCert_caCertIsInstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
@@ -142,7 +138,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = CaCertManagement.class)
     public void installCaCert_invalidAdmin_throwsException() throws Exception {
         assertThrows(SecurityException.class,
@@ -150,8 +145,6 @@ public final class CaCertManagementTest {
                     sDeviceState.dpc().componentName(), CA_CERT_1));
     }
 
-
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void installCaCert_logsEvent() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
@@ -172,7 +165,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallCaCert_caCertIsNotInstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
@@ -188,7 +180,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallCaCert_otherCaCertsAreNotUninstalled() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
@@ -205,7 +196,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = CaCertManagement.class)
     public void uninstallCaCert_invalidAdmin_throwsException() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
@@ -214,7 +204,6 @@ public final class CaCertManagementTest {
                 () -> remoteDpm.uninstallCaCert(sDeviceState.dpc().componentName(), CA_CERT_1));
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallCaCert_logsEvent() throws Exception {
         RemoteDevicePolicyManager remoteDpm = sDeviceState.dpc().devicePolicyManager();
@@ -238,7 +227,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void uninstallAllUserCaCerts_uninstallsAllCaCerts()
             throws Exception {
@@ -257,7 +245,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void installKeyPair_installsKeyPair() throws Exception {
         PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(
@@ -278,7 +265,6 @@ public final class CaCertManagementTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = CaCertManagement.class)
     public void installKeyPair_invalidAdmin_throwsException() throws Exception {
         PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(
@@ -293,7 +279,6 @@ public final class CaCertManagementTest {
                         sDeviceState.dpc().componentName(), privateKey, certificate, ALIAS));
     }
 
-    @Test
     @PolicyAppliesTest(policy = CaCertManagement.class)
     public void removeKeyPair_removedKeyPair() throws Exception {
         PrivateKey privateKey = KeyFactory.getInstance("RSA").generatePrivate(
@@ -312,7 +297,6 @@ public final class CaCertManagementTest {
         assertThat(result).isTrue();
     }
 
-    @Test
     @CannotSetPolicyTest(policy = CaCertManagement.class)
     public void removeKeyPair_invalidAdmin_throwsException() throws Exception {
         assertThrows(SecurityException.class,

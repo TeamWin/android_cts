@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -421,7 +422,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     private void testActivityLaunchInExpandedTaskFragmentInternal() {
 
         final TaskFragmentCreationParams fullScreenParamsC = mTaskFragmentOrganizer
-                .generateTaskFragParams(mOwnerToken);
+                .generateTaskFragParams(mOwnerToken, new Rect(), WINDOWING_MODE_FULLSCREEN);
         final IBinder taskFragTokenC = fullScreenParamsC.getFragmentToken();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
                 .createTaskFragment(fullScreenParamsC)
@@ -535,7 +536,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public void testLaunchEmbeddedActivityWithShowWhenLocked() {
         assumeTrue(supportsLockScreen());
 
+        // Create lock screen session and set credentials (since some devices will not show a
+        // lockscreen without credentials set).
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
         // Initialize test environment by launching Activity A and B (with showWhenLocked)
         // side-by-side.
         initializeSplitActivities(false /* verifyEmbeddedTask */, true /* showWhenLocked */);
@@ -555,7 +559,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public void testLaunchEmbeddedActivitiesWithoutShowWhenLocked() {
         assumeTrue(supportsLockScreen());
 
+        // Create lock screen session and set credentials (since some devices will not show a
+        // lockscreen without credentials set).
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
         // Initialize test environment by launching Activity A and B side-by-side.
         initializeSplitActivities(false /* verifyEmbeddedTask */, false /* showWhenLocked */);
 
@@ -575,7 +582,10 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     public void testLaunchEmbeddedActivitiesWithShowWhenLocked() {
         assumeTrue(supportsLockScreen());
 
+        // Create lock screen session and set credentials (since some devices will not show a
+        // lockscreen without credentials set).
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
         // Initialize test environment by launching Activity A and B side-by-side.
         mOwnerActivity.setShowWhenLocked(true);
         initializeSplitActivities(false /* verifyEmbeddedTask */, true /* showWhenLocked */);

@@ -783,11 +783,17 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 .Builder(Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_SK_128)
                 .setPskPassphrase(passphrase)
                 .build();
+        assertEquals(passphrase, securityConfig.getPskPassphrase());
+        assertEquals(Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_SK_128,
+                securityConfig.getCipherSuite());
+        assertNull(securityConfig.getPmkId());
+        assertNull(securityConfig.getPmk());
 
         PublishConfig.Builder builder = new PublishConfig.Builder()
                 .setServiceName(serviceName)
                 .setDataPathSecurityConfig(securityConfig);
         PublishConfig publishConfig = builder.build();
+        assertEquals(securityConfig, publishConfig.getSecurityConfig());
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
 
         // 1. publish
@@ -844,6 +850,8 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 .setServiceName(serviceName)
                 .setInstantCommunicationModeEnabled(true, WifiScanner.WIFI_BAND_24_GHZ)
                 .build();
+        assertEquals(WifiScanner.WIFI_BAND_24_GHZ, publishConfig.getInstantCommunicationBand());
+        assertTrue(publishConfig.isInstantCommunicationModeEnabled());
 
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
 
@@ -960,6 +968,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 .setServiceName(serviceName)
                 .setInstantCommunicationModeEnabled(true, WifiScanner.WIFI_BAND_24_GHZ)
                 .build();
+
+        assertEquals(WifiScanner.WIFI_BAND_24_GHZ, subscribeConfig.getInstantCommunicationBand());
+        assertTrue(subscribeConfig.isInstantCommunicationModeEnabled());
 
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
 
@@ -1229,12 +1240,15 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertEquals(1000, params.getMacRandomizationIntervalSeconds());
         assertEquals(1, params.getNumSpatialStreamsInDiscovery());
         assertTrue(params.isDwEarlyTerminationEnabled());
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiAwareManager.setAwareParams(params)
-        );
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiAwareManager.setAwareParams(null)
-        );
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiAwareManager.setAwareParams(params)
+            );
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiAwareManager.setAwareParams(null)
+            );
+        }
     }
 
     /**

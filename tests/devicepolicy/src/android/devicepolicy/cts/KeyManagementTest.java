@@ -44,7 +44,6 @@ import com.android.compatibility.common.util.FakeKeys;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
 
@@ -134,7 +133,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void installKeyPair_validRsaKeyPair_success() {
@@ -149,7 +147,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
     public void installKeyPair_nullPrivateKey_throwException() {
@@ -158,7 +155,6 @@ public final class KeyManagementTest {
                         DPC_COMPONENT_NAME, /* privKey = */ null, CERTIFICATE, RSA_ALIAS));
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
     public void installKeyPair_nullCertificate_throwException() {
@@ -167,7 +163,6 @@ public final class KeyManagementTest {
                         DPC_COMPONENT_NAME, PRIVATE_KEY, /* cert = */ null, RSA_ALIAS));
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
     public void installKeyPair_nullAdminComponent_throwException() {
@@ -176,7 +171,6 @@ public final class KeyManagementTest {
                         /* admin = */ null, PRIVATE_KEY, CERTIFICATE, RSA_ALIAS));
     }
 
-    @Test
     @Ignore("TODO(b/204544463): Enable when the key can be serialized")
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
@@ -195,7 +189,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void installKeyPair_withoutAutomatedAccess_aliasIsNotGranted() throws Exception {
@@ -213,7 +206,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void removeKeyPair_validRsaKeyPair_success() {
@@ -228,7 +220,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void hasKeyPair_nonExistentAlias_false() {
@@ -236,7 +227,6 @@ public final class KeyManagementTest {
                 sDeviceState.dpc().devicePolicyManager().hasKeyPair(NON_EXISTENT_ALIAS)).isFalse();
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void hasKeyPair_installedAlias_true() {
@@ -252,7 +242,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void hasKeyPair_removedAlias_false() {
@@ -269,7 +258,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeyManagement.class)
     public void choosePrivateKeyAlias_aliasIsSelectedByAdmin_returnAlias() throws Exception {
@@ -289,7 +277,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeyManagement.class)
     public void choosePrivateKeyAlias_nonUserSelectedAliasIsSelectedByAdmin_returnAlias()
@@ -310,7 +297,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeyManagement.class)
     public void getPrivateKey_aliasIsGranted_returnPrivateKey() throws Exception {
@@ -336,7 +322,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void install_wasPreviouslyGrantedOnPreviousInstall_grantDoesNotPersist()
@@ -359,7 +344,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class, singleTestOnly = true)
     public void getKeyPairGrants_nonExistent_throwsIllegalArgumentException() {
@@ -368,7 +352,6 @@ public final class KeyManagementTest {
                         .getKeyPairGrants(NON_EXISTENT_ALIAS));
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void getKeyPairGrants_doesNotIncludeNotGranted() {
@@ -385,7 +368,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void getKeyPairGrants_includesGrantedAtInstall() {
@@ -403,7 +385,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeyManagement.class)
     public void getKeyPairGrants_includesGrantedExplicitly() {
@@ -424,7 +405,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void getKeyPairGrants_doesNotIncludeRevoked() {
@@ -444,7 +424,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void isKeyPairGrantedToWifiAuth_default_returnsFalse() {
@@ -462,7 +441,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void isKeyPairGrantedToWifiAuth_granted_returnsTrue() {
@@ -481,7 +459,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void isKeyPairGrantedToWifiAuth_revoked_returnsFalse() {
@@ -501,7 +478,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeyManagement.class)
     public void grantKeyPair_keyUsable() throws Exception {
@@ -522,7 +498,6 @@ public final class KeyManagementTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = KeyManagement.class)
     public void revokeKeyPairFromApp_keyNotUsable() throws Exception {

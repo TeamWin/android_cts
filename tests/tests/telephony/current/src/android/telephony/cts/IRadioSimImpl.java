@@ -27,7 +27,10 @@ import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.telephony.cts.MockSimService.SimAppData;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 public class IRadioSimImpl extends IRadioSim.Stub {
     private static final String TAG = "MRSIM";
@@ -42,10 +45,12 @@ public class IRadioSimImpl extends IRadioSim.Stub {
 
     // ***** Events
     static final int EVENT_SIM_CARD_STATUS_CHANGED = 1;
+    static final int EVENT_SIM_APP_DATA_CHANGED = 2;
 
     // ***** Cache of modem attributes/status
     private int mNumOfLogicalSim;
     private CardStatus mCardStatus;
+    private ArrayList<SimAppData> mSimAppList;
 
     public IRadioSimImpl(
             MockModemService service, MockModemConfigInterface[] interfaces, int instanceId) {
@@ -62,6 +67,10 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         // Register events
         sMockModemConfigInterfaces[mSubId].registerForCardStatusChanged(
                 mHandler, EVENT_SIM_CARD_STATUS_CHANGED, null);
+
+        // Register events
+        sMockModemConfigInterfaces[mSubId].registerForSimAppDataChanged(
+                mHandler, EVENT_SIM_APP_DATA_CHANGED, null);
     }
 
     /** Handler class to handle callbacks */
@@ -78,6 +87,21 @@ public class IRadioSimImpl extends IRadioSim.Stub {
                             mCardStatus = (CardStatus) ar.result;
                             Log.i(TAG, "Sim card status: " + mCardStatus);
                             simStatusChanged();
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+
+                    case EVENT_SIM_APP_DATA_CHANGED:
+                        Log.d(TAG, "Received EVENT_SIM_APP_DATA_CHANGED");
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mSimAppList = (ArrayList<SimAppData>) ar.result;
+                            if (mSimAppList != null) {
+                                Log.i(TAG, "number of SIM app data: " + mSimAppList.size());
+                            } else {
+                                Log.e(TAG, "mSimAppList = null");
+                            }
                         } else {
                             Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
                         }
@@ -213,13 +237,49 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     public void getFacilityLockForApp(
             int serial, String facility, String password, int serviceClass, String appId) {
         Log.d(TAG, "getFacilityLockForApp");
+        int numOfSimApp = mSimAppList.size();
+        int responseError = RadioError.NONE;
+        int simAppIdx;
+        boolean isHandled = false;
+        boolean isFacilitySupport = true;
+        int responseData = -1;
 
-        // TODO: cache value
-        int response = 0;
+        // TODO: check service class
+        for (simAppIdx = 0;
+                simAppIdx < numOfSimApp && isFacilitySupport && !isHandled;
+                simAppIdx++) {
+            switch (facility) {
+                case "FD": // FDN status query
+                    if (appId.equals(mSimAppList.get(simAppIdx).getAid())) {
+                        responseData = mSimAppList.get(simAppIdx).getFdnStatus();
+                        isHandled = true;
+                    }
+                    break;
+                case "SC": // PIN1 status query
+                    if (appId.equals(mSimAppList.get(simAppIdx).getAid())) {
+                        responseData = mSimAppList.get(simAppIdx).getPin1State();
+                        isHandled = true;
+                    }
+                    break;
+                default:
+                    isFacilitySupport = false;
+                    break;
+            }
+        }
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (!isHandled) {
+            Log.e(TAG, "Not support sim application aid = " + appId);
+            responseError = RadioError.NO_SUCH_ELEMENT;
+        } else if (!isFacilitySupport) {
+            Log.e(TAG, "Not support facility = " + facility);
+            responseError = RadioError.REQUEST_NOT_SUPPORTED;
+        } else if (responseData == -1) {
+            responseError = RadioError.INTERNAL_ERR;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
-            mRadioSimResponse.getFacilityLockForAppResponse(rsp, response);
+            mRadioSimResponse.getFacilityLockForAppResponse(rsp, responseData);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getFacilityLockForApp from AIDL. Exception" + ex);
         }
@@ -245,10 +305,25 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     @Override
     public void getImsiForApp(int serial, String aid) {
         Log.d(TAG, "getImsiForApp");
-        // TODO: cache value
         String imsi = "";
+        int numOfSimApp = mSimAppList.size();
+        int responseError = RadioError.NONE;
+        int simAppIdx;
+        boolean isHandled;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        for (simAppIdx = 0, isHandled = false; simAppIdx < numOfSimApp && !isHandled; simAppIdx++) {
+            if (aid.equals(mSimAppList.get(simAppIdx).getAid())) {
+                imsi = mSimAppList.get(simAppIdx).getImsi();
+                isHandled = true;
+            }
+        }
+
+        if (!isHandled) {
+            Log.e(TAG, "Not support sim application aid = " + aid);
+            responseError = RadioError.NO_SUCH_ELEMENT;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioSimResponse.getImsiForAppResponse(rsp, imsi);
         } catch (RemoteException ex) {

@@ -61,14 +61,14 @@ public class BluetoothLeAudioCodecStatusTest extends AndroidTestCase {
         assertTrue(LE_MONO_CODEC_STATUS.getCodecConfig().equals(LC3_MONO_CONFIG));
     }
 
-    public void testGetCodecsLocalCapabilities() {
+    public void testGetCodecLocalCapabilities() {
         assertTrue(
-                LE_STEREO_CODEC_STATUS.getCodecsLocalCapabilities().equals(CAPABILITIES_CONFIG));
+                LE_STEREO_CODEC_STATUS.getCodecLocalCapabilities().equals(CAPABILITIES_CONFIG));
     }
 
-    public void testGetCodecsSelectableCapabilities() {
+    public void testGetCodecSelectableCapabilities() {
         assertTrue(
-                LE_STEREO_CODEC_STATUS.getCodecsSelectableCapabilities().equals(SELECTABLE_CONFIG));
+                LE_STEREO_CODEC_STATUS.getCodecSelectableCapabilities().equals(SELECTABLE_CONFIG));
     }
 
     public void testIsCodecConfigSelectable() {
@@ -88,8 +88,8 @@ public class BluetoothLeAudioCodecStatusTest extends AndroidTestCase {
                 BluetoothLeAudioCodecStatus.CREATOR.createFromParcel(parcel);
         assertTrue(codecStatusFromParcel.getCodecConfig().equals(LC3_STEREO_CONFIG));
         assertTrue(
-                codecStatusFromParcel.getCodecsLocalCapabilities().equals(CAPABILITIES_CONFIG));
+                codecStatusFromParcel.getCodecLocalCapabilities().equals(CAPABILITIES_CONFIG));
         assertTrue(
-                codecStatusFromParcel.getCodecsSelectableCapabilities().equals(SELECTABLE_CONFIG));
+                codecStatusFromParcel.getCodecSelectableCapabilities().equals(SELECTABLE_CONFIG));
     }
 }

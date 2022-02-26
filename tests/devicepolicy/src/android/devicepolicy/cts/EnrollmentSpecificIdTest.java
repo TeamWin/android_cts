@@ -39,7 +39,6 @@ import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
@@ -61,7 +60,6 @@ public final class EnrollmentSpecificIdTest {
 
     private static final Context sContext = TestApis.context().instrumentedContext();
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
     public void emptyOrganizationId_throws() {
@@ -69,7 +67,6 @@ public final class EnrollmentSpecificIdTest {
                 () -> sDeviceState.dpc().devicePolicyManager().setOrganizationId(""));
     }
 
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
     public void reSetOrganizationId_throws() {
@@ -88,7 +85,6 @@ public final class EnrollmentSpecificIdTest {
      * This test tests that the platform calculates the ESID according to the specification and
      * does not, for example, return the same ESID regardless of the managing package.
      */
-    @Test
     @Postsubmit(reason = "New test")
     @PolicyAppliesTest(policy = EnrollmentSpecificId.class)
     @EnsureHasPermission({READ_PRIVILEGED_PHONE_STATE, NETWORK_SETTINGS, LOCAL_MAC_ADDRESS})

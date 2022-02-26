@@ -21,12 +21,16 @@ import android.app.StatusBarManager
 import android.app.UiAutomation
 import android.content.Context
 import android.media.MediaRoute2Info
-import android.server.wm.WindowManagerStateHelper
+import android.net.Uri
+import android.support.test.uiautomator.By
+import android.support.test.uiautomator.UiDevice
 import androidx.test.InstrumentationRegistry
 import androidx.test.InstrumentationRegistry.getInstrumentation
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.compatibility.common.util.AdoptShellPermissionsRule
+import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -48,8 +52,8 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     private lateinit var statusBarManager: StatusBarManager
     private lateinit var instrumentation: Instrumentation
     private lateinit var uiAutomation: UiAutomation
+    private lateinit var uiDevice: UiDevice
     private lateinit var context: Context
-    private lateinit var windowManagerStateHelper: WindowManagerStateHelper
 
     @Before
     fun setUp() {
@@ -57,7 +61,8 @@ class UpdateMediaTapToTransferSenderDisplayTest {
         context = instrumentation.getTargetContext()
         statusBarManager = context.getSystemService(StatusBarManager::class.java)!!
         uiAutomation = getInstrumentation().getUiAutomation()
-        windowManagerStateHelper = WindowManagerStateHelper()
+        uiDevice = UiDevice.getInstance(instrumentation)
+        uiDevice.wakeUp()
     }
 
     @After
@@ -127,7 +132,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
-    fun almostCloseToStartCast_displaysChipWindow() {
+    fun almostCloseToStartCast_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_START_CAST,
             ROUTE_INFO,
@@ -135,11 +140,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun almostCloseToEndCast_displaysChipWindow() {
+    fun almostCloseToEndCast_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_END_CAST,
             ROUTE_INFO,
@@ -147,11 +155,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToReceiverTriggered_displaysChipWindow() {
+    fun transferToReceiverTriggered_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_TRIGGERED,
             ROUTE_INFO,
@@ -159,11 +170,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToThisDeviceTriggered_displaysChipWindow() {
+    fun transferToThisDeviceTriggered_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_TRIGGERED,
             ROUTE_INFO,
@@ -171,11 +185,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToReceiverSucceeded_nullCallback_displaysChipWindow() {
+    fun transferToReceiverSucceeded_nullCallback_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_SUCCEEDED,
             ROUTE_INFO,
@@ -183,11 +200,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToReceiverSucceeded_withCallbackAndExecutor_displaysChipWindow() {
+    fun transferToReceiverSucceeded_withCallbackAndExecutor_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_SUCCEEDED,
             ROUTE_INFO,
@@ -195,11 +215,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             Runnable { }
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToThisDeviceSucceeded_nullCallback_displaysChipWindow() {
+    fun transferToThisDeviceSucceeded_nullCallback_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_SUCCEEDED,
             ROUTE_INFO,
@@ -207,11 +230,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToThisDeviceSucceeded_withCallbackAndExecutor_displaysChipWindow() {
+    fun transferToThisDeviceSucceeded_withCallbackAndExecutor_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_SUCCEEDED,
             ROUTE_INFO,
@@ -219,11 +245,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             Runnable { }
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToReceiverFailed_displaysChipWindow() {
+    fun transferToReceiverFailed_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_FAILED,
             ROUTE_INFO,
@@ -231,11 +260,14 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
     @Test
-    fun transferToThisDeviceFailed_displaysChipWindow() {
+    fun transferToThisDeviceFailed_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_FAILED,
             ROUTE_INFO,
@@ -243,17 +275,45 @@ class UpdateMediaTapToTransferSenderDisplayTest {
             /* callback= */ null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
 
-    // TODO(b/216318437): Write tests for the FAR_FROM_RECEIVER state and verify that the window
-    //   isn't displayed. Writing a test that called
-    //   `updateMediaTapToTransferSenderDisplay(FAR_FROM_RECEIVER, ...)` then
-    //   `windowManagerStateHelper.assertWindowNotDisplayed` resulted in test flakiness.
+    @Test
+    fun farFromReceiver_hidesChip() {
+        // First, make sure we display the chip
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_START_CAST,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null
+        )
+
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
+
+        // Then, make sure we hide the chip
+        statusBarManager.updateMediaTapToTransferSenderDisplay(
+            StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_FAR_FROM_RECEIVER,
+            ROUTE_INFO,
+            /* executor= */ null,
+            /* callback= */ null
+        )
+
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_SENDER_CHIP_ID))
+            assertThat(chip).isNull()
+        }
+    }
 }
 
-private const val MEDIA_CHIP_WINDOW_TITLE = "Media Transfer Chip View"
+private const val MEDIA_SENDER_CHIP_ID = "com.android.systemui:id/media_ttt_sender_chip"
 private val MEDIA_PERMISSION: String = android.Manifest.permission.MEDIA_CONTENT_CONTROL
 private val ROUTE_INFO = MediaRoute2Info.Builder("id", "Test Name")
     .addFeature("feature")
+    .setIconUri(Uri.parse("content://ctstest"))
     .build()

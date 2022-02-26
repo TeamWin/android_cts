@@ -117,6 +117,20 @@ public final class Processor extends AbstractProcessor {
                     + ".Uri, java.util.concurrent.Executor, android.app.admin.DevicePolicyManager"
                     + ".InstallSystemUpdateCallback)",
 
+            // Uses Drawable
+            "public android.graphics.drawable.Drawable getDrawable(@NonNull String, @NonNull "
+                    + "String, @NonNull java.util.concurrent.Callable<"
+                    + "android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawable(@NonNull String, @NonNull "
+                    + "String, @NonNull String, @NonNull java.util.concurrent.Callable<"
+                    + "android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawableForDensity(@NonNull String, "
+                    + "@NonNull String, int, @NonNull java.util.concurrent.Callable<"
+                    + "android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawableForDensity(@NonNull String, "
+                    + "@NonNull String, @NonNull String, int, @NonNull "
+                    + "java.util.concurrent.Callable<android.graphics.drawable.Drawable>)",
+
             // WifiManager
 
             // Uses Executor
@@ -131,7 +145,12 @@ public final class Processor extends AbstractProcessor {
                     + ".wifi.WifiManager.ScanResultsCallback)",
             "public void registerSubsystemRestartTrackingCallback(java.util.concurrent.Executor, "
                     + "android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
-            // Uses WpsCallback
+            "public void reportImpactToCreateIfaceRequest(int, boolean, @NonNull "
+                    + "java.util.concurrent.Executor, @NonNull java.util.function.BiConsumer<"
+                    + "java.lang.Boolean,java.util.List<android.util.Pair<java.lang.Integer,"
+                    + "java.lang.String[]>>>)",
+
+    // Uses WpsCallback
             "public void cancelWps(android.net.wifi.WifiManager.WpsCallback)",
             // Uses MulticastLock
             "public android.net.wifi.WifiManager.MulticastLock createMulticastLock(String)",
@@ -462,6 +481,11 @@ public final class Processor extends AbstractProcessor {
             // Uses java.io.FileDescriptor
             "public void dump(@NonNull String, @Nullable java.io.FileDescriptor, @NonNull java.io"
                     + ".PrintWriter, @Nullable String[])",
+            "public void dumpInternal(@NonNull String, @Nullable java.io.FileDescriptor, @NonNull "
+                    + "java.io.PrintWriter, @Nullable String[])",
+
+            // Uses android.view.OnBackInvokedDispatcher
+            "public android.view.OnBackInvokedDispatcher getOnBackInvokedDispatcher()",
 
             // Uses android.app.Activity
             "@Deprecated public void finishActivityFromChild(@NonNull android.app.Activity, int)",
@@ -589,6 +613,10 @@ public final class Processor extends AbstractProcessor {
             "public void onOptionsMenuClosed(android.view.Menu)",
             "public void onPanelClosed(int, @NonNull android.view.Menu)",
             "public boolean onPrepareOptionsMenu(android.view.Menu)",
+
+            // Uses android.util.Dumpable
+            "public boolean addDumpable(@NonNull android.util.Dumpable)",
+            "public boolean removeDumpable(@NonNull android.util.Dumpable)",
 
             // Uses android.graphics.Canvas
             "@Deprecated public boolean onCreateThumbnail(android.graphics.Bitmap, android"

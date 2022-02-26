@@ -48,7 +48,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
@@ -83,7 +82,6 @@ public final class LostModeLocationTest {
         sDeviceState.dpc().unregisterReceiver(sFilter);
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = LostMode.class)
     @EnsureDoesNotHavePermission(SEND_LOST_MODE_LOCATION_UPDATES)
@@ -94,7 +92,6 @@ public final class LostModeLocationTest {
                         new Locations.BlockingLostModeLocationUpdateCallback()));
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
     @Ignore("b/216487148")
@@ -102,7 +99,6 @@ public final class LostModeLocationTest {
         sendLostModeLocationUpdate(/* expected= */ false);
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
     @Ignore("b/216487148")
@@ -112,7 +108,6 @@ public final class LostModeLocationTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_returnTrueAndSendLocationUpdate() throws Exception {
@@ -135,7 +130,6 @@ public final class LostModeLocationTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_sendMostRecentLocation() throws Exception {

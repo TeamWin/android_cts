@@ -177,6 +177,7 @@ public class ItsService extends Service implements SensorEventListener {
     private CameraCaptureSession mSession = null;
     private ImageReader[] mOutputImageReaders = null;
     private SparseArray<String> mPhysicalStreamMap = new SparseArray<String>();
+    private SparseArray<Integer> mStreamUseCaseMap = new SparseArray<Integer>();
     private ImageReader mInputImageReader = null;
     private CameraCharacteristics mCameraCharacteristics = null;
     private HashMap<String, CameraCharacteristics> mPhysicalCameraChars =
@@ -1055,6 +1056,9 @@ public class ItsService extends Service implements SensorEventListener {
                 if (mPhysicalStreamMap.get(i) != null) {
                     config.setPhysicalCameraId(mPhysicalStreamMap.get(i));
                 }
+                if (mStreamUseCaseMap.get(i) != null) {
+                    config.setStreamUseCase(mStreamUseCaseMap.get(i));
+                }
                 outputConfigs.add(config);
             }
 
@@ -1509,6 +1513,7 @@ public class ItsService extends Service implements SensorEventListener {
         int outputFormats[];
         int numSurfaces = 0;
         mPhysicalStreamMap.clear();
+        mStreamUseCaseMap.clear();
 
         if (jsonOutputSpecs != null) {
             try {
@@ -1598,6 +1603,9 @@ public class ItsService extends Service implements SensorEventListener {
                     }
 
                     outputSizes[i] = new Size(width, height);
+                    if (!surfaceObj.isNull("useCase")) {
+                        mStreamUseCaseMap.put(i, surfaceObj.optInt("useCase"));
+                    }
                 }
             } catch (org.json.JSONException e) {
                 throw new ItsException("JSON error", e);
@@ -1685,6 +1693,9 @@ public class ItsService extends Service implements SensorEventListener {
                             mOutputImageReaders[i].getSurface());
                     if (mPhysicalStreamMap.get(i) != null) {
                         config.setPhysicalCameraId(mPhysicalStreamMap.get(i));
+                    }
+                    if (mStreamUseCaseMap.get(i) != null) {
+                        config.setStreamUseCase(mStreamUseCaseMap.get(i));
                     }
                     outputConfigs.add(config);
                 }

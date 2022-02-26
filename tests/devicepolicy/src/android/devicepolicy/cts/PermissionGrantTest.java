@@ -57,7 +57,6 @@ import com.android.bedstead.testapp.TestAppInstance;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.annotation.Retention;
@@ -144,7 +143,6 @@ public final class PermissionGrantTest {
         sTestAppInstance.uninstall();
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetSmsPermissionGranted.class)
     public void getPermissionGrantState_smsPermission_notAbleToSetState_alsoCantReadState() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -172,7 +170,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
     public void getPermissionGrantState_sensorPermission_notAbleToSetState_alsoCantReadState(
             @SensorPermissionTestParameter String permission) {
@@ -201,7 +198,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void denyPermission_setsGrantState(@DeniablePermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -228,7 +224,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void grantPermission_setsGrantState() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -255,7 +250,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SetPermissionGrantState.class)
     public void denyPermission_permissionIsDenied(
             @DeniablePermissionTestParameter String permission) {
@@ -280,7 +274,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SetPermissionGrantState.class)
     public void grantPermission_permissionIsGranted() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -304,7 +297,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
     public void denyPermission_doesNotApply_permissionIsNotDenied(
             @DeniablePermissionTestParameter String permission) {
@@ -322,7 +314,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
     public void grantPermission_doesNotApply_permissionIsNotGranted(
             @DeniablePermissionTestParameter String permission) {
@@ -342,7 +333,6 @@ public final class PermissionGrantTest {
 
     // TODO(b/204041462): Add test that the user can manually grant sensor permissions
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void grantDevelopmentPermission_cannotGrant() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -371,7 +361,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void denyDevelopmentPermission_cannotDeny() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -397,7 +386,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setDevelopmentPermissionToDefault_cannotSet() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -418,7 +406,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetSmsPermissionGranted.class)
     public void grantSmsPermission_setsGrantState() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -444,7 +431,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetSensorPermissionGranted.class)
     @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_setsGrantState(
@@ -472,7 +458,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SetSmsPermissionGranted.class)
     public void grantSmsPermission_permissionIsGranted() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -492,7 +477,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
     @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_permissionIsGranted(
@@ -514,7 +498,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetSmsPermissionGranted.class)
     public void grantSmsPermission_doesNotApplyToUser_permissionIsNotGranted() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -534,7 +517,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
     @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_doesNotApplyToUser_permissionIsNotGranted(
@@ -556,7 +538,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
     public void grantSmsPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -582,7 +563,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeDeviceAdminStates = false)
     public void grantSmsPermission_nonDeviceAdmin_throwsException() {
         assertThrows(SecurityException.class,
@@ -591,7 +571,6 @@ public final class PermissionGrantTest {
                         READ_SMS, PERMISSION_GRANT_STATE_GRANTED));
     }
 
-    @Test
     @CannotSetPolicyTest(policy = SetSensorPermissionGranted.class)
     public void grantSensorPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState(
             @SensorPermissionTestParameter String permission) {
@@ -618,7 +597,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
     @NotificationsTest
     @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
@@ -647,7 +625,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setPermissionGrantState_permissionIsNotDeclared_doesNotSetGrantState() {
         boolean wasSet = sDeviceState.dpc().devicePolicyManager()
@@ -663,7 +640,6 @@ public final class PermissionGrantTest {
                 .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setPermissionGrantState_appIsNotInstalled_doesNotSetGrantState() {
         boolean wasSet = sDeviceState.dpc().devicePolicyManager()
@@ -680,7 +656,6 @@ public final class PermissionGrantTest {
                 .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setPermissionGrantStateDefault_wasPreviouslyGranted_permissionStaysGranted() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -713,7 +688,6 @@ public final class PermissionGrantTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setPermissionGrantStateDefault_wasPreviouslyDenied_permissionStaysDenied() {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()

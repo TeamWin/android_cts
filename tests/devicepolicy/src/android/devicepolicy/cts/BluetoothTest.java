@@ -70,7 +70,6 @@ public final class BluetoothTest {
     private static final byte[] VALID_ADDRESS_BYTES =
             new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 
-    @Test
     @Postsubmit(reason = "new test")
     @EnsureBluetoothEnabled
     @PolicyAppliesTest(policy = Bluetooth.class)
@@ -93,7 +92,6 @@ public final class BluetoothTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @EnsureBluetoothDisabled
     @PolicyAppliesTest(policy = Bluetooth.class)

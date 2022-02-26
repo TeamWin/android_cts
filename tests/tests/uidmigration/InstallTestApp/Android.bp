@@ -40,9 +40,9 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsSharedUserMigrationInstallTestAppRm",
+    name: "CtsSharedUserMigrationInstallTestApp3",
     defaults: ["cts_defaults"],
-    manifest: "AndroidManifestRm.xml",
+    manifest: "AndroidManifest3.xml",
     sdk_version: "current",
     // tag this module as a cts test artifact
     test_suites: [
@@ -52,9 +52,9 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
-    name: "CtsSharedUserMigrationInstallTestAppMax",
+    name: "CtsSharedUserMigrationInstallTestApp4",
     defaults: ["cts_defaults"],
-    manifest: "AndroidManifestMax.xml",
+    manifest: "AndroidManifest4.xml",
     sdk_version: "current",
     // tag this module as a cts test artifact
     test_suites: [

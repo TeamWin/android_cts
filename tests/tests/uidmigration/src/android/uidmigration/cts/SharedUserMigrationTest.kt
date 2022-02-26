@@ -96,22 +96,17 @@ class SharedUserMigrationTest {
         var pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         assertEquals(2, pkgs.size)
 
-        // Leave shared UID by removing sharedUserId.
-        assertTrue(installPackage(apk + "Rm.apk"))
+        // Should not allow directly removing sharedUserId.
+        assertFalse(installPackage(apk + "3.apk"))
+
+        // Leave shared UID.
+        assertTrue(installPackage(apk + "4.apk"))
         pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         assertEquals(1, pkgs.size)
 
-        // Uninstall and reinstall the old app.
-        uninstallPackage(Const.INSTALL_TEST_PKG)
-        assertTrue(installPackage("$apk.apk"))
-        pkgs = mPm.getPackagesForUid(uid).assertNotNull()
-        assertNotNull(pkgs)
-        assertEquals(2, pkgs.size)
+        // Should not allow re-joining sharedUserId.
+        assertFalse(installPackage("$apk.apk"))
 
-        // Leave shared UID with sharedUserMaxSdkVersion.
-        assertTrue(installPackage(apk + "Max.apk"))
-        pkgs = mPm.getPackagesForUid(uid).assertNotNull()
-        assertEquals(1, pkgs.size)
         uninstallPackage(Const.INSTALL_TEST_PKG)
         uninstallPackage(Const.INSTALL_TEST_PKG + "2")
     }
