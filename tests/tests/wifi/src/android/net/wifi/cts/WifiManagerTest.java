@@ -5463,7 +5463,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     /**
      * Tests
-     * {@link WifiManager#reportImpactToCreateIfaceRequest(int, boolean, Executor, BiConsumer)}.
+     * {@link WifiManager#reportCreateInterfaceImpact(int, boolean, Executor, BiConsumer)}.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testIsItPossibleToCreateInterface() throws Exception {
@@ -5474,7 +5474,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         AtomicBoolean called = new AtomicBoolean(false);
         AtomicBoolean canBeCreated = new AtomicBoolean(false);
-        assertThrows(SecurityException.class, () -> mWifiManager.reportImpactToCreateIfaceRequest(
+        assertThrows(SecurityException.class, () -> mWifiManager.reportCreateInterfaceImpact(
                 WifiManager.WIFI_INTERFACE_TYPE_AP, false, mExecutor,
                 (canBeCreatedLocal, interfacesWhichWillBeDeleted) -> {
                     synchronized (mLock) {
