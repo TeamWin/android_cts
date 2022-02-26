@@ -48,7 +48,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.Duration;
@@ -82,7 +81,6 @@ public final class ScreenCaptureDisabledTest {
         mDevicePolicyManager.setScreenCaptureDisabled(mAdmin, false);
     }
 
-    @Test
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_false_works() {
@@ -91,7 +89,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(mLocalDevicePolicyManager.getScreenCaptureDisabled(/* admin= */ null)).isFalse();
     }
 
-    @Test
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_false_checkWithDPC_works() {
@@ -100,7 +97,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(mDevicePolicyManager.getScreenCaptureDisabled(mAdmin)).isFalse();
     }
 
-    @Test
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_true_works() {
@@ -109,7 +105,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(mLocalDevicePolicyManager.getScreenCaptureDisabled(/* admin= */ null)).isTrue();
     }
 
-    @Test
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_true_checkWithDPC_works() {
@@ -118,7 +113,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(mDevicePolicyManager.getScreenCaptureDisabled(mAdmin)).isTrue();
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_true_doesNotApply() {
@@ -127,7 +121,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(mLocalDevicePolicyManager.getScreenCaptureDisabled(/* admin= */ null)).isFalse();
     }
 
-    @Test
     @PolicyDoesNotApplyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @EnsureScreenIsOn
@@ -137,7 +130,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(takeScreenshotExpectingSuccess()).isNotNull();
     }
 
-    @Test
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @SlowApiTest("Screenshot policy can take minutes to propagate")
@@ -148,7 +140,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(takeScreenshotExpectingFailure()).isNull();
     }
 
-    @Test
     @PolicyAppliesTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     @EnsureScreenIsOn
@@ -158,7 +149,6 @@ public final class ScreenCaptureDisabledTest {
         assertThat(takeScreenshotExpectingSuccess()).isNotNull();
     }
 
-    @Test
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_true_metricsLogged() {
@@ -172,7 +162,6 @@ public final class ScreenCaptureDisabledTest {
         }
     }
 
-    @Test
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)
     @Postsubmit(reason = "new test")
     public void setScreenCaptureDisabled_false_metricsLogged() {

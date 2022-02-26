@@ -44,7 +44,6 @@ import com.android.bedstead.testapp.TestAppInstance;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 // TODO(b/198442101): Add tests for the COPE case when we can sideload system apps
@@ -76,7 +75,6 @@ public final class DefaultSmsApplicationTest {
     }
 
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_works() {
@@ -92,7 +90,6 @@ public final class DefaultSmsApplicationTest {
     }
 
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
-    @Test
     @Postsubmit(reason = "new test")
     @PolicyDoesNotApplyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_unchanged() {
@@ -108,7 +105,6 @@ public final class DefaultSmsApplicationTest {
     }
 
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_smsPackageDoesNotExist_unchanged() {
@@ -124,7 +120,6 @@ public final class DefaultSmsApplicationTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_nullAdmin_throwsException() {
@@ -137,7 +132,6 @@ public final class DefaultSmsApplicationTest {
     }
 
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
-    @Test
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultSmsApplication.class)
     public void setDefaultSmsApplication_notSmsCapable_unchanged() {
@@ -152,7 +146,6 @@ public final class DefaultSmsApplicationTest {
         }
     }
 
-    @Test
     @Postsubmit(reason = "new test")
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = DefaultSmsApplication.class, includeNonDeviceAdminStates = false)

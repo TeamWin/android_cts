@@ -135,7 +135,7 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       # Assert all captured images are similar in RBG space
       max_diff = 0
       for rgb_i in rgbs[1:]:
-        rms_diff = image_processing_utils.compute_image_rms_difference(
+        rms_diff = image_processing_utils.compute_image_rms_difference_1d(
             rgbs[0], rgb_i)  # use first capture as reference
         max_diff = max(max_diff, rms_diff)
       msg = 'Max RMS difference: %.4f' % max_diff

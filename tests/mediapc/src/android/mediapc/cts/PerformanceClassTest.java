@@ -16,6 +16,7 @@
 
 package android.mediapc.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
 import static android.mediapc.cts.Utils.MIN_MEMORY_PERF_CLASS_CANDIDATE_MB;
 import static android.mediapc.cts.Utils.MIN_MEMORY_PERF_CLASS_T_MB;
 import static android.util.DisplayMetrics.DENSITY_400;
@@ -24,6 +25,11 @@ import static org.junit.Assert.assertTrue;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
+import android.media.MediaDrm;
+import android.media.MediaFormat;
+import android.media.UnsupportedSchemeException;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -40,11 +46,25 @@ import com.android.compatibility.common.util.ResultUnit;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.UUID;
+
 /**
  * Tests the basic aspects of the media performance class.
  */
 public class PerformanceClassTest {
     private static final String TAG = "PerformanceClassTest";
+    private static final UUID WIDEVINE_UUID = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
+    static ArrayList<String> mMimeSecureSupport = new ArrayList<>();
+
+    static {
+        mMimeSecureSupport.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+        mMimeSecureSupport.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        mMimeSecureSupport.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        mMimeSecureSupport.add(MediaFormat.MIMETYPE_VIDEO_AV1);
+    }
+
 
     private boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
@@ -55,6 +75,101 @@ public class PerformanceClassTest {
                 && !pm.hasSystemFeature(pm.FEATURE_WATCH)
                 && !pm.hasSystemFeature(pm.FEATURE_TELEVISION)
                 && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
+    }
+
+    @SmallTest
+    @Test
+    // TODO(b/218771970) Add @CddTest annotation
+    public void testSecureHwDecodeSupport() throws IOException {
+        ArrayList<String> noSecureHwDecoderForMimes = new ArrayList<>();
+        for (String mime : mMimeSecureSupport) {
+            boolean isSecureHwDecoderFoundForMime = false;
+            boolean isHwDecoderFoundForMime = false;
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
+            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
+            for (MediaCodecInfo info : codecInfos) {
+                if (info.isEncoder() || !info.isHardwareAccelerated() || info.isAlias()) continue;
+                try {
+                    MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
+                    if (caps != null) {
+                        isHwDecoderFoundForMime = true;
+                        if (caps.isFeatureSupported(FEATURE_SecurePlayback))
+                            isSecureHwDecoderFoundForMime = true;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+            if (isHwDecoderFoundForMime && !isSecureHwDecoderFoundForMime)
+                noSecureHwDecoderForMimes.add(mime);
+        }
+        if (Utils.isTPerfClass()) {
+            assertTrue(
+                    "For MPC >= Android T, if HW decoder is present for a mime, secure HW decoder" +
+                            " must be present for the mime. HW decoder present but secure HW " +
+                            "decoder not available for mimes: " + noSecureHwDecoderForMimes,
+                    noSecureHwDecoderForMimes.isEmpty());
+        } else {
+            DeviceReportLog log =
+                    new DeviceReportLog("MediaPerformanceClassLogs", "SecureHwDecodeSupport");
+            log.addValue("SecureHwDecodeSupportForMimesWithHwDecoders",
+                    noSecureHwDecoderForMimes.isEmpty(), ResultType.NEUTRAL, ResultUnit.NONE);
+            // TODO(b/218771970) Log CDD sections
+            log.setSummary("MPC 13: Widevine/Secure codec requirements", 0, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
+    }
+
+    @SmallTest
+    @Test
+    // TODO(b/218771970) Add @CddTest annotation
+    public void testWidevineSupport() throws UnsupportedSchemeException {
+        boolean isWidevineSupported = MediaDrm.isCryptoSchemeSupported(WIDEVINE_UUID);
+        boolean isL1Supported = false;
+        boolean isL1Tier3Supported = false;
+        boolean isOemCrypto17Plus = false;
+        boolean isWidevineCdm17Plus = false;
+        if (isWidevineSupported) {
+            MediaDrm mediaDrm = new MediaDrm(WIDEVINE_UUID);
+            isL1Supported = mediaDrm.getPropertyString("securityLevel").equals("L1");
+            int tier = Integer.parseInt(mediaDrm.getPropertyString("resourceRatingTier"));
+            isL1Tier3Supported = tier >= 3;
+
+            String oemCryptoVersionProperty = mediaDrm.getPropertyString("oemCryptoApiVersion");
+            int oemCryptoVersion = Integer.parseInt(oemCryptoVersionProperty);
+            isOemCrypto17Plus = oemCryptoVersion >= 17;
+
+            String cdmVersionProperty = mediaDrm.getPropertyString(MediaDrm.PROPERTY_VERSION);
+            int cdmMajorVersion = Integer.parseInt(cdmVersionProperty.split("\\.", 2)[0]);
+            isWidevineCdm17Plus = cdmMajorVersion >= 17;
+        }
+
+        if (Utils.isTPerfClass()) {
+            assertTrue("Widevine support required for MPC >= Android T", isWidevineSupported);
+            assertTrue("Widevine L1 support required for MPC >= Android T", isL1Supported);
+            assertTrue("Widevine L1 Resource Rating Tier 3 support required for MPC >= Android T",
+                    isL1Tier3Supported);
+            assertTrue("OEMCrypto min version 17.x required for MPC >= Android T",
+                    isOemCrypto17Plus);
+            assertTrue("Widevine CDM min version 17.x required for MPC >= Android T",
+                    isWidevineCdm17Plus);
+        } else {
+            DeviceReportLog log =
+                    new DeviceReportLog("MediaPerformanceClassLogs", "WidevineSupport");
+            log.addValue("Widevine Support", isWidevineSupported, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            log.addValue("Widevine L1 Support", isL1Supported, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.addValue("Widevine L1 Resource Rating Tier 3 Support", isL1Tier3Supported,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            log.addValue("OEMCrypto min version 17.x Support", isOemCrypto17Plus,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            log.addValue("Widevine CDM min version 17.x Support", isWidevineCdm17Plus,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            // TODO(b/218771970) Log CDD sections
+            log.setSummary("MPC 13: Widevine/Secure codec requirements", 0, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            log.submit(InstrumentationRegistry.getInstrumentation());
+        }
     }
 
     @SmallTest

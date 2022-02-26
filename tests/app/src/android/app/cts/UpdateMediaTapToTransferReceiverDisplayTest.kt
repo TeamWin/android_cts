@@ -22,12 +22,15 @@ import android.app.UiAutomation
 import android.content.Context
 import android.media.MediaRoute2Info
 import android.net.Uri
-import android.server.wm.WindowManagerStateHelper
+import android.support.test.uiautomator.By
+import android.support.test.uiautomator.UiDevice
 import androidx.test.InstrumentationRegistry
 import androidx.test.InstrumentationRegistry.getInstrumentation
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.compatibility.common.util.AdoptShellPermissionsRule
+import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -49,8 +52,8 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     private lateinit var statusBarManager: StatusBarManager
     private lateinit var instrumentation: Instrumentation
     private lateinit var uiAutomation: UiAutomation
+    private lateinit var uiDevice: UiDevice
     private lateinit var context: Context
-    private lateinit var windowManagerStateHelper: WindowManagerStateHelper
 
     @Before
     fun setUp() {
@@ -58,7 +61,8 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
         context = instrumentation.getTargetContext()
         statusBarManager = context.getSystemService(StatusBarManager::class.java)!!
         uiAutomation = getInstrumentation().getUiAutomation()
-        windowManagerStateHelper = WindowManagerStateHelper()
+        uiDevice = UiDevice.getInstance(instrumentation)
+        uiDevice.wakeUp()
     }
 
     @After
@@ -87,7 +91,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
-    fun closeToSender_displaysChipWindow() {
+    fun closeToSender_displaysChip() {
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
             StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
             ROUTE_INFO,
@@ -95,15 +99,43 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
             null
         )
 
-        windowManagerStateHelper.assertWindowDisplayed(MEDIA_CHIP_WINDOW_TITLE)
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_RECEIVER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
     }
-    // TODO(b/216318437): Write tests for the FAR_FROM_SENDER state and verify that the window
-    //   isn't displayed. Writing a test that called
-    //   `updateMediaTapToTransferReceiverDisplay(FAR_FROM_SENDER, ...)` then
-    //   `windowManagerStateHelper.assertWindowNotDisplayed` resulted in test flakiness.
+
+    @Test
+    fun farFromSender_hidesChip() {
+        // First, make sure we display the chip
+        statusBarManager.updateMediaTapToTransferReceiverDisplay(
+            StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
+            ROUTE_INFO,
+            null,
+            null
+        )
+
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_RECEIVER_CHIP_ID))
+            assertThat(chip).isNotNull()
+        }
+
+        // Then, make sure we hide the chip
+        statusBarManager.updateMediaTapToTransferReceiverDisplay(
+            StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_FAR_FROM_SENDER,
+            ROUTE_INFO,
+            null,
+            null
+        )
+
+        eventually {
+            val chip = uiDevice.findObject(By.res(MEDIA_RECEIVER_CHIP_ID))
+            assertThat(chip).isNull()
+        }
+    }
 }
 
-private const val MEDIA_CHIP_WINDOW_TITLE = "Media Transfer Chip View"
+private const val MEDIA_RECEIVER_CHIP_ID = "com.android.systemui:id/media_ttt_receiver_chip"
 private val MEDIA_PERMISSION: String = android.Manifest.permission.MEDIA_CONTENT_CONTROL
 private val ROUTE_INFO = MediaRoute2Info.Builder("id", "Test Name")
     .addFeature("feature")

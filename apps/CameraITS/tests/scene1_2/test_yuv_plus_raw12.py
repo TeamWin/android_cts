@@ -97,7 +97,7 @@ class YuvPlusRaw12Test(its_base_test.ItsBaseTest):
           img, PATCH_X, PATCH_Y, PATCH_W, PATCH_H)
       rgb_means_raw = image_processing_utils.compute_image_means(patch)
 
-      rms_diff = image_processing_utils.compute_image_rms_difference(
+      rms_diff = image_processing_utils.compute_image_rms_difference_1d(
           rgb_means_yuv, rgb_means_raw)
       msg = f'RMS diff: {rms_diff:.4f}'
       logging.debug('%s', msg)

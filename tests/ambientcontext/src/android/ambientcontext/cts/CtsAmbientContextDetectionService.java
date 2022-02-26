@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 
 public class CtsAmbientContextDetectionService extends AmbientContextDetectionService {
     private static final String TAG = "CtsTestAmbientContextEventProviderService";
+    private static final String FAKE_APP_PACKAGE = "foo.bar.baz";
 
     private static Consumer<AmbientContextDetectionResult> sResultConsumer;
     private static Consumer<AmbientContextDetectionServiceStatus> sQueryConsumer;
@@ -63,13 +64,15 @@ public class CtsAmbientContextDetectionService extends AmbientContextDetectionSe
 
     public static void respondSuccess(AmbientContextEvent event) {
         if (sResultConsumer != null) {
-            AmbientContextDetectionResult result = new AmbientContextDetectionResult.Builder()
-                    .addEvent(event).build();
+            AmbientContextDetectionResult result = new AmbientContextDetectionResult
+                    .Builder(FAKE_APP_PACKAGE)
+                    .addEvent(event)
+                    .build();
             sResultConsumer.accept(result);
         }
         if (sQueryConsumer != null) {
             AmbientContextDetectionServiceStatus serviceStatus =
-                    new AmbientContextDetectionServiceStatus.Builder()
+                    new AmbientContextDetectionServiceStatus.Builder(FAKE_APP_PACKAGE)
                             .setStatusCode(AmbientContextManager.STATUS_SUCCESS)
                             .build();
             sQueryConsumer.accept(serviceStatus);
@@ -80,7 +83,7 @@ public class CtsAmbientContextDetectionService extends AmbientContextDetectionSe
     public static void respondFailure(int status) {
         if (sQueryConsumer != null) {
             AmbientContextDetectionServiceStatus serviceStatus =
-                    new AmbientContextDetectionServiceStatus.Builder()
+                    new AmbientContextDetectionServiceStatus.Builder(FAKE_APP_PACKAGE)
                             .setStatusCode(status)
                             .build();
             sQueryConsumer.accept(serviceStatus);

@@ -38,7 +38,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.HashSet;
@@ -80,7 +79,6 @@ public class AccessibilityServicesTest {
                 sDeviceState.dpc().componentName(), /* packageNames= */ null);
     }
 
-    @Test
     @PolicyAppliesTest(policy = PermittedAccessibilityServices.class)
     @EnsureHasPermission(QUERY_ADMIN_POLICY)
     @Postsubmit(reason = "new test")
@@ -95,7 +93,6 @@ public class AccessibilityServicesTest {
                 TestApis.users().instrumented().id())).isNull();
     }
 
-    @Test
     @PolicyAppliesTest(policy = PermittedAccessibilityServices.class)
     @EnsureHasPermission(value = QUERY_ADMIN_POLICY)
     @Postsubmit(reason = "new test")
@@ -114,7 +111,6 @@ public class AccessibilityServicesTest {
                 .containsExactlyElementsIn(SYSTEM_ACCESSIBILITY_SERVICE_PACKAGES);
     }
 
-    @Test
     @PolicyAppliesTest(policy = PermittedAccessibilityServices.class)
     @EnsureHasPermission(value = QUERY_ADMIN_POLICY)
     @Postsubmit(reason = "new test")
@@ -131,7 +127,6 @@ public class AccessibilityServicesTest {
                 .contains(ACCESSIBILITY_SERVICE_PACKAGE_NAME);
     }
 
-    @Test
     @PolicyAppliesTest(policy = PermittedAccessibilityServices.class)
     @EnsureHasPermission(QUERY_ADMIN_POLICY)
     @Postsubmit(reason = "new test")

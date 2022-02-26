@@ -16,12 +16,18 @@
 
 package android.app.appsearch.cts.app;
 
+import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
+import static android.app.appsearch.testutil.AppSearchTestUtils.doGet;
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSessionShim;
+import android.app.appsearch.GenericDocument;
+import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SetSchemaRequest;
 import android.app.appsearch.testutil.AppSearchEmail;
@@ -128,5 +134,42 @@ public class AppSearchSessionPlatformCtsTest {
         // Verify that storage size doesn't change.
         assertThat(afterStatsForPkg.getDataBytes()).isEqualTo(beforeStatsForPkg.getDataBytes());
         assertThat(afterStatsForUid.getDataBytes()).isEqualTo(beforeStatsForUid.getDataBytes());
+    }
+
+    @Test
+    public void testPutDocuments_emptyBytesAndDocuments() throws Exception {
+        // Schema registration
+        AppSearchSchema schema = new AppSearchSchema.Builder("testSchema")
+                .addProperty(new AppSearchSchema.BytesPropertyConfig.Builder("bytes")
+                        .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_REPEATED)
+                        .build())
+                .addProperty(new AppSearchSchema.DocumentPropertyConfig.Builder(
+                        "document", AppSearchEmail.SCHEMA_TYPE)
+                        .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_REPEATED)
+                        .setShouldIndexNestedProperties(true)
+                        .build())
+                .build();
+        mDb.setSchema(new SetSchemaRequest.Builder()
+                .addSchemas(schema, AppSearchEmail.SCHEMA).build()).get();
+
+        // Index a document
+        GenericDocument document = new GenericDocument.Builder<>("namespace", "id1", "testSchema")
+                .setPropertyBytes("bytes")
+                .setPropertyDocument("document")
+                .build();
+
+        AppSearchBatchResult<String, Void> result = checkIsBatchResultSuccess(mDb.put(
+                new PutDocumentsRequest.Builder().addGenericDocuments(document).build()));
+        assertThat(result.getSuccesses()).containsExactly("id1", null);
+        assertThat(result.getFailures()).isEmpty();
+
+        GetByDocumentIdRequest request = new GetByDocumentIdRequest.Builder("namespace")
+                .addIds("id1")
+                .build();
+        List<GenericDocument> outDocuments = doGet(mDb, request);
+        assertThat(outDocuments).hasSize(1);
+        GenericDocument outDocument = outDocuments.get(0);
+        assertThat(outDocument.getPropertyBytesArray("bytes")).isEmpty();
+        assertThat(outDocument.getPropertyDocumentArray("document")).isEmpty();
     }
 }

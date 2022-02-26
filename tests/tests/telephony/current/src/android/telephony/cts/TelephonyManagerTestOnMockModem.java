@@ -82,6 +82,7 @@ public class TelephonyManagerTestOnMockModem {
     public void testSimStateChange() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testSimStateChange");
 
+        int slotId = 0;
         int simCardState = sTelephonyManager.getSimCardState();
         Log.d(TAG, "Current SIM card state: " + simCardState);
 
@@ -89,12 +90,21 @@ public class TelephonyManagerTestOnMockModem {
                 Arrays.asList(TelephonyManager.SIM_STATE_UNKNOWN, TelephonyManager.SIM_STATE_ABSENT)
                         .contains(simCardState));
 
-        int slotId = 0;
-        sMockModemManager.setSimPresent(slotId);
-
+        // Insert a SIM
+        assertTrue(
+                sMockModemManager.insertSimCard(
+                        slotId, MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT));
         simCardState = sTelephonyManager.getSimCardState();
-        Log.d(TAG, "New SIM card state: " + simCardState);
         assertEquals(TelephonyManager.SIM_STATE_PRESENT, simCardState);
+
+        // Check SIM state ready
+        simCardState = sTelephonyManager.getSimState();
+        assertEquals(TelephonyManager.SIM_STATE_READY, simCardState);
+
+        // Remove the SIM
+        assertTrue(sMockModemManager.removeSimCard(slotId));
+        simCardState = sTelephonyManager.getSimCardState();
+        assertEquals(TelephonyManager.SIM_STATE_ABSENT, simCardState);
     }
 
     @Test

@@ -42,7 +42,6 @@ import com.android.bedstead.nene.TestApis;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
@@ -57,7 +56,6 @@ public final class BackupTest {
             sContext.getSystemService(DevicePolicyManager.class);
     private static final BackupManager sLocalBackupManager = new BackupManager(sContext);
 
-    @Test
     @PolicyAppliesTest(policy = Backup.class)
     @EnsureHasPermission(BACKUP)
     @Postsubmit(reason = "new test")
@@ -65,7 +63,6 @@ public final class BackupTest {
         assertThat(sLocalBackupManager.isBackupEnabled()).isFalse();
     }
 
-    @Test
     @PolicyAppliesTest(policy = Backup.class)
     @Postsubmit(reason = "new test")
     public void isBackupServiceEnabled_default_returnsFalse() {
@@ -73,7 +70,6 @@ public final class BackupTest {
                 sDeviceState.dpc().componentName())).isFalse();
     }
 
-    @Test
     @PolicyAppliesTest(policy = Backup.class)
     @Postsubmit(reason = "new test")
     @EnsureHasPermission(BACKUP)
@@ -92,7 +88,6 @@ public final class BackupTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = Backup.class)
     @Postsubmit(reason = "new test")
     @EnsureHasPermission(BACKUP)

@@ -88,12 +88,12 @@ public class SatellitePvtTest {
         assertEquals(satPvt1.getIonoDelayMeters(), satPvt2.getIonoDelayMeters(), DELTA);
         assertEquals(satPvt1.getTropoDelayMeters(), satPvt2.getTropoDelayMeters(), DELTA);
 
-        assertTrue(satPvt1.hasTimeOfClock());
-        assertTrue(satPvt2.hasTimeOfClock());
-        assertEquals(satPvt1.getTimeOfClock(), satPvt2.getTimeOfClock());
-        assertTrue(satPvt1.hasTimeOfEphemeris());
-        assertTrue(satPvt2.hasTimeOfEphemeris());
-        assertEquals(satPvt1.getTimeOfEphemeris(), satPvt2.getTimeOfEphemeris());
+        assertTrue(satPvt1.hasTimeOfClockSeconds());
+        assertTrue(satPvt2.hasTimeOfClockSeconds());
+        assertEquals(satPvt1.getTimeOfClockSeconds(), satPvt2.getTimeOfClockSeconds());
+        assertTrue(satPvt1.hasTimeOfEphemerisSeconds());
+        assertTrue(satPvt2.hasTimeOfEphemerisSeconds());
+        assertEquals(satPvt1.getTimeOfEphemerisSeconds(), satPvt2.getTimeOfEphemerisSeconds());
         assertTrue(satPvt1.hasIssueOfDataClock());
         assertTrue(satPvt2.hasIssueOfDataClock());
         assertEquals(satPvt1.getIssueOfDataClock(), satPvt2.getIssueOfDataClock());
@@ -113,8 +113,8 @@ public class SatellitePvtTest {
                 .setClockInfo(clockInfo)
                 .setIonoDelayMeters(ionoDelayMeters)
                 .setTropoDelayMeters(tropoDelayMeters)
-                .setTimeOfClock(timeOfClock)
-                .setTimeOfEphemeris(timeOfEphemeris)
+                .setTimeOfClockSeconds(timeOfClock)
+                .setTimeOfEphemerisSeconds(timeOfEphemeris)
                 .setIssueOfDataClock(issueOfDataClock)
                 .setIssueOfDataEphemeris(issueOfDataEphemeris)
                 .setEphemerisSource(ephemerisSource)

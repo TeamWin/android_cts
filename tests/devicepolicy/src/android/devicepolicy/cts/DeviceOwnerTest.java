@@ -125,7 +125,6 @@ public final class DeviceOwnerTest {
     @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER, UserType.WORK_PROFILE})
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @Test
     @Postsubmit(reason = "new test")
     public void getDeviceOwnerNameOnAnyUser_returnsDeviceOwnerName() {
         assertThat(sDevicePolicyManager.getDeviceOwnerNameOnAnyUser())
@@ -135,7 +134,6 @@ public final class DeviceOwnerTest {
     @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER, UserType.WORK_PROFILE})
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @Test
     @Postsubmit(reason = "new test")
     public void getDeviceOwnerComponentOnAnyUser_returnsDeviceOwnerComponent() {
         assertThat(sDevicePolicyManager.getDeviceOwnerComponentOnAnyUser())

@@ -37,7 +37,6 @@ import com.android.bedstead.remotedpc.RemotePolicyManager;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
 
@@ -59,7 +58,6 @@ public class WifiSsidRestrictionTest {
         mDevicePolicyManager = dpc.devicePolicyManager();
     }
 
-    @Test
     @PolicyAppliesTest(policy = WifiSsidRestriction.class)
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_validAllowlist_works() {
@@ -82,7 +80,6 @@ public class WifiSsidRestrictionTest {
 
     }
 
-    @Test
     @PolicyAppliesTest(policy = WifiSsidRestriction.class)
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_validDenylist_works() {
@@ -104,7 +101,6 @@ public class WifiSsidRestrictionTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = WifiSsidRestriction.class)
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_validRemoveRestriction_works() {
@@ -128,7 +124,6 @@ public class WifiSsidRestrictionTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = WifiSsidRestriction.class)
     @Postsubmit(reason = "new test")
     public void setWifiSsidPolicy_invalidPolicy_fails() {
@@ -137,7 +132,6 @@ public class WifiSsidRestrictionTest {
                 () -> new WifiSsidPolicy(WifiSsidPolicy.WIFI_SSID_POLICY_TYPE_ALLOWLIST, ssids));
     }
 
-    @Test
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = WifiSsidRestriction.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")

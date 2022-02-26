@@ -50,7 +50,6 @@ import com.android.queryable.queries.StringQuery;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
@@ -74,7 +73,6 @@ public final class UserControlDisabledPackagesTest {
 
     private static final String PACKAGE_NAME = "com.android.foo.bar.baz";
 
-    @Test
     @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "New test")
     public void setUserControlDisabledPackages_verifyMetricIsLogged() {
@@ -100,7 +98,6 @@ public final class UserControlDisabledPackagesTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
@@ -121,7 +118,6 @@ public final class UserControlDisabledPackagesTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
@@ -142,7 +138,6 @@ public final class UserControlDisabledPackagesTest {
         }
     }
 
-    @Test
     @CannotSetPolicyTest(policy = UserControlDisabledPackages.class)
     public void setUserControlDisabledPackages_notAllowedToSetProtectedPackages_throwsException() {
         assertThrows(SecurityException.class,
@@ -151,7 +146,6 @@ public final class UserControlDisabledPackagesTest {
                         Collections.emptyList()));
     }
 
-    @Test
     @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void
@@ -163,7 +157,6 @@ public final class UserControlDisabledPackagesTest {
                 .isEmpty();
     }
 
-    @Test
     @CannotSetPolicyTest(policy = UserControlDisabledPackages.class)
     public void
     getUserControlDisabledPackages_notAllowedToRetrieveProtectedPackages_throwsException() {
@@ -172,7 +165,6 @@ public final class UserControlDisabledPackagesTest {
                         DPC_COMPONENT_NAME));
     }
 
-    @Test
     @EnsureHasPermission(value = permission.FORCE_STOP_PACKAGES)
     @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")

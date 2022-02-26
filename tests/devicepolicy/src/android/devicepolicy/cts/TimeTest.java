@@ -28,7 +28,6 @@ import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
@@ -39,7 +38,6 @@ public final class TimeTest {
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
-    @Test
     @PolicyAppliesTest(policy = AutoTimeRequired.class)
     public void setAutoTimeRequired_false_setsAutoTimeNotRequired() {
         boolean originalValue = sLocalDevicePolicyManager.getAutoTimeRequired();
@@ -56,7 +54,6 @@ public final class TimeTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = AutoTimeRequired.class)
     public void setAutoTimeRequired_true_setsAutoTimeRequired() {
         boolean originalValue = sLocalDevicePolicyManager.getAutoTimeRequired();

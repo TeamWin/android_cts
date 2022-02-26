@@ -39,7 +39,6 @@ import com.android.bedstead.remotedpc.RemotePolicyManager;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.annotation.Retention;
@@ -69,7 +68,6 @@ public class WifiMinimumSecurityTest {
     private @interface SettableWifiSecurityLevelTestParameter {
     }
 
-    @Test
     @PolicyAppliesTest(policy = WifiMinimumSecurity.class)
     @Postsubmit(reason = "new test")
     public void setWifiMinimumSecurity_validLevel_works(
@@ -83,7 +81,6 @@ public class WifiMinimumSecurityTest {
         }
     }
 
-    @Test
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = WifiMinimumSecurity.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")

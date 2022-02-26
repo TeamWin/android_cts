@@ -97,7 +97,7 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       rgb_means_yuv = compute_means_and_save(cap_yuv, 'yuv', log_path)
       rgb_means_jpg = compute_means_and_save(cap_jpg, 'jpg', log_path)
 
-      rms_diff = image_processing_utils.compute_image_rms_difference(
+      rms_diff = image_processing_utils.compute_image_rms_difference_1d(
           rgb_means_yuv, rgb_means_jpg)
       msg = f'RMS diff: {rms_diff:.4f}'
       logging.debug('%s', msg)

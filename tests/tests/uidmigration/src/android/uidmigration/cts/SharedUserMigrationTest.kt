@@ -103,6 +103,10 @@ class SharedUserMigrationTest {
         assertTrue(installPackage(apk + "4.apk"))
         pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         assertEquals(1, pkgs.size)
+
+        // Should not allow re-joining sharedUserId.
+        assertFalse(installPackage("$apk.apk"))
+
         uninstallPackage(Const.INSTALL_TEST_PKG)
         uninstallPackage(Const.INSTALL_TEST_PKG + "2")
     }

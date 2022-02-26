@@ -116,7 +116,6 @@ public class LockTest {
                 .await();
     }
 
-    @Test
     @PolicyAppliesTest(policy = LockNow.class)
     @Postsubmit(reason = "New test")
     @EnsurePasswordNotSet
@@ -136,7 +135,6 @@ public class LockTest {
     @EnsureScreenIsOn
     @EnsurePasswordNotSet
     @Postsubmit(reason = "New test")
-    @Test
     @PolicyAppliesTest(policy = LockNow.class)
     public void lockNow_noPasswordSet_turnsScreenOff() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
@@ -151,7 +149,6 @@ public class LockTest {
     @EnsureScreenIsOn
     @EnsurePasswordNotSet
     @Postsubmit(reason = "New test")
-    @Test
     @PolicyAppliesTest(policy = LockNow.class)
     public void lockNow_automotive_noPasswordSet_doesNotTurnScreenOff() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
@@ -163,7 +160,6 @@ public class LockTest {
     @EnsureScreenIsOn
     @EnsurePasswordSet
     @Postsubmit(reason = "New test")
-    @Test
     @PolicyAppliesTest(policy = LockNow.class)
     public void lockNow_passwordSet_locksDevice() throws Exception {
         sDeviceState.dpc().devicePolicyManager().lockNow();
@@ -176,7 +172,6 @@ public class LockTest {
 
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     @RequireTargetSdkVersion(max = N)
-    @Test
     @PolicyAppliesTest(policy = DeprecatedResetPassword.class)
     public void resetPassword_targetBeforeN_returnsFalse() {
         assertThat(sDeviceState.dpc()
@@ -185,7 +180,6 @@ public class LockTest {
 
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     @RequireTargetSdkVersion(min = O)
-    @Test
     @PolicyAppliesTest(policy = DeprecatedResetPassword.class)
     public void resetPassword_targetAfterO_throwsSecurityException() {
         assertThrows(SecurityException.class,

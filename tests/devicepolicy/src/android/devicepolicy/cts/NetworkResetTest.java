@@ -44,7 +44,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 // TODO(b/189280629): Move this test to to net test folder to live with other network reset tests.
@@ -75,7 +74,6 @@ public final class NetworkResetTest {
 
     // TODO: Add @PolicyDoesNotApplyTest
 
-    @Test
     @PolicyAppliesTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
@@ -96,7 +94,6 @@ public final class NetworkResetTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = DisallowPrivateDnsConfig.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
@@ -120,7 +117,6 @@ public final class NetworkResetTest {
         }
     }
 
-    @Test
     @PolicyAppliesTest(policy = DisallowNetworkReset.class)
     @EnsureHasPermission({NETWORK_SETTINGS, WRITE_SECURE_SETTINGS})
     @Postsubmit(reason = "b/181993922 automatically marked flaky")

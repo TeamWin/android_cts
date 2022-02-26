@@ -52,6 +52,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
 
     private static final String NAMESPACE_ambient_context = "ambient_context";
     private static final String KEY_SERVICE_ENABLED = "service_enabled";
+    private static final String FAKE_APP_PACKAGE = "foo.bar.baz";
     private static final String FAKE_SERVICE_PACKAGE =
             CtsAmbientContextDetectionService.class.getPackage().getName();
     private static final String USER_ID = "0";
@@ -100,6 +101,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
 
         // From manager, verify callback was called
         assertThat(getLastStatusCode()).isEqualTo(AmbientContextManager.STATUS_SUCCESS);
+        assertThat(getLastAppPackageName()).isEqualTo(FAKE_APP_PACKAGE);
     }
 
     @Test
@@ -119,6 +121,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
         // From manager, verify that the callback was called with STATUS_SERVICE_UNAVAILABLE
         assertThat(getLastStatusCode()).isEqualTo(
                 AmbientContextManager.STATUS_SERVICE_UNAVAILABLE);
+        assertThat(getLastAppPackageName()).isEqualTo(FAKE_APP_PACKAGE);
     }
 
     @Test
@@ -133,11 +136,17 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
 
         // From manager, verify callback was called
         assertThat(getLastStatusCode()).isEqualTo(AmbientContextManager.STATUS_ACCESS_DENIED);
+        assertThat(getLastAppPackageName()).isEqualTo(FAKE_APP_PACKAGE);
     }
 
     private int getLastStatusCode() {
         return Integer.parseInt(runShellCommand(
                 "cmd ambient_context get-last-status-code"));
+    }
+
+    private String getLastAppPackageName() {
+        return runShellCommand(
+                "cmd ambient_context get-last-package-name");
     }
 
     private void bindToTestService() {
@@ -159,7 +168,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
      */
     private void callStartDetection() {
         runShellCommand("cmd ambient_context start-detection %s %s",
-                USER_ID, FAKE_SERVICE_PACKAGE);
+                USER_ID, FAKE_APP_PACKAGE);
         CtsAmbientContextDetectionService.onReceivedResponse();
     }
 
@@ -171,7 +180,7 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
      */
     private void callQueryServiceStatus() {
         runShellCommand("cmd ambient_context query-service-status %s %s",
-                USER_ID, FAKE_SERVICE_PACKAGE);
+                USER_ID, FAKE_APP_PACKAGE);
         CtsAmbientContextDetectionService.onReceivedResponse();
     }
 

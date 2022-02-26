@@ -62,7 +62,6 @@ public class ActivityTest {
             .contains(activity().exported().isTrue())
             .get();
 
-    @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile // Activities need to start on both users
     @PermissionTest({INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL})
@@ -142,7 +141,6 @@ public class ActivityTest {
         }
     }
 
-    @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile // Activities need to start on both users
     @PermissionTest({INTERACT_ACROSS_USERS, INTERACT_ACROSS_USERS_FULL})
