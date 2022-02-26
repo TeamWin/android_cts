@@ -27,6 +27,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,6 +44,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -64,14 +66,16 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     private final String mReconfigFile;
     private final float mRmsError;
     private final long mRefCRC;
+    private final SupportClass mSupportRequirements;
 
     public CodecDecoderTest(String decoder, String mime, String testFile, String refFile,
-            String reconfigFile, float rmsError, long refCRC) {
+            String reconfigFile, float rmsError, long refCRC, SupportClass supportRequirements) {
         super(decoder, mime, testFile);
         mRefFile = refFile;
         mReconfigFile = reconfigFile;
         mRmsError = rmsError;
         mRefCRC = refCRC;
+        mSupportRequirements = supportRequirements;
     }
 
     static short[] setUpAudioReference(String file) throws IOException {
@@ -129,53 +133,61 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         final boolean isEncoder = false;
         final boolean needAudio = true;
         final boolean needVideo = true;
-        // mime, testClip, referenceClip, reconfigureTestClip, refRmsError, refCRC32
+        // mediaType, testClip, referenceClip, reconfigureTestClip, refRmsError, refCRC32,
+        // SupportClass
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3", 91.022f, -1L},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3", 91.022f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_2ch_44kHz_lame_cbr.mp3",
-                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 103.60f, -1L},
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 103.60f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, "bbb_1ch_16kHz_16kbps_amrwb.3gp",
                         "bbb_1ch_16kHz_s16le.raw", "bbb_1ch_16kHz_23kbps_amrwb.3gp", 2393.598f,
-                        -1L},
+                        -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_NB, "bbb_1ch_8kHz_10kbps_amrnb.3gp",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_8kbps_amrnb.3gp", -1.0f, -1L},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_8kbps_amrnb.3gp", -1.0f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, "bbb_1ch_16kHz_flac.mka",
-                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_flac.mka", 0.0f, -1L},
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_flac.mka", 0.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, "bbb_2ch_44kHz_flac.mka",
-                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_flac.mka", 0.0f, -1L},
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_flac.mka", 0.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_1ch_16kHz.wav", "bbb_1ch_16kHz_s16le.raw",
-                        "bbb_2ch_44kHz.wav", 0.0f, -1L},
+                        "bbb_2ch_44kHz.wav", 0.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_2ch_44kHz.wav", "bbb_2ch_44kHz_s16le.raw",
-                        "bbb_1ch_16kHz.wav", 0.0f, -1L},
+                        "bbb_1ch_16kHz.wav", 0.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_G711_ALAW, "bbb_1ch_8kHz_alaw.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.08678f, -1L},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.08678f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_G711_MLAW, "bbb_1ch_8kHz_mulaw.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.4131f, -1L},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.4131f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_MSGSM, "bbb_1ch_8kHz_gsm.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.02698f, -1L},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.02698f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_VORBIS, "bbb_1ch_16kHz_vorbis.mka",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_vorbis.mka", -1.0f, -1L},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_vorbis.mka", -1.0f, -1L,
+                        CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_OPUS, "bbb_2ch_48kHz_opus.mka",
-                        "bbb_2ch_48kHz_s16le.raw", "bbb_1ch_48kHz_opus.mka", -1.0f, -1L},
+                        "bbb_2ch_48kHz_s16le.raw", "bbb_1ch_48kHz_opus.mka", -1.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, "bbb_1ch_16kHz_aac.mp4",
-                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_aac.mp4", -1.0f, -1L},
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_aac.mp4", -1.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_340x280_768kbps_30fps_mpeg2.mp4", null,
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f, -1L},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_340x280_768kbps_30fps_avc.mp4", null,
-                        "bbb_520x390_1mbps_30fps_avc.mp4", -1.0f, 1746312400L},
+                        "bbb_520x390_1mbps_30fps_avc.mp4", -1.0f, 1746312400L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_520x390_1mbps_30fps_hevc.mp4", null,
-                        "bbb_340x280_768kbps_30fps_hevc.mp4", -1.0f, 3061322606L},
+                        "bbb_340x280_768kbps_30fps_hevc.mp4", -1.0f, 3061322606L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4",
-                        null, "bbb_176x144_192kbps_15fps_mpeg4.mp4", -1.0f, -1L},
+                        null, "bbb_176x144_192kbps_15fps_mpeg4.mp4", -1.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp",
-                        null, "bbb_176x144_192kbps_10fps_h263.3gp", -1.0f, -1L},
+                        null, "bbb_176x144_192kbps_10fps_h263.3gp", -1.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_340x280_768kbps_30fps_vp8.webm", null,
-                        "bbb_520x390_1mbps_30fps_vp8.webm", -1.0f, 2030620796L},
+                        "bbb_520x390_1mbps_30fps_vp8.webm", -1.0f, 2030620796L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_340x280_768kbps_30fps_vp9.webm", null,
-                        "bbb_520x390_1mbps_30fps_vp9.webm", -1.0f, 4122701060L},
+                        "bbb_520x390_1mbps_30fps_vp9.webm", -1.0f, 4122701060L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4", null,
-                        "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f, 400672933L},
+                        "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f, 400672933L, CODEC_ALL},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
@@ -194,6 +206,15 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         } else if (refCRC >= 0) {
             assertEquals("checksum mismatch", refCRC, outBuff.getCheckSumImage());
         }
+    }
+
+    @Before
+    public void setUp() throws IOException {
+        MediaFormat format = setUpSource(mTestFile);
+        mExtractor.release();
+        ArrayList<MediaFormat> formatList = new ArrayList<>();
+        formatList.add(format);
+        checkFormatSupport(mCodecName, mMime, formatList, null, mSupportRequirements);
     }
 
     /**
@@ -419,6 +440,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         mExtractor.release();
         MediaFormat newFormat = setUpSource(mReconfigFile);
         mExtractor.release();
+        ArrayList<MediaFormat> formatList = new ArrayList<>();
+        formatList.add(newFormat);
+        checkFormatSupport(mCodecName, mMime, formatList, null, mSupportRequirements);
         final long startTs = 0;
         final long seekTs = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;

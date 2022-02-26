@@ -35,10 +35,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -46,11 +48,13 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderSurfaceTest.class.getSimpleName();
 
     private final String mReconfigFile;
+    private final SupportClass mSupportRequirements;
 
     public CodecDecoderSurfaceTest(String decoder, String mime, String testFile,
-            String reconfigFile) {
+            String reconfigFile, SupportClass supportRequirements) {
         super(decoder, mime, testFile);
         mReconfigFile = reconfigFile;
+        mSupportRequirements = supportRequirements;
     }
 
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
@@ -93,6 +97,11 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     @Before
     public void setUp() throws IOException, InterruptedException {
+        MediaFormat format = setUpSource(mTestFile);
+        mExtractor.release();
+        ArrayList<MediaFormat> formatList = new ArrayList<>();
+        formatList.add(format);
+        checkFormatSupport(mCodecName, mMime, formatList, null, mSupportRequirements);
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
         setUpSurface(mActivity);
     }
@@ -107,41 +116,42 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final boolean isEncoder = false;
         final boolean needAudio = false;
         final boolean needVideo = true;
+        // mediaType, test file, reconfig test file, SupportClass
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_340x280_768kbps_30fps_mpeg2.mp4",
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2,
                         "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4",
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2,
                         "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts",
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_340x280_768kbps_30fps_avc.mp4",
-                        "bbb_520x390_1mbps_30fps_avc.mp4"},
+                        "bbb_520x390_1mbps_30fps_avc.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_360x640_768kbps_30fps_avc.mp4",
-                        "bbb_520x390_1mbps_30fps_avc.mp4"},
+                        "bbb_520x390_1mbps_30fps_avc.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_160x1024_1500kbps_30fps_avc.mp4",
-                        "bbb_520x390_1mbps_30fps_avc.mp4"},
+                        "bbb_520x390_1mbps_30fps_avc.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1280x120_1500kbps_30fps_avc.mp4",
-                        "bbb_340x280_768kbps_30fps_avc.mp4"},
+                        "bbb_340x280_768kbps_30fps_avc.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_520x390_1mbps_30fps_hevc.mp4",
-                        "bbb_340x280_768kbps_30fps_hevc.mp4"},
+                        "bbb_340x280_768kbps_30fps_hevc.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4",
-                        "bbb_176x144_192kbps_15fps_mpeg4.mp4"},
+                        "bbb_176x144_192kbps_15fps_mpeg4.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp",
-                        "bbb_176x144_192kbps_10fps_h263.3gp"},
+                        "bbb_176x144_192kbps_10fps_h263.3gp", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_340x280_768kbps_30fps_vp8.webm",
-                        "bbb_520x390_1mbps_30fps_vp8.webm"},
+                        "bbb_520x390_1mbps_30fps_vp8.webm", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_340x280_768kbps_30fps_vp9.webm",
-                        "bbb_520x390_1mbps_30fps_vp9.webm"},
+                        "bbb_520x390_1mbps_30fps_vp9.webm", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP9,
                         "bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.webm",
-                        "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm"},
+                        "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4",
-                        "bbb_520x390_1mbps_30fps_av1.mp4"},
+                        "bbb_520x390_1mbps_30fps_av1.mp4", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AV1,
                         "bikes_qcif_color_bt2020_smpte2086Hlg_bt2020Ncl_fr_av1.mp4",
-                        "bbb_520x390_1mbps_30fps_av1.mp4"},
+                        "bbb_520x390_1mbps_30fps_av1.mp4", CODEC_ALL},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
@@ -316,6 +326,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         mExtractor.release();
         MediaFormat newFormat = setUpSource(mReconfigFile);
         mExtractor.release();
+        ArrayList<MediaFormat> formatList = new ArrayList<>();
+        formatList.add(newFormat);
+        checkFormatSupport(mCodecName, mMime, formatList, null, mSupportRequirements);
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
