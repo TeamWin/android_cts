@@ -16,14 +16,19 @@
 
 package android.server.wm;
 
+import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -36,6 +41,7 @@ import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -55,6 +61,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 
@@ -66,6 +73,9 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
+
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
 import org.junit.After;
@@ -117,6 +127,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     private static final int DEFAULT_SURFACE_VIEW_WIDTH = 100;
     private static final int DEFAULT_SURFACE_VIEW_HEIGHT = 100;
+    MockImeSession mImeSession;
 
     @Before
     public void setUp() throws Exception {
@@ -124,6 +135,10 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mClicked = false;
         mEmbeddedLayoutParams = null;
         mRemoteSurfacePackage = null;
+
+        if (supportsInstallableIme()) {
+            mImeSession = createManagedMockImeSession(this);
+        }
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.launchActivity(null);
@@ -406,6 +421,30 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertWindowFocused(mEmbeddedView, false);
         // assert host has focus
         assertWindowFocused(mSurfaceView, true);
+    }
+
+    @Test
+    public void testImeVisible() throws Throwable {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+        EditText editText = new EditText(mActivity);
+
+        mEmbeddedView = editText;
+        editText.setBackgroundColor(Color.BLUE);
+        editText.setPrivateImeOptions("Hello reader! This is a random string");
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        // When surface view is focused, it should transfer focus to the embedded view.
+        requestSurfaceViewFocus();
+        assertWindowFocused(mEmbeddedView, true);
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        final ImeEventStream stream = mImeSession.openEventStream();
+        expectEvent(stream, editorMatcher("onStartInputView",
+            editText.getPrivateImeOptions()), TIMEOUT_MS);
     }
 
     @Test
