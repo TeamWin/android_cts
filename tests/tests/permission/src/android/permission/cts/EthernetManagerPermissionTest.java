@@ -25,8 +25,8 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.EthernetManager;
 import android.net.EthernetNetworkUpdateRequest;
+import android.net.IpConfiguration;
 import android.net.NetworkCapabilities;
-import android.net.StaticIpConfiguration;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -56,11 +56,14 @@ public class EthernetManagerPermissionTest {
     }
 
     private void callUpdateConfiguration() {
-        final StaticIpConfiguration ipConfig = new StaticIpConfiguration.Builder().build();
+        final IpConfiguration ipConfig = new IpConfiguration.Builder().build();
         final NetworkCapabilities networkCapabilities =
                 new NetworkCapabilities.Builder().build();
         final EthernetNetworkUpdateRequest request =
-                new EthernetNetworkUpdateRequest(ipConfig, networkCapabilities);
+                new EthernetNetworkUpdateRequest.Builder()
+                        .setIpConfiguration(ipConfig)
+                        .setNetworkCapabilities(networkCapabilities)
+                        .build();
         mEthernetManager.updateConfiguration(TEST_IFACE, request, null, null);
     }
 
