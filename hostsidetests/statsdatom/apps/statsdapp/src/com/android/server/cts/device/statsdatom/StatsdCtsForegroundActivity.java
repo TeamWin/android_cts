@@ -52,6 +52,8 @@ public class StatsdCtsForegroundActivity extends Activity {
     public static final String ACTION_POLL_NETWORK_STATS = "action.poll_network_stats";
     public static final String ACTION_LMK = "action.lmk";
     public static final String ACTION_DRAIN_POWER = "action.drain_power";
+    public static final String ACTION_TRIGGER_LIBNERUALNETWORKS_ATOMS =
+            "action.trigger_libneuralnetworks_atoms";
 
     public static final int SLEEP_OF_ACTION_SLEEP_WHILE_TOP = 2_000;
     public static final int SLEEP_OF_ACTION_SHOW_APPLICATION_OVERLAY = 2_000;
@@ -59,6 +61,7 @@ public class StatsdCtsForegroundActivity extends Activity {
 
     static {
         System.loadLibrary("crashhelper");
+        System.loadLibrary("neuralnetworkshelper_statsdatom");
     }
 
     @Override
@@ -107,6 +110,9 @@ public class StatsdCtsForegroundActivity extends Activity {
                 break;
             case ACTION_DRAIN_POWER:
                 doBusyWork();
+                break;
+            case ACTION_TRIGGER_LIBNERUALNETWORKS_ATOMS:
+                trigger_libneuralnetworks_atoms();
                 break;
             default:
                 Log.e(TAG, "Intent had invalid action " + action);
@@ -241,4 +247,6 @@ public class StatsdCtsForegroundActivity extends Activity {
     }
 
     private native void segfault();
+
+    private native void trigger_libneuralnetworks_atoms();
 }
