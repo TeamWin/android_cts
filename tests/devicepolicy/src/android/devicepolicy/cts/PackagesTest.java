@@ -23,6 +23,7 @@ import static org.testng.Assert.assertThrows;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.HideApplication;
@@ -49,6 +50,7 @@ public final class PackagesTest {
     }
 
     @CanSetPolicyTest(policy = HideApplication.class)
+    @Postsubmit(reason = "new test")
     public void isApplicationHidden_applicationIsHidden_returnsTrue() {
         try {
             sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
@@ -63,6 +65,7 @@ public final class PackagesTest {
     }
 
     @CanSetPolicyTest(policy = HideApplication.class)
+    @Postsubmit(reason = "new test")
     public void isApplicationHidden_applicationIsNotHidden_returnsFalse() {
         sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                 sDeviceState.dpc().componentName(), sTestApp.packageName(), false);
@@ -72,6 +75,7 @@ public final class PackagesTest {
     }
 
     @CannotSetPolicyTest(policy = HideApplication.class)
+    @Postsubmit(reason = "new test")
     public void isApplicationHidden_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager()
@@ -80,6 +84,7 @@ public final class PackagesTest {
     }
 
     @CannotSetPolicyTest(policy = HideApplication.class)
+    @Postsubmit(reason = "new test")
     public void setApplicationHidden_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager()
@@ -88,6 +93,7 @@ public final class PackagesTest {
     }
 
     @CanSetPolicyTest(policy = SuspendPackage.class)
+    @Postsubmit(reason = "new test")
     public void isPackageSuspended_packageIsSuspended_returnsTrue() throws Exception {
         try {
             sDeviceState.dpc().devicePolicyManager().setPackagesSuspended(
@@ -103,6 +109,7 @@ public final class PackagesTest {
     }
 
     @CanSetPolicyTest(policy = SuspendPackage.class)
+    @Postsubmit(reason = "new test")
     public void isPackageSuspended_packageIsNotSuspended_returnFalse() throws Exception {
         sDeviceState.dpc().devicePolicyManager().setPackagesSuspended(
                 sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()}, false);
@@ -112,6 +119,7 @@ public final class PackagesTest {
     }
 
     @CannotSetPolicyTest(policy = SuspendPackage.class)
+    @Postsubmit(reason = "new test")
     public void isPackageSuspended_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager()
@@ -120,6 +128,7 @@ public final class PackagesTest {
     }
 
     @CannotSetPolicyTest(policy = SuspendPackage.class)
+    @Postsubmit(reason = "new test")
     public void setPackageSuspended_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager()

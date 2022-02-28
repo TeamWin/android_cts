@@ -93,7 +93,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
-    private static final String DELEGATION_ENABLE_SYSTEM_APP = "delegation-enable-system-app";
     private static final String DELEGATION_CERT_SELECTION = "delegation-cert-selection";
 
     protected static final String TEST_APP_APK = "CtsSimpleApp.apk";
@@ -222,18 +221,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             "testAssertCallerIsApplicationRestrictionsManagingPackage", mUserId);
     }
 
-    /**
-     * Returns a list of delegation tests that should run. Add delegations tests applicable to both
-     * device owner and profile owners to this method directly. DO or PO specific tests should be
-     * added to {@link #getAdditionalDelegationTests} in the subclass.
-     */
-    private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
-        final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".EnableSystemAppDelegateTest", null);
-        result.putAll(getAdditionalDelegationTests());
-        return result;
-    }
-
     Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
         return Collections.<String, DevicePolicyEventWrapper[]>emptyMap();
     }
@@ -247,8 +234,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private List<String> getDelegationScopes() {
         final List<String> result = new ArrayList<>(Arrays.asList(
                 DELEGATION_APP_RESTRICTIONS,
-                DELEGATION_CERT_INSTALL,
-                DELEGATION_ENABLE_SYSTEM_APP
+                DELEGATION_CERT_INSTALL
                 ));
         result.addAll(getAdditionalDelegationScopes());
         return result;
@@ -284,7 +270,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
 
         try {
-            final Map<String, DevicePolicyEventWrapper[]> delegationTests = getDelegationTests();
+            final Map<String, DevicePolicyEventWrapper[]> delegationTests =
+                    getAdditionalDelegationTests();
             // APIs are not accessible by default.
             executeDelegationTests(delegationTests, false /* negative result */);
 
