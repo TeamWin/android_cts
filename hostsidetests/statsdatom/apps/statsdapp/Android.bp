@@ -43,6 +43,24 @@ cc_library_shared {
     sdk_version: "current",
 }
 
+cc_library_shared {
+    name: "libneuralnetworkshelper_statsdatom",
+    srcs: ["jni/trigger_libneuralnetworks_atoms.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    header_libs: ["jni_headers"],
+    shared_libs: [
+        "liblog",
+        "libnativewindow",
+        "libneuralnetworks",
+    ],
+    static_libs: ["libbase_ndk"],
+    stl: "c++_static",
+    sdk_version: "current",
+}
+
 android_test_helper_app {
     name: "CtsStatsdAtomApp",
     defaults: ["cts_defaults"],
@@ -68,6 +86,7 @@ android_test_helper_app {
     jni_libs: [
         "liblmkhelper_statsdatom",
         "libcrashhelper",
+        "libneuralnetworkshelper_statsdatom",
     ],
     compile_multilib: "both",
     v4_signature: true,
