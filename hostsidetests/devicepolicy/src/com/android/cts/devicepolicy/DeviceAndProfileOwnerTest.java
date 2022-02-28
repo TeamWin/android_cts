@@ -93,7 +93,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
-    private static final String DELEGATION_PACKAGE_ACCESS = "delegation-package-access";
     private static final String DELEGATION_ENABLE_SYSTEM_APP = "delegation-enable-system-app";
     private static final String DELEGATION_CERT_SELECTION = "delegation-cert-selection";
 
@@ -114,13 +113,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String VPN_APP_API24_APK = "CtsVpnFirewallAppApi24.apk";
     private static final String VPN_APP_NOT_ALWAYS_ON_APK = "CtsVpnFirewallAppNotAlwaysOn.apk";
 
-    private static final String COMMAND_BLOCK_ACCOUNT_TYPE = "block-accounttype";
-    private static final String COMMAND_UNBLOCK_ACCOUNT_TYPE = "unblock-accounttype";
-
-    private static final String DISALLOW_MODIFY_ACCOUNTS = "no_modify_accounts";
     private static final String DISALLOW_REMOVE_USER = "no_remove_user";
-    private static final String ACCOUNT_TYPE
-            = "com.android.cts.devicepolicy.accountmanagement.account.type";
 
     private static final String CUSTOMIZATION_APP_PKG = "com.android.cts.customizationapp";
     private static final String CUSTOMIZATION_APP_APK = "CtsCustomizationApp.apk";
@@ -155,9 +148,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     protected static final String ASSIST_INTERACTION_SERVICE =
             ASSIST_APP_PKG + "/.MyInteractionService";
-
-    private static final String ARG_ALLOW_FAILURE = "allowFailure";
-    private static final String ARG_LOGGING_TEST = "loggingTest";
 
     private static final String RESTRICT_BACKGROUND_GET_CMD =
         "cmd netpolicy get restrict-background";
@@ -239,7 +229,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".PackageAccessDelegateTest", null);
         result.put(".EnableSystemAppDelegateTest", null);
         result.putAll(getAdditionalDelegationTests());
         return result;
@@ -259,7 +248,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final List<String> result = new ArrayList<>(Arrays.asList(
                 DELEGATION_APP_RESTRICTIONS,
                 DELEGATION_CERT_INSTALL,
-                DELEGATION_PACKAGE_ACCESS,
                 DELEGATION_ENABLE_SYSTEM_APP
                 ));
         result.addAll(getAdditionalDelegationScopes());
@@ -1672,11 +1660,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         String command = "am start -a android.intent.action.MAIN"
                 + " -c android.intent.category.HOME";
         CLog.i("Output for command " + command + ": " + getDevice().executeShellCommand(command));
-    }
-
-    private void executeAppRestrictionsManagingPackageTest(String testName) throws Exception {
-        runDeviceTestsAsUser(DELEGATE_APP_PKG,
-                ".AppRestrictionsDelegateTest", testName, mUserId);
     }
 
     private void executeDelegationTests(Map<String, DevicePolicyEventWrapper[]> delegationTests,

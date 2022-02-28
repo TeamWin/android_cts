@@ -35,6 +35,7 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
 
 import static com.android.bedstead.nene.notifications.NotificationListenerQuerySubject.assertThat;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
