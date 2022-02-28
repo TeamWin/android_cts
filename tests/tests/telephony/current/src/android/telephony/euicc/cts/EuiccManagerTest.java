@@ -43,6 +43,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -189,6 +190,7 @@ public class EuiccManagerTest {
                 EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, mCallbackReceiver.getResultCode());
     }
 
+    @Ignore("b/221887933") // TODO: Enable the test case after framework code is uncommented
     @Test
     public void testSwitchToSubscritionDisableWithNoPortAndChangesCompatDisabled()
             throws Exception {
@@ -229,6 +231,7 @@ public class EuiccManagerTest {
                 SWITCH_WITHOUT_PORT_INDEX_EXCEPTION_ON_DISABLE_STRING);
     }
 
+    @Ignore("b/221887933") // TODO: Enable the test case after framework code is uncommented
     @Test
     public void testSwitchToSubscriptionDisableWithNoPort() throws Exception {
         // test disabled state only for now
