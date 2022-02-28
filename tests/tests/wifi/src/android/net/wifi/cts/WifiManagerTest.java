@@ -35,6 +35,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
+import android.app.admin.DevicePolicyManager;
+import android.app.admin.WifiSsidPolicy;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -5458,6 +5460,43 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mWifiManager.updateNetwork(network);
             }
             uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#notifyMinimumRequiredWifiSecurityLevelChanged(int)}
+     * raise security exception without permission.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testNotifyMinimumRequiredWifiSecurityLevelChangedWithoutPermission()
+            throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported.
+            return;
+        }
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.notifyMinimumRequiredWifiSecurityLevelChanged(
+                        DevicePolicyManager.WIFI_SECURITY_PERSONAL));
+    }
+
+    /**
+     * Tests {@link WifiManager#notifyMinimumRequiredWifiSecurityLevelChanged(int)}
+     * raise security exception without permission.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testNotifyWifiSsidPolicyChangedWithoutPermission() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported.
+            return;
+        }
+        WifiSsidPolicy policy = new WifiSsidPolicy(
+                WifiSsidPolicy.WIFI_SSID_POLICY_TYPE_ALLOWLIST, new ArraySet<>(Arrays.asList(
+                WifiSsid.fromBytes("ssid".getBytes(StandardCharsets.UTF_8)))));
+        try {
+            mWifiManager.notifyWifiSsidPolicyChanged(policy);
+            fail("Expected security exception due to lack of permission");
+        } catch (SecurityException e) {
+            // expected
         }
     }
 
