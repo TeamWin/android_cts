@@ -5578,4 +5578,16 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mLock.wait(TEST_WAIT_DURATION_MS);
         }
     }
+
+    /**
+     * Tests {@link WifiManager#isEasyConnectDppAkmSupported)} does not crash.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testIsEasyConnectDppAkmSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isEasyConnectDppAkmSupported();
+    }
 }
