@@ -93,7 +93,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
-    private static final String DELEGATION_PERMISSION_GRANT = "delegation-permission-grant";
     private static final String DELEGATION_PACKAGE_ACCESS = "delegation-package-access";
     private static final String DELEGATION_ENABLE_SYSTEM_APP = "delegation-enable-system-app";
     private static final String DELEGATION_CERT_SELECTION = "delegation-cert-selection";
@@ -240,7 +239,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
      */
     private Map<String, DevicePolicyEventWrapper[]> getDelegationTests() {
         final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        result.put(".PermissionGrantDelegateTest", null);
         result.put(".PackageAccessDelegateTest", null);
         result.put(".EnableSystemAppDelegateTest", null);
         result.putAll(getAdditionalDelegationTests());
@@ -261,7 +259,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         final List<String> result = new ArrayList<>(Arrays.asList(
                 DELEGATION_APP_RESTRICTIONS,
                 DELEGATION_CERT_INSTALL,
-                DELEGATION_PERMISSION_GRANT,
                 DELEGATION_PACKAGE_ACCESS,
                 DELEGATION_ENABLE_SYSTEM_APP
                 ));
