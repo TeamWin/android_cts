@@ -10,7 +10,7 @@
                 summary="@string/reference"
                 intentAction="intent"
                 profile="primary_profile_only"
-                allowLogging="false"/>
+                loggingAllowed="false"/>
         </safety-sources-group>
     </safety-sources-config>
 </safety-center-config>

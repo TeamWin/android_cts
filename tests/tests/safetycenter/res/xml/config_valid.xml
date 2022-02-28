@@ -24,8 +24,8 @@
                 maxSeverityLevel="300"
                 searchTerms="@string/reference"
                 broadcastReceiverClassName="broadcast"
-                allowLogging="false"
-                allowRefreshOnPageOpen="true"/>
+                loggingAllowed="false"
+                refreshOnPageOpenAllowed="true"/>
             <dynamic-safety-source
                 id="dynamic_disabled"
                 packageName="package"
@@ -69,8 +69,8 @@
                 profile="all_profiles"
                 maxSeverityLevel="300"
                 broadcastReceiverClassName="broadcast"
-                allowLogging="false"
-                allowRefreshOnPageOpen="true"/>
+                loggingAllowed="false"
+                refreshOnPageOpenAllowed="true"/>
         </safety-sources-group>
         <safety-sources-group
             id="mixed"
