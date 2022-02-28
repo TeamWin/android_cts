@@ -596,10 +596,10 @@ jobject SurfaceControlTest_getFrameTimelines(JNIEnv* env, jclass) {
     ATrace_endSection();
     verifyChoreographer(env, choreographer);
 
-    ExtendedCallback cb1("cb1", env);
+    VsyncCallback cb1("cb1", env);
     auto start = now();
     ATrace_beginSection("postVsyncCallback");
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb1);
     ATrace_endSection();
     auto delayPeriod = std::chrono::duration_cast<std::chrono::milliseconds>(DELAY_PERIOD).count();
     ATrace_beginSection("ALooper_pollOnce");
@@ -621,7 +621,7 @@ jobject SurfaceControlTest_getFrameTimelines(JNIEnv* env, jclass) {
         return NULL;
     }
     for (int i = 0; i < cb1.getTimeline().size(); i++) {
-        ExtendedCallback::FrameTime frameTimeline = cb1.getTimeline()[i];
+        VsyncCallback::FrameTime frameTimeline = cb1.getTimeline()[i];
         jobject frameTimelineObj =
                 env->NewObject(gFrameTimelineClassInfo.clazz, gFrameTimelineClassInfo.constructor,
                                frameTimeline.vsyncId, frameTimeline.expectedPresentTime,

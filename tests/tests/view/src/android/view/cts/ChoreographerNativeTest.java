@@ -75,7 +75,7 @@ public class ChoreographerNativeTest {
     private static native void nativeTestPostCallback64WithoutDelayEventuallyRunsCallbacks(
             long ptr);
     private static native void nativeTestPostCallback64WithDelayEventuallyRunsCallbacks(long ptr);
-    private static native void nativeTestPostExtendedCallbackWithoutDelayEventuallyRunsCallbacks(
+    private static native void nativeTestPostVsyncCallbackWithoutDelayEventuallyRunsCallbacks(
             long ptr);
     private static native void nativeTestFrameCallbackDataVsyncIdValid(
             long ptr);
@@ -130,8 +130,8 @@ public class ChoreographerNativeTest {
 
     @MediumTest
     @Test
-    public void testPostExtendedCallbackWithoutDelayEventuallyRunsCallbacks() {
-        nativeTestPostExtendedCallbackWithoutDelayEventuallyRunsCallbacks(mChoreographerPtr);
+    public void testPostVsyncCallbackWithoutDelayEventuallyRunsCallbacks() {
+        nativeTestPostVsyncCallbackWithoutDelayEventuallyRunsCallbacks(mChoreographerPtr);
     }
 
     @MediumTest
