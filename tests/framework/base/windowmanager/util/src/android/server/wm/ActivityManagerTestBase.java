@@ -86,10 +86,13 @@ import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_F
 import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LaunchingActivity.KEY_FINISH_BEFORE_LAUNCH;
+import static android.server.wm.app.Components.PipActivity.ACTION_CHANGE_ASPECT_RATIO;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_CALLBACK;
@@ -423,6 +426,12 @@ public abstract class ActivityManagerTestBase {
         void requestOrientationForPip(int orientation) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_SET_REQUESTED_ORIENTATION)
                     .putExtra(EXTRA_PIP_ORIENTATION, String.valueOf(orientation)));
+        }
+
+        void changeAspectRatio(int numerator, int denominator) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_CHANGE_ASPECT_RATIO)
+                    .putExtra(EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(numerator))
+                    .putExtra(EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denominator)));
         }
     }
 
