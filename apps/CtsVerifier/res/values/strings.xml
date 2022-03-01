@@ -2320,8 +2320,8 @@
         user preferences about relative package priorities.
     </string>
     <string name="package_priority_bot">Verifying that the CTS Robot helper package is installed.</string>
-    <string name="package_priority_high">Find \"%s\" in the \"Notifications\" settings panel, and allow it to Override Priority mode.</string>
-    <string name="package_priority_default">Find \"%s\" in the \"Notifications\" settings panel, and disallow it to Override Priority mode.</string>
+    <string name="package_priority_high">Find \"%s\" in the \"Notifications\" settings panel, and allow it to Override Do Not Disturb.</string>
+    <string name="package_priority_default">Find \"%s\" in the \"Notifications\" settings panel, and disallow it to Override Do Not Disturb.</string>
     <string name="package_priority_user_order">Check that ranker respects user priorities.</string>
 
     <string name="shortcut_reset_test">Shortcut Reset Rate-limiting Test</string>
@@ -2353,12 +2353,12 @@
     <string name="test_ringer_manager">Test RingtoneManager</string>
     <string name="enable_sound_effects">Please enable touch sound in Sound settings.</string>
     <string name="attention_ready">I\'m done</string>
-    <string name="attention_filter_any">Please enable \"Priority mode\" by tapping the Quick Settings tile.</string>
-    <string name="attention_filter_all">Please disable \"Priority mode\" by tapping the Quick Settings tile.</string>
-    <string name="attention_filter_priority">Please enable \"Priority mode\" by tapping the Quick
+    <string name="attention_filter_any">Please enable \"Do not disturb\" by tapping the Quick Settings tile.</string>
+    <string name="attention_filter_all">Please disable \"Do not disturb\" by tapping the Quick Settings tile.</string>
+    <string name="attention_filter_priority">Please enable \"Do not disturb\" by tapping the Quick
         Settings tile.  Then, long press the same tile and customize the setting to allow messages
         from starred contacts only.</string>
-    <string name="attention_filter_priority_mimic_alarms_only">Please enable Priority-Only \"Priority mode\"
+    <string name="attention_filter_priority_mimic_alarms_only">Please enable Priority-Only \"Do not disturb\"
         by tapping the Quick Settings tile.  Then, long press the same tile and customize the setting to allow sounds
         from Alarms and Media (if applicable) only.</string>
     <string name="attention_create_contacts">Create contacts for notification annotations.</string>
@@ -2583,8 +2583,8 @@ When the buttons are enabled, pass this test if the information in the dialog wa
         and disabled, and that once enabled the service is able to create, query, edit, and delete
         automatic zen rules.
     </string>
-    <string name="cp_enable_service">Please enable \"CTS Verifier\" under Priority mode access and return here.</string>
-    <string name="cp_disable_service">Please disable \"CTS Verifier\" under Priority mode access and return here.</string>
+    <string name="cp_enable_service">Please enable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
+    <string name="cp_disable_service">Please disable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
     <string name="cp_start_settings">Launch Settings</string>
     <string name="cp_create_rule">Creating Automatic Zen Rule</string>
     <string name="cp_create_rule_with_zen_policy">Creating Automatic Zen Rule with Zen Policy</string>
