@@ -692,9 +692,12 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         int priority = mManager.getClientPriority(TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
         assertTrue(priority == (isForeground ? fgLivePriority : bgLivePriority));
 
-        priority = mManager.getClientPriority(
-                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */);
-        assertTrue(priority == (isForeground ? fgDefaultPriority : bgDefaultPriority));
+        try {
+            priority = mManager.getClientPriority(
+                    PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */);
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
 
         Handler handler = new Handler(Looper.getMainLooper());
         final SessionCallback sessionCallback = new SessionCallback();
@@ -708,10 +711,13 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE, sessionId /* valid sessionId */);
         assertTrue(priority == (isForeground ? fgLivePriority : bgLivePriority));
 
-        priority = mManager.getClientPriority(
-                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
-                sessionId /* valid sessionId */);
-        assertTrue(priority == (isForeground ? fgDefaultPriority : fgDefaultPriority));
+        try {
+            priority = mManager.getClientPriority(
+                    PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
+                    sessionId /* valid sessionId */);
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
 
         session.release();
         PollingCheck.waitFor(TIME_OUT_MS, () -> StubTvInputService2.getSessionId() == null);
@@ -720,10 +726,13 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE, sessionId /* invalid sessionId */);
         assertTrue(priority == bgLivePriority);
 
-        priority = mManager.getClientPriority(
-                PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
-                sessionId /* invalid sessionId */);
-        assertTrue(priority == bgDefaultPriority);
+        try {
+            priority = mManager.getClientPriority(
+                    PRIORITY_HINT_USE_CASE_TYPE_INVALID /* invalid use case type */,
+                    sessionId /* invalid sessionId */);
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
     }
 
     public void testGetClientPid() {
