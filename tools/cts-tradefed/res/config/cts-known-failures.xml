@@ -257,6 +257,7 @@
 
     <!-- b/204721335 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerJetpackTestCases android.server.wm.jetpack.SidecarTest#testSidecarInterface_onWindowLayoutChangeListener" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerJetpackTestCases android.server.wm.jetpack.SidecarTest#testSidecarInterface_getWindowLayoutInfo" />
 
     <!-- b/209382234 -->
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases android.devicepolicy.cts.KeyManagementTest" />
