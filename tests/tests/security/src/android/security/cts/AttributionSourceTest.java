@@ -27,9 +27,10 @@ import android.content.Context;
 import android.platform.test.annotations.AsbSecurityTest;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 @RunWith(AndroidJUnit4.class)
-public class AttributionSourceTest {
+public class AttributionSourceTest extends StsExtraBusinessLogicTestCase {
 
     @AsbSecurityTest(cveBugId = 200288596)
     @Test
