@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,25 +16,14 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsCompilationTestCases",
+android_test_helper_app {
+    name: "AppUsedByOtherApp",
+    defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
-    java_resource_dirs: ["assets/"],
-    java_resources: [
-        ":AppUsedByOtherApp",
-        ":AppUsingOtherApp",
-        ":CtsCompilationApp",
-    ],
+    sdk_version: "31",
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
-    ],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
-        "guava",
-        "truth-prebuilt",
     ],
 }

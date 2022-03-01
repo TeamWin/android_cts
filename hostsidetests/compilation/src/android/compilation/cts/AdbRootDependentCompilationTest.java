@@ -32,6 +32,7 @@ import com.android.tradefed.device.TestDeviceState;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.FileUtil;
 
@@ -43,6 +44,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,6 +57,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Various integration tests for dex to oat compilation, with or without profiles.
@@ -71,6 +75,12 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
     private static final int ADB_ROOT_RETRY_ATTEMPTS = 3;
     private static final String TEMP_DIR = "/data/local/tmp/AdbRootDependentCompilationTest";
     private static final String APPLICATION_PACKAGE = "android.compilation.cts";
+    private static final String APP_USED_BY_OTHER_APP_PACKAGE =
+            "android.compilation.cts.appusedbyotherapp";
+    private static final String APP_USING_OTHER_APP_PACKAGE =
+            "android.compilation.cts.appusingotherapp";
+    private static final int PERMISSIONS_LENGTH = 10;
+    private static final int READ_OTHER = 7;
 
     enum ProfileLocation {
         CUR("/data/misc/profiles/cur/0/"),
@@ -93,6 +103,9 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
 
     private ITestDevice mDevice;
     private File mCtsCompilationAppApkFile;
+    private File mAppUsedByOtherAppApkFile;
+    private File mAppUsedByOtherAppDmFile;
+    private File mAppUsingOtherAppApkFile;
     private boolean mWasAdbRoot = false;
     private boolean mAdbRootEnabled = false;
 
@@ -120,7 +133,12 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         mDevice.executeShellV2Command("rm -rf " + TEMP_DIR);
 
         FileUtil.deleteFile(mCtsCompilationAppApkFile);
+        FileUtil.deleteFile(mAppUsedByOtherAppApkFile);
+        FileUtil.deleteFile(mAppUsedByOtherAppDmFile);
+        FileUtil.deleteFile(mAppUsingOtherAppApkFile);
         mDevice.uninstallPackage(APPLICATION_PACKAGE);
+        mDevice.uninstallPackage(APP_USED_BY_OTHER_APP_PACKAGE);
+        mDevice.uninstallPackage(APP_USING_OTHER_APP_PACKAGE);
 
         if (!mWasAdbRoot && mAdbRootEnabled) {
             mDevice.disableAdbRoot();
@@ -203,6 +221,63 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
                 EnumSet.of(ProfileLocation.CUR, ProfileLocation.REF));
         // expect a change in odex because the of the change form
         // verify -> speed-profile
+    }
+
+    /**
+     * Tests how compilation of an app used by other apps is handled.
+     */
+    @Test
+    public void testCompile_usedByOtherApps() throws Exception {
+        mAppUsedByOtherAppApkFile = copyResourceToFile(
+                "/AppUsedByOtherApp.apk", File.createTempFile("AppUsedByOtherApp", ".apk"));
+        mAppUsedByOtherAppDmFile = constructDmFile(
+                "/app_used_by_other_app_1.prof.txt", mAppUsedByOtherAppApkFile);
+        // We cannot use `mDevice.installPackage` here because it doesn't support DM file.
+        String result = mDevice.executeAdbCommand(
+                "install-multiple",
+                mAppUsedByOtherAppApkFile.getAbsolutePath(),
+                mAppUsedByOtherAppDmFile.getAbsolutePath());
+        assertWithMessage("Failed to install AppUsedByOtherApp").that(result).isNotNull();
+
+        mAppUsingOtherAppApkFile = copyResourceToFile(
+                "/AppUsingOtherApp.apk", File.createTempFile("AppUsingOtherApp", ".apk"));
+        result = mDevice.installPackage(mAppUsingOtherAppApkFile, false /* reinstall */);
+        assertWithMessage(result).that(result).isNull();
+
+        String odexFilePath = getOdexFilePath(APP_USED_BY_OTHER_APP_PACKAGE);
+        // Initially, the app should be compiled with the cloud profile, and the odex file should be
+        // public.
+        assertThat(getCompilerFilter(odexFilePath)).isEqualTo("speed-profile");
+        assertFileIsPublic(odexFilePath);
+        assertThat(getCompiledMethods(odexFilePath))
+                .containsExactly("android.compilation.cts.appusedbyotherapp.MyActivity.method2()");
+
+        // Simulate that the app profile has changed.
+        resetProfileState(APP_USED_BY_OTHER_APP_PACKAGE);
+        writeSystemManagedProfile("/app_used_by_other_app_2.prof.txt", ProfileLocation.REF,
+                APP_USED_BY_OTHER_APP_PACKAGE);
+
+        executeCompile(APP_USED_BY_OTHER_APP_PACKAGE, "-m", "speed-profile", "-f");
+        // Right now, the app hasn't been used by any other app yet. It should be compiled with the
+        // new profile, and the odex file should be private.
+        assertThat(getCompilerFilter(odexFilePath)).isEqualTo("speed-profile");
+        assertFileIsPrivate(odexFilePath);
+        assertThat(getCompiledMethods(odexFilePath)).containsExactly(
+                "android.compilation.cts.appusedbyotherapp.MyActivity.method1()",
+                "android.compilation.cts.appusedbyotherapp.MyActivity.method2()");
+
+        DeviceTestRunOptions options = new DeviceTestRunOptions(APP_USING_OTHER_APP_PACKAGE);
+        options.setTestClassName(APP_USING_OTHER_APP_PACKAGE + ".UsingOtherAppTest");
+        options.setTestMethodName("useOtherApp");
+        runDeviceTests(options);
+
+        executeCompile(APP_USED_BY_OTHER_APP_PACKAGE, "-m", "speed-profile");
+        // Now, the app has been used by any other app. It should be compiled with the cloud
+        // profile, and the odex file should be public.
+        assertThat(getCompilerFilter(odexFilePath)).isEqualTo("speed-profile");
+        assertFileIsPublic(odexFilePath);
+        assertThat(getCompiledMethods(odexFilePath))
+                .containsExactly("android.compilation.cts.appusedbyotherapp.MyActivity.method2()");
     }
 
     /**
@@ -294,6 +369,37 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         assertCommandSucceeds("chown", owner, targetPath);
     }
 
+    private File constructDmFile(String profileResourceName, File apkFile) throws Exception {
+        File binaryProfileFile = File.createTempFile("primary", ".prof");
+        String binaryProfileFileOnDevice = TEMP_DIR + "/primary.prof";
+        // When constructing a DM file, we don't have the real dex location because the app is not
+        // yet installed. We can use an arbitrary location. This is okay because installd will
+        // rewrite the dex location in the profile when the app is being installed.
+        String dexLocation = TEMP_DIR + "/app.apk";
+
+        try {
+            assertTrue(mDevice.pushFile(apkFile, dexLocation));
+            writeProfile(profileResourceName, dexLocation, binaryProfileFileOnDevice);
+            assertTrue(mDevice.pullFile(binaryProfileFileOnDevice, binaryProfileFile));
+
+            // Construct the DM file from the binary profile file. The stem of the APK file and the
+            // DM file must match.
+            File dmFile = new File(apkFile.getAbsolutePath().replaceAll("\\.apk$", ".dm"));
+            try (ZipOutputStream outputStream =
+                            new ZipOutputStream(new FileOutputStream(dmFile));
+                    InputStream inputStream = new FileInputStream(binaryProfileFile)) {
+                outputStream.putNextEntry(new ZipEntry("primary.prof"));
+                ByteStreams.copy(inputStream, outputStream);
+                outputStream.closeEntry();
+            }
+            return dmFile;
+        } finally {
+            mDevice.executeShellV2Command("rm " + binaryProfileFileOnDevice);
+            mDevice.executeShellV2Command("rm " + dexLocation);
+            FileUtil.deleteFile(binaryProfileFile);
+        }
+    }
+
     /**
      * Writes the given profile in binary format on the device.
      */
@@ -334,6 +440,63 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         }
         fail("No occurence of \"" + prefix + "\" in: " + Arrays.toString(response));
         return null;
+    }
+
+    /**
+     * Returns a list of methods that have native code in the odex file.
+     */
+    private List<String> getCompiledMethods(String odexFilePath)
+            throws DeviceNotAvailableException {
+        // Matches "    CODE: (code_offset=0x000010e0 size=198)...".
+        Pattern codePattern = Pattern.compile("^\\s*CODE:.*size=(\\d+)");
+
+        // Matches
+        // "  0: void android.compilation.cts.appusedbyotherapp.R.<init>() (dex_method_idx=7)".
+        Pattern methodPattern =
+                Pattern.compile("((?:\\w+\\.)+[<>\\w]+\\(.*?\\)).*dex_method_idx=\\d+");
+
+        String[] response = assertCommandSucceeds("oatdump", "--oat-file=" + odexFilePath)
+                .split("\n");
+        ArrayList<String> compiledMethods = new ArrayList<>();
+        String currentMethod = null;
+        int currentMethodIndent = -1;
+        for (int i = 0; i < response.length; i++) {
+            // While in a method block.
+            while (currentMethodIndent != -1 && i < response.length
+                    && getIndent(response[i]) > currentMethodIndent) {
+                Matcher matcher = codePattern.matcher(response[i]);
+                // The method has code whose size > 0.
+                if (matcher.find() && Long.parseLong(matcher.group(1)) > 0) {
+                    compiledMethods.add(currentMethod);
+                }
+                i++;
+            }
+
+            if (i >= response.length) {
+                break;
+            }
+
+            currentMethod = null;
+            currentMethodIndent = -1;
+
+            Matcher matcher = methodPattern.matcher(response[i]);
+            if (matcher.find()) {
+                currentMethod = matcher.group(1);
+                currentMethodIndent = getIndent(response[i]);
+            }
+        }
+        return compiledMethods;
+    }
+
+    /**
+     * Returns the number of leading spaces.
+     */
+    private int getIndent(String str) {
+        int indent = 0;
+        while (indent < str.length() && str.charAt(indent) == ' ') {
+            indent++;
+        }
+        return indent;
     }
 
     /**
@@ -441,5 +604,24 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
                     mDevice.getSerialNumber(), i, attempts, output);
         }
         return false;
+    }
+
+    private void assertFileIsPublic(String path) throws Exception {
+        String permissions = getPermissions(path);
+        assertWithMessage("Expected " + path + " to be public, got " + permissions)
+                .that(permissions.charAt(READ_OTHER)).isEqualTo('r');
+    }
+
+    private void assertFileIsPrivate(String path) throws Exception {
+        String permissions = getPermissions(path);
+        assertWithMessage("Expected " + path + " to be private, got " + permissions)
+                .that(permissions.charAt(READ_OTHER)).isEqualTo('-');
+    }
+
+    private String getPermissions(String path) throws Exception {
+        String permissions = mDevice.getFileEntry(path).getPermissions();
+        assertWithMessage("Invalid permissions string " + permissions).that(permissions.length())
+                .isEqualTo(PERMISSIONS_LENGTH);
+        return permissions;
     }
 }
