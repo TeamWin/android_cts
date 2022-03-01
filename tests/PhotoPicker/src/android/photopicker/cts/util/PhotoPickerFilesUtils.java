@@ -49,6 +49,8 @@ public class PhotoPickerFilesUtils {
             uriList.add(uri);
             clearMediaOwner(uri, userId);
         }
+        // Wait for Picker db sync to complete
+        MediaStore.waitForIdle(InstrumentationRegistry.getContext().getContentResolver());
     }
 
     public static void createDNGVideos(int count, int userId, List<Uri> uriList)
@@ -58,6 +60,8 @@ public class PhotoPickerFilesUtils {
             uriList.add(uri);
             clearMediaOwner(uri, userId);
         }
+        // Wait for Picker db sync to complete
+        MediaStore.waitForIdle(InstrumentationRegistry.getContext().getContentResolver());
     }
 
     public static void createVideos(int count, int userId, List<Uri> uriList)
@@ -67,6 +71,8 @@ public class PhotoPickerFilesUtils {
             uriList.add(uri);
             clearMediaOwner(uri, userId);
         }
+        // Wait for Picker db sync to complete
+        MediaStore.waitForIdle(InstrumentationRegistry.getContext().getContentResolver());
     }
 
     public static void deleteMedia(Uri uri, Context context) throws Exception {
