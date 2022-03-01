@@ -281,8 +281,8 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Test {@link TelecomManager#getSelfManagedPhoneAccounts} works on packages with only the
-     * {@link android.Manifest.permission#MANAGE_OWN_CALLS} permission
+     * Test {@link TelecomManager#getOwnSelfManagedPhoneAccounts} works on packages with only the
+     * {@link android.Manifest.permission#MANAGE_OWN_CALLS} permission.
      */
     public void testTelecomManagerGetSelfManagedPhoneAccountsForPackage() throws Exception {
         if (!mShouldTestTelecom) {
@@ -303,7 +303,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
                 TEST_SELF_MANAGED_PHONE_ACCOUNT);
 
         List<PhoneAccountHandle> pah =
-                mCarModeIncallServiceControlSelfManaged.getSelfManagedPhoneAccounts();
+                mCarModeIncallServiceControlSelfManaged.getOwnSelfManagedPhoneAccounts();
 
         // assert that we can get all the self-managed phone accounts registered to
         // CarModeTestAppSelfManaged

@@ -36,6 +36,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -947,6 +949,108 @@ public class HorizontalScrollViewTest {
         fling(mActivityRule, mScrollViewStretch, -300, 0);
         assertTrue("Expecting greater than 0, but was " + edgeEffect.onAbsorbVelocity,
                 edgeEffect.onAbsorbVelocity > 0);
+    }
+
+    @Test
+    public void scrollFromRotaryStretchesLeft() throws Throwable {
+        showOnlyStretch();
+
+        ScrollViewTest.CaptureOnReleaseEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowLeft = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(-2f, InputDevice.SOURCE_ROTARY_ENCODER)));
+            assertFalse(edgeEffect.isFinished());
+            assertTrue(edgeEffect.getDistance() > 0f);
+            assertTrue(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromMouseDoesNotStretchLeft() throws Throwable {
+        showOnlyStretch();
+
+        ScrollViewTest.CaptureOnReleaseEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowLeft = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertFalse(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(-2f, InputDevice.SOURCE_MOUSE)));
+            assertTrue(edgeEffect.isFinished());
+            assertFalse(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromRotaryStretchesRight() throws Throwable {
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the Right
+            mScrollViewStretch.scrollTo(210, 0);
+        });
+
+        ScrollViewTest.CaptureOnReleaseEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowRight = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(2f, InputDevice.SOURCE_ROTARY_ENCODER)));
+            assertFalse(edgeEffect.isFinished());
+            assertTrue(edgeEffect.getDistance() > 0f);
+            assertTrue(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromMouseDoesNotStretchRight() throws Throwable {
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the Right
+            mScrollViewStretch.scrollTo(210, 0);
+        });
+
+        ScrollViewTest.CaptureOnReleaseEdgeEffect
+                edgeEffect = new ScrollViewTest.CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowRight = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertFalse(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(2f, InputDevice.SOURCE_MOUSE)));
+            assertTrue(edgeEffect.isFinished());
+            assertFalse(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    private MotionEvent createScrollEvent(float scrollAmount, int source) {
+        MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
+        pointerProperties.toolType = MotionEvent.TOOL_TYPE_MOUSE;
+        MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+        int axis = source == InputDevice.SOURCE_ROTARY_ENCODER ? MotionEvent.AXIS_SCROLL
+                : MotionEvent.AXIS_HSCROLL;
+        pointerCoords.setAxisValue(axis, scrollAmount);
+
+        return MotionEvent.obtain(
+                0, /* downTime */
+                0, /* eventTime */
+                MotionEvent.ACTION_SCROLL, /* action */
+                1, /* pointerCount */
+                new MotionEvent.PointerProperties[] { pointerProperties },
+                new MotionEvent.PointerCoords[] { pointerCoords },
+                0, /* metaState */
+                0, /* buttonState */
+                0f, /* xPrecision */
+                0f, /* yPrecision */
+                0, /* deviceId */
+                0, /* edgeFlags */
+                source, /* source */
+                0 /* flags */
+        );
     }
 
     private void showOnlyStretch() throws Throwable {

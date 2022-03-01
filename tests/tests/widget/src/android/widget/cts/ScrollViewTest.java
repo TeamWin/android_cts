@@ -36,6 +36,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -984,6 +986,104 @@ public class ScrollViewTest {
         assertTrue(edgeEffect.onAbsorbVelocity > 0);
     }
 
+    @Test
+    public void scrollFromRotaryStretchesTop() throws Throwable {
+        showOnlyStretch();
+
+        CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(2f, InputDevice.SOURCE_ROTARY_ENCODER)));
+            assertFalse(edgeEffect.isFinished());
+            assertTrue(edgeEffect.getDistance() > 0f);
+            assertTrue(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromMouseDoesNotStretchTop() throws Throwable {
+        showOnlyStretch();
+
+        CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertFalse(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(2f, InputDevice.SOURCE_MOUSE)));
+            assertTrue(edgeEffect.isFinished());
+            assertFalse(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromRotaryStretchesBottom() throws Throwable {
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollTo(0, 210);
+        });
+
+        CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(-2f, InputDevice.SOURCE_ROTARY_ENCODER)));
+            assertFalse(edgeEffect.isFinished());
+            assertTrue(edgeEffect.getDistance() > 0f);
+            assertTrue(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromMouseDoesNotStretchBottom() throws Throwable {
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollTo(0, 210);
+        });
+
+        CaptureOnReleaseEdgeEffect edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertFalse(mScrollViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(-2f, InputDevice.SOURCE_MOUSE)));
+            assertTrue(edgeEffect.isFinished());
+            assertFalse(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    private MotionEvent createScrollEvent(float scrollAmount, int source) {
+        MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
+        pointerProperties.toolType = MotionEvent.TOOL_TYPE_MOUSE;
+        MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+        int axis = source == InputDevice.SOURCE_ROTARY_ENCODER ? MotionEvent.AXIS_SCROLL
+                : MotionEvent.AXIS_VSCROLL;
+        pointerCoords.setAxisValue(axis, scrollAmount);
+
+        return MotionEvent.obtain(
+                0, /* downTime */
+                0, /* eventTime */
+                MotionEvent.ACTION_SCROLL, /* action */
+                1, /* pointerCount */
+                new MotionEvent.PointerProperties[] { pointerProperties },
+                new MotionEvent.PointerCoords[] { pointerCoords },
+                0, /* metaState */
+                0, /* buttonState */
+                0f, /* xPrecision */
+                0f, /* yPrecision */
+                0, /* deviceId */
+                0, /* edgeFlags */
+                source, /* source */
+                0 /* flags */
+        );
+    }
+
     private void showOnlyStretch() throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mScrollViewCustom.setVisibility(View.GONE);
@@ -1145,6 +1245,20 @@ public class ScrollViewTest {
         public void onAbsorb(int velocity) {
             onAbsorbVelocity = velocity;
             super.onAbsorb(velocity);
+        }
+    }
+
+    public static class CaptureOnReleaseEdgeEffect extends EdgeEffect {
+        public boolean onReleaseCalled;
+
+        public CaptureOnReleaseEdgeEffect(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void onRelease() {
+            onReleaseCalled = true;
+            super.onRelease();
         }
     }
 }

@@ -112,6 +112,13 @@ public class CtsCarModeInCallServiceControl extends Service {
         }
 
         @Override
+        public List<PhoneAccountHandle> getOwnSelfManagedPhoneAccounts() {
+            TelecomManager telecomManager = getSystemService(TelecomManager.class);
+            return (telecomManager != null) ? telecomManager.getOwnSelfManagedPhoneAccounts()
+                    : new ArrayList<>();
+        }
+
+        @Override
         public void registerPhoneAccount(PhoneAccount phoneAccount) {
             TelecomManager telecomManager = getSystemService(TelecomManager.class);
             if (telecomManager != null) {

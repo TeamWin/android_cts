@@ -1738,7 +1738,7 @@ public class LocationManagerFineTest {
                     .getSystemService(LocationManager.class)
                     .requestLocationUpdates(
                             TEST_PROVIDER,
-                            new LocationRequest.Builder(600000).build(),
+                            new LocationRequest.Builder(100).build(),
                             Runnable::run,
                             slowCapture);
 
@@ -1767,7 +1767,7 @@ public class LocationManagerFineTest {
             // Verify noteOp for the slow request.
             timeBeforeLocationAccess = System.currentTimeMillis();
             Location loc3 = createLocation(TEST_PROVIDER, 0, 1, 10,
-                    SystemClock.elapsedRealtimeNanos() + 600000000000L);
+                    SystemClock.elapsedRealtimeNanos() + 100000000L);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc3);
             assertNotedOpsSinceLastLocationAccess(
                     timeBeforeLocationAccess,

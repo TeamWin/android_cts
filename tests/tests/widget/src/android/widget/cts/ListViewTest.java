@@ -56,7 +56,9 @@ import android.util.Pair;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.Xml;
+import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.LayoutAnimationController;
@@ -65,6 +67,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -1413,6 +1416,102 @@ public class ListViewTest {
         assertNotEquals(firstVisible, mListViewStretch.getFirstVisiblePosition());
     }
 
+    @Test
+    public void scrollFromRotaryStretchesTop() throws Throwable {
+        showOnlyStretch();
+
+        CaptureOnReleaseEdgeEffect
+                edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowTop = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mListViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(2f, InputDevice.SOURCE_ROTARY_ENCODER)));
+            assertFalse(edgeEffect.isFinished());
+            assertTrue(edgeEffect.getDistance() > 0f);
+            assertTrue(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromMouseDoesNotStretchTop() throws Throwable {
+        showOnlyStretch();
+
+        CaptureOnReleaseEdgeEffect
+                edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowTop = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertFalse(mListViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(2f, InputDevice.SOURCE_MOUSE)));
+            assertTrue(edgeEffect.isFinished());
+            assertFalse(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromRotaryStretchesBottom() throws Throwable {
+        showOnlyStretch();
+
+        scrollToBottomOfStretch();
+
+        CaptureOnReleaseEdgeEffect
+                edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(mListViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(-2f, InputDevice.SOURCE_ROTARY_ENCODER)));
+            assertFalse(edgeEffect.isFinished());
+            assertTrue(edgeEffect.getDistance() > 0f);
+            assertTrue(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    @Test
+    public void scrollFromMouseDoesNotStretchBottom() throws Throwable {
+        showOnlyStretch();
+
+        scrollToBottomOfStretch();
+
+        CaptureOnReleaseEdgeEffect
+                edgeEffect = new CaptureOnReleaseEdgeEffect(mActivity);
+        mListViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            assertFalse(mListViewStretch.dispatchGenericMotionEvent(
+                    createScrollEvent(-2f, InputDevice.SOURCE_MOUSE)));
+            assertTrue(edgeEffect.isFinished());
+            assertFalse(edgeEffect.onReleaseCalled);
+        });
+    }
+
+    private MotionEvent createScrollEvent(float scrollAmount, int source) {
+        MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
+        pointerProperties.toolType = MotionEvent.TOOL_TYPE_MOUSE;
+        MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
+        int axis = source == InputDevice.SOURCE_ROTARY_ENCODER ? MotionEvent.AXIS_SCROLL
+                : MotionEvent.AXIS_VSCROLL;
+        pointerCoords.setAxisValue(axis, scrollAmount);
+
+        return MotionEvent.obtain(
+                0, /* downTime */
+                0, /* eventTime */
+                MotionEvent.ACTION_SCROLL, /* action */
+                1, /* pointerCount */
+                new MotionEvent.PointerProperties[] { pointerProperties },
+                new MotionEvent.PointerCoords[] { pointerCoords },
+                0, /* metaState */
+                0, /* buttonState */
+                0f, /* xPrecision */
+                0f, /* yPrecision */
+                0, /* deviceId */
+                0, /* edgeFlags */
+                source, /* source */
+                0 /* flags */
+        );
+    }
+
     private void executeWhileDragging(
             int dragY,
             Runnable duringDrag,
@@ -1709,6 +1808,20 @@ public class ListViewTest {
             View view = super.getView(position, convertView, parent);
             view.setOnClickListener((v) -> { });
             return view;
+        }
+    }
+
+    private static class CaptureOnReleaseEdgeEffect extends EdgeEffect {
+        public boolean onReleaseCalled;
+
+        CaptureOnReleaseEdgeEffect(Context context) {
+            super(context);
+        }
+
+        @Override
+        public void onRelease() {
+            onReleaseCalled = true;
+            super.onRelease();
         }
     }
 }
