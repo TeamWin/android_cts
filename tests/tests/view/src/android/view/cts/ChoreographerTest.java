@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
 import java.util.HashSet;
+import java.util.Set;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -334,6 +335,26 @@ public class ChoreographerTest {
         assertTimeDeltaLessThan(captor1.getValue().getFrameTimeNanos() - postTimeNanos,
                 NOMINAL_VSYNC_PERIOD * 10 * NANOS_PER_MS);
         // Callback #2 is not invoked a second time so the time delta is not checked here.
+    }
+
+    @Test
+    public void testPostVsyncCallbackFrameDataPreferredFrameTimelineValid() {
+        final Choreographer.VsyncCallback addedCallback = mock(
+                Choreographer.VsyncCallback.class);
+        long postTimeNanos = System.nanoTime();
+        mChoreographer.postVsyncCallback(addedCallback);
+
+        ArgumentCaptor<Choreographer.FrameData> captor = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        verify(addedCallback, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).onVsync(
+                captor.capture());
+
+        Choreographer.FrameData frameData = captor.getValue();
+        assertTrue("Number of frame timelines should be greater than 0",
+                frameData.getFrameTimelines().length > 0);
+        Set<Choreographer.FrameTimeline> frameTimelines = Set.of(frameData.getFrameTimelines());
+        assertTrue("Preferred frame timeline is not included in frame timelines",
+                frameTimelines.contains(frameData.getPreferredFrameTimeline()));
     }
 
     @Test
