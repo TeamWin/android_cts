@@ -2003,6 +2003,7 @@ public class UsageStatsTest {
             assertResponseStats(TEST_RESPONSE_STATS_ID_1, expectedStatsForId1);
             assertResponseStats(TEST_RESPONSE_STATS_ID_2, expectedStatsForId2);
 
+            mUsageStatsManager.clearBroadcastEvents();
             // Trigger a notification from test-pkg4 and verify notification-posted count gets
             // incremented.
             testReceiver4.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
