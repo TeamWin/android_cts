@@ -16,33 +16,47 @@
 
 package android.car.cts.builtin;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.car.cts.builtin.user.CarInitialUserCommand;
+import android.car.cts.builtin.user.InitializedUsersCommand;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class ActivityManagerHelperHostTest extends CarBuiltinApiHostCtsBase {
+    private static final int SYSTEM_USER = 0;
 
+    // The startUserInForeground, startUserInBackground and unlockUser ActivityManagerHelper
+    // APIs are called by InitialUserSetter during device boot.Checking the default users
+    // are properly initialized covers the API testing.
     @Test
-    public void testStartUser() throws Exception {
-        // TODO (b/201005730): implement the test case to test the startUserInBackground()
-        // and startUserInForeground() APIs
+    public void testDefaultUserInitialization() throws Exception {
+        InitializedUsersCommand initUsersCommand = new InitializedUsersCommand(getDevice());
+        initUsersCommand.executeWith();
+        List<Integer> initUsers = initUsersCommand.getInitializedUsers();
+
+        ArrayList<Integer> defaultUsers = new ArrayList<>();
+        defaultUsers.add(SYSTEM_USER);
+        if (initUsersCommand.hasHeadlessUser()) {
+            CarInitialUserCommand initialUserCommand = new CarInitialUserCommand(getDevice());
+            initialUserCommand.executeWith();
+            int initialUser = initialUserCommand.getCarInitialUser();
+            defaultUsers.add(initialUser);
+        }
+
+        assertThat(initUsers).containsAtLeastElementsIn(defaultUsers);
     }
 
     @Test
     public void testStopUserWithDelayedLocking() throws Exception {
-        // TODO (b/201005730): implement the test case to test
-        // the stopUserWithDelayedLocking() API.
-    }
-
-    @Test
-    public void testUnlockUser() throws Exception {
-        // TODO (b/201005730): implement the test case to test the unlockUser() API.
-    }
-
-    @Test
-    public void testStopAllTaskForUser() throws Exception {
-        // TODO (b/201005730): implement the test case to test the stopAllTasksForUser() API.
+        // CtsCarHostTestCases:CarGarageModeAtomTests covers the stopUserWithDelayedLocking
+        // API call.
     }
 }
