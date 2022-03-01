@@ -1224,4 +1224,31 @@ public class SurfaceControlTest {
                     }
                 });
     }
+
+    @Test
+    public void testSurfaceControl_scaleToZero() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl parentSurfaceControl = createFromWindow(holder);
+                        SurfaceControl childSurfaceControl = create(parentSurfaceControl);
+
+                        setSolidBuffer(parentSurfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        setSolidBuffer(childSurfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        new SurfaceControl.Transaction()
+                                .setScale(childSurfaceControl, 0, 0)
+                                .apply();
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+    }
 }
