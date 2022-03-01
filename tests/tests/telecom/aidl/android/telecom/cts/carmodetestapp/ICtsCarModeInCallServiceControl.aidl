@@ -30,6 +30,7 @@ interface ICtsCarModeInCallServiceControl {
     void releaseAutomotiveProjection();
     boolean checkBindStatus(boolean bind);
     List<PhoneAccountHandle> getSelfManagedPhoneAccounts();
+    List<PhoneAccountHandle> getOwnSelfManagedPhoneAccounts();
     void registerPhoneAccount(in PhoneAccount phoneAccount);
     void unregisterPhoneAccount(in PhoneAccountHandle phoneAccountHandle);
 }
