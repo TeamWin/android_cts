@@ -365,7 +365,7 @@ class OutputManager {
                 left = imageLeft / 2;
                 top = imageTop / 2;
             }
-            int cropOffset = left + top * rowStride;
+            int cropOffset = (left * pixelStride) + top * rowStride;
             // local contiguous pixel buffer
             byte[] bb = new byte[width * height];
             if (buf.hasArray()) {
