@@ -40,10 +40,11 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
-import android.view.cts.util.SyncFenceUtil;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.cts.hardware.SyncFenceUtil;
 
 import org.junit.Before;
 import org.junit.Rule;

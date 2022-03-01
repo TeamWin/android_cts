@@ -58,6 +58,7 @@ android_test {
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "cts-hardware-lib",
         "mockito-target-minus-junit4",
         "android-ex-camera2",
         "CtsCameraUtils",
