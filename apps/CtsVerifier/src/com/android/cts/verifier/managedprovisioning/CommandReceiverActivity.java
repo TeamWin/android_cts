@@ -126,6 +126,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_ENABLE_USB_DATA_SIGNALING = "enable-usb-data-signaling";
     public static final String COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY =
             "set-required-password-complexity";
+    public static final String COMMAND_CHECK_NEW_USER_DISCLAIMER = "check-new-user-disclaimer";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
