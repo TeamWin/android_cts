@@ -31,26 +31,35 @@ const val EXTRA_CREATE_CHANNELS_DELAYED = "extra_create_delayed"
 const val EXTRA_REQUEST_NOTIF_PERMISSION = "extra_request_notif_permission"
 const val EXTRA_REQUEST_OTHER_PERMISSIONS = "extra_request_permissions"
 const val EXTRA_REQUEST_OTHER_PERMISSIONS_DELAYED = "extra_request_permissions_delayed"
-const val CHANNEL_ID = "channel_id"
+const val EXTRA_START_SECOND_ACTIVITY = "extra_start_second_activity"
+const val EXTRA_START_SECOND_APP = "extra_start_second_app"
+const val SECONDARY_APP_INTENT = "emptyactivity.main"
+const val SECONDARY_APP_PKG = "android.permission3.cts.usepermissionother"
+const val CHANNEL_ID_31 = "test_channel_id"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
 const val DELAY_MS = 1000L
+const val LONG_DELAY_MS = 5000L
 
 class CreateNotificationChannelsActivity : Activity() {
     lateinit var notificationManager: NotificationManager
     override fun onStart() {
         val handler = Handler(Looper.getMainLooper())
         notificationManager = baseContext.getSystemService(NotificationManager::class.java)!!
-        if (intent.getBooleanExtra(EXTRA_CREATE_CHANNELS, false)) {
-            if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
-                notificationManager.createNotificationChannel(NotificationChannel(CHANNEL_ID,
-                    "Foreground Services", NotificationManager.IMPORTANCE_HIGH))
-            }
+        if (intent.getBooleanExtra(EXTRA_START_SECOND_APP, false)) {
+            handler.postDelayed({
+                val intent2 = Intent(SECONDARY_APP_INTENT)
+                intent2.`package` = SECONDARY_APP_PKG
+                intent2.addCategory(Intent.CATEGORY_DEFAULT)
+                handler.postDelayed({
+                    createChannel()
+                }, DELAY_MS)
+                startActivity(intent2)
+            }, LONG_DELAY_MS)
+        } else if (intent.getBooleanExtra(EXTRA_CREATE_CHANNELS, false)) {
+            createChannel()
         } else if (intent.getBooleanExtra(EXTRA_CREATE_CHANNELS_DELAYED, false)) {
             handler.postDelayed({
-                if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
-                    notificationManager.createNotificationChannel(NotificationChannel(CHANNEL_ID,
-                        "Foreground Services", NotificationManager.IMPORTANCE_HIGH))
-                }
+                createChannel()
             }, DELAY_MS)
         }
 
@@ -65,12 +74,29 @@ class CreateNotificationChannelsActivity : Activity() {
         if (intent.getBooleanExtra(EXTRA_REQUEST_NOTIF_PERMISSION, false)) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
+        if (intent.getBooleanExtra(EXTRA_START_SECOND_ACTIVITY, false)) {
+            handler.postDelayed({
+                val intent2 = Intent(Intent.ACTION_MAIN)
+                intent2.`package` = packageName
+                intent2.addCategory(Intent.CATEGORY_DEFAULT)
+                intent2.putExtra(EXTRA_CREATE_CHANNELS_DELAYED, true)
+                startActivity(intent2)
+            }, LONG_DELAY_MS)
+        }
+
         super.onStart()
+    }
+
+    private fun createChannel() {
+        if (notificationManager.getNotificationChannel(CHANNEL_ID_31) == null) {
+            notificationManager.createNotificationChannel(NotificationChannel(CHANNEL_ID_31,
+                "Foreground Services", NotificationManager.IMPORTANCE_HIGH))
+        }
     }
 
     override fun onPause() {
         if (intent.getBooleanExtra(EXTRA_DELETE_CHANNELS_ON_CLOSE, false)) {
-            notificationManager.deleteNotificationChannel(CHANNEL_ID)
+            notificationManager.deleteNotificationChannel(CHANNEL_ID_31)
         }
         super.onPause()
     }
