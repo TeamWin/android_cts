@@ -34,31 +34,31 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for permission handling for supplemental process uid range.
+ * Tests for permission handling for sdk sandbox uid range.
  */
 @AppModeFull(reason = "Instant apps can't access PermissionManager")
 @RunWith(AndroidJUnit4ClassRunner.class)
-public class SupplementalProcessPermissionTest {
+public class SdkSandboxPermissionTest {
 
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
-    public void testSupplementalProcessHasInternetPermission() throws Exception {
+    public void testSdkSandboxHasInternetPermission() throws Exception {
         final Context ctx = getInstrumentation().getContext();
         int ret = ctx.checkPermission(
                 Manifest.permission.INTERNET,
                 /* pid= */ -1 /* invalid pid */,
-                Process.toSupplementalUid(19999));
+                Process.toSdkSandboxUid(19999));
         assertThat(ret).isEqualTo(PackageManager.PERMISSION_GRANTED);
     }
 
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
-    public void testSupplementalProcessDoesNotHaveFineLocationPermission() throws Exception {
+    public void testSdkSandboxDoesNotHaveFineLocationPermission() throws Exception {
         final Context ctx = getInstrumentation().getContext();
         int ret = ctx.checkPermission(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 /* pid= */ -1 /* invalid pid */,
-                Process.toSupplementalUid(19999));
+                Process.toSdkSandboxUid(19999));
         assertThat(ret).isEqualTo(PackageManager.PERMISSION_DENIED);
     }
 }

@@ -18,25 +18,39 @@ package android.server.wm.jetpack;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFinishing;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForResumed;
 
+import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
+
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
 import android.server.wm.jetpack.utils.ActivityEmbeddingTestBase;
+import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.util.Pair;
+import android.util.Size;
+import android.view.Display;
+import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.embedding.SplitPlaceholderRule;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Tests for the {@link androidx.window.extensions} implementation provided on the device (and only
@@ -51,6 +65,20 @@ import java.util.Collections;
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase {
 
+    private static final String PRIMARY_ACTIVITY_ID = "primaryActivity";
+    private static final String PLACEHOLDER_ACTIVITY_ID = "placeholderActivity";
+    private ReportedDisplayMetrics mReportedDisplayMetrics;
+
+    @Before
+    public void initializeDisplayMetrics() {
+        mReportedDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(Display.DEFAULT_DISPLAY);
+    }
+
+    @After
+    public void restoreDisplayMetrics() {
+        mReportedDisplayMetrics.restoreDisplayMetrics();
+    }
+
     /**
      * Tests that an activity with a matching {@link SplitPlaceholderRule} is successfully able to
      * launch into a split with its placeholder.
@@ -58,15 +86,14 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
     @Test
     public void testPlaceholderLaunchesWithPrimaryActivity() {
         // Set embedding rules
-        final String primaryActivityId = "primaryActivity";
-        final String placeholderActivityId = "placeholderActivity";
-        final SplitPlaceholderRule splitPlaceholderRule = createSplitPlaceholderRule(
-                primaryActivityId, placeholderActivityId);
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID).build();
         mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
 
         // Launch activity with placeholder
         final Pair<Activity, Activity> activityPair = launchActivityWithPlaceholderAndVerifySplit(
-                primaryActivityId, placeholderActivityId, splitPlaceholderRule);
+                PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
         final Activity primaryActivity = activityPair.first;
         final Activity placeholderActivity = activityPair.second;
 
@@ -76,27 +103,256 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
     }
 
     /**
-     * Creates a SplitPlaceholderRule that launches a placeholder with the target primary activity.
+     * Tests that when the parent window metrics predicate in a {@link SplitPlaceholderRule} does
+     * not allow for a split on the current parent window metrics, then when an activity with a
+     * placeholder rule is launched, the placeholder is not launched.
      */
-    @NonNull
-    private SplitPlaceholderRule createSplitPlaceholderRule(
-            @NonNull String primaryActivityId, @NonNull String placeholderActivityId) {
-        // Create placeholder activity intent
-        Intent placeholderIntent = new Intent(mContext, TestActivityWithId.class);
-        placeholderIntent.putExtra(ACTIVITY_ID_LABEL, placeholderActivityId);
+    @Test
+    public void testPlaceholderDoesNotLaunchWhenParentMetricsDoNotAllow() {
+        // Set embedding rules where the parent window metrics do not allow for a placeholder
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID)
+                        .setParentWindowMetrics(parentWindowMetrics -> false).build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
 
-        // Create {@link SplitPlaceholderRule} that launches the placeholder in a split with the
-        // target primary activity.
-        SplitPlaceholderRule splitPlaceholderRule = new SplitPlaceholderRule.Builder(
-                placeholderIntent,
-                activity -> primaryActivityId.equals(
-                        ((TestActivityWithId) activity).getId()) /* activityPredicate */,
-                intent -> primaryActivityId.equals(
-                        intent.getStringExtra(ACTIVITY_ID_LABEL)) /* intentPredicate */,
-                parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(DEFAULT_SPLIT_RATIO).build();
+        // Launch the primary activity and verify that the placeholder activity was not launched and
+        // the primary activity fills the task.
+        Activity primaryActivity = startActivityNewTask(TestActivityWithId.class,
+                PRIMARY_ACTIVITY_ID);
+        assertFalse(waitForResumed(PLACEHOLDER_ACTIVITY_ID));
+        verifyFillsTask(primaryActivity);
+    }
 
-        return splitPlaceholderRule;
+    /**
+     * Tests that when the placeholder activity is finished, then the activity it launched with is
+     * also finished because the default value for finishPrimaryWithSecondary is
+     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS}.
+     */
+    @Test
+    public void testFinishingPlaceholderFinishesPrimaryActivity() {
+        // Set embedding rules
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID).build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
+
+        // Launch activity with placeholder
+        final Pair<Activity, Activity> activityPair = launchActivityWithPlaceholderAndVerifySplit(
+                PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
+        final Activity primaryActivity = activityPair.first;
+        final Activity placeholderActivity = activityPair.second;
+
+        // Finish the placeholder activity and verify that the primary activity is also finishing
+        placeholderActivity.finish();
+        assertTrue(waitForFinishing(primaryActivity));
+    }
+
+    /**
+     * Tests that when a placeholder activity that is created from a rule that sets
+     * finishPrimaryWithSecondary to
+     * {@link androidx.window.extensions.embedding.SplitRule.FINISH_NEVER} is finished, then the
+     * activity it launched with is not finished.
+     */
+    @Test
+    public void testPlaceholderFinishPrimaryWithSecondary_FinishNever() {
+        // Set embedding rules with finishPrimaryWithSecondary set to FINISH_NEVER
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID).setFinishPrimaryWithSecondary(FINISH_NEVER)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
+
+        // Launch activity with placeholder
+        final Pair<Activity, Activity> activityPair = launchActivityWithPlaceholderAndVerifySplit(
+                PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
+        final TestActivity primaryActivity = (TestActivity) activityPair.first;
+        final Activity placeholderActivity = activityPair.second;
+
+        // Finish the placeholder activity and verify that the primary activity does not finish
+        // and fills the task.
+        primaryActivity.resetBoundsChangeCounter();
+        placeholderActivity.finish();
+        assertTrue(primaryActivity.waitForBoundsChange());
+        verifyFillsTask(primaryActivity);
+    }
+
+    /**
+     * Tests that when the task width is decreased below the width that can support split
+     * activities, then the placeholder activity is finished.
+     */
+    @Test
+    public void testPlaceholderFinishedWhenTaskWidthDecreased() {
+        final int taskWidth = getTaskWidth();
+
+        // Set embedding rules with the parent window metrics only allowing side-by-side activities
+        // on a task width at least the current width.
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID)
+                        .setParentWindowMetrics(
+                                windowMetrics -> windowMetrics.getBounds().width() >= taskWidth)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
+
+        // Launch activity with placeholder
+        final Pair<Activity, Activity> activityPair = launchActivityWithPlaceholderAndVerifySplit(
+                PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
+        final TestActivity primaryActivity = (TestActivity) activityPair.first;
+        final Activity placeholderActivity = activityPair.second;
+
+        // Shrink display width by 10% so that the primary and placeholder activities are stacked
+        primaryActivity.resetBoundsChangeCounter();
+        final Size currentSize = mReportedDisplayMetrics.getSize();
+        mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
+                currentSize.getHeight()));
+
+        // Verify that the placeholder activity was finished and that the primary activity now
+        // fills the task.
+        assertTrue(waitForFinishing(placeholderActivity));
+        assertTrue(primaryActivity.waitForBoundsChange());
+        verifyFillsTask(primaryActivity);
+    }
+
+    /**
+     * Tests that when the task width is increased to a width large enough to support a placeholder,
+     * then a placeholder activity is launched.
+     */
+    @Test
+    public void testPlaceholderLaunchedWhenTaskWidthIncreased() {
+        final int taskWidth = getTaskWidth();
+
+        // Set embedding rules with the parent window metrics only allowing side-by-side activities
+        // on a task width 5% wider than the current task width.
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID)
+                        .setParentWindowMetrics(
+                                windowMetrics ->
+                                        windowMetrics.getBounds().width() >= taskWidth * 1.05)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
+
+        // Launch activity and verify that it fills the task and that a placeholder activity is
+        // not launched
+        Activity primaryActivity = startActivityNewTask(TestActivityWithId.class,
+                PRIMARY_ACTIVITY_ID);
+        verifyFillsTask(primaryActivity);
+        assertFalse(waitForResumed(PLACEHOLDER_ACTIVITY_ID));
+
+        // Increase display width by 10% so that the primary and placeholder activities are stacked
+        final Size currentSize = mReportedDisplayMetrics.getSize();
+        mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 1.1),
+                currentSize.getHeight()));
+
+        // Verify that the placeholder activity is launched into a split with the primary activity
+        assertTrue(waitForResumed(PLACEHOLDER_ACTIVITY_ID));
+        Activity placeholderActivity = getResumedActivityById(PLACEHOLDER_ACTIVITY_ID);
+        assertValidSplit(primaryActivity, placeholderActivity, splitPlaceholderRule);
+    }
+
+    /**
+     * Tests that when an activity is launched with a sticky placeholder, then resizing the task
+     * such that it can no longer support split activities does not cause the placeholder activity
+     * to finish.
+     */
+    @Test
+    public void testStickyPlaceholder() {
+        final int taskWidth = getTaskWidth();
+
+        // Set embedding rules with isSticky set to true and the parent window metrics only allowing
+        // side-by-side activities on a task width at least the current width.
+        final SplitPlaceholderRule splitPlaceholderRule =
+                new SplitPlaceholderRuleBuilderWithDefaults(PRIMARY_ACTIVITY_ID,
+                        PLACEHOLDER_ACTIVITY_ID).setIsSticky(true)
+                        .setParentWindowMetrics(
+                                windowMetrics -> windowMetrics.getBounds().width() >= taskWidth)
+                        .build();
+        mActivityEmbeddingComponent.setEmbeddingRules(Collections.singleton(splitPlaceholderRule));
+
+        // Launch activity with placeholder
+        final Pair<Activity, Activity> activityPair = launchActivityWithPlaceholderAndVerifySplit(
+                PRIMARY_ACTIVITY_ID, PLACEHOLDER_ACTIVITY_ID, splitPlaceholderRule);
+        final TestActivity placeholderActivity = (TestActivity) activityPair.second;
+
+        // Shrink display width by 10% so that the primary and placeholder activities are stacked
+        placeholderActivity.resetBoundsChangeCounter();
+        final Size currentSize = mReportedDisplayMetrics.getSize();
+        mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 0.9),
+                currentSize.getHeight()));
+
+        // Verify that the placeholder was not finished and fills the task
+        assertTrue(placeholderActivity.waitForBoundsChange());
+        verifyFillsTask(placeholderActivity);
+        assertTrue(waitForResumed(Arrays.asList(placeholderActivity)));
+    }
+
+    /**
+     * Convenience builder for a SplitPlaceholderRule with default values.
+     */
+    private class SplitPlaceholderRuleBuilderWithDefaults {
+        private final String mPrimaryActivityId;
+        private final String mPlaceholderActivityId;
+
+        // By default, allow any parent window metrics to allow a placeholder to be launched
+        private Predicate<WindowMetrics> mParentWindowMetricsPredicate = windowMetrics -> true;
+
+        private Optional<Integer> mFinishPrimaryWithSecondary = Optional.empty();
+        private Optional<Boolean> mIsSticky = Optional.empty();
+
+        SplitPlaceholderRuleBuilderWithDefaults(@NonNull String primaryActivityId,
+                @NonNull String placeholderActivityId) {
+            mPrimaryActivityId = primaryActivityId;
+            mPlaceholderActivityId = placeholderActivityId;
+        }
+
+        public SplitPlaceholderRuleBuilderWithDefaults setParentWindowMetrics(
+                Predicate<WindowMetrics> parentWindowMetricsPredicate) {
+            mParentWindowMetricsPredicate = parentWindowMetricsPredicate;
+            return this;
+        }
+
+        public SplitPlaceholderRuleBuilderWithDefaults setFinishPrimaryWithSecondary(
+                int finishPrimaryWithSecondary) {
+            mFinishPrimaryWithSecondary = Optional.of(finishPrimaryWithSecondary);
+            return this;
+        }
+
+        public SplitPlaceholderRuleBuilderWithDefaults setIsSticky(boolean isSticky) {
+            mIsSticky = Optional.of(isSticky);
+            return this;
+        }
+
+        public SplitPlaceholderRule build() {
+            // Create placeholder activity intent
+            Intent placeholderIntent = new Intent(mContext, TestActivityWithId.class);
+            placeholderIntent.putExtra(ACTIVITY_ID_LABEL, mPlaceholderActivityId);
+
+            // Create {@link SplitPlaceholderRule} that launches the placeholder in a split with the
+            // target primary activity.
+            SplitPlaceholderRule.Builder splitPlaceholderRuleBuilder =
+                    new SplitPlaceholderRule.Builder(placeholderIntent,
+                            activity -> activity instanceof TestActivityWithId
+                                    && mPrimaryActivityId.equals(((TestActivityWithId) activity)
+                                    .getId()) /* activityPredicate */,
+                            intent -> mPrimaryActivityId.equals(
+                                    intent.getStringExtra(ACTIVITY_ID_LABEL)) /* intentPredicate */,
+                    mParentWindowMetricsPredicate)
+                    .setSplitRatio(DEFAULT_SPLIT_RATIO);
+
+            // Only set finishPrimaryWithSecondary if an explicit value is present
+            if (mFinishPrimaryWithSecondary.isPresent()) {
+                splitPlaceholderRuleBuilder.setFinishPrimaryWithSecondary(
+                        mFinishPrimaryWithSecondary.get());
+            }
+
+            // Only set isSticky if an explicit value is present
+            if (mIsSticky.isPresent()) {
+                splitPlaceholderRuleBuilder.setSticky(mIsSticky.get());
+            }
+
+            return splitPlaceholderRuleBuilder.build();
+        }
     }
 
     /**

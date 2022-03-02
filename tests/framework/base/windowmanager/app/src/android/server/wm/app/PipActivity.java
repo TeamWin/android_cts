@@ -16,6 +16,7 @@
 
 package android.server.wm.app;
 
+import static android.server.wm.app.Components.PipActivity.ACTION_CHANGE_ASPECT_RATIO;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
@@ -128,6 +129,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         break;
                     case ACTION_ON_PIP_REQUESTED:
                         onPictureInPictureRequested();
+                        break;
+                    case ACTION_CHANGE_ASPECT_RATIO:
+                        setPictureInPictureParams(new PictureInPictureParams.Builder()
+                                .setAspectRatio(getAspectRatio(intent,
+                                        EXTRA_SET_ASPECT_RATIO_NUMERATOR,
+                                        EXTRA_SET_ASPECT_RATIO_DENOMINATOR))
+                                .build());
                         break;
                 }
             }
@@ -269,6 +277,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_SET_REQUESTED_ORIENTATION);
         filter.addAction(ACTION_FINISH);
         filter.addAction(ACTION_ON_PIP_REQUESTED);
+        filter.addAction(ACTION_CHANGE_ASPECT_RATIO);
         registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         // Don't dump configuration when entering PIP to avoid the verifier getting the intermediate

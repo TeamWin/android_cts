@@ -1891,7 +1891,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * The same set of HDR profiles MUST be supported by both the primary rear-facing and
      * primary front-facing cameras.
      */
-    @CddTest(requirement="7.5.4/C-2-1")
+    @CddTest(requirement="7.5/C-2-1")
     @Test
     public void test10BitDeviceSupport() throws Exception {
         boolean rearFacing10bitSupport = false;
@@ -1937,7 +1937,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * The same HDR profiles must be supported for all BACKWARD_COMPATIBLE-capable physical
      * sub-cameras of a logical camera, and the logical camera itself.
      */
-    @CddTest(requirement="7.5.4/C-2-2")
+    @CddTest(requirement="7.5/C-2-2")
     @Test
     public void test10BitLogicalDeviceSupport() {
         for (int i = 0; i < mAllCameraIds.length; i++) {

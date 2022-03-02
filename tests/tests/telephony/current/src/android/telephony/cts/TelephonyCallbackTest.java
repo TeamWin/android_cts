@@ -185,7 +185,13 @@ public class TelephonyCallbackTest {
 
     private void registerTelephonyCallback(@NonNull TelephonyCallback callback,
             boolean renounceFine, boolean renounceCoarse) {
-        mTelephonyManager.registerTelephonyCallback(renounceFine, renounceCoarse, mSimpleExecutor,
+        int includeLocationData = TelephonyManager.INCLUDE_LOCATION_DATA_FINE;
+        if (renounceFine && renounceCoarse) {
+            includeLocationData = TelephonyManager.INCLUDE_LOCATION_DATA_NONE;
+        } else if (renounceFine) {
+            includeLocationData = TelephonyManager.INCLUDE_LOCATION_DATA_COARSE;
+        }
+        mTelephonyManager.registerTelephonyCallback(includeLocationData, mSimpleExecutor,
                 callback);
     }
 

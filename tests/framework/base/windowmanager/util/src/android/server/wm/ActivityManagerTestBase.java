@@ -86,10 +86,13 @@ import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_F
 import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LaunchingActivity.KEY_FINISH_BEFORE_LAUNCH;
+import static android.server.wm.app.Components.PipActivity.ACTION_CHANGE_ASPECT_RATIO;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_CALLBACK;
@@ -154,6 +157,7 @@ import android.server.wm.settings.SettingsSession;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.EventLog.Event;
+import android.util.Size;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -422,6 +426,12 @@ public abstract class ActivityManagerTestBase {
         void requestOrientationForPip(int orientation) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_SET_REQUESTED_ORIENTATION)
                     .putExtra(EXTRA_PIP_ORIENTATION, String.valueOf(orientation)));
+        }
+
+        void changeAspectRatio(int numerator, int denominator) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_CHANGE_ASPECT_RATIO)
+                    .putExtra(EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(numerator))
+                    .putExtra(EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denominator)));
         }
     }
 
@@ -2692,6 +2702,108 @@ public abstract class ActivityManagerTestBase {
             executeShellCommand(
                     WM_SET_IGNORE_ORIENTATION_REQUEST + mInitialIgnoreOrientationRequest + " -d "
                             + mDisplayId);
+        }
+    }
+
+    public static class ReportedDisplayMetrics {
+        private static final String WM_SIZE = "wm size";
+        private static final String WM_DENSITY = "wm density";
+        private static final Pattern PHYSICAL_SIZE =
+                Pattern.compile("Physical size: (\\d+)x(\\d+)");
+        private static final Pattern OVERRIDE_SIZE =
+                Pattern.compile("Override size: (\\d+)x(\\d+)");
+        private static final Pattern PHYSICAL_DENSITY =
+                Pattern.compile("Physical density: (\\d+)");
+        private static final Pattern OVERRIDE_DENSITY =
+                Pattern.compile("Override density: (\\d+)");
+
+        /** The size of the physical display. */
+        @NonNull
+        final Size physicalSize;
+        /** The density of the physical display. */
+        final int physicalDensity;
+
+        /** The pre-existing size override applied to a logical display. */
+        @Nullable
+        final Size overrideSize;
+        /** The pre-existing density override applied to a logical display. */
+        @Nullable
+        final Integer overrideDensity;
+
+        final int mDisplayId;
+
+        /** Get physical and override display metrics from WM for specified display. */
+        public static ReportedDisplayMetrics getDisplayMetrics(int displayId) {
+            return new ReportedDisplayMetrics(executeShellCommand(WM_SIZE + " -d " + displayId)
+                    + executeShellCommand(WM_DENSITY + " -d " + displayId), displayId);
+        }
+
+        public void setDisplayMetrics(final Size size, final int density) {
+            setSize(size);
+            setDensity(density);
+        }
+
+        public void restoreDisplayMetrics() {
+            if (overrideSize != null) {
+                setSize(overrideSize);
+            } else {
+                executeShellCommand(WM_SIZE + " reset -d " + mDisplayId);
+            }
+            if (overrideDensity != null) {
+                setDensity(overrideDensity);
+            } else {
+                executeShellCommand(WM_DENSITY + " reset -d " + mDisplayId);
+            }
+        }
+
+        public void setSize(final Size size) {
+            executeShellCommand(
+                    WM_SIZE + " " + size.getWidth() + "x" + size.getHeight() + " -d " + mDisplayId);
+        }
+
+        public void setDensity(final int density) {
+            executeShellCommand(WM_DENSITY + " " + density + " -d " + mDisplayId);
+        }
+
+        /** Get display size that WM operates with. */
+        public Size getSize() {
+            return overrideSize != null ? overrideSize : physicalSize;
+        }
+
+        /** Get density that WM operates with. */
+        public int getDensity() {
+            return overrideDensity != null ? overrideDensity : physicalDensity;
+        }
+
+        private ReportedDisplayMetrics(final String lines, int displayId) {
+            mDisplayId = displayId;
+            Matcher matcher = PHYSICAL_SIZE.matcher(lines);
+            assertTrue("Physical display size must be reported", matcher.find());
+            log(matcher.group());
+            physicalSize = new Size(
+                    Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+
+            matcher = PHYSICAL_DENSITY.matcher(lines);
+            assertTrue("Physical display density must be reported", matcher.find());
+            log(matcher.group());
+            physicalDensity = Integer.parseInt(matcher.group(1));
+
+            matcher = OVERRIDE_SIZE.matcher(lines);
+            if (matcher.find()) {
+                log(matcher.group());
+                overrideSize = new Size(
+                        Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+            } else {
+                overrideSize = null;
+            }
+
+            matcher = OVERRIDE_DENSITY.matcher(lines);
+            if (matcher.find()) {
+                log(matcher.group());
+                overrideDensity = Integer.parseInt(matcher.group(1));
+            } else {
+                overrideDensity = null;
+            }
         }
     }
 }

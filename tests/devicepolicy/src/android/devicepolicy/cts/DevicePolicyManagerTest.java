@@ -1466,7 +1466,7 @@ public final class DevicePolicyManagerTest {
 
     @Test
     public void getDeviceManagerRoleHolderPackageName_doesNotCrash() {
-        sDevicePolicyManager.getDeviceManagerRoleHolderPackageName();
+        sDevicePolicyManager.getDevicePolicyManagementRoleHolderPackage();
     }
 
     private static PersistableBundle createAdminExtrasBundle() {

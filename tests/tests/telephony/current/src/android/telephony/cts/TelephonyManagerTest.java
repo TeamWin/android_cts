@@ -1380,11 +1380,12 @@ public class TelephonyManagerTest {
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
-        assertServiceStateSanitization(mServiceState, mTelephonyManager.getServiceState(true,
-                true));
+        assertServiceStateSanitization(mServiceState, mTelephonyManager.getServiceState(
+                TelephonyManager.INCLUDE_LOCATION_DATA_NONE));
         assertServiceStateFineLocationSanitization(mServiceState,
-                mTelephonyManager.getServiceState(true, false));
-        assertEquals(mServiceState, mTelephonyManager.getServiceState(false, true));
+                mTelephonyManager.getServiceState(TelephonyManager.INCLUDE_LOCATION_DATA_COARSE));
+        assertEquals(mServiceState, mTelephonyManager.getServiceState(
+                TelephonyManager.INCLUDE_LOCATION_DATA_FINE));
     }
 
     private void assertServiceStateSanitization(ServiceState expectedServiceState,
@@ -4257,7 +4258,7 @@ public class TelephonyManagerTest {
         TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
                 cmdBuilder.toString());
 
-        long arbitraryCompletionWindowSecs = 1L;
+        long arbitraryCompletionWindowMillis = 60000L;
 
         boolean isDataThrottlingSupported = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
@@ -4274,7 +4275,7 @@ public class TelephonyManagerTest {
                                 .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
                                         .setDataThrottlingAction(DataThrottlingRequest
                                                 .DATA_THROTTLING_ACTION_THROTTLE_SECONDARY_CARRIER)
-                                        .setCompletionDurationMillis(arbitraryCompletionWindowSecs)
+                                        .setCompletionDurationMillis(arbitraryCompletionWindowMillis)
                                         .build())
                                 .build()));
 
@@ -4310,7 +4311,7 @@ public class TelephonyManagerTest {
                                                     DataThrottlingRequest
                                                             .DATA_THROTTLING_ACTION_HOLD)
                                             .setCompletionDurationMillis(
-                                                    arbitraryCompletionWindowSecs)
+                                                    arbitraryCompletionWindowMillis)
                                             .build())
                                     .build()));
         } catch (IllegalArgumentException e) {

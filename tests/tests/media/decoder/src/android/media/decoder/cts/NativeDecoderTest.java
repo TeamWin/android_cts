@@ -204,35 +204,6 @@ public class NativeDecoderTest extends MediaTestBase {
         return ret;
     }
 
-    @Ignore
-    @Test
-    public void SKIP_testDecoder() throws Exception {
-        // duplicate of CtsMediaV2TestCases:CodecDecoderTest#testSimpleDecode where checksum  is
-        // computed over decoded output in both SDK and NDK side and checked for equality.
-        int testsRun =
-                testDecoder("sinesweepogg.ogg") +
-                testDecoder("sinesweepoggmkv.mkv") +
-                testDecoder("sinesweepoggmp4.mp4") +
-                testDecoder("sinesweepmp3lame.mp3") +
-                testDecoder("sinesweepmp3smpb.mp3") +
-                testDecoder("sinesweepopus.mkv") +
-                testDecoder("sinesweepopusmp4.mp4") +
-                testDecoder("sinesweepm4a.m4a") +
-                testDecoder("sinesweepflacmkv.mkv") +
-                testDecoder("sinesweepflac.flac") +
-                testDecoder("sinesweepflacmp4.mp4") +
-                testDecoder("sinesweepwav.wav") +
-                testDecoder("video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
-                testDecoder("bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm") +
-                testDecoder("bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm") +
-                testDecoder("video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp") +
-                testDecoder("video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz.mp4") +
-                testDecoder("video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
-        if (testsRun == 0) {
-            MediaUtils.skipTest("no decoders found");
-        }
-    }
-
     @Test
     public void testDataSource() throws Exception {
         int testsRun = testDecoder(
@@ -454,47 +425,5 @@ public class NativeDecoderTest extends MediaTestBase {
     private static native int[] getDecodedDataNative(int fd, long offset, long size, boolean wrapFd,
                                                      boolean useCallback)
             throws IOException;
-
-    @Ignore
-    @Test
-    public void SKIP_testVideoPlayback() throws Exception {
-        // duplicate of
-        // CtsMediaV2TestCases:CodecDecoderSurfaceTest#testSimpleDecodeToSurfaceNative[*]
-        int testsRun =
-                testVideoPlayback(
-                        "video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
-                testVideoPlayback(
-                        "bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm") +
-                testVideoPlayback(
-                        "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm") +
-                testVideoPlayback(
-                        "video_640x360_webm_av1_470kbps_30fps_vorbis_stereo_128kbps_48000hz.webm") +
-                testVideoPlayback(
-                        "video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp") +
-                testVideoPlayback(
-                        "video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
-                testVideoPlayback(
-                        "video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
-        if (testsRun == 0) {
-            MediaUtils.skipTest("no decoders found");
-        }
-    }
-
-    private int testVideoPlayback(final String res) throws Exception {
-        Preconditions.assertTestFileExists(mInpPrefix + res);
-        if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
-            return 0; // skip
-        }
-
-        AssetFileDescriptor fd = getAssetFileDescriptorFor(res);
-
-        boolean ret = testPlaybackNative(mActivity.getSurfaceHolder().getSurface(),
-                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
-        assertTrue("native playback error", ret);
-        return 1;
-    }
-
-    private static native boolean testPlaybackNative(Surface surface,
-                                                     int fd, long startOffset, long length);
 }
 

@@ -218,11 +218,11 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
                                                 .adoptShellPermissionIdentity();
                                     }
                                     try {
-                                        mNetworkScan =
-                                                mTelephonyManager.requestNetworkScan(
-                                                        true, mNetworkScanRequest,
-                                                        AsyncTask.SERIAL_EXECUTOR,
-                                                        mNetworkScanCallback);
+                                        mNetworkScan = mTelephonyManager.requestNetworkScan(
+                                                TelephonyManager.INCLUDE_LOCATION_DATA_NONE,
+                                                mNetworkScanRequest,
+                                                AsyncTask.SERIAL_EXECUTOR,
+                                                mNetworkScanCallback);
                                         if (mNetworkScan == null) {
                                             mNetworkScanStatus = EVENT_SCAN_DENIED;
                                             setReady(true);

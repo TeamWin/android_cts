@@ -1476,9 +1476,9 @@ public class PackageManagerShellCommandTest {
     }
 
     @Test
-    public void testQuerySupplementalProcessPackageName() throws Exception {
+    public void testQuerySdkSandboxPackageName() throws Exception {
         final PackageManager pm = getPackageManager();
-        final String name = pm.getSupplementalProcessPackageName();
+        final String name = pm.getSdkSandboxPackageName();
         assertNotNull(name);
         final ApplicationInfo info = pm.getApplicationInfo(
                 name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
@@ -1487,27 +1487,27 @@ public class PackageManagerShellCommandTest {
     }
 
     @Test
-    public void testGetPackagesForUid_supplementalProcessUid() throws Exception {
+    public void testGetPackagesForUid_sdkSandboxUid() throws Exception {
         final PackageManager pm = getPackageManager();
-        final String[] pkgs = pm.getPackagesForUid(Process.toSupplementalUid(10239));
+        final String[] pkgs = pm.getPackagesForUid(Process.toSdkSandboxUid(10239));
         assertEquals(1, pkgs.length);
-        assertEquals(pm.getSupplementalProcessPackageName(), pkgs[0]);
+        assertEquals(pm.getSdkSandboxPackageName(), pkgs[0]);
     }
 
     @Test
-    public void testGetNameForUid_supplementalProcessUid() throws Exception {
+    public void testGetNameForUid_sdkSandboxUid() throws Exception {
         final PackageManager pm = getPackageManager();
-        final String pkgName = pm.getNameForUid(Process.toSupplementalUid(11543));
-        assertEquals(pm.getSupplementalProcessPackageName(), pkgName);
+        final String pkgName = pm.getNameForUid(Process.toSdkSandboxUid(11543));
+        assertEquals(pm.getSdkSandboxPackageName(), pkgName);
     }
 
     @Test
-    public void testGetNamesForUids_supplementalProcessUids() throws Exception {
+    public void testGetNamesForUids_sdkSandboxUids() throws Exception {
         final PackageManager pm = getPackageManager();
-        final int[] uids = new int[]{Process.toSupplementalUid(10101)};
+        final int[] uids = new int[]{Process.toSdkSandboxUid(10101)};
         final String[] names = pm.getNamesForUids(uids);
         assertEquals(1, names.length);
-        assertEquals(pm.getSupplementalProcessPackageName(), names[0]);
+        assertEquals(pm.getSdkSandboxPackageName(), names[0]);
     }
 
     private static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {

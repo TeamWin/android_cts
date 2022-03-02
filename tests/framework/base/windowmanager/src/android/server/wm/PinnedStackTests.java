@@ -399,6 +399,19 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackDoesNotExist();
     }
 
+    @Test
+    public void testChangeAspectRationWhenInPipMode() {
+        // Enter PiP mode with a 2:1 aspect ratio
+        testEnterPipAspectRatio(2, 1);
+
+        // Change the aspect ratio to 1:2
+        final int newNumerator = 1;
+        final int newDenominator = 2;
+        mBroadcastActionTrigger.changeAspectRatio(newNumerator, newDenominator);
+
+        waitForValidAspectRatio(newNumerator, newDenominator);
+    }
+
     private void testEnterPipAspectRatio(int num, int denom) {
         // Launch a test activity so that we're not over home
         launchActivity(TEST_ACTIVITY);

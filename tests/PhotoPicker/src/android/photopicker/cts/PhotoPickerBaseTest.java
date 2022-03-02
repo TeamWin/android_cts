@@ -47,6 +47,10 @@ public class PhotoPickerBaseTest {
 
         enablePhotoPickerFlag(inst);
 
+        final String setSyncDelayCommand =
+                "setprop  persist.sys.photopicker.pickerdb.default_sync_delay_ms 0";
+        mDevice.executeShellCommand(setSyncDelayCommand);
+
         mContext = inst.getContext();
         final Intent intent = new Intent(mContext, GetResultActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
