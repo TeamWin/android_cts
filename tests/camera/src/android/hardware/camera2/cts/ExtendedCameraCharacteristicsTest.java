@@ -16,6 +16,23 @@
 
 package android.hardware.camera2.cts;
 
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContains;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertArrayContainsAnyOf;
+import static android.hardware.camera2.cts.helpers.AssertHelpers.assertCollectionContainsAnyOf;
+import static android.hardware.cts.helpers.CameraUtils.matchParametersToCharacteristics;
+
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -34,17 +51,18 @@ import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
 import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Rational;
-import android.util.Range;
-import android.util.Size;
 import android.util.Pair;
 import android.util.Patterns;
+import android.util.Range;
+import android.util.Rational;
+import android.util.Size;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -56,25 +74,17 @@ import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Set;
-
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
-import org.junit.Test;
-
-import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
-import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
-import static android.hardware.cts.helpers.CameraUtils.matchParametersToCharacteristics;
-
-import static junit.framework.Assert.*;
-
-import static org.mockito.Mockito.*;
 
 import static android.hardware.camera2.cts.CameraTestUtils.MPC_REPORT_LOG_NAME;
 import static android.hardware.camera2.cts.CameraTestUtils.MPC_STREAM_NAME;
@@ -2578,6 +2588,15 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     @CddTest(requirement="7.5.5/C-1-1")
     @Test
     public void testCameraOrientationAlignedWithDevice() {
+        if (CameraUtils.isDeviceFoldable(mContext)) {
+            // CDD 7.5.5/C-1-1 does not apply to devices with folding displays as the display aspect
+            // ratios might change with the device's folding state.
+            // Skip this test in foldables until the CDD is updated to include foldables.
+            Log.i(TAG, "CDD 7.5.5/C-1-1 does not apply to foldables, skipping"
+                    + " testCameraOrientationAlignedWithDevice");
+            return;
+        }
+
         WindowManager windowManager =
                 (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
