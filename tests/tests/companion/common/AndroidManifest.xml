@@ -34,7 +34,6 @@
 
             <property android:name="android.companion.PROPERTY_PRIMARY_COMPANION_DEVICE_SERVICE"
                       android:value="true" />
-
         </service>
 
         <service
@@ -46,6 +45,26 @@
                 <action android:name="android.companion.CompanionDeviceService" />
             </intent-filter>
         </service>
+
+        <!-- Service does not require BIND_COMPANION_DEVICE_SERVICE -->
+        <service
+                android:name=".MissingPermissionCompanionService"
+                android:exported="true"
+                android:label="Secondary Companion Service">
+            <intent-filter>
+                <action android:name="android.companion.CompanionDeviceService" />
+            </intent-filter>
+        </service>
+
+        <!--
+        Service does not declare an intent-filter for "android.companion.CompanionDeviceService"
+        action
+        -->
+        <service
+                android:name=".MissingIntentFilterActionCompanionService"
+                android:exported="true"
+                android:label="Primary Companion Service"
+                android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE"/>
 
         <activity
                 android:name=".CompanionActivity"

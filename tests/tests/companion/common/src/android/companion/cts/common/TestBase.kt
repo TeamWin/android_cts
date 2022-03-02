@@ -16,10 +16,12 @@
 
 package android.companion.cts.common
 
+import android.Manifest
 import android.annotation.CallSuper
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.companion.AssociationInfo
+import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -36,6 +38,7 @@ import org.junit.Before
 import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -110,6 +113,23 @@ abstract class TestBase {
         } finally {
             uiAutomation.dropShellPermissionIdentity()
         }
+    }
+
+    protected fun createSelfManagedAssociation(displayName: String): Int {
+        val callback = RecordingCallback()
+        val request: AssociationRequest = AssociationRequest.Builder()
+                .setSelfManaged(true)
+                .setDisplayName(displayName)
+                .build()
+        callback.assertInvokedByActions {
+            withShellPermissionIdentity(Manifest.permission.REQUEST_COMPANION_SELF_MANAGED) {
+                cdm.associate(request, SIMPLE_EXECUTOR, callback)
+            }
+        }
+
+        val callbackInvocation = callback.invocations.first()
+        assertIs<RecordingCallback.OnAssociationCreated>(callbackInvocation)
+        return callbackInvocation.associationInfo.id
     }
 
     private fun CompanionDeviceManager.disassociateAll() =
