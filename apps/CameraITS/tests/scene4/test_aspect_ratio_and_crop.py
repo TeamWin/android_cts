@@ -253,14 +253,10 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
       # If raw is available and main camera, use it as ground truth.
       ref_img_name_stem = f'{os.path.join(log_path, _NAME)}'
-      if raw_avlb and (fls_physical == fls_logical):
-        ref_fov, cc_ct_gt, aspect_ratio_gt = (
-            image_fov_utils.find_fov_reference(
-                cam, req, props, 'RAW', ref_img_name_stem))
-      else:
-        ref_fov, cc_ct_gt, aspect_ratio_gt = (
-            image_fov_utils.find_fov_reference(
-                cam, req, props, 'JPEG', ref_img_name_stem))
+      raw_bool = raw_avlb and (fls_physical == fls_logical)
+      ref_fov, cc_ct_gt, aspect_ratio_gt = (
+          image_fov_utils.find_fov_reference(
+              cam, req, props, raw_bool, ref_img_name_stem))
 
       run_crop_test = full_or_better and raw_avlb
       if run_crop_test:
