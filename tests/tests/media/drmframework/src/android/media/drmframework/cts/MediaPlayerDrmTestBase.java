@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.media.drm.cts;
+package android.media.drmframework.cts;
 
 import android.app.DownloadManager;
 import android.app.DownloadManager.Request;
