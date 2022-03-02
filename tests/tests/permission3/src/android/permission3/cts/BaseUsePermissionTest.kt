@@ -22,6 +22,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -31,6 +32,7 @@ import android.text.Spanned
 import android.text.style.ClickableSpan
 import android.view.View
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.modules.utils.build.SdkLevel
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -96,11 +98,21 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val ASK_BUTTON_TEXT = "app_permission_button_ask"
         const val ALLOW_ONE_TIME_BUTTON_TEXT = "grant_dialog_button_allow_one_time"
         const val DENY_BUTTON_TEXT = "grant_dialog_button_deny"
+        const val DENY_ANYWAY_BUTTON_TEXT = "grant_dialog_button_deny_anyway"
         const val DENY_AND_DONT_ASK_AGAIN_BUTTON_TEXT =
                 "grant_dialog_button_deny_and_dont_ask_again"
         const val NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON_TEXT = "grant_dialog_button_no_upgrade"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
+
+        val STORAGE_AND_MEDIA_PERMISSIONS = setOf(
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            android.Manifest.permission.ACCESS_MEDIA_LOCATION,
+            android.Manifest.permission.READ_MEDIA_AUDIO,
+            android.Manifest.permission.READ_MEDIA_IMAGE,
+            android.Manifest.permission.READ_MEDIA_VIDEO
+        )
     }
 
     enum class PermissionState {
@@ -165,7 +177,15 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.BLUETOOTH_CONNECT to
                     "@android:string/permgrouplab_nearby_devices",
             android.Manifest.permission.BLUETOOTH_SCAN to
-                    "@android:string/permgrouplab_nearby_devices"
+                    "@android:string/permgrouplab_nearby_devices",
+            // Aural
+            android.Manifest.permission.READ_MEDIA_AUDIO to
+                "@android:string/permgrouplab_readMediaAural",
+            // Visual
+            android.Manifest.permission.READ_MEDIA_IMAGE to
+                "@android:string/permgrouplab_readMediaVisual",
+            android.Manifest.permission.READ_MEDIA_VIDEO to
+                "@android:string/permgrouplab_readMediaVisual"
     )
 
     @Before
@@ -315,8 +335,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
      */
     protected fun clickNotificationPermissionRequestAllowButton() {
         if (waitFindObjectOrNull(By.text(getPermissionControllerString(
-                NOTIF_CONTINUE_TEXT, APP_PACKAGE_NAME)), 1000) != null
-                || waitFindObjectOrNull(By.text(getPermissionControllerString(
+                NOTIF_CONTINUE_TEXT, APP_PACKAGE_NAME)), 1000) != null ||
+                waitFindObjectOrNull(By.text(getPermissionControllerString(
                         NOTIF_TEXT, APP_PACKAGE_NAME)), 1000) != null) {
             if (isAutomotive) {
                 click(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)))
@@ -558,7 +578,15 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             if (!alreadyChecked) {
                 button.click()
             }
-            if (!alreadyChecked && isLegacyApp && wasGranted) {
+
+            val shouldShowStorageWarning = !isTv && !isWatch &&
+                SdkLevel.isAtLeastT() && targetSdk <= Build.VERSION_CODES.S_V2 &&
+                permission in STORAGE_AND_MEDIA_PERMISSIONS
+            if (shouldShowStorageWarning && state == PermissionState.ALLOWED) {
+                click(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)))
+            } else if (shouldShowStorageWarning && state == PermissionState.DENIED) {
+                click(By.text(getPermissionControllerString(DENY_ANYWAY_BUTTON_TEXT)))
+            } else if (!alreadyChecked && isLegacyApp && wasGranted) {
                 if (!isTv) {
                     scrollToBottom()
                 }
