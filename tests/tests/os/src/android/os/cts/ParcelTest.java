@@ -3112,6 +3112,11 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals(intentArrayList, objects);
 
         p.setDataPosition(0);
+        ArrayList<Intent> objects1 = p.readArrayList(
+                getClass().getClassLoader(), TestSubIntent.class);
+        assertEquals(intentArrayList, objects1);
+
+        p.setDataPosition(0);
         assertThrows(BadParcelableException.class, () -> p.readArray(
                 getClass().getClassLoader(), Signature.class));
         p.recycle();
@@ -3217,6 +3222,12 @@ public class ParcelTest extends AndroidTestCase {
                 getClass().getClassLoader(), Intent.class);
         assertNotNull(sparseArray);
         assertTrue(intentArray.contentEquals(sparseArray));
+
+        p.setDataPosition(0);
+        SparseArray<Intent> sparseArray1 = p.readSparseArray(
+                getClass().getClassLoader(), TestSubIntent.class);
+        assertNotNull(sparseArray1);
+        assertTrue(intentArray.contentEquals(sparseArray1));
 
         p.setDataPosition(0);
         assertThrows(BadParcelableException.class, () -> p.readSparseArray(
@@ -3900,6 +3911,11 @@ public class ParcelTest extends AndroidTestCase {
                 TestSubIntent.class);
         assertEquals(map, map2);
 
+        p.setDataPosition(0);
+        HashMap<Object, Intent> map3 = p.readHashMap(loader, String.class,
+                TestSubIntent.class);
+        assertEquals(map, map3);
+
         p.recycle();
     }
 
@@ -4000,6 +4016,7 @@ public class ParcelTest extends AndroidTestCase {
     public void testReadListWithSubClass() {
         Parcel p;
         ArrayList<Intent> arrayList = new ArrayList();
+        ArrayList<Intent> arrayList2 = new ArrayList();
         ArrayList<Intent> parcelableArrayList = new ArrayList();
         final Intent baseIntent = new Intent();
         final TestSubIntent testSubIntent = new TestSubIntent(baseIntent, "1234567890abcdef");
@@ -4015,6 +4032,14 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals(2, arrayList.size());
         for (int i = 0; i < arrayList.size(); i++) {
             assertEquals(arrayList.get(i), parcelableArrayList.get(i));
+        }
+
+        p.setDataPosition(0);
+        assertEquals(0, arrayList2.size());
+        p.readList(arrayList2, getClass().getClassLoader(), TestSubIntent.class);
+        assertEquals(2, arrayList2.size());
+        for (int i = 0; i < arrayList2.size(); i++) {
+            assertEquals(arrayList2.get(i), parcelableArrayList.get(i));
         }
 
         p.recycle();
@@ -4346,6 +4371,7 @@ public class ParcelTest extends AndroidTestCase {
 
         ArrayList<Intent> intentArrayList = new ArrayList<>();
         ArrayList<Intent> intentArrayList1 = new ArrayList<>();
+        ArrayList<Intent> intentArrayList2 = new ArrayList<>();
 
         intentArrayList.add(new TestSubIntent(baseIntent, "1234567890abcdef"));
         intentArrayList.add(null);
@@ -4354,8 +4380,11 @@ public class ParcelTest extends AndroidTestCase {
         p.writeParcelableList(intentArrayList, 0);
         p.setDataPosition(0);
         p.readParcelableList(intentArrayList1, getClass().getClassLoader(), Intent.class);
-
         assertEquals(intentArrayList, intentArrayList1);
+
+        p.setDataPosition(0);
+        p.readParcelableList(intentArrayList2, getClass().getClassLoader(), TestSubIntent.class);
+        assertEquals(intentArrayList, intentArrayList2);
         p.recycle();
     }
 

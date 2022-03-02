@@ -1619,7 +1619,8 @@ public class UsageStatsTest {
         final long broadcastResponseWindowDurationMs = TimeUnit.MINUTES.toMillis(2);
         try (DeviceConfigStateHelper deviceConfigStateHelper =
                 new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
-            deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS,
+            updateFlagWithDelay(deviceConfigStateHelper,
+                    KEY_BROADCAST_RESPONSE_WINDOW_DURATION_MS,
                     String.valueOf(broadcastResponseWindowDurationMs));
 
             assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -1747,7 +1748,8 @@ public class UsageStatsTest {
                      new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
             final TestServiceConnection connection = bindToTestServiceAndGetConnection();
             try {
-                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
                         String.valueOf(ActivityManager.PROCESS_STATE_TOP));
 
                 ITestReceiver testReceiver = connection.getITestReceiver();
@@ -1790,7 +1792,8 @@ public class UsageStatsTest {
 
                 // Change the threshold to something lower than TOP, send the broadcast again
                 // and verify that counts get incremented.
-                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
                         String.valueOf(ActivityManager.PROCESS_STATE_PERSISTENT));
                 sendBroadcastAndWaitForReceipt(intent, options.toBundle());
 
@@ -1808,7 +1811,8 @@ public class UsageStatsTest {
                 mUiDevice.pressHome();
                 // Change the threshold to a process state higher than RECEIVER, send the
                 // broadcast again and verify that counts do not change.
-                deviceConfigStateHelper.set(KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
+                updateFlagWithDelay(deviceConfigStateHelper,
+                        KEY_BROADCAST_RESPONSE_FG_THRESHOLD_STATE,
                         String.valueOf(ActivityManager.PROCESS_STATE_HOME));
                 sendBroadcastAndWaitForReceipt(intent, options.toBundle());
 
@@ -1999,6 +2003,7 @@ public class UsageStatsTest {
             assertResponseStats(TEST_RESPONSE_STATS_ID_1, expectedStatsForId1);
             assertResponseStats(TEST_RESPONSE_STATS_ID_2, expectedStatsForId2);
 
+            mUsageStatsManager.clearBroadcastEvents();
             // Trigger a notification from test-pkg4 and verify notification-posted count gets
             // incremented.
             testReceiver4.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
@@ -2316,6 +2321,13 @@ public class UsageStatsTest {
             connection1.unbind();
             connection3.unbind();
         }
+    }
+
+    private void updateFlagWithDelay(DeviceConfigStateHelper deviceConfigStateHelper,
+            String key, String value) throws Exception {
+        deviceConfigStateHelper.set(key, value);
+        // TODO (221176951): Add a way to check the value of the flag in AppStandbyController
+        SystemClock.sleep(1_000);
     }
 
     private Notification buildNotification(String channelId, int notificationId,

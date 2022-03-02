@@ -242,7 +242,17 @@ public class DatasetTest {
                 .build();
 
         assertThat(field.getValue()).isEqualTo(mValue);
+        assertThat(field.getFilter()).isEqualTo(mFilter);
         assertThat(field.getPresentations()).isEqualTo(presentations);
+    }
+
+    @Test
+    public void testField_empty() {
+        final Field field = new Field.Builder().build();
+
+        assertThat(field.getValue()).isNull();
+        assertThat(field.getFilter()).isNull();
+        assertThat(field.getPresentations()).isNull();
     }
 
     @Test
