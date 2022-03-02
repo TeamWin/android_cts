@@ -540,10 +540,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         assertTrue("Max number of Subscribe sessions",
                 characteristics.getNumberOfSupportedSubscribeSessions() > 0);
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
-            mWifiAwareManager.enableInstantCommunicationMode(true);
+            ShellIdentityUtils.invokeWithShellPermissions(() ->
+                    mWifiAwareManager.enableInstantCommunicationMode(true));
             assertEquals(mWifiAwareManager.isInstantCommunicationModeEnabled(),
                     characteristics.isInstantCommunicationModeSupported());
-            mWifiAwareManager.enableInstantCommunicationMode(false);
+            ShellIdentityUtils.invokeWithShellPermissions(() ->
+                    mWifiAwareManager.enableInstantCommunicationMode(false));
         }
     }
 
