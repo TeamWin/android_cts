@@ -59,7 +59,7 @@ public class MediaServerCrashTest extends StsExtraBusinessLogicTestCase {
     private final ConditionVariable mOnCompletionCalled = new ConditionVariable();
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mFlFilePath = new File(getContext().getFilesDir(), "temp.fl").getAbsolutePath();
 
         mOnPrepareCalled.close();
@@ -92,7 +92,7 @@ public class MediaServerCrashTest extends StsExtraBusinessLogicTestCase {
     }
 
     @After
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         new File(mFlFilePath).delete();
     }
 
