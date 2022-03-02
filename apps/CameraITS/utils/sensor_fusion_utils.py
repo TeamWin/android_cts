@@ -28,11 +28,9 @@ from serial.tools import list_ports
 
 # Constants for Rotation Rig
 ARDUINO_ANGLE_MAX = 180.0  # degrees
-ARDUINO_ANGLES = [0]*5 +list(range(0, 90, 3)) + [90]*5 +list(range(90, -1, -3))
 ARDUINO_BAUDRATE = 9600
 ARDUINO_CMD_LENGTH = 3
 ARDUINO_CMD_TIME = 2.0 * ARDUINO_CMD_LENGTH / ARDUINO_BAUDRATE  # round trip
-ARDUINO_MOVE_TIME = 0.06 - ARDUINO_CMD_TIME  # seconds
 ARDUINO_PID = 0x0043
 ARDUINO_SERVO_SPEED_MAX = 255
 ARDUINO_SERVO_SPEED_MIN = 1
@@ -175,14 +173,14 @@ def convert_to_hex(cmd):
           for x in cmd]
 
 
-def arduino_rotate_servo_to_angle(ch, angle, serial_port, delay=0):
+def arduino_rotate_servo_to_angle(ch, angle, serial_port, move_time):
   """Rotate servo to the specified angle.
 
   Args:
     ch: str; servo to rotate in ARDUINO_VALID_CH
     angle: int; servo angle to move to
     serial_port: object; serial port
-    delay: int; time in seconds
+    move_time: int; time in seconds
   """
   if angle < 0 or angle > ARDUINO_ANGLE_MAX:
     logging.debug('Angle must be between 0 and %d.', ARDUINO_ANGLE_MAX)
@@ -192,23 +190,31 @@ def arduino_rotate_servo_to_angle(ch, angle, serial_port, delay=0):
 
   cmd = [struct.pack('B', i) for i in [ARDUINO_START_BYTE, int(ch), angle]]
   arduino_send_cmd(serial_port, cmd)
-  time.sleep(delay)
+  time.sleep(move_time)
 
 
-def arduino_rotate_servo(ch, serial_port):
-  """Rotate servo between 0 --> 90 --> 0.
+def arduino_rotate_servo(ch, angles, servo_speed, move_time, serial_port):
+  """Rotate servo through 'angles'.
 
   Args:
     ch: str; servo to rotate
+    angles: list of ints; servo angles to move to
+    servo_speed: int; move speed between [1, 255]
+    move_time: int; time required to allow for arduino movement
     serial_port: object; serial port
   """
-  for angle in ARDUINO_ANGLES:
+
+  # set servo speed
+  logging.debug('Servo speed: %d', servo_speed)
+  set_servo_speed(ch, servo_speed, serial_port, delay=0)
+
+  for angle in angles:
     angle_norm = int(round(angle*ARDUINO_ANGLE_MAX/HS755HB_ANGLE_MAX, 0))
-    arduino_rotate_servo_to_angle(
-        ch, angle_norm, serial_port, ARDUINO_MOVE_TIME)
+    arduino_rotate_servo_to_angle(ch, angle_norm, serial_port, move_time)
 
 
-def rotation_rig(rotate_cntl, rotate_ch, num_rotations):
+def rotation_rig(rotate_cntl, rotate_ch, num_rotations, angles, servo_speed,
+                 move_time):
   """Rotate the phone n times using rotate_cntl and rotate_ch defined.
 
   rotate_ch is hard wired and must be determined from physical setup.
@@ -220,6 +226,9 @@ def rotation_rig(rotate_cntl, rotate_ch, num_rotations):
     rotate_cntl: str to identify as 'arduino' or 'canakit' controller.
     rotate_ch: str to identify rotation channel number.
     num_rotations: int number of rotations.
+    angles: list of ints; servo angle to move to.
+    servo_speed: int number of move speed between [1, 255].
+    move_time: int time required to allow for arduino movement.
   """
 
   logging.debug('Controller: %s, ch: %s', rotate_cntl, rotate_ch)
@@ -244,11 +253,15 @@ def rotation_rig(rotate_cntl, rotate_ch, num_rotations):
   logging.debug('Rotating phone %dx', num_rotations)
   for _ in range(num_rotations):
     if rotate_cntl == 'arduino':
-      arduino_rotate_servo(rotate_ch, arduino_serial_port)
+      arduino_rotate_servo(rotate_ch, angles, servo_speed, move_time,
+                           arduino_serial_port)
     elif rotate_cntl == 'canakit':
       canakit_set_relay_channel_state(canakit_serial_port, rotate_ch, 'ON')
       canakit_set_relay_channel_state(canakit_serial_port, rotate_ch, 'OFF')
   logging.debug('Finished rotations')
+  if rotate_cntl == 'arduino':
+    logging.debug('Moving servo to origin')
+    arduino_rotate_servo_to_angle(rotate_ch, 0, arduino_serial_port, 1)
 
 
 def set_servo_speed(ch, servo_speed, serial_port, delay=0):
@@ -267,7 +280,8 @@ def set_servo_speed(ch, servo_speed, serial_port, delay=0):
     logging.debug('Servo speed must be <= %d.', ARDUINO_SERVO_SPEED_MAX)
     servo_speed = ARDUINO_SERVO_SPEED_MAX
 
-  cmd = [struct.pack('B', i) for i in [ARDUINO_SPEED_START_BYTE, int(ch), servo_speed]]
+  cmd = [struct.pack('B', i) for i in [ARDUINO_SPEED_START_BYTE,
+                                       int(ch), servo_speed]]
   arduino_send_cmd(serial_port, cmd)
   time.sleep(delay)
 
