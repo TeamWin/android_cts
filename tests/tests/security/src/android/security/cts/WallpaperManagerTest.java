@@ -32,11 +32,14 @@ import android.util.Log;
 import android.view.Display;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -46,7 +49,8 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class WallpaperManagerTest {
+@RunWith(AndroidJUnit4.class)
+public class WallpaperManagerTest extends StsExtraBusinessLogicTestCase {
     private static final String TAG = "WallpaperManagerSTS";
     private static final long PNG_SIZE = 7503368920L;
 
