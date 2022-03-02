@@ -230,35 +230,35 @@ class SafetySourceTest {
     }
 
     @Test
-    fun isAllowLogging_returnsAllowLoggingOrThrows() {
-        assertThat(DYNAMIC_BAREBONE.isAllowLogging).isEqualTo(true)
-        assertThat(DYNAMIC_ALL_OPTIONAL.isAllowLogging).isEqualTo(false)
-        assertThat(DYNAMIC_DISABLED.isAllowLogging).isEqualTo(true)
-        assertThat(DYNAMIC_HIDDEN.isAllowLogging).isEqualTo(true)
+    fun isLoggingAllowed_returnsLoggingAllowedOrThrows() {
+        assertThat(DYNAMIC_BAREBONE.isLoggingAllowed).isEqualTo(true)
+        assertThat(DYNAMIC_ALL_OPTIONAL.isLoggingAllowed).isEqualTo(false)
+        assertThat(DYNAMIC_DISABLED.isLoggingAllowed).isEqualTo(true)
+        assertThat(DYNAMIC_HIDDEN.isLoggingAllowed).isEqualTo(true)
         assertThrows(UnsupportedOperationException::class.java) {
-            STATIC_BAREBONE.isAllowLogging
+            STATIC_BAREBONE.isLoggingAllowed
         }
         assertThrows(UnsupportedOperationException::class.java) {
-            STATIC_ALL_OPTIONAL.isAllowLogging
+            STATIC_ALL_OPTIONAL.isLoggingAllowed
         }
-        assertThat(ISSUE_ONLY_BAREBONE.isAllowLogging).isEqualTo(true)
-        assertThat(ISSUE_ONLY_ALL_OPTIONAL.isAllowLogging).isEqualTo(false)
+        assertThat(ISSUE_ONLY_BAREBONE.isLoggingAllowed).isEqualTo(true)
+        assertThat(ISSUE_ONLY_ALL_OPTIONAL.isLoggingAllowed).isEqualTo(false)
     }
 
     @Test
-    fun isAllowRefreshOnPageOpen_returnsAllowRefreshOnPageOpenOrThrows() {
-        assertThat(DYNAMIC_BAREBONE.isAllowRefreshOnPageOpen).isEqualTo(false)
-        assertThat(DYNAMIC_ALL_OPTIONAL.isAllowRefreshOnPageOpen).isEqualTo(true)
-        assertThat(DYNAMIC_DISABLED.isAllowRefreshOnPageOpen).isEqualTo(false)
-        assertThat(DYNAMIC_HIDDEN.isAllowRefreshOnPageOpen).isEqualTo(false)
+    fun isRefreshOnPageOpenAllowed_returnsRefreshOnPageOpenAllowedOrThrows() {
+        assertThat(DYNAMIC_BAREBONE.isRefreshOnPageOpenAllowed).isEqualTo(false)
+        assertThat(DYNAMIC_ALL_OPTIONAL.isRefreshOnPageOpenAllowed).isEqualTo(true)
+        assertThat(DYNAMIC_DISABLED.isRefreshOnPageOpenAllowed).isEqualTo(false)
+        assertThat(DYNAMIC_HIDDEN.isRefreshOnPageOpenAllowed).isEqualTo(false)
         assertThrows(UnsupportedOperationException::class.java) {
-            STATIC_BAREBONE.isAllowRefreshOnPageOpen
+            STATIC_BAREBONE.isRefreshOnPageOpenAllowed
         }
         assertThrows(UnsupportedOperationException::class.java) {
-            STATIC_ALL_OPTIONAL.isAllowRefreshOnPageOpen
+            STATIC_ALL_OPTIONAL.isRefreshOnPageOpenAllowed
         }
-        assertThat(ISSUE_ONLY_BAREBONE.isAllowRefreshOnPageOpen).isEqualTo(false)
-        assertThat(ISSUE_ONLY_ALL_OPTIONAL.isAllowRefreshOnPageOpen).isEqualTo(true)
+        assertThat(ISSUE_ONLY_BAREBONE.isRefreshOnPageOpenAllowed).isEqualTo(false)
+        assertThat(ISSUE_ONLY_ALL_OPTIONAL.isRefreshOnPageOpenAllowed).isEqualTo(true)
     }
 
     @Test
@@ -327,8 +327,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalCopy)
     }
@@ -360,8 +360,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -380,8 +380,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -400,8 +400,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -420,8 +420,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -440,8 +440,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -460,8 +460,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -491,8 +491,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -511,8 +511,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(-1)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -531,8 +531,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(-1)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -551,14 +551,14 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName("other")
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
 
     @Test
-    fun hashCode_equals_toString_withDifferentAllowLoggings_areNotEqual() {
+    fun hashCode_equals_toString_withDifferentLoggingAlloweds_areNotEqual() {
         val dynamicAllOptionalAlt = SafetySource.Builder(SafetySource.SAFETY_SOURCE_TYPE_DYNAMIC)
             .setId(DYNAMIC_ALL_OPTIONAL_ID)
             .setPackageName(PACKAGE_NAME)
@@ -571,14 +571,14 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(true)
-            .setAllowRefreshOnPageOpen(true)
+            .setLoggingAllowed(true)
+            .setRefreshOnPageOpenAllowed(true)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
 
     @Test
-    fun hashCode_equals_toString_withDifferentAllowRefreshOnPageOpens_areNotEqual() {
+    fun hashCode_equals_toString_withDifferentRefreshOnPageOpenAlloweds_areNotEqual() {
         val dynamicAllOptionalAlt = SafetySource.Builder(SafetySource.SAFETY_SOURCE_TYPE_DYNAMIC)
             .setId(DYNAMIC_ALL_OPTIONAL_ID)
             .setPackageName(PACKAGE_NAME)
@@ -591,8 +591,8 @@ class SafetySourceTest {
             .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
             .setSearchTermsResId(REFERENCE_RES_ID)
             .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-            .setAllowLogging(false)
-            .setAllowRefreshOnPageOpen(false)
+            .setLoggingAllowed(false)
+            .setRefreshOnPageOpenAllowed(false)
             .build()
         AnyTester.assertThatRepresentationsAreNotEqual(DYNAMIC_ALL_OPTIONAL, dynamicAllOptionalAlt)
     }
@@ -636,8 +636,8 @@ class SafetySourceTest {
                 .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
                 .setSearchTermsResId(REFERENCE_RES_ID)
                 .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-                .setAllowLogging(false)
-                .setAllowRefreshOnPageOpen(true)
+                .setLoggingAllowed(false)
+                .setRefreshOnPageOpenAllowed(true)
                 .build()
 
         private val DYNAMIC_DISABLED =
@@ -692,8 +692,8 @@ class SafetySourceTest {
                 .setProfile(SafetySource.PROFILE_ALL)
                 .setMaxSeverityLevel(MAX_SEVERITY_LEVEL)
                 .setBroadcastReceiverClassName(BROADCAST_RECEIVER_CLASS_NAME)
-                .setAllowLogging(false)
-                .setAllowRefreshOnPageOpen(true)
+                .setLoggingAllowed(false)
+                .setRefreshOnPageOpenAllowed(true)
                 .build()
     }
 }
