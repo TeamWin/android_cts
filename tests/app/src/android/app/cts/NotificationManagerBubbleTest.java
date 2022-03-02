@@ -151,7 +151,10 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
      */
     private void verifyNotificationBubbleState(int id, boolean shouldBeBubble) {
         // FLAG_BUBBLE relies on notification being posted, wait for notification listener
-        sleep();
+        try {
+            Thread.sleep(700);
+        } catch (InterruptedException ignored) {
+        }
 
         for (StatusBarNotification sbn : mListener.mPosted) {
             if (sbn.getId() == id) {
