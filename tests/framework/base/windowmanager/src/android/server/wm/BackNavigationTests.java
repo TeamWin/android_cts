@@ -24,7 +24,7 @@ import android.os.RemoteException;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
-import android.view.OnBackInvokedCallback;
+import android.window.OnBackInvokedCallback;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;

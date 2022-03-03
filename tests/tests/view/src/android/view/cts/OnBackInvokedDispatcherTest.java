@@ -19,8 +19,8 @@ package android.view.cts;
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Dialog;
-import android.view.OnBackInvokedCallback;
-import android.view.OnBackInvokedDispatcher;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
