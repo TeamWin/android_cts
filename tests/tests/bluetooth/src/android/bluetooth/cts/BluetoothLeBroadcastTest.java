@@ -16,6 +16,9 @@
 
 package android.bluetooth.cts;
 
+import static android.Manifest.permission.BLUETOOTH_CONNECT;
+import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -24,12 +27,9 @@ import static org.junit.Assert.assertTrue;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothLeBroadcast;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothStatusCodes;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
 
@@ -73,14 +73,12 @@ public class BluetoothLeBroadcastTest {
         if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             return;
         }
-        mHasBluetooth = mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
-
+        mHasBluetooth = TestUtils.hasBluetooth();
         if (!mHasBluetooth) {
             return;
         }
-        BluetoothManager manager = mContext.getSystemService(BluetoothManager.class);
-        mAdapter = manager.getAdapter();
+        TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
+        mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
 
         mProfileConnectedlock = new ReentrantLock();
@@ -88,20 +86,14 @@ public class BluetoothLeBroadcastTest {
         mIsProfileReady = false;
         mBluetoothLeBroadcast = null;
 
-        Resources bluetoothResources = null;
-        try {
-            bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                    "com.android.bluetooth");
-        } catch (PackageManager.NameNotFoundException e) {
-            return;
+        mIsLeBroadcastSupported =
+                mAdapter.isLeAudioBroadcastSourceSupported() == FEATURE_SUPPORTED;
+        if (mIsLeBroadcastSupported) {
+            boolean isBroadcastSourceEnabledInConfig =
+                    TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO_BROADCAST);
+            assertTrue("Config must be true when profile is supported",
+                    isBroadcastSourceEnabledInConfig);
         }
-        int leBroadcastSupportId = bluetoothResources.getIdentifier(
-                PROFILE_SUPPORTED_LE_BROADCAST, "bool", "com.android.bluetooth");
-        if (leBroadcastSupportId == 0) {
-            return;
-        }
-        mIsLeBroadcastSupported = bluetoothResources.getBoolean(
-                leBroadcastSupportId);
         if (!mIsLeBroadcastSupported) {
             return;
         }
@@ -121,13 +113,15 @@ public class BluetoothLeBroadcastTest {
             }
             assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
             mAdapter = null;
+            TestUtils.dropPermissionAsShellUid();
         }
     }
 
     @Test
     public void testGetConnectedDevices() {
-        if (!(mHasBluetooth && mIsLeBroadcastSupported)) return;
-
+        if (shouldSkipTest()) {
+            return;
+        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -140,8 +134,9 @@ public class BluetoothLeBroadcastTest {
 
     @Test
     public void testGetDevicesMatchingConnectionStates() {
-        if (!(mHasBluetooth && mIsLeBroadcastSupported)) return;
-
+        if (shouldSkipTest()) {
+            return;
+        }
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
@@ -155,7 +150,9 @@ public class BluetoothLeBroadcastTest {
 
     @Test
     public void testGetConnectionState() {
-        if (!(mHasBluetooth && mIsLeBroadcastSupported)) return;
+        if (shouldSkipTest()) {
+            return;
+        }
 
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
@@ -184,6 +181,10 @@ public class BluetoothLeBroadcastTest {
             return;
         }
         assertTrue(mIsLeBroadcastSupported);
+    }
+
+    private boolean shouldSkipTest() {
+        return !(mHasBluetooth && mIsLeBroadcastSupported);
     }
 
     private boolean waitForProfileConnect() {
