@@ -24,8 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothLeBroadcastMetadata;
+import android.bluetooth.BluetoothLeBroadcastChannel;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
@@ -43,12 +42,8 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class BluetoothLeBroadcastMetadataTest {
-    private static final String TEST_MAC_ADDRESS = "00:11:22:33:44:55";
-    private static final int TEST_BROADCAST_ID = 42;
-    private static final int TEST_ADVERTISER_SID = 1234;
-    private static final int TEST_PA_SYNC_INTERVAL = 100;
-    private static final int TEST_PRESENTATION_DELAY_MS = 345;
+public class BluetoothLeBroadcastChannelTest {
+    private static final int TEST_CHANNEL_INDEX = 42;
 
     private Context mContext;
     private boolean mHasBluetooth;
@@ -101,28 +96,19 @@ public class BluetoothLeBroadcastMetadataTest {
     }
 
     @Test
-    public void testCreateMetadataFromBuilder() {
+    public void testCreateBroadcastChannelFromBuilder() {
         if (shouldSkipTest()) {
             return;
         }
-        BluetoothDevice testDevice =
-                mAdapter.getRemoteLeDevice(TEST_MAC_ADDRESS, BluetoothDevice.ADDRESS_TYPE_RANDOM);
-        BluetoothLeBroadcastMetadata.Builder builder = new BluetoothLeBroadcastMetadata.Builder();
-        BluetoothLeBroadcastMetadata metadata =
-                builder.setEncrypted(false)
-                        .setSourceDevice(testDevice, BluetoothDevice.ADDRESS_TYPE_RANDOM)
-                        .setSourceAdvertisingSid(TEST_ADVERTISER_SID)
-                        .setBroadcastId(TEST_BROADCAST_ID)
-                        .setBroadcastCode(null)
-                        .setPaSyncInterval(TEST_PA_SYNC_INTERVAL)
-                        .setPresentationDelayMicros(TEST_PRESENTATION_DELAY_MS)
+        BluetoothLeBroadcastChannel channel =
+                new BluetoothLeBroadcastChannel.Builder()
+                        .setSelected(true)
+                        .setChannelIndex(TEST_CHANNEL_INDEX)
+                        .setCodecMetadata(null)
                         .build();
-        assertEquals(testDevice, metadata.getSourceDevice());
-        assertEquals(BluetoothDevice.ADDRESS_TYPE_RANDOM, metadata.getSourceAddressType());
-        assertEquals(TEST_BROADCAST_ID, metadata.getBroadcastId());
-        assertNull(metadata.getBroadcastCode());
-        assertEquals(TEST_PA_SYNC_INTERVAL, metadata.getPaSyncInterval());
-        assertEquals(TEST_PRESENTATION_DELAY_MS, metadata.getPresentationDelayMicros());
+        assertTrue(channel.isSelected());
+        assertEquals(TEST_CHANNEL_INDEX, channel.getChannelIndex());
+        assertNull(channel.getCodecMetadata());
     }
 
     private boolean shouldSkipTest() {
