@@ -19,13 +19,12 @@ package android.bluetooth.cts;
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 
 import android.app.UiAutomation;
-import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -40,7 +39,6 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
     private static final String TAG = BluetoothHeadsetTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final String PROFILE_SUPPORTED_HEADSET = "profile_supported_hs_hfp";
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
@@ -57,8 +55,11 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         super.setUp();
         mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
-
         if (!mHasBluetooth) return;
+
+        mIsHeadsetSupported = TestUtils.isProfileEnabled(BluetoothProfile.HEADSET);
+        if (!mIsHeadsetSupported) return;
+
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
@@ -71,14 +72,6 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         mIsProfileReady = false;
         mBluetoothHeadset = null;
 
-        Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
-        int headsetSupportId = bluetoothResources.getIdentifier(
-                PROFILE_SUPPORTED_HEADSET, "bool", "com.android.bluetooth");
-        assertTrue("resource profile_supported_hs_hfp not found", headsetSupportId != 0);
-        mIsHeadsetSupported = bluetoothResources.getBoolean(headsetSupportId);
-        if (!mIsHeadsetSupported) return;
-
         mAdapter.getProfileProxy(getContext(), new BluetoothHeadsetServiceListener(),
                 BluetoothProfile.HEADSET);
     }
@@ -86,16 +79,19 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        if (mHasBluetooth) {
-            if (mAdapter != null && mBluetoothHeadset != null) {
-                mAdapter.closeProfileProxy(BluetoothProfile.HEADSET, mBluetoothHeadset);
-                mBluetoothHeadset = null;
-                mIsProfileReady = false;
-            }
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            mAdapter = null;
-            mUiAutomation.dropShellPermissionIdentity();
+        if (!(mHasBluetooth && mIsHeadsetSupported)) {
+            return;
         }
+        if (mAdapter != null && mBluetoothHeadset != null) {
+            mAdapter.closeProfileProxy(BluetoothProfile.HEADSET, mBluetoothHeadset);
+            mBluetoothHeadset = null;
+            mIsProfileReady = false;
+        }
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
+        mAdapter = null;
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     public void test_getConnectedDevices() {

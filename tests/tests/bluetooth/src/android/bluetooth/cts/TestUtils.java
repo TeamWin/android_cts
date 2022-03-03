@@ -16,9 +16,7 @@
 
 package android.bluetooth.cts;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
@@ -28,8 +26,8 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanRecord;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.provider.Settings;
+import android.sysprop.BluetoothProperties;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -50,93 +48,6 @@ class TestUtils {
     static final String BLUETOOTH_PACKAGE_NAME = "com.android.bluetooth";
 
     /**
-     * Get the Config.xml name tag for a particular Bluetooth profile
-     * @param profile profile id from {@link BluetoothProfile}
-     * @return config name tag, or null if the tag name is not available
-     */
-    @Nullable static String profileIdToConfigTag(int profile) {
-        switch (profile) {
-            case BluetoothProfile.A2DP:
-                return "profile_supported_a2dp";
-            case BluetoothProfile.A2DP_SINK:
-                return "profile_supported_a2dp_sink";
-            case BluetoothProfile.HEADSET:
-                return "profile_supported_hs_hfp";
-            case BluetoothProfile.HEADSET_CLIENT:
-                return "profile_supported_hfpclient";
-            case BluetoothProfile.HID_HOST:
-                return "profile_supported_hid_host";
-            case BluetoothProfile.OPP:
-                return "profile_supported_opp";
-            case BluetoothProfile.PAN:
-                return "profile_supported_pan";
-            case BluetoothProfile.PBAP:
-                return "profile_supported_pbap";
-            case BluetoothProfile.GATT:
-                return "profile_supported_gatt";
-            case BluetoothProfile.MAP:
-                return "profile_supported_map";
-            // Hidden profile
-            // case BluetoothProfile.AVRCP:
-            //    return "profile_supported_avrcp_target";
-            case BluetoothProfile.AVRCP_CONTROLLER:
-                return "profile_supported_avrcp_controller";
-            case BluetoothProfile.SAP:
-                return "profile_supported_sap";
-            case BluetoothProfile.PBAP_CLIENT:
-                return "profile_supported_pbapclient";
-            case BluetoothProfile.MAP_CLIENT:
-                return "profile_supported_mapmce";
-            case BluetoothProfile.HID_DEVICE:
-                return "profile_supported_hid_device";
-            case BluetoothProfile.LE_AUDIO:
-                return "profile_supported_le_audio";
-            case BluetoothProfile.LE_AUDIO_BROADCAST:
-                return "profile_supported_le_audio_broadcast";
-            case BluetoothProfile.VOLUME_CONTROL:
-                return "profile_supported_vc";
-            // Hidden profile
-            // case BluetoothProfile.MCP_SERVER:
-            //    return "profile_supported_mcp_server";
-            case BluetoothProfile.CSIP_SET_COORDINATOR:
-                return "profile_supported_csip_set_coordinator";
-            // Hidden profile
-            // case BluetoothProfile.LE_CALL_CONTROL:
-            //    return "profile_supported_le_call_control";
-            case BluetoothProfile.HAP_CLIENT:
-                return "profile_supported_hap_client";
-            case BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT:
-                return "profile_supported_bass_client";
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Checks if a particular Bluetooth profile is configured for this device
-     * Fail the test if profile config status cannot be obtained
-     */
-    static boolean getProfileConfigValueOrDie(int profile) {
-        String profileConfigValueTag = profileIdToConfigTag(profile);
-        assertNotNull(profileConfigValueTag);
-        assertNotEquals("profile tag cannot be empty", 0, profileConfigValueTag.length());
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        Resources bluetoothResources = null;
-        try {
-            bluetoothResources = context.getPackageManager().getResourcesForApplication(
-                    BLUETOOTH_PACKAGE_NAME);
-        } catch (PackageManager.NameNotFoundException e) {
-            fail("Cannot get Bluetooth package resource");
-        }
-        int resourceId = bluetoothResources.getIdentifier(
-                profileConfigValueTag, "bool", BLUETOOTH_PACKAGE_NAME);
-        if (resourceId == 0) {
-            return false;
-        }
-        return bluetoothResources.getBoolean(resourceId);
-    }
-
-    /**
      * Checks whether this device has Bluetooth feature
      * @return true if this device has Bluetooth feature
      */
@@ -144,6 +55,70 @@ class TestUtils {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         return context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
+    }
+
+    /**
+     * Get the current enabled status of a given profile
+     */
+    static boolean isProfileEnabled(int profile) {
+        switch (profile) {
+            case BluetoothProfile.A2DP:
+                return BluetoothProperties.isProfileA2dpSourceEnabled().orElse(false);
+            case BluetoothProfile.A2DP_SINK:
+                return BluetoothProperties.isProfileA2dpSinkEnabled().orElse(false);
+            // Hidden profile
+            // case BluetoothProfile.AVRCP:
+            //     return BluetoothProperties.isProfileAvrcpTargetEnabled().orElse(false);
+            case BluetoothProfile.AVRCP_CONTROLLER:
+                return BluetoothProperties.isProfileAvrcpControllerEnabled().orElse(false);
+            case BluetoothProfile.CSIP_SET_COORDINATOR:
+                return BluetoothProperties.isProfileCsipSetCoordinatorEnabled().orElse(false);
+            case BluetoothProfile.GATT:
+                return BluetoothProperties.isProfileGattEnabled().orElse(false);
+            case BluetoothProfile.HAP_CLIENT:
+                return BluetoothProperties.isProfileHapClientEnabled().orElse(false);
+            case BluetoothProfile.HEADSET:
+                return BluetoothProperties.isProfileHfpAgEnabled().orElse(false);
+            case BluetoothProfile.HEADSET_CLIENT:
+                return BluetoothProperties.isProfileHfpHfEnabled().orElse(false);
+            case BluetoothProfile.HEARING_AID:
+                return BluetoothProperties.isProfileAshaCentralEnabled().orElse(false);
+            case BluetoothProfile.HID_DEVICE:
+                return BluetoothProperties.isProfileHidDeviceEnabled().orElse(false);
+            case BluetoothProfile.HID_HOST:
+                return BluetoothProperties.isProfileHidHostEnabled().orElse(false);
+            case BluetoothProfile.LE_AUDIO:
+                return BluetoothProperties.isProfileBapUnicastServerEnabled().orElse(false);
+            case BluetoothProfile.LE_AUDIO_BROADCAST:
+                return BluetoothProperties.isProfileBapBroadcastSourceEnabled().orElse(false);
+            case BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT:
+                return BluetoothProperties.isProfileBapBroadcastAssistEnabled().orElse(false);
+            // Hidden profile
+            // case BluetoothProfile.LE_CALL_CONTROL:
+            //     return BluetoothProperties.isProfileTbsServerEnabled().orElse(false);
+            case BluetoothProfile.MAP:
+                return BluetoothProperties.isProfileMapServerEnabled().orElse(false);
+            case BluetoothProfile.MAP_CLIENT:
+                return BluetoothProperties.isProfileMapClientEnabled().orElse(false);
+            // Hidden profile
+            // case BluetoothProfile.MCP_SERVER:
+            //     return BluetoothProperties.isProfileMcpServerEnabled().orElse(false);
+            case BluetoothProfile.OPP:
+                return BluetoothProperties.isProfileOppEnabled().orElse(false);
+            case BluetoothProfile.PAN:
+                return BluetoothProperties.isProfilePanNapEnabled().orElse(false)
+                        || BluetoothProperties.isProfilePanPanuEnabled().orElse(false);
+            case BluetoothProfile.PBAP:
+                return BluetoothProperties.isProfilePbapServerEnabled().orElse(false);
+            case BluetoothProfile.PBAP_CLIENT:
+                return BluetoothProperties.isProfilePbapClientEnabled().orElse(false);
+            case BluetoothProfile.SAP:
+                return BluetoothProperties.isProfileSapServerEnabled().orElse(false);
+            case BluetoothProfile.VOLUME_CONTROL:
+                return BluetoothProperties.isProfileVcServerEnabled().orElse(false);
+            default:
+                return false;
+        }
     }
 
     /**
