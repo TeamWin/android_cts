@@ -637,11 +637,9 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         Set<Integer> screenMin = new HashSet<>(Arrays.asList(47));
         Set<Integer> screen100 = new HashSet<>(Arrays.asList(100));
-        Set<Integer> screen140 = new HashSet<>(Arrays.asList(140));
-        // Set<Integer> screenMax = new HashSet<>(Arrays.asList(255));
 
         // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(screenMin, screen100, screen140);
+        List<Set<Integer>> stateSet = Arrays.asList(screenMin, screen100);
 
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag);
@@ -656,7 +654,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         AtomTestUtils.popUntilFind(data, screenMin,
                 atom -> atom.getScreenBrightnessChanged().getLevel());
-        AtomTestUtils.popUntilFindFromEnd(data, screen140,
+        AtomTestUtils.popUntilFindFromEnd(data, screen100,
                 atom -> atom.getScreenBrightnessChanged().getLevel());
         // Assert that the events happened in the expected order.
         AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
