@@ -21,13 +21,12 @@ import android.app.cloudsearch.SearchResponse;
 import android.os.Bundle;
 
 public class CloudSearchTestUtils {
-    public static SearchRequest getBasicSearchRequest(String query, String constraint) {
+    public static SearchRequest getBasicSearchRequest(String query) {
         final int rn = 20;
         final int offset = 0;
         Bundle constraints = new Bundle();
         constraints.putBoolean(SearchRequest.CONSTRAINT_IS_PRESUBMIT_SUGGESTION,
                 true);
-        constraints.putString(SearchRequest.CONSTRAINT_SEARCH_PROVIDER_FILTER, constraint);
 
         return new SearchRequest.Builder(query).setResultNumber(rn)
                 .setResultOffset(offset).setSearchConstraints(constraints).build();
