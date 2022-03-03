@@ -107,4 +107,7 @@
     <!-- b/192912975 Remove CtsMediaTestCases android.media.cts.DecodeAccuracyTest from cts-on-gsi -->
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.DecodeAccuracyTest" />
 
+    <!-- b/201645790 Remove CtsAppSecurityHostTestCases android.appsecurity.cts.ListeningPortsTest#testNoRemotelyAccessibleListeningUdpPorts from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.ListeningPortsTest#testNoRemotelyAccessibleListeningUdpPorts" />
+
 </configuration>
