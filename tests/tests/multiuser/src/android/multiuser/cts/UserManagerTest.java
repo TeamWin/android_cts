@@ -141,6 +141,8 @@ public final class UserManagerTest {
             assertThat(cloneUserManager.isMediaSharedWithParent()).isTrue();
             assertThat(cloneUserManager.isCredentialSharedWithParent()).isTrue();
             assertThat(cloneUserManager.isCloneProfile()).isTrue();
+            assertThat(cloneUserManager.isProfile()).isTrue();
+            assertThat(cloneUserManager.isUserOfType(UserManager.USER_TYPE_PROFILE_CLONE)).isTrue();
 
             final List<UserInfo> list = mUserManager.getUsers(true, true, true);
             final UserHandle finalUserHandle = userHandle;
@@ -152,6 +154,53 @@ public final class UserManagerTest {
         } finally {
             removeUser(userHandle);
         }
+    }
+
+    @Test
+    @SystemUserOnly(reason = "Profiles are only supported on system user.")
+    @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
+    public void testManagedProfile() throws Exception {
+        UserHandle userHandle = null;
+
+        try {
+            userHandle = mUserManager.createProfile(
+                    "Managed profile", UserManager.USER_TYPE_PROFILE_MANAGED, new HashSet<>());
+            assertThat(userHandle).isNotNull();
+
+            final UserManager umOfProfile = sContext
+                    .createPackageContextAsUser("android", 0, userHandle)
+                    .getSystemService(UserManager.class);
+
+            // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
+                assertThat(umOfProfile.isManagedProfile()).isTrue();
+            }
+            assertThat(umOfProfile.isManagedProfile(userHandle.getIdentifier())).isTrue();
+            assertThat(umOfProfile.isProfile()).isTrue();
+            assertThat(umOfProfile.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isTrue();
+        } finally {
+            removeUser(userHandle);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission({QUERY_USERS})
+    public void testSystemUser() throws Exception {
+      final UserManager umOfSys = sContext
+        .createPackageContextAsUser("android", 0, UserHandle.SYSTEM)
+        .getSystemService(UserManager.class);
+
+      assertThat(umOfSys.isSystemUser()).isTrue();
+
+      // We cannot demand what type of user SYSTEM is, but we can say some things it isn't.
+      assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_CLONE)).isFalse();
+      assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isFalse();
+      assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_FULL_GUEST)).isFalse();
+
+      assertThat(umOfSys.isProfile()).isFalse();
+      assertThat(umOfSys.isManagedProfile()).isFalse();
+      assertThat(umOfSys.isManagedProfile(UserHandle.USER_SYSTEM)).isFalse();
+      assertThat(umOfSys.isCloneProfile()).isFalse();
     }
 
     @Test
@@ -174,7 +223,7 @@ public final class UserManagerTest {
 
             final Context userContext = sContext.createPackageContextAsUser("system", 0, user);
             final UserManager userUm = userContext.getSystemService(UserManager.class);
-            // TODO(183239043): Remove the if{} clause after v33 Sdk bump.
+            // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
                 assertThat(userUm.isRestrictedProfile()).isTrue();
             }
@@ -240,7 +289,12 @@ public final class UserManagerTest {
                     .getSystemService(UserManager.class);
 
             assertThat(userManagerOfNewUser.getUserName()).isEqualTo(request.getName());
+            // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
+                assertThat(userManagerOfNewUser.isUserNameSet()).isTrue();
+            }
             assertThat(userManagerOfNewUser.getUserType()).isEqualTo(request.getUserType());
+            assertThat(userManagerOfNewUser.isUserOfType(request.getUserType())).isEqualTo(true);
             // We can not test userIcon and accountOptions,
             // because getters require MANAGE_USERS permission.
             // And we are already testing accountName and accountType
