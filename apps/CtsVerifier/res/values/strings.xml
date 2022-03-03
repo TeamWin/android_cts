@@ -180,6 +180,24 @@
         framework correctly tries to open the CAR_DOCK app again.</string>
     <string name="car_mode_enable">Enable Car Mode</string>
     <string name="car_dock_activity_text">Press the Home button</string>
+    <string name="car_launcher_test">Car Launcher Test</string>
+    <string name="car_launcher_test_desc">This test ensures that the car launcher lists apps
+        disabled by car service due to system resource overuse.\n\n
+        <b>
+            Before proceeding, check if \'com.android.cts.car.watchdog_companionapp\'
+            (aka CtsCarWatchdogCompanionApp) is installed by going to Settings &gt; Apps. If not,
+            please install the app before proceeding.\n\n
+        </b>
+        1. Check if the CtsCarWatchdogCompanionApp is visible in car launcher\'s app grid view. If
+        it is not listed, pass the test.\n
+        2. Run the
+        \'adb shell cmd car_service watchdog-resource-overuse-kill com.android.cts.car.watchdog_companionapp\'
+        shell command to disable the app because of system resource overuse.\n
+        3. Click on \"Open Launcher\". Make sure the CtsCarWatchdogCompanionApp is displayed. If it
+        is not listed, fail the test.\n
+        4. Open CtsCarWatchdogCompanionApp from the launcher.\n\n
+        Pass the test only if the companion app opened successfully.</string>
+    <string name="car_launcher_test_button_label">Open Launcher</string>
     <string name="gear_selection_test">Gear Selection Test</string>
     <string name="gear_selection_test_desc">This test ensures that the
       GEAR_SELECTION property is implemented correctly.\n\nShift the car\'s
