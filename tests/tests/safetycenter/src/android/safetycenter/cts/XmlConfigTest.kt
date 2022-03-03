@@ -17,7 +17,7 @@
 package android.safetycenter.cts
 
 import android.os.Build.VERSION_CODES.TIRAMISU
-import android.safetycenter.config.Parser
+import android.safetycenter.config.SafetyCenterConfig
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
@@ -34,6 +34,6 @@ class XmlConfigTest {
     @Test
     fun safetyCenterConfigResource_validConfig() {
         // Assert that the parser validates the Safety Center config without throwing any exception
-        assertThat(Parser.parseXmlResource(safetyCenterContext.safetyCenterConfig!!)).isNotNull()
+        assertThat(SafetyCenterConfig.fromXml(safetyCenterContext.safetyCenterConfig!!)).isNotNull()
     }
 }

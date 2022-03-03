@@ -55,6 +55,8 @@ class SafetyCenterIssueTest {
     val action2 = SafetyCenterIssue.Action.Builder("action_id_2")
             .setLabel("another action")
             .setPendingIntent(pendingIntent2)
+            .setResolving(false)
+            .setInFlight(false)
             .build()
 
     val issue1 = SafetyCenterIssue.Builder("issue_id")
@@ -62,7 +64,15 @@ class SafetyCenterIssueTest {
             .setSubtitle("In the neighborhood")
             .setSummary("Please acknowledge this")
             .setSeverityLevel(SafetyCenterIssue.ISSUE_SEVERITY_LEVEL_OK)
+            .setDismissible(true)
+            .setShouldConfirmDismissal(true)
             .setActions(listOf(action1))
+            .build()
+
+    val issueWithRequiredFieldsOnly = SafetyCenterIssue.Builder("issue_id")
+            .setTitle("Everything's good")
+            .setSummary("Please acknowledge this")
+            .setSeverityLevel(SafetyCenterIssue.ISSUE_SEVERITY_LEVEL_OK)
             .build()
 
     @Test
@@ -121,6 +131,11 @@ class SafetyCenterIssueTest {
     }
 
     @Test
+    fun isDismissible_defaultsToTrue() {
+        assertThat(issueWithRequiredFieldsOnly.isDismissible).isTrue()
+    }
+
+    @Test
     fun shouldConfirmDismissal_returnsShouldConfirmDismissal() {
         assertThat(SafetyCenterIssue.Builder(issue1)
                 .setShouldConfirmDismissal(true)
@@ -132,6 +147,11 @@ class SafetyCenterIssueTest {
                 .build()
                 .shouldConfirmDismissal())
                 .isFalse()
+    }
+
+    @Test
+    fun shouldConfirmDismissal_defaultsToTrue() {
+        assertThat(issueWithRequiredFieldsOnly.shouldConfirmDismissal()).isTrue()
     }
 
     @Test
@@ -264,7 +284,7 @@ class SafetyCenterIssueTest {
     @Test
     fun equals_toString_differentIsDismissibleValues_areNotEqual() {
         val differentFromIssue1 = SafetyCenterIssue.Builder(issue1)
-                .setDismissible(true)
+                .setDismissible(false)
                 .build()
 
         assertThat(differentFromIssue1).isNotEqualTo(issue1)
@@ -274,7 +294,7 @@ class SafetyCenterIssueTest {
     @Test
     fun equals_toString_differentShouldConfirmDismissalValues_areNotEqual() {
         val differentFromIssue1 = SafetyCenterIssue.Builder(issue1)
-                .setShouldConfirmDismissal(true)
+                .setShouldConfirmDismissal(false)
                 .build()
 
         assertThat(differentFromIssue1).isNotEqualTo(issue1)

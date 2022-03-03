@@ -1992,6 +1992,7 @@ public class WindowManagerState {
         private int mRequestedWidth;
         private int mRequestedHeight;
         private List<Rect> mKeepClearRects;
+        private List<Rect> mUnrestrictedKeepClearRects;
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
@@ -2037,6 +2038,10 @@ public class WindowManagerState {
             mKeepClearRects = new ArrayList();
             for (RectProto r : proto.keepClearAreas) {
                 mKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
+            }
+            mUnrestrictedKeepClearRects = new ArrayList();
+            for (RectProto r : proto.unrestrictedKeepClearAreas) {
+                mUnrestrictedKeepClearRects.add(new Rect(r.left, r.top, r.right, r.bottom));
             }
         }
 
@@ -2110,6 +2115,10 @@ public class WindowManagerState {
 
         public List<Rect> getKeepClearRects() {
             return mKeepClearRects;
+        }
+
+        public List<Rect> getUnrestrictedKeepClearRects() {
+            return mUnrestrictedKeepClearRects;
         }
 
         private String getWindowTypeSuffix(int windowType) {

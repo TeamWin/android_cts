@@ -177,6 +177,10 @@ public class UsageStatsTest {
             "broadcast_response_fg_threshold_state";
 
     private static final int DEFAULT_TIMEOUT_MS = 10_000;
+    // For tests that are verifying a certain event doesn't occur, wait for some time
+    // to ensure the event doesn't really occur. Otherwise, we cannot be sure if the event didn't
+    // occur or the verification was done too early before the event occurred.
+    private static final int WAIT_TIME_FOR_NEGATIVE_TESTS_MS = 500;
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -2360,26 +2364,32 @@ public class UsageStatsTest {
 
     private void assertResponseStats(String packageName, long id,
             BroadcastResponseStats expectedStats) {
-
-        final List<BroadcastResponseStats> actualStats = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
-                () -> mUsageStatsManager.queryBroadcastResponseStats(packageName, id),
-                result -> {
-                    final BroadcastResponseStats stats = (result == null || result.isEmpty())
-                            ? new BroadcastResponseStats(packageName, id) : result.get(0);
-                    return Objects.equals(expectedStats, stats);
-                });
-        if (actualStats != null && actualStats.size() > 1) {
-            fail("More than one object returned; expected=" + expectedStats
-                    + ", actual=" + Arrays.toString(actualStats.toArray()));
+        List<BroadcastResponseStats> actualStats = mUsageStatsManager
+                .queryBroadcastResponseStats(packageName, id);
+        if (compareStats(expectedStats, actualStats)) {
+            SystemClock.sleep(WAIT_TIME_FOR_NEGATIVE_TESTS_MS);
         }
-        final BroadcastResponseStats stats = (actualStats == null || actualStats.isEmpty())
-                ? new BroadcastResponseStats(packageName, id) : actualStats.get(0);
-        assertEquals(expectedStats, stats);
+
+        actualStats = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
+                () -> mUsageStatsManager.queryBroadcastResponseStats(packageName, id),
+                result -> compareStats(expectedStats, result));
+        final String errorMsg = String.format("\nEXPECTED(%d)=%s\nACTUAL(%d)=%s\n",
+                1, expectedStats,
+                actualStats.size(), Arrays.toString(actualStats.toArray()));
+        assertTrue(errorMsg, compareStats(expectedStats, actualStats));
     }
 
     private void assertResponseStats(long id,
             ArrayMap<String, BroadcastResponseStats> expectedStats) {
-        final List<BroadcastResponseStats> actualStats = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
+        // TODO: Call into the above assertResponseStats() method instead of duplicating
+        // the logic.
+        List<BroadcastResponseStats> actualStats = mUsageStatsManager
+                .queryBroadcastResponseStats(null /* packageName */, id);
+        if (compareStats(expectedStats, actualStats)) {
+            SystemClock.sleep(WAIT_TIME_FOR_NEGATIVE_TESTS_MS);
+        }
+
+        actualStats = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
                 () -> mUsageStatsManager.queryBroadcastResponseStats(null /* packageName */, id),
                 result -> compareStats(expectedStats, result));
         final String errorMsg = String.format("\nEXPECTED(%d)=%s\nACTUAL(%d)=%s\n",
@@ -2401,6 +2411,17 @@ public class UsageStatsTest {
             }
         }
         return true;
+    }
+
+    private boolean compareStats(BroadcastResponseStats expectedStats,
+            List<BroadcastResponseStats> actualStats) {
+        if (actualStats.size() > 1) {
+            return false;
+        }
+        final BroadcastResponseStats stats = (actualStats == null || actualStats.isEmpty())
+                ? new BroadcastResponseStats(expectedStats.getPackageName(), expectedStats.getId())
+                : actualStats.get(0);
+        return expectedStats.equals(stats);
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")

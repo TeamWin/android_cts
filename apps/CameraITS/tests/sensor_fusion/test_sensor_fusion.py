@@ -62,6 +62,9 @@ _CV2_LK_PARAMS = dict(winSize=(15, 15),
                                 10, 0.03))  # cv2.calcOpticalFlowPyrLK params.
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
+_ARDUINO_ANGLES = (0, 90)
+_ARDUINO_MOVE_TIME = 2
+_ARDUINO_SERVO_SPEED = 20
 _NUM_ROTATIONS = 10
 _START_FRAME = 1
 _FRAME_DELTA_TOL = 1.5  # 50% margin over nominal FPS of captures
@@ -120,7 +123,8 @@ def _collect_data(cam, fps, w, h, test_length, rot_rig, chart_dist, log_path):
   # Start camera rotation.
   p = multiprocessing.Process(
       target=sensor_fusion_utils.rotation_rig,
-      args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,))
+      args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,
+            _ARDUINO_ANGLES, _ARDUINO_SERVO_SPEED, _ARDUINO_MOVE_TIME,))
   p.start()
 
   cam.start_sensor_events()

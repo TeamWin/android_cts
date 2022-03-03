@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
-package android.media.drm.cts;
+#include <jni.h>
+#include <stdio.h>
 
-import android.media.cts.WorkDirBase;
+extern int registerNativeMediaDrmClearkeyTest(JNIEnv*);
 
-class WorkDir extends WorkDirBase {
-    public static final String getMediaDirString() {
-        return getMediaDirString("CtsMediaDrmTestCases-1.4");
+jint JNI_OnLoad(JavaVM *vm, void */*reserved*/) {
+    JNIEnv *env = NULL;
+
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) {
+        return JNI_ERR;
     }
+
+    if (registerNativeMediaDrmClearkeyTest(env)) {
+        return JNI_ERR;
+    }
+
+    return JNI_VERSION_1_4;
 }

@@ -744,7 +744,12 @@ public class CarrierApiTest extends BaseCarrierApiTest {
 
         // Channel 0 is guaranteed to be always available and cannot be closed, per TS 102 221
         // Section 11.1.17
-        assertThat(mTelephonyManager.iccCloseLogicalChannel(0)).isFalse();
+        try {
+            mTelephonyManager.iccCloseLogicalChannel(0);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException ex) {
+            // IllegalArgumentException is expected
+        }
     }
 
     /**

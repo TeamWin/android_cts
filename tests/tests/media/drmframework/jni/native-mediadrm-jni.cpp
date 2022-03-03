@@ -173,7 +173,7 @@ static media_status_t setDataSourceFdOrUrl(
     return status;
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_isCryptoSchemeSupportedNative(
+extern "C" jboolean isCryptoSchemeSupportedNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid) {
 
     if (NULL == uuid) {
@@ -205,7 +205,7 @@ void initPlaybackParams(JNIEnv* env, const jobject &playbackParams, PlaybackPara
         playbackParams, gFieldIds.videoUrl));
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetPropertyStringNative(
+extern "C" jboolean testGetPropertyStringNative(
     JNIEnv* env, jclass clazz, jbyteArray uuid,
     jstring name, jobject outValue) {
 
@@ -250,7 +250,7 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGet
     return JNI_TRUE;
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testPropertyByteArrayNative(
+extern "C" jboolean testPropertyByteArrayNative(
         JNIEnv* env, jclass /* clazz */, jbyteArray uuid) {
 
     if (NULL == uuid) {
@@ -301,7 +301,7 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testPro
     return JNI_TRUE;
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testPsshNative(
+extern "C" jboolean testPsshNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid, jstring videoUrl) {
 
     if (NULL == uuid || NULL == videoUrl) {
@@ -686,7 +686,7 @@ errorOut:
     jniThrowExceptionFmt(env, "java/lang/RuntimeException", errorMessage.c_str(), status);
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testClearKeyPlaybackNative(
+extern "C" jboolean testClearKeyPlaybackNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid, jobject playbackParams) {
     if (NULL == uuid || NULL == playbackParams) {
         jniThrowException(env, "java/lang/NullPointerException",
@@ -826,7 +826,7 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testCle
     return JNI_TRUE;
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testQueryKeyStatusNative(
+extern "C" jboolean testQueryKeyStatusNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid) {
 
     if (NULL == uuid) {
@@ -919,7 +919,7 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testQue
     return JNI_TRUE;
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testFindSessionIdNative(
+extern "C" jboolean testFindSessionIdNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid) {
 
     if (NULL == uuid) {
@@ -975,7 +975,7 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testFin
     return JNI_TRUE;
 }
 
-extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetKeyRequestNative(
+extern "C" jboolean testGetKeyRequestNative(
     JNIEnv* env, jclass /*clazz*/, jbyteArray uuid, jobject playbackParams) {
 
     if (NULL == uuid || NULL == playbackParams) {
@@ -1058,41 +1058,41 @@ extern "C" jboolean Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGet
 
 static JNINativeMethod gMethods[] = {
     { "isCryptoSchemeSupportedNative", "([B)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_isCryptoSchemeSupportedNative },
+            (void *)isCryptoSchemeSupportedNative },
 
     { "testClearKeyPlaybackNative",
-            "([BLandroid/media/drm/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testClearKeyPlaybackNative },
+            "([BLandroid/media/drmframework/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
+            (void *)testClearKeyPlaybackNative },
 
     { "testGetPropertyStringNative",
             "([BLjava/lang/String;Ljava/lang/StringBuffer;)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetPropertyStringNative },
+            (void *)testGetPropertyStringNative },
 
     { "testPropertyByteArrayNative",
             "([B)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testPropertyByteArrayNative },
+            (void *)testPropertyByteArrayNative },
 
     { "testPsshNative", "([BLjava/lang/String;)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testPsshNative },
+            (void *)testPsshNative },
 
     { "testQueryKeyStatusNative", "([B)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testQueryKeyStatusNative },
+            (void *)testQueryKeyStatusNative },
 
     { "testFindSessionIdNative", "([B)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testFindSessionIdNative },
+            (void *)testFindSessionIdNative },
 
     { "testGetKeyRequestNative",
-            "([BLandroid/media/drm/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
-            (void *)Java_android_mediadrm_cts_NativeMediaDrmClearkeyTest_testGetKeyRequestNative},
+            "([BLandroid/media/drmframework/cts/NativeMediaDrmClearkeyTest$PlaybackParams;)Z",
+            (void *)testGetKeyRequestNative},
 };
 
-int register_android_mediadrm_cts_NativeMediaDrmClearkeyTest(JNIEnv* env) {
+int registerNativeMediaDrmClearkeyTest(JNIEnv* env) {
     jint result = JNI_ERR;
     jclass testClass =
-        env->FindClass("android/media/drm/cts/NativeMediaDrmClearkeyTest");
+        env->FindClass("android/media/drmframework/cts/NativeMediaDrmClearkeyTest");
     if (testClass) {
         jclass playbackParamsClass = env->FindClass(
-            "android/media/drm/cts/NativeMediaDrmClearkeyTest$PlaybackParams");
+            "android/media/drmframework/cts/NativeMediaDrmClearkeyTest$PlaybackParams");
         if (playbackParamsClass) {
             jclass surfaceClass =
                 env->FindClass("android/view/Surface");

@@ -24,45 +24,38 @@ import android.util.Log;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class CtsCloudSearchService extends CloudSearchService {
+public class Cts2CloudSearchService extends CloudSearchService {
 
     private static final boolean DEBUG = true;
     public static final String MY_PACKAGE = "android.cloudsearch.cts";
     public static final String SERVICE_NAME = MY_PACKAGE + "/."
-            + CtsCloudSearchService.class.getSimpleName();
+            + Cts2CloudSearchService.class.getSimpleName();
     private static final String TAG =
-            "CloudSearchManagerTest[" + CtsCloudSearchService.class.getSimpleName() + "]";
+            "CloudSearchManagerTest CS2[" + Cts2CloudSearchService.class.getSimpleName() + "]";
 
     private static Watcher sWatcher;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        if (DEBUG) Log.d(TAG, "onCreate");
+        if (DEBUG) Log.e(TAG, "onCreate CS2");
     }
 
     @Override
     public void onSearch(SearchRequest request) {
+        if (DEBUG) Log.e(TAG, "onSearch CS2:" + request);
         // Counting down created in onSearch because a mock search request is issued in setup().
         sWatcher.created.countDown();
         sWatcher.queried.countDown();
-        if (request.getQuery().equals("Successful")) {
+        if (request.getQuery().contains("Successful2")) {
             sWatcher.succeeded.countDown();
             returnResults(request.getRequestId(),
                     CloudSearchTestUtils.getSearchResponse(SearchResponse.SEARCH_STATUS_OK));
-        } else if (request.getQuery().equals("Unsuccessful")) {
+        }
+        if (request.getQuery().contains("Unsuccessful2")) {
             sWatcher.failed.countDown();
             returnResults(request.getRequestId(), CloudSearchTestUtils.getSearchResponse(
                     SearchResponse.SEARCH_STATUS_NO_INTERNET));
-
-        } else {
-            // Count down a search failure once and a search success once
-            sWatcher.failed.countDown();
-            returnResults(request.getRequestId(), CloudSearchTestUtils.getSearchResponse(
-                    SearchResponse.SEARCH_STATUS_NO_INTERNET));
-            sWatcher.succeeded.countDown();
-            returnResults(request.getRequestId(),
-                    CloudSearchTestUtils.getSearchResponse(SearchResponse.SEARCH_STATUS_OK));
         }
     }
 

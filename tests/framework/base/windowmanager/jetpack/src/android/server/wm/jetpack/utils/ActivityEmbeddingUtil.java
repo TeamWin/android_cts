@@ -43,6 +43,8 @@ import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 import androidx.window.extensions.embedding.SplitRule;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +58,7 @@ public class ActivityEmbeddingUtil {
     public static final String TAG = "ActivityEmbeddingTests";
     public static final long WAIT_FOR_LIFECYCLE_TIMEOUT_MS = 3000;
     public static final float DEFAULT_SPLIT_RATIO = 0.5f;
+    public static final float UNEVEN_CONTAINERS_DEFAULT_SPLIT_RATIO = 0.7f;
     public static final String EMBEDDED_ACTIVITY_ID = "embedded_activity_id";
 
     @NonNull
@@ -255,6 +258,11 @@ public class ActivityEmbeddingUtil {
         assertEquals(getMaximumActivityBounds(activity), getActivityBounds(activity));
     }
 
+    public static void waitForFillsTask(Activity activity) {
+        PollingCheck.waitFor(WAIT_FOR_LIFECYCLE_TIMEOUT_MS, () -> getActivityBounds(activity)
+                .equals(getMaximumActivityBounds(activity)));
+    }
+
     public static boolean waitForResumed(
             @NonNull List<Activity> activityList) {
         final long startTime = System.currentTimeMillis();
@@ -329,23 +337,35 @@ public class ActivityEmbeddingUtil {
     public static void getExpectedPrimaryAndSecondaryBounds(int layoutDir, float splitRatio,
             @NonNull Rect inParentBounds, @NonNull Rect outPrimaryActivityBounds,
             @NonNull Rect outSecondaryActivityBounds) {
-        final int expectedPrimaryWidth = (int) (inParentBounds.width() * splitRatio);
-        final int expectedSecondaryWidth = (int) (inParentBounds.width() * (1 - splitRatio));
+        assertTrue(layoutDir == LayoutDirection.LTR || layoutDir == LayoutDirection.RTL);
 
-        outPrimaryActivityBounds.set(inParentBounds);
-        outSecondaryActivityBounds.set(inParentBounds);
+        // Normalize the split ratio so that parent left + (parent width * split ratio) is always
+        // the position of the split divider in the parent.
+        if (layoutDir == LayoutDirection.RTL) {
+            splitRatio = 1 - splitRatio;
+        }
+
+        // Create the left and right container bounds
+        final Rect leftContainerBounds = new Rect(inParentBounds.left, inParentBounds.top,
+                (int) (inParentBounds.left + inParentBounds.width() * splitRatio),
+                inParentBounds.bottom);
+        final Rect rightContainerBounds = new Rect(
+                (int) (inParentBounds.left + inParentBounds.width() * splitRatio),
+                inParentBounds.top, inParentBounds.right, inParentBounds.bottom);
+
+        // Assign the primary and secondary bounds depending on layout direction
         if (layoutDir == LayoutDirection.LTR) {
             /*******************|*********************
              * primary activity | secondary activity *
              *******************|*********************/
-            outPrimaryActivityBounds.right = inParentBounds.left + expectedPrimaryWidth;
-            outSecondaryActivityBounds.left = inParentBounds.right - expectedSecondaryWidth;
+            outPrimaryActivityBounds.set(leftContainerBounds);
+            outSecondaryActivityBounds.set(rightContainerBounds);
         } else {
             /*********************|*******************
              * secondary activity | primary activity *
              *********************|*******************/
-            outPrimaryActivityBounds.left = inParentBounds.right - expectedPrimaryWidth;
-            outSecondaryActivityBounds.right = inParentBounds.left + expectedSecondaryWidth;
+            outPrimaryActivityBounds.set(rightContainerBounds);
+            outSecondaryActivityBounds.set(leftContainerBounds);
         }
     }
 }

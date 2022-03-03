@@ -522,6 +522,7 @@
         </activity>
 
         <activity android:name="android.app.stubs.BubbledActivity"
+             android:turnScreenOn="true"
              android:resizeableActivity="true"/>
 
         <service android:name="android.app.stubs.BubblesTestService"

@@ -276,7 +276,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         swipeLeftAndWait();
 
         // Deselect one item
-        clickAndWait(findPreviewSelectCheckButton());
+        clickAndWait(findPreviewSelectedCheckButton());
 
         // Return selected items
         clickAndWait(findPreviewAddButton());
@@ -556,9 +556,9 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
                 REGEX_PACKAGE_NAME + ":id/button_view_selected"));
     }
 
-    private static UiObject findPreviewSelectCheckButton() {
+    private static UiObject findPreviewSelectedCheckButton() {
         return new UiObject(new UiSelector().resourceIdMatches(
-                REGEX_PACKAGE_NAME + ":id/preview_select_check_button"));
+                REGEX_PACKAGE_NAME + ":id/preview_selected_check_button"));
     }
 
 

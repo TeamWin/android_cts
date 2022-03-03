@@ -84,7 +84,7 @@ class ItsSession(object):
   SOCK_TIMEOUT = 20.0
   # Additional timeout in seconds when ITS service is doing more complicated
   # operations, for example: issuing warmup requests before actual capture.
-  EXTRA_SOCK_TIMEOUT = 5.0
+  EXTRA_SOCK_TIMEOUT = 10.0
 
   PACKAGE = 'com.android.cts.verifier.camera.its'
   INTENT_START = 'com.android.cts.verifier.camera.its.START'
@@ -1144,7 +1144,11 @@ class ItsSession(object):
     cmd['cameraId'] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
+    self.sock.settimeout(self.SOCK_TIMEOUT)
+
     if data['tag'] != 'cameraLaunchMs':
       raise error_util.CameraItsError('Failed to measure camera launch latency')
     return float(data['strValue'])
@@ -1160,7 +1164,11 @@ class ItsSession(object):
     cmd['cameraId'] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
+    self.sock.settimeout(self.SOCK_TIMEOUT)
+
     if data['tag'] != 'camera1080pJpegCaptureMs':
       raise error_util.CameraItsError(
           'Failed to measure camera 1080p jpeg capture latency')
