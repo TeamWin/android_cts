@@ -82,9 +82,12 @@ class ItsSession(object):
 
   # Seconds timeout on each socket operation.
   SOCK_TIMEOUT = 20.0
+  # Seconds timeout on performance measurement socket operation
+  SOCK_TIMEOUT_FOR_PERF_MEASURE = 40.0
+
   # Additional timeout in seconds when ITS service is doing more complicated
   # operations, for example: issuing warmup requests before actual capture.
-  EXTRA_SOCK_TIMEOUT = 10.0
+  EXTRA_SOCK_TIMEOUT = 5.0
 
   PACKAGE = 'com.android.cts.verifier.camera.its'
   INTENT_START = 'com.android.cts.verifier.camera.its.START'
@@ -1124,7 +1127,7 @@ class ItsSession(object):
     cmd['cameraId'] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
-    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    timeout = self.SOCK_TIMEOUT_FOR_PERF_MEASURE
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
     self.sock.settimeout(self.SOCK_TIMEOUT)
@@ -1144,7 +1147,7 @@ class ItsSession(object):
     cmd['cameraId'] = self._camera_id
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
 
-    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    timeout = self.SOCK_TIMEOUT_FOR_PERF_MEASURE
     self.sock.settimeout(timeout)
     data, _ = self.__read_response_from_socket()
     self.sock.settimeout(self.SOCK_TIMEOUT)
