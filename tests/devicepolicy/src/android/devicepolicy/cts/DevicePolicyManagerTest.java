@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.MANAGE_ROLE_HOLDERS;
 import static android.Manifest.permission.PROVISION_DEMO_DEVICE;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
@@ -34,12 +35,15 @@ import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
+import static com.android.queryable.queries.ServiceQuery.service;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -59,6 +63,7 @@ import android.content.pm.PackageManager;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.os.BaseBundle;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PersistableBundle;
@@ -73,8 +78,10 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
@@ -93,6 +100,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
@@ -120,6 +128,10 @@ import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
 public final class DevicePolicyManagerTest {
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
     private static final Context sContext = ApplicationProvider.getApplicationContext();
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
@@ -127,6 +139,17 @@ public final class DevicePolicyManagerTest {
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final SharedPreferences sSharedPreferences =
             sContext.getSharedPreferences("required-apps.txt", Context.MODE_PRIVATE);
+    private static final AccountManager sAccountManager =
+            sContext.getSystemService(AccountManager.class);
+    private static final TestApp sAccountManagementApp = sDeviceState.testApps()
+            .query()
+            // TODO(b/198417584): Support Querying XML resources in TestApp.
+            // TODO(b/198590265) Filter for the correct account type.
+            .whereServices().contains(
+                    service().serviceClass().className()
+                            .isEqualTo("com.android.bedstead.testapp.AccountManagementApp"
+                                    + ".TestAppAccountAuthenticatorService"))
+            .get();
 
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
             DeviceAdminApp.deviceAdminComponentName(sContext);
@@ -141,6 +164,12 @@ public final class DevicePolicyManagerTest {
     private static final String ACCOUNT_NAME = "CTS";
     private static final String ACCOUNT_TYPE = "com.android.cts.test";
     private static final Account TEST_ACCOUNT = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
+
+    private static final String EXISTING_ACCOUNT_TYPE =
+            "com.android.bedstead.testapp.AccountManagementApp.account.type";
+    private static final Account ACCOUNT_WITH_EXISTING_TYPE =
+            new Account("user0", EXISTING_ACCOUNT_TYPE);
+    private static final String TEST_PASSWORD = "password";
 
     private static final String KEY_PRE_PROVISIONING_SYSTEM_APPS = "pre_provisioning_system_apps";
     private static final String KEY_PRE_PROVISIONING_NON_SYSTEM_APPS =
@@ -180,10 +209,6 @@ public final class DevicePolicyManagerTest {
             .whereIsDeviceAdmin().isTrue()
             .whereTestOnly().isFalse()
             .get();
-
-    @ClassRule
-    @Rule
-    public static final DeviceState sDeviceState = new DeviceState();
 
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
     private static final String TEST_KEY = "test_key";
@@ -1621,5 +1646,92 @@ public final class DevicePolicyManagerTest {
         sDevicePolicyManager.setDpcDownloaded(true);
 
         assertThat(sDevicePolicyManager.isDpcDownloaded()).isTrue();
+    }
+
+    // TODO(b/222669810): add ensureHasNoAccounts annotation
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasNoSecondaryUser
+    @EnsureHasNoWorkProfile
+    @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    public void shouldAllowBypassingDevicePolicyManagementRoleQualification_noUsersAndAccounts_returnsTrue() {
+        // TODO(b/222669811): replace with annotation
+        assumeFalse(Build.isDebuggable());
+
+        assertThat(
+                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
+                .isTrue();
+    }
+
+    // TODO(b/222669810): add ensureHasNoAccounts annotation
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasSecondaryUser
+    @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withUsers_returnsFalse() {
+        // TODO(b/222669811): replace with annotation
+        assumeFalse(Build.isDebuggable());
+
+        assertThat(
+                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
+                .isFalse();
+    }
+
+    // TODO(b/222669810): add ensureHasNoAccounts annotation
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withProfile_returnsFalse() {
+        // TODO(b/222669811): replace with annotation
+        assumeFalse(Build.isDebuggable());
+
+        assertThat(
+                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
+                .isFalse();
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureHasNoSecondaryUser
+    @EnsureHasNoWorkProfile
+    @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withAccounts_returnsFalse() {
+        // TODO(b/222669811): replace with annotation
+        assumeFalse(Build.isDebuggable());
+
+        try (TestAppInstance accountAuthenticatorApp =
+                     sAccountManagementApp.install(TestApis.users().instrumented())) {
+            addAccount();
+
+            assertThat(
+                    sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification())
+                    .isFalse();
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @Test
+    @EnsureDoesNotHavePermission(MANAGE_ROLE_HOLDERS)
+    public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withoutRequiredPermission_throwsSecurityException() {
+        assertThrows(SecurityException.class, () ->
+                sDevicePolicyManager.shouldAllowBypassingDevicePolicyManagementRoleQualification());
+    }
+
+    /**
+     * Blocks until an account is added.
+     */
+    private void addAccount() {
+        Poll.forValue("account created success", this::addAccountOnce)
+                .toBeEqualTo(true)
+                .errorOnFail()
+                .await();
+    }
+
+    private boolean addAccountOnce() {
+        return sAccountManager.addAccountExplicitly(
+                ACCOUNT_WITH_EXISTING_TYPE,
+                TEST_PASSWORD,
+                /* userdata= */ null);
     }
 }
