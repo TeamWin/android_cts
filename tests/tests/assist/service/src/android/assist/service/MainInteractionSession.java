@@ -27,6 +27,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.service.voice.VoiceInteractionSession;
@@ -36,6 +37,12 @@ import android.view.DisplayCutout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
+
+import com.android.compatibility.common.util.PropertyUtil;
+
+import java.util.Objects;
 
 public class MainInteractionSession extends VoiceInteractionSession {
     static final String TAG = "MainInteractionSession";
@@ -125,7 +132,11 @@ public class MainInteractionSession extends VoiceInteractionSession {
                     mContentView.getViewTreeObserver().removeOnPreDrawListener(this);
                     Display d = mContentView.getDisplay();
                     Point displayPoint = new Point();
-                    d.getRealSize(displayPoint);
+                    WindowManager wm = mContext.getSystemService(WindowManager.class);
+                    WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
+                    Rect bound = windowMetrics.getBounds();
+                    displayPoint.y = bound.height();
+                    displayPoint.x = bound.width();
                     DisplayCutout dc = d.getCutout();
                     if (dc != null) {
                         // Means the device has a cutout area
@@ -137,9 +148,16 @@ public class MainInteractionSession extends VoiceInteractionSession {
                             displayPoint.x -= (wi.left + wi.right);
                         }
                     }
+                    int WindowInsetTop = windowMetrics.getWindowInsets().getSystemWindowInsetTop();
+                    final String property = PropertyUtil.getProperty("ro.hardware.virtual_device");
+                    boolean isVirtual = Objects.equals(property, "1");
                     Bundle bundle = new Bundle();
-                    bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.BROADCAST_CONTENT_VIEW_HEIGHT);
-                    bundle.putInt(Utils.EXTRA_CONTENT_VIEW_HEIGHT, mContentView.getHeight());
+                    bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION,
+                            Utils.BROADCAST_CONTENT_VIEW_HEIGHT);
+                    // TODO: find reason why virtual device don't have problem
+                    bundle.putInt(Utils.EXTRA_CONTENT_VIEW_HEIGHT,
+                            isVirtual ? mContentView.getHeight()
+                                    : mContentView.getHeight() + WindowInsetTop);
                     bundle.putInt(Utils.EXTRA_CONTENT_VIEW_WIDTH, mContentView.getWidth());
                     bundle.putParcelable(Utils.EXTRA_DISPLAY_POINT, displayPoint);
                     mRemoteCallback.sendResult(bundle);
