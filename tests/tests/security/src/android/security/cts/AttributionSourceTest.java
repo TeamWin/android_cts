@@ -16,44 +16,39 @@
 
 package android.security.cts;
 
+import static org.junit.Assert.assertThrows;
+
+import java.lang.reflect.Field;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import android.content.AttributionSource;
 import android.content.Context;
 import android.platform.test.annotations.AsbSecurityTest;
-
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
-
-import org.junit.Assume;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.Assert;
-
-import java.lang.reflect.Field;
 
 @RunWith(AndroidJUnit4.class)
 public class AttributionSourceTest {
 
     @AsbSecurityTest(cveBugId = 200288596)
     @Test
-    public void testPidCheck()
-            throws Exception {
+    public void testPidCheck() throws Exception {
         Context context = ApplicationProvider.getApplicationContext();
-        AttributionSource attributionSource = null;
-        Field attSourceStateField = null;
-        try {
-            attributionSource = (AttributionSource) Context.class.getMethod(
-                    "getAttributionSource").invoke(context);
-            attSourceStateField = attributionSource.getClass().getDeclaredField(
-                    "mAttributionSourceState");
-            attSourceStateField.setAccessible(true);
-        } catch (Exception e) {
-            Assume.assumeFalse(true);
-        }
+        AttributionSource attributionSource =
+                new AttributionSource(
+                        (AttributionSource)
+                                Context.class.getMethod("getAttributionSource").invoke(context),
+                        null);
+
+        Field attSourceStateField =
+                attributionSource.getClass().getDeclaredField("mAttributionSourceState");
+        attSourceStateField.setAccessible(true);
 
         Object attSourceState = attSourceStateField.get(attributionSource);
         attSourceState.getClass().getField("pid").setInt(attSourceState, 0);
         final AttributionSource attributionSourceFinal = attributionSource;
-        Assert.assertThrows(SecurityException.class,
-                () -> attributionSourceFinal.enforceCallingPid());
+        assertThrows(SecurityException.class, () -> attributionSourceFinal.enforceCallingPid());
     }
 }
+
