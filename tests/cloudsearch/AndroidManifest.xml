@@ -22,25 +22,9 @@
     <uses-permission android:name="android.permission.MANAGE_CLOUDSEARCH"/>
 
     <application>
-        <service android:name=".Cts1CloudSearchService"
-            android:exported="true"
-            android:label="CtsDummy1CloudSearchService">
-            <intent-filter>
-                <!-- This constant must match CloudSearchService.SERVICE_INTERFACE -->
-                <action android:name="android.service.cloudsearch.CloudSearchService"/>
-            </intent-filter>
-        </service>
-        <service android:name=".Cts2CloudSearchService"
-            android:exported="true"
-            android:label="CtsDummy2CloudSearchService">
-            <intent-filter>
-                <!-- This constant must match CloudSearchService.SERVICE_INTERFACE -->
-                <action android:name="android.service.cloudsearch.CloudSearchService"/>
-            </intent-filter>
-        </service>
-        <service android:name=".Cts3CloudSearchService"
-            android:exported="true"
-            android:label="CtsDummy3CloudSearchService">
+        <service android:name=".CtsCloudSearchService"
+                 android:exported="true"
+                 android:label="CtsDummyCloudSearchService">
             <intent-filter>
                 <!-- This constant must match CloudSearchService.SERVICE_INTERFACE -->
                 <action android:name="android.service.cloudsearch.CloudSearchService"/>
