@@ -4190,7 +4190,7 @@ public class TelephonyManagerTest {
         TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
                 cmdBuilder.toString());
 
-        long arbitraryCompletionWindowSecs = 1L;
+        long arbitraryCompletionWindowMillis = 60000L;
 
         boolean isDataThrottlingSupported = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
@@ -4207,7 +4207,7 @@ public class TelephonyManagerTest {
                                 .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
                                         .setDataThrottlingAction(DataThrottlingRequest
                                                 .DATA_THROTTLING_ACTION_THROTTLE_SECONDARY_CARRIER)
-                                        .setCompletionDurationMillis(arbitraryCompletionWindowSecs)
+                                        .setCompletionDurationMillis(arbitraryCompletionWindowMillis)
                                         .build())
                                 .build()));
 
@@ -4243,7 +4243,7 @@ public class TelephonyManagerTest {
                                                     DataThrottlingRequest
                                                             .DATA_THROTTLING_ACTION_HOLD)
                                             .setCompletionDurationMillis(
-                                                    arbitraryCompletionWindowSecs)
+                                                    arbitraryCompletionWindowMillis)
                                             .build())
                                     .build()));
         } catch (IllegalArgumentException e) {
