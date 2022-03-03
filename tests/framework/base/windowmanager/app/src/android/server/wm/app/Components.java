@@ -300,7 +300,7 @@ public class Components extends ComponentsBase {
      * The keys used by {@link CustomTransitionExitActivity} to select the animation to run.
      */
     public static class CustomTransitionAnimations {
-        /** see @anim/show_background_hide_window_animation.xml */
+        /** see @anim/show_backdrop_hide_window_animation.xml */
         public static final String BACKGROUND_COLOR = "backgroundColor";
         /** see @anim/edge_extension_right_window_animation.xml */
         public static final String LEFT_EDGE_EXTENSION = "leftEdgeExtension";
