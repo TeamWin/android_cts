@@ -168,6 +168,11 @@ public class HandlerInputConnection implements InputConnection {
         return false;
     }
 
+    @Override
+    public boolean requestCursorUpdates(int cursorUpdateMode, int cursorUpdateFilter) {
+        return false;
+    }
+
     @Nullable
     @Override
     public Handler getHandler() {
