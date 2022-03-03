@@ -28,6 +28,8 @@ android_test {
 
     data: [
         ":CtsGameTestApp",
+        ":CtsGameTestAppWithBatteryMode",
+        ":CtsGameTestAppWithPerformanceMode",
         ":CtsLegacyGameTestApp",
         ":CtsNotGameTestApp",
     ],
