@@ -48,7 +48,7 @@ import java.util.concurrent.Semaphore;
 @RunWith(AndroidJUnit4.class)
 public class CarTelemetryManagerTest extends CarApiTestBase {
 
-    /* Test MetricsConfig that does nothing. */
+    /** Test MetricsConfig that does nothing. */
     private static final TelemetryProto.MetricsConfig TEST_CONFIG =
             TelemetryProto.MetricsConfig.newBuilder()
                     .setName("test_config")
@@ -57,7 +57,7 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
                     .build();
     private static final String TEST_CONFIG_NAME = TEST_CONFIG.getName();
 
-    /* MetricsConfig with simple script that listens for parking brake change. */
+    /** MetricsConfig with simple script that listens for parking brake change. */
     private static final String PARKING_BRAKE_CHANGE_SCRIPT = new StringBuilder()
             .append("function onParkingBrakeChange(published_data, saved_state)\n")
             .append("    result = {data = \"Hello World!\"}\n")
@@ -86,7 +86,7 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
                     .build();
     private static final String PARKING_BRAKE_CONFIG_NAME = PARKING_BRAKE_CONFIG.getName();
 
-    /*
+    /**
      * MetricsConfig with a bad script that listens for parking brake change, will produce error.
      */
     private static final TelemetryProto.MetricsConfig ERROR_CONFIG =
