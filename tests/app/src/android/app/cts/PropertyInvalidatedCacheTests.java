@@ -40,7 +40,7 @@ import org.junit.Test;
 public class PropertyInvalidatedCacheTests {
 
     // Configuration for creating caches
-    private static final int MODULE = PropertyInvalidatedCache.MODULE_TEST;
+    private static final String MODULE = PropertyInvalidatedCache.MODULE_TEST;
     private static final String API = "testApi";
 
     // This class is a proxy for binder calls.  It contains a counter that increments
@@ -216,11 +216,11 @@ public class PropertyInvalidatedCacheTests {
             this(MODULE, API);
         }
 
-        TestCache(int module, String api) {
+        TestCache(String module, String api) {
             this(module, api, new TestQuery());
         }
 
-        TestCache(int module, String api, TestQuery query) {
+        TestCache(String module, String api, TestQuery query) {
             super(4, module, api, "testCache7", query);
             mQuery = query;
             setTestMode(true);
