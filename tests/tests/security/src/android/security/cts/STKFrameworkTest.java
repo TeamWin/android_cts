@@ -33,7 +33,7 @@ public class STKFrameworkTest extends StsExtraBusinessLogicTestCase {
     private boolean mHasTelephony;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mHasTelephony = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY);
     }
