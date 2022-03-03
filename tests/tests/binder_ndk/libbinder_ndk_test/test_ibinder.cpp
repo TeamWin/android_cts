@@ -227,6 +227,10 @@ TEST_F(NdkBinderTest_AIBinder, WeakPointerNotEqual) {
   AIBinder_Weak_delete(w2);
 }
 
+TEST_F(NdkBinderTest_AIBinder, IsHandlingTransactionFalse) {
+  EXPECT_FALSE(AIBinder_isHandlingTransaction());
+}
+
 TEST_F(NdkBinderTest_AIBinder, LocalIsLocal) {
   AIBinder* binder = SampleData::newBinder();
   EXPECT_FALSE(AIBinder_isRemote(binder));
