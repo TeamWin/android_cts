@@ -1485,7 +1485,7 @@ public class PackageManagerShellCommandTest {
         final ApplicationInfo info = pm.getApplicationInfo(
                 name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
         assertEquals(ApplicationInfo.FLAG_SYSTEM, info.flags & ApplicationInfo.FLAG_SYSTEM);
-        assertTrue(info.sourceDir.startsWith("/apex/com.android.supplementalprocess"));
+        assertTrue(info.sourceDir.startsWith("/apex/com.android.adservices"));
     }
 
     @Test
