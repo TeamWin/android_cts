@@ -50,6 +50,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Presubmit
@@ -356,10 +357,10 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
                            getKeepClearRectsForActivity(activity));
 
         activity.finishAndRemoveTask();
-        mWmState.waitAndAssertActivityRemoved(componentName);
-        assertSameElements(EMPTY_LIST, getKeepClearRectsOnDefaultDisplay());
+        assertTrue(Collections.disjoint(
+                getRectsInScreenSpace(TEST_KEEP_CLEAR_RECTS, componentName),
+                getKeepClearRectsOnDefaultDisplay()));
     }
-
 
     @Test
     public void testKeepClearRectsOnDisplayTwoWindows() {
