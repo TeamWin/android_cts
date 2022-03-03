@@ -138,6 +138,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -199,29 +200,35 @@ public final class DeviceState extends HarrierRule {
     // We are allowed 11 minutes before the entire test run fails
     private static final Duration MAX_TEST_DURATION = Duration.ofMinutes(10);
     private final ExecutorService mTestExecutor = Executors.newSingleThreadExecutor();
+    private Thread mTestThread;
 
     private final Logger mLogger = Logger.forInstance(this);
 
     public DeviceState() {
         mLogger.constructor(() -> {
-            mSkipTestTeardown = TestApis.instrumentation().arguments()
-                    .getBoolean(SKIP_TEST_TEARDOWN_KEY);
-            mSkipClassTeardown = TestApis.instrumentation().arguments()
-                    .getBoolean(SKIP_CLASS_TEARDOWN_KEY);
-            mSkipTestsReason = TestApis.instrumentation().arguments()
-                    .getString(SKIP_TESTS_REASON_KEY, /* defaultValue= */ "");
+            Future<Thread> testThreadFuture = mTestExecutor.submit(Thread::currentThread);
+
+            Bundle arguments = InstrumentationRegistry.getArguments();
+            mSkipTestTeardown = Boolean.parseBoolean(
+                    arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
+            mSkipClassTeardown = Boolean.parseBoolean(
+                    arguments.getString(SKIP_CLASS_TEARDOWN_KEY, "false"));
+            mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
             mSkipTests = !mSkipTestsReason.isEmpty();
-
-            mMinSdkVersion = TestApis.instrumentation().arguments()
-                    .getInt(MIN_SDK_VERSION_KEY, /* defaultValue= */ SDK_INT);
-
+            mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, SDK_INT);
             mPermissionsInstrumentationPackage =
-                    TestApis.instrumentation().arguments()
-                            .getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
+                    arguments.getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
             if (mPermissionsInstrumentationPackage != null) {
                 mPermissionsInstrumentationPackagePermissions.addAll(
                         TestApis.packages().find(mPermissionsInstrumentationPackage)
                                 .requestedPermissions());
+            }
+
+            try {
+                mTestThread = testThreadFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new AssertionError(
+                        "Error setting up DeviceState. Interrupted getting test thread", e);
             }
         });
     }
@@ -272,10 +279,13 @@ public final class DeviceState extends HarrierRule {
                             throw t;
                         }
                     } catch (TimeoutException e) {
+                        StackTraceElement[] stack = mTestThread.getStackTrace();
                         future.cancel(true);
 
-                        throw new AssertionError("Timed out executing test "
-                                + description.getDisplayName());
+                        AssertionError assertionError = new AssertionError(
+                                "Timed out executing test " + description.getDisplayName());
+                        assertionError.setStackTrace(stack);
+                        throw assertionError;
                     }
                 }
             };

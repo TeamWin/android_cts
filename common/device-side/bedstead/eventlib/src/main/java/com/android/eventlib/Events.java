@@ -167,9 +167,11 @@ class Events {
     }
 
     /** Register an {@link EventListener} to be called when a new {@link Event} is logged. */
-    public void registerEventListener(EventListener listener) {
+    public Queue<Event> registerEventListener(EventListener listener) {
         synchronized (mEventListeners) {
             mEventListeners.add(listener);
+
+            return getEvents();
         }
     }
 

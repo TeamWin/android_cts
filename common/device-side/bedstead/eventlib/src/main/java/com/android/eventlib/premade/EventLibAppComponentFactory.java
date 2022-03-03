@@ -54,6 +54,26 @@ public final class EventLibAppComponentFactory extends AppComponentFactory {
         try {
             return super.instantiateReceiver(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
+            if (className.endsWith("DeviceAdminReceiver")) {
+                Log.d(LOG_TAG, "Broadcast Receiver class (" + className
+                        + ") not found, routing to TestAppDeviceAdminReceiver");
+                EventLibDeviceAdminReceiver receiver = (EventLibDeviceAdminReceiver)
+                        super.instantiateReceiver(
+                                classLoader, EventLibDeviceAdminReceiver.class.getName(),
+                                intent);
+                receiver.setOverrideDeviceAdminReceiverClassName(className);
+                return receiver;
+            } else if (className.endsWith("DelegatedAdminReceiver")) {
+                Log.d(LOG_TAG, "Broadcast Receiver class (" + className
+                        + ") not found, routing to EventLibDelegatedAdminReceiver");
+                EventLibDelegatedAdminReceiver receiver = (EventLibDelegatedAdminReceiver)
+                        super.instantiateReceiver(
+                                classLoader, EventLibDelegatedAdminReceiver.class.getName(),
+                                intent);
+                receiver.setOverrideDelegatedAdminReceiverClassName(className);
+                return receiver;
+            }
+
             Log.d(LOG_TAG, "Broadcast Receiver class (" + className
                     + ") not found, routing to EventLibBroadcastReceiver");
 

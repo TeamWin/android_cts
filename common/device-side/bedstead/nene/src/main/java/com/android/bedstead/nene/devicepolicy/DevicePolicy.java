@@ -21,6 +21,7 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.FORCE_DEVICE_POLICY_MANAGER_LOGS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_ADMINS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 
@@ -388,6 +389,30 @@ public final class DevicePolicy {
                     .instrumentedContext()
                     .getSystemService(DevicePolicyManager.class)
                     .getPolicyExemptApps();
+        }
+    }
+
+    @Experimental
+    public void forceNetworkLogs() {
+        try (PermissionContext p = TestApis.permissions().withPermission(FORCE_DEVICE_POLICY_MANAGER_LOGS)) {
+            long throttle = TestApis.context()
+                    .instrumentedContext()
+                    .getSystemService(DevicePolicyManager.class)
+                    .forceNetworkLogs();
+
+            if (throttle == -1) {
+                throw new NeneException("Error forcing network logs: returned -1");
+            }
+            if (throttle == 0) {
+                return;
+            }
+            try {
+                Thread.sleep(throttle);
+            } catch (InterruptedException e) {
+                throw new NeneException("Error waiting for network log throttle", e);
+            }
+
+            forceNetworkLogs();
         }
     }
 }
