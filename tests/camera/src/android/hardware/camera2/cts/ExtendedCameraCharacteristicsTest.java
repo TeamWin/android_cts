@@ -1853,6 +1853,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             mCollector.expectTrue("The recommended 10-bit dynamic range profile must " +
                             "not be the same as standard",
                     recommendedProfile != DynamicRangeProfiles.STANDARD);
+            mCollector.expectTrue("HLG10 profile must not have extra latency!",
+                    !dynamicProfiles.isExtraLatencyPresent(DynamicRangeProfiles.HLG10));
+            mCollector.expectTrue("STANDARD profile must not have extra latency!",
+                    !dynamicProfiles.isExtraLatencyPresent(DynamicRangeProfiles.STANDARD));
 
             // Verify constraints validity. For example if HLG10 advertises support for HDR10, then
             // there shouldn't be any HDR10 constraints related to HLG10.
