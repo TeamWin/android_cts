@@ -38,20 +38,20 @@ public final class PowerManagerHelperTest {
     public void testSetDisplayState() {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         Context context = instrumentation.getContext();
-        PowerManagerHelper helper = new PowerManagerHelper(context);
         PowerManager powerManager = context.getSystemService(PowerManager.class);
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
 
         uiAutomation.adoptShellPermissionIdentity(android.Manifest.permission.DEVICE_POWER);
 
         try {
-            helper.setDisplayState(/* on= */ true, SystemClock.uptimeMillis());
+            PowerManagerHelper.setDisplayState(context, /* on= */ true, SystemClock.uptimeMillis());
             assertWithMessage("Screen on").that(powerManager.isInteractive()).isTrue();
 
-            helper.setDisplayState(/* on= */ false, SystemClock.uptimeMillis());
+            PowerManagerHelper.setDisplayState(context, /* on= */ false,
+                    SystemClock.uptimeMillis());
             assertWithMessage("Screen on").that(powerManager.isInteractive()).isFalse();
 
-            helper.setDisplayState(/* on= */ true, SystemClock.uptimeMillis());
+            PowerManagerHelper.setDisplayState(context, /* on= */ true, SystemClock.uptimeMillis());
             assertWithMessage("Screen on").that(powerManager.isInteractive()).isTrue();
         } finally {
             uiAutomation.dropShellPermissionIdentity();
