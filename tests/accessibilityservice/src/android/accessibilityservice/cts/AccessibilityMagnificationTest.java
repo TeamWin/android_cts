@@ -342,6 +342,54 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
+    public void testSetWindowModeConfig_connectionReset_expectedResult() throws Exception {
+        Assume.assumeTrue(isWindowModeSupported(mInstrumentation.getContext()));
+
+        final MagnificationController controller = mService.getMagnificationController();
+        final WindowManager windowManager = mInstrumentation.getContext().getSystemService(
+                WindowManager.class);
+        final float scale = 2.0f;
+        final float x = windowManager.getCurrentWindowMetrics().getBounds().centerX();
+        final float y = windowManager.getCurrentWindowMetrics().getBounds().centerY();
+
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_WINDOW)
+                .setScale(scale)
+                .setCenterX(x)
+                .setCenterY(y).build();
+
+        mService.runOnServiceSync(
+                () -> controller.setMagnificationConfig(config, /* animate= */ false));
+
+        waitUntilMagnificationConfig(controller, config);
+
+        // Test service is disabled and enabled to make the connection reset.
+        mService.runOnServiceSync(() -> mService.disableSelfAndRemove());
+        mService = null;
+        InstrumentedAccessibilityService service =
+                mMagnificationAccessibilityServiceRule.enableService();
+        MagnificationController controller2 = service.getMagnificationController();
+        try {
+            final float newScale = scale + 1;
+            final float newX = x + 10;
+            final float newY = y + 10;
+            final MagnificationConfig newConfig = new MagnificationConfig.Builder()
+                    .setMode(MAGNIFICATION_MODE_WINDOW)
+                    .setScale(newScale)
+                    .setCenterX(newX)
+                    .setCenterY(newY).build();
+
+            service.runOnServiceSync(
+                    () -> controller2.setMagnificationConfig(newConfig, /* animate= */ false));
+
+            waitUntilMagnificationConfig(controller2, newConfig);
+        } finally {
+            service.runOnServiceSync(
+                    () -> controller2.resetCurrentMagnification(false));
+        }
+    }
+
+    @Test
     public void testSetWindowModeConfig_hasMagnificationOverlay() throws TimeoutException {
         Assume.assumeTrue(isWindowModeSupported(mInstrumentation.getContext()));
 
@@ -360,6 +408,26 @@ public class AccessibilityMagnificationTest {
         } finally {
             controller.resetCurrentMagnification(false);
         }
+    }
+
+    @Test
+    public void testServiceConnectionDisconnected_hasNoMagnificationOverlay()
+            throws TimeoutException {
+        Assume.assumeTrue(isWindowModeSupported(mInstrumentation.getContext()));
+
+        final MagnificationController controller = mService.getMagnificationController();
+        final MagnificationConfig config = new MagnificationConfig.Builder()
+                .setMode(MAGNIFICATION_MODE_WINDOW)
+                .setScale(2.0f)
+                .build();
+        mService.runOnServiceSync(
+                () -> controller.setMagnificationConfig(config, /* animate= */ false));
+
+        sUiAutomation.executeAndWaitForEvent(
+                () -> mService.runOnServiceSync(() -> mService.disableSelfAndRemove()),
+                event -> sUiAutomation.getWindows().stream().noneMatch(
+                        accessibilityWindowInfo -> accessibilityWindowInfo.getType()
+                                == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
     }
 
     @Test

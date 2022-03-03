@@ -16,6 +16,8 @@
 
 package android.os.cts;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -152,6 +154,8 @@ public class ProcessTest extends AndroidTestCase {
         assertEquals(0, Process.getGidForName("0"));
 
         assertTrue(Process.myUid() >= 0);
+
+        assertNotEquals(null, Process.getExclusiveCores());
     }
 
     /**
