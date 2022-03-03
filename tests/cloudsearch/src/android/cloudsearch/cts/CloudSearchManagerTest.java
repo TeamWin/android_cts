@@ -63,97 +63,61 @@ public class CloudSearchManagerTest implements CloudSearchManager.CallBack {
             new RequiredServiceRule(Context.CLOUDSEARCH_SERVICE);
 
     private CloudSearchManager mManager;
-    private Cts1CloudSearchService.Watcher mWatcher1;
-    private Cts2CloudSearchService.Watcher mWatcher2;
-    private Cts3CloudSearchService.Watcher mWatcher3;
+    private CtsCloudSearchService.Watcher mWatcher;
 
     @Before
     public void setUp() throws Exception {
-        mWatcher1 = Cts1CloudSearchService.setWatcher();
-        mWatcher2 = Cts2CloudSearchService.setWatcher();
-        mWatcher3 = Cts3CloudSearchService.setWatcher();
-
+        mWatcher = CtsCloudSearchService.setWatcher();
         mManager = getContext().getSystemService(CloudSearchManager.class);
-        setService(Cts1CloudSearchService.SERVICE_NAME + ";"
-                + Cts2CloudSearchService.SERVICE_NAME + ";"
-                + Cts3CloudSearchService.SERVICE_NAME);
+        setService(CtsCloudSearchService.SERVICE_NAME);
 
-        mManager.search(CloudSearchTestUtils.getBasicSearchRequest("", ""),
+        mManager.search(CloudSearchTestUtils.getBasicSearchRequest(""),
                 Executors.newSingleThreadExecutor(), this);
-        await(mWatcher1.created, "Waiting for search()");
-        await(mWatcher2.created, "Waiting for search()");
-        await(mWatcher3.created, "Waiting for search()");
-
+        await(mWatcher.created, "Waiting for onCreate()");
     }
 
     @After
     public void tearDown() throws Exception {
-        Log.d(TAG, "Starting tear down, watcher is: ");
+        Log.d(TAG, "Starting tear down, watcher is: " + mWatcher);
         setService(null);
-        mWatcher1 = null;
-        mWatcher2 = null;
-        mWatcher3 = null;
-        Cts1CloudSearchService.clearWatcher();
-        Cts2CloudSearchService.clearWatcher();
-        Cts3CloudSearchService.clearWatcher();
+        mWatcher = null;
+        CtsCloudSearchService.clearWatcher();
     }
 
     @Test
     public void testCloudSearchServiceConnection() {
         assertNotNull(mManager);
-        await(mWatcher1.queried, "Waiting for search()");
-        await(mWatcher2.queried, "Waiting for search()");
-        await(mWatcher3.queried, "Waiting for search()");
+        await(mWatcher.queried, "Waiting for search()");
     }
 
     @Test
     public void testSuccessfulSearch() {
         assertNotNull(mManager);
-        mManager.search(
-                CloudSearchTestUtils.getBasicSearchRequest("Successful1 Successful2 Successful3",
-                        ""),
+        await(mWatcher.queried, "Waiting for search()");
+        mManager.search(CloudSearchTestUtils.getBasicSearchRequest("Successful"),
                 Executors.newSingleThreadExecutor(), this);
-        await(mWatcher1.succeeded, "Waiting for successful search");
-        await(mWatcher2.succeeded, "Waiting for successful search");
-        await(mWatcher3.succeeded, "Waiting for successful search");
+        await(mWatcher.succeeded, "Waiting for successful search");
     }
 
     @Test
     public void testUnsuccessfulSearch() {
         assertNotNull(mManager);
-        mManager.search(CloudSearchTestUtils.getBasicSearchRequest(
-                "Unsuccessful1 Unsuccessful2 Unsuccessful3", ""),
+        await(mWatcher.queried, "Waiting for search()");
+        mManager.search(CloudSearchTestUtils.getBasicSearchRequest("Unsuccessful"),
                 Executors.newSingleThreadExecutor(), this);
-        await(mWatcher1.failed, "Waiting for unsuccessful search");
-        await(mWatcher2.failed, "Waiting for unsuccessful search");
-        await(mWatcher3.failed, "Waiting for unsuccessful search");
-    }
-
-    @Test
-    public void testSingleServiceSearch() {
-        setService(Cts1CloudSearchService.SERVICE_NAME);
-        assertNotNull(mManager);
-        mManager.search(CloudSearchTestUtils.getBasicSearchRequest("Unsuccessful1", ""),
-                Executors.newSingleThreadExecutor(), this);
-        await(mWatcher1.failed, "Waiting for unsuccessful search");
+        await(mWatcher.failed, "Waiting for unsuccessful search");
     }
 
     @Test
     public void testMultipleCallbacksSearch() {
         assertNotNull(mManager);
-        mManager.search(CloudSearchTestUtils.getBasicSearchRequest(
-                "Successful1 Successful2 Successful3 Unsuccessful1 Unsuccessful2 Unsuccessful3",
-                ""),
+        await(mWatcher.queried, "Waiting for search()");
+        mManager.search(CloudSearchTestUtils.getBasicSearchRequest("Unsuccessful and Successful"),
                 Executors.newSingleThreadExecutor(), this);
         // TODO(216520546) add a condition to send a SearchRequest without
         //  CtsCloudSearchServiceas a provider.
-
-        await(mWatcher1.succeeded, "Waiting for successful search");
-        await(mWatcher2.succeeded, "Waiting for successful search");
-        await(mWatcher3.succeeded, "Waiting for successful search");
-        await(mWatcher1.failed, "Waiting for unsuccessful search");
-        await(mWatcher2.failed, "Waiting for unsuccessful search");
-        await(mWatcher3.failed, "Waiting for unsuccessful search");
+        await(mWatcher.failed, "Waiting for unsuccessful search");
+        await(mWatcher.succeeded, "Waiting for successful search");
     }
 
     private void setService(String service) {
@@ -188,29 +152,15 @@ public class CloudSearchManagerTest implements CloudSearchManager.CallBack {
 
     @Override
     public void onSearchSucceeded(SearchRequest request, SearchResponse response) {
-        Log.e(TAG, "onSearchSucceeded: " + request.getQuery() + ";" + response.getSource());
-        if (response.getSource().contains("1")) {
-            mWatcher1.succeeded.countDown();
-        }
-        if (response.getSource().contains("2")) {
-            mWatcher2.succeeded.countDown();
-        }
-        if (response.getSource().contains("3")) {
-            mWatcher3.succeeded.countDown();
+        if (response.getStatusCode() == SearchResponse.SEARCH_STATUS_OK) {
+            mWatcher.succeeded.countDown();
         }
     }
 
     @Override
     public void onSearchFailed(SearchRequest request, SearchResponse response) {
-        Log.e(TAG, "onSearchFailed: " + request.getQuery() + ";" + response.getSource());
-        if (response.getSource().contains("1")) {
-            mWatcher1.failed.countDown();
-        }
-        if (response.getSource().contains("2")) {
-            mWatcher2.failed.countDown();
-        }
-        if (response.getSource().contains("3")) {
-            mWatcher3.failed.countDown();
+        if (response.getStatusCode() == SearchResponse.SEARCH_STATUS_NO_INTERNET) {
+            mWatcher.failed.countDown();
         }
     }
 }
