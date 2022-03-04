@@ -23,13 +23,11 @@ import static android.app.UiModeManager.MODE_NIGHT_YES;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY;
-import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_THEME_ACTIVITY;
@@ -128,21 +126,15 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.setSanityCheckWithFocusedWindow(true);
     }
 
-    private CommandSession.ActivitySession prepareTestLauncher() {
-        createManagedHomeActivitySession(HOME_ACTIVITY);
+    /**
+     * @return The starter activity session to start the test activity
+     */
+    private CommandSession.ActivitySession prepareTestStarter() {
         return createManagedActivityClientSession()
-                .startActivity(new Intent(ACTION_MAIN)
-                        .addCategory(CATEGORY_HOME)
-                        .addFlags(FLAG_ACTIVITY_NEW_TASK)
-                        .setComponent(HOME_ACTIVITY));
+                .startActivity(getLaunchActivityBuilder().setUseInstrumentation());
     }
 
-    private void startActivityFromTestLauncher(CommandSession.ActivitySession homeActivity,
-            ComponentName componentName, Consumer<Intent> fillExtra) {
-        startActivityFromTestLauncher(homeActivity, componentName, fillExtra, null /* options */);
-    }
-
-    private void startActivitiesFromTestLauncher(CommandSession.ActivitySession homeActivity,
+    private void startActivitiesFromStarter(CommandSession.ActivitySession starter,
             Intent[] intents, ActivityOptions options) {
 
         final Bundle data = new Bundle();
@@ -150,10 +142,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         if (options != null) {
             data.putParcelable(EXTRA_OPTION, options.toBundle());
         }
-        homeActivity.sendCommand(COMMAND_START_ACTIVITIES, data);
+        starter.sendCommand(COMMAND_START_ACTIVITIES, data);
     }
 
-    private void startActivityFromTestLauncher(CommandSession.ActivitySession homeActivity,
+    private void startActivityFromStarter(CommandSession.ActivitySession starter,
             ComponentName componentName, Consumer<Intent> fillExtra, ActivityOptions options) {
 
         final Bundle data = new Bundle();
@@ -165,7 +157,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         if (options != null) {
             data.putParcelable(EXTRA_OPTION, options.toBundle());
         }
-        homeActivity.sendCommand(COMMAND_START_ACTIVITY, data);
+        starter.sendCommand(COMMAND_START_ACTIVITY, data);
     }
 
     @Test
@@ -174,7 +166,14 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // applied insets by system bars in AAOS.
         assumeFalse(isCar());
 
-        launchActivityNoWait(SPLASHSCREEN_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        final CommandSession.ActivitySession starter = prepareTestStarter();
+        final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
+        noIconOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+
+        // launch from app with no-icon options
+        startActivityFromStarter(starter, SPLASHSCREEN_ACTIVITY,
+                intent -> {}, noIconOptions);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
         testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.WHITE);
     }
@@ -186,7 +185,13 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isCar());
         assumeTrue(supportsFreeform());
 
-        launchActivityNoWait(SPLASHSCREEN_ACTIVITY, WINDOWING_MODE_FREEFORM);
+        final CommandSession.ActivitySession starter = prepareTestStarter();
+        final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
+        noIconOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
+        // launch from app with no-icon options
+        startActivityFromStarter(starter, SPLASHSCREEN_ACTIVITY,
+                intent -> {}, noIconOptions);
         // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
         testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.WHITE);
     }
@@ -373,12 +378,11 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     private void launchRuntimeHandleExitAnimationActivity(boolean extraOnCreate,
             boolean extraOnResume, boolean extraCancel, boolean expectResult) throws Exception {
         TestJournalProvider.TestJournalContainer.start();
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
-        startActivityFromTestLauncher(homeActivity, HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, intent -> {
-            intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, extraOnCreate);
-            intent.putExtra(REQUEST_HANDLE_EXIT_ON_RESUME, extraOnResume);
-            intent.putExtra(CANCEL_HANDLE_EXIT, extraCancel);
-        });
+
+        launchActivityNoWait(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY,
+                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, extraOnCreate),
+                extraBool(REQUEST_HANDLE_EXIT_ON_RESUME, extraOnResume),
+                extraBool(CANCEL_HANDLE_EXIT, extraCancel));
 
         mWmState.computeState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY);
         mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
@@ -420,8 +424,15 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // applied insets by system bars in AAOS.
         assumeFalse(isCar());
 
-        launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                extraBool(DELAY_RESUME, true));
+        final CommandSession.ActivitySession starter = prepareTestStarter();
+        final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
+        noIconOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+
+        // launch from app with no-icon options
+        startActivityFromStarter(starter, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
+                intent -> intent.putExtra(DELAY_RESUME, true), noIconOptions);
+
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.WHITE);
     }
 
@@ -432,20 +443,25 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isCar());
         assumeTrue(supportsFreeform());
 
-        launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, WINDOWING_MODE_FREEFORM,
-                extraBool(DELAY_RESUME, true));
+        final CommandSession.ActivitySession starter = prepareTestStarter();
+        final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
+        noIconOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
+
+        // launch from app with no-icon options
+        startActivityFromStarter(starter, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
+                intent -> intent.putExtra(DELAY_RESUME, true), noIconOptions);
+
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.WHITE);
     }
 
     @Test
     public void testHandleExitIconAnimatingActivity() throws Exception {
         assumeFalse(isLeanBack());
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
-        TestJournalProvider.TestJournalContainer.start();
 
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent -> {
-            intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true);
-        });
+        TestJournalProvider.TestJournalContainer.start();
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
+                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true));
         mWmState.computeState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
         mWmState.assertVisibility(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, true);
 
@@ -456,12 +472,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testCancelHandleExitIconAnimatingActivity() {
         assumeFalse(isLeanBack());
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+
         TestJournalProvider.TestJournalContainer.start();
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent -> {
-            intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true);
-            intent.putExtra(CANCEL_HANDLE_EXIT, true);
-        });
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
+                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true),
+                extraBool(CANCEL_HANDLE_EXIT, true));
+
         mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
@@ -511,13 +527,13 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testLaunchFromLauncherWithSolidColorOptions() throws Exception {
+    public void testLaunchWithSolidColorOptions() throws Exception {
         assumeFalse(isLeanBack());
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        final CommandSession.ActivitySession starter = prepareTestStarter();
         TestJournalProvider.TestJournalContainer.start();
         final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
                 .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent ->
+        startActivityFromStarter(starter, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent ->
                 intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true), noIconOptions);
         mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
@@ -544,13 +560,13 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 true /* containsBranding */, false /* iconAnimatable */);
     }
 
-    private void launchActivitiesFromLauncherWithOptions(Intent[] intents,
+    private void launchActivitiesFromStarterWithOptions(Intent[] intents,
             ActivityOptions options, ComponentName waitResumeComponent) {
         assumeFalse(isLeanBack());
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        final CommandSession.ActivitySession starter = prepareTestStarter();
         TestJournalProvider.TestJournalContainer.start();
 
-        startActivitiesFromTestLauncher(homeActivity, intents, options);
+        startActivitiesFromStarter(starter, intents, options);
 
         mWmState.waitForActivityState(waitResumeComponent, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
@@ -566,7 +582,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 new Intent().setComponent(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY)
                         .putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true)
         };
-        launchActivitiesFromLauncherWithOptions(intents, options,
+        launchActivitiesFromStarterWithOptions(intents, options,
                 SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
         assertHandleExit(REPLACE_ICON_EXIT, true /* containsIcon */, false /* containsBranding */,
                 true /* iconAnimatable */);
@@ -584,7 +600,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 new Intent().setComponent(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY)
                         .putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true)
         };
-        launchActivitiesFromLauncherWithOptions(intents, options,
+        launchActivitiesFromStarterWithOptions(intents, options,
                 SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
         assertHandleExit(REPLACE_ICON_EXIT, false /* containsIcon */, false /* containsBranding */,
                 false /* iconAnimatable */);
@@ -621,28 +637,31 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testOverrideSplashscreenTheme() {
         assumeFalse(isLeanBack());
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
-
         // Pre-launch the activity to ensure status is cleared on the device
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
-                intent -> {});
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertOverrideThemeColor(0 /* ignore */);
 
         // Launch the activity a first time, check that the splashscreen use the default theme,
         // and override the theme for the next launch
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
-                intent -> intent.putExtra(OVERRIDE_THEME_ENABLED, true));
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
+                extraBool(OVERRIDE_THEME_ENABLED, true));
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertOverrideThemeColor(Color.BLUE);
 
         // Launch the activity a second time, check that the theme has been overridden and reset
         // to the default theme
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
-                intent -> {});
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertOverrideThemeColor(Color.RED);
 
         // Launch the activity a third time just to check that the theme has indeed been reset.
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_THEME_ACTIVITY,
-                intent -> {});
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY);
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_THEME_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         waitAndAssertOverrideThemeColor(Color.BLUE);
     }
 
@@ -671,23 +690,25 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testDefineSplashScreenStyleFromTheme() {
         assumeFalse(isLeanBack());
-        final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
+        final CommandSession.ActivitySession starter = prepareTestStarter();
         final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
                 .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
 
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
+        // launch from app with sold color options
+        startActivityFromStarter(starter, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
                 intent -> {}, noIconOptions);
         waitAndAssertStyleThemeIcon(false);
 
-        startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
-                intent -> {});
+        // launch from app with icon options
+        final ActivityOptions iconOptions = ActivityOptions.makeBasic()
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_ICON);
+        startActivityFromStarter(starter, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
+                intent -> {}, iconOptions);
         waitAndAssertStyleThemeIcon(true);
 
-        // launch from app
-        final Intent intent = new Intent(Intent.ACTION_VIEW)
-                .setComponent(SPLASH_SCREEN_STYLE_THEME_ACTIVITY)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        // launch from app without activity options
+        startActivityFromStarter(starter, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
+                intent -> {}, null /* options */);
         waitAndAssertStyleThemeIcon(true);
     }
 }
