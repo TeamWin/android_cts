@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
+import android.media.AudioFormat;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -437,18 +438,70 @@ class OutputManager {
         outPtsList.clear();
     }
 
-    float getRmsError(short[] refData) {
-        long totalErrorSquared = 0;
-        assertTrue(0 == (memIndex & 1));
-        short[] shortData = new short[memIndex / 2];
-        ByteBuffer.wrap(memory, 0, memIndex).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
-                .get(shortData);
-        if (refData.length != shortData.length) return Float.MAX_VALUE;
-        for (int i = 0; i < shortData.length; i++) {
-            int d = shortData[i] - refData[i];
-            totalErrorSquared += d * d;
+    float getRmsError(Object refObject, int audioFormat) {
+        double totalErrorSquared = 0;
+        double avgErrorSquared;
+        int bytesPerSample = AudioFormat.getBytesPerSample(audioFormat);
+        if (refObject instanceof float[]) {
+            if (audioFormat != AudioFormat.ENCODING_PCM_FLOAT) return Float.MAX_VALUE;
+            float[] refData = (float[]) refObject;
+            if (refData.length != memIndex / bytesPerSample) return Float.MAX_VALUE;
+            float[] floatData = new float[refData.length];
+            ByteBuffer.wrap(memory, 0, memIndex).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer()
+                    .get(floatData);
+            for (int i = 0; i < refData.length; i++) {
+                float d = floatData[i] - refData[i];
+                totalErrorSquared += d * d;
+            }
+            avgErrorSquared = (totalErrorSquared / refData.length);
+        } else if (refObject instanceof int[]) {
+            int[] refData = (int[]) refObject;
+            int[] intData;
+            if (audioFormat == AudioFormat.ENCODING_PCM_24BIT_PACKED) {
+                if (refData.length != (memIndex / bytesPerSample)) return Float.MAX_VALUE;
+                intData = new int[refData.length];
+                for (int i = 0, j = 0; i < memIndex; i += 3, j++) {
+                    intData[j] =  memory[j] | (memory[j + 1] << 8) | (memory[j + 2] << 16);
+                }
+            } else if (audioFormat == AudioFormat.ENCODING_PCM_32BIT) {
+                if (refData.length != memIndex / bytesPerSample) return Float.MAX_VALUE;
+                intData = new int[refData.length];
+                ByteBuffer.wrap(memory, 0, memIndex).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
+                        .get(intData);
+            } else {
+                return Float.MAX_VALUE;
+            }
+            for (int i = 0; i < intData.length; i++) {
+                float d = intData[i] - refData[i];
+                totalErrorSquared += d * d;
+            }
+            avgErrorSquared = (totalErrorSquared / refData.length);
+        } else if (refObject instanceof short[]) {
+            short[] refData = (short[]) refObject;
+            if (refData.length != memIndex / bytesPerSample) return Float.MAX_VALUE;
+            if (audioFormat != AudioFormat.ENCODING_PCM_16BIT) return Float.MAX_VALUE;
+            short[] shortData = new short[refData.length];
+            ByteBuffer.wrap(memory, 0, memIndex).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+                    .get(shortData);
+            for (int i = 0; i < shortData.length; i++) {
+                float d = shortData[i] - refData[i];
+                totalErrorSquared += d * d;
+            }
+            avgErrorSquared = (totalErrorSquared / refData.length);
+        } else if (refObject instanceof byte[]) {
+            byte[] refData = (byte[]) refObject;
+            if (refData.length != memIndex / bytesPerSample) return Float.MAX_VALUE;
+            if (audioFormat != AudioFormat.ENCODING_PCM_8BIT) return Float.MAX_VALUE;
+            byte[] byteData = new byte[refData.length];
+            ByteBuffer.wrap(memory, 0, memIndex).get(byteData);
+            for (int i = 0; i < byteData.length; i++) {
+                float d = byteData[i] - refData[i];
+                totalErrorSquared += d * d;
+            }
+            avgErrorSquared = (totalErrorSquared / refData.length);
+        } else {
+            return Float.MAX_VALUE;
         }
-        long avgErrorSquared = (totalErrorSquared / shortData.length);
         return (float) Math.sqrt(avgErrorSquared);
     }
 
@@ -1201,7 +1254,17 @@ class CodecDecoderTestBase extends CodecTestBase {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
                 mExtractor.selectTrack(trackID);
-                if (!mIsAudio) {
+                if (mIsAudio) {
+                    // as per cdd, pcm/wave must support PCM_{8, 16, 24, 32, float} and flac must
+                    // support PCM_{16, float}. For raw media type let extractor manage the
+                    // encoding type directly. For flac, basing on bits-per-sample select the type
+                    if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
+                        if (format.getInteger("bits-per-sample", 16) > 16) {
+                            format.setInteger(MediaFormat.KEY_PCM_ENCODING,
+                                    AudioFormat.ENCODING_PCM_FLOAT);
+                        }
+                    }
+                } else {
                     if (mSurface == null) {
                         // COLOR_FormatYUV420Flexible must be supported by all components
                         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
@@ -1444,8 +1507,8 @@ class CodecEncoderTestBase extends CodecTestBase {
     private static final String LOG_TAG = CodecEncoderTestBase.class.getSimpleName();
 
     // files are in WorkDir.getMediaDirString();
-    private static final String mInputAudioFile = "bbb_2ch_44kHz_s16le.raw";
-    private static final String mInputVideoFile = "bbb_cif_yuv420p_30fps.yuv";
+    private static final String INPUT_AUDIO_FILE = "bbb_2ch_44kHz_s16le.raw";
+    private static final String INPUT_VIDEO_FILE = "bbb_cif_yuv420p_30fps.yuv";
     private final int INP_FRM_WIDTH = 352;
     private final int INP_FRM_HEIGHT = 288;
 
@@ -1487,7 +1550,7 @@ class CodecEncoderTestBase extends CodecTestBase {
         mSampleRate = 8000;
         mAsyncHandle = new CodecAsyncHandler();
         mIsAudio = mMime.startsWith("audio/");
-        mInputFile = mIsAudio ? mInputAudioFile : mInputVideoFile;
+        mInputFile = mIsAudio ? INPUT_AUDIO_FILE : INPUT_VIDEO_FILE;
     }
 
     /**
