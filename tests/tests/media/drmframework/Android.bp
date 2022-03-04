@@ -21,7 +21,7 @@ package {
 }
 
 android_test {
-    name: "CtsMediaDrmTestCases",
+    name: "CtsMediaDrmFrameworkTestCases",
     defaults: ["cts_defaults"],
     // include both the 32 and 64 bit versions
     compile_multilib: "both",
@@ -33,8 +33,8 @@ android_test {
     ],
     aaptflags: [
         "--auto-add-overlay",
-        // Give com.android.media.drm.cts Java files access to the R class
-        "--extra-packages com.android.media.drm.cts",
+        // Give com.android.media.drmframework.cts Java files access to the R class
+        "--extra-packages com.android.media.drmframework.cts",
 
         // Do not compress these files:
         "-0 .vp9",
