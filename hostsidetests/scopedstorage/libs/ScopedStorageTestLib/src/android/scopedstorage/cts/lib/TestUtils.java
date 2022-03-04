@@ -854,8 +854,7 @@ public class TestUtils {
      * Returns whether we can open the file.
      */
     public static boolean canOpen(File file, boolean forWrite) {
-        try {
-            openWithFilePath(file, forWrite);
+        try (ParcelFileDescriptor ignore = openWithFilePath(file, forWrite)) {
             return true;
         } catch (IOException expected) {
             return false;
@@ -1578,7 +1577,7 @@ public class TestUtils {
     private static boolean isVolumeMounted(String type) {
         try {
             final String volume = executeShellCommand("sm list-volumes " + type).trim();
-            return volume != null && volume.contains("mounted");
+            return volume != null && volume.contains(" mounted");
         } catch (Exception e) {
             return false;
         }
@@ -1590,6 +1589,18 @@ public class TestUtils {
 
     private static boolean isEmulatedVolumeMounted() {
         return isVolumeMounted("emulated");
+    }
+
+    private static boolean isFuseReady() {
+        for (String volumeName : MediaStore.getExternalVolumeNames(getContext())) {
+            final Uri uri = MediaStore.Files.getContentUri(volumeName);
+            try (Cursor c = getContentResolver().query(uri, null, null, null)) {
+                assertThat(c).isNotNull();
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -1610,6 +1621,8 @@ public class TestUtils {
                     "Timed out while waiting for public volume");
             pollForCondition(TestUtils::isEmulatedVolumeMounted,
                     "Timed out while waiting for emulated volume");
+            pollForCondition(TestUtils::isFuseReady,
+                    "Timed out while waiting for fuse");
         }
     }
 
