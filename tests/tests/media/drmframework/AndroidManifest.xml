@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-     package="android.media.drm.cts"
+     package="android.media.drmframework.cts"
      android:targetSandboxVersion="2">
 
     <uses-sdk android:minSdkVersion="29"
@@ -36,7 +36,7 @@
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-         android:targetPackage="android.media.drm.cts"
+         android:targetPackage="android.media.drmframework.cts"
          android:label="CTS tests of android MediaDrm">
         <meta-data android:name="listener"
              android:value="com.android.cts.runner.CtsTestRunListener"/>
