@@ -17,8 +17,7 @@ package android.smartspace.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.smartspace.uitemplatedata.Icon;
-import android.graphics.Bitmap;
+import android.app.smartspace.uitemplatedata.BaseTemplateData.SubItemLoggingInfo;
 import android.os.Parcel;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -27,32 +26,31 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for {@link Icon}
+ * Tests for {@link SubItemLoggingInfo}
  *
  * atest CtsSmartspaceServiceTestCases
  */
 @RunWith(AndroidJUnit4.class)
-public class IconTest {
+public class SubItemLoggingInfoTest {
 
-    private static final String TAG = "IconTest";
+    private static final String TAG = "SubItemLoggingInfoTest";
 
     @Test
-    public void testCreateIcon() {
-        android.graphics.drawable.Icon icon = android.graphics.drawable.Icon.createWithBitmap(
-                Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
-        Icon smartspaceIcon = new Icon.Builder(icon).setContentDescription(
-                "test content").setShouldTint(false).build();
+    public void testCreateSubItemLoggingInfo() {
+        SubItemLoggingInfo itemLoggingInfo = new SubItemLoggingInfo.Builder(1, 1)
+                .setPackageName("package name").build();
 
-        assertThat(smartspaceIcon.getIcon()).isEqualTo(icon);
-        assertThat(smartspaceIcon.getContentDescription()).isEqualTo("test content");
-        assertThat(smartspaceIcon.shouldTint()).isFalse();
+        assertThat(itemLoggingInfo.getInstanceId()).isEqualTo(1);
+        assertThat(itemLoggingInfo.getFeatureType()).isEqualTo(1);
+        assertThat(itemLoggingInfo.getPackageName()).isEqualTo("package name");
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);
-        smartspaceIcon.writeToParcel(parcel, 0);
+        itemLoggingInfo.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        Icon copyIcon = Icon.CREATOR.createFromParcel(parcel);
-        assertThat(smartspaceIcon).isEqualTo(copyIcon);
+        SubItemLoggingInfo copyItemLoggingInfo = SubItemLoggingInfo.CREATOR.createFromParcel(
+                parcel);
+        assertThat(itemLoggingInfo).isEqualTo(copyItemLoggingInfo);
         parcel.recycle();
     }
 }
