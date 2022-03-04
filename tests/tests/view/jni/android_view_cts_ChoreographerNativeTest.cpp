@@ -136,15 +136,15 @@ static jboolean android_view_cts_ChoreographerNativeTest_prepareChoreographerTes
 }
 
 static void
-android_view_cts_ChoreographerNativeTest_testPostExtendedCallbackWithoutDelayEventuallyRunsCallback(
+android_view_cts_ChoreographerNativeTest_testPostVsyncCallbackWithoutDelayEventuallyRunsCallback(
         JNIEnv* env, jclass, jlong choreographerPtr) {
     AChoreographer* choreographer = reinterpret_cast<AChoreographer*>(choreographerPtr);
-    ExtendedCallback cb1("cb1", env);
-    ExtendedCallback cb2("cb2", env);
+    VsyncCallback cb1("cb1", env);
+    VsyncCallback cb2("cb2", env);
     auto start = now();
 
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb2);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb2);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -156,7 +156,7 @@ android_view_cts_ChoreographerNativeTest_testPostExtendedCallbackWithoutDelayEve
                "Callback 1 and 2 have frame times too large of a delta in frame times");
     }
 
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb1);
     start = now();
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
     verifyCallback(env, cb1, 2, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -166,19 +166,19 @@ android_view_cts_ChoreographerNativeTest_testPostExtendedCallbackWithoutDelayEve
 static void android_view_cts_ChoreographerNativeTest_testFrameCallbackDataVsyncIdValid(
         JNIEnv* env, jclass, jlong choreographerPtr) {
     AChoreographer* choreographer = reinterpret_cast<AChoreographer*>(choreographerPtr);
-    ExtendedCallback cb1("cb1", env);
+    VsyncCallback cb1("cb1", env);
     auto start = now();
 
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb1);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
     std::lock_guard<std::mutex> _l{gLock};
-    for (const ExtendedCallback::FrameTime& frameTime : cb1.getTimeline()) {
+    for (const VsyncCallback::FrameTime& frameTime : cb1.getTimeline()) {
         int64_t vsyncId = frameTime.vsyncId;
         ASSERT(vsyncId >= 0, "Invalid vsync ID");
         ASSERT(std::count_if(cb1.getTimeline().begin(), cb1.getTimeline().end(),
-                             [vsyncId](const ExtendedCallback::FrameTime& ft) {
+                             [vsyncId](const VsyncCallback::FrameTime& ft) {
                                  return ft.vsyncId == vsyncId;
                              }) == 1,
                "Vsync ID is not unique");
@@ -188,10 +188,10 @@ static void android_view_cts_ChoreographerNativeTest_testFrameCallbackDataVsyncI
 static void android_view_cts_ChoreographerNativeTest_testFrameCallbackDataDeadlineInFuture(
         JNIEnv* env, jclass, jlong choreographerPtr) {
     AChoreographer* choreographer = reinterpret_cast<AChoreographer*>(choreographerPtr);
-    ExtendedCallback cb1("cb1", env);
+    VsyncCallback cb1("cb1", env);
     auto start = now();
 
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb1);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -209,10 +209,10 @@ static void
 android_view_cts_ChoreographerNativeTest_testFrameCallbackDataExpectedPresentTimeInFuture(
         JNIEnv* env, jclass, jlong choreographerPtr) {
     AChoreographer* choreographer = reinterpret_cast<AChoreographer*>(choreographerPtr);
-    ExtendedCallback cb1("cb1", env);
+    VsyncCallback cb1("cb1", env);
     auto start = now();
 
-    AChoreographer_postVsyncCallback(choreographer, extendedFrameCallback, &cb1);
+    AChoreographer_postVsyncCallback(choreographer, vsyncCallback, &cb1);
     std::this_thread::sleep_for(NOMINAL_VSYNC_PERIOD * 3);
 
     verifyCallback(env, cb1, 1, start, NOMINAL_VSYNC_PERIOD * 3);
@@ -550,8 +550,8 @@ static JNINativeMethod gMethods[] = {
          (void*)android_view_cts_ChoreographerNativeTest_getChoreographer},
         {"nativePrepareChoreographerTests", "(J[J)Z",
          (void*)android_view_cts_ChoreographerNativeTest_prepareChoreographerTests},
-        {"nativeTestPostExtendedCallbackWithoutDelayEventuallyRunsCallbacks", "(J)V",
-         (void*)android_view_cts_ChoreographerNativeTest_testPostExtendedCallbackWithoutDelayEventuallyRunsCallback},
+        {"nativeTestPostVsyncCallbackWithoutDelayEventuallyRunsCallbacks", "(J)V",
+         (void*)android_view_cts_ChoreographerNativeTest_testPostVsyncCallbackWithoutDelayEventuallyRunsCallback},
         {"nativeTestFrameCallbackDataVsyncIdValid", "(J)V",
          (void*)android_view_cts_ChoreographerNativeTest_testFrameCallbackDataVsyncIdValid},
         {"nativeTestFrameCallbackDataDeadlineInFuture", "(J)V",

@@ -1149,6 +1149,34 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call {@link InputConnection#requestCursorUpdates(int, int)} with the
+     * given parameters.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().requestCursorUpdates(
+     * cursorUpdateMode, cursorUpdateFilter)}.
+     * </p>
+     *
+     * <p>Use {@link ImeEvent#getReturnBooleanValue()} for {@link ImeEvent} returned from
+     * {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to see the
+     * value returned from the API.</p>
+     *
+     * <p>This can be affected by {@link #memorizeCurrentInputConnection()}.</p>
+     *
+     * @param cursorUpdateMode to be passed as the {@code cursorUpdateMode} parameter
+     * @param cursorUpdateFilter to be passed as the {@code cursorUpdateFilter} parameter
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callRequestCursorUpdates(int cursorUpdateMode, int cursorUpdateFilter) {
+        final Bundle params = new Bundle();
+        params.putInt("cursorUpdateMode", cursorUpdateMode);
+        params.putInt("cursorUpdateFilter", cursorUpdateFilter);
+        return callCommandInternal("requestCursorUpdates", params);
+    }
+
+    /**
      * Lets {@link MockIme} to call {@link InputConnection#getHandler()} with the given parameters.
      *
      * <p>This triggers {@code getCurrentInputConnection().getHandler()}.</p>

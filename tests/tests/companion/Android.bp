@@ -76,6 +76,38 @@ android_test {
 }
 
 android_test {
+    name: "CtsCompanionDeviceManagerNoCompanionServicesTestCases",
+    srcs: [
+        "noservices/src/**/*.kt",
+    ],
+    manifest: "noservices/AndroidManifest.xml",
+    test_config: "noservices/AndroidTest.xml",
+
+    platform_apis: true,
+    static_libs: [
+        "androidx.test.ext.junit",
+        "cts-companion-common",
+        "junit",
+        "kotlin-test",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+
+    defaults: ["cts_defaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+
+    // TODO(b/211264986) Change both SDK versions to T (33) once it's formally defined.
+    min_sdk_version: "current",
+    target_sdk_version: "current",
+}
+
+android_test {
     name: "CtsCompanionDeviceManagerUiAutomationTestCases",
     srcs: [
         "uiautomation/src/**/*.kt",

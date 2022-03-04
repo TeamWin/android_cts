@@ -120,7 +120,7 @@ public final class TestAppSystemServiceFactory {
     }
 
     private static void assertHasRequiredReceiver(Context context) {
-        if (!UserManager.isHeadlessSystemUserMode()) return;
+        if (!Utils.isHeadlessSystemUserMode()) return;
 
         String packageName = context.getPackageName();
         Boolean hasIt = sHasRequiredReceiver.get(packageName);
@@ -226,7 +226,7 @@ public final class TestAppSystemServiceFactory {
         assertHasRequiredReceiver(context);
 
         int userId = context.getUserId();
-        if (userId == UserHandle.USER_SYSTEM || !UserManager.isHeadlessSystemUserMode()) {
+        if (userId == UserHandle.USER_SYSTEM || !Utils.isHeadlessSystemUserMode()) {
             Log.i(TAG, "get(): returning 'pure' DevicePolicyManager for user " + userId);
             return manager;
         }

@@ -694,6 +694,38 @@ public class OmapiTest {
         }
     }
 
+    /** Tests closeChannels API */
+    @Test
+    public void testCloseChannels() {
+        assumeTrue(supportOMAPIReaders());
+        try {
+            waitForConnection();
+            Reader[] readers = seService.getReaders();
+
+            for (Reader reader : readers) {
+                Session session = null;
+                Channel channelA = null;
+                Channel channelB = null;
+                try {
+                    assertTrue(reader.isSecureElementPresent());
+                    session = reader.openSession();
+                    assertNotNull("null session", session);
+                    channelA = session.openLogicalChannel(SELECTABLE_AID, (byte) 0x00);
+                    assertNotNull("Null Channel", channelA);
+                    channelB = session.openLogicalChannel(LONG_SELECT_RESPONSE_AID, (byte) 0x00);
+                    assertNotNull("Null Channel", channelB);
+                    session.closeChannels();
+                    assertFalse("channel is still open", channelA.isOpen());
+                    assertFalse("channel is still open", channelB.isOpen());
+                } finally {
+                    if (session != null) session.close();
+                }
+            }
+        } catch (Exception e) {
+            fail("unexpected exception " + e);
+        }
+    }
+
     /**
      * Verifies TLV data
      * @param tlv

@@ -52,7 +52,7 @@ public class SQLiteTest extends StsExtraBusinessLogicTestCase {
     private SQLiteDatabase mDatabase;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mResolver = getContext().getContentResolver();
         mContext = InstrumentationRegistry.getTargetContext();
         mPackageName = mContext.getPackageName();

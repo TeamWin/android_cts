@@ -29,6 +29,8 @@ import static android.provider.MediaStore.PickerMediaColumns;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -283,8 +285,9 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         addImage(mCloudPrimaryMediaGenerator, /* localId */ null, CLOUD_ID1);
 
         // Notification fails because the calling cloud provider isn't enabled
-        assertThat(MediaStore.notifyCloudMediaChangedEvent(mContext.getContentResolver(),
-                        CloudProviderPrimary.AUTHORITY)).isFalse();
+        assertThrows("Unauthorized cloud media notification", SecurityException.class,
+                () -> MediaStore.notifyCloudMediaChangedEvent(mContext.getContentResolver(),
+                        CloudProviderPrimary.AUTHORITY, COLLECTION_1));
 
         // Sleep because the notification API throttles requests with a 1s delay
         Thread.sleep(1500);
@@ -298,12 +301,13 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isTrue();
-        assertThat(MediaStore.notifyCloudMediaChangedEvent(mContext.getContentResolver(),
-                        CloudProviderPrimary.AUTHORITY)).isTrue();
 
-        // Notification fails with a different provider enabled within the same app
-        assertThat(MediaStore.notifyCloudMediaChangedEvent(mContext.getContentResolver(),
-                        CloudProviderSecondary.AUTHORITY)).isFalse();
+        MediaStore.notifyCloudMediaChangedEvent(mContext.getContentResolver(),
+                CloudProviderPrimary.AUTHORITY, COLLECTION_1);
+
+        assertThrows("Unauthorized cloud media notification", SecurityException.class,
+                () -> MediaStore.notifyCloudMediaChangedEvent(mContext.getContentResolver(),
+                        CloudProviderSecondary.AUTHORITY, COLLECTION_1));
 
         // Sleep because the notification API throttles requests with a 1s delay
         Thread.sleep(1500);

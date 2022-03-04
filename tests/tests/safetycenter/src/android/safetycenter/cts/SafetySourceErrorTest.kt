@@ -16,107 +16,63 @@
 
 package android.safetycenter.cts
 
-import android.os.Parcel
+import android.os.Build
+import android.safetycenter.SafetyEvent
 import android.safetycenter.SafetySourceError
-import android.safetycenter.SafetySourceError.SOURCE_ERROR_TYPE_ACTION_ERROR
+import android.safetycenter.testers.AnyTester.assertThatRepresentationsAreEqual
+import android.safetycenter.testers.AnyTester.assertThatRepresentationsAreNotEqual
+import android.safetycenter.testers.ParcelableTester.assertThatRoundTripReturnsOriginal
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/** CTS tests for [SafetySourceError]. */
 @RunWith(AndroidJUnit4::class)
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class SafetySourceErrorTest {
-
-    val actionError1 = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-            .setIssueId("issue_id_1")
-            .setActionId("action_id_1")
-            .build()
-    val actionError2 = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-            .setIssueId("issue_id_2")
-            .setActionId("action_id_2")
-            .build()
-
     @Test
-    fun getType_returnsType() {
-        assertThat(actionError1.type).isEqualTo(SOURCE_ERROR_TYPE_ACTION_ERROR)
-        assertThat(actionError2.type).isEqualTo(SOURCE_ERROR_TYPE_ACTION_ERROR)
-    }
+    fun getSafetyEvent_returnsSafetyEvent() {
+        val safetySourceError = SafetySourceError(SAFETY_EVENT)
 
-    @Test
-    fun getIssueId_returnsIssueId() {
-        assertThat(actionError1.issueId).isEqualTo("issue_id_1")
-        assertThat(actionError2.issueId).isEqualTo("issue_id_2")
-    }
-
-    @Test
-    fun getActionId_returnsActionId() {
-        assertThat(actionError1.actionId).isEqualTo("action_id_1")
-        assertThat(actionError2.actionId).isEqualTo("action_id_2")
+        assertThat(safetySourceError.safetyEvent).isEqualTo(SAFETY_EVENT)
     }
 
     @Test
     fun createFromParcel_withWriteToParcel_returnsEquivalentObject() {
-        val parcel = Parcel.obtain()
+        val safetySourceError = SafetySourceError(SAFETY_EVENT)
 
-        actionError1.writeToParcel(parcel, /* flags= */ 0)
-        parcel.setDataPosition(0)
-
-        val fromParcel = SafetySourceError.CREATOR.createFromParcel(parcel)
-        parcel.recycle()
-
-        assertThat(fromParcel).isEqualTo(actionError1)
+        assertThatRoundTripReturnsOriginal(safetySourceError, SafetySourceError.CREATOR)
     }
 
     @Test
     fun equals_hashCode_toString_equalByReference_areEqual() {
-        assertThat(actionError1).isEqualTo(actionError1)
-        assertThat(actionError1.hashCode()).isEqualTo(actionError1.hashCode())
-        assertThat(actionError1.toString()).isEqualTo(actionError1.toString())
+        val safetySourceError = SafetySourceError(SAFETY_EVENT)
+
+        assertThatRepresentationsAreEqual(safetySourceError, safetySourceError)
     }
 
     @Test
-    fun equals_hashCode_toString_actionErrors_equalByValue_areEqual() {
-        val actionError = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-                .setIssueId("issue_id_1")
-                .setActionId("action_id_1")
-                .build()
-        val equivalentActionError = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-                .setIssueId("issue_id_1")
-                .setActionId("action_id_1")
-                .build()
+    fun equals_hashCode_toString_equalByValue_areEqual() {
+        val safetySourceError = SafetySourceError(SAFETY_EVENT)
+        val equivalentSafetySourceError = SafetySourceError(SAFETY_EVENT)
 
-        assertThat(actionError).isEqualTo(equivalentActionError)
-        assertThat(actionError.hashCode()).isEqualTo(equivalentActionError.hashCode())
-        assertThat(actionError.toString()).isEqualTo(equivalentActionError.toString())
+        assertThatRepresentationsAreEqual(safetySourceError, equivalentSafetySourceError)
     }
 
     @Test
-    fun equals_toString_withDifferentIssueIds_areNotEqual() {
-        val actionError = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-                .setIssueId("issue_id_1")
-                .setActionId("action_id_1")
-                .build()
-        val differentActionError = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-                .setIssueId("issue_id_2")
-                .setActionId("action_id_1")
-                .build()
+    fun equals_toString_withDifferentSafetyEvents_areNotEqual() {
+        val safetySourceError = SafetySourceError(
+                SafetyEvent.Builder(SafetyEvent.SAFETY_EVENT_TYPE_SOURCE_STATE_CHANGED).build())
+        val otherSafetySourceError = SafetySourceError(
+                SafetyEvent.Builder(SafetyEvent.SAFETY_EVENT_TYPE_DEVICE_REBOOTED).build())
 
-        assertThat(actionError).isNotEqualTo(differentActionError)
-        assertThat(actionError.toString()).isNotEqualTo(differentActionError.toString())
+        assertThatRepresentationsAreNotEqual(safetySourceError, otherSafetySourceError)
     }
 
-    @Test
-    fun equals_toString_withDifferentActionIds_areNotEqual() {
-        val actionError = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-                .setIssueId("issue_id_1")
-                .setActionId("action_id_1")
-                .build()
-        val differentActionError = SafetySourceError.Builder(SOURCE_ERROR_TYPE_ACTION_ERROR)
-                .setIssueId("issue_id_1")
-                .setActionId("action_id_2")
-                .build()
-
-        assertThat(actionError).isNotEqualTo(differentActionError)
-        assertThat(actionError.toString()).isNotEqualTo(differentActionError.toString())
+    companion object {
+        private val SAFETY_EVENT =
+                SafetyEvent.Builder(SafetyEvent.SAFETY_EVENT_TYPE_SOURCE_STATE_CHANGED).build()
     }
 }

@@ -136,3 +136,13 @@ class PrimaryCompanionService : CompanionService<PrimaryCompanionService>(Compan
 class SecondaryCompanionService : CompanionService<SecondaryCompanionService>(Companion) {
     companion object : InstanceHolder<SecondaryCompanionService>()
 }
+
+class MissingPermissionCompanionService
+    : CompanionService<MissingPermissionCompanionService>(Companion) {
+    companion object : InstanceHolder<MissingPermissionCompanionService>()
+}
+
+class MissingIntentFilterActionCompanionService
+    : CompanionService<MissingIntentFilterActionCompanionService>(Companion) {
+    companion object : InstanceHolder<MissingIntentFilterActionCompanionService>()
+}

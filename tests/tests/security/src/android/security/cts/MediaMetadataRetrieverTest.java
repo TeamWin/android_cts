@@ -40,13 +40,13 @@ public class MediaMetadataRetrieverTest extends StsExtraBusinessLogicTestCase {
     protected MediaMetadataRetriever mRetriever;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mResources = getContext().getResources();
         mRetriever = new MediaMetadataRetriever();
     }
 
     @After
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         mRetriever.release();
     }
 

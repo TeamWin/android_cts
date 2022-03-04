@@ -145,7 +145,7 @@ def calc_circle_image_ratio(radius, img_w, img_h):
   return 100 * math.pi * math.pow(radius, 2) / (img_w * img_h)
 
 
-def find_fov_reference(cam, req, props, fmt_type, ref_img_name_stem):
+def find_fov_reference(cam, req, props, raw_bool, ref_img_name_stem):
   """Determine the circle coverage of the image in reference image.
 
   Captures a full-frame RAW or JPEG and uses its aspect ratio and circle center
@@ -166,7 +166,7 @@ def find_fov_reference(cam, req, props, fmt_type, ref_img_name_stem):
     cam: camera object
     req: camera request
     props: camera properties
-    fmt_type: 'RAW' or 'JPEG'
+    raw_bool: True if RAW available
     ref_img_name_stem: test _NAME + location to save data
 
   Returns:
@@ -174,8 +174,10 @@ def find_fov_reference(cam, req, props, fmt_type, ref_img_name_stem):
     cc_ct_gt: circle center position relative to the center of image.
     aspect_ratio_gt: aspect ratio of the detected circle in float.
   """
-  logging.debug('Creating references for fov_coverage from %s', fmt_type)
-  if fmt_type == 'RAW':
+  logging.debug('Creating references for fov_coverage')
+  if raw_bool:
+    logging.debug('Using RAW for reference')
+    fmt_type = 'RAW'
     out_surface = {'format': 'raw'}
     cap = cam.do_capture(req, out_surface)
     logging.debug('Captured RAW %dx%d', cap['width'], cap['height'])
@@ -201,7 +203,9 @@ def find_fov_reference(cam, req, props, fmt_type, ref_img_name_stem):
         img = cv2.undistort(img, k, opencv_dist)
     size = img.shape
 
-  elif fmt_type == 'JPEG':
+  else:
+    logging.debug('Using JPEG for reference')
+    fmt_type = 'JPEG'
     ref_fov = {}
     fmt = capture_request_utils.get_largest_jpeg_format(props)
     cap = cam.do_capture(req, fmt)
@@ -267,7 +271,7 @@ class ImageFovUtilsTest(unittest.TestCase):
     circle = {'w': 2, 'h': 1}
     e_msg_stem = 'check_ar_false'
     e_msg = check_ar(circle, ar_gt, w, h, e_msg_stem)
-    self.assertTrue('check_ar_false' in e_msg)
+    self.assertIn('check_ar_false', e_msg)
 
   def test_check_crop(self):
     """Unit test for crop check."""
@@ -284,7 +288,7 @@ class ImageFovUtilsTest(unittest.TestCase):
     circle = {'w': 100, 'h': 100, 'x_offset': 2, 'y_offset': 1}
     e_msg_stem = 'check_crop_false'
     e_msg = check_crop(circle, cc_gt, w, h, e_msg_stem, crop_thresh_factor)
-    self.assertTrue('check_crop_false' in e_msg)
+    self.assertIn('check_crop_false', e_msg)
 
 if __name__ == '__main__':
   unittest.main()

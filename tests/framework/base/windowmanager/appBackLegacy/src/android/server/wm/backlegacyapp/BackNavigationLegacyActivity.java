@@ -19,8 +19,8 @@ package android.server.wm.backlegacyapp;
 import android.app.Activity;
 import android.os.Bundle;
 import android.server.wm.TestJournalProvider;
-import android.view.OnBackInvokedCallback;
-import android.view.OnBackInvokedDispatcher;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.annotation.Nullable;
 

@@ -591,10 +591,10 @@ public class MediaRouter2Test {
 
         try {
             mRouter2.registerTransferCallback(mExecutor, transferCallback);
-            mRouter2.transferTo(route);
-
             // Unregisters transfer callback
             mRouter2.unregisterTransferCallback(transferCallback);
+
+            mRouter2.transferTo(route);
 
             // No transfer callback methods should be called.
             assertFalse(successLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));

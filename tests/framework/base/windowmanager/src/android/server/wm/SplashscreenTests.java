@@ -511,12 +511,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testLaunchFromLauncherWithEmptyIconOptions() throws Exception {
+    public void testLaunchFromLauncherWithSolidColorOptions() throws Exception {
         assumeFalse(isLeanBack());
         final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         TestJournalProvider.TestJournalContainer.start();
         final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
-                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent ->
                 intent.putExtra(REQUEST_HANDLE_EXIT_ON_CREATE, true), noIconOptions);
         mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
@@ -573,9 +573,9 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testLaunchActivitiesWithEmptyOptions() throws Exception {
+    public void testLaunchActivitiesWithSolidColorOptions() throws Exception {
         final ActivityOptions options = ActivityOptions.makeBasic()
-                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
 
         final Intent[] intents = new Intent[] {
                 new Intent().setComponent(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY)
@@ -673,7 +673,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assumeFalse(isLeanBack());
         final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         final ActivityOptions noIconOptions = ActivityOptions.makeBasic()
-                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_EMPTY);
+                .setSplashScreenStyle(SplashScreen.SPLASH_SCREEN_STYLE_SOLID_COLOR);
 
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_STYLE_THEME_ACTIVITY,
                 intent -> {}, noIconOptions);

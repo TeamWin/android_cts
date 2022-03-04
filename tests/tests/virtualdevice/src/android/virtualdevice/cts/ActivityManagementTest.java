@@ -137,7 +137,7 @@ public class ActivityManagementTest {
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         ActivityListener activityListener = mock(ActivityListener.class);
         Executor mockExecutor = mock(Executor.class);
-        mVirtualDevice.addActivityListener(activityListener, mockExecutor);
+        mVirtualDevice.addActivityListener(mockExecutor, activityListener);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 /* width= */ 100,
                 /* height= */ 100,
@@ -175,7 +175,7 @@ public class ActivityManagementTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         ActivityListener activityListener = mock(ActivityListener.class);
-        mVirtualDevice.addActivityListener(activityListener);
+        mVirtualDevice.addActivityListener(context.getMainExecutor(), activityListener);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 /* width= */ 100,
                 /* height= */ 100,
@@ -210,7 +210,7 @@ public class ActivityManagementTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         ActivityListener activityListener = mock(ActivityListener.class);
-        mVirtualDevice.addActivityListener(activityListener);
+        mVirtualDevice.addActivityListener(context.getMainExecutor(), activityListener);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 /* width= */ 100,
                 /* height= */ 100,

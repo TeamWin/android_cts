@@ -41,10 +41,11 @@ public class IconTest {
         android.graphics.drawable.Icon icon = android.graphics.drawable.Icon.createWithBitmap(
                 Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8));
         Icon smartspaceIcon = new Icon.Builder(icon).setContentDescription(
-                "test content").build();
+                "test content").setShouldTint(false).build();
 
         assertThat(smartspaceIcon.getIcon()).isEqualTo(icon);
         assertThat(smartspaceIcon.getContentDescription()).isEqualTo("test content");
+        assertThat(smartspaceIcon.shouldTint()).isFalse();
 
         Parcel parcel = Parcel.obtain();
         parcel.setDataPosition(0);

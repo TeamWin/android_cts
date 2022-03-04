@@ -83,7 +83,7 @@ public class NanoAppBundleTest extends StsExtraBusinessLogicTestCase {
         };
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         mContext = getInstrumentation().getContext();
         Intent serviceIntent = new Intent(mContext, AuthenticatorService.class);
         mContext.startService(serviceIntent);
@@ -91,7 +91,7 @@ public class NanoAppBundleTest extends StsExtraBusinessLogicTestCase {
     }
 
     @After
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mContext != null) {
             Intent serviceIntent = new Intent(mContext, AuthenticatorService.class);
             mContext.stopService(serviceIntent);
