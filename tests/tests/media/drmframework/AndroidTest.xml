@@ -21,30 +21,30 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
-        <option name="config-filename" value="CtsMediaDrmTestCases" />
-        <option name="dynamic-config-name" value="CtsMediaDrmTestCases" />
+        <option name="config-filename" value="CtsMediaDrmFrameworkTestCases" />
+        <option name="dynamic-config-name" value="CtsMediaDrmFrameworkTestCases" />
         <option name="version" value="9.0_r1"/>
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer">
         <option name="push-all" value="true" />
-        <option name="media-folder-name" value="CtsMediaDrmTestCases-1.4" />
-        <option name="dynamic-config-module" value="CtsMediaDrmTestCases" />
+        <option name="media-folder-name" value="CtsMediaDrmFrameworkTestCases-1.0" />
+        <option name="dynamic-config-module" value="CtsMediaDrmFrameworkTestCases" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsMediaDrmTestCases.apk" />
+        <option name="test-file-name" value="CtsMediaDrmFrameworkTestCases.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- MediaProjectionTest needs this one to not be granted, SuiteApkInstaller grants all of them by default.-->
-        <option name="run-command" value="pm revoke android.media.drm.cts android.permission.SYSTEM_ALERT_WINDOW"/>
+        <option name="run-command" value="pm revoke android.media.drmframework.cts android.permission.SYSTEM_ALERT_WINDOW"/>
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="device" />
-        <option name="config-filename" value="CtsMediaDrmTestCases" />
+        <option name="config-filename" value="CtsMediaDrmFrameworkTestCases" />
         <option name="version" value="7.0"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.media.drm.cts" />
+        <option name="package" value="android.media.drmframework.cts" />
         <!-- setup can be expensive so limit the number of shards -->
         <option name="ajur-max-shard" value="5" />
         <!-- test-timeout unit is ms, value = 30 min -->

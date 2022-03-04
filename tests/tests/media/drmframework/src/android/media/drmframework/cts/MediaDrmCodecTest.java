@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.drm.cts;
+package android.media.drmframework.cts;
 
 import android.media.MediaCodec;
 import android.media.MediaCodec.CryptoException;
