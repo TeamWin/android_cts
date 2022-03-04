@@ -20,7 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
-import com.android.car.telemetry.TelemetryProto;
+import android.car.telemetry.TelemetryProto;
+
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
