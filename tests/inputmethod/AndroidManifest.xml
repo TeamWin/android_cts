@@ -19,6 +19,7 @@
      package="android.view.inputmethod.cts"
      android:targetSandboxVersion="2">
 
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <application android:label="CtsInputMethodTestCases"
          android:multiArch="true"
