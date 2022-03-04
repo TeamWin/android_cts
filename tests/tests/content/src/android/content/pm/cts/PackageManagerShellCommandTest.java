@@ -1435,6 +1435,7 @@ public class PackageManagerShellCommandTest {
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
+    @Ignore
     @Test
     public void testPackageFullyRemovedBroadcastAfterUninstall() throws IOException {
         final int currentUser = getContext().getUserId();
@@ -1608,8 +1609,9 @@ public class PackageManagerShellCommandTest {
     private boolean isAppInstalled(String packageName) throws IOException {
         final String commandResult = executeShellCommand("pm list packages");
         final int prefixLength = "package:".length();
-        return Arrays.stream(commandResult.split("\\r?\\n"))
-                .anyMatch(line -> line.substring(prefixLength).equals(packageName));
+        return Arrays.stream(commandResult.split("\\r?\\n")).anyMatch(
+                line -> line.length() > prefixLength && line.substring(prefixLength).equals(
+                        packageName));
     }
 
     private boolean isAppInstalledForUser(String packageName, int userId) throws IOException {
