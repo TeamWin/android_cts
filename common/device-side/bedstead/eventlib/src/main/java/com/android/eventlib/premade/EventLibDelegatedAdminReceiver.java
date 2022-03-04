@@ -31,6 +31,7 @@ import com.android.eventlib.events.deviceadminreceivers.DelegatedAdminNetworkLog
 /**
  * {@link DelegatedAdminReceiver} which logs all callbacks using EventLib.
  */
+@SuppressWarnings("NewApi")
 public class EventLibDelegatedAdminReceiver extends DelegatedAdminReceiver {
 
     private String mOverrideDelegatedAdminReceiverClassName;

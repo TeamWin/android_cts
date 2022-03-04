@@ -30,7 +30,6 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code BluetoothAdapter#disable()}.
  */
 // TODO(b/220306133): Behaviour is unpredictable when applying to other users
-// TODO(??): This should be able to be applied by profile owners also
-@EnterprisePolicy(dpc = {APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER})
+@EnterprisePolicy(dpc = {APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER})
 public final class Bluetooth {
 }

@@ -23,6 +23,7 @@ import android.app.admin.DelegatedAdminReceiver;
  *
  * <p>This is used instead of {@link DelegatedAdminReceiver} so that it can be easily serialized.
  */
+@SuppressWarnings("NewApi")
 public class DelegatedAdminReceiverInfo extends BroadcastReceiverInfo {
     public DelegatedAdminReceiverInfo(DelegatedAdminReceiver delegatedAdminReceiver) {
         super(delegatedAdminReceiver);

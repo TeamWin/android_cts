@@ -27,8 +27,8 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.delegatedadminreceivers.DelegatedAdminChoosePrivateKeyAliasEvent;
-import com.android.eventlib.events.delegatedadminreceivers.DelegatedAdminNetworkLogsAvailableEvent;
 import com.android.eventlib.events.delegatedadminreceivers.DelegatedAdminSecurityLogsAvailableEvent;
+import com.android.eventlib.events.deviceadminreceivers.DelegatedAdminNetworkLogsAvailableEvent;
 
 import org.junit.Before;
 import org.junit.ClassRule;

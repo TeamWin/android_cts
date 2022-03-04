@@ -16,12 +16,11 @@
 
 package com.android.bedstead.harrier.policies;
 
-import static android.app.admin.DevicePolicyManager.DELEGATION_ENABLE_SYSTEM_APP;
-
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
+import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_ENABLE_SYSTEM_APP;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 

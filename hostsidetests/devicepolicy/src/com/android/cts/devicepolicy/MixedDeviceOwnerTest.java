@@ -36,7 +36,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -112,14 +111,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 ".AffiliationTest",
                 "testSetLockTaskPackagesClearedIfUserBecomesUnaffiliated",
                 userId);
-    }
-
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "218408549",
-            reason = "Will be migrated to new test infra")
-    public void testDelegation() throws Exception {
-        super.testDelegation();
     }
 
     @Override

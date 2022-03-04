@@ -24,6 +24,7 @@ import android.content.Intent;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
+import com.android.eventlib.events.deviceadminreceivers.DelegatedAdminNetworkLogsAvailableEvent;
 
 import org.junit.Before;
 import org.junit.Test;

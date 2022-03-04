@@ -49,6 +49,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
+
 @RunWith(BedsteadJUnit4.class)
 public final class DeviceOwnerTest {
     @ClassRule
@@ -118,11 +120,12 @@ public final class DeviceOwnerTest {
             Poll.forValue("Active admins", dpm::getActiveAdmins)
                     .toMeet(i -> i == null || !i.contains(RemoteDpc.DPC_COMPONENT_NAME))
                     .errorOnFail("Expected active admins to not contain RemoteDPC")
+                    .timeout(Duration.ofMinutes(5))
                     .await();
         }
     }
 
-    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER, UserType.WORK_PROFILE})
+    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER})
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "new test")
@@ -131,7 +134,7 @@ public final class DeviceOwnerTest {
                 .isEqualTo(sDeviceState.dpc().packageName());
     }
 
-    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER, UserType.WORK_PROFILE})
+    @UserTest({UserType.PRIMARY_USER, UserType.SECONDARY_USER})
     @EnsureHasDeviceOwner
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "new test")

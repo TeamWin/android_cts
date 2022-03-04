@@ -35,6 +35,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.KeyManagement;
 import com.android.bedstead.nene.TestApis;
@@ -74,7 +75,7 @@ public final class KeyManagementTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
-    private static final int KEYCHAIN_CALLBACK_TIMEOUT_SECONDS = 600;
+    private static final int KEYCHAIN_CALLBACK_TIMEOUT_SECONDS = 540;
     private static final String RSA = "RSA";
     private static final String RSA_ALIAS = "com.android.test.valid-rsa-key-1";
     private static final PrivateKey PRIVATE_KEY =
@@ -220,6 +221,14 @@ public final class KeyManagementTest {
         }
     }
 
+
+    @Postsubmit(reason = "new test")
+    @CannotSetPolicyTest(policy = KeyManagement.class)
+    public void hasKeyPair_notAllowed_throwsException() {
+        assertThrows(SecurityException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().hasKeyPair(RSA_ALIAS));
+    }
+
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = KeyManagement.class)
     public void hasKeyPair_nonExistentAlias_false() {
@@ -342,6 +351,14 @@ public final class KeyManagementTest {
             // Remove keypair
             sDeviceState.dpc().devicePolicyManager().removeKeyPair(DPC_COMPONENT_NAME, RSA_ALIAS);
         }
+    }
+
+    @Postsubmit(reason = "new test")
+    @CannotSetPolicyTest(policy = KeyManagement.class)
+    public void getKeyPairGrants_notAllowed_throwsException() {
+        Assert.assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .getKeyPairGrants(RSA_ALIAS));
     }
 
     @Postsubmit(reason = "new test")

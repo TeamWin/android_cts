@@ -48,12 +48,9 @@ import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
-import com.android.compatibility.common.util.PollingCheck;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,7 +97,8 @@ public final class DevicePolicy {
                             return false; // Just retry on old versions as we don't have stderr
                         }
                         if (ex instanceof AdbException) {
-                            if (((AdbException) ex).error().contains("is being removed")) {
+                            String error = ((AdbException) ex).error();
+                            if (error.contains("is being removed")) {
                                 return false;
                             }
                         }
@@ -174,17 +172,16 @@ public final class DevicePolicy {
                 // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
-                retryIfNotTerminal(
-                        () -> {
+                Retry.logic(() -> {
                             devicePolicyManager.setActiveAdmin(deviceOwnerComponent,
                                     /* refreshing= */ true, user.id());
                             setDeviceOwnerOnly(devicePolicyManager,
                                     deviceOwnerComponent, "Nene", user.id());
-                        },
-                        () -> checkForTerminalDeviceOwnerFailures(
-                                user, deviceOwnerComponent, /* allowAdditionalUsers= */ true),
-                        NeneException.class, IllegalArgumentException.class);
-            } catch (IllegalStateException | SecurityException e) {
+                }).terminalException((e) -> checkForTerminalDeviceOwnerFailures(
+                        user, deviceOwnerComponent, /* allowAdditionalUsers= */ true))
+                        .timeout(Duration.ofMinutes(5))
+                        .run();
+            } catch (Throwable e) {
                 throw new NeneException("Error setting device owner", e);
             }
         } finally {
@@ -235,44 +232,6 @@ public final class DevicePolicy {
         }
     }
 
-    /**
-     * Runs {@code operation}. If it fails, runs {@code terminalCheck} and then retries
-     * {@code operation} until it does not fail or for a maximum of 30 seconds.
-     *
-     * <p>The {@code operation} is considered to be successful if it does not throw an exception
-     */
-    private void retryIfNotTerminal(
-            Runnable operation, Runnable terminalCheck,
-            Class<? extends RuntimeException>... exceptions) {
-        Set<Class<? extends RuntimeException>> exceptionSet =
-                new HashSet<>(Arrays.asList(exceptions));
-        try {
-            operation.run();
-        } catch (RuntimeException e) {
-            if (!exceptionSet.contains(e.getClass())) {
-                throw e;
-            }
-
-            terminalCheck.run();
-
-            try {
-                PollingCheck.waitFor(() -> {
-                    try {
-                        operation.run();
-                        return true;
-                    } catch (RuntimeException e2) {
-                        if (!exceptionSet.contains(e2.getClass())) {
-                            throw e2;
-                        }
-                        return false;
-                    }
-                });
-            } catch (AssertionError e3) {
-                operation.run();
-            }
-        }
-    }
-
     private DeviceOwner setDeviceOwnerPreS(ComponentName deviceOwnerComponent) {
         UserReference user = TestApis.users().system();
 
@@ -283,18 +242,23 @@ public final class DevicePolicy {
         // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
         //  we retry because if the device owner was recently removed, it can take some time
         //  to be allowed to set it again
-        retryIfNotTerminal(
-                () -> command.executeOrThrowNeneException("Could not set device owner for user "
-                        + user + " component " + deviceOwnerComponent),
-                () -> checkForTerminalDeviceOwnerFailures(
-                    user, deviceOwnerComponent, /* allowAdditionalUsers= */ false));
+
+        try {
+            Retry.logic(command::execute)
+                .terminalException((e) -> checkForTerminalDeviceOwnerFailures(
+                            user, deviceOwnerComponent, /* allowAdditionalUsers= */ false))
+                    .timeout(Duration.ofMinutes(5))
+                    .run();
+        } catch (Throwable e) {
+            throw new NeneException("Error setting device owner", e);
+        }
 
         return new DeviceOwner(user,
                 TestApis.packages().find(
                         deviceOwnerComponent.getPackageName()), deviceOwnerComponent);
     }
 
-    private void checkForTerminalDeviceOwnerFailures(
+    private boolean checkForTerminalDeviceOwnerFailures(
             UserReference user, ComponentName deviceOwnerComponent, boolean allowAdditionalUsers) {
         DeviceOwner deviceOwner = getDeviceOwner();
         if (deviceOwner != null) {
@@ -329,6 +293,8 @@ public final class DevicePolicy {
 
         }
         // TODO(scottjonathan): Check accounts
+
+        return false;
     }
 
     private boolean componentCanBeSetAsDeviceAdmin(ComponentName component, UserReference user) {

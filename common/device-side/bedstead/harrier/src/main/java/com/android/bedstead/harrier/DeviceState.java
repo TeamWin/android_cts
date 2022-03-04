@@ -208,16 +208,13 @@ public final class DeviceState extends HarrierRule {
         mLogger.constructor(() -> {
             Future<Thread> testThreadFuture = mTestExecutor.submit(Thread::currentThread);
 
-            Bundle arguments = InstrumentationRegistry.getArguments();
-            mSkipTestTeardown = Boolean.parseBoolean(
-                    arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
-            mSkipClassTeardown = Boolean.parseBoolean(
-                    arguments.getString(SKIP_CLASS_TEARDOWN_KEY, "false"));
-            mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
+            mSkipTestTeardown = TestApis.instrumentation().arguments().getBoolean(SKIP_TEST_TEARDOWN_KEY, false);
+            mSkipClassTeardown = TestApis.instrumentation().arguments().getBoolean(SKIP_CLASS_TEARDOWN_KEY, false);
+
+            mSkipTestsReason = TestApis.instrumentation().arguments().getString(SKIP_TESTS_REASON_KEY, "");
             mSkipTests = !mSkipTestsReason.isEmpty();
-            mMinSdkVersion = arguments.getInt(MIN_SDK_VERSION_KEY, SDK_INT);
-            mPermissionsInstrumentationPackage =
-                    arguments.getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
+            mMinSdkVersion = TestApis.instrumentation().arguments().getInt(MIN_SDK_VERSION_KEY, SDK_INT);
+            mPermissionsInstrumentationPackage = TestApis.instrumentation().arguments().getString(PERMISSIONS_INSTRUMENTATION_PACKAGE_KEY);
             if (mPermissionsInstrumentationPackage != null) {
                 mPermissionsInstrumentationPackagePermissions.addAll(
                         TestApis.packages().find(mPermissionsInstrumentationPackage)
@@ -276,7 +273,13 @@ public final class DeviceState extends HarrierRule {
                     try {
                         Throwable t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
                         if (t != null) {
-                            throw t;
+                            if (t instanceof AssertionError
+                                    || t instanceof AssumptionViolatedException) {
+                                throw t;
+                            } else {
+                                // We wrap the failure in an AssertionError so it doesn't crash
+                                throw new AssertionError("Exception while executing test", t);
+                            }
                         }
                     } catch (TimeoutException e) {
                         StackTraceElement[] stack = mTestThread.getStackTrace();
@@ -452,8 +455,8 @@ public final class DeviceState extends HarrierRule {
                     requireRunOnProfile(requireRunOnProfileAnnotation.value(),
                             installInstrumentedAppInParent,
                             requireRunOnProfileAnnotation.hasProfileOwner(),
-                            /* useParentInstance= */ false,
-                            dpcIsPrimary, switchedToParentUser, affiliationIds);
+                            dpcIsPrimary, /* useParentInstance= */ false,
+                            switchedToParentUser, affiliationIds);
                     continue;
                 }
 
@@ -1904,7 +1907,8 @@ public final class DeviceState extends HarrierRule {
             RemotePolicyManager dpc = getDeviceAdmin(adminType);
 
             boolean specifiesAdminType = adminType != EnsureHasDelegate.AdminType.PRIMARY;
-            boolean currentPrimaryPolicyManagerIsNotDelegator = mPrimaryPolicyManager != dpc;
+            boolean currentPrimaryPolicyManagerIsNotDelegator =
+                    !Objects.equal(mPrimaryPolicyManager, dpc);
 
             if (isPrimary && mPrimaryPolicyManager != null
                     && (specifiesAdminType || currentPrimaryPolicyManagerIsNotDelegator)) {
