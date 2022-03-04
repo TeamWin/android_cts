@@ -17,7 +17,8 @@
 package android.safetycenter.config.cts
 
 import android.content.Context
-import android.safetycenter.config.Parser
+import android.safetycenter.config.ParseException
+import android.safetycenter.config.SafetyCenterConfig
 import android.safetycenter.cts.R
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import com.google.common.truth.Truth.assertThat
@@ -45,8 +46,8 @@ class ParserConfigInvalidTest {
     @Test
     fun invalidConfig_throws() {
         val parser = context.resources.getXml(params.configResourceId)
-        val thrown = assertThrows(Parser.ParseException::class.java) {
-            Parser.parseXmlResource(parser)
+        val thrown = assertThrows(ParseException::class.java) {
+            SafetyCenterConfig.fromXml(parser)
         }
         assertThat(thrown).hasMessageThat().isEqualTo(params.errorMessage)
         if (params.causeErrorMessage != null) {
@@ -350,7 +351,7 @@ class ParserConfigInvalidTest {
                 "ConfigStaticSafetySourceWithLogging",
                 R.xml.config_static_safety_source_with_logging,
                 "Element static-safety-source invalid",
-                "Prohibited attribute allowLogging present"
+                "Prohibited attribute loggingAllowed present"
             ),
             Params(
                 "ConfigStaticSafetySourceWithPackage",
@@ -368,7 +369,7 @@ class ParserConfigInvalidTest {
                 "ConfigStaticSafetySourceWithRefresh",
                 R.xml.config_static_safety_source_with_refresh,
                 "Element static-safety-source invalid",
-                "Prohibited attribute allowRefreshOnPageOpen present"
+                "Prohibited attribute refreshOnPageOpenAllowed present"
             ),
             Params(
                 "ConfigStaticSafetySourceWithSeverity",

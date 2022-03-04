@@ -57,7 +57,6 @@ public class CallAudioInterceptionTest {
     @Before
     public void setUp() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assumeTrue(context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
 
         mAudioManager = context.getSystemService(AudioManager.class);
         mAudioManager.setMode(AudioManager.MODE_NORMAL);
@@ -66,6 +65,8 @@ public class CallAudioInterceptionTest {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.CALL_AUDIO_INTERCEPTION,
                         Manifest.permission.MODIFY_PHONE_STATE);
+
+        assumeTrue(context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
     }
 
     /** Test teardown */

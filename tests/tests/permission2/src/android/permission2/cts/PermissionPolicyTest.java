@@ -30,6 +30,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.os.Process;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -76,8 +77,6 @@ public class PermissionPolicyTest {
 
     private static final String PLATFORM_ROOT_NAMESPACE = "android.";
 
-    private static final String AUTOMOTIVE_SERVICE_PACKAGE_NAME = "com.android.car";
-
     private static final String TAG_PERMISSION = "permission";
     private static final String TAG_PERMISSION_GROUP = "permission-group";
 
@@ -123,8 +122,14 @@ public class PermissionPolicyTest {
 
         if (sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             expectedPermissions.addAll(loadExpectedPermissions(R.raw.automotive_android_manifest));
+            String carServicePackageName = SystemProperties.get("ro.android.car.carservice.package",
+                    null);
+
+            assertWithMessage("Car service package not defined").that(
+                    carServicePackageName).isNotNull();
+
             declaredPermissionsMap.putAll(
-                    getPermissionsForPackage(sContext, AUTOMOTIVE_SERVICE_PACKAGE_NAME));
+                    getPermissionsForPackage(sContext, carServicePackageName));
         }
 
         for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {

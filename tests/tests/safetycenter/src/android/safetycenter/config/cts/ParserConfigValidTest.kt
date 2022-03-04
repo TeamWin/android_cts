@@ -17,7 +17,6 @@
 package android.safetycenter.config.cts
 
 import android.content.Context
-import android.safetycenter.config.Parser
 import android.safetycenter.config.SafetyCenterConfig
 import android.safetycenter.config.SafetySource
 import android.safetycenter.config.SafetySourcesGroup
@@ -61,8 +60,8 @@ class ParserConfigValidTest {
                     .setMaxSeverityLevel(300)
                     .setSearchTermsResId(R.string.reference)
                     .setBroadcastReceiverClassName("broadcast")
-                    .setAllowLogging(false)
-                    .setAllowRefreshOnPageOpen(true)
+                    .setLoggingAllowed(false)
+                    .setRefreshOnPageOpenAllowed(true)
                     .build())
                 .addSafetySource(SafetySource.Builder(SafetySource.SAFETY_SOURCE_TYPE_DYNAMIC)
                     .setId("dynamic_disabled")
@@ -112,8 +111,8 @@ class ParserConfigValidTest {
                     .setProfile(SafetySource.PROFILE_ALL)
                     .setMaxSeverityLevel(300)
                     .setBroadcastReceiverClassName("broadcast")
-                    .setAllowLogging(false)
-                    .setAllowRefreshOnPageOpen(true)
+                    .setLoggingAllowed(false)
+                    .setRefreshOnPageOpenAllowed(true)
                     .build())
                 .build())
             .addSafetySourcesGroup(SafetySourcesGroup.Builder()
@@ -141,6 +140,6 @@ class ParserConfigValidTest {
                     .build())
                 .build())
             .build()
-        assertEquals(expected, Parser.parseXmlResource(parser))
+        assertEquals(expected, SafetyCenterConfig.fromXml(parser))
     }
 }

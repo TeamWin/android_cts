@@ -61,8 +61,8 @@ struct Callback {
     std::chrono::nanoseconds frameTime{0LL};
 };
 
-struct ExtendedCallback : Callback {
-    ExtendedCallback(const char* name, JNIEnv* env) : Callback(name), env(env) {}
+struct VsyncCallback : Callback {
+    VsyncCallback(const char* name, JNIEnv* env) : Callback(name), env(env) {}
 
     struct FrameTime {
         FrameTime(const AChoreographerFrameCallbackData* callbackData, int index)
@@ -105,30 +105,30 @@ private:
     std::vector<FrameTime> timeline;
 };
 
-static void extendedFrameCallback(int64_t frameTimeNanos, void* data) {
+static void vsyncCallback(int64_t frameTimeNanos, void* data) {
     std::lock_guard<std::mutex> _l(gLock);
-    ATrace_beginSection("extendedFrameCallback base");
+    ATrace_beginSection("vsyncCallback base");
     Callback* cb = static_cast<Callback*>(data);
     cb->count++;
     cb->frameTime = std::chrono::nanoseconds{frameTimeNanos};
     ATrace_endSection();
 }
 
-static void extendedFrameCallback(const AChoreographerFrameCallbackData* callbackData, void* data) {
-    ATrace_beginSection("extendedFrameCallback");
-    extendedFrameCallback(AChoreographerFrameCallbackData_getFrameTimeNanos(callbackData), data);
+static void vsyncCallback(const AChoreographerFrameCallbackData* callbackData, void* data) {
+    ATrace_beginSection("vsyncCallback");
+    vsyncCallback(AChoreographerFrameCallbackData_getFrameTimeNanos(callbackData), data);
 
-    ExtendedCallback* cb = static_cast<ExtendedCallback*>(data);
+    VsyncCallback* cb = static_cast<VsyncCallback*>(data);
     cb->populate(callbackData);
     ATrace_endSection();
 }
 
 static void frameCallback64(int64_t frameTimeNanos, void* data) {
-    extendedFrameCallback(frameTimeNanos, data);
+    vsyncCallback(frameTimeNanos, data);
 }
 
 static void frameCallback(long frameTimeNanos, void* data) {
-    extendedFrameCallback((int64_t)frameTimeNanos, data);
+    vsyncCallback((int64_t)frameTimeNanos, data);
 }
 
 static std::chrono::nanoseconds now() {

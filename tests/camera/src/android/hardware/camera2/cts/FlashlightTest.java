@@ -128,6 +128,20 @@ public class FlashlightTest extends Camera2AndroidTestCase {
                 torchStrength = mCameraManager.getTorchStrengthLevel(id);
                 assertEquals(torchStrength, minLevel);
 
+                try {
+                    mCameraManager.turnOnTorchWithStrengthLevel(id, 0);
+                    fail("turnOnTorchWithStrengthLevel with strengthLevel = 0 must fail.");
+                } catch (IllegalArgumentException e) {
+                    Log.v(TAG, e.getMessage());
+                }
+
+                try {
+                    mCameraManager.turnOnTorchWithStrengthLevel(id, maxLevel + 1);
+                    fail("turnOnTorchWithStrengthLevel with strengthLevel" + (maxLevel + 1) + " must fail.");
+                } catch (IllegalArgumentException e) {
+                    Log.v(TAG, e.getMessage());
+                }
+
                 // Turn off the torch and verify if the strength level gets
                 // reset to default level.
                 mCameraManager.setTorchMode(id, false);

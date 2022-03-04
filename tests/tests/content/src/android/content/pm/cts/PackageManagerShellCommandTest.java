@@ -73,6 +73,7 @@ import libcore.util.HexEncoding;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1309,6 +1310,7 @@ public class PackageManagerShellCommandTest {
         }
     }
 
+    @Ignore
     @Test
     public void testGetFirstInstallTime() throws Exception {
         final int currentUser = getContext().getUserId();
@@ -1483,7 +1485,7 @@ public class PackageManagerShellCommandTest {
         final ApplicationInfo info = pm.getApplicationInfo(
                 name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
         assertEquals(ApplicationInfo.FLAG_SYSTEM, info.flags & ApplicationInfo.FLAG_SYSTEM);
-        assertTrue(info.sourceDir.startsWith("/apex/com.android.supplementalprocess"));
+        assertTrue(info.sourceDir.startsWith("/apex/com.android.adservices"));
     }
 
     @Test

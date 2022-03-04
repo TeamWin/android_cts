@@ -33,6 +33,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiSelector;
 
@@ -69,8 +70,13 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         mActivity.finish();
     }
 
+    /**
+     * ACTION_PICK_IMAGES is allowlisted by default from work to personal. This got allowlisted
+     * in a platform code change and is available Android T onwards.
+     */
     @Test
     @RequireRunOnWorkProfile
+    @SdkSuppress(minSdkVersion = 32, codeName = "T")
     public void testWorkApp_canAccessPersonalProfileContents() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, sDeviceState.primaryUser().id(), mUriList);
@@ -107,9 +113,28 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         }
     }
 
+    /**
+     * ACTION_PICK_IMAGES is allowlisted by default from work to personal. This got allowlisted
+     * in a platform code change and is available Android T onwards. Before that it needs to be
+     * explicitly allowlisted by the device admin.
+     */
+    @Test
+    @RequireRunOnWorkProfile
+    @SdkSuppress(maxSdkVersion = 31, codeName = "S")
+    public void testWorkApp_cannotAccessPersonalProfile_beforeT() throws Exception {
+        assertBlockedByAdmin(/* isInvokedFromWorkProfile */ true);
+    }
+
+    /**
+     * ACTION_PICK_IMAGES is allowlisted by default from work to personal only (not vice-a-versa)
+     */
     @Test
     @EnsureHasWorkProfile
     public void testPersonalApp_cannotAccessWorkProfile_default() throws Exception {
+        assertBlockedByAdmin(/* isInvokedFromWorkProfile */ false);
+    }
+
+    private void assertBlockedByAdmin(boolean isInvokedFromWorkProfile) throws Exception {
         Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
         // TODO(b/205291616): Replace 100 with MediaStore.getPickImagesMaxLimit()
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, 100);
@@ -120,19 +145,22 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         profileButton.click();
         mDevice.waitForIdle();
 
-        // By default, ACTION_PICK_IMAGES is only allowlisted to access personal
-        // content from work profile, but not vice-a-versa.
-        assertBlockedByAdminDialog();
+        assertBlockedByAdminDialog(isInvokedFromWorkProfile);
     }
 
-    private void assertBlockedByAdminDialog() {
+    private void assertBlockedByAdminDialog(boolean isInvokedFromWorkProfile) {
         final String dialogTitle = "Blocked by your admin";
         assertWithMessage("Timed out while waiting for blocked by admin dialog to appear")
                 .that(new UiObject(new UiSelector().textContains(dialogTitle))
                         .waitForExists(SHORT_TIMEOUT))
                 .isTrue();
 
-        final String dialogDescription = "Accessing work data from a personal app is not permitted";
+        final String dialogDescription;
+        if (isInvokedFromWorkProfile) {
+            dialogDescription = "Accessing personal data from a work app is not permitted";
+        } else {
+            dialogDescription = "Accessing work data from a personal app is not permitted";
+        }
         assertWithMessage("Blocked by admin description is not as expected")
                 .that(new UiObject(new UiSelector().textContains(dialogDescription)).exists())
                 .isTrue();

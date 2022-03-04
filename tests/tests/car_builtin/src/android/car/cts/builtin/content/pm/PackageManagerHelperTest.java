@@ -16,7 +16,10 @@
 
 package android.car.cts.builtin.content.pm;
 
+import static android.car.builtin.content.pm.PackageManagerHelper.PROPERTY_CAR_SERVICE_PACKAGE_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.builtin.content.pm.PackageManagerHelper;
 import android.car.cts.builtin.R;
@@ -26,6 +29,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -117,6 +121,21 @@ public final class PackageManagerHelperTest {
     public void testGetComponentName() throws Exception {
         // TODO (b/201822684): implement this test case to test getComponentName()
         // builtin API
+    }
+
+    @Test
+    public void testCarServicePackageName() throws Exception {
+        // The property must exist.
+        String packageName = SystemProperties.get(
+                PROPERTY_CAR_SERVICE_PACKAGE_NAME, /* def= */null);
+
+        assertWithMessage("Property %s not defined", PROPERTY_CAR_SERVICE_PACKAGE_NAME).that(
+                packageName).isNotNull();
+
+        // The package must exist.
+        PackageInfo info = mPackageManager.getPackageInfo(packageName, /* flags= */ 0);
+
+        assertWithMessage("Package %s not found", packageName).that(info).isNotNull();
     }
 
     private boolean hasActivity(String activityName, ActivityInfo[] activities) {

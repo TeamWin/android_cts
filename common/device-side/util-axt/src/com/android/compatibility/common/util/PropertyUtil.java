@@ -268,4 +268,33 @@ public class PropertyUtil {
             }
         }
     }
+
+    /** Retrieves a map of prop to value for all props with the given prefix */
+    public static Map<String, String> getPropertiesWithPrefix(String prefix) {
+        Map<String, String> result = new HashMap<>();
+        Pattern pattern = Pattern.compile("\\[(.*)\\]: \\[(.*)\\]");
+        Scanner scanner = null;
+        try {
+            Process process = new ProcessBuilder("getprop").start();
+            scanner = new Scanner(process.getInputStream());
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    String prop = matcher.group(1);
+                    String value = matcher.group(2);
+                    if (prop.startsWith(prefix)) {
+                        result.put(prop, value);
+                    }
+                }
+            }
+            return result;
+        } catch (IOException e) {
+            return result;
+        } finally {
+            if (scanner != null) {
+                scanner.close();
+            }
+        }
+    }
 }
