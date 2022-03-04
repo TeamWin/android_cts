@@ -16,6 +16,7 @@
 
 package android.mediav2.cts;
 
+import android.media.AudioFormat;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
@@ -47,6 +48,7 @@ import java.util.List;
 import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Validate decode functionality of listed decoder components
@@ -78,22 +80,17 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         mSupportRequirements = supportRequirements;
     }
 
-    static short[] setUpAudioReference(String file) throws IOException {
+    static ByteBuffer readAudioReferenceFile(String file) throws IOException {
         File refFile = new File(file);
-        short[] refData;
+        ByteBuffer refBuffer;
         try (FileInputStream refStream = new FileInputStream(refFile)) {
             FileChannel fileChannel = refStream.getChannel();
             int length = (int) refFile.length();
-            ByteBuffer refBuffer = ByteBuffer.allocate(length);
+            refBuffer = ByteBuffer.allocate(length);
             refBuffer.order(ByteOrder.LITTLE_ENDIAN);
             fileChannel.read(refBuffer);
-            refData = new short[length / 2];
-            refBuffer.position(0);
-            for (int i = 0; i < length / 2; i++) {
-                refData[i] = refBuffer.getShort();
-            }
         }
-        return refData;
+        return refBuffer;
     }
 
     private ArrayList<MediaCodec.BufferInfo> createSubFrames(ByteBuffer buffer, int sfCount) {
@@ -137,13 +134,13 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         // SupportClass
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3", 91.022f, -1L,
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3", 91.026749f, -1L,
                         CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_2ch_44kHz_lame_cbr.mp3",
-                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 103.60f, -1L,
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 103.603081f, -1L,
                         CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, "bbb_1ch_16kHz_16kbps_amrwb.3gp",
-                        "bbb_1ch_16kHz_s16le.raw", "bbb_1ch_16kHz_23kbps_amrwb.3gp", 2393.598f,
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_1ch_16kHz_23kbps_amrwb.3gp", 2393.5979f,
                         -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_NB, "bbb_1ch_8kHz_10kbps_amrnb.3gp",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_8kbps_amrnb.3gp", -1.0f, -1L,
@@ -157,13 +154,13 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_2ch_44kHz.wav", "bbb_2ch_44kHz_s16le.raw",
                         "bbb_1ch_16kHz.wav", 0.0f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_G711_ALAW, "bbb_1ch_8kHz_alaw.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.08678f, -1L,
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.087402f, -1L,
                         CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_G711_MLAW, "bbb_1ch_8kHz_mulaw.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.4131f, -1L,
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.413954f, -1L,
                         CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_MSGSM, "bbb_1ch_8kHz_gsm.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.02698f, -1L,
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.026978f, -1L,
                         CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_VORBIS, "bbb_1ch_16kHz_vorbis.mka",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_vorbis.mka", -1.0f, -1L,
@@ -195,11 +192,47 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
             String testFile, String refFile, float rmsError, long checksum);
 
-    static void verify(OutputManager outBuff, String refFile, float rmsError, long refCRC)
-            throws IOException {
+    static void verify(OutputManager outBuff, String refFile, float rmsError, int audioFormat,
+            long refCRC) throws IOException {
         if (rmsError >= 0) {
-            short[] refData = setUpAudioReference(mInpPrefix + refFile);
-            float currError = outBuff.getRmsError(refData);
+            int bytesPerSample = AudioFormat.getBytesPerSample(audioFormat);
+            ByteBuffer bb = readAudioReferenceFile(mInpPrefix + refFile);
+            bb.position(0);
+            int bufferSize = bb.limit();
+            assertEquals (0, bufferSize % bytesPerSample);
+            Object refObject = null;
+            int refObjectLen = bufferSize / bytesPerSample;
+            switch (audioFormat) {
+                case AudioFormat.ENCODING_PCM_8BIT:
+                    refObject = new byte[refObjectLen];
+                    bb.get((byte[]) refObject);
+                    break;
+                case AudioFormat.ENCODING_PCM_16BIT:
+                    refObject = new short[refObjectLen];
+                    bb.asShortBuffer().get((short[]) refObject);
+                    break;
+                case AudioFormat.ENCODING_PCM_24BIT_PACKED:
+                    refObject = new int[refObjectLen];
+                    int[] refArray = (int[]) refObject;
+                    for (int i = 0, j = 0; i < bufferSize; i += 3, j++) {
+                        int byte1 = (bb.get() & 0xff);
+                        int byte2 = (bb.get() & 0xff);
+                        int byte3 = (bb.get() & 0xff);
+                        refArray[j] =  byte1 | (byte2 << 8) | (byte3 << 16);
+                    }
+                    break;
+                case AudioFormat.ENCODING_PCM_32BIT:
+                    refObject = new int[refObjectLen];
+                    bb.asIntBuffer().get((int[]) refObject);
+                    break;
+                case AudioFormat.ENCODING_PCM_FLOAT:
+                    refObject = new float[refObjectLen];
+                    bb.asFloatBuffer().get((float[]) refObject);
+                    break;
+                default:
+                    fail("unrecognized audio encoding type " + audioFormat);
+            }
+            float currError = outBuff.getRmsError(refObject, audioFormat);
             float errMargin = rmsError * RMS_ERROR_TOLERANCE;
             assertTrue(String.format("%s rms error too high ref/exp/got %f/%f/%f", refFile,
                     rmsError, errMargin, currError), currError <= errMargin);
@@ -295,7 +328,11 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 }
             }
             mCodec.release();
-            if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
+            if (mSaveToMem) {
+                int audioEncoding = mIsAudio ? format.getInteger(MediaFormat.KEY_PCM_ENCODING,
+                        AudioFormat.ENCODING_PCM_16BIT) : AudioFormat.ENCODING_INVALID;
+                verify(mOutputBuff, mRefFile, mRmsError, audioEncoding, mRefCRC);
+            }
             assertTrue(nativeTestSimpleDecode(mCodecName, null, mMime, mInpPrefix + mTestFile,
                     mInpPrefix + mRefFile, mRmsError, ref.getCheckSumBuffer()));
         }
@@ -512,7 +549,6 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
@@ -538,7 +574,6 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                if (mSaveToMem) verify(mOutputBuff, mRefFile, mRmsError, mRefCRC);
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
