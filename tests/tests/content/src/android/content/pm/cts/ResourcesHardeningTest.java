@@ -290,7 +290,7 @@ public class ResourcesHardeningTest {
 
     private static class RemoteTest implements AutoCloseable {
         private static final int SPIN_SLEEP_MS = 500;
-        private static final long RESPONSE_TIMEOUT_MS = 60 * 1000;
+        private static final long RESPONSE_TIMEOUT_MS = 120 * 1000;
 
         private final ShellInstallSession mSession;
         private final String mTestName;
