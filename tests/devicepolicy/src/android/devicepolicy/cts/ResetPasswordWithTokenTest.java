@@ -27,6 +27,7 @@ import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_NUMERIC;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_SOMETHING;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
@@ -59,6 +60,7 @@ import org.junit.runner.RunWith;
 
 // TODO(b/191640667): Parameterize the length limit tests with multiple limits
 @RunWith(BedsteadJUnit4.class)
+@RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
 public final class ResetPasswordWithTokenTest {
 
     private static final String NOT_COMPLEX_PASSWORD = "1234";
