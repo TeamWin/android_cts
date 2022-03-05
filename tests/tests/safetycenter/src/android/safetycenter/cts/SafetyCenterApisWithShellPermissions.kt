@@ -22,26 +22,32 @@ import android.safetycenter.SafetyCenterData
 import android.safetycenter.SafetyCenterManager
 import android.safetycenter.SafetyCenterManager.OnSafetyCenterDataChangedListener
 import android.safetycenter.SafetySourceData
+import android.safetycenter.SafetyEvent
+import android.safetycenter.config.SafetyCenterConfig
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import java.util.concurrent.Executor
 
 /**
- * Call {@link SafetyCenterManager#sendSafetyCenterUpdate} adopting Shell's
+ * Call {@link SafetyCenterManager#setSafetySourceData} adopting Shell's
  * {@link SEND_SAFETY_CENTER_UPDATE} permission.
  */
-fun SafetyCenterManager.sendUpdateWithPermission(safetySourceData: SafetySourceData) =
+fun SafetyCenterManager.setSafetySourceDataWithPermission(
+    safetySourceId: String,
+    safetySourceData: SafetySourceData,
+    safetyEvent: SafetyEvent
+) =
     runWithShellPermissionIdentity({
-        sendSafetyCenterUpdate(safetySourceData)
+        setSafetySourceData(safetySourceId, safetySourceData, safetyEvent)
     }, SEND_SAFETY_CENTER_UPDATE)
 
 /**
- * Call {@link SafetyCenterManager#getLastSafetyCenterUpdate} adopting Shell's
+ * Call {@link SafetyCenterManager#getSafetySourceData} adopting Shell's
  * {@link SEND_SAFETY_CENTER_UPDATE} permission.
  */
-fun SafetyCenterManager.getLastUpdateWithPermission(id: String): SafetySourceData? =
+fun SafetyCenterManager.getSafetySourceDataWithPermission(id: String): SafetySourceData? =
     callWithShellPermissionIdentity({
-        getLastSafetyCenterUpdate(id)
+        getSafetySourceData(id)
     }, SEND_SAFETY_CENTER_UPDATE)
 
 /**
@@ -82,24 +88,22 @@ fun SafetyCenterManager.removeOnSafetyCenterDataChangedListenerWithPermission(
     }, MANAGE_SAFETY_CENTER)
 
 /**
- * Call {@link SafetyCenterManager#clearSafetyCenterData} adopting Shell's
+ * Call {@link SafetyCenterManager#clearAllSafetySourceData} adopting Shell's
  * {@link MANAGE_SAFETY_CENTER} permission.
  */
-fun SafetyCenterManager.clearDataWithPermission() =
+fun SafetyCenterManager.clearAllSafetySourceDataWithPermission() =
     runWithShellPermissionIdentity({
-        clearSafetyCenterData()
+        clearAllSafetySourceData()
     }, MANAGE_SAFETY_CENTER)
 
-fun SafetyCenterManager.addAdditionalSafetySourceWithPermission(
-    sourceId: String,
-    packageName: String,
-    broadcastReceiverName: String
+fun SafetyCenterManager.setSafetyCenterConfigOverrideWithPermission(
+    safetyCenterConfig: SafetyCenterConfig
 ) =
     runWithShellPermissionIdentity({
-        addAdditionalSafetySource(sourceId, packageName, broadcastReceiverName)
+        setSafetyCenterConfigOverride(safetyCenterConfig)
     }, MANAGE_SAFETY_CENTER)
 
-fun SafetyCenterManager.clearAdditionalSafetySourcesWithPermission() =
+fun SafetyCenterManager.clearSafetyCenterConfigOverrideWithPermission() =
     runWithShellPermissionIdentity({
-        clearAdditionalSafetySources()
+        clearSafetyCenterConfigOverride()
     }, MANAGE_SAFETY_CENTER)

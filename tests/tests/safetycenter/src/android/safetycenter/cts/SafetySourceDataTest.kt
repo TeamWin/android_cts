@@ -104,22 +104,15 @@ class SafetySourceDataTest {
         .build()
 
     @Test
-    fun getId_returnsId() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id").build()
-
-        assertThat(safetySourceData.id).isEqualTo("Safety source id")
-    }
-
-    @Test
     fun getStatus_withDefaultBuilder_returnsNull() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id").build()
+        val safetySourceData = SafetySourceData.Builder().build()
 
         assertThat(safetySourceData.status).isNull()
     }
 
     @Test
     fun getStatus_whenSetExplicitly_returnsStatus() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .build()
 
@@ -128,14 +121,14 @@ class SafetySourceDataTest {
 
     @Test
     fun getIssues_withDefaultBuilder_returnsEmptyList() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id").build()
+        val safetySourceData = SafetySourceData.Builder().build()
 
         assertThat(safetySourceData.issues).isEmpty()
     }
 
     @Test
     fun getIssues_whenSetExplicitly_returnsIssues() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .addIssue(issue1)
                 .addIssue(issue2)
                 .build()
@@ -145,7 +138,7 @@ class SafetySourceDataTest {
 
     @Test
     fun clearIssues_removesAllIssues() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
             .addIssue(issue1)
             .addIssue(issue2)
             .clearIssues()
@@ -156,7 +149,7 @@ class SafetySourceDataTest {
 
     @Test
     fun describeContents_returns0() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
@@ -167,7 +160,7 @@ class SafetySourceDataTest {
 
     @Test
     fun createFromParcel_withWriteToParcel_returnsOriginalSafetySourceData() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
@@ -186,7 +179,7 @@ class SafetySourceDataTest {
     // TODO(b/208473675): Use `EqualsTester` for testing `hashcode` and `equals`.
     @Test
     fun hashCode_equals_toString_withEqualByReference_withoutStatusAndIssues_areEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id").build()
+        val safetySourceData = SafetySourceData.Builder().build()
         val otherSafetySourceData = safetySourceData
 
         assertThat(safetySourceData.hashCode()).isEqualTo(otherSafetySourceData.hashCode())
@@ -196,7 +189,7 @@ class SafetySourceDataTest {
 
     @Test
     fun hashCode_equals_toString_withEqualByReference_withoutIssues_areEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .build()
         val otherSafetySourceData = safetySourceData
@@ -208,7 +201,7 @@ class SafetySourceDataTest {
 
     @Test
     fun hashCode_equals_toString_withEqualByReference_areEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
@@ -222,12 +215,12 @@ class SafetySourceDataTest {
 
     @Test
     fun hashCode_equals_toString_withAllFieldsEqual_areEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
                 .build()
-        val otherSafetySourceData = SafetySourceData.Builder("Safety source id")
+        val otherSafetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
@@ -239,27 +232,13 @@ class SafetySourceDataTest {
     }
 
     @Test
-    fun hashCode_equals_toString_withDifferentIds_areNotEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
-                .setStatus(status1)
-                .build()
-        val otherSafetySourceData = SafetySourceData.Builder("Safety source id 2")
-                .setStatus(status1)
-                .build()
-
-        assertThat(safetySourceData.hashCode()).isNotEqualTo(otherSafetySourceData.hashCode())
-        assertThat(safetySourceData).isNotEqualTo(otherSafetySourceData)
-        assertThat(safetySourceData.toString()).isNotEqualTo(otherSafetySourceData.toString())
-    }
-
-    @Test
     fun hashCode_equals_toString_withDifferentIssues_areNotEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
                 .build()
-        val otherSafetySourceData = SafetySourceData.Builder("Safety source id")
+        val otherSafetySourceData = SafetySourceData.Builder()
                 .setStatus(status2)
                 .addIssue(issue1)
                 .addIssue(issue2)
@@ -272,12 +251,12 @@ class SafetySourceDataTest {
 
     @Test
     fun hashCode_equals_toString_withDifferentStatuses_areNotEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
                 .build()
-        val otherSafetySourceData = SafetySourceData.Builder("Safety source id")
+        val otherSafetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .build()
@@ -289,10 +268,10 @@ class SafetySourceDataTest {
 
     @Test
     fun hashCode_equals_toString_withStatusSetInOneAndNotOther_areNotEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .build()
-        val otherSafetySourceData = SafetySourceData.Builder("Safety source id").build()
+        val otherSafetySourceData = SafetySourceData.Builder().build()
 
         assertThat(safetySourceData.hashCode()).isNotEqualTo(otherSafetySourceData.hashCode())
         assertThat(safetySourceData).isNotEqualTo(otherSafetySourceData)
@@ -301,12 +280,12 @@ class SafetySourceDataTest {
 
     @Test
     fun hashCode_equals_toString_withIssuesSetInOneAndNotOther_areNotEqual() {
-        val safetySourceData = SafetySourceData.Builder("Safety source id")
+        val safetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .addIssue(issue1)
                 .addIssue(issue2)
                 .build()
-        val otherSafetySourceData = SafetySourceData.Builder("Safety source id")
+        val otherSafetySourceData = SafetySourceData.Builder()
                 .setStatus(status1)
                 .build()
 

@@ -32,6 +32,7 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "cts-wm-util",
+        "cts-inputmethod-util",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
         "CtsMockSpellCheckerLib",

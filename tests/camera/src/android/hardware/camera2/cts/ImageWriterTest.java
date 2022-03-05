@@ -290,6 +290,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             ImageWriter writer = new ImageWriter
                 .Builder(surface)
                 .setWidthAndHeight(imageWriterWidth, imageWriterHeight)
+                .setMaxImages(MAX_NUM_IMAGES)
                 .setImageFormat(ImageFormat.YV12)
                 .setUsage(usage)
                 .build();
@@ -298,8 +299,8 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             // ImageFormat.YV12 HAL dataspace is DataSpace.DATASPACE_JFIF
             assertEquals(imageWriterWidth, writer.getWidth());
             assertEquals(imageWriterHeight, writer.getHeight());
+            assertEquals(MAX_NUM_IMAGES, writer.getMaxImages());
             assertEquals(DataSpace.DATASPACE_JFIF, writer.getDataSpace());
-            assertEquals(imageWriterHeight, writer.getHeight());
             assertEquals(usage, writer.getUsage());
 
             assertEquals(DataSpace.DATASPACE_JFIF, image.getDataSpace());

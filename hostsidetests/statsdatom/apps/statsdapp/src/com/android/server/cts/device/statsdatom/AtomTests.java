@@ -684,8 +684,6 @@ public class AtomTests {
         sleep(500);
         setScreenBrightness(100);
         sleep(500);
-        setScreenBrightness(140);
-        sleep(500);
 
 
         wl.release();
