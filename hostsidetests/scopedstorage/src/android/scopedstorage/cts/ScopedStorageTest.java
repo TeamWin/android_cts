@@ -28,6 +28,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.assertMountMode;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
+import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.canReadAndWriteAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
@@ -135,10 +136,25 @@ public class ScopedStorageTest {
 
     // The following apps are installed before the tests are run via a target_preparer.
     // See test config for details.
-    // An app with READ_EXTERNAL_STORAGE permission
-    private static final TestApp APP_A_HAS_RES = new TestApp("TestAppA",
-            "android.scopedstorage.cts.testapp.A.withres", 1, false,
-            "CtsScopedStorageTestAppA.apk");
+
+    // An app with READ_EXTERNAL_STORAGE and READ_MEDIA_* permissions.
+    // R_E_S permission isn't actually used since the app targets T+,
+    // the R_M_* permissions will be checked instead.
+    private static final TestApp APP_A_HAS_READ_MEDIA_ALL =
+            new TestApp(
+                    "TestAppA",
+                    "android.scopedstorage.cts.testapp.A.withres",
+                    1,
+                    false,
+                    "CtsScopedStorageTestAppA.apk");
+    // An app with READ_EXTERNAL_STORAGE permission with targetSdk 31
+    private static final TestApp APP_A_HAS_RES_31 =
+            new TestApp(
+                    "TestAppA31",
+                    "android.scopedstorage.cts.testapp.A31.withres",
+                    1,
+                    false,
+                    "CtsScopedStorageTestAppA31.apk");
     // An app with no permissions
     private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
             "android.scopedstorage.cts.testapp.B.noperms", 1, false,
@@ -212,10 +228,10 @@ public class ScopedStorageTest {
 
         // Let app A create a file in its data dir
         final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
-                THIS_PACKAGE_NAME, APP_A_HAS_RES.getPackageName()));
+                THIS_PACKAGE_NAME, APP_A_HAS_READ_MEDIA_ALL.getPackageName()));
         final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
                 NONMEDIA_FILE_NAME);
-        assertCreateFilesAs(APP_A_HAS_RES, otherAppExternalDataFile);
+        assertCreateFilesAs(APP_A_HAS_READ_MEDIA_ALL, otherAppExternalDataFile);
 
         // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
         // file manager app doesn't have access to other app's external files directory
@@ -223,7 +239,8 @@ public class ScopedStorageTest {
         assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
         assertThat(otherAppExternalDataFile.delete()).isFalse();
 
-        assertThat(deleteFileAs(APP_A_HAS_RES, otherAppExternalDataFile.getPath())).isTrue();
+        assertThat(deleteFileAs(APP_A_HAS_READ_MEDIA_ALL,
+            otherAppExternalDataFile.getPath())).isTrue();
 
         assertThrows(IOException.class,
                 () -> {
@@ -282,8 +299,167 @@ public class ScopedStorageTest {
     }
 
     @Test
+    public void testAccess_OnlyImageFile() throws Exception {
+        pollForPermission(Manifest.permission.READ_MEDIA_IMAGE, /*granted*/ true);
+
+        final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
+        final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
+        final File otherAppAudio = new File(getMusicDir(), "other-" + AUDIO_FILE_NAME);
+
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideo.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudio.getPath())).isTrue();
+
+            // We can read the other app's image file only because we hold R_M_I.
+            assertCannotReadOrWrite(otherAppAudio);
+            assertFileAccess_readOnly(otherAppImage);
+            assertCannotReadOrWrite(otherAppVideo);
+
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideo.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppAudio.getAbsolutePath());
+        }
+    }
+
+    @Test
+    public void testAccess_OnlyVideoFile() throws Exception {
+        pollForPermission(Manifest.permission.READ_MEDIA_VIDEO, /*granted*/ true);
+
+        final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
+        final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
+        final File otherAppAudio = new File(getMusicDir(), "other-" + AUDIO_FILE_NAME);
+
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideo.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudio.getPath())).isTrue();
+
+            // We can read the other app's video file only because we hold R_M_V.
+            assertCannotReadOrWrite(otherAppImage);
+            assertFileAccess_readOnly(otherAppVideo);
+            assertCannotReadOrWrite(otherAppAudio);
+
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideo.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppAudio.getAbsolutePath());
+        }
+    }
+
+    @Test
+    public void testAccess_OnlyAudioFile() throws Exception {
+        pollForPermission(Manifest.permission.READ_MEDIA_AUDIO, /*granted*/ true);
+
+        final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
+        final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
+        final File otherAppAudio = new File(getMusicDir(), "other-" + AUDIO_FILE_NAME);
+
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideo.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudio.getPath())).isTrue();
+
+            // We can read the other app's audio file only because we hold R_M_A.
+            assertCannotReadOrWrite(otherAppImage);
+            assertFileAccess_readOnly(otherAppAudio);
+            assertCannotReadOrWrite(otherAppVideo);
+
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideo.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppAudio.getAbsolutePath());
+        }
+    }
+
+    @Test
+    public void testAccess_MediaFile() throws Exception {
+        pollForPermission(Manifest.permission.READ_MEDIA_IMAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.READ_MEDIA_AUDIO, /*granted*/ true);
+        pollForPermission(Manifest.permission.READ_MEDIA_VIDEO, /*granted*/ true);
+
+        final File downloadDir = getDownloadDir();
+        final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
+        final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
+        final File otherAppAudio = new File(getMusicDir(), "other-" + AUDIO_FILE_NAME);
+        final File myAppPdf = new File(downloadDir, "my-" + NONMEDIA_FILE_NAME);
+
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideo.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudio.getPath())).isTrue();
+
+            // We can read our image and pdf files.
+            assertThat(myAppPdf.createNewFile()).isTrue();
+            assertFileAccess_readWrite(myAppPdf);
+
+            // We can read the other app media files because we hold R_M_*.
+            assertFileAccess_readOnly(otherAppImage);
+            assertFileAccess_readOnly(otherAppVideo);
+            assertFileAccess_readOnly(otherAppAudio);
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideo.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppAudio.getAbsolutePath());
+            myAppPdf.delete();
+        }
+    }
+
+    /** R_E_S can't give access to media files anymore. */
+    @Test
+    public void testAccess_MediaFileWithRES() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+
+        final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
+        final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
+        final File otherAppAudio = new File(getMusicDir(), "other-" + AUDIO_FILE_NAME);
+
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideo.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudio.getPath())).isTrue();
+
+            // Can't read the other app media even with R_E_S.
+            assertCannotReadOrWrite(otherAppImage);
+            assertCannotReadOrWrite(otherAppVideo);
+            assertCannotReadOrWrite(otherAppAudio);
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideo.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppAudio.getAbsolutePath());
+        }
+    }
+
+    // R_E_S with targetsdk 31 can still access media files.
+    @Test
+    public void testAccess_MediaFileLegacy() throws Exception {
+        final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
+        final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
+        final File otherAppAudio = new File(getMusicDir(), "other-" + AUDIO_FILE_NAME);
+        try {
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideo.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudio.getPath())).isTrue();
+
+            // Can read the other app media files because of holding R_E_S with targetsdk31.
+            assertThat(canOpenFileAs(APP_A_HAS_RES_31, otherAppImage, false /* forWrite */))
+                    .isTrue();
+            assertThat(canOpenFileAs(APP_A_HAS_RES_31, otherAppVideo, false /* forWrite */))
+                    .isTrue();
+            assertThat(canOpenFileAs(APP_A_HAS_RES_31, otherAppAudio, false /* forWrite */))
+                    .isTrue();
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideo.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppAudio.getAbsolutePath());
+        }
+    }
+
+    @Test
     public void testAccess_file() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.READ_MEDIA_IMAGE, /*granted*/ true);
 
         final File downloadDir = getDownloadDir();
         final File otherAppPdf = new File(downloadDir, "other-" + NONMEDIA_FILE_NAME);
@@ -301,7 +477,7 @@ public class ScopedStorageTest {
             assertThat(myAppPdf.createNewFile()).isTrue();
             assertFileAccess_readWrite(myAppPdf);
 
-            // We can read the other app's image file because we hold R_E_S, but we can
+            // We can read the other app's image file because we hold R_M_I, but we can
             // check only exists for the pdf files.
             assertFileAccess_readOnly(otherAppImage);
             assertFileAccess_existsOnly(otherAppPdf);
@@ -798,10 +974,10 @@ public class ScopedStorageTest {
         }
         // Let app A create a file in its data dir
         final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
-                THIS_PACKAGE_NAME, APP_A_HAS_RES.getPackageName()));
+                THIS_PACKAGE_NAME, APP_A_HAS_READ_MEDIA_ALL.getPackageName()));
         final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
                 NONMEDIA_FILE_NAME);
-        assertCreateFilesAs(APP_A_HAS_RES, otherAppExternalDataFile);
+        assertCreateFilesAs(APP_A_HAS_READ_MEDIA_ALL, otherAppExternalDataFile);
 
         // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
         // file manager app doesn't have access to other app's external files directory
@@ -809,7 +985,8 @@ public class ScopedStorageTest {
         assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
         assertThat(otherAppExternalDataFile.delete()).isFalse();
 
-        assertThat(deleteFileAs(APP_A_HAS_RES, otherAppExternalDataFile.getPath())).isTrue();
+        assertThat(deleteFileAs(APP_A_HAS_READ_MEDIA_ALL,
+            otherAppExternalDataFile.getPath())).isTrue();
 
         assertThrows(IOException.class,
                 () -> {

@@ -54,14 +54,27 @@ public class GameManagerTest {
     private static final Pattern GAME_LOADING_REGEX =
             Pattern.compile("^GAME_LOADING\\t(\\d*)\\t\\d*$", Pattern.MULTILINE);
     private static final String APK_DIRECTORY = "/data/local/tmp/cts/gamemanager/test/apps/";
+
     private static final String NOT_GAME_TEST_APP_APK_PATH =
             APK_DIRECTORY + "CtsNotGameTestApp.apk";
     private static final String NOT_GAME_TEST_APP_PACKAGE_NAME =
             "android.gamemanager.cts.app.notgametestapp";
+
     private static final String GAME_TEST_APP_APK_PATH =
             APK_DIRECTORY + "CtsGameTestApp.apk";
     private static final String GAME_TEST_APP_PACKAGE_NAME =
             "android.gamemanager.cts.app.gametestapp";
+
+    private static final String GAME_TEST_APP_WITH_BATTERY_APK_PATH =
+            APK_DIRECTORY + "CtsGameTestAppWithBatteryMode.apk";
+    private static final String GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME =
+            "android.gamemanager.cts.app.gametestapp.battery";
+
+    private static final String GAME_TEST_APP_WITH_PERFORMANCE_APK_PATH =
+            APK_DIRECTORY + "CtsGameTestAppWithPerformanceMode.apk";
+    private static final String GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME =
+            "android.gamemanager.cts.app.gametestapp.performance";
+
     private static final int TEST_LABEL = 1;
     private static final int TEST_QUALITY = 2;
 
@@ -78,6 +91,8 @@ public class GameManagerTest {
     public void setUp() {
         TestUtil.uninstallPackage(NOT_GAME_TEST_APP_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_PACKAGE_NAME);
+        TestUtil.uninstallPackage(GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME);
+        TestUtil.uninstallPackage(GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME);
 
         mActivityRule.getScenario().onActivity(activity -> {
             mActivity = activity;
@@ -93,21 +108,35 @@ public class GameManagerTest {
     public void tearDown() throws Exception {
         TestUtil.uninstallPackage(NOT_GAME_TEST_APP_PACKAGE_NAME);
         TestUtil.uninstallPackage(GAME_TEST_APP_PACKAGE_NAME);
+        TestUtil.uninstallPackage(GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME);
+        TestUtil.uninstallPackage(GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME);
     }
 
     @Test
     public void testIsAngleEnabled() throws Exception {
+        final String packageName = GAME_TEST_APP_WITH_PERFORMANCE_PACKAGE_NAME;
+        assertTrue(TestUtil.installPackage(GAME_TEST_APP_WITH_PERFORMANCE_APK_PATH));
+        Thread.sleep(500);
+
         // enable Angle for BATTERY mode.
-        runShellCommand("device_config put game_overlay " + mActivity.getPackageName()
+        runShellCommand("device_config put game_overlay " + packageName
                 + " mode=3,useAngle=true");
+        Thread.sleep(500);
+
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
-                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
-                        GameManager.GAME_MODE_BATTERY));
-        assertTrue(mGameManager.isAngleEnabled(mActivity.getPackageName()));
+                (gameManager) -> gameManager.setGameMode(packageName,
+                        GameManager.GAME_MODE_BATTERY), "android.permission.MANAGE_GAME_MODE");
+        assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                (gameManager) -> gameManager.isAngleEnabled(packageName),
+                "android.permission.MANAGE_GAME_MODE"));
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
-                (gameManager) -> gameManager.setGameMode(mActivity.getPackageName(),
-                        GameManager.GAME_MODE_PERFORMANCE));
-        assertFalse(mGameManager.isAngleEnabled(mActivity.getPackageName()));
+                (gameManager) -> gameManager.setGameMode(packageName,
+                        GameManager.GAME_MODE_PERFORMANCE), "android.permission.MANAGE_GAME_MODE");
+        assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                (gameManager) -> gameManager.isAngleEnabled(packageName),
+                "android.permission.MANAGE_GAME_MODE"));
+
+        TestUtil.uninstallPackage(packageName);
     }
 
     /**
@@ -339,5 +368,41 @@ public class GameManagerTest {
                 GameManager.GAME_MODE_BATTERY, gameModeInfo.getActiveGameMode());
 
         TestUtil.uninstallPackage(GAME_TEST_APP_PACKAGE_NAME);
+    }
+
+    /**
+     * Test that GameManager::getGameModeInfo() returns correct values for a game when it only
+     * supports battery mode.
+     */
+    @Test
+    public void testGetGameModeInfoWithBatteryMode() throws InterruptedException {
+        final String packageName = GAME_TEST_APP_WITH_BATTERY_PACKAGE_NAME;
+        assertTrue(TestUtil.installPackage(GAME_TEST_APP_WITH_BATTERY_APK_PATH));
+        // When an app is installed, some propagation work for the configuration will
+        // be set up asynchronously, hence wait for 500ms here.
+        Thread.sleep(500);
+
+        GameModeInfo gameModeInfo =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                        (gameManager) -> gameManager.getGameModeInfo(packageName),
+                        "android.permission.MANAGE_GAME_MODE");
+        assertEquals("GameManager#getGameModeInfo returned incorrect available game modes.",
+                2, gameModeInfo.getAvailableGameModes().length);
+        assertEquals("GameManager#getGameModeInfo returned incorrect active game mode.",
+                GameManager.GAME_MODE_STANDARD, gameModeInfo.getActiveGameMode());
+
+        // Attempt to set the game mode to battery.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mGameManager,
+                (gameManager) -> gameManager.setGameMode(packageName,
+                        GameManager.GAME_MODE_BATTERY));
+        gameModeInfo = ShellIdentityUtils.invokeMethodWithShellPermissions(mGameManager,
+                (gameManager) -> gameManager.getGameModeInfo(packageName),
+                "android.permission.MANAGE_GAME_MODE");
+        assertEquals("GameManager#getGameModeInfo returned incorrect available game modes.",
+                2, gameModeInfo.getAvailableGameModes().length);
+        assertEquals("GameManager#getGameModeInfo returned incorrect active game mode.",
+                GameManager.GAME_MODE_BATTERY, gameModeInfo.getActiveGameMode());
+
+        TestUtil.uninstallPackage(packageName);
     }
 }

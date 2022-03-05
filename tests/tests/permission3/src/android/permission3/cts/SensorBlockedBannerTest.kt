@@ -21,9 +21,11 @@ import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.location.LocationManager
+import android.Manifest.permission_group.CAMERA as CAMERA_PERMISSION_GROUP
+import android.Manifest.permission_group.LOCATION as LOCATION_PERMISSION_GROUP
+import android.Manifest.permission_group.MICROPHONE as MICROPHONE_PERMISSION_GROUP
 import android.os.Build
 import android.provider.DeviceConfig
-import android.provider.Settings
 import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
@@ -50,9 +52,9 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
                 WARNING_BANNER_ENABLED, false.toString())
     }
 
-    private val permToLabel = mapOf(CAMERA to "privdash_label_camera",
-            MICROPHONE to "privdash_label_microphone",
-            LOCATION to "privdash_label_location")
+    private val sensorToPermissionGroup = mapOf(CAMERA to CAMERA_PERMISSION_GROUP,
+            MICROPHONE to MICROPHONE_PERMISSION_GROUP,
+            LOCATION to LOCATION_PERMISSION_GROUP)
 
     private val permToTitle = mapOf(CAMERA to "blocked_camera_title",
             MICROPHONE to "blocked_microphone_title",
@@ -80,16 +82,15 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     }
 
     private fun navigateAndTest(sensor: Int) {
-        val permLabel = permToLabel.getOrDefault(sensor, "Break")
-        val intent = Intent(Settings.ACTION_PRIVACY_SETTINGS)
+        val permissionGroup = sensorToPermissionGroup.getOrDefault(sensor, "Break")
+        val intent = Intent(Intent.ACTION_MANAGE_PERMISSION_APPS)
+                .putExtra(Intent.EXTRA_PERMISSION_GROUP_NAME, permissionGroup)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
-        click(By.text(getPermissionControllerString("app_permission_manager")))
-        click(By.text(getPermissionControllerString(permLabel)))
+        runWithShellPermissionIdentity {
+            context.startActivity(intent)
+        }
         val bannerTitle = permToTitle.getOrDefault(sensor, "Break")
         waitFindObject(By.text(getPermissionControllerString(bannerTitle)))
-        pressBack()
-        pressBack()
         pressBack()
     }
 

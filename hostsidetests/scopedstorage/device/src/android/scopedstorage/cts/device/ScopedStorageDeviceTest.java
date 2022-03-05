@@ -198,10 +198,14 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
     // The following apps are installed before the tests are run via a target_preparer.
     // See test config for details.
-    // An app with READ_EXTERNAL_STORAGE permission
-    private static final TestApp APP_A_HAS_RES = new TestApp("TestAppA",
-            "android.scopedstorage.cts.testapp.A.withres", 1, false,
-            "CtsScopedStorageTestAppA.apk");
+    // An app with READ_EXTERNAL_STORAGE and READ_MEDIA_* permissions
+    private static final TestApp APP_A_HAS_RES =
+            new TestApp(
+                    "TestAppA",
+                    "android.scopedstorage.cts.testapp.A.withres",
+                    1,
+                    false,
+                    "CtsScopedStorageTestAppA.apk");
     // An app with no permissions
     private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
             "android.scopedstorage.cts.testapp.B.noperms", 1, false,
@@ -1260,9 +1264,12 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     public void testReadStorageInvalidation() throws Exception {
-        testAppOpInvalidation(APP_C, new File(getDcimDir(), "read_storage.jpg"),
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE, /* forWrite */ false);
+        testAppOpInvalidation(
+                APP_C,
+                new File(getDcimDir(), "read_storage.jpg"),
+                Manifest.permission.READ_MEDIA_IMAGE,
+                AppOpsManager.OPSTR_READ_MEDIA_IMAGES,
+                /* forWrite */ false);
     }
 
     @Test
@@ -1435,7 +1442,6 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             Thread.sleep(200);
         }
         assertThat(canOpenFileAs(app, file, forWrite)).isTrue();
-
         // Deny
         if (permission != null) {
             revokePermission(packageName, permission);

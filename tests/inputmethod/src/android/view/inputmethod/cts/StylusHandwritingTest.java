@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.provider.Settings.Global.STYLUS_HANDWRITING_ENABLED;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -26,8 +28,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.content.Context;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
@@ -43,10 +47,14 @@ import androidx.annotation.NonNull;
 import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -61,13 +69,44 @@ import java.util.concurrent.atomic.AtomicReference;
 public class StylusHandwritingTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+    private static final int SETTING_VALUE_ON = 1;
+    private static final int SETTING_VALUE_OFF = 0;
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.StylusHandwritingTest";
 
+    private Context mContext;
+    private int mHwInitialState;
+    private boolean mShouldRestoreInitialHwState;
+
+    @Rule
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.WRITE_SECURE_SETTINGS);
+
+    @Before
+    public void setup() {
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mHwInitialState = Settings.Global.getInt(mContext.getContentResolver(),
+                STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
+        if (mHwInitialState != SETTING_VALUE_ON) {
+            Settings.Global.putInt(mContext.getContentResolver(),
+                    STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_ON);
+            mShouldRestoreInitialHwState = true;
+        }
+    }
+
+    @After
+    public void tearDown() {
+        if (mShouldRestoreInitialHwState) {
+            mShouldRestoreInitialHwState = false;
+            Settings.Global.putInt(mContext.getContentResolver(),
+                    STYLUS_HANDWRITING_ENABLED, mHwInitialState);
+        }
+    }
+
     @Test
     public void testHandwritingStartAndFinish() throws Exception {
-        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
-                .getTargetContext().getSystemService(InputMethodManager.class);
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -120,8 +159,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      */
     @Test
     public void testHandwritingStylusEvents() throws Exception {
-        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation()
-                .getTargetContext().getSystemService(InputMethodManager.class);
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),

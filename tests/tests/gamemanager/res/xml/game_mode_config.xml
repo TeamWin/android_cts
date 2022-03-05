@@ -18,7 +18,7 @@
 
 <game-mode-config
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:supportsBatteryGameMode="false"
+    android:supportsBatteryGameMode="true"
     android:supportsPerformanceGameMode="true"
     android:allowGameAngleDriver="true"
     android:allowGameDownscaling="true"

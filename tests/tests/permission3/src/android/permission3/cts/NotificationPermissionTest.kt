@@ -45,7 +45,8 @@ import java.util.concurrent.CountDownLatch
 const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
 const val EXTRA_CREATE_CHANNELS = "extra_create"
 const val EXTRA_CREATE_CHANNELS_DELAYED = "extra_create_delayed"
-const val EXTRA_REQUEST_PERMISSIONS = "extra_request_permissions"
+const val EXTRA_REQUEST_OTHER_PERMISSIONS = "extra_request_permissions"
+const val EXTRA_REQUEST_NOTIF_PERMISSION = "extra_request_notif_permission"
 const val EXTRA_REQUEST_PERMISSIONS_DELAYED = "extra_request_permissions_delayed"
 const val ACTIVITY_NAME = "CreateNotificationChannelsActivity"
 const val ACTIVITY_LABEL = "CreateNotif"
@@ -337,6 +338,18 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         waitFindObject(By.textContains(ALLOW))
     }
 
+    @Test
+    fun legacyAppCannotExplicitlyRequestNotifications() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(createChannels = false, requestNotificationPermission = true)
+        try {
+            clickPermissionRequestAllowButton()
+            Assert.fail("Expected not to find permission request dialog")
+        } catch (expected: RuntimeException) {
+            // Do nothing
+        }
+    }
+
     private fun assertAppPermissionGrantedState(permission: String, granted: Boolean) {
         SystemUtil.eventually {
             runWithShellPermissionIdentity {
@@ -371,6 +384,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         createChannels: Boolean = true,
         createChannelsDelayed: Boolean = false,
         deleteChannels: Boolean = false,
+        requestNotificationPermission: Boolean = false,
         requestPermissions: Boolean = false,
         requestPermissionsDelayed: Boolean = false,
         launcherCategory: Boolean = true,
@@ -391,10 +405,11 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
             intent.putExtra(EXTRA_CREATE_CHANNELS_DELAYED, createChannelsDelayed)
         }
         intent.putExtra(EXTRA_DELETE_CHANNELS_ON_CLOSE, deleteChannels)
-        intent.putExtra(EXTRA_REQUEST_PERMISSIONS, requestPermissions)
+        intent.putExtra(EXTRA_REQUEST_OTHER_PERMISSIONS, requestPermissions)
         if (!requestPermissions) {
             intent.putExtra(EXTRA_REQUEST_PERMISSIONS_DELAYED, requestPermissionsDelayed)
         }
+        intent.putExtra(EXTRA_REQUEST_NOTIF_PERMISSION, requestNotificationPermission)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
         val options = ActivityOptions.makeBasic()

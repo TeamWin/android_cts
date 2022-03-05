@@ -134,6 +134,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
@@ -4696,6 +4697,57 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mWifiManager.allowAutojoinGlobal(true);
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Verify the invalid and valid usages of {@code WifiManager#getAutojoinGlobal}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testGetAutojoinGlobal() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        AtomicBoolean enabled = new AtomicBoolean(false);
+        Consumer<Boolean> listener = new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean value) {
+                synchronized (mLock) {
+                    enabled.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+        // Test invalid inputs trigger IllegalArgumentException
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getAutojoinGlobal(null, listener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getAutojoinGlobal(mExecutor, null));
+
+        // Test caller with no permission triggers SecurityException.
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> mWifiManager.getAutojoinGlobal(mExecutor, listener));
+
+        // Test get/set autojoin global enabled
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.allowAutojoinGlobal(true));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getAutojoinGlobal(mExecutor, listener));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertTrue(enabled.get());
+
+        // Test get/set autojoin global disabled
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.allowAutojoinGlobal(false));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getAutojoinGlobal(mExecutor, listener));
+        synchronized (mLock) {
+            mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertFalse(enabled.get());
     }
 
     /**

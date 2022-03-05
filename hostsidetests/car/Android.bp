@@ -24,7 +24,11 @@ java_test_host {
         "src/**/*.java",
         "app/src/android/car/cts/app/PowerPolicyTestCommandStatus.java",
         "app/src/android/car/cts/app/PowerPolicyTestCommandType.java",
+        ":cartelemetryservice-proto-srcs",
     ],
+    proto: {
+        type: "lite",
+    },
     libs: [
         "cts-tradefed",
         "tradefed",

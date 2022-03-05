@@ -2242,7 +2242,8 @@ public class TunerTest {
 
         assertEquals(f.start(), Tuner.RESULT_SUCCESS);
         assertEquals(f.flush(), Tuner.RESULT_SUCCESS);
-        assertTrue(f.read(new byte[3], 0, 3) != 0);
+        int size = f.read(new byte[3], 0, 3);
+        assertTrue(size >= 0 && size <= 3);
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);
@@ -2273,7 +2274,8 @@ public class TunerTest {
 
         assertEquals(f.start(), Tuner.RESULT_SUCCESS);
         assertEquals(f.flush(), Tuner.RESULT_SUCCESS);
-        assertTrue(f.read(new byte[3], 0, 3) != 0);
+        int size = f.read(new byte[3], 0, 3);
+        assertTrue(size >= 0 && size <= 3);
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);
@@ -2303,7 +2305,8 @@ public class TunerTest {
 
         assertEquals(f.start(), Tuner.RESULT_SUCCESS);
         assertEquals(f.flush(), Tuner.RESULT_SUCCESS);
-        assertTrue(f.read(new byte[3], 0, 3) != 0);
+        int size = f.read(new byte[3], 0, 3);
+        assertTrue(size >= 0 && size <= 3);
         assertEquals(f.stop(), Tuner.RESULT_SUCCESS);
 
         mLockLatch = new CountDownLatch(1);

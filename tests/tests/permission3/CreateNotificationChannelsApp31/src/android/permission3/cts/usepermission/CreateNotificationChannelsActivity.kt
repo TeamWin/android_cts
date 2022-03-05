@@ -28,8 +28,9 @@ import android.os.Looper
 const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
 const val EXTRA_CREATE_CHANNELS = "extra_create"
 const val EXTRA_CREATE_CHANNELS_DELAYED = "extra_create_delayed"
-const val EXTRA_REQUEST_PERMISSIONS = "extra_request_permissions"
-const val EXTRA_REQUEST_PERMISSIONS_DELAYED = "extra_request_permissions_delayed"
+const val EXTRA_REQUEST_NOTIF_PERMISSION = "extra_request_notif_permission"
+const val EXTRA_REQUEST_OTHER_PERMISSIONS = "extra_request_permissions"
+const val EXTRA_REQUEST_OTHER_PERMISSIONS_DELAYED = "extra_request_permissions_delayed"
 const val CHANNEL_ID = "channel_id"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
 const val DELAY_MS = 1000L
@@ -53,12 +54,16 @@ class CreateNotificationChannelsActivity : Activity() {
             }, DELAY_MS)
         }
 
-        if (intent.getBooleanExtra(EXTRA_REQUEST_PERMISSIONS, false)) {
+        if (intent.getBooleanExtra(EXTRA_REQUEST_OTHER_PERMISSIONS, false)) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 0)
-        } else if (intent.getBooleanExtra(EXTRA_REQUEST_PERMISSIONS_DELAYED, false)) {
+        } else if (intent.getBooleanExtra(EXTRA_REQUEST_OTHER_PERMISSIONS_DELAYED, false)) {
             handler.postDelayed({
                 requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 0)
             }, DELAY_MS)
+        }
+
+        if (intent.getBooleanExtra(EXTRA_REQUEST_NOTIF_PERMISSION, false)) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
         super.onStart()
     }

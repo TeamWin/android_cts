@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -33,6 +34,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -47,12 +49,9 @@ public class TelephonyManagerTestOnMockModem {
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
-
         Log.d(TAG, "TelephonyManagerTestOnMockModem#beforeAllTests()");
 
-        final PackageManager pm = getContext().getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+        if (!hasTelephonyFeature()) {
             return;
         }
 
@@ -68,14 +67,32 @@ public class TelephonyManagerTestOnMockModem {
     public static void afterAllTests() throws Exception {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#afterAllTests()");
 
+        if (!hasTelephonyFeature()) {
+            return;
+        }
+
         // Rebind all interfaces which is binding to MockModemService to default.
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.disconnectMockModemService());
         sMockModemManager = null;
     }
 
+    @Before
+    public void beforeTest() {
+        assumeTrue(hasTelephonyFeature());
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private static boolean hasTelephonyFeature() {
+        final PackageManager pm = getContext().getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return false;
+        }
+        return true;
     }
 
     @Test

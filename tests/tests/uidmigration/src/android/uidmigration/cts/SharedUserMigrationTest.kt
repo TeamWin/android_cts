@@ -177,7 +177,7 @@ class SharedUserMigrationTest {
 
         // Ensure system broadcasts are delivered properly.
         try {
-            val e = receiver.poll(5, TimeUnit.SECONDS)
+            val e = receiver.poll(30, TimeUnit.SECONDS)
             if (e !== NOT_AN_ERROR) {
                 throw AssertionError(e)
             }

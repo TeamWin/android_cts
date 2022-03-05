@@ -18,12 +18,12 @@ package android.telecom.cts;
 
 import static android.telecom.Connection.PROPERTY_HIGH_DEF_AUDIO;
 import static android.telecom.Connection.PROPERTY_WIFI;
-import static android.telecom.cts.TestUtils.InvokeCounter;
-import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
-import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2;
-import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
+import static android.telecom.cts.TestUtils.*;
+
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import android.content.Context;
@@ -299,9 +299,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         mConnection.setConnectionProperties(Connection.PROPERTY_CROSS_SIM);
         assertCallProperties(mCall, Call.Details.PROPERTY_CROSS_SIM);
-
-        mConnection.setConnectionProperties(Connection.PROPERTY_TETHERED_CALL);
-        assertCallProperties(mCall, Call.Details.PROPERTY_TETHERED_CALL);
     }
 
     /**

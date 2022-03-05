@@ -43,11 +43,6 @@ public final class ActivityManagerHelperTest {
     private static final int OWNING_UID = -1;
 
     @Test
-    public void testGetInstance() throws Exception {
-        assertThat(ActivityManagerHelper.getInstance()).isNotNull();
-    }
-
-    @Test
     public void testCheckComponentPermission() throws Exception {
         // not requested from Manifest
         assertComponentPermissionNotGranted(NOT_REQUESTED_PERMISSION_CAR_MILEAGE);

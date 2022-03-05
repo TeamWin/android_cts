@@ -238,7 +238,7 @@ public class ActivityBlockingTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder()
-                                .setBlockedActivities(Set.of())
+                                .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
                                 .build());
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 /* width= */ 100,
@@ -259,7 +259,8 @@ public class ActivityBlockingTest {
         EmptyActivity.Callback callback = mock(EmptyActivity.Callback.class);
         emptyActivity.setCallback(callback);
         final int requestCode = 1;
-        emptyActivity.startActivityForResult(TestAppHelper.createNoActionIntent(), requestCode);
+        emptyActivity.startActivityForResult(
+                TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver), requestCode);
 
         verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(
                 eq(Activity.RESULT_OK),

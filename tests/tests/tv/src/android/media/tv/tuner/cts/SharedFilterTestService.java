@@ -106,7 +106,13 @@ public class SharedFilterTestService extends Service {
                 Log.e(TAG, "Failed to flush SharedFilter");
                 return false;
             }
-            f.read(new byte[3], 0, 3);
+            int size = f.read(new byte[3], 0, 3);
+            if (size < 0 || size > 3) {
+                f.close();
+                f = null;
+                Log.e(TAG, "Failed to read from SharedFilter");
+                return false;
+            }
             if (f.stop() != Tuner.RESULT_SUCCESS) {
                 f.close();
                 f = null;
