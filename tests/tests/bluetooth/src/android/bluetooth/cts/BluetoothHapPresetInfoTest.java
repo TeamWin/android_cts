@@ -27,6 +27,7 @@ import android.bluetooth.BluetoothHapPresetInfo;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Build;
+import android.os.Parcel;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -77,22 +78,26 @@ public class BluetoothHapPresetInfoTest {
     }
 
     @Test
-    public void testCreateCodecConfigMetadataFromBuilder() {
+    public void testCreateHapPresetInfo() {
         if (shouldSkipTest()) {
             return;
         }
-        BluetoothHapPresetInfo.Builder builder =
-                new BluetoothHapPresetInfo.Builder();
-        BluetoothHapPresetInfo presetInfo =
-                builder.setIndex(TEST_PRESET_INDEX)
-                        .setName(TEST_PRESET_NAME)
-                        .setAvailable(true)
-                        .setWritable(false)
-                        .build();
+        BluetoothHapPresetInfo presetInfo = createBluetoothHapPresetInfoForTest(TEST_PRESET_INDEX,
+                TEST_PRESET_NAME, true /* isAvailable */, false /* isWritable */);
         assertEquals(TEST_PRESET_INDEX, presetInfo.getIndex());
         assertEquals(TEST_PRESET_NAME, presetInfo.getName());
         assertTrue(presetInfo.isAvailable());
         assertFalse(presetInfo.isWritable());
+    }
+
+    static BluetoothHapPresetInfo createBluetoothHapPresetInfoForTest(int presetIndex,
+            String presetName, boolean isAvailable, boolean isWritable) {
+        Parcel out = Parcel.obtain();
+        out.writeInt(presetIndex);
+        out.writeString(presetName);
+        out.writeBoolean(isAvailable);
+        out.writeBoolean(isWritable);
+        return BluetoothHapPresetInfo.CREATOR.createFromParcel(out);
     }
 
     private boolean shouldSkipTest() {
