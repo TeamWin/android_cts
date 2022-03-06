@@ -2022,6 +2022,10 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testGetHalVersion() {
+        assertNotEquals(null, AudioManager.getHalVersion());
+    }
+
     private void assertStreamVolumeEquals(int stream, int expectedVolume) throws Exception {
         assertStreamVolumeEquals(stream, expectedVolume,
                 "Unexpected stream volume for stream=" + stream);

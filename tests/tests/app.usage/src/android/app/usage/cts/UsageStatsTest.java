@@ -104,6 +104,7 @@ import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -2373,6 +2374,7 @@ public class UsageStatsTest {
         actualStats = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
                 () -> mUsageStatsManager.queryBroadcastResponseStats(packageName, id),
                 result -> compareStats(expectedStats, result));
+        actualStats.sort(Comparator.comparing(BroadcastResponseStats::getPackageName));
         final String errorMsg = String.format("\nEXPECTED(%d)=%s\nACTUAL(%d)=%s\n",
                 1, expectedStats,
                 actualStats.size(), Arrays.toString(actualStats.toArray()));
@@ -2392,6 +2394,7 @@ public class UsageStatsTest {
         actualStats = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
                 () -> mUsageStatsManager.queryBroadcastResponseStats(null /* packageName */, id),
                 result -> compareStats(expectedStats, result));
+        actualStats.sort(Comparator.comparing(BroadcastResponseStats::getPackageName));
         final String errorMsg = String.format("\nEXPECTED(%d)=%s\nACTUAL(%d)=%s\n",
                 expectedStats.size(), expectedStats,
                 actualStats.size(), Arrays.toString(actualStats.toArray()));

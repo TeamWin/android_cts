@@ -16,6 +16,7 @@
 
 package android.server.wm.jetpack.utils;
 
+import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
@@ -39,6 +40,7 @@ import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 import androidx.window.extensions.embedding.SplitRule;
@@ -242,14 +244,22 @@ public class ActivityEmbeddingUtil {
             layoutDir = primaryActivity.getResources().getConfiguration().getLayoutDirection();
         }
 
+        // Compute the expected bounds
         final float splitRatio = splitRule.getSplitRatio();
         final Rect parentBounds = getMaximumActivityBounds(primaryActivity);
         final Rect expectedPrimaryActivityBounds = new Rect();
         final Rect expectedSecondaryActivityBounds = new Rect();
         getExpectedPrimaryAndSecondaryBounds(layoutDir, splitRatio, parentBounds,
                 expectedPrimaryActivityBounds, expectedSecondaryActivityBounds);
+
+        final ActivityEmbeddingComponent activityEmbeddingComponent = getWindowExtensions()
+                .getActivityEmbeddingComponent();
+
+        // Verify that both activities are embedded and that the bounds are correct
+        assertTrue(activityEmbeddingComponent.isActivityEmbedded(primaryActivity));
         assertEquals(expectedPrimaryActivityBounds, getActivityBounds(primaryActivity));
         if (secondaryActivity != null) {
+            assertTrue(activityEmbeddingComponent.isActivityEmbedded(secondaryActivity));
             assertEquals(expectedSecondaryActivityBounds, getActivityBounds(secondaryActivity));
         }
     }
