@@ -16,8 +16,6 @@
 
 package android.photopicker.cts.util;
 
-import static android.provider.MediaStore.Files.FileColumns;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -30,6 +28,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore.PickerMediaColumns;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -61,17 +60,14 @@ public class PhotoPickerAssertionsUtils {
 
     public static void assertRedactedReadOnlyAccess(Uri uri) throws Exception {
         assertThat(uri).isNotNull();
-        // TODO(b/205291616): Replace FileColumns.MIME_TYPE with PickerMediaColumns.MIME_TYPE
-        final String[] projection = new String[]{ FileColumns.MIME_TYPE };
+        final String[] projection = new String[]{ PickerMediaColumns.MIME_TYPE };
         final Context context = InstrumentationRegistry.getTargetContext();
         final ContentResolver resolver = context.getContentResolver();
         try (Cursor c = resolver.query(uri, projection, null, null)) {
             assertThat(c).isNotNull();
             assertThat(c.moveToFirst()).isTrue();
 
-            // TODO(b/205291616): Replace FileColumns.MIME_TYPE with
-            // PickerMediaColumns.MIME_TYPE
-            final String mimeType = c.getString(c.getColumnIndex(FileColumns.MIME_TYPE));
+            final String mimeType = c.getString(c.getColumnIndex(PickerMediaColumns.MIME_TYPE));
 
             if (mimeType.startsWith("image")) {
                 assertImageRedactedReadOnlyAccess(uri, resolver);
