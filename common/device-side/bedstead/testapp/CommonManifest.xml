@@ -140,7 +140,9 @@
     <uses-permission android:name="android.permission.SET_PROCESS_LIMIT" />
     <uses-permission android:name="android.permission.SET_ALWAYS_FINISH" />
     <uses-permission android:name="android.permission.SIGNAL_PERSISTENT_PROCESSES" />
-    <uses-permission android:name="android.permission.ACCESS_SUPPLEMENTAL_APIS" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_CUSTOM_AUDIENCES" />
     <uses-permission android:name="android.permission.GET_APP_OPS_STATS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
