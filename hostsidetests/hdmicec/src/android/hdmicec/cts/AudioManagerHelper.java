@@ -66,6 +66,14 @@ public final class AudioManagerHelper {
         hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.REPORT_AUDIO_STATUS);
     }
 
+    public static void unmuteDevice(ITestDevice device)
+            throws Exception {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.UNMUTE");
+    }
+
     public static boolean isDeviceMuted(ITestDevice device) throws Exception {
         // Clear activity
         device.executeShellCommand(CLEAR_COMMAND);
