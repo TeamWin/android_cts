@@ -198,7 +198,7 @@ public class MediaRouter2Test {
     public void testAllowedPackages() throws Exception {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(FEATURES_ALL, true)
-                        .setAllowedPackages(List.of("android.media.cts"))
+                        .setAllowedPackages(List.of("android.media.misc.cts"))
                         .build();
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(preference);
 
