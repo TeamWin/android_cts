@@ -16,12 +16,12 @@
 
 package android.hdmicec.cts;
 
+import com.android.tradefed.device.ITestDevice;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import com.android.tradefed.device.ITestDevice;
 
 /** Helper class to get DUT audio status using Audio manager app */
 public final class AudioManagerHelper {
@@ -74,6 +74,20 @@ public final class AudioManagerHelper {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
         return (LogHelper.parseDutVolume(device, CLASS) >= 128);
+    }
+
+    public static void lowerVolume(ITestDevice device) throws Exception {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Start the APK and wait for it to complete
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.LOWER_VOLUME");
+    }
+
+    public static void raiseVolume(ITestDevice device) throws Exception {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Start the APK and wait for it to complete
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.RAISE_VOLUME");
     }
 
     public static void setDeviceVolume(ITestDevice device, int percentVolume) throws Exception {
