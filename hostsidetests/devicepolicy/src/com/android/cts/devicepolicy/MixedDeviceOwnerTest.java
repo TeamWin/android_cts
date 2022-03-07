@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,6 +87,16 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
 
         super.tearDown();
+    }
+
+    @Override
+    protected void installAppPermissionAppAsUser()
+            throws FileNotFoundException, DeviceNotAvailableException {
+        super.installAppPermissionAppAsUser();
+
+        if (isHeadlessSystemUserMode()) {
+            installAppPermissionAppAsUser(mDeviceOwnerUserId);
+        }
     }
 
     @Test
@@ -513,6 +524,42 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have UI / credentials")
     public void testSetKeyguardDisabledFeatures() throws Exception {
         super.testSetKeyguardDisabledFeatures();
+    }
+
+    @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
+    public void testPermissionAppUpdate() throws Exception {
+        super.testPermissionAppUpdate();
+    }
+
+    @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
+    public void testPermissionMixedPolicies() throws Exception {
+        super.testPermissionMixedPolicies();
+    }
+
+    @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
+    public void testPermissionPolicy() throws Exception {
+        super.testPermissionPolicy();
+    }
+
+    @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
+    public void testAutoGrantMultiplePermissionsInGroup() throws Exception {
+        super.testAutoGrantMultiplePermissionsInGroup();
+    }
+
+    @Override
+    @Test
+    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
+    public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
+            throws Exception {
+        super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
     }
 
     @Override
