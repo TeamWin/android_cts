@@ -152,6 +152,7 @@ public class WindowManagerState {
     private String mInputMethodWindowAppToken = null;
     private boolean mDisplayFrozen;
     private boolean mSanityCheckFocusedWindow = true;
+    private boolean mWindowFramesValid;
 
     static String appStateToString(int appState) {
         switch (appState) {
@@ -322,6 +323,7 @@ public class WindowManagerState {
 
             retry = mRootTasks.isEmpty() || mTopFocusedTaskId == -1 || mWindowStates.isEmpty()
                     || mFocusedApp == null || (mSanityCheckFocusedWindow && mFocusedWindow == null)
+                    || !mWindowFramesValid
                     || (mTopResumedActivityRecord == null
                     || mResumedActivitiesInRootTasks.isEmpty())
                     && !mKeyguardControllerState.keyguardShowing;
@@ -347,6 +349,9 @@ public class WindowManagerState {
         }
         if (mFocusedApp == null) {
             logE("No Focused App...");
+        }
+        if (!mWindowFramesValid) {
+            logE("Window Frames Invalid...");
         }
     }
 
@@ -431,6 +436,7 @@ public class WindowManagerState {
             mInputMethodWindowAppToken = Integer.toHexString(state.inputMethodWindow.hashCode);
         }
         mDisplayFrozen = state.displayFrozen;
+        mWindowFramesValid = state.windowFramesValid;
     }
 
     private void reset() {
@@ -452,6 +458,7 @@ public class WindowManagerState {
         mPinnedStackMovementBounds.setEmpty();
         mInputMethodWindowAppToken = null;
         mDisplayFrozen = false;
+        mWindowFramesValid = false;
     }
 
     public String getFocusedApp() {
