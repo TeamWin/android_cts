@@ -32,11 +32,6 @@
 #define FSCRYPT_MODE_AES_256_HEH 126
 #define FSCRYPT_MODE_PRIVATE 127
 
-// The relevant Android API levels
-#define Q_API_LEVEL 29
-#define R_API_LEVEL 30
-#define S_API_LEVEL 31
-
 #ifdef __arm__
 // For ARM32, assemble the 'aese.8' instruction as an .inst, since otherwise
 // clang does not accept it.  It would be allowed in a separate file compiled
@@ -221,8 +216,8 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
     // SC or later.
     int min_api_level = (first_api_level < vendor_api_level) ? first_api_level
                                                              : vendor_api_level;
-    if (min_api_level >= S_API_LEVEL &&
-       !deviceSupportsFeature("android.hardware.security.model.compatible")) {
+    if (min_api_level >= __ANDROID_API_S__ &&
+        !deviceSupportsFeature("android.hardware.security.model.compatible")) {
         GTEST_SKIP()
             << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
         return;
@@ -246,7 +241,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
 
             // Starting with Android 10, file-based encryption is required on
             // new devices [CDD 9.9.2/C-0-3].
-            if (first_api_level < Q_API_LEVEL) {
+            if (first_api_level < __ANDROID_API_Q__) {
                 GTEST_LOG_(INFO)
                         << "Exempt from file-based encryption due to old starting API level";
                 return;
@@ -280,7 +275,7 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             // the fscrypt policy version must not be v1.  If this part of the
             // test fails, make sure the device's fstab has something like
             // "fileencryption=aes-256-xts:aes-256-cts:v2".
-            if (first_api_level < R_API_LEVEL) {
+            if (first_api_level < __ANDROID_API_R__) {
                 GTEST_LOG_(INFO) << "Exempt from non-reversible FBE key derivation due to old "
                                     "starting API level";
                 // On these old devices we also allow the use of some custom
