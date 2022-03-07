@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.database.DataSetObserver;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.provider.Settings;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -53,6 +54,8 @@ public class WifiLockdownTestActivity extends PassFailButtons.TestListActivity {
     private static final String CONFIG_NOT_MODIFIABLE_WHEN_LOCKED_TEST_ID = "LOCKED_MODIFICATION";
     private static final String CONFIG_CONNECTABLE_WHEN_LOCKED_TEST_ID = "LOCKED_CONNECT";
     private static final String CONFIG_REMOVABLE_WHEN_UNLOCKED_TEST_ID = "UNLOCKED_REMOVE";
+    private static final String DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI_ID =
+            "DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI";
 
     private WifiConfigCreator mConfigCreator;
     private ButtonInfo[] mSwitchLockdownOffButtonInfos;
@@ -156,6 +159,23 @@ public class WifiLockdownTestActivity extends PassFailButtons.TestListActivity {
                 R.string.device_owner_wifi_config_unlocked_removal_test,
                 R.string.device_owner_wifi_config_unlocked_removal_test_info,
                 mSwitchLockdownOffButtonInfos));
+        adapter.add(Utils.createInteractiveTestItem(this,
+                DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI_ID,
+                R.string.device_owner_disallow_sharing_admin_configure_wifi,
+                R.string.device_owner_disallow_sharing_admin_configure_wifi_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_set,
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                        UserManager.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI, true)),
+                        new ButtonInfo(
+                                R.string.device_owner_settings_go,
+                                new Intent(Settings.ACTION_WIFI_SETTINGS)),
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_unset,
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
+                                        UserManager.DISALLOW_SHARING_ADMIN_CONFIGURED_WIFI, false))
+                }));
     }
 
     private int convertKeyManagement(int radioButtonId) {
