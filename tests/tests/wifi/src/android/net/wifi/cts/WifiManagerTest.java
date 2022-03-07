@@ -4693,10 +4693,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify the invalid and valid usages of {@code WifiManager#getAutojoinGlobal}.
+     * Verify the invalid and valid usages of {@code WifiManager#queryAutojoinGlobal}.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
-    public void testGetAutojoinGlobal() throws Exception {
+    public void testQueryAutojoinGlobal() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -4714,19 +4714,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         };
         // Test invalid inputs trigger IllegalArgumentException
         assertThrows("null executor should trigger exception", NullPointerException.class,
-                () -> mWifiManager.getAutojoinGlobal(null, listener));
+                () -> mWifiManager.queryAutojoinGlobal(null, listener));
         assertThrows("null listener should trigger exception", NullPointerException.class,
-                () -> mWifiManager.getAutojoinGlobal(mExecutor, null));
+                () -> mWifiManager.queryAutojoinGlobal(mExecutor, null));
 
         // Test caller with no permission triggers SecurityException.
         assertThrows("No permission should trigger SecurityException", SecurityException.class,
-                () -> mWifiManager.getAutojoinGlobal(mExecutor, listener));
+                () -> mWifiManager.queryAutojoinGlobal(mExecutor, listener));
 
         // Test get/set autojoin global enabled
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.allowAutojoinGlobal(true));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getAutojoinGlobal(mExecutor, listener));
+                () -> mWifiManager.queryAutojoinGlobal(mExecutor, listener));
         synchronized (mLock) {
             mLock.wait(TEST_WAIT_DURATION_MS);
         }
@@ -4736,7 +4736,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.allowAutojoinGlobal(false));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getAutojoinGlobal(mExecutor, listener));
+                () -> mWifiManager.queryAutojoinGlobal(mExecutor, listener));
         synchronized (mLock) {
             mLock.wait(TEST_WAIT_DURATION_MS);
         }
