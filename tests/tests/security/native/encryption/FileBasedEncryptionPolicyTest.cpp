@@ -272,8 +272,8 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
             // never be never reused for different cryptographic purposes
             // [CDD 9.9.3/C-1-14].  Effectively, these requirements mean that
             // the fscrypt policy version must not be v1.  If this part of the
-            // test fails, make sure the device's fstab has something like
-            // "fileencryption=aes-256-xts:aes-256-cts:v2".
+            // test fails, make sure the device's fstab doesn't contain the "v1"
+            // flag in the argument to the fileencryption option.
             if (first_api_level < __ANDROID_API_R__) {
                 GTEST_LOG_(INFO) << "Exempt from non-reversible FBE key derivation due to old "
                                     "starting API level";
