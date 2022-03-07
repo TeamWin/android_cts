@@ -27,6 +27,7 @@ import android.car.Car;
 import android.car.VehiclePropertyIds;
 import android.car.telemetry.CarTelemetryManager;
 import android.car.telemetry.TelemetryProto;
+import android.os.PersistableBundle;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.ArrayMap;
 
@@ -260,11 +261,11 @@ public class CarTelemetryManagerTest extends CarApiTestBase {
 
         private final Semaphore mSemaphore = new Semaphore(0);
         private final Map<String, byte[]> mErrorMap = new ArrayMap<>();
-        private final Map<String, byte[]> mReportMap = new ArrayMap<>();
+        private final Map<String, PersistableBundle> mReportMap = new ArrayMap<>();
         private final Map<String, Integer> mStatusMap = new ArrayMap<>();
 
         @Override
-        public void onResult(@NonNull String metricsConfigName, @Nullable byte[] report,
+        public void onResult(@NonNull String metricsConfigName, @Nullable PersistableBundle report,
                 @Nullable byte[] error, int status) {
             mReportMap.put(metricsConfigName, report);
             mErrorMap.put(metricsConfigName, error);
