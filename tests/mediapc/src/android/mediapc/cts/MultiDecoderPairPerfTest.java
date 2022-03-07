@@ -16,6 +16,8 @@
 
 package android.mediapc.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.media.MediaFormat;
 import android.os.Build;
 import android.util.Pair;
@@ -28,6 +30,7 @@ import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,11 +38,10 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * The following test class calculates the maximum number of concurrent decode sessions that it can
@@ -71,7 +73,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         final List<Object[]> argsList = new ArrayList<>();
         ArrayList<Pair<String, String>> mimeTypeDecoderPairs = new ArrayList<>();
         for (String mime : mMimeList) {
-            ArrayList<String> listOfDecoders = getHardwareCodecsFor720p(mime, false);
+            ArrayList<String> listOfDecoders = getHardwareCodecsForMime(mime, false);
             for (String decoder : listOfDecoders) {
                 mimeTypeDecoderPairs.add(Pair.create(mime, decoder));
             }
@@ -96,17 +98,24 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
      */
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    @CddTest(requirement="2.2.7.1/5.1/H-1-1,H-1-2")
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-1,H-1-2")
     public void test720p() throws Exception {
+        Assume.assumeTrue(Utils.isSPerfClass() || Utils.isRPerfClass() || !Utils.isPerfClass());
+
+        boolean hasVP9 = mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
+                mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
+        int requiredMinInstances = getRequiredMinConcurrentInstances(hasVP9);
+        testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
+    }
+
+    private void testCodec(Map<String, String> testFiles, int height, int width,
+            int requiredMinInstances) throws Exception {
+        mTestFiles = testFiles;
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(mFirstPair);
         mimeDecoderPairs.add(mSecondPair);
-        int maxInstances = checkAndGetMaxSupportedInstancesFor720p(mimeDecoderPairs);
-        int requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES;
-        if (mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)
-                || mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
-            requiredMinInstances = REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
-        }
+        int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
+                mimeDecoderPairs);
         double achievedFrameRate = 0.0;
         if (maxInstances >= requiredMinInstances) {
             int secondPairInstances = maxInstances / 2;
