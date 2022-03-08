@@ -16,8 +16,6 @@
 
 package android.app.stubs;
 
-import static android.app.stubs.BubbledActivity.EXTRA_LOCUS_ID;
-
 import android.app.Activity;
 import android.app.Notification;
 import android.app.Notification.BubbleMetadata;
@@ -54,23 +52,6 @@ public class SendBubbleActivity extends Activity {
 
         Intent i = new Intent(BUBBLE_ACTIVITY_OPENED);
         sendBroadcast(i);
-    }
-
-    public void startBubbleActivity(int id) {
-        startBubbleActivity(id, true /* addLocusId */);
-    }
-
-    /**
-     * Starts the same activity that is in the bubble produced by this activity.
-     */
-    public void startBubbleActivity(int id, boolean addLocusId) {
-        final Intent intent = new Intent(getApplicationContext(), BubbledActivity.class);
-        // Clear any previous instance of this activity
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (addLocusId) {
-            intent.putExtra(EXTRA_LOCUS_ID, String.valueOf(id));
-        }
-        startActivity(intent);
     }
 
     /**
