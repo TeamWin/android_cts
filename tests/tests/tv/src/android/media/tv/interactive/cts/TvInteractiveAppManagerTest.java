@@ -25,8 +25,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.tv.interactive.AppLinkInfo;
-import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
+import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.Bundle;
 import android.os.ConditionVariable;
@@ -87,8 +87,8 @@ public class TvInteractiveAppManagerTest {
         }
 
         @Override
-        public void onTvInteractiveAppInfoUpdated(TvInteractiveAppInfo iAppInfo) {
-            super.onTvInteractiveAppInfoUpdated(iAppInfo);
+        public void onTvInteractiveAppServiceInfoUpdated(TvInteractiveAppServiceInfo iAppInfo) {
+            super.onTvInteractiveAppServiceInfoUpdated(iAppInfo);
         }
 
         @Override
@@ -177,25 +177,26 @@ public class TvInteractiveAppManagerTest {
     }
 
     @Test
-    public void testGetTvInteractiveAppInfoList() throws Exception {
-        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+    public void testGetTvInteractiveAppServiceInfoList() throws Exception {
+        List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
-        for (TvInteractiveAppInfo info : list) {
+        for (TvInteractiveAppServiceInfo info : list) {
             if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 return;
             }
         }
         throw new AssertionFailedError(
-                "getTvInteractiveAppServiceList() doesn't contain valid TvInteractiveAppInfo: "
+                "getTvInteractiveAppServiceList() doesn't contain valid "
+                        + "TvInteractiveAppServiceInfo: "
                         + StubTvInteractiveAppService.class.getName());
     }
 
     @Test
     public void testPrepare() throws Exception {
-        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+        List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
-        TvInteractiveAppInfo stubInfo = null;
-        for (TvInteractiveAppInfo info : list) {
+        TvInteractiveAppServiceInfo stubInfo = null;
+        for (TvInteractiveAppServiceInfo info : list) {
             if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 stubInfo = info;
                 break;
@@ -204,12 +205,13 @@ public class TvInteractiveAppManagerTest {
         assertNotNull(stubInfo);
         stubInfo.getSupportedTypes();
 
-        mManager.prepare(stubInfo.getId(), TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+        mManager.prepare(stubInfo.getId(), TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mIAppServiceId != null);
         assertThat(mCallback.mIAppServiceId).isEqualTo(stubInfo.getId());
-        assertThat(mCallback.mType).isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+        assertThat(mCallback.mType)
+                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         assertThat(StubTvInteractiveAppService.sType)
-                .isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         assertThat(mCallback.mState)
                 .isEqualTo(TvInteractiveAppManager.SERVICE_STATE_PREPARING);
         assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_NONE);
@@ -217,10 +219,10 @@ public class TvInteractiveAppManagerTest {
 
     @Test
     public void testAppLinkCommand() throws Exception {
-        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+        List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
-        TvInteractiveAppInfo stubInfo = null;
-        for (TvInteractiveAppInfo info : list) {
+        TvInteractiveAppServiceInfo stubInfo = null;
+        for (TvInteractiveAppServiceInfo info : list) {
             if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 stubInfo = info;
                 break;
@@ -241,10 +243,10 @@ public class TvInteractiveAppManagerTest {
 
     @Test
     public void testAppLinkInfo() throws Exception {
-        List<TvInteractiveAppInfo> list = mManager.getTvInteractiveAppServiceList();
+        List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
-        TvInteractiveAppInfo stubInfo = null;
-        for (TvInteractiveAppInfo info : list) {
+        TvInteractiveAppServiceInfo stubInfo = null;
+        for (TvInteractiveAppServiceInfo info : list) {
             if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 stubInfo = info;
                 break;
