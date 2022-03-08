@@ -32,7 +32,7 @@
             android:layout_height="5dp"/>
 
         <Button
-            android:text="@string/audio_general_record"
+            android:text="@string/audio_uap_record_recordBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/uap_recordRecordBtn"
@@ -40,7 +40,7 @@
             android:nextFocusDown="@+id/uap_recordRecordLoopBtn"/>
 
         <Button
-            android:text="@string/audio_general_recordLoopback"
+            android:text="@string/audio_uap_record_recordLoopbackBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/uap_recordRecordLoopBtn"

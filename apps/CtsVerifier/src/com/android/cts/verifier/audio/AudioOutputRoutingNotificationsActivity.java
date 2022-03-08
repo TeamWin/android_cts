@@ -109,10 +109,6 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
     }
 
     @Override
-    protected void calculatePass() {
-    }
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_output_routingnotifications_test);

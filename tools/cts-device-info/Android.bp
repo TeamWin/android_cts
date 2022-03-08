@@ -33,6 +33,8 @@ android_test_helper_app {
         "mts",
         "vts",
         "catbox",
+        "gcatbox",
+        "ats",
     ],
     static_libs: [
         "compatibility-device-info",

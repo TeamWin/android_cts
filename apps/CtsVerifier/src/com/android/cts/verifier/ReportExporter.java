@@ -83,30 +83,38 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
             Log.d(TAG, "copyReportFiles(" + tempDir.getAbsolutePath() + ")");
         }
 
-        File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File reportLogFolder =
                 new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                         + File.separator
                         + LOGS_DIRECTORY);
-        File[] reportLogFiles = reportLogFolder.listFiles();
 
-        // if no ReportLog files have been created (i.e. the folder doesn't exist)
-        // then listFiles() returns null. Handle silently.
-        if (reportLogFiles != null) {
-            for (File reportLogFile : reportLogFiles) {
-                Path src = Paths.get(reportLogFile.getAbsolutePath());
-                Path dest = Paths.get(
-                        tempDir.getAbsolutePath()
-                                + File.separator
-                                + reportLogFile.getName());
-                try {
-                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
-                } catch (IOException ex) {
-                    LOG.log(Level.WARNING, "Error copying ReportLog files. IOException: " + ex);
-                }
+        copyFilesRecursively(reportLogFolder, tempDir);
+    }
+
+    private void copyFilesRecursively(File source, File destFolder) {
+        File[] files = source.listFiles();
+
+        if (files == null) {
+            return;
+        }
+
+        for (File file : files) {
+            Path src = Paths.get(file.getAbsolutePath());
+            Path dest = Paths.get(
+                    destFolder.getAbsolutePath()
+                            + File.separator
+                            + file.getName());
+            try {
+                Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException ex) {
+                LOG.log(Level.WARNING, "Error copying ReportLog file. IOException: " + ex);
+            }
+            if (file.isDirectory()) {
+                copyFilesRecursively(file, dest.toFile());
             }
         }
     }
+
 
     @Override
     protected String doInBackground(Void... params) {

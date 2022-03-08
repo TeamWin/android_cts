@@ -50,6 +50,7 @@ public class SettingsPanelTest {
     private static final int TIMEOUT = 8000;
 
     private static final String RESOURCE_DONE = "done";
+    private static final String RESOURCE_INTERNET_DIALOG_DONE = "done_button";
     private static final String RESOURCE_SEE_MORE = "see_more";
     private static final String RESOURCE_TITLE = "panel_title";
     private static final String SYSTEMUI_PACKAGE_NAME = "com.android.systemui";
@@ -135,6 +136,7 @@ public class SettingsPanelTest {
 
     @Test
     public void internetDialog_doneClosesDialog() {
+        assumeTrue(mHasTouchScreen);
         // Launch panel
         launchInternetDialog();
         String currentPackage = mDevice.getCurrentPackageName();
@@ -142,7 +144,8 @@ public class SettingsPanelTest {
 
         // Click the done button
         if (mHasTouchScreen) {
-            mDevice.findObject(By.res(SYSTEMUI_PACKAGE_NAME, RESOURCE_DONE)).click();
+            mDevice.findObject(
+                    By.res(SYSTEMUI_PACKAGE_NAME, RESOURCE_INTERNET_DIALOG_DONE)).click();
             mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
         } else {
             mDevice.pressBack();

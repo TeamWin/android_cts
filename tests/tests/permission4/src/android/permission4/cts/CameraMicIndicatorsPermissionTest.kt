@@ -32,9 +32,14 @@ import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiSelector
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.DisableAnimationRule
-import com.android.compatibility.common.util.SystemUtil.*
+import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
+import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -201,7 +206,6 @@ class CameraMicIndicatorsPermissionTest {
             assertTrue("Did not find chip", chipFound)
         } else if (useHotword || useCamera) {
             assertFalse("Found chip, but did not expect to", chipFound)
-            return
         }
 
         eventually {
@@ -227,7 +231,7 @@ class CameraMicIndicatorsPermissionTest {
         val chipFound = isChipPresent()
         if (useMic || useCamera) {
             assertTrue("Did not find chip", chipFound)
-        } else {
+        } else { // hotword
             assertFalse("Found chip, but did not expect to", chipFound)
             return
         }

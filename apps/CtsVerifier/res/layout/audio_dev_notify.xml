@@ -20,12 +20,12 @@
         android:id="@+id/scrollView"
         style="@style/RootLayoutPadding">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <include layout="@layout/audio_wired_query_layout" />
+        <include layout="@layout/audio_wired_query_layout" />
 
     <TextView
       android:layout_width="match_parent"
@@ -54,12 +54,7 @@
           android:layout_height="wrap_content"
           android:id="@+id/audio_dev_notification_disconnect_msg"/>
 
-      <TextView
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:id="@+id/audio_dev_notification_passfail_msg"/>
-
-  </LinearLayout>
+    </LinearLayout>
 
   <include layout="@layout/pass_fail_buttons" />
 

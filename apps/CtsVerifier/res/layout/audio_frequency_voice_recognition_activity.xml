@@ -67,7 +67,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/af_button_test"
                             android:id="@+id/vr_button_test_tone" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -91,14 +91,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_play"
+                            android:text="@string/af_button_play"
                             android:id="@+id/vr_button_play_tone" />
                     </LinearLayout>
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/af_test_results"
                     android:id="@+id/vr_test_tone_result" />
             </LinearLayout>
 
@@ -136,7 +136,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/af_button_test"
                             android:id="@+id/vr_button_test_noise" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -159,14 +159,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_play"
+                            android:text="@string/af_button_play"
                             android:id="@+id/vr_button_play_noise" />
                     </LinearLayout>
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/af_test_results"
                     android:id="@+id/vr_test_noise_result" />
             </LinearLayout>
 
@@ -204,7 +204,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/af_button_test"
                             android:id="@+id/vr_button_test_usb_background" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -216,7 +216,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/af_test_results"
                     android:id="@+id/vr_test_usb_background_result" />
             </LinearLayout>
 
@@ -254,7 +254,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/af_button_test"
                             android:id="@+id/vr_button_test_usb_noise" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -277,14 +277,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_play"
+                            android:text="@string/af_button_play"
                             android:id="@+id/vr_button_play_usb_noise" />
                     </LinearLayout>
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/af_test_results"
                     android:id="@+id/vr_test_usb_noise_result" />
             </LinearLayout>
             <View

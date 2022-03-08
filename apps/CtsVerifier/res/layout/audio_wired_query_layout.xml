@@ -21,12 +21,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/audio_wired_no"
-            android:text="@string/audio_general_no" />
+            android:text="@string/audio_wired_no" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/audio_wired_yes"
-            android:text="@string/audio_general_yes" />
+            android:text="@string/audio_wired_yes" />
     </LinearLayout>
 </LinearLayout>

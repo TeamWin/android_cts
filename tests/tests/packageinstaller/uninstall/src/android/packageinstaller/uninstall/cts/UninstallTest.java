@@ -18,7 +18,6 @@ package android.packageinstaller.uninstall.cts;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.graphics.PixelFormat.TRANSLUCENT;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -28,7 +27,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
 import android.content.Intent;
@@ -105,6 +103,7 @@ public class UninstallTest {
         Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE);
         intent.setData(Uri.parse("package:" + TEST_APK_PACKAGE_NAME));
         intent.addFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
+        Log.d(LOG_TAG, "sending uninstall intent ("  + intent + ") on user " + mContext.getUser());
         mContext.startActivity(intent);
     }
 
@@ -150,9 +149,7 @@ public class UninstallTest {
 
     @Test
     public void testUninstall() throws Exception {
-        // TODO(b/200620676) STOPSHIP Fix accessibility issue and remove assumeNoAutomotive()
-        assumeNoAutomotive();
-        assertTrue(isInstalled());
+        assertTrue("Package is not installed", isInstalled());
 
         startUninstall();
 
@@ -168,7 +165,8 @@ public class UninstallTest {
 
         // Confirm uninstall
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
-            UiObject2 clickableView = mUiDevice.findObject(By.focusable(true).hasDescendant(By.text("OK")));
+            UiObject2 clickableView = mUiDevice
+                    .findObject(By.focusable(true).hasDescendant(By.text("OK")));
             if (!clickableView.isFocused()) {
                 mUiDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_DOWN);
             }
@@ -180,7 +178,12 @@ public class UninstallTest {
             }
             mUiDevice.pressKeyCode(KeyEvent.KEYCODE_DPAD_CENTER);
         } else {
-            mUiDevice.findObject(By.text("OK")).click();
+            UiObject2 clickableView = mUiDevice.findObject(By.text("OK"));
+            if (clickableView == null) {
+              dumpWindowHierarchy();
+              fail("OK button not shown");
+            }
+            clickableView.click();
         }
 
         for (int i = 0; i < 30; i++) {
@@ -195,16 +198,15 @@ public class UninstallTest {
     }
 
     private boolean isInstalled() {
+        Log.d(LOG_TAG, "Testing if package " + TEST_APK_PACKAGE_NAME + " is installed for user "
+                + mContext.getUser());
         try {
-            mContext.getPackageManager().getPackageInfo(TEST_APK_PACKAGE_NAME, 0);
+            mContext.getPackageManager().getPackageInfo(TEST_APK_PACKAGE_NAME, /* flags= */ 0);
             return true;
         } catch (PackageManager.NameNotFoundException e) {
+            Log.v(LOG_TAG, "Package " + TEST_APK_PACKAGE_NAME + " not installed for user "
+                    + mContext.getUser() + ": " + e);
             return false;
         }
-    }
-
-    private void assumeNoAutomotive() {
-        assumeFalse("automotive build",
-                mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE));
     }
 }

@@ -87,10 +87,14 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
 
     // Tests.
 
-    public void testLogSessionId() throws Exception {
-        runDeviceTest("testLogSessionId");
-        assertThat(getSingleMediaParserReportedEvent().getLogSessionId())
-                .isEqualTo("FakeLogSessionId");
+    public void testDefaultLogSessionId() throws Exception {
+        runDeviceTest("testDefaultLogSessionId");
+        assertThat(getSingleMediaParserReportedEvent().getLogSessionId()).isEmpty();
+    }
+
+    public void testSetLogSessionId() throws Exception {
+        runDeviceTest("testSetLogSessionId");
+        assertThat(getSingleMediaParserReportedEvent().getLogSessionId()).isNotEmpty();
     }
 
     public void testCreationByNameMetrics() throws Exception {

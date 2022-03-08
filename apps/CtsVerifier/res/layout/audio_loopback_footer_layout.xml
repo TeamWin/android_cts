@@ -13,6 +13,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/audio_general_results"
+        android:text="@string/audio_loopback_results_text"
         android:id="@+id/audio_loopback_results_text" />
 </LinearLayout>

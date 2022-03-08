@@ -70,12 +70,12 @@
             android:orientation="horizontal"
             android:layout_marginLeft="10dp">
             <Button
-                android:text="@string/audio_general_play"
+                android:text="@string/analog_headset_play"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:id="@+id/headset_analog_play"/>
             <Button
-                android:text="@string/audio_general_stop"
+                android:text="@string/analog_headset_stop"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:id="@+id/headset_analog_stop"/>

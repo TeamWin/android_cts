@@ -20,45 +20,78 @@ import com.android.cts.verifier.R;
 
 import android.content.Context;
 
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
+
 import android.os.Bundle;
 
-import android.widget.TextView;
+import android.view.View;
+import android.view.View.OnClickListener;
 
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * Tests Audio Device Connection events for output devices by prompting the user to
  * insert/remove a wired headset and noting the presence (or absence) of notifications.
  */
-public class AudioOutputDeviceNotificationsActivity extends AudioDeviceNotificationsBaseActivity {
-    // ReportLog Schema
-    private static final String SECTION_OUTPUT_DEVICE_NOTIFICATIONS = "output_device_notifications";
+public class AudioOutputDeviceNotificationsActivity extends AudioWiredDeviceBaseActivity {
+    Context mContext;
+
+    TextView mConnectView;
+    TextView mDisconnectView;
+    Button mClearMsgsBtn;
+
+    private class TestAudioDeviceCallback extends AudioDeviceCallback {
+        public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
+            if (addedDevices.length != 0) {
+                mConnectView.setText(
+                    mContext.getResources().getString(R.string.audio_dev_notification_connectMsg));
+            }
+        }
+
+        public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+            if (removedDevices.length != 0) {
+                mDisconnectView.setText(
+                    mContext.getResources().getString(
+                        R.string.audio_dev_notification_disconnectMsg));
+            }
+        }
+    }
+
+    @Override
+    protected void enableTestButtons(boolean enabled) {
+        // Nothing to do.
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.audio_dev_notify);
+
+        mContext = this;
+
+        mConnectView = (TextView)findViewById(R.id.audio_dev_notification_connect_msg);
+        mDisconnectView = (TextView)findViewById(R.id.audio_dev_notification_disconnect_msg);
 
         ((TextView)findViewById(R.id.info_text)).setText(mContext.getResources().getString(
                 R.string.audio_out_devices_notification_instructions));
 
-        mAudioManager.registerAudioDeviceCallback(
-                new TestAudioDeviceCallback(TestAudioDeviceCallback.SCANTYPE_OUTPUT), null);
+        mClearMsgsBtn = (Button)findViewById(R.id.audio_dev_notification_connect_clearmsgs_btn);
+        mClearMsgsBtn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mConnectView.setText("");
+                mDisconnectView.setText("");
+            }
+        });
+
+        AudioManager audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        audioManager.registerAudioDeviceCallback(new TestAudioDeviceCallback(), null);
 
         // "Honor System" buttons
         super.setup();
 
-        setInfoResources(R.string.audio_out_devices_notifications_test,
-                R.string.audio_out_devices_infotext, -1);
         setPassFailButtonClickListeners();
-        getPassButton().setEnabled(false);
-    }
-
-    //
-    // PassFailButtons Overrides
-    //
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_OUTPUT_DEVICE_NOTIFICATIONS);
     }
 }

@@ -376,8 +376,8 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     }
 
     private void setButtonPlayStatus(int playResId) {
-        String play = getResources().getText(R.string.audio_general_play).toString();
-        String stop = getResources().getText(R.string.audio_general_stop).toString();
+        String play = getResources().getText(R.string.af_button_play).toString();
+        String stop = getResources().getText(R.string.af_button_stop).toString();
 
         mButtonPlayTone.setText(playResId == R.id.vr_button_play_tone ? stop : play);
         mButtonPlayNoise.setText(playResId == R.id.vr_button_play_noise ? stop : play);

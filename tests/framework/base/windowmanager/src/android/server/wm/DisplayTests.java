@@ -29,7 +29,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.util.Size;
@@ -124,13 +123,13 @@ public class DisplayTests extends MultiDisplayTestBase {
 
         // Check that activity is on the right display.
         final int frontStackId = mWmState.getFrontRootTaskId(DEFAULT_DISPLAY);
-        final WindowManagerState.ActivityTask frontStack =
+        final WindowManagerState.Task frontStack =
                 mWmState.getRootTask(frontStackId);
         assertEquals("Launched activity must be resumed",
                 getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
         assertEquals("Front stack must be on the default display",
                 DEFAULT_DISPLAY, frontStack.mDisplayId);
-        mWmState.assertFocusedStack("Focus must be on the default display", frontStackId);
+        mWmState.assertFocusedRootTask("Focus must be on the default display", frontStackId);
     }
 
     @Test

@@ -263,21 +263,6 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         assertThat(data).isNotEmpty();
     }
 
-    public void testPerSimStatus() throws Exception {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                AtomsProto.Atom.PER_SIM_STATUS_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
-        assertThat(data).hasSize(getActiveSimSlotCount());
-    }
-
     private boolean hasGsmPhone() throws Exception {
         // Not using log entries or ServiceState in the dump since they may or may not be present,
         // which can make the test flaky

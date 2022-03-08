@@ -23,10 +23,6 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
-import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.ResultType;
-import com.android.compatibility.common.util.ResultUnit;
-
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -67,8 +63,6 @@ public abstract class AudioColdStartBaseActivity
     protected long mPostStartTime;
 
     protected double mColdStartlatencyMS;
-    private double mOpenTimeMS;
-    private double mStartTimeMS;
 
     // Widgets
     Button mStartBtn;
@@ -79,12 +73,6 @@ public abstract class AudioColdStartBaseActivity
     TextView mStartTimeTxt;
     TextView mLatencyTxt;
     TextView mResultsTxt;
-
-    // ReportLog Schema
-    private static final String KEY_AUDIO_API = "audio_api";
-    private static final String KEY_LATENCY = "latency_ms";
-    private static final String KEY_OPEN = "open_ms";
-    private static final String KEY_START = "start_ms";
 
     // Time-base conversions
     protected double nanosToMs(double nanos) {
@@ -111,21 +99,17 @@ public abstract class AudioColdStartBaseActivity
         mAttributesTxt.setText("" + mSampleRate + " Hz " + mNumBufferFrames + " Frames");
     }
 
-    private void showOpenTime() {
-        mOpenTimeMS = nanosToMs(mPostOpenTime - mPreOpenTime);
-        mOpenTimeTxt.setText("Open: " + makeMSString(mOpenTimeMS));
-
-        reportOpenTime();
+    void showOpenTime() {
+        double timeMs = nanosToMs(mPostOpenTime - mPreOpenTime);
+        mOpenTimeTxt.setText("Open: " + makeMSString(timeMs));
     }
 
-    private void showStartTime() {
-        mStartTimeMS = nanosToMs(mPostStartTime - mPreStartTime);
-        mStartTimeTxt.setText("Start: " + makeMSString(mStartTimeMS));
-
-        reportStartTime();
+    void showStartTime() {
+        double timeMs = nanosToMs(mPostStartTime - mPreStartTime);
+        mStartTimeTxt.setText("Start: " + makeMSString(timeMs));
     }
 
-    protected void showColdStartLatency() {
+    void showColdStartLatency() {
         mLatencyTxt.setText("Latency: " + mColdStartlatencyMS);
 
         if (mColdStartlatencyMS <= getRecommendedTimeMS()) {
@@ -167,8 +151,6 @@ public abstract class AudioColdStartBaseActivity
         mStartTimeTxt = ((TextView) findViewById(R.id.coldstart_startTimeTxt));
         mLatencyTxt = (TextView) findViewById(R.id.coldstart_coldLatencyTxt);
         mResultsTxt = (TextView) findViewById(R.id.coldstart_coldResultsTxt);
-
-        reportApi();
     }
 
     abstract int getRequiredTimeMS();
@@ -183,49 +165,6 @@ public abstract class AudioColdStartBaseActivity
     }
 
     //
-    // PassFailButtons Overrides
-    //
-    @Override
-    public String getReportFileName() { return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME; }
-
-    @Override
-    public void recordTestResults() {
-        getReportLog().submit();
-    }
-
-    private void reportApi() {
-        getReportLog().addValue(
-                KEY_AUDIO_API,
-                mAudioApi,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-    }
-
-    private void reportOpenTime() {
-        getReportLog().addValue(
-                KEY_OPEN,
-                mOpenTimeMS,
-                ResultType.NEUTRAL,
-                ResultUnit.MS);
-    }
-
-    private void reportStartTime() {
-        getReportLog().addValue(
-                KEY_START,
-                mStartTimeMS,
-                ResultType.NEUTRAL,
-                ResultUnit.MS);
-    }
-
-    protected void reportLatency() {
-        getReportLog().addValue(
-                KEY_LATENCY,
-                mColdStartlatencyMS,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-    }
-
-    //
     // View.OnClickListener overrides
     //
     @Override
@@ -236,7 +175,6 @@ public abstract class AudioColdStartBaseActivity
                 updateTestStateButtons();
                 clearResults();
                 mAudioApi = BuilderBase.TYPE_JAVA;
-                reportApi();
                 break;
 
             case R.id.audioNativeApiBtn:
@@ -244,7 +182,6 @@ public abstract class AudioColdStartBaseActivity
                 updateTestStateButtons();
                 clearResults();
                 mAudioApi = BuilderBase.TYPE_OBOE;
-                reportApi();
                 break;
 
             case R.id.coldstart_start_btn:
@@ -261,8 +198,6 @@ public abstract class AudioColdStartBaseActivity
                 stopAudioTest();
 
                 updateTestStateButtons();
-
-                reportLatency();
                 break;
         }
     }

@@ -34,7 +34,7 @@ public final class FeatureUtil {
      * Checks whether the device supports configing (e.g. disable, enable) location
      */
     public static boolean isConfigLocationSupported(Context context) {
-        return !isWatchOrAutomotive(context);
+        return !isWatch(context);
     }
 
     /**
@@ -73,12 +73,42 @@ public final class FeatureUtil {
     }
 
     /**
+     * Checks whether the device supports installing from unknown sources
+     */
+    public static boolean isInstallUnknownSourcesSupported(Context context) {
+        return !isWatchOrAutomotive(context);
+    }
+
+    /**
+     * Checks whether the device supports file transfer.
+     */
+    public static boolean isUsbFileTransferSupported(Context context) {
+        return !isWatchOrAutomotive(context);
+    }
+
+    /**
+     * Checks whether the device is watch .
+     */
+    private static boolean isWatch(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
+    /**
      * Checks whether the device is watch or automotive
      */
-    private static boolean isWatchOrAutomotive(Context context) {
+    public static boolean isWatchOrAutomotive(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Checks whether the device is automotive
+     */
+    public static boolean isAutomotive(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     /**
@@ -87,5 +117,12 @@ public final class FeatureUtil {
     public static boolean supportManagedSecondaryUsers(Context context) {
         return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
                 || UserManager.isHeadlessSystemUserMode()) && UserManager.supportsMultipleUsers();
+    }
+
+    /**
+     * Checks whether the device shows keyguard when the user doesn't have credentials.
+     */
+    public static boolean isKeyguardShownWhenUserDoesntHaveCredentials(Context context) {
+        return !isAutomotive(context);
     }
 }
