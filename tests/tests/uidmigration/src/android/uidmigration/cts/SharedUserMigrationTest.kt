@@ -26,6 +26,8 @@ import com.android.server.pm.SharedUidMigration.NEW_INSTALL_ONLY
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -63,10 +65,16 @@ class SharedUserMigrationTest {
         // Should not allow upgrading to an APK that directly removes sharedUserId.
         assertFalse(installPackage(InstallTest.APK3))
 
+        // Directly parsing APK4 should return no sharedUserId.
+        var pkgInfo = mPm.getPackageArchiveInfo(InstallTest.APK4, FLAG_ZERO).assertNotNull()
+        assertNull(pkgInfo.sharedUserId)
+
         assertTrue(installPackage(InstallTest.APK4))
         var pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         // With NEW_INSTALL_ONLY, upgrades should not change appId.
         assertEquals(2, pkgs.size)
+        pkgInfo = mPm.getPackageInfo(Const.INSTALL_TEST_PKG, FLAG_ZERO)
+        assertNotNull(pkgInfo.sharedUserId)
 
         // Should not allow re-joining sharedUserId.
         assertFalse(installPackage(InstallTest.APK))
@@ -77,6 +85,8 @@ class SharedUserMigrationTest {
         pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         // Newly installed apps with sharedUserMaxSdkVersion set should not join shared UID.
         assertEquals(1, pkgs.size)
+        pkgInfo = mPm.getPackageInfo(Const.INSTALL_TEST_PKG, FLAG_ZERO)
+        assertNull(pkgInfo.sharedUserId)
     }
 
     private fun testBestEffort(uid: Int) {
@@ -86,6 +96,8 @@ class SharedUserMigrationTest {
         var pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         // With BEST_EFFORT, upgrades should also not change appId.
         assertEquals(2, pkgs.size)
+        var pkgInfo = mPm.getPackageInfo(Const.INSTALL_TEST_PKG, FLAG_ZERO)
+        assertNotNull(pkgInfo.sharedUserId)
 
         val oldUidName = mPm.getNameForUid(uid)
         uninstallPackage(Const.INSTALL_TEST_PKG + "2")
@@ -98,6 +110,8 @@ class SharedUserMigrationTest {
         // Confirm that the internal PackageSetting is actually migrated.
         val newUidName = mPm.getNameForUid(uid)
         assertNotEquals(oldUidName, newUidName)
+        pkgInfo = mPm.getPackageInfo(Const.INSTALL_TEST_PKG, FLAG_ZERO)
+        assertNull(pkgInfo.sharedUserId)
 
         // Even installing another shared UID app, the appId shall not be reused.
         assertTrue(installPackage(InstallTest.APK2))
@@ -111,7 +125,7 @@ class SharedUserMigrationTest {
         assertTrue(installPackage(InstallTest.APK2))
 
         // Both app should share the same UID.
-        val uid = mPm.getPackageUid(Const.INSTALL_TEST_PKG, PackageManager.PackageInfoFlags.of(0))
+        val uid = mPm.getPackageUid(Const.INSTALL_TEST_PKG, FLAG_ZERO)
         val pkgs = mPm.getPackagesForUid(uid).assertNotNull()
         assertEquals(2, pkgs.size)
 
