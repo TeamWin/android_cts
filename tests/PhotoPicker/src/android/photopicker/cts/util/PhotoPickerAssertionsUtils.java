@@ -26,6 +26,8 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.UriPermission;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -37,7 +39,9 @@ import androidx.test.InstrumentationRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Photo Picker Utility methods for test assertions.
@@ -52,6 +56,20 @@ public class PhotoPickerAssertionsUtils {
 
         final String auth = uri.getPathSegments().get(0);
         assertThat(auth).isEqualTo("picker");
+    }
+
+    public static void assertPersistedGrant(Uri uri, ContentResolver resolver) {
+        resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        final List<UriPermission> uriPermissions = resolver.getPersistedUriPermissions();
+        final List<Uri> uris = new ArrayList<>();
+        for (UriPermission perm : uriPermissions) {
+            if (perm.isReadPermission()) {
+                uris.add(perm.getUri());
+            }
+        }
+
+        assertThat(uris).contains(uri);
     }
 
     public static void assertMimeType(Uri uri, String expectedMimeType) throws Exception {
