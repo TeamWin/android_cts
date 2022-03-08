@@ -760,6 +760,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testApexInfoListAfterUpdate() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 

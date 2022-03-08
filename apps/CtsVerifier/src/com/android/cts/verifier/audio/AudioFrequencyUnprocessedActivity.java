@@ -333,8 +333,8 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
     }
 
     private void setButtonPlayStatus(int playResId) {
-        String play = getResources().getText(R.string.audio_general_play).toString();
-        String stop = getResources().getText(R.string.audio_general_stop).toString();
+        String play = getResources().getText(R.string.unprocessed_play).toString();
+        String stop = getResources().getText(R.string.unprocessed_stop).toString();
 
         mButtonPlayTone.setText(playResId == R.id.unprocessed_play_tone_btn ? stop : play);
         mButtonPlayNoise.setText(playResId == R.id.unprocessed_play_noise_btn ? stop : play);

@@ -65,11 +65,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="@string/audio_loopback_lbl_proaudio"/>
+                        android:text="Pro Audio:"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:text=""
                         android:id="@+id/audio_loopback_pro_audio"/>
                 </LinearLayout>
 
@@ -81,11 +82,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="@string/audio_loopback_lbl_mmap"/>
+                        android:text="MMAP Supported:"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:text=""
                         android:id="@+id/audio_loopback_mmap"/>
                 </LinearLayout>
 
@@ -97,11 +99,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="@string/audio_loopback_lbl_mmexclusive"/>
+                        android:text="MMAP Exclusive Supported:"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:text=""
                         android:id="@+id/audio_loopback_mmap_exclusive"/>
                 </LinearLayout>
 
@@ -113,11 +116,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="@string/audio_loopback_lbl_lowlatency"/>
+                        android:text="Low Latency Support:"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:text=""
                         android:id="@+id/audio_loopback_low_latency"/>
                 </LinearLayout>
 
@@ -134,6 +138,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:text=""
                         android:id="@+id/audio_loopback_must_latency"/>
                 </LinearLayout>
 
@@ -145,11 +150,12 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="@string/audio_loopback_lbl_recommededlatency"/>
+                        android:text="Recommended Max Latency (ms):"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:text=""
                         android:id="@+id/audio_loopback_recommended_latency"/>
                 </LinearLayout>
 
@@ -162,7 +168,7 @@
                     <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/audio_general_test"
+                        android:text="@string/audio_loopback_test_btn"
                         android:id="@+id/audio_loopback_test_btn"
                         android:nextFocusForward="@+id/pass_button"
                         android:nextFocusUp="@+id/audio_loopback_level_seekbar"

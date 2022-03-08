@@ -18,21 +18,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:soundEffectsEnabled="false"
-            android:text="@string/audio_general_yes"
+            android:text="@string/uap_test_yes"
             android:id="@+id/uap_tests_yes_btn" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:soundEffectsEnabled="false"
-            android:text="@string/audio_general_no"
+            android:text="@string/uap_test_no"
             android:id="@+id/uap_tests_no_btn" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:soundEffectsEnabled="false"
-            android:text="@string/audio_general_info"
+            android:text="@string/uap_test_info"
             android:id="@+id/uap_test_info_btn" />
     </LinearLayout>
 </LinearLayout>

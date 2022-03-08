@@ -32,7 +32,7 @@
             android:layout_height="5dp"/>
 
         <Button
-            android:text="@string/audio_general_play"
+            android:text="@string/audio_uap_play_playBtn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/uap_playPlayBtn"

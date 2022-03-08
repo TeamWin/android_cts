@@ -67,7 +67,6 @@ public class ProAudioActivity
     private static final String INFO_DIALOG_MESSAGE_ID = "infoDialogMessageId";
 
     // ReportLog Schema
-    private static final String SECTION_PRO_AUDIO_ACTIVITY = "pro_audio_activity";
     private static final String KEY_CLAIMS_PRO = "claims_pro_audio";
     private static final String KEY_CLAIMS_LOW_LATENCY = "claims_low_latency_audio";
     private static final String KEY_CLAIMS_MIDI = "claims_midi";
@@ -166,7 +165,7 @@ public class ProAudioActivity
 
         Resources strings = getResources();
         if (hasPassed) {
-            mTestStatusLbl.setText(strings.getString(R.string.audio_general_pass));
+            mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_pass));
         } else if (!mClaimsMIDI) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_midinotreported));
         } else if (!mClaimsUSBHostMode) {
@@ -232,14 +231,6 @@ public class ProAudioActivity
     //
     // PassFailButtons Overrides
     //
-    @Override
-    public String getReportFileName() { return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME; }
-
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_PRO_AUDIO_ACTIVITY);
-    }
-
     @Override
     public void recordTestResults() {
 

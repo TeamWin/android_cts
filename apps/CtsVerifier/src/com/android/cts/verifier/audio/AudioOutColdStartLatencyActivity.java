@@ -58,10 +58,6 @@ public class AudioOutColdStartLatencyActivity
 
     private boolean mTouchSoundsActive;
 
-    // ReportLog Schema
-    private static final String SECTION_OUTPUT_LATENCY = "out_coldlatency_activity";
-    private static final String KEY_LATENCY = "out_coldstart_latency";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.audio_coldstart_out_activity);
@@ -129,7 +125,6 @@ public class AudioOutColdStartLatencyActivity
                             updateTestStateButtons();
                             showColdStartLatency();
                             calcTestResult();
-                            reportLatency();
                         }
                     });
 
@@ -214,13 +209,5 @@ public class AudioOutColdStartLatencyActivity
         mIsTestRunning = false;
 
         stopOutTimer();
-    }
-
-    //
-    // PassFailButtons Overrides
-    //
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_OUTPUT_LATENCY);
     }
 }

@@ -1151,7 +1151,7 @@ public class StagefrightTest {
     }
 
     @Test
-    @AsbSecurityTest(cveBugId = 110435401)
+    @AsbSecurityTest(cveBugId = 68664359)
     public void testStagefright_bug_110435401() throws Exception {
         doStagefrightTest(R.raw.bug_110435401, 60000);
     }
@@ -1820,6 +1820,16 @@ public class StagefrightTest {
      to prevent merge conflicts, add Q tests below this comment,
      before any existing test methods
      ***********************************************************/
+    @Test
+    @AsbSecurityTest(cveBugId = 136175447)
+    public void testStagefright_cve_2019_2186() throws Exception {
+        long end = System.currentTimeMillis() + 180000; // 3 minutes from now
+        while (System.currentTimeMillis() < end) {
+            doStagefrightTestRawBlob(R.raw.cve_2019_2186, "video/3gpp", 128, 96,
+                    new CrashUtils.Config().setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS,
+                            CrashUtils.SIGABRT));
+        }
+    }
 
     @Test
     @AsbSecurityTest(cveBugId = 140692129)
@@ -2416,11 +2426,6 @@ public class StagefrightTest {
                 } catch (Exception e) {
                     // local exceptions ignored, not security issues
                 } finally {
-                    try {
-                        codec.stop();
-                    } catch (Exception e) {
-                        // local exceptions ignored, not security issues
-                    }
                     codec.release();
                     renderTarget.destroy();
                 }

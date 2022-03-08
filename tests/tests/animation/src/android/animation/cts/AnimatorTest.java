@@ -95,10 +95,11 @@ public class AnimatorTest {
         assertEquals(duration, animatorLocal.getDuration());
     }
 
+    @UiThreadTest
     @Test
     public void testIsRunning() throws Throwable {
         assertFalse(mAnimator.isRunning());
-        startAnimation(mAnimator);
+        mAnimator.start();
         assertTrue(mAnimator.isRunning());
     }
 
@@ -159,7 +160,7 @@ public class AnimatorTest {
         assertFalse(listener.mEnd);
         assertEquals(listener.mRepeat, 0);
         mAnimator.addListener(listener);
-        mAnimator.setDuration(100l);
+        mAnimator.setDuration(5000);
         startAnimation(mAnimator);
         SystemClock.sleep(200);
 

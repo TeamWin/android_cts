@@ -26,6 +26,7 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_INSETS_C
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TEXT_CHANGED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APPEARED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_TREE_APPEARING;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_WINDOW_BOUNDS_CHANGED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -113,6 +114,8 @@ final class Assertions {
                 .that(activityId.getTaskId()).isEqualTo(activity.getRealTaskId());
         assertWithMessage("context for session %s should have ActivityId", session)
                 .that(activityId.getToken()).isNotNull();
+        assertWithMessage("context for session %s should have windowToken", session)
+                .that(session.context.getWindowToken()).isNotNull();
     }
 
     /**
@@ -131,6 +134,8 @@ final class Assertions {
         final ActivityId activityId = session.context.getActivityId();
         assertWithMessage("context for session %s should not have ActivityIds", session)
                 .that(activityId).isNull();
+        assertWithMessage("context for session %s should not have windowToken", session)
+                .that(session.context.getWindowToken()).isNull();
     }
 
     /**
@@ -496,7 +501,7 @@ final class Assertions {
     }
 
     /**
-     * Asserts the existence and contents of a {@link #TYPE_VIEW_TEXT_CHANGED} event.
+     * Asserts the existence and contents of a {@link #TYPE_VIEW_INSETS_CHANGED} event.
      */
     public static void assertViewInsetsChanged(@NonNull List<ContentCaptureEvent> events) {
         boolean insetsEventFound = false;
@@ -513,6 +518,27 @@ final class Assertions {
                 String.format(
                     "Expected at least one VIEW_INSETS_CHANGED event in the set of events %s",
                     events));
+        }
+    }
+
+    /**
+     * Asserts the existence and contents of a {@link #TYPE_WINDOW_BOUNDS_CHANGED} event.
+     */
+    public static void assertWindowBoundsChanged(@NonNull List<ContentCaptureEvent> events) {
+        boolean boundsEventFound = false;
+        for (ContentCaptureEvent event : events) {
+            if (event.getType() == TYPE_WINDOW_BOUNDS_CHANGED) {
+                assertWithMessage("Expected window bounds to be non-null on %s", event)
+                        .that(event.getBounds()).isNotNull();
+                boundsEventFound = true;
+            }
+        }
+
+        if (!boundsEventFound) {
+            throw new RetryableException(
+                String.format(
+                        "Expected at least one WINDOW_BOUNDS_CHANGED event in the set of events %s",
+                        events));
         }
     }
 
@@ -600,6 +626,9 @@ final class Assertions {
                 break;
             case TYPE_SESSION_RESUMED:
                 string = "RESUMED";
+                break;
+            case TYPE_WINDOW_BOUNDS_CHANGED:
+                string = "WINDOW_BOUNDS";
                 break;
             default:
                 return "UNKNOWN-" + type;

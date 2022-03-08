@@ -18,6 +18,7 @@ package com.android.cts.verifier.managedprovisioning;
 
 import static android.os.UserHandle.myUserId;
 
+import static com.android.cts.verifier.managedprovisioning.CommandReceiverActivity.createIntentForDisablingKeyguardOrStatusBar;
 import static com.android.cts.verifier.managedprovisioning.Utils.createInteractiveTestItem;
 
 import android.app.Activity;
@@ -31,9 +32,9 @@ import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 
 import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
+import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
@@ -49,6 +50,7 @@ import com.android.cts.verifier.features.FeatureUtil;
  * adb shell dpm set-device-owner
  *  'com.android.cts.verifier/com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver'
  */
+@CddTest(requirement="7.7")
 public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListActivity {
     private static final String TAG = "DeviceOwnerPositiveTestActivity";
 
@@ -101,7 +103,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
         if (ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
             DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
-                    DeviceAdminTestReceiver.class);
+                    DeviceAdminTestReceiver.class, /* forDeviceOwner= */ true);
             if (dpm.isDeviceOwnerApp(getPackageName())) {
                 // Set DISALLOW_ADD_USER on behalf of ManagedProvisioning.
                 dpm.addUserRestriction(DeviceAdminTestReceiver.getReceiverComponentName(),
@@ -162,25 +164,25 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         setTestListAdapter(adapter);
 
         View setDeviceOwnerButton = findViewById(R.id.set_device_owner_button);
-        setDeviceOwnerButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                StringBuilder builder = new StringBuilder();
-                if (UserManager.isHeadlessSystemUserMode()) {
-                    builder.append(getString(R.string.grant_headless_system_user_permissions));
-                }
-
-                String message = builder.append(getString(R.string.set_device_owner_dialog_text))
-                        .toString();
-                Log.i(TAG, message);
-                new AlertDialog.Builder(
-                        DeviceOwnerPositiveTestActivity.this)
-                        .setIcon(android.R.drawable.ic_dialog_info)
-                        .setTitle(R.string.set_device_owner_dialog_title)
-                        .setMessage(message)
-                        .setPositiveButton(android.R.string.ok, null)
-                        .show();
+        setDeviceOwnerButton.setOnClickListener((v) -> {
+            StringBuilder builder = new StringBuilder();
+            int messageResId;
+            if (UserManager.isHeadlessSystemUserMode()) {
+                builder.append(getString(R.string.grant_headless_system_user_permissions));
+                messageResId = R.string.set_device_owner_headless_dialog_text;
+            } else {
+                messageResId = R.string.set_device_owner_dialog_text;
             }
+
+            String message = builder.append(getString(messageResId)).toString();
+            Log.i(TAG, message);
+            new AlertDialog.Builder(
+                    DeviceOwnerPositiveTestActivity.this)
+                    .setIcon(android.R.drawable.ic_dialog_info)
+                    .setTitle(R.string.set_device_owner_dialog_title)
+                    .setMessage(message)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
         });
 
     }
@@ -353,8 +355,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_USB_FILE_TRANSFER
-        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (FeatureUtil.isUsbFileTransferSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
                     R.string.device_owner_disallow_usb_file_transfer_test,
                     R.string.device_owner_disallow_usb_file_transfer_test_info,
@@ -378,32 +379,35 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_disable_statusbar_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
-                                                    true)),
+                                            /* disabled= */ true)),
                             new ButtonInfo(
                                     R.string.device_owner_reenable_statusbar_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_STATUSBAR_DISABLED,
-                                                    false))}));
+                                            /* disabled= */ false))
+                    }));
         }
 
         // setKeyguardDisabled
-        if (isKeyguardShownWhenUserDoesntHaveCredentials() && Utils.isLockscreenSupported(this)) {
+        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)
+                && Utils.isLockscreenSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
                     R.string.device_owner_disable_keyguard_test,
                     R.string.device_owner_disable_keyguard_test_info,
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_disable_keyguard_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                                    true)),
+                                            /* disabled= */ true)),
                             new ButtonInfo(
                                     R.string.device_owner_reenable_keyguard_button,
-                                    createDeviceOwnerIntentWithBooleanParameter(
+                                    createIntentForDisablingKeyguardOrStatusBar(this,
                                             CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
-                                                    false))}));
+                                            /* disabled= */ false))
+                    }));
         }
 
         // setLockTaskFeatures
@@ -504,20 +508,20 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     R.string.device_owner_disallow_user_switch,
                     R.string.device_owner_disallow_user_switch_info,
                     new ButtonInfo[]{
-                            new ButtonInfo(
-                                    R.string.device_owner_disallow_user_switch_create_user,
+                            new ButtonInfo(R.string.device_owner_disallow_user_switch_create_user,
                                     createCreateManagedUserWithoutSetupIntent()),
-                            new ButtonInfo(
-                                    R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_USER_SWITCH, true)),
-                            new ButtonInfo(
-                                    R.string.device_owner_settings_go,
+                            new ButtonInfo(R.string.device_owner_user_restriction_set,
+                                    CommandReceiverActivity
+                                            .createSetDeviceOwnerUserRestrictionIntent(
+                                                    UserManager.DISALLOW_USER_SWITCH,
+                                                    /* enforced= */ true)),
+                            new ButtonInfo(R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_USER_SETTINGS)),
-                            new ButtonInfo(
-                                    R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
-                                            UserManager.DISALLOW_USER_SWITCH, false))
+                            new ButtonInfo(R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity
+                                            .createSetDeviceOwnerUserRestrictionIntent(
+                                                    UserManager.DISALLOW_USER_SWITCH,
+                                                    /* enforced= */ false))
             }));
 
             // DISALLOW_REMOVE_USER
@@ -635,12 +639,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         CommandReceiverActivity.COMMAND_REMOVE_DEVICE_OWNER);
     }
 
-    private Intent createDeviceOwnerIntentWithBooleanParameter(String command, boolean value) {
-        return new Intent(this, CommandReceiverActivity.class)
-                .putExtra(CommandReceiverActivity.EXTRA_COMMAND, command)
-                .putExtra(CommandReceiverActivity.EXTRA_ENFORCED, value);
-    }
-
     private Intent createSetUserIconIntent(int iconRes) {
         return new Intent(this, CommandReceiverActivity.class)
                 .putExtra(CommandReceiverActivity.EXTRA_COMMAND,
@@ -721,11 +719,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         // Watches don't support the status bar so this is an ok proxy, but this is not the most
         // general test for that. TODO: add a test API to do a real check for status bar support.
         return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)
-                && !isAutomotive() && !isTelevision();
-    }
-
-    private boolean isKeyguardShownWhenUserDoesntHaveCredentials() {
-        return !isAutomotive();
+                && !isTelevision();
     }
 
     private boolean isSwipeToUnlockSupported() {
@@ -733,7 +727,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     }
 
     private boolean isAutomotive() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        return FeatureUtil.isAutomotive(this);
     }
 
     private boolean isTelevision() {

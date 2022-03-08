@@ -266,8 +266,8 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
     }
 
     private void setButtonPlayStatus(int playResId) {
-        String play = getResources().getText(R.string.audio_general_play).toString();
-        String stop = getResources().getText(R.string.audio_general_stop).toString();
+        String play = getResources().getText(R.string.frequency_mic_play).toString();
+        String stop = getResources().getText(R.string.frequency_mic_stop).toString();
 
         mButtonPlayNoise.setText(playResId == R.id.frequency_mic_play_noise_btn ? stop : play);
         mButtonPlayUsbNoise.setText(playResId ==

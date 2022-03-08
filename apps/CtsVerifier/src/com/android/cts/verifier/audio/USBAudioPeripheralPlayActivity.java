@@ -74,10 +74,10 @@ public class USBAudioPeripheralPlayActivity extends USBAudioPeripheralPlayerActi
                 Log.i(TAG, "Play Button Pressed");
                 if (!isPlaying()) {
                     startPlay();
-                    mPlayBtn.setText(getString(R.string.audio_general_stop));
+                    mPlayBtn.setText(getString(R.string.audio_uap_play_stopBtn));
                 } else {
                     stopPlay();
-                    mPlayBtn.setText(getString(R.string.audio_general_play));
+                    mPlayBtn.setText(getString(R.string.audio_uap_play_playBtn));
                 }
                 break;
             }

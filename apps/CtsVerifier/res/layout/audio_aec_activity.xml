@@ -48,12 +48,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/audio_aec_mandatory_no"
-                        android:text="@string/audio_general_no" />
+                        android:text="@string/af_no" />
                 <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:id="@+id/audio_aec_mandatory_yes"
-                        android:text="@string/audio_general_yes" />
+                        android:text="@string/af_yes" />
             </LinearLayout>
 
             <LinearLayout
@@ -79,7 +79,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:soundEffectsEnabled="false"
-                        android:text="@string/audio_general_test"
+                        android:text="@string/af_button_test"
                         android:id="@+id/audio_aec_button_test" />
                 <ProgressBar
                         android:layout_width="wrap_content"
@@ -90,7 +90,7 @@
                 <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/audio_general_results"
+                        android:text="@string/af_test_results"
                         android:id="@+id/audio_aec_test_result" />
             </LinearLayout>
 

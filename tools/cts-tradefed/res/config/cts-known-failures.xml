@@ -194,9 +194,6 @@
     <option name="compatibility:exclude-filter" value="CtsLocation2TestCases android.location2.cts.LocationManagerTest#testGetCoarseLocationUpdates_withListener" />
     <option name="compatibility:exclude-filter" value="CtsLocation2TestCases android.location2.cts.LocationManagerTest#testGetNetworkProviderLocationUpdates_withListener" />
 
-    <!-- b/116002979 -->
-    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.ListeningPortsTest" />
-
     <!-- b/117107760 -->
     <option name="compatibility:exclude-filter" value="CtsHarmfulAppWarningHostTestCases android.harmfulappwarning.cts.HarmfulAppWarningTest#testDismissDialog" />
     <option name="compatibility:exclude-filter" value="CtsHarmfulAppWarningHostTestCases android.harmfulappwarning.cts.HarmfulAppWarningTest#testLaunchAnyway" />
@@ -257,5 +254,16 @@
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testSetCameraDisabledLogged" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testSetCameraDisabledLogged" />
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testSetCameraDisabledLogged" />
+
+    <!-- b/204721335 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerJetpackTestCases android.server.wm.jetpack.SidecarTest#testSidecarInterface_onWindowLayoutChangeListener" />
+
+    <!-- b/209382234 -->
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases android.devicepolicy.cts.KeyManagementTest" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-work-profile] android.devicepolicy.cts.KeyManagementTest" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-secondary-user] android.devicepolicy.cts.KeyManagementTest" />
+
+    <!-- b/203177211 -->
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.ListeningPortsTest#testNoRemotelyAccessibleListeningUdpPorts" />
 
 </configuration>

@@ -72,7 +72,7 @@
                         <Button
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/audio_frequency_speaker_test_btn"
                             android:id="@+id/audio_frequency_speaker_test_btn"
                             android:nextFocusForward="@+id/pass_button"
                             android:nextFocusUp="@+id/audio_frequency_speaker_mic_ready_btn"
@@ -89,7 +89,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/audio_general_results"
+                        android:text="@string/audio_frequency_speaker_results_text"
                         android:id="@+id/audio_frequency_speaker_results_text"/>
 
                 </LinearLayout>

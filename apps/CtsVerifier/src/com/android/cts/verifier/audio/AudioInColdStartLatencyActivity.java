@@ -48,6 +48,8 @@ public class AudioInColdStartLatencyActivity
     // MegaAudio
     private Recorder mRecorder;
 
+//    private TextView mCallbackDeltaTxt;
+
     private long mPreviousCallbackTime;
     private long mCallbackDeltaTime;
 
@@ -56,13 +58,12 @@ public class AudioInColdStartLatencyActivity
     private long mAccumulatedTime;
     private long mNumCallbacks;
 
-    // ReportLog Schema
-    private static final String SECTION_INPUT_LATENCY = "in_coldlatency_activity";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setContentView(R.layout.audio_coldstart_in_activity);
         super.onCreate(savedInstanceState);
+
+//        mCallbackDeltaTxt = (TextView) findViewById(R.id.coldstart_inCallbackDeltaTxt);
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
@@ -141,6 +142,9 @@ public class AudioInColdStartLatencyActivity
         mRecorder.startStream();
         mPostStartTime = System.nanoTime();
 
+        showOpenTime();
+        showStartTime();
+
         if (mIsTestRunning) {
             mStartBtn.setEnabled(false);
             mStopBtn.setEnabled(true);
@@ -165,8 +169,6 @@ public class AudioInColdStartLatencyActivity
         calcColdStartLatency();
 
         showInResults();
-
-        reportLatency();
     }
 
     // Callback for Recorder
@@ -204,13 +206,5 @@ public class AudioInColdStartLatencyActivity
                 }
             }
         }
-    }
-
-    //
-    // PassFailButtons Overrides
-    //
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_INPUT_LATENCY);
     }
 }

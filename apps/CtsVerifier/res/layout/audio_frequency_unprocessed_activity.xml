@@ -67,7 +67,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/unprocessed_test_tone_btn"
                             android:id="@+id/unprocessed_test_tone_btn" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -91,14 +91,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_play"
+                            android:text="@string/unprocessed_play"
                             android:id="@+id/unprocessed_play_tone_btn" />
                     </LinearLayout>
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/unprocessed_test_tone_result"
                     android:id="@+id/unprocessed_test_tone_result" />
             </LinearLayout>
 
@@ -136,7 +136,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/unprocessed_test_noise_btn"
                             android:id="@+id/unprocessed_test_noise_btn" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -159,14 +159,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_play"
+                            android:text="@string/unprocessed_play"
                             android:id="@+id/unprocessed_play_noise_btn" />
                     </LinearLayout>
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/unprocessed_test_noise_result"
                     android:id="@+id/unprocessed_test_noise_result" />
             </LinearLayout>
 
@@ -204,7 +204,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/unprocessed_test_usb_background_btn"
                             android:id="@+id/unprocessed_test_usb_background_btn" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -216,7 +216,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/unprocessed_test_usb_background_result"
                     android:id="@+id/unprocessed_test_usb_background_result" />
             </LinearLayout>
 
@@ -254,7 +254,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_test"
+                            android:text="@string/unprocessed_test_usb_noise_btn"
                             android:id="@+id/unprocessed_test_usb_noise_btn" />
                         <ProgressBar
                             android:layout_width="wrap_content"
@@ -277,14 +277,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:soundEffectsEnabled="false"
-                            android:text="@string/audio_general_play"
+                            android:text="@string/unprocessed_play"
                             android:id="@+id/unprocessed_play_usb_noise_btn" />
                     </LinearLayout>
                 </LinearLayout>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/unprocessed_test_usb_noise_result"
                     android:id="@+id/unprocessed_test_usb_noise_result" />
             </LinearLayout>
              <View
@@ -295,7 +295,7 @@
             <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_general_results"
+                    android:text="@string/unprocessed_test_global_result"
                     android:id="@+id/unprocessed_test_global_result" />
 
             <include layout="@layout/pass_fail_buttons" />
