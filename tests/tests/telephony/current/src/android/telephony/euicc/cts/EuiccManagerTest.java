@@ -35,6 +35,7 @@ import android.telephony.euicc.DownloadableSubscription;
 import android.telephony.euicc.EuiccCardManager;
 import android.telephony.euicc.EuiccInfo;
 import android.telephony.euicc.EuiccManager;
+import android.text.TextUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -595,20 +596,10 @@ public class EuiccManagerTest {
             if (cardInfo.isEuicc()) {
                 for (UiccPortInfo portInfo : portInfoList) {
                     // Check if port is active and no profile install on it.
-                    if (portInfo.isActive() && portInfo.getIccId() == null) {
+                    if (portInfo.isActive() && TextUtils.isEmpty(portInfo.getIccId())) {
                         boolean result = mEuiccManager.isSimPortAvailable(portInfo.getPortIndex());
                         assertTrue(result);
-                    } else {
-                        // Port is not available.
-                        boolean result = mEuiccManager.isSimPortAvailable(portInfo.getPortIndex());
-                        assertFalse(result);
                     }
-                }
-            } else {
-                for (UiccPortInfo portInfo : portInfoList) {
-                    // Port is not Euicc.
-                    boolean result = mEuiccManager.isSimPortAvailable(portInfo.getPortIndex());
-                    assertFalse(result);
                 }
             }
         }
