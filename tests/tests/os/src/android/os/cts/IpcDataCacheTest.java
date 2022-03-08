@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.app.cts;
+package android.os.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
-import android.app.PropertyInvalidatedCache;
+import android.os.IpcDataCache;
 
 import androidx.test.filters.SmallTest;
 
@@ -28,19 +28,19 @@ import org.junit.After;
 import org.junit.Test;
 
 /**
- * Test for verifying the behavior of {@link PropertyInvalidatedCache}.  This test does
+ * Test for verifying the behavior of {@link IpcDataCache}.  This test does
  * not use any actual binder calls - it is entirely self-contained.  This test also relies
- * on the test mode of {@link PropertyInvalidatedCache} because Android SELinux rules do
+ * on the test mode of {@link IpcDataCache} because Android SELinux rules do
  * not grant test processes the permission to set system properties.
  * <p>
  * Build/Install/Run:
- *  atest FrameworksCoreTests:PropertyInvalidatedCacheTests
+ *  atest CtsOsTestCases:IpcDataCacheTest
  */
 @SmallTest
-public class PropertyInvalidatedCacheTests {
+public class IpcDataCacheTest {
 
     // Configuration for creating caches
-    private static final String MODULE = PropertyInvalidatedCache.MODULE_TEST;
+    private static final String MODULE = IpcDataCache.MODULE_TEST;
     private static final String API = "testApi";
 
     // This class is a proxy for binder calls.  It contains a counter that increments
@@ -68,7 +68,7 @@ public class PropertyInvalidatedCacheTests {
 
     // The functions for querying the server.
     private static class ServerQuery
-            extends PropertyInvalidatedCache.QueryHandler<Integer, Boolean> {
+            extends IpcDataCache.QueryHandler<Integer, Boolean> {
         private final ServerProxy mServer;
 
         ServerQuery(ServerProxy server) {
@@ -89,7 +89,7 @@ public class PropertyInvalidatedCacheTests {
     // tests. This also resets the test property map.
     @After
     public void tearDown() throws Exception {
-        PropertyInvalidatedCache.setTestMode(false);
+        IpcDataCache.setTestMode(false);
     }
 
     // This test is disabled pending an sepolicy change that allows any app to set the
@@ -102,11 +102,11 @@ public class PropertyInvalidatedCacheTests {
         ServerProxy tester = new ServerProxy();
 
         // Create a cache that uses simple arithmetic to computer its values.
-        PropertyInvalidatedCache<Integer, Boolean> testCache =
-                new PropertyInvalidatedCache<>(4, MODULE, API, "testCache1",
+        IpcDataCache<Integer, Boolean> testCache =
+                new IpcDataCache<>(4, MODULE, API, "testCache1",
                         new ServerQuery(tester));
 
-        PropertyInvalidatedCache.setTestMode(true);
+        IpcDataCache.setTestMode(true);
         testCache.testPropertyName();
 
         tester.verify(0);
@@ -148,14 +148,14 @@ public class PropertyInvalidatedCacheTests {
         ServerProxy tester = new ServerProxy();
 
         // Three caches, all using the same system property but one uses a different name.
-        PropertyInvalidatedCache<Integer, Boolean> cache1 =
-                new PropertyInvalidatedCache<>(4, MODULE, API, "cacheA",
+        IpcDataCache<Integer, Boolean> cache1 =
+                new IpcDataCache<>(4, MODULE, API, "cacheA",
                         new ServerQuery(tester));
-        PropertyInvalidatedCache<Integer, Boolean> cache2 =
-                new PropertyInvalidatedCache<>(4, MODULE, API, "cacheA",
+        IpcDataCache<Integer, Boolean> cache2 =
+                new IpcDataCache<>(4, MODULE, API, "cacheA",
                         new ServerQuery(tester));
-        PropertyInvalidatedCache<Integer, Boolean> cache3 =
-                new PropertyInvalidatedCache<>(4, MODULE, API, "cacheB",
+        IpcDataCache<Integer, Boolean> cache3 =
+                new IpcDataCache<>(4, MODULE, API, "cacheB",
                         new ServerQuery(tester));
 
         // Caches are enabled upon creation.
@@ -177,7 +177,7 @@ public class PropertyInvalidatedCacheTests {
         assertEquals(false, cache3.getDisabledState());
 
         // Create a new cache1.  Verify that the new instance is disabled.
-        cache1 = new PropertyInvalidatedCache<>(4, MODULE, API, "cacheA",
+        cache1 = new IpcDataCache<>(4, MODULE, API, "cacheA",
                 new ServerQuery(tester));
         assertEquals(true, cache1.getDisabledState());
 
@@ -188,13 +188,13 @@ public class PropertyInvalidatedCacheTests {
         assertEquals(false, cache3.getDisabledState());
 
         // Create a new cache1.  Verify that the new instance is not disabled.
-        cache1 = new PropertyInvalidatedCache<>(4, MODULE, API, "cacheA",
+        cache1 = new IpcDataCache<>(4, MODULE, API, "cacheA",
                 new ServerQuery(tester));
         assertEquals(false, cache1.getDisabledState());
     }
 
     private static class TestQuery
-            extends PropertyInvalidatedCache.QueryHandler<Integer, String> {
+            extends IpcDataCache.QueryHandler<Integer, String> {
 
         private int mRecomputeCount = 0;
 
@@ -209,7 +209,7 @@ public class PropertyInvalidatedCacheTests {
         }
     }
 
-    private static class TestCache extends PropertyInvalidatedCache<Integer, String> {
+    private static class TestCache extends IpcDataCache<Integer, String> {
         private final TestQuery mQuery;
 
         TestCache() {
@@ -248,7 +248,7 @@ public class PropertyInvalidatedCacheTests {
         assertEquals("foo5", cache.query(5));
         assertEquals(3, cache.getRecomputeCount());
         // Invalidate the cache with a direct call to the property.
-        PropertyInvalidatedCache.invalidateCache(MODULE, API);
+        IpcDataCache.invalidateCache(MODULE, API);
         assertEquals("foo5", cache.query(5));
         assertEquals("foo5", cache.query(5));
         assertEquals(4, cache.getRecomputeCount());

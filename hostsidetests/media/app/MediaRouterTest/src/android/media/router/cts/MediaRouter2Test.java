@@ -30,6 +30,7 @@ import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_3_1;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_3_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_3_3;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -46,6 +47,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +55,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @LargeTest
 public class MediaRouter2Test {
@@ -77,14 +80,14 @@ public class MediaRouter2Test {
         List<String> features = new ArrayList<>();
         features.add("A test feature");
         RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(features, /*activeScan=*/false).build();
+                new RouteDiscoveryPreference.Builder(features, /*activeScan=*/ false).build();
         mRouter2.registerRouteCallback(mExecutor, mRouterDummyCallback, preference);
     }
 
     @Test
     public void dontDedupeByDefault() throws Exception {
         RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/  true).build();
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/ true).build();
         Map<String, MediaRoute2Info> routes =
                 waitAndGetRoutes(preference, Set.of(ROUTE_ID_1_1, ROUTE_ID_2_1, ROUTE_ID_3_1));
 
@@ -102,7 +105,7 @@ public class MediaRouter2Test {
     @Test
     public void setDeduplicationPackageOrder1() throws Exception {
         RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/true)
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/ true)
                         .setDeduplicationPackageOrder(
                                 List.of(
                                         MEDIA_ROUTER_PROVIDER_1_PACKAGE,
@@ -126,7 +129,7 @@ public class MediaRouter2Test {
     @Test
     public void setDeduplicationPackageOrder2() throws Exception {
         RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/true)
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/ true)
                         .setDeduplicationPackageOrder(
                                 List.of(
                                         MEDIA_ROUTER_PROVIDER_3_PACKAGE,
@@ -150,7 +153,7 @@ public class MediaRouter2Test {
     @Test
     public void setDeduplicationPackageOrder3() throws Exception {
         RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/true)
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/ true)
                         .setDeduplicationPackageOrder(
                                 List.of(
                                         MEDIA_ROUTER_PROVIDER_2_PACKAGE,
@@ -169,6 +172,89 @@ public class MediaRouter2Test {
         assertTrue(routes.containsKey(ROUTE_ID_3_1));
         assertTrue(routes.containsKey(ROUTE_ID_3_2));
         assertFalse(routes.containsKey(ROUTE_ID_3_3));
+    }
+
+    @Test
+    public void testRouteCallbacks() throws Exception {
+        Set<String> addedRouteIds = new HashSet<>();
+        Set<String> removedRouteIds = new HashSet<>();
+
+        AtomicReference<CountDownLatch> addLatchRef = new AtomicReference<>();
+        AtomicReference<CountDownLatch> removeLatchRef = new AtomicReference<>();
+
+        addLatchRef.set(new CountDownLatch(1));
+        removeLatchRef.set(new CountDownLatch(1));
+
+        RouteDiscoveryPreference preference =
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, /*activeScan=*/ true)
+                        .setAllowedPackages(List.of(MEDIA_ROUTER_PROVIDER_1_PACKAGE))
+                        .setDeduplicationPackageOrder(
+                                List.of(
+                                        MEDIA_ROUTER_PROVIDER_2_PACKAGE,
+                                        MEDIA_ROUTER_PROVIDER_3_PACKAGE,
+                                        MEDIA_ROUTER_PROVIDER_1_PACKAGE))
+                        .build();
+        MediaRouter2.RouteCallback routeCallback =
+                new MediaRouter2.RouteCallback() {
+                    @Override
+                    public void onRoutesAdded(List<MediaRoute2Info> routes) {
+                        for (MediaRoute2Info route : routes) {
+                            if (!route.isSystemRoute()) {
+                                addedRouteIds.add(route.getOriginalId());
+                            }
+                        }
+                        addLatchRef.get().countDown();
+                    }
+
+                    @Override
+                    public void onRoutesRemoved(List<MediaRoute2Info> routes) {
+                        for (MediaRoute2Info route : routes) {
+                            removedRouteIds.add(route.getOriginalId());
+                        }
+                        removeLatchRef.get().countDown();
+                    }
+                };
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, preference);
+        assertTrue(addLatchRef.get().await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertFalse(removeLatchRef.get().await(WAIT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(Set.of(ROUTE_ID_1_1, ROUTE_ID_1_2, ROUTE_ID_1_3), addedRouteIds);
+
+        addLatchRef.set(new CountDownLatch(1));
+        removeLatchRef.set(new CountDownLatch(1));
+        RouteDiscoveryPreference preference2 =
+                new RouteDiscoveryPreference.Builder(preference)
+                        .setAllowedPackages(
+                                List.of(
+                                        MEDIA_ROUTER_PROVIDER_1_PACKAGE,
+                                        MEDIA_ROUTER_PROVIDER_2_PACKAGE))
+                        .build();
+
+        addedRouteIds.clear();
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, preference2);
+        assertTrue(addLatchRef.get().await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(removeLatchRef.get().await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(Set.of(ROUTE_ID_2_1, ROUTE_ID_2_2, ROUTE_ID_2_3), addedRouteIds);
+        assertEquals(Set.of(ROUTE_ID_1_2), removedRouteIds);
+
+        addLatchRef.set(new CountDownLatch(1));
+        removeLatchRef.set(new CountDownLatch(1));
+        RouteDiscoveryPreference preference3 =
+                new RouteDiscoveryPreference.Builder(preference)
+                        .setAllowedPackages(
+                                List.of(
+                                        MEDIA_ROUTER_PROVIDER_1_PACKAGE,
+                                        MEDIA_ROUTER_PROVIDER_2_PACKAGE,
+                                        MEDIA_ROUTER_PROVIDER_3_PACKAGE))
+                        .build();
+
+        addedRouteIds.clear();
+        removedRouteIds.clear();
+
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, preference3);
+        assertTrue(addLatchRef.get().await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(removeLatchRef.get().await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(Set.of(ROUTE_ID_3_1, ROUTE_ID_3_2), addedRouteIds);
+        assertEquals(Set.of(ROUTE_ID_1_3), removedRouteIds);
     }
 
     // It returns original route id -> route for convenience

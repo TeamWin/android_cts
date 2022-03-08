@@ -66,4 +66,10 @@ public class MediaRouter2HostTest extends BaseMediaHostSideTest {
         runDeviceTests(
                 MEDIA_ROUTER_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "setDeduplicationPackageOrder3");
     }
+
+    @AppModeFull
+    @RequiresDevice
+    public void testCallback() throws Exception {
+        runDeviceTests(MEDIA_ROUTER_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testRouteCallbacks");
+    }
 }

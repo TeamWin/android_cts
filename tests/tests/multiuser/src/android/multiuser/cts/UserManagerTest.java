@@ -139,7 +139,7 @@ public final class UserManagerTest {
                     userHandle);
             final UserManager cloneUserManager = userContext.getSystemService(UserManager.class);
             assertThat(cloneUserManager.isMediaSharedWithParent()).isTrue();
-            assertThat(cloneUserManager.isCredentialSharedWithParent()).isTrue();
+            assertThat(cloneUserManager.isCredentialSharableWithParent()).isTrue();
             assertThat(cloneUserManager.isCloneProfile()).isTrue();
 
             final List<UserInfo> list = mUserManager.getUsers(true, true, true);

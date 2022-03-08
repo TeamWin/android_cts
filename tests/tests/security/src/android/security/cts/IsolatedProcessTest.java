@@ -15,6 +15,7 @@
  */
 package android.security.cts;
 
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -25,8 +26,8 @@ import android.os.RemoteException;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.security.cts.IIsolatedService;
 import android.security.cts.IsolatedService;
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import android.util.Log;
+import androidx.test.InstrumentationRegistry;
 import com.android.internal.util.ArrayUtils;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,7 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 
 @RunWith(AndroidJUnit4.class)
-public class IsolatedProcessTest extends StsExtraBusinessLogicTestCase {
+public class IsolatedProcessTest {
     static final String TAG = IsolatedProcessTest.class.getSimpleName();
 
     private static final long BIND_SERVICE_TIMEOUT = 5000;
@@ -71,6 +72,10 @@ public class IsolatedProcessTest extends StsExtraBusinessLogicTestCase {
             mLatch.countDown();
         }
     };
+
+    private static Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
 
     @Before
     public void setUp() throws InterruptedException {

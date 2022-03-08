@@ -84,6 +84,8 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       else:
         w, h = capture_request_utils.get_available_output_sizes(
             'yuv', props, max_size=MAX_IMG_SIZE)[0]
+      logging.debug('YUV size: (%d, %d)', w, h)
+      logging.debug('JPEG size: %s', max_jpeg_size)
       fmt_yuv = {'format': 'yuv', 'width': w, 'height': h}
       fmt_jpg = {'format': 'jpeg'}
 

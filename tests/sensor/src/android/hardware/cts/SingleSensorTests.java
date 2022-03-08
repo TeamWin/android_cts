@@ -181,7 +181,7 @@ public class SingleSensorTests extends SensorTestCase {
     }
 
     public void testAccelerometer_automotive() throws Throwable {
-        runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_25HZ, true);
+        runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_100HZ, true);
     }
 
     public void testAccelUncalibrated_fastest() throws Throwable {
@@ -218,6 +218,10 @@ public class SingleSensorTests extends SensorTestCase {
 
     public void testAccelUncalibrated_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_1HZ);
+    }
+
+    public void testAccelUncalibrated_automotive() throws Throwable {
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_100HZ, true);
     }
 
     public void testMagneticField_fastest() throws Throwable {
@@ -625,7 +629,7 @@ public class SingleSensorTests extends SensorTestCase {
     }
 
     public void testAccelerometerLimitedAxes_automotive() throws Throwable {
-        runSensorTest(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES, RATE_25HZ, true);
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES, RATE_100HZ, true);
     }
 
     public void testAccelerometerLimitedAxesUncalibrated_fastest() throws Throwable {
@@ -666,7 +670,7 @@ public class SingleSensorTests extends SensorTestCase {
     }
 
     public void testAccelerometerLimitedAxesUncalibrated_automotive() throws Throwable {
-        runSensorTest(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED, RATE_25HZ, true);
+        runSensorTest(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED, RATE_100HZ, true);
     }
 
     public void testGyroscopeLimitedAxes_fastest() throws Throwable {
