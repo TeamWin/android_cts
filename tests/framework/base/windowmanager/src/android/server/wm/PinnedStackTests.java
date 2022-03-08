@@ -515,16 +515,16 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPreferDockBigOverlaysWithExpandedPip() {
-        testPreferDockBigOverlaysWithExpandedPip(true);
+    public void testShouldDockBigOverlaysWithExpandedPip() {
+        testShouldDockBigOverlaysWithExpandedPip(true);
     }
 
     @Test
-    public void testNotPreferDockBigOverlaysWithExpandedPip() {
-        testPreferDockBigOverlaysWithExpandedPip(false);
+    public void testShouldNotDockBigOverlaysWithExpandedPip() {
+        testShouldDockBigOverlaysWithExpandedPip(false);
     }
 
-    private void testPreferDockBigOverlaysWithExpandedPip(boolean preferDock) {
+    private void testShouldDockBigOverlaysWithExpandedPip(boolean shouldDock) {
         assumeTrue(supportsExpandedPip());
         TestActivitySession<TestActivity> testSession = createManagedTestActivitySession();
         final Intent intent = new Intent(mContext, TestActivity.class);
@@ -541,7 +541,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        testSession.runOnMainSyncAndWait(() -> activity.setPreferDockBigOverlays(preferDock));
+        testSession.runOnMainSyncAndWait(() -> activity.setShouldDockBigOverlays(shouldDock));
 
         mWmState.assertResumedActivity("Activity must be resumed", activity.getComponentName());
         assertPinnedStackExists();
@@ -549,8 +549,15 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             final Task task = mWmState.getTaskByActivity(activity.getComponentName());
             final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
 
-            assertEquals(preferDock, info.getPreferDockBigOverlays());
+            assertEquals(shouldDock, info.shouldDockBigOverlays());
         });
+
+        final boolean[] actual = new boolean[] {!shouldDock};
+        testSession.runOnMainSyncAndWait(() -> {
+            actual[0] = activity.shouldDockBigOverlays();
+        });
+
+        assertEquals(shouldDock, actual[0]);
     }
 
     @Test
