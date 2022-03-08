@@ -29,7 +29,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.server.pm.SharedUidMigration.LIVE_TRANSITION
 import org.junit.After
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -40,12 +39,6 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets.UTF_8
-import java.security.Signature
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-import java.util.UUID
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
@@ -182,53 +175,6 @@ class AppIdMigrationTest {
         result = resolver.call(authority, "data", null, null).assertNotNull()
         val newUUID = result.getString(RESULT_KEY)
         assertEquals(oldUUID, newUUID)
-        uninstallPackage(Const.DATA_TEST_PKG)
-    }
-
-    @Ignore
-    @Test
-    fun testKeyMigration() = withStrategy(LIVE_TRANSITION) {
-        val apk = "$TMP_APK_PATH/DataTestApp"
-        assertTrue(installPackage(apk + "1.apk"))
-        val oldUid = mPm.getPackageUid(Const.DATA_TEST_PKG, PackageInfoFlags.of(0))
-        val authority = Const.DATA_TEST_PKG + ".provider"
-        val resolver = mContext.contentResolver
-        val secret = UUID.randomUUID().toString()
-
-        // Ask the app to encrypt secret with AES.
-        var result = resolver.call(authority, "encryptAES", secret, null).assertNotNull()
-        assertNotNull(result[RESULT_KEY])
-        assertNotNull(result["iv"])
-        val encResult = result
-
-        // Ask the app to generate a new EC keypair and sign our data.
-        result = resolver.call(authority, "signEC", secret, null).assertNotNull()
-        val signature = result.getByteArray(RESULT_KEY).assertNotNull()
-        val oldCertChain = result.getByteArray("certChain").assertNotNull()
-
-        // Update the data test APK and make sure UID changed.
-        assertTrue(installPackage(apk + "2.apk"))
-        val newUid = mPm.getPackageUid(Const.DATA_TEST_PKG, PackageInfoFlags.of(0))
-        assertNotEquals(oldUid, newUid)
-
-        // Ask the app to decrypt our secret.
-        result = resolver.call(authority, "decryptAES", null, encResult).assertNotNull()
-        val decSecret = result.getString(RESULT_KEY)
-        assertEquals(secret, decSecret)
-
-        // Ask the app to return the previously generated EC certificate.
-        result = resolver.call(authority, "getECCert", null, null).assertNotNull()
-        val rawCert = result.getByteArray(RESULT_KEY).assertNotNull()
-        val newCertChain = result.getByteArray("certChain").assertNotNull()
-        val cf = CertificateFactory.getInstance("X.509")
-        val cert = cf.generateCertificate(ByteArrayInputStream(rawCert)) as X509Certificate
-
-        // Verify the signature and cert.
-        assertArrayEquals(oldCertChain, newCertChain)
-        val s = Signature.getInstance("SHA256withECDSA")
-        s.initVerify(cert)
-        s.update(secret.toByteArray(UTF_8))
-        assertTrue(s.verify(signature))
         uninstallPackage(Const.DATA_TEST_PKG)
     }
 
