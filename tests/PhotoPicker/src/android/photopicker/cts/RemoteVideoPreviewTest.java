@@ -48,6 +48,7 @@ import androidx.test.uiautomator.UiSelector;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
@@ -112,6 +113,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/223224727 is fixed")
     public void testBasicVideoPreview() throws Exception {
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID1)));
 
@@ -144,6 +146,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/223224727 is fixed")
     public void testSwipeAdjacentVideoPreview() throws Exception {
         initCloudProviderWithVideo(
                 Arrays.asList(Pair.create(null, CLOUD_ID1), Pair.create(null, CLOUD_ID2)));
@@ -179,6 +182,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once b/223224727 is fixed")
     public void testSwipeImageVideoPreview() throws Exception {
         initCloudProviderWithImage(Arrays.asList(Pair.create(null, CLOUD_ID1)));
         initCloudProviderWithVideo(Arrays.asList(Pair.create(null, CLOUD_ID2)));
@@ -299,8 +303,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
 
     private void launchPreviewMultiple(int count) throws Exception {
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        // TODO(b/205291616): Replace 100 with MediaStore.getPickImagesMaxLimit()
-        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, 100);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         final List<UiObject> itemList = findItemList(count);
