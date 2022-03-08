@@ -328,6 +328,11 @@ public abstract class ActivityManagerTestBase {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
 
+    protected static String getAmStartCmdWithDismissKeyguardIfInsecure(
+            final ComponentName activityName) {
+        return "am start --dismiss-keyguard-if-insecure -n " + getActivityName(activityName);
+    }
+
     protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     protected TouchHelper mTouchHelper = new TouchHelper(mInstrumentation, mWmState);
     // Initialized in setUp to execute with proper permission, such as MANAGE_ACTIVITY_TASKS
@@ -789,6 +794,11 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivityWithData(final ComponentName activityName, String data) {
         executeShellCommand(getAmStartCmdWithData(activityName, data));
+        mWmState.waitForValidState(activityName);
+    }
+
+    protected void launchActivityWithDismissKeyguardIfInsecure(final ComponentName activityName) {
+        executeShellCommand(getAmStartCmdWithDismissKeyguardIfInsecure(activityName));
         mWmState.waitForValidState(activityName);
     }
 
