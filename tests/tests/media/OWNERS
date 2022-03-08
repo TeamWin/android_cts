@@ -2,14 +2,91 @@
 include ../../media/OWNERS
 elaurent@google.com
 etalvala@google.com
-hdmoon@google.com
 hunga@google.com
-insun@google.com
-jaewan@google.com
-jinpark@google.com
 jmtrivi@google.com
 jsharkey@android.com
-sungsoo@google.com
 
-# go/android-fwk-media-solutions for info on areas of ownership.
-include platform/frameworks/av:/media/janitors/media_solutions_OWNERS
+per-file src/android/media/cts/AdaptivePlaybackTest.java = hunga@google.com
+per-file src/android/media/cts/AudioMetadataTest.java = hunga@google.com
+per-file src/android/media/cts/AudioRecordTest.java = hunga@google.com
+per-file src/android/media/cts/AudioRecord_BufferSizeTest.java = hunga@google.com
+per-file src/android/media/cts/AudioTrackLatencyTest.java = hunga@google.com
+per-file src/android/media/cts/AudioTrackOffloadTest.java = hunga@google.com
+per-file src/android/media/cts/AudioTrackSurroundTest.java = hunga@google.com
+per-file src/android/media/cts/AudioTrackTest.java = hunga@google.com
+per-file src/android/media/cts/AudioTrack_ListenerTest.java = hunga@google.com
+per-file src/android/media/cts/SoundPoolAacTest.java = hunga@google.com
+per-file src/android/media/cts/SoundPoolHapticTest.java = hunga@google.com
+per-file src/android/media/cts/SoundPoolMidiTest.java = hunga@google.com
+per-file src/android/media/cts/SoundPoolOggTest.java = hunga@google.com
+per-file src/android/media/cts/SoundPoolTest.java = hunga@google.com
+per-file src/android/media/cts/VolumeShaperTest.java = hunga@google.com
+
+per-file src/android/media/cts/AudioAttributesTest.java = jmtrivi@google.com
+per-file src/android/media/cts/AudioFocusTest.java = jmtrivi@google.com
+per-file src/android/media/cts/AudioPlaybackConfigurationTest.java = jmtrivi@google.com
+per-file src/android/media/cts/AudioRecordingConfigurationTest.java = jmtrivi@google.com
+per-file src/android/media/cts/DecoderTestAacDrc.java = jmtrivi@google.com
+per-file src/android/media/cts/DecoderTestAacFormat.java = jmtrivi@google.com
+per-file src/android/media/cts/DecoderTestXheAac.java = jmtrivi@google.com
+per-file src/android/media/cts/LoudnessEnhancerTest.java = jmtrivi@google.com
+per-file src/android/media/cts/RingtoneManagerTest.java = jmtrivi@google.com
+per-file src/android/media/cts/RingtoneTest.java = jmtrivi@google.com
+
+per-file src/android/media/cts/AudioNativeTest.java = philburk@google.com
+per-file src/android/media/cts/AudioPlayRoutingNative.java = philburk@google.com
+per-file src/android/media/cts/AudioRecordNative.java = philburk@google.com
+per-file src/android/media/cts/AudioRecordRoutingNative.java = philburk@google.com
+per-file src/android/media/cts/AudioTrackNative.java = philburk@google.com
+per-file src/android/media/cts/MidiSoloTest.java = philburk@google.com
+
+per-file src/android/media/cts/DecodeAccuracyTest.java = lajos@google.com
+per-file src/android/media/cts/DecodeEditEncodeTest.java = lajos@google.com
+per-file src/android/media/cts/DecoderConformanceTest.java = lajos@google.com
+per-file src/android/media/cts/DecoderTest.java = lajos@google.com
+per-file src/android/media/cts/EncodeDecodeTest.java = lajos@google.com
+per-file src/android/media/cts/EncodeVirtualDisplayTest.java = lajos@google.com
+per-file src/android/media/cts/EncodeVirtualDisplayWithCompositionTest.java = lajos@google.com
+per-file src/android/media/cts/EncoderTest.java = lajos@google.com
+per-file src/android/media/cts/MediaCodecBlockModelTest.java = lajos@google.com
+per-file src/android/media/cts/MediaCodecCapabilitiesTest.java = lajos@google.com
+per-file src/android/media/cts/MediaCodecListTest.java = lajos@google.com
+per-file src/android/media/cts/MediaCodecTest.java = lajos@google.com
+per-file src/android/media/cts/NativeDecoderTest.java = lajos@google.com
+per-file src/android/media/cts/NativeImageReaderTest.java = lajos@google.com
+per-file src/android/media/cts/ResourceManagerTest.java = lajos@google.com
+per-file src/android/media/cts/NativeDecoderTest.java = lajos@google.com
+per-file src/android/media/cts/VideoCodecTest.java = lajos@google.com
+per-file src/android/media/cts/VideoDecoderPerfTest.java = lajos@google.com
+per-file src/android/media/cts/VideoDecoderRotationTest.java = lajos@google.com
+per-file src/android/media/cts/VideoEncoderTest.java = lajos@google.com
+per-file src/android/media/cts/VideoCodecTest.java = lajos@google.com
+
+per-file src/android/media/cts/MediaBrowserServiceTest.java = olly@google.com
+per-file src/android/media/cts/MediaBrowserTest.java = olly@google.com
+per-file src/android/media/cts/MediaCasTest.java = olly@google.com
+per-file src/android/media/cts/MediaCommunicationManagerTest.java = olly@google.com
+per-file src/android/media/cts/MediaController2Test.java = olly@google.com
+per-file src/android/media/cts/MediaControllerTest.java = olly@google.com
+per-file src/android/media/cts/MediaExtractorTest.java = olly@google.com
+per-file src/android/media/cts/MediaFormatTest.java = olly@google.com
+per-file src/android/media/cts/MediaMetadataRetrieverTest.java = olly@google.com
+per-file src/android/media/cts/MediaMetadataTest.java = olly@google.com
+per-file src/android/media/cts/MediaMuxerTest.java = olly@google.com
+per-file src/android/media/cts/MediaPlayerFlakyNetworkTest.java = olly@google.com
+per-file src/android/media/cts/MediaPlayerSurfaceTest.java = olly@google.com
+per-file src/android/media/cts/MediaPlayerTest.java = olly@google.com
+per-file src/android/media/cts/MediaMuxerTest.java = olly@google.com
+per-file src/android/media/cts/MediaRecorderTest.java = olly@google.com
+per-file src/android/media/cts/MediaRoute2InfoTest.java = olly@google.com
+per-file src/android/media/cts/MediaRoute2ProviderServiceTest.java = olly@google.com
+per-file src/android/media/cts/MediaRouter2Test.java = olly@google.com
+per-file src/android/media/cts/MediaRouterTest.java = olly@google.com
+per-file src/android/media/cts/MediaSession2ServiceTest.java = olly@google.com
+per-file src/android/media/cts/MediaSession2Test.java = olly@google.com
+per-file src/android/media/cts/MediaSessionManagerTest.java = olly@google.com
+per-file src/android/media/cts/MediaSessionTest.java = olly@google.com
+per-file src/android/media/cts/StreamingMediaPlayerTest.java = olly@google.com
+
+per-file src/android/media/cts/CamcorderProfileTest.java = etalvala@google.com
+per-file src/android/media/cts/CameraProfileTest.java = etalvala@google.com
