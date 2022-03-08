@@ -16,7 +16,6 @@
 
 package android.media.codec.cts;
 
-import android.content.res.Resources;
 import android.media.MediaCodec;
 import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
@@ -34,9 +33,10 @@ import android.os.Looper;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.compatibility.common.util.MediaUtils;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,9 +47,6 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * Verification test for video encoder and decoder.
@@ -269,10 +266,11 @@ public class VideoCodecTestBase {
         public ArrayList<MediaCodec.BufferInfo> bufferInfo;
         public EncodingStatisticsInfo encStat;
 
-        VideoEncodeOutput(ArrayList<MediaCodec.BufferInfo> bufferInfo,
-            EncodingStatisticsInfo encStat) {
-            bufferInfo = bufferInfo;
-            encStat = encStat;
+        VideoEncodeOutput(
+                ArrayList<MediaCodec.BufferInfo> bufferInfo,
+                EncodingStatisticsInfo encStat) {
+            this.bufferInfo = bufferInfo;
+            this.encStat = encStat;
         }
     }
 
@@ -1042,10 +1040,6 @@ public class VideoCodecTestBase {
                     out.inPresentationTimeUs = mInPresentationTimeUs;
                     out.outPresentationTimeUs = mOutPresentationTimeUs;
                 }
-                mCodec.releaseOutputBuffer(index, false);
-
-                out.flags = info.flags;
-                out.outputGenerated = true;
 
                 MediaFormat format = codec.getOutputFormat(index);
                 if (format.containsKey(MediaFormat.KEY_VIDEO_QP_AVERAGE)) {
@@ -1053,6 +1047,11 @@ public class VideoCodecTestBase {
                     // Copy per-frame avgQp to sequence level buffer
                     mHelper.saveAvgQp(avgQp);
                 }
+
+                mCodec.releaseOutputBuffer(index, false);
+
+                out.flags = info.flags;
+                out.outputGenerated = true;
 
                 if (mHelper.saveOutputFrame(out)) {
                     // output EOS
@@ -1092,6 +1091,17 @@ public class VideoCodecTestBase {
         @Override
         public void run() {
             Looper.prepare();
+            setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    Log.e(TAG, "thread " + t + " exception " + e);
+                    try {
+                        deleteCodec();
+                    } catch (Exception ex) {
+                        Log.e(TAG, "exception from deleteCodec " + e);
+                    }
+                }
+            });
             synchronized (mThreadEvent) {
                 mHandler = new Handler();
                 mThreadEvent.notify();
