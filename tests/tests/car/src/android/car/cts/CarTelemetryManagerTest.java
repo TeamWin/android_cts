@@ -26,6 +26,7 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.VehiclePropertyIds;
 import android.car.telemetry.CarTelemetryManager;
+import android.car.telemetry.TelemetryProto;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.ArrayMap;
 
@@ -33,8 +34,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.car.telemetry.TelemetryProto;
 
 import org.junit.After;
 import org.junit.Before;

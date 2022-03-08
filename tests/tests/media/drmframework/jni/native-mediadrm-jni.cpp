@@ -27,7 +27,6 @@
 #include <jni.h>
 #include <nativehelper/JNIHelp.h>
 #include <sys/stat.h>
-
 #include <android/native_window_jni.h>
 
 #include "AMediaObjects.h"
@@ -1040,6 +1039,17 @@ extern "C" jboolean testGetKeyRequestNative(
             jniThrowExceptionFmt(env, "java/lang/RuntimeException", errorMessage.c_str(), keyRequestType, status);
             return JNI_FALSE;
     }
+
+    // Check service availability
+    const char *outValue = NULL;
+    status = AMediaDrm_getPropertyString(aMediaObjects.getDrm(),
+            "aidlVersion", &outValue);
+    if (status != AMEDIA_OK) {
+        // Drm service not using aidl interface, skip checking default url value
+        return JNI_TRUE;
+    }
+
+    ALOGD("aidlVersion is [%s]", outValue);
 
     ALOGD("kDefaultUrl [%s], length %d, defaultUrl [%s], length %d",
         kDefaultUrl,

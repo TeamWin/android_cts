@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.PROVISION_DEMO_DEVICE;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
@@ -63,6 +64,7 @@ import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.provider.Settings;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -686,6 +688,123 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+    @Postsubmit(reason = "New test")
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    public void newlyProvisionedFullyManagedDevice_setsDeviceAsDemoDeviceWhenRequested()
+            throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+        // TODO(b/222499341): replace with annotations
+        int demoDevice = TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE, 0);
+        TestApis.settings().global().putInt(Settings.Global.DEVICE_DEMO_MODE, 0);
+        try {
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder()
+                            .setDemoDevice(true)
+                            .build();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+            assertThat(TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE, 0))
+                    .isEqualTo(1);
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+            TestApis.settings().global().putInt(Settings.Global.DEVICE_DEMO_MODE, demoDevice);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    public void newlyProvisionedFullyManagedDevice_setsProvisioningStateWhenDemoDeviceIsRequested()
+            throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+        // TODO(b/222499341): replace with annotations
+        int demoDevice = TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE, 0);
+        try {
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder()
+                            .setDemoDevice(true)
+                            .build();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+            assertThat(sDevicePolicyManager.getUserProvisioningState())
+                    .isEqualTo(DevicePolicyManager.STATE_USER_SETUP_FINALIZED);
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+            TestApis.settings().global().putInt(Settings.Global.DEVICE_DEMO_MODE, demoDevice);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(PROVISION_DEMO_DEVICE)
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    public void newlyProvisionedFullyManagedDevice_withProvisionDemoDevicePermission_throwsSecurityException()
+            throws Exception {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .build();
+
+        assertThrows(SecurityException.class, () ->
+                sDevicePolicyManager.provisionFullyManagedDevice(params));
+    }
+
+    @Postsubmit(reason = "New test")
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureHasPermission(PROVISION_DEMO_DEVICE)
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @Test
+    public void newlyProvisionedFullyManagedDevice_withProvisionDemoDevicePermissionForDemoDevice_doesNotThrowException()
+            throws Exception {
+        boolean setupComplete = TestApis.users().current().getSetupComplete();
+        TestApis.users().current().setSetupComplete(false);
+        // TODO(b/222499341): replace with annotations
+        int demoDevice = TestApis.settings().global().getInt(Settings.Global.DEVICE_DEMO_MODE, 0);
+        try {
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder()
+                            .setDemoDevice(true)
+                            .build();
+
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+        } finally {
+            TestApis.users().current().setSetupComplete(setupComplete);
+            TestApis.settings().global().putInt(Settings.Global.DEVICE_DEMO_MODE, demoDevice);
+        }
+    }
+
+    @Postsubmit(reason = "New test")
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_DEVICE_ADMIN)
+    @EnsureDoesNotHavePermission({
+            PROVISION_DEMO_DEVICE,
+            MANAGE_PROFILE_AND_DEVICE_OWNERS})
+    @Test
+    public void newlyProvisionedFullyManagedDevice_withoutRequiredPermissionsForDemoDevice_throwsSecurityException()
+            throws Exception {
+        FullyManagedDeviceProvisioningParams params =
+                createDefaultManagedDeviceProvisioningParamsBuilder()
+                        .setDemoDevice(true)
+                        .build();
+
+        assertThrows(SecurityException.class, () ->
+                sDevicePolicyManager.provisionFullyManagedDevice(params));
+    }
 
     @RequireDoesNotHaveFeature(PackageManager.FEATURE_AUTOMOTIVE)
     @EnsureHasPermission(MANAGE_DEVICE_ADMINS)

@@ -307,6 +307,21 @@ public class MeanVerification extends AbstractMeanVerification {
                         new float[]{0.0f, 0.0f, SensorManager.STANDARD_GRAVITY},
                         new float[]{1.95f, 1.95f, 1.95f} /* m / s^2 */,
                         new float[]{1.95f, 1.95f, 1.95f} /* m / s^2 */));
+        defaults.put(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED,
+                new ExpectedValuesAndThresholds(
+                        new float[]{0.0f, 0.0f, SensorManager.STANDARD_GRAVITY, 0.0f, 0.0f, 0.0f},
+                        new float[]{1.95f,
+                                    1.95f,
+                                    1.95f,
+                                    Float.MAX_VALUE,
+                                    Float.MAX_VALUE,
+                                    Float.MAX_VALUE},
+                        new float[]{1.95f,
+                                    1.95f,
+                                    1.95f,
+                                    Float.MAX_VALUE,
+                                    Float.MAX_VALUE,
+                                    Float.MAX_VALUE}));
 
         defaults.put(Sensor.TYPE_ACCELEROMETER_LIMITED_AXES,
                 new ExpectedValuesAndThresholds(
