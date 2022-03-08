@@ -242,7 +242,7 @@ public class ProcessTest {
     @Test
     public void testSdkSandboxUids() {
         assertEquals(SANDBOX_SDK_UID, Process.toSdkSandboxUid(APP_UID));
-        assertEquals(APP_UID, Process.sdkSandboxToAppUid(SANDBOX_SDK_UID));
+        assertEquals(APP_UID, Process.getAppUidForSdkSandboxUid(SANDBOX_SDK_UID));
 
         assertFalse(Process.isSdkSandboxUid(APP_UID));
         assertTrue(Process.isSdkSandboxUid(SANDBOX_SDK_UID));
