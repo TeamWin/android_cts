@@ -52,6 +52,9 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
 
     fun clickNegativeButton() = click(NEGATIVE_BUTTON, "Negative button")
 
+    fun clickNegativeButtonMultipleDevices() = click(
+            NEGATIVE_BUTTON_MULTIPLE_DEVICES, "Negative button for multiple devices")
+
     private fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
             Until.findObject(selector), "$description  is not found")
             .click()
@@ -66,6 +69,8 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
                 By.pkg(PACKAGE_NAME).clazz(".Button").clickable(true)
         private val POSITIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_positive")
         private val NEGATIVE_BUTTON = By.copy(CLICKABLE_BUTTON).res(PACKAGE_NAME, "btn_negative")
+        private val NEGATIVE_BUTTON_MULTIPLE_DEVICES = By.copy(CLICKABLE_BUTTON)
+                .res(PACKAGE_NAME, "btn_negative_multiple_devices")
 
         private val DEVICE_LIST = By.pkg(PACKAGE_NAME)
             .clazz("androidx.recyclerview.widget.RecyclerView")
