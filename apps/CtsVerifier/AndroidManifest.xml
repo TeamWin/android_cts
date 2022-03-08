@@ -5676,6 +5676,7 @@
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.15/C-0-6" />
         </activity>
         <activity android:name=".instantapps.RecentAppsTestActivity"
                 android:exported="true"
@@ -5688,6 +5689,7 @@
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.15/C-0-7" />
         </activity>
         <activity android:name=".instantapps.AppInfoTestActivity"
                 android:exported="true"
@@ -5701,6 +5703,7 @@
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.15/C-0-5" />
         </activity>
 
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"
