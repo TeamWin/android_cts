@@ -241,7 +241,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    public void testUriAccess() throws Exception {
+    public void testUriAccessWithValidProjection() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
 
         final ClipData clipData = fetchPickerMedia(1);
@@ -273,6 +273,22 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         }
 
         assertRedactedReadOnlyAccess(clipData.getItemAt(0).getUri());
+    }
+
+    @Test
+    public void testUriAccessWithInvalidProjection() throws Exception {
+        initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
+
+        final ClipData clipData = fetchPickerMedia(1);
+        final List<String> mediaIds = extractMediaIds(clipData, 1);
+
+        assertThat(mediaIds).containsExactly(CLOUD_ID1);
+
+        final ContentResolver resolver = mContext.getContentResolver();
+
+        assertThrows(IllegalArgumentException.class, () -> resolver.query(
+                        clipData.getItemAt(0).getUri(),
+                        new String[] {MediaStore.MediaColumns.RELATIVE_PATH}, null, null));
     }
 
     @Test
