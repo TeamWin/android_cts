@@ -30,6 +30,7 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
 import android.system.Os;
@@ -86,6 +87,7 @@ import java.util.stream.Stream;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @LargeTest
+@Presubmit
 public class PackageManagerShellCommandIncrementalTest {
     private static final String TAG = "PackageManagerShellCommandIncrementalTest";
 
