@@ -1339,19 +1339,6 @@ public final class DevicePolicyManagerTest {
                         TestApis.users().current().userHandle()));
     }
 
-    @Postsubmit(reason = "New test")
-    @Test
-    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @EnsureHasDeviceOwner
-    public void setUserProvisioningState_unmanagedDevice_stateUserUnmanaged_doesNotThrowIllegalStateException() {
-        sDevicePolicyManager.setUserProvisioningState(
-                DevicePolicyManager.STATE_USER_PROFILE_FINALIZED,
-                TestApis.users().current().userHandle());
-
-        assertThat(sDevicePolicyManager.getUserProvisioningState())
-                .isEqualTo(DevicePolicyManager.STATE_USER_PROFILE_FINALIZED);
-    }
-
     @Test
     public void setAdminExtras_managedProfileParams_works() {
         ManagedProfileProvisioningParams params =
