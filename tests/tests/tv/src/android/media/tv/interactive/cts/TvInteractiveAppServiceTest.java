@@ -221,8 +221,8 @@ public class TvInteractiveAppServiceTest {
             mAitInfoUpdatedCount++;
             mAitInfo = aitInfo;
         }
-        public void onSignalStrength(String inputId, int strength) {
-            super.onSignalStrength(inputId, strength);
+        public void onSignalStrengthUpdated(String inputId, int strength) {
+            super.onSignalStrengthUpdated(inputId, strength);
         }
         public void onTuned(String inputId, Uri uri) {
             super.onTuned(inputId, uri);
