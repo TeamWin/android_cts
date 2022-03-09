@@ -1288,6 +1288,62 @@ public class WindowManagerState {
             return "Display #" + mId + ": name=" + mName + " mDisplayRect=" + mDisplayRect
                     + " mAppRect=" + mAppRect + " mFlags=" + mFlags;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (o == null) {
+                return false;
+            }
+            if (!(o instanceof DisplayContent)) {
+                return false;
+            }
+
+            DisplayContent dc = (DisplayContent) o;
+
+            return (dc.mDisplayRect == null ? mDisplayRect == null
+                    : dc.mDisplayRect.equals(mDisplayRect))
+                && (dc.mAppRect == null ? mAppRect == null : dc.mAppRect.equals(mAppRect))
+                && dc.mDpi == mDpi
+                && dc.mFlags == mFlags
+                && (dc.mName == null ? mName == null : dc.mName.equals(mName))
+                && dc.mSurfaceSize == mSurfaceSize
+                && (dc.mAppTransitionState == null ? mAppTransitionState == null
+                    : dc.mAppTransitionState.equals(mAppTransitionState))
+                && dc.mRotation == mRotation
+                && dc.mFrozenToUserRotation == mFrozenToUserRotation
+                && dc.mUserRotation == mUserRotation
+                && dc.mFixedToUserRotationMode == mFixedToUserRotationMode
+                && dc.mLastOrientation == mLastOrientation;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 0;
+            if (mDisplayRect != null) {
+                result = 31 * result + mDisplayRect.hashCode();
+            }
+            if (mAppRect != null) {
+                result = 31 * result + mAppRect.hashCode();
+            }
+            result = 31 * result + mDpi;
+            result = 31 * result + mFlags;
+            if (mName != null) {
+                result = 31 * result + mName.hashCode();
+            }
+            result = 31 * result + mSurfaceSize;
+            if (mAppTransitionState != null) {
+                result = 31 * result + mAppTransitionState.hashCode();
+            }
+            result = 31 * result + mRotation;
+            result = 31 * result + Boolean.hashCode(mFrozenToUserRotation);
+            result = 31 * result + mUserRotation;
+            result = 31 * result + mFixedToUserRotationMode;
+            result = 31 * result + mLastOrientation;
+            return result;
+        }
     }
 
     public static class Task extends ActivityContainer {
