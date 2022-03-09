@@ -272,8 +272,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
-        public void onCreateBiInteractiveApp(Uri biIAppUri, Bundle params) {
-            super.onCreateBiInteractiveApp(biIAppUri, params);
+        public void onCreateBiInteractiveAppRequest(Uri biIAppUri, Bundle params) {
+            super.onCreateBiInteractiveAppRequest(biIAppUri, params);
             mCreateBiIAppCount++;
             mCreateBiIAppUri = biIAppUri;
             mCreateBiIAppParams = params;
@@ -281,8 +281,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
-        public void onDestroyBiInteractiveApp(String biIAppId) {
-            super.onDestroyBiInteractiveApp(biIAppId);
+        public void onDestroyBiInteractiveAppRequest(String biIAppId) {
+            super.onDestroyBiInteractiveAppRequest(biIAppId);
             mDestroyBiIAppCount++;
             mDestroyBiIAppId = biIAppId;
         }
