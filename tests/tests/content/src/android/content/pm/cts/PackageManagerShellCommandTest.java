@@ -28,12 +28,25 @@ import static org.junit.Assert.assertTrue;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.IIntentReceiver;
+import android.content.IIntentSender;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
+import android.content.pm.ApkChecksum;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.DataLoaderParams;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
+import android.os.Bundle;
+import android.os.ConditionVariable;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
+import android.os.RemoteException;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -57,6 +70,10 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -151,6 +168,15 @@ public class PackageManagerShellCommandTest {
         }
         if (expected > 0) {
             assertEquals(expected, total);
+        }
+    }
+
+    private static void writeFileToSession(PackageInstaller.Session session, String name,
+            String apk) throws IOException {
+        File file = new File(createApkPath(apk));
+        try (OutputStream os = session.openWrite(name, 0, file.length());
+             InputStream is = new FileInputStream(file)) {
+            writeFullStream(is, os, file.length());
         }
     }
 
@@ -479,6 +505,78 @@ public class PackageManagerShellCommandTest {
                 "pm " + mInstall + " -t -g " + split + " " + split);
         assertEquals("Failure [failed to add file(s)]\n", commandResult);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testDontKillWithSplit() throws Exception {
+        installPackage(TEST_HW5);
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName(TEST_APP_PACKAGE);
+            params.setDontKillApp(true);
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+            assertTrue((session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0);
+
+            writeFileToSession(session, "hw5_split0", TEST_HW5_SPLIT0);
+
+            final CompletableFuture<Boolean> result = new CompletableFuture<>();
+            session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
+                @Override
+                public void send(int code, Intent intent, String resolvedType,
+                        IBinder whitelistToken, IIntentReceiver finishedReceiver,
+                        String requiredPermission, Bundle options) throws RemoteException {
+                    boolean dontKillApp =
+                            (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
+                    result.complete(dontKillApp);
+                }
+            }));
+
+            // We are adding split. OK to have the flag.
+            assertTrue(result.get());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testDontKillRemovedWithBaseApk() throws Exception {
+        installPackage(TEST_HW5);
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName(TEST_APP_PACKAGE);
+            params.setDontKillApp(true);
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+            assertTrue((session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0);
+
+            writeFileToSession(session, "hw7", TEST_HW7);
+
+            final CompletableFuture<Boolean> result = new CompletableFuture<>();
+            session.commit(new IntentSender((IIntentSender) new IIntentSender.Stub() {
+                @Override
+                public void send(int code, Intent intent, String resolvedType,
+                        IBinder whitelistToken, IIntentReceiver finishedReceiver,
+                        String requiredPermission, Bundle options) throws RemoteException {
+                    boolean dontKillApp =
+                            (session.getInstallFlags() & PackageManager.INSTALL_DONT_KILL_APP) != 0;
+                    result.complete(dontKillApp);
+                }
+            }));
+
+            // We are updating base.apk. Flag to be removed.
+            assertFalse(result.get());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     @Test
