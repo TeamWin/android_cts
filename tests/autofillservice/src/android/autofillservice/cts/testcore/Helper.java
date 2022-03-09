@@ -771,6 +771,7 @@ public final class Helper {
 
     /**
      * Gets the total number of nodes in an structure.
+     * A node that has a non-null IdPackage which does not match the test package is not counted.
      */
     public static int getNumberNodes(AssistStructure structure,
             CharSequence windowTitle) {
@@ -798,14 +799,18 @@ public final class Helper {
 
     /**
      * Gets the total number of nodes in an node, including all descendants and the node itself.
+     * A node that has a non-null IdPackage which does not match the test package is not counted.
      */
     public static int getNumberNodes(ViewNode node) {
+        if (node.getIdPackage() != null && !node.getIdPackage().equals(MY_PACKAGE)) {
+            Log.w(TAG, "ViewNode ignored in getNumberNodes because of mismatched package: "
+                    + node.getIdPackage());
+            return 0;
+        }
         int count = 1;
         final int childrenSize = node.getChildCount();
-        if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                count += getNumberNodes(node.getChildAt(i));
-            }
+        for (int i = 0; i < childrenSize; i++) {
+            count += getNumberNodes(node.getChildAt(i));
         }
         return count;
     }
