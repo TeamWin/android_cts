@@ -45,6 +45,22 @@
         <service android:name="android.car.cts.builtin.os.SharedMemoryTestService"
             android:process=":shdmemservice">
         </service>
+
+        <activity android:name="android.car.cts.builtin.app.ActivityManagerHelperTest$ActivityA"
+                  android:taskAffinity="android.car.cts.builtin.amTestTask1"
+                  android:exported="true">
+        </activity>
+
+        <activity android:name="android.car.cts.builtin.app.ActivityManagerHelperTest$ActivityB"
+                  android:taskAffinity="android.car.cts.builtin.amTestTask1"
+                  android:exported="true">
+        </activity>
+
+        <activity android:name="android.car.cts.builtin.app.ActivityManagerHelperTest$ActivityC"
+                  android:taskAffinity="android.car.cts.builtin.amTestTask2"
+                  android:exported="true">
+        </activity>
+
         <service android:name="android.car.cts.builtin.os.ServiceManagerTestService"
             android:process=":testservice">
         </service>

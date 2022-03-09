@@ -205,6 +205,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/hardware/usb/gadget/V1_2/UsbSpeed;",
                     "Landroid/os/CreateAppDataArgs;",
                     "Landroid/os/CreateAppDataResult;",
+                    "Landroid/os/ReconcileSdkDataArgs;",
                     "Lcom/android/internal/util/FrameworkStatsLog;"
             );
 

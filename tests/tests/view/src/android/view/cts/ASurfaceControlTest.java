@@ -1625,6 +1625,30 @@ public class ASurfaceControlTest {
     }
 
     @Test
+    public void testSurfaceTransaction_scaleToZero() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long parentSurfaceControl = createFromWindow(holder.getSurface());
+                        long childSurfaceControl = create(parentSurfaceControl);
+
+                        setSolidBuffer(parentSurfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        setSolidBuffer(childSurfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        setScale(childSurfaceControl, 0f, 0f);
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 & matchingPixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
     public void testSurfaceTransaction_setPositionAndScale() {
         verifyTest(
                 new BasicSurfaceHolderCallback() {

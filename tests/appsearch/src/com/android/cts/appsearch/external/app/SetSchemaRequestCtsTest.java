@@ -274,6 +274,62 @@ public class SetSchemaRequestCtsTest {
     }
 
     @Test
+    public void testClearSchemaTypeVisibleForPermissions() {
+        SetSchemaRequest.Builder setSchemaRequestBuilder =
+                new SetSchemaRequest.Builder()
+                        .addSchemas(
+                                new AppSearchSchema.Builder("Schema1").build(),
+                                new AppSearchSchema.Builder("Schema2").build())
+                        .addRequiredPermissionsForSchemaTypeVisibility(
+                                "Schema1",
+                                ImmutableSet.of(
+                                        SetSchemaRequest.READ_SMS, SetSchemaRequest.READ_CALENDAR))
+                        .addRequiredPermissionsForSchemaTypeVisibility(
+                                "Schema1",
+                                ImmutableSet.of(SetSchemaRequest.READ_HOME_APP_SEARCH_DATA))
+                        .addRequiredPermissionsForSchemaTypeVisibility(
+                                "Schema2", ImmutableSet.of(SetSchemaRequest.READ_EXTERNAL_STORAGE));
+
+        SetSchemaRequest request = setSchemaRequestBuilder.build();
+
+        assertThat(request.getRequiredPermissionsForSchemaTypeVisibility())
+                .containsExactly(
+                        "Schema1",
+                                ImmutableSet.of(
+                                        ImmutableSet.of(
+                                                SetSchemaRequest.READ_SMS,
+                                                SetSchemaRequest.READ_CALENDAR),
+                                        ImmutableSet.of(
+                                                SetSchemaRequest.READ_HOME_APP_SEARCH_DATA)),
+                        "Schema2",
+                                ImmutableSet.of(
+                                        ImmutableSet.of(SetSchemaRequest.READ_EXTERNAL_STORAGE)));
+
+        // Clear the permissions in the builder
+        setSchemaRequestBuilder.clearRequiredPermissionsForSchemaTypeVisibility("Schema1");
+
+        // New object should be updated
+        assertThat(setSchemaRequestBuilder.build().getRequiredPermissionsForSchemaTypeVisibility())
+                .containsExactly(
+                        "Schema2",
+                        ImmutableSet.of(ImmutableSet.of(SetSchemaRequest.READ_EXTERNAL_STORAGE)));
+
+        // Old object should remain unchanged
+        assertThat(request.getRequiredPermissionsForSchemaTypeVisibility())
+                .containsExactly(
+                        "Schema1",
+                                ImmutableSet.of(
+                                        ImmutableSet.of(
+                                                SetSchemaRequest.READ_SMS,
+                                                SetSchemaRequest.READ_CALENDAR),
+                                        ImmutableSet.of(
+                                                SetSchemaRequest.READ_HOME_APP_SEARCH_DATA)),
+                        "Schema2",
+                                ImmutableSet.of(
+                                        ImmutableSet.of(SetSchemaRequest.READ_EXTERNAL_STORAGE)));
+    }
+
+    @Test
     public void testSchemaTypeVisibilityForPackage_visible() {
         AppSearchSchema schema = new AppSearchSchema.Builder("Schema").build();
 

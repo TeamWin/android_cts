@@ -107,12 +107,14 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     }
 
     @Test
+    @Ignore
     fun testCameraCardDisplayed() {
         Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(CAMERA))
         runSensorTest(CAMERA)
     }
 
     @Test
+    @Ignore
     fun testMicCardDisplayed() {
         Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(MICROPHONE))
         runSensorTest(MICROPHONE)

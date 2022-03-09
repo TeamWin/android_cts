@@ -67,7 +67,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp31.apk"
         const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33 =
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp33.apk"
+        const val APP_APK_PATH_OTHER_APP =
+            "$APK_DIRECTORY/CtsDifferentPkgNameApp.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
+        const val OTHER_APP_PACKAGE_NAME = "android.permission3.cts.usepermissionother"
 
         const val ALLOW_BUTTON =
                 "com.android.permissioncontroller:id/permission_allow_button"
@@ -322,11 +325,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         block
     )
 
-    protected fun clickPermissionRequestAllowButton() {
+    protected fun clickPermissionRequestAllowButton(timeoutMillis: Long = 20000) {
         if (isAutomotive) {
-            click(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)))
+            click(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)), timeoutMillis)
         } else {
-            click(By.res(ALLOW_BUTTON))
+            click(By.res(ALLOW_BUTTON), timeoutMillis)
         }
     }
 

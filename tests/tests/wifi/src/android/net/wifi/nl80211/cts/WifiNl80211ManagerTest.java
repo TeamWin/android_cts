@@ -132,6 +132,14 @@ public class WifiNl80211ManagerTest {
     }
 
     @Test
+    public void testGetMaxNumScanSsids() {
+        try {
+            WifiNl80211Manager manager = mContext.getSystemService(WifiNl80211Manager.class);
+            manager.getMaxNumScanSsids("wlan0");
+        } catch (Exception ignore) { }
+    }
+
+    @Test
     public void testSetOnServiceDeadCallback() {
         try {
             WifiNl80211Manager manager = mContext.getSystemService(WifiNl80211Manager.class);

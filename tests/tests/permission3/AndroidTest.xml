@@ -63,6 +63,7 @@
         <option name="push" value="CtsHelperAppOverlay.apk->/data/local/tmp/cts/permission3/CtsHelperAppOverlay.apk" />
         <option name="push" value="CtsCreateNotificationChannelsApp31.apk->/data/local/tmp/cts/permission3/CtsCreateNotificationChannelsApp31.apk" />
         <option name="push" value="CtsCreateNotificationChannelsApp33.apk->/data/local/tmp/cts/permission3/CtsCreateNotificationChannelsApp33.apk" />
+        <option name="push" value="CtsDifferentPkgNameApp.apk->/data/local/tmp/cts/permission3/CtsDifferentPkgNameApp.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

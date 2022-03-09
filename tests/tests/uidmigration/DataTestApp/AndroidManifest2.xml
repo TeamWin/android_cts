@@ -17,8 +17,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.uidmigration.cts.DataTestApp"
     android:sharedUserId="android.uidmigration.cts"
-    android:sharedUserMaxSdkVersion="32"
-    android:inheritKeyStoreKeys="true" >
+    android:sharedUserMaxSdkVersion="32" >
 
     <queries>
         <package android:name="android.uidmigration.cts" />

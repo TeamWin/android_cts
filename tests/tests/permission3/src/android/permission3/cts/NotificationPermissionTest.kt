@@ -48,14 +48,18 @@ const val EXTRA_CREATE_CHANNELS_DELAYED = "extra_create_delayed"
 const val EXTRA_REQUEST_OTHER_PERMISSIONS = "extra_request_permissions"
 const val EXTRA_REQUEST_NOTIF_PERMISSION = "extra_request_notif_permission"
 const val EXTRA_REQUEST_PERMISSIONS_DELAYED = "extra_request_permissions_delayed"
+const val EXTRA_START_SECOND_ACTIVITY = "extra_start_second_activity"
+const val EXTRA_START_SECOND_APP = "extra_start_second_app"
 const val ACTIVITY_NAME = "CreateNotificationChannelsActivity"
 const val ACTIVITY_LABEL = "CreateNotif"
+const val SECOND_ACTIVITY_LABEL = "EmptyActivity"
 const val ALLOW = "to send you"
 const val CONTINUE_ALLOW = "to continue sending you"
 const val INTENT_ACTION = "usepermission.createchannels.MAIN"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
 const val NOTIFICATION_PERMISSION_ENABLED = "notification_permission_enabled"
 const val DELAY_MS = 5000L
+const val DELAY_MS_SHORT = 500L
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class NotificationPermissionTest : BaseUsePermissionTest() {
@@ -153,59 +157,102 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun notificationPromptDoesNotShowForLegacyAppWithNoNotificationChannels() {
+    fun notificationPromptDoesNotShowForLegacyAppWithNoNotificationChannels_onLaunch() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         launchApp(createChannels = false)
-        try {
-            clickPermissionRequestAllowButton()
-            Assert.fail("Expected not to find permission request dialog")
-        } catch (expected: RuntimeException) {
-            // Do nothing
-        }
+        assertDialogNotShowing()
+    }
+    @Test
+    fun notificationPromptDoesNotShowForNonLauncherIntentCategoryLaunches_onChannelCreate() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(launcherCategory = false)
+        assertDialogNotShowing()
     }
 
     @Test
-    fun notificationPromptDoesNotShowForNonLauncherIntentCategoryLaunches() {
+    fun notificationPromptDoesNotShowForNonLauncherIntentCategoryLaunches_onLaunch() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         // create channels, then leave the app
         launchApp()
         killTestApp()
         launchApp(launcherCategory = false)
-        try {
-            clickPermissionRequestAllowButton()
-            Assert.fail("Expected not to find permission request dialog")
-        } catch (expected: RuntimeException) {
-            // Do nothing
-        }
+        assertDialogNotShowing()
     }
 
     @Test
-    fun notificationPromptDoesNotShowForNonMainIntentActionLaunches() {
+    fun notificationPromptDoesNotShowForNonMainIntentActionLaunches_onLaunch() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         // create channels, then leave the app
         launchApp()
         killTestApp()
         launchApp(mainIntent = false)
-        try {
-            clickPermissionRequestAllowButton()
-            Assert.fail("Expected not to find permission request dialog")
-        } catch (expected: RuntimeException) {
-            // Do nothing
-        }
+        assertDialogNotShowing()
+    }
+
+    @Test
+    fun notificationPromptDoesNotShowForNonMainIntentActionLaunches_onChannelCreate() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(mainIntent = false)
+        assertDialogNotShowing()
     }
 
     @Test
     fun notificationPromptShowsIfActivityOptionSet() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        setReviewRequired()
         // create channels, then leave the app
         launchApp()
         killTestApp()
         launchApp(mainIntent = false, isEligibleForPromptOption = true)
         clickPermissionRequestAllowButton()
+    }
+
+    @Test
+    fun notificationPromptShownForSubsequentStartsIfTaskStartWasLauncher() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(startSecondActivity = true)
+        pressBack()
+        assertDialogNotShowing(DELAY_MS_SHORT)
+        Thread.sleep(DELAY_MS)
+        clickPermissionRequestAllowButton()
+    }
+
+    @Test
+    fun notificationPromptNotShownForSubsequentStartsIfTaskStartWasNotLauncher() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(mainIntent = false, startSecondActivity = true)
+        Thread.sleep(DELAY_MS)
+        assertDialogNotShowing()
+    }
+
+    @Test
+    fun notificationPromptShownForChannelCreateInSecondActivityIfTaskStartWasLauncher() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(startSecondActivity = true, createChannels = false)
+        Thread.sleep(DELAY_MS)
+        clickPermissionRequestAllowButton()
+    }
+
+    @Test
+    fun notificationPromptNotShownForChannelCreateInSecondActivityIfTaskStartWasntLauncher() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        launchApp(mainIntent = false, startSecondActivity = true, createChannels = false)
+        Thread.sleep(DELAY_MS)
+        assertDialogNotShowing()
+    }
+
+    @Test
+    fun notificationPromptNotShownForSubsequentStartsIfSubsequentIsDifferentPkg() {
+        installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
+        installPackage(APP_APK_PATH_OTHER_APP, expectSuccess = true)
+        // perform a launcher start, then start a secondary app
+        launchApp(startSecondaryAppAndCreateChannelsAfterSecondStart = true)
+        Thread.sleep(DELAY_MS)
+        try {
+            waitFindObject(By.textContains(SECOND_ACTIVITY_LABEL))
+            assertDialogNotShowing()
+        } finally {
+            uninstallPackage(OTHER_APP_PACKAGE_NAME)
+        }
     }
 
     @Test
@@ -389,7 +436,9 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         requestPermissionsDelayed: Boolean = false,
         launcherCategory: Boolean = true,
         mainIntent: Boolean = true,
-        isEligibleForPromptOption: Boolean = false
+        isEligibleForPromptOption: Boolean = false,
+        startSecondActivity: Boolean = false,
+        startSecondaryAppAndCreateChannelsAfterSecondStart: Boolean = false
     ) {
         val intent = if (mainIntent && launcherCategory) {
             packageManager.getLaunchIntentForPackage(APP_PACKAGE_NAME)!!
@@ -410,6 +459,8 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
             intent.putExtra(EXTRA_REQUEST_PERMISSIONS_DELAYED, requestPermissionsDelayed)
         }
         intent.putExtra(EXTRA_REQUEST_NOTIF_PERMISSION, requestNotificationPermission)
+        intent.putExtra(EXTRA_START_SECOND_ACTIVITY, startSecondActivity)
+        intent.putExtra(EXTRA_START_SECOND_APP, startSecondaryAppAndCreateChannelsAfterSecondStart)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
         val options = ActivityOptions.makeBasic()
@@ -428,5 +479,14 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
             am.forceStopPackage(APP_PACKAGE_NAME)
         }
         waitForIdle()
+    }
+
+    private fun assertDialogNotShowing(timeoutMillis: Long = DELAY_MS) {
+        try {
+            clickPermissionRequestAllowButton(timeoutMillis)
+            Assert.fail("Expected not to find permission request dialog")
+        } catch (expected: RuntimeException) {
+            // Do nothing
+        }
     }
 }

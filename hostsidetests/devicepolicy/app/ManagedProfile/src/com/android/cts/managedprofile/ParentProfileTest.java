@@ -104,6 +104,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("setPermittedInputMethods")
             .add("getDrawable")
             .add("getDrawableForDensity")
+            .add("getDevicePolicyManagementRoleHolderPackage")
+            .add("getDrawableAsIcon")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";

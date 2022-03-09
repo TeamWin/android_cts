@@ -20,10 +20,14 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import static junit.framework.Assert.*;
 
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
+
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.DataSpace;
 import android.hardware.HardwareBuffer;
+import android.hardware.SyncFence;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -36,6 +40,8 @@ import android.media.ImageWriter;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+
+import com.android.cts.hardware.SyncFenceUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -200,7 +206,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
     @Test
     public void testWriterFormatOverride() throws Exception {
         int[] TEXTURE_TEST_FORMATS = {ImageFormat.YV12, ImageFormat.YUV_420_888};
-        SurfaceTexture texture = new SurfaceTexture(/*random int*/1);
+        SurfaceTexture texture = new SurfaceTexture(false);
         texture.setDefaultBufferSize(BUFFER_WIDTH, BUFFER_HEIGHT);
         Surface surface = new Surface(texture);
 
@@ -279,7 +285,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
 
     @Test
     public void testWriterBuilderSetImageFormatAndSize() throws Exception {
-        SurfaceTexture texture = new SurfaceTexture(/*random int*/1);
+        SurfaceTexture texture = new SurfaceTexture(false);
         texture.setDefaultBufferSize(BUFFER_WIDTH, BUFFER_HEIGHT);
         Surface surface = new Surface(texture);
         final int imageWriterWidth = 20;
@@ -311,7 +317,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
 
     @Test
     public void testWriterBuilderSetHardwareBufferFormatAndDataSpace() throws Exception {
-        SurfaceTexture texture = new SurfaceTexture(/*random int*/1);
+        SurfaceTexture texture = new SurfaceTexture(false);
         texture.setDefaultBufferSize(BUFFER_WIDTH, BUFFER_HEIGHT);
         Surface surface = new Surface(texture);
 
@@ -352,6 +358,28 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             Image outputImage = writer.dequeueInputImage()
         ) {
             assertEquals(false, outputImage.getFence().isValid());
+        }
+    }
+
+    @Test
+    public void testSetFence() throws Exception {
+        SyncFence fence = SyncFenceUtil.createUselessFence();
+        assumeNotNull(fence);
+
+        SurfaceTexture texture = new SurfaceTexture(false);
+        texture.setDefaultBufferSize(BUFFER_WIDTH, BUFFER_HEIGHT);
+        Surface surface = new Surface(texture);
+        // fence may not be valid on cuttlefish using swiftshader
+        assumeTrue(fence.isValid());
+
+        try (
+            ImageWriter writer = new ImageWriter
+                    .Builder(surface)
+                    .build();
+            Image outputImage = writer.dequeueInputImage()
+        ) {
+            outputImage.setFence(fence);
+            assertEquals(fence.getSignalTime(), outputImage.getFence().getSignalTime());
         }
     }
 

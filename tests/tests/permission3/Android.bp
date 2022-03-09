@@ -58,6 +58,7 @@ android_test {
         ":CtsHelperAppOverlay",
         ":CtsCreateNotificationChannelsApp31",
         ":CtsCreateNotificationChannelsApp33",
+        ":CtsDifferentPkgNameApp",
     ],
     test_suites: [
         "cts",

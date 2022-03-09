@@ -41,6 +41,8 @@ import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.google.common.truth.Expect;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -109,6 +111,7 @@ import junit.framework.AssertionFailedError;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
@@ -230,6 +233,8 @@ public class PackageManagerTest {
             ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockProvider");
 
     private final ServiceTestRule mServiceTestRule = new ServiceTestRule();
+
+    @Rule public final Expect expect = Expect.create();
 
     @Before
     public void setup() throws Exception {
@@ -1738,20 +1743,26 @@ public class PackageManagerTest {
      */
     @Test
     public void testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates() {
+        final Set<String> packageNames = new HashSet<>();
         runTestWithFlags(PACKAGE_INFO_MATCH_FLAGS,
-                this::testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates);
+                flags -> testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates(flags,
+                        packageNames));
     }
 
-    public void testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates(int flags) {
+    public void testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates(int flags,
+            Set<String> packageNames) {
         List<PackageInfo> packageInfos =
                 mPackageManager.getInstalledPackages(
                         PackageManager.PackageInfoFlags.of(flags | MATCH_FACTORY_ONLY));
-        Set<String> foundPackages = new HashSet<>();
+
+        final Set<String> localPackageNames = new HashSet<>();
         for (PackageInfo pi : packageInfos) {
-            if (foundPackages.contains(pi.packageName)) {
-                throw new AssertionError(pi.packageName + " is listed at least twice.");
+            final String packageName = pi.packageName;
+            // Duplicate: already in local.
+            // Dedup error messages: not in global.
+            if (!localPackageNames.add(pi.packageName) && packageNames.add(packageName)) {
+                expect.withMessage("Duplicate package " + packageName + " detected").fail();
             }
-            foundPackages.add(pi.packageName);
         }
     }
 

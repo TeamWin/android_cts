@@ -994,23 +994,32 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             assertNotNull(
                     String.format("Can't get camera characteristics from: ID %s", cameraId), props);
 
+            Integer lensFacing = props.get(CameraCharacteristics.LENS_FACING);
+            if (lensFacing != null && lensFacing == CameraCharacteristics.LENS_FACING_EXTERNAL) {
+                // Automotive device implementations may have external cameras but they are exempted
+                // from this test case.
+                continue;
+            }
+
             Integer cameraLocation = props.get(CameraCharacteristics.AUTOMOTIVE_LOCATION);
             assertNotNull(
                     String.format("Can't get a camera location from: ID %s", cameraId),
                     cameraLocation);
 
-            int[] lensFacing = props.get(CameraCharacteristics.AUTOMOTIVE_LENS_FACING);
+            int[] automotiveLensFacing = props.get(CameraCharacteristics.AUTOMOTIVE_LENS_FACING);
             assertNotNull(
                     String.format("Can't get a lens facing direction from: ID %s", cameraId),
-                    lensFacing);
+                    automotiveLensFacing);
 
             if (cameraLocation == CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTERIOR_OTHER ||
                     cameraLocation == CameraCharacteristics.AUTOMOTIVE_LOCATION_EXTRA_OTHER ||
-                    lensFacing[0] == CameraCharacteristics.AUTOMOTIVE_LENS_FACING_EXTERIOR_OTHER ||
-                    lensFacing[0] == CameraCharacteristics.AUTOMOTIVE_LENS_FACING_INTERIOR_OTHER) {
+                    automotiveLensFacing[0] ==
+                            CameraCharacteristics.AUTOMOTIVE_LENS_FACING_EXTERIOR_OTHER ||
+                    automotiveLensFacing[0] ==
+                            CameraCharacteristics.AUTOMOTIVE_LENS_FACING_INTERIOR_OTHER) {
                 checkAutomotiveLensPoseCharacteristics(cameraId, props);
             } else {
-                Pair<Integer, Integer> key = new Pair<>(cameraLocation, lensFacing[0]);
+                Pair<Integer, Integer> key = new Pair<>(cameraLocation, automotiveLensFacing[0]);
                 if (cameraGroup.containsKey(key)) {
                     cameraGroup.get(key).add(cameraId);
                 } else {

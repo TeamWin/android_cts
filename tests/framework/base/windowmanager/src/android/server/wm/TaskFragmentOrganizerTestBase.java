@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -24,10 +25,13 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
+import android.server.wm.WindowContextTests.TestActivity;
 import android.server.wm.WindowManagerState.WindowContainer;
 import android.util.ArrayMap;
 import android.window.TaskFragmentCreationParams;
@@ -48,6 +52,10 @@ import java.util.function.Predicate;
 
 public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     public BasicTaskFragmentOrganizer mTaskFragmentOrganizer;
+    Activity mOwnerActivity;
+    IBinder mOwnerToken;
+    ComponentName mOwnerActivityName;
+    int mOwnerTaskId;
 
     @Before
     @Override
@@ -55,6 +63,17 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         super.setUp();
         mTaskFragmentOrganizer = new BasicTaskFragmentOrganizer();
         mTaskFragmentOrganizer.registerOrganizer();
+        mOwnerActivity = setUpOwnerActivity();
+        mOwnerToken = getActivityToken(mOwnerActivity);
+        mOwnerActivityName = mOwnerActivity.getComponentName();
+        mOwnerTaskId = mOwnerActivity.getTaskId();
+    }
+
+    /** Setups the owner activity of the organized TaskFragment. */
+    Activity setUpOwnerActivity() {
+        // Launch activities in fullscreen in case the device may use freeform as the default
+        // windowing mode.
+        return startActivityInWindowingModeFullScreen(TestActivity.class);
     }
 
     @After
@@ -119,6 +138,50 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             assertWithMessage(parent + " must contains " + child)
                     .that(parent.mChildren).contains(child);
         }
+    }
+
+    /**
+     * Builds, runs and waits for completion of task fragment creation transaction.
+     * @param componentName name of the activity to launch in the TF, or {@code null} if none.
+     * @return token of the created task fragment.
+     */
+    TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName) {
+        return createTaskFragment(componentName, new Rect());
+    }
+
+    /**
+     * Same as {@link #createTaskFragment(ComponentName)}, but allows to specify the bounds for the
+     * new task fragment.
+     */
+    TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName,
+            @NonNull Rect bounds) {
+        final TaskFragmentCreationParams params = generateTaskFragCreationParams(bounds);
+        final IBinder taskFragToken = params.getFragmentToken();
+        final WindowContainerTransaction wct = new WindowContainerTransaction()
+                .createTaskFragment(params);
+        if (componentName != null) {
+            wct.startActivityInTaskFragment(taskFragToken, mOwnerToken,
+                    new Intent().setComponent(componentName), null /* activityOptions */);
+        }
+        mTaskFragmentOrganizer.applyTransaction(wct);
+        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
+
+        if (componentName != null) {
+            mWmState.waitForActivityState(componentName, STATE_RESUMED);
+        }
+
+        return mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
+    }
+
+    @NonNull
+    TaskFragmentCreationParams generateTaskFragCreationParams() {
+        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken);
+    }
+
+    @NonNull
+    TaskFragmentCreationParams generateTaskFragCreationParams(@NonNull Rect bounds) {
+        return mTaskFragmentOrganizer.generateTaskFragParams(mOwnerToken, bounds,
+                WINDOWING_MODE_UNDEFINED);
     }
 
     public static class BasicTaskFragmentOrganizer extends TaskFragmentOrganizer {

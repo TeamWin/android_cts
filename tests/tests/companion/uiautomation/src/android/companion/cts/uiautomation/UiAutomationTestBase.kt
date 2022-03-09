@@ -89,7 +89,11 @@ open class UiAutomationTestBase(
         displayName: String? = null
     ) = test_cancelled(singleDevice, selfManaged, displayName) {
             // User "rejects" the request.
-            confirmationUi.clickNegativeButton()
+            if (singleDevice || selfManaged) {
+                confirmationUi.clickNegativeButton()
+            } else {
+                confirmationUi.clickNegativeButtonMultipleDevices()
+            }
         }
 
     protected fun test_userDismissed(

@@ -538,6 +538,10 @@
                   android:exported="true"/>
         <activity android:name="android.server.wm.PinnedStackTests$TestActivity"
                   android:exported="true"/>
+        <activity android:name="android.server.wm.TaskFragmentTrustedModeTest$TranslucentActivity"
+                  android:exported="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

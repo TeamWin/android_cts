@@ -2625,6 +2625,76 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
+    public void testRepeatCallers_repeatCallNotIntercepted_contactAfterPhone() throws Exception {
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        // if a call is recorded with just phone number info (not a contact's uri), which may
+        // happen when the same contact calls across multiple apps (or if the contact uri provided
+        // is otherwise inconsistent), check for the contact's phone number
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        int origFilter = mNotificationManager.getCurrentInterruptionFilter();
+        Policy origPolicy = mNotificationManager.getNotificationPolicy();
+        Uri aliceUri = null;
+        long startTime = System.currentTimeMillis();
+        try {
+            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
+                    PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
+            // turn on manual DND
+            mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
+            assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
+
+            insertSingleContact(ALICE, ALICE_PHONE, ALICE_EMAIL, false);
+            aliceUri = lookupContact(ALICE_PHONE);
+            Uri alicePhoneUri = makePhoneUri(ALICE_PHONE);
+
+            // no one has called; matchesCallFilter should return false for both URIs
+            assertFalse(mNotificationManager.matchesCallFilter(aliceUri));
+            assertFalse(mNotificationManager.matchesCallFilter(alicePhoneUri));
+
+            // register a call from Alice via just the phone number
+            sendNotification(1, null, R.drawable.blue, true, alicePhoneUri);
+            Thread.sleep(1000); // give the listener some time to receive info
+
+            // check that the first notification is intercepted
+            StatusBarNotification sbn = findPostedNotification(1, false);
+            assertNotNull(sbn);
+            assertTrue(mListener.mIntercepted.containsKey(sbn.getKey()));
+            assertTrue(mListener.mIntercepted.get(sbn.getKey()));  // should be intercepted
+
+            // cancel first notification
+            cancelAndPoll(1);
+
+            // now send a call with only Alice's contact Uri as the info
+            // Note that this is a test of the repeat caller check, not matchesCallFilter itself
+            sendNotification(2, null, R.drawable.blue, true, aliceUri);
+            // wait for contact lookup, which may take a while
+            Thread.sleep(3000);
+
+            // now check that the second notification is not intercepted
+            StatusBarNotification sbn2 = findPostedNotification(2, true);
+            assertTrue(mListener.mIntercepted.containsKey(sbn2.getKey()));
+            assertFalse(mListener.mIntercepted.get(sbn2.getKey()));  // should not be intercepted
+
+            // cancel second notification
+            cancelAndPoll(2);
+        } finally {
+            mNotificationManager.setInterruptionFilter(origFilter);
+            mNotificationManager.setNotificationPolicy(origPolicy);
+            if (aliceUri != null) {
+                // delete the contact
+                deleteSingleContact(aliceUri);
+            }
+
+            // clean up the recorded calls
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mNotificationManager.cleanUpCallersAfter(startTime));
+        }
+    }
+
     public void testMatchesCallFilter_allCallers() throws Exception {
         // allow all callers
         toggleNotificationPolicyAccess(mContext.getPackageName(),

@@ -112,6 +112,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -822,13 +823,13 @@ public final class DevicePolicyManagerTest {
                 (new PreferentialNetworkServiceConfig.Builder())
                         .setEnabled(true).build();
         assertThrows(SecurityException.class,
-                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfig(
-                        preferentialNetworkServiceConfigEnabled));
+                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfigs(
+                        List.of(preferentialNetworkServiceConfigEnabled)));
         assertThrows(SecurityException.class,
-                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfig(
-                        PreferentialNetworkServiceConfig.DEFAULT));
+                () -> sDevicePolicyManager.setPreferentialNetworkServiceConfigs(
+                        List.of(PreferentialNetworkServiceConfig.DEFAULT)));
         assertThrows(SecurityException.class,
-                () -> sDevicePolicyManager.getPreferentialNetworkServiceConfig());
+                () -> sDevicePolicyManager.getPreferentialNetworkServiceConfigs());
     }
 
     @Test
@@ -837,12 +838,12 @@ public final class DevicePolicyManagerTest {
         PreferentialNetworkServiceConfig preferentialNetworkServiceConfigEnabled =
                 (new PreferentialNetworkServiceConfig.Builder())
                         .setEnabled(true).build();
-        sDevicePolicyManager.setPreferentialNetworkServiceConfig(
-                preferentialNetworkServiceConfigEnabled);
-        assertTrue(sDevicePolicyManager.getPreferentialNetworkServiceConfig().isEnabled());
-        sDevicePolicyManager.setPreferentialNetworkServiceConfig(
-                PreferentialNetworkServiceConfig.DEFAULT);
-        assertFalse(sDevicePolicyManager.getPreferentialNetworkServiceConfig().isEnabled());
+        sDevicePolicyManager.setPreferentialNetworkServiceConfigs(
+                List.of(preferentialNetworkServiceConfigEnabled));
+        assertTrue(sDevicePolicyManager.getPreferentialNetworkServiceConfigs().get(0).isEnabled());
+        sDevicePolicyManager.setPreferentialNetworkServiceConfigs(
+                List.of(PreferentialNetworkServiceConfig.DEFAULT));
+        assertFalse(sDevicePolicyManager.getPreferentialNetworkServiceConfigs().get(0).isEnabled());
         sDevicePolicyManager.clearProfileOwner(DEVICE_ADMIN_COMPONENT_NAME);
         SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
     }
@@ -1456,19 +1457,6 @@ public final class DevicePolicyManagerTest {
                 sDevicePolicyManager.setUserProvisioningState(
                         DevicePolicyManager.STATE_USER_UNMANAGED,
                         TestApis.users().current().userHandle()));
-    }
-
-    @Postsubmit(reason = "New test")
-    @Test
-    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @EnsureHasDeviceOwner
-    public void setUserProvisioningState_unmanagedDevice_stateUserUnmanaged_doesNotThrowIllegalStateException() {
-        sDevicePolicyManager.setUserProvisioningState(
-                DevicePolicyManager.STATE_USER_PROFILE_FINALIZED,
-                TestApis.users().current().userHandle());
-
-        assertThat(sDevicePolicyManager.getUserProvisioningState())
-                .isEqualTo(DevicePolicyManager.STATE_USER_PROFILE_FINALIZED);
     }
 
     @Test

@@ -40,10 +40,11 @@ import android.view.cts.surfacevalidator.ASurfaceControlTestActivity;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.MultiRectChecker;
 import android.view.cts.surfacevalidator.ASurfaceControlTestActivity.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
-import android.view.cts.util.SyncFenceUtil;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.cts.hardware.SyncFenceUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -1223,5 +1224,32 @@ public class SurfaceControlTest {
                         return pixelCount > 9000 && pixelCount < 11000;
                     }
                 });
+    }
+
+    @Test
+    public void testSurfaceControl_scaleToZero() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl parentSurfaceControl = createFromWindow(holder);
+                        SurfaceControl childSurfaceControl = create(parentSurfaceControl);
+
+                        setSolidBuffer(parentSurfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        setSolidBuffer(childSurfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        new SurfaceControl.Transaction()
+                                .setScale(childSurfaceControl, 0, 0)
+                                .apply();
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
     }
 }
