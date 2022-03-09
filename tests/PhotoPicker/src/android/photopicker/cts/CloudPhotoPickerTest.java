@@ -65,7 +65,6 @@ import java.util.List;
  * Photo Picker Device only tests for common flows.
  */
 @RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     private final List<Uri> mUriList = new ArrayList<>();
     private MediaGenerator mCloudPrimaryMediaGenerator;
