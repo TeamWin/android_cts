@@ -33,7 +33,6 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import org.junit.After
 import org.junit.Assume
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -107,21 +106,18 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     }
 
     @Test
-    @Ignore
     fun testCameraCardDisplayed() {
         Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(CAMERA))
         runSensorTest(CAMERA)
     }
 
     @Test
-    @Ignore
     fun testMicCardDisplayed() {
         Assume.assumeTrue(sensorPrivacyManager.supportsSensorToggle(MICROPHONE))
         runSensorTest(MICROPHONE)
     }
 
     @Test
-    @Ignore
     fun testLocationCardDisplayed() {
         runSensorTest(LOCATION)
     }
