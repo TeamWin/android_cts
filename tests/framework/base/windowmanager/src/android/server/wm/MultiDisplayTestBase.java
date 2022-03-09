@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.content.pm.ActivityInfo.CONFIG_SCREEN_SIZE;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
@@ -843,13 +844,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         mWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
     }
 
-    protected void waitAndAssertImeConfigurationChanged(ImeEventStream stream) throws Exception {
-        expectEvent(stream, event -> "onConfigurationChanged".equals(event.getEventName()),
-                TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
-    }
-
-    protected void waitAndAssertNoImeConfigurationChanged(ImeEventStream stream) {
-        notExpectEvent(stream, event -> "onConfigurationChanged".equals(event.getEventName()),
+    protected void waitAndAssertImeNoScreenSizeChanged(ImeEventStream stream) {
+        notExpectEvent(stream, event -> "onConfigurationChanged".equals(event.getEventName())
+                && (event.getArguments().getInt("ConfigUpdates") & CONFIG_SCREEN_SIZE) != 0,
                 TimeUnit.SECONDS.toMillis(1) /* eventTimeout */);
     }
 

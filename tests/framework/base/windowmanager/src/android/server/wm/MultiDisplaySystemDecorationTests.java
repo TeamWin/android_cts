@@ -42,6 +42,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -401,11 +402,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 .setDisplayImePolicy(DISPLAY_IME_POLICY_LOCAL)
                 .setSimulateDisplay(true)
                 .createDisplay();
+
+        final ImeEventStream stream = mockImeSession.openEventStream();
+
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 newDisplay.mId);
 
-        final ImeEventStream stream = mockImeSession.openEventStream();
-        ImeEventStream configChangeVerifyStream = stream.copy();
         expectEvent(stream, editorMatcher("onStartInput",
                 imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
 
@@ -414,8 +416,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Assert the configuration of the IME window is the same as the configuration of the
         // virtual display.
-        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
-        configChangeVerifyStream = clearOnConfigurationChangedFromStream(configChangeVerifyStream);
         assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(), newDisplay);
 
         // Launch another activity on the default display.
@@ -429,7 +429,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Assert the configuration of the IME window is the same as the configuration of the
         // default display.
-        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
         assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(),
                 mWmState.getDisplay(DEFAULT_DISPLAY));
     }
@@ -503,7 +502,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         tapOnDisplayCenter(defDisplay.mId);
         expectEvent(stream, editorMatcher("onStartInput",
                 imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
-        ImeEventStream configChangeVerifyStream = stream.copy();
         showSoftInputAndAssertImeShownOnDisplay(defDisplay.mId, imeTestActivitySession, stream);
 
         // Tap virtual display as top focused display & request focus on EditText to show
@@ -513,15 +511,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 imeTestActivitySession2.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
         showSoftInputAndAssertImeShownOnDisplay(newDisplay.mId, imeTestActivitySession2, stream);
 
-        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
-        configChangeVerifyStream = clearOnConfigurationChangedFromStream(configChangeVerifyStream);
-
         // Tap default display again to make sure the IME window will come back.
         tapOnDisplayCenter(defDisplay.mId);
         expectEvent(stream, editorMatcher("onStartInput",
                 imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
-
-        waitAndAssertImeConfigurationChanged(configChangeVerifyStream);
         showSoftInputAndAssertImeShownOnDisplay(defDisplay.mId, imeTestActivitySession, stream);
     }
 
@@ -737,12 +730,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final TestActivitySession<ImeTestActivity> imeTestActivitySession =
                 createManagedTestActivitySession();
         ImeEventStream stream = mockImeSession.openEventStream();
-
-        // Make firstDisplay the top focus display.
-        tapOnDisplayCenter(firstDisplay.mId);
         // Filter out onConfigurationChanged events in case that IME is moved from the default
         // display to the firstDisplay.
         ImeEventStream configChangeVerifyStream = clearOnConfigurationChangedFromStream(stream);
+
+        // Make firstDisplay the top focus display.
+        tapOnDisplayCenter(firstDisplay.mId);
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 firstDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
@@ -752,8 +745,17 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
-        // Launch Ime must not lead to configuration changes.
-        waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
+        // Launch Ime must not lead to screen size changes.
+        waitAndAssertImeNoScreenSizeChanged(configChangeVerifyStream);
+
+        final Rect currentBoundsOnFirstDisplay = expectCommand(stream,
+                mockImeSession.callGetCurrentWindowMetricsBounds(), TIMEOUT)
+                .getReturnParcelableValue();
+
+        // Clear onConfigurationChanged events before IME moves to the secondary display to prevent
+        // flaky because IME may receive configuration updates which we don't care about.
+        // An example is CONFIG_KEYBOARD_HIDDEN.
+        configChangeVerifyStream = clearOnConfigurationChangedFromStream(stream);
 
         // Tap secondDisplay to change it to the top focused display.
         tapOnDisplayCenter(secondDisplay.mId);
@@ -781,9 +783,16 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 editorMatcher("onStartInput",
                         imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
-        // Moving IME to the display with the same display metrics must not trigger
-        // onConfigurationChanged callback.
-        waitAndAssertNoImeConfigurationChanged(configChangeVerifyStream);
+        // Moving IME to the display with the same display metrics must not lead to
+        // screen size changes.
+        waitAndAssertImeNoScreenSizeChanged(configChangeVerifyStream);
+
+        final Rect currentBoundsOnSecondDisplay = expectCommand(stream,
+                mockImeSession.callGetCurrentWindowMetricsBounds(), TIMEOUT)
+                .getReturnParcelableValue();
+
+        assertWithMessage("The current WindowMetrics bounds of IME must not be changed.")
+                .that(currentBoundsOnFirstDisplay).isEqualTo(currentBoundsOnSecondDisplay);
     }
 
     public static class ImeTestActivity extends Activity {
