@@ -16,6 +16,7 @@
 
 package android.media.codec.cts;
 
+import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -23,16 +24,31 @@ import android.media.MediaFormat;
 import android.media.cts.InputSurface;
 import android.media.cts.OutputSurface;
 import android.opengl.GLES20;
-import android.test.AndroidTestCase;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
+import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+import static org.junit.Assert.fail;
 
 /**
  * This test has three steps:
@@ -48,15 +64,14 @@ import java.util.ArrayList;
  * no longer exercising the code in the way we expect it to be used (and the code
  * gets a bit unwieldy).
  */
-public class DecodeEditEncodeTest extends AndroidTestCase {
+@RunWith(Parameterized.class)
+public class DecodeEditEncodeTest {
     private static final String TAG = "DecodeEditEncode";
     private static final boolean WORK_AROUND_BUGS = false;  // avoid fatal codec bugs
     private static final boolean VERBOSE = false;           // lots of logging
     private static final boolean DEBUG_SAVE_FILE = false;   // save copy of encoded movie
 
     // parameters for the encoder
-                                                            // H.264 Advanced Video Coding
-    private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
     private static final int FRAME_RATE = 15;               // 15fps
     private static final int IFRAME_INTERVAL = 10;          // 10 seconds between I-frames
     private static final String KEY_ALLOW_FRAME_DROP = "allow-frame-drop";
@@ -93,26 +108,73 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
             "  gl_FragColor = texture2D(sTexture, vTextureCoord).rbga;\n" +
             "}\n";
 
+    // component names
+    private final String mEncoderName;
+    private final String mDecoderName;
+    // mime
+    private final String mMediaType;
     // size of a frame, in pixels
-    private int mWidth = -1;
-    private int mHeight = -1;
+    private final int mWidth;
+    private final int mHeight;
     // bit rate, in bits per second
-    private int mBitRate = -1;
+    private final int mBitRate;
 
     // largest color component delta seen (i.e. actual vs. expected)
     private int mLargestColorDelta;
 
+    static private List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList) {
+        final List<Object[]> argsList = new ArrayList<>();
+        int argLength = exhaustiveArgsList.get(0).length;
+        for (Object[] arg : exhaustiveArgsList) {
+            String[] encoderNamesForMime = MediaUtils.getEncoderNamesForMime((String)arg[0]);
+            String[] decoderNamesForMime = MediaUtils.getDecoderNamesForMime((String)arg[0]);
+            Object[] testArgs = new Object[argLength + 2];
+            // Add encoder name and decoder name as first two arguments and then
+            // copy arguments passed
+            testArgs[0] = encoderNamesForMime[0];
+            testArgs[1] = decoderNamesForMime[0];
+            System.arraycopy(arg, 0, testArgs, 2, argLength);
+            argsList.add(testArgs);
+        }
+        return argsList;
+    }
 
-    public void testVideoEditQCIF() throws Throwable {
-        setParameters(176, 144, 1100000);
-        VideoEditWrapper.runTest(this);
+    @Before
+    public void shouldSkip() {
+        MediaFormat format = MediaFormat.createVideoFormat(mMediaType, mWidth, mHeight);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+        assumeTrue(MediaUtils.supports(mEncoderName, format));
+        assumeTrue(MediaUtils.supports(mDecoderName, format));
     }
-    public void testVideoEditQVGA() throws Throwable {
-        setParameters(320, 240, 2000000);
-        VideoEditWrapper.runTest(this);
+
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4})")
+    public static Collection<Object[]> input() {
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+                // mediaType, width, height, bitrate
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 176, 144, 1000000},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240, 2000000},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 6000000},
+        });
+        return prepareParamList(exhaustiveArgsList);
     }
-    public void testVideoEdit720p() throws Throwable {
-        setParameters(1280, 720, 6000000);
+
+    public DecodeEditEncodeTest(String encoder, String decoder, String mimeType, int width,
+            int height, int bitRate) {
+        if ((width % 16) != 0 || (height % 16) != 0) {
+            Log.w(TAG, "WARNING: width or height not multiple of 16");
+        }
+        mEncoderName = encoder;
+        mDecoderName = decoder;
+        mMediaType = mimeType;
+        mWidth = width;
+        mHeight = height;
+        mBitRate = bitRate;
+    }
+
+    @Test
+    public void testVideoEdit() throws Throwable {
         VideoEditWrapper.runTest(this);
     }
 
@@ -151,18 +213,6 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
     }
 
     /**
-     * Sets the desired frame size and bit rate.
-     */
-    private void setParameters(int width, int height, int bitRate) {
-        if ((width % 16) != 0 || (height % 16) != 0) {
-            Log.w(TAG, "WARNING: width or height not multiple of 16");
-        }
-        mWidth = width;
-        mHeight = height;
-        mBitRate = bitRate;
-    }
-
-    /**
      * Tests editing of a video file with GL.
      */
     private void videoEditTest()
@@ -177,7 +227,8 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
         if (DEBUG_SAVE_FILE) {
             // Save a copy to a file.  We call it ".mp4", but it's actually just an elementary
             // stream, so not all video players will know what to do with it.
-            String dirName = getContext().getFilesDir().getAbsolutePath();
+            Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            String dirName = context.getFilesDir().getAbsolutePath();
             String fileName = "vedit1_" + mWidth + "x" + mHeight + ".mp4";
             sourceChunks.saveToFile(new File(dirName, fileName));
         }
@@ -185,7 +236,8 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
         VideoChunks destChunks = editVideoFile(sourceChunks);
 
         if (DEBUG_SAVE_FILE) {
-            String dirName = getContext().getFilesDir().getAbsolutePath();
+            Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            String dirName = context.getFilesDir().getAbsolutePath();
             String fileName = "vedit2_" + mWidth + "x" + mHeight + ".mp4";
             destChunks.saveToFile(new File(dirName, fileName));
         }
@@ -208,15 +260,7 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
         try {
             // We avoid the device-specific limitations on width and height by using values that
             // are multiples of 16, which all tested devices seem to be able to handle.
-            MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
-
-            String codecName = selectCodec(format);
-            if (codecName == null) {
-                // Don't fail CTS if they don't have an AVC codec (not here, anyway).
-                Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
-                return false;
-            }
-            if (VERBOSE) Log.d(TAG, "found codec: " + codecName);
+            MediaFormat format = MediaFormat.createVideoFormat(mMediaType, mWidth, mHeight);
 
             // Set some properties.  Failing to specify some of these can cause the MediaCodec
             // configure() call to throw an unhelpful exception.
@@ -230,7 +274,7 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
 
             // Create a MediaCodec for the desired codec, then configure it as an encoder with
             // our desired properties.
-            encoder = MediaCodec.createByCodecName(codecName);
+            encoder = MediaCodec.createByCodecName(mEncoderName);
             encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             inputSurface = new InputSurface(encoder.createInputSurface());
             inputSurface.makeCurrent();
@@ -250,15 +294,6 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
         }
 
         return true;
-    }
-
-    /**
-     * Returns the first codec capable of encoding the specified MIME type, or null if no
-     * match was found.
-     */
-    private static String selectCodec(MediaFormat format) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        return mcl.findEncoderForFormat(format);
     }
 
     /**
@@ -411,7 +446,7 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
 
             // Create an encoder format that matches the input format.  (Might be able to just
             // re-use the format used to generate the video, since we want it to be the same.)
-            MediaFormat outputFormat = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
+            MediaFormat outputFormat = MediaFormat.createVideoFormat(mMediaType, mWidth, mHeight);
             outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             outputFormat.setInteger(MediaFormat.KEY_BIT_RATE,
@@ -423,14 +458,14 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
 
             outputData.setMediaFormat(outputFormat);
 
-            encoder = MediaCodec.createEncoderByType(MIME_TYPE);
+            encoder = MediaCodec.createByCodecName(mEncoderName);
             encoder.configure(outputFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             inputSurface = new InputSurface(encoder.createInputSurface());
             inputSurface.makeCurrent();
             encoder.start();
 
             // OutputSurface uses the EGL context created by InputSurface.
-            decoder = MediaCodec.createDecoderByType(MIME_TYPE);
+            decoder = MediaCodec.createByCodecName(mDecoderName);
             outputSurface = new OutputSurface();
             outputSurface.changeFragmentShader(FRAGMENT_SHADER);
             // do not allow frame drops
@@ -639,7 +674,7 @@ public class DecodeEditEncodeTest extends AndroidTestCase {
             surface = new OutputSurface(mWidth, mHeight);
 
             MediaFormat format = inputData.getMediaFormat();
-            decoder = MediaCodec.createDecoderByType(MIME_TYPE);
+            decoder = MediaCodec.createByCodecName(mDecoderName);
             format.setInteger(KEY_ALLOW_FRAME_DROP, 0);
             decoder.configure(format, surface.getSurface(), null, 0);
             decoder.start();
