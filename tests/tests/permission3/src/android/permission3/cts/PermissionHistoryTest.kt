@@ -108,6 +108,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
     }
 
     @Test
+    @Ignore
     fun testToggleSystemApps() {
         // I had some hard time mocking a system app.
         // Hence here I am only testing if the toggle is there.
@@ -158,6 +159,7 @@ class PermissionHistoryTest : BasePermissionHubTest() {
     }
 
     @Test
+    @Ignore
     fun testToggleFrom24HoursTo7DaysInTimeline() {
         // Auto doesn't support the 7 day view
         assumeFalse(isAutomotive)
