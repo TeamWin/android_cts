@@ -22,8 +22,8 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.keystore.cts.util.TestUtils;
 import android.keystore.cts.R;
+import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
@@ -31,6 +31,9 @@ import android.test.MoreAsserts;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.InputStream;
 import java.security.InvalidKeyException;
@@ -41,6 +44,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.Provider.Service;
+import java.security.PublicKey;
 import java.security.Security;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
@@ -52,8 +57,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.security.Provider.Service;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -64,9 +67,6 @@ import java.util.Set;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class KeyFactoryTest {
@@ -94,6 +94,9 @@ public class KeyFactoryTest {
         Set<String> actualAlgsLowerCase = new HashSet<String>();
         Set<String> expectedAlgsLowerCase = new HashSet<String>(
                 Arrays.asList(TestUtils.toLowerCase(EXPECTED_ALGORITHMS)));
+        // XDH is also a supported algorithm, but not available for other tests as the keys
+        // generated with it have more limited set of uses.
+        expectedAlgsLowerCase.add("xdh");
         for (Service service : services) {
             if ("KeyFactory".equalsIgnoreCase(service.getType())) {
                 String algLowerCase = service.getAlgorithm().toLowerCase(Locale.US);
