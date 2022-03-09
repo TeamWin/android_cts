@@ -53,6 +53,7 @@ import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -885,6 +886,60 @@ public class SurfaceControlTest {
     }
 
     @Test
+    public void testSurfaceTransaction_setCropRect_invalidCropWidth() {
+        final AtomicBoolean caughtException = new AtomicBoolean(false);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        try {
+                            new SurfaceControl.Transaction()
+                                    .setCrop(surfaceControl, new Rect(0, 0, -1, 100))
+                                    .apply();
+                        } catch (IllegalArgumentException e) {
+                            caughtException.set(true);
+                        }
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) { //10000
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+        assertTrue(caughtException.get());
+    }
+
+    @Test
+    public void testSurfaceTransaction_setCropRect_invalidCropHeight() {
+        final AtomicBoolean caughtException = new AtomicBoolean(false);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        try {
+                            new SurfaceControl.Transaction()
+                                    .setCrop(surfaceControl, new Rect(0, 0, 100, -1))
+                                    .apply();
+                        } catch (IllegalArgumentException e) {
+                            caughtException.set(true);
+                        }
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) { //10000
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+        assertTrue(caughtException.get());
+    }
+
+    @Test
     public void testSurfaceTransaction_setTransform_flipH() {
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -1243,12 +1298,66 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new PixelChecker(PixelColor.YELLOW) {
+                new PixelChecker(PixelColor.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int matchingPixelCount, int width, int height) {
                         return matchingPixelCount > 9000 && matchingPixelCount < 11000;
                     }
                 }
         );
+    }
+
+    @Test
+    public void testSurfaceTransaction_negativeScaleX() {
+        final AtomicBoolean caughtException = new AtomicBoolean(false);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        try {
+                            new SurfaceControl.Transaction()
+                                    .setScale(surfaceControl, -1, 1)
+                                    .apply();
+                        } catch (IllegalArgumentException e) {
+                            caughtException.set(true);
+                        }
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) { //10000
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+        assertTrue(caughtException.get());
+    }
+
+    @Test
+    public void testSurfaceTransaction_negativeScaleY() {
+        final AtomicBoolean caughtException = new AtomicBoolean(false);
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        try {
+                            new SurfaceControl.Transaction()
+                                    .setScale(surfaceControl, 1, -1)
+                                    .apply();
+                        } catch (IllegalArgumentException e) {
+                            caughtException.set(true);
+                        }
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) { //10000
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+        assertTrue(caughtException.get());
     }
 }
