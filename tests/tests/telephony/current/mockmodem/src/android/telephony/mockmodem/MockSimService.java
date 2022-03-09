@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.mockmodem;
 
 import android.content.Context;
 import android.hardware.radio.sim.AppStatus;

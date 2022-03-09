@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.mockmodem;
 
 import android.app.Service;
 import android.content.Context;
@@ -36,13 +36,15 @@ public class MockModemService extends Service {
     private static final String TAG = "MockModemService";
 
     public static final int TEST_TIMEOUT_MS = 30000;
-    public static final String IRADIOCONFIG_INTERFACE = "android.telephony.cts.iradioconfig";
-    public static final String IRADIOMODEM_INTERFACE = "android.telephony.cts.iradiomodem";
-    public static final String IRADIOSIM_INTERFACE = "android.telephony.cts.iradiosim";
-    public static final String IRADIONETWORK_INTERFACE = "android.telephony.cts.iradionetwork";
-    public static final String IRADIODATA_INTERFACE = "android.telephony.cts.iradiodata";
-    public static final String IRADIOMESSAGING_INTERFACE = "android.telephony.cts.iradiomessaging";
-    public static final String IRADIOVOICE_INTERFACE = "android.telephony.cts.iradiovoice";
+    public static final String IRADIOCONFIG_INTERFACE = "android.telephony.mockmodem.iradioconfig";
+    public static final String IRADIOMODEM_INTERFACE = "android.telephony.mockmodem.iradiomodem";
+    public static final String IRADIOSIM_INTERFACE = "android.telephony.mockmodem.iradiosim";
+    public static final String IRADIONETWORK_INTERFACE =
+            "android.telephony.mockmodem.iradionetwork";
+    public static final String IRADIODATA_INTERFACE = "android.telephony.mockmodem.iradiodata";
+    public static final String IRADIOMESSAGING_INTERFACE =
+            "android.telephony.mockmodem.iradiomessaging";
+    public static final String IRADIOVOICE_INTERFACE = "android.telephony.mockmodem.iradiovoice";
     public static final String PHONE_ID = "phone_id";
 
     private static Context sContext;

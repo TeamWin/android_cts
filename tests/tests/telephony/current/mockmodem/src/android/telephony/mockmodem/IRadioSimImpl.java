@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.mockmodem;
 
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
@@ -27,7 +27,7 @@ import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
-import android.telephony.cts.MockSimService.SimAppData;
+import android.telephony.mockmodem.MockSimService.SimAppData;
 import android.util.Log;
 
 import java.util.ArrayList;

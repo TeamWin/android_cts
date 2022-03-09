@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.mockmodem;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.telephony.cts.TelephonyUtils;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -33,7 +34,6 @@ class MockModemServiceConnector {
 
     private static final String TAG = "MockModemServiceConnector";
 
-    private static final String DEFAULT_SERVICE_NAME = MockModemService.class.getClass().getName();
     private static final String COMMAND_BASE = "cmd phone ";
     private static final String COMMAND_SET_MODEM_SERVICE = "radio set-modem-service ";
     private static final String COMMAND_GET_MODEM_SERVICE = "radio get-modem-service ";
@@ -56,10 +56,8 @@ class MockModemServiceConnector {
         public void onServiceConnected(ComponentName name, IBinder service) {
             String serviceName;
             mMockModemService = ((MockModemService.LocalBinder) service).getService();
-            serviceName = mMockModemService.getClass().getName();
-            if (!isDefaultMockModemService(serviceName)) {
-                updateModemServiceName(serviceName);
-            }
+            serviceName = name.getPackageName() + "/" + name.getClassName();
+            updateModemServiceName(serviceName);
             mLatch.countDown();
             Log.d(TAG, "MockModemServiceConnection - " + serviceName + " onServiceConnected");
         }
@@ -162,10 +160,6 @@ class MockModemServiceConnector {
         if (result) mIsServiceOverridden = true;
 
         return result;
-    }
-
-    private boolean isDefaultMockModemService(String serviceName) {
-        return TextUtils.equals(DEFAULT_SERVICE_NAME, serviceName);
     }
 
     /**
