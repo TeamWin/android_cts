@@ -60,8 +60,6 @@ import org.junit.Test;
  */
 @Presubmit
 public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
-    private Activity mOwnerActivity;
-    private IBinder mOwnerToken;
     private final Rect mPrimaryBounds = new Rect();
     private final Rect mSideBounds = new Rect();
     private TaskFragmentRecord mTaskFragA;
@@ -72,13 +70,11 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     private final Intent mIntent = new Intent().setComponent(mActivityC);
 
     @Override
-    public void setUp() throws Exception {
-        super.setUp();
+    Activity setUpOwnerActivity() {
         // Launch activities in fullscreen, otherwise, some tests fail on devices which use freeform
         // as the default windowing mode, because tests' prerequisite are that activity A, B, and C
         // need to overlay completely, but they can be partially overlay as freeform windows.
-        mOwnerActivity = startActivityInWindowingModeFullScreen(ActivityA.class);
-        mOwnerToken = getActivityToken(mOwnerActivity);
+        return startActivityInWindowingModeFullScreen(ActivityA.class);
     }
 
     /** Launch two Activities in two adjacent TaskFragments side-by-side. */

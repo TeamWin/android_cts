@@ -52,7 +52,6 @@ import androidx.test.uiautomator.UiObject;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -276,9 +275,13 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         assertRedactedReadOnlyAccess(clipData.getItemAt(0).getUri());
     }
 
-    @Ignore("b/215187981: For some reason, it hits a timeout and crashes the other tests on cf")
     @Test
     public void testCloudEventNotification() throws Exception {
+        // Create a placeholder local image to ensure that the picker UI is never empty.
+        // The PhotoPickerUiUtils#findItemList needs to select an item and it times out if the
+        // Picker UI is empty.
+        createImages(1, mContext.getUserId(), mUriList);
+
         // Cloud provider isn't set
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isFalse();
@@ -349,8 +352,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     private ClipData fetchPickerMedia(int maxCount) throws Exception {
         final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-        // TODO(b/205291616): Replace 100 with MediaStore.getPickImagesMaxLimit()
-        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, 100);
+        intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit());
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         final List<UiObject> itemList = findItemList(maxCount);

@@ -99,7 +99,7 @@ public class AppSearchTestService extends Service {
                 String packageName, String databaseName, String namespace, String id) {
             try {
                 AppSearchBatchResult<String, GenericDocument> getResult =
-                        mGlobalSearchSessionShim.getByDocumentId(
+                        mGlobalSearchSessionShim.getByDocumentIdAsync(
                                 packageName,
                                 databaseName,
                                 new GetByDocumentIdRequest.Builder(namespace)

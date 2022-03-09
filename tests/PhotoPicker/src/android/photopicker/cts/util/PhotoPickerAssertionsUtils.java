@@ -16,8 +16,6 @@
 
 package android.photopicker.cts.util;
 
-import static android.os.SystemProperties.getBoolean;
-import static android.provider.MediaStore.Files.FileColumns;
 import static android.provider.MediaStore.PickerMediaColumns;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -73,12 +71,7 @@ public class PhotoPickerAssertionsUtils {
             assertThat(c).isNotNull();
             assertThat(c.moveToFirst()).isTrue();
 
-            final String mimeType;
-            if (getBoolean("sys.photopicker.pickerdb.enabled", true)) {
-                mimeType = c.getString(c.getColumnIndex(PickerMediaColumns.MIME_TYPE));
-            } else {
-                mimeType = c.getString(c.getColumnIndex(FileColumns.MIME_TYPE));
-            }
+            final String mimeType = c.getString(c.getColumnIndex(PickerMediaColumns.MIME_TYPE));
 
             if (mimeType.startsWith("image")) {
                 assertImageRedactedReadOnlyAccess(uri, resolver);

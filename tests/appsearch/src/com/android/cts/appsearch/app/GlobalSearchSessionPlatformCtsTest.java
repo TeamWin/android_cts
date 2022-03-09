@@ -329,7 +329,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, "database",
+                            .getByDocumentIdAsync(PKG_A, "database",
                                     new GetByDocumentIdRequest.Builder("namespace")
                                             .addIds("id1")
                                             .build()).get();
@@ -360,7 +360,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, "database",
+                            .getByDocumentIdAsync(PKG_A, "database",
                                     new GetByDocumentIdRequest.Builder("namespace")
                                             .addIds("id1")
                                             .build()).get();
@@ -376,7 +376,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, "database",
+                            .getByDocumentIdAsync(PKG_A, "database",
                                     new GetByDocumentIdRequest.Builder("namespace")
                                             .addIds("id1")
                                             .build()).get();
@@ -392,7 +392,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, "database",
+                            .getByDocumentIdAsync(PKG_A, "database",
                                     new GetByDocumentIdRequest.Builder("namespace")
                                             .addIds("id1")
                                             .build()).get();
@@ -408,7 +408,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, "database",
+                            .getByDocumentIdAsync(PKG_A, "database",
                                     new GetByDocumentIdRequest.Builder("namespace")
                                             .addIds("id1")
                                             .build()).get();
@@ -423,7 +423,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         mGlobalSearchSession =
                 GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
         AppSearchBatchResult<String, GenericDocument> nonExistentResult = mGlobalSearchSession
-                .getByDocumentId(PKG_A, "database",
+                .getByDocumentIdAsync(PKG_A, "database",
                         new GetByDocumentIdRequest.Builder("namespace")
                                 .addIds("id1")
                                 .build()).get();
@@ -439,7 +439,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         mGlobalSearchSession =
                 GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
         AppSearchBatchResult<String, GenericDocument> unAuthResult = mGlobalSearchSession
-                .getByDocumentId(PKG_A, "database",
+                .getByDocumentIdAsync(PKG_A, "database",
                         new GetByDocumentIdRequest.Builder("namespace")
                                 .addIds("id1")
                                 .build()).get();
@@ -463,7 +463,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, DB_NAME,
+                            .getByDocumentIdAsync(PKG_A, DB_NAME,
                                     new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
                                             .addIds("id1")
                                             .build()).get();
@@ -472,7 +472,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can't get non existent document
                     AppSearchBatchResult<String, GenericDocument> nonExistent = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, DB_NAME,
+                            .getByDocumentIdAsync(PKG_A, DB_NAME,
                                     new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
                                             .addIds("id2")
                                             .build()).get();
@@ -494,7 +494,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
                     // Can't get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
-                            .getByDocumentId(PKG_A, DB_NAME,
+                            .getByDocumentIdAsync(PKG_A, DB_NAME,
                                     new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
                                             .addIds("id1")
                                             .build()).get();
@@ -517,7 +517,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                             GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
 
                     AppSearchBatchResult<String, GenericDocument> nonExistentResult =
-                            mGlobalSearchSession.getByDocumentId(PKG_A, DB_NAME,
+                            mGlobalSearchSession.getByDocumentIdAsync(PKG_A, DB_NAME,
                                     new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
                                             .addIds("id1")
                                             .build()).get();
@@ -538,7 +538,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                             GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
 
                     AppSearchBatchResult<String, GenericDocument> unAuthResult =
-                            mGlobalSearchSession.getByDocumentId(PKG_A, DB_NAME,
+                            mGlobalSearchSession.getByDocumentIdAsync(PKG_A, DB_NAME,
                                     new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
                                             .addIds("id1")
                                             .build()).get();
@@ -560,7 +560,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                 GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
 
         AppSearchBatchResult<String, GenericDocument> noGlobalResult = mGlobalSearchSession
-                .getByDocumentId(PKG_A, DB_NAME,
+                .getByDocumentIdAsync(PKG_A, DB_NAME,
                         new GetByDocumentIdRequest.Builder(NAMESPACE_NAME)
                                 .addIds("id1")
                                 .build()).get();
