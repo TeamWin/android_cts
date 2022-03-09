@@ -1820,6 +1820,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check 10-Bit output capability
      */
+    @CddTest(requirement="7.5/C-2-1")
     @Test
     public void test10BitOutputCharacteristics() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
@@ -1892,16 +1893,16 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * The same set of HDR profiles MUST be supported by both the primary rear-facing and
-     * primary front-facing cameras.
+     * If device implementations support HDR 10-bit output capability, then they
+     * MUST support 10-bit output for either the primary rear-facing or the primary front-facing
+     * camera.
      */
-    @CddTest(requirement="7.5/C-2-1")
+    @CddTest(requirement="7.5/C-2-2")
     @Test
     public void test10BitDeviceSupport() throws Exception {
         boolean rearFacing10bitSupport = false;
         boolean frontFacing10bitSupport = false;
-        Set<Long> rearFacingProfiles = new ArraySet<>();
-        Set<Long> frontFacingProfiles = new ArraySet<>();
+        boolean device10bitSupport = false;
 
         for (int i = 0; i < mAllCameraIds.length; i++) {
             Log.i(TAG, "test10BitDeviceSupport: Testing camera ID " + mAllCameraIds[i]);
@@ -1914,34 +1915,29 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT);
             if (!supports10BitOutput) {
                 continue;
+            } else {
+                device10bitSupport = true;
             }
-
-            DynamicRangeProfiles dynamicProfiles = c.get(
-                    CameraCharacteristics.REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES);
 
             if (CameraTestUtils.isPrimaryRearFacingCamera(mCameraManager, mAllCameraIds[i])) {
                 rearFacing10bitSupport = true;
-                rearFacingProfiles = dynamicProfiles.getSupportedProfiles();
             } else if (CameraTestUtils.isPrimaryFrontFacingCamera(mCameraManager,
                     mAllCameraIds[i])) {
                 frontFacing10bitSupport = true;
-                frontFacingProfiles = dynamicProfiles.getSupportedProfiles();
             }
         }
 
-        assertEquals("Primary front facing camera 10-bit support: " +
-                frontFacing10bitSupport + " must match with the rear facing 10-bit support: " +
-                rearFacing10bitSupport, frontFacing10bitSupport, rearFacing10bitSupport);
-        assertTrue("Primary front facing camera dynamic range profiles must match with " +
-                "the rear facing dynamic range profiles! ",
-                frontFacingProfiles.equals(rearFacingProfiles));
+        if (device10bitSupport) {
+            assertTrue("10-bit output support must be enabled on either front or rear " +
+                    " camera", rearFacing10bitSupport || frontFacing10bitSupport);
+        }
     }
 
     /**
      * The same HDR profiles must be supported for all BACKWARD_COMPATIBLE-capable physical
      * sub-cameras of a logical camera, and the logical camera itself.
      */
-    @CddTest(requirement="7.5/C-2-2")
+    @CddTest(requirement="7.5/C-2-3")
     @Test
     public void test10BitLogicalDeviceSupport() {
         for (int i = 0; i < mAllCameraIds.length; i++) {
