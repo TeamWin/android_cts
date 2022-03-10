@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -78,6 +79,25 @@ public class StartActivityAsUserTests {
 
     @Test
     public void startActivityValidUser() throws Throwable {
+        verifyStartActivityAsValidUser(false /* withOptions */);
+    }
+
+    @Test
+    public void startActivityInvalidUser() {
+        verifyStartActivityAsInvalidUser(false /* withOptions */);
+    }
+
+    @Test
+    public void startActivityAsValidUserWithOptions() throws Throwable {
+        verifyStartActivityAsValidUser(true /* withOptions */);
+    }
+
+    @Test
+    public void startActivityAsInvalidUserWithOptions() {
+        verifyStartActivityAsInvalidUser(true /* withOptions */);
+    }
+
+    private void verifyStartActivityAsValidUser(boolean withOptions) throws Throwable {
         int[] secondUser= {-1};
         CountDownLatch latch = new CountDownLatch(1);
         RemoteCallback cb = new RemoteCallback((Bundle result) -> {
@@ -102,7 +122,12 @@ public class StartActivityAsUserTests {
 
         try {
             runWithShellPermissionIdentity(() -> {
-                mContext.startActivityAsUser(intent, secondUserHandle);
+                if (withOptions) {
+                    mContext.startActivityAsUser(intent, ActivityOptions.makeBasic().toBundle(),
+                            secondUserHandle);
+                } else {
+                    mContext.startActivityAsUser(intent, secondUserHandle);
+                }
                 mAm.switchUser(secondUserHandle);
                 try {
                     latch.await(5, TimeUnit.SECONDS);
@@ -120,8 +145,7 @@ public class StartActivityAsUserTests {
         returnToOriginalUserLatch.await(20, TimeUnit.SECONDS);
     }
 
-    @Test
-    public void startActivityInvalidUser() {
+    private void verifyStartActivityAsInvalidUser(boolean withOptions) {
         UserHandle secondUserHandle = UserHandle.of(mSecondUserId * 100);
         int[] stackId = {-1};
 
@@ -129,7 +153,12 @@ public class StartActivityAsUserTests {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         runWithShellPermissionIdentity(() -> {
-            mContext.startActivityAsUser(intent, secondUserHandle);
+            if (withOptions) {
+                mContext.startActivityAsUser(intent, ActivityOptions.makeBasic().toBundle(),
+                        secondUserHandle);
+            } else {
+                mContext.startActivityAsUser(intent, secondUserHandle);
+            }
             WindowManagerState amState = mAmWmState;
             amState.computeState();
             ComponentName componentName = ComponentName.createRelative(PACKAGE, CLASS);
