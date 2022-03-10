@@ -30,6 +30,7 @@ import com.android.tradefed.targetprep.TestAppInstallSetup;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.InstrumentationTest;
 import com.android.tradefed.util.AaptParser;
+import com.android.tradefed.util.FileUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,20 +70,12 @@ public class ApkPackageNameCheck {
             fail(String.format("%s does not exists", testcases));
             return;
         }
-        File[] listConfig = testcases.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                if (name.endsWith(".config")) {
-                    return true;
-                }
-                return false;
-            }
-        });
-        assertTrue(listConfig.length > 0);
+        Set<File> listConfigs = FileUtil.findFilesObject(testcases, ".*\\.config");
+        assertTrue(listConfigs.size() > 0);
         // We check all apk installed by all modules
         Map<String, String> packageNames = new HashMap<>();
 
-        for (File config : listConfig) {
+        for (File config : listConfigs) {
             IConfiguration c = ConfigurationFactory.getInstance()
                     .createConfigurationFromArgs(new String[] {config.getAbsolutePath()});
             // For each config, we check all the apk it's going to install
@@ -126,11 +119,12 @@ public class ApkPackageNameCheck {
                         }
                     }
                 }
-    
+
+                // All apks need to be in the config dir or sub-dir
                 for (File apk : apkNames) {
                     String apkName = apk.getName();
-                    File apkFile = new File(testcases, apkName);
-                    if (!apkFile.exists()) {
+                    File apkFile = FileUtil.findFile(config.getParentFile(), apkName);
+                    if (apkFile == null || !apkFile.exists()) {
                         fail(String.format("Module %s is trying to install %s which does not "
                                 + "exists in testcases/", config.getName(), apkFile));
                     }

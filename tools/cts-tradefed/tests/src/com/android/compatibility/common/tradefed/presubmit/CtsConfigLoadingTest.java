@@ -40,6 +40,7 @@ import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.ITestFilterReceiver;
 import com.android.tradefed.testtype.suite.ITestSuite;
 import com.android.tradefed.testtype.suite.params.ModuleParameters;
+import com.android.tradefed.util.FileUtil;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -193,16 +194,8 @@ public class CtsConfigLoadingTest {
             fail(String.format("%s does not exists", testcases));
             return;
         }
-        File[] listConfig = testcases.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                if (name.endsWith(".config")) {
-                    return true;
-                }
-                return false;
-            }
-        });
-        assertTrue(listConfig.length > 0);
+        Set<File> listConfigs = FileUtil.findFilesObject(testcases, ".*\\.config");
+        assertTrue(listConfigs.size() > 0);
         // Create a FolderBuildInfo to similate the CompatibilityBuildProvider
         FolderBuildInfo stubFolder = new FolderBuildInfo("-1", "-1");
         stubFolder.setRootDir(new File(ctsRoot));
@@ -213,7 +206,7 @@ public class CtsConfigLoadingTest {
 
         List<String> missingMandatoryParameters = new ArrayList<>();
         // We expect to be able to load every single config in testcases/
-        for (File config : listConfig) {
+        for (File config : listConfigs) {
             IConfiguration c = ConfigurationFactory.getInstance()
                     .createConfigurationFromArgs(new String[] {config.getAbsolutePath()});
             if (c.getDeviceConfig().size() > 2) {
