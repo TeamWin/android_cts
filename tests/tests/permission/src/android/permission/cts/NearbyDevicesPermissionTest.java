@@ -107,6 +107,7 @@ public class NearbyDevicesPermissionTest {
     @After
     public void uninstallTestApp() {
         uninstallApp(TEST_APP_PKG);
+        uninstallApp(DISAVOWAL_APP_PKG);
     }
 
     @Test
