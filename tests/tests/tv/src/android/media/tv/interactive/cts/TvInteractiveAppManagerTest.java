@@ -264,8 +264,7 @@ public class TvInteractiveAppManagerTest {
         PollingCheck.waitFor(
                 TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo == null);
 
-        info = new AppLinkInfo.Builder("pkg1", "class1").setPackageName("pkg2")
-                .setClassName("class2").setUriScheme("url1").setUriHost("host2")
+        info = new AppLinkInfo.Builder("pkg1", "class1").setUriScheme("url1").setUriHost("host2")
                 .setUriPrefix("prefix").build();
 
         mManager.registerAppLinkInfo(stubInfo.getId(), info);
