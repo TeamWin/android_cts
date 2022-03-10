@@ -407,14 +407,14 @@ public class BluetoothAdapterTest extends AndroidTestCase {
 
         // Verify return value without permission.BLUETOOTH_CONNECT
         mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mAdapter.getUuids());
+        assertThrows(SecurityException.class, () -> mAdapter.getUuidsList());
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
-        assertNotNull(mAdapter.getUuids());
+        assertNotNull(mAdapter.getUuidsList());
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify return value if Bluetooth is not enabled
-        assertEquals(mAdapter.getUuids().length, 0);
+        assertEquals(0, mAdapter.getUuidsList().size());
 
     }
 
