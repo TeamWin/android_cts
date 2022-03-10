@@ -37,6 +37,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.policies.CreateAndManageUser;
 import com.android.bedstead.nene.TestApis;
 
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,6 +51,11 @@ public final class CreateAndManageUserTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    @Before
+    public void setUp() {
+        sDeviceState.requireCanSupportAdditionalUser();
+    }
 
     @Test
     @Postsubmit(reason = "new test")
