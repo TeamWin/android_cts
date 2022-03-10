@@ -21,6 +21,7 @@ import static org.junit.Assert.assertThrows;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothLeAudio;
+import android.bluetooth.BluetoothLeAudioCodecStatus;
 import android.bluetooth.BluetoothLeAudioCodecConfig;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -35,6 +36,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -174,6 +176,29 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
         assertFalse(mBluetoothLeAudio.setConnectionPolicy(null, 0));
         assertEquals(BluetoothProfile.CONNECTION_POLICY_FORBIDDEN,
                 mBluetoothLeAudio.getConnectionPolicy(null));
+    }
+
+    public void testRegisterCallback() {
+        if (!(mHasBluetooth && mIsLeAudioSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothLeAudio);
+
+        Executor executor = mContext.getMainExecutor();
+        BluetoothLeAudio.Callback callback =
+                new BluetoothLeAudio.Callback() {
+                    @Override
+                    public void onCodecConfigChanged(int groupId,
+                                                     BluetoothLeAudioCodecStatus status) {}
+                };
+
+        // Verify parameter
+        assertThrows(NullPointerException.class, () ->
+                mBluetoothLeAudio.registerCallback(null, callback));
+        assertThrows(NullPointerException.class, () ->
+                mBluetoothLeAudio.registerCallback(executor, null));
+        assertThrows(NullPointerException.class, () ->
+                mBluetoothLeAudio.unregisterCallback(null));
     }
 
     private boolean waitForProfileConnect() {
