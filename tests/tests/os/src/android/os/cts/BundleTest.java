@@ -671,6 +671,28 @@ public class BundleTest {
     }
 
     @Test
+    public void testGetParcelableArrayListTypeSafe_withMismatchingTypeAndDifferentReturnType_returnsNull() {
+        final ArrayList<CustomParcelable> originalObjects = new ArrayList<>();
+        originalObjects.add(new CustomParcelable(42, "don't panic"));
+        mBundle.putParcelableArrayList(KEY1, originalObjects);
+        roundtrip();
+        ArrayList<Parcelable> result = mBundle.getParcelableArrayList(KEY1, Intent.class);
+        assertNull(result);
+        assertFalse(CustomParcelable.sDeserialized);
+    }
+
+    @Test
+    public void testGetParcelableArrayListTypeSafe_withMatchingTypeAndDifferentReturnType__returnsObject() {
+        final ArrayList<CustomParcelable> original = new ArrayList<>();
+        original.add(new CustomParcelable(42, "don't panic"));
+        original.add(new CustomParcelable(1961, "off we go"));
+        mBundle.putParcelableArrayList(KEY1, original);
+        roundtrip();
+        ArrayList<Parcelable> result = mBundle.getParcelableArrayList(KEY1, CustomParcelable.class);
+        assertEquals(original, result);
+    }
+
+    @Test
     public void testGetParcelableArrayListTypeSafe_withBaseType_returnsObject() {
         final ArrayList<CustomParcelable> original = new ArrayList<>();
         original.add(new CustomParcelable(42, "don't panic"));
@@ -823,6 +845,29 @@ public class BundleTest {
         mBundle.putSparseParcelableArray(KEY1, original);
         roundtrip();
         assertTrue(original.contentEquals(mBundle.getSparseParcelableArray(KEY1, CustomParcelable.class)));
+    }
+
+    @Test
+    public void testGetSparseParcelableArrayTypeSafe_withMismatchingTypeAndDifferentReturnType_returnsNull() {
+        final SparseArray<CustomParcelable> originalObjects = new SparseArray<>();
+        originalObjects.put(42, new CustomParcelable(42, "don't panic"));
+        mBundle.putSparseParcelableArray(KEY1, originalObjects);
+        roundtrip();
+        SparseArray<Parcelable> result = mBundle.getSparseParcelableArray(KEY1, Intent.class);
+        assertNull(result);
+        assertFalse(CustomParcelable.sDeserialized);
+    }
+
+    @Test
+    public void testGetSparseParcelableArrayTypeSafe_withMatchingTypeAndDifferentReturnType_returnsObject() {
+        final SparseArray<CustomParcelable> original = new SparseArray<>();
+        original.put(42, new CustomParcelable(42, "don't panic"));
+        original.put(1961, new CustomParcelable(1961, "off we go"));
+        mBundle.putSparseParcelableArray(KEY1, original);
+        roundtrip();
+        SparseArray<Parcelable> result = mBundle.getSparseParcelableArray(KEY1,
+                CustomParcelable.class);
+        assertTrue(original.contentEquals(result));
     }
 
     @Test
