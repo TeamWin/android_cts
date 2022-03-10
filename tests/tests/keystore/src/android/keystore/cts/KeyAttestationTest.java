@@ -80,6 +80,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.google.common.collect.ImmutableSet;
 
 import org.bouncycastle.asn1.x500.X500Name;
@@ -726,6 +728,7 @@ public class KeyAttestationTest {
         testDeviceIdAttestationFailure(AttestationUtils.ID_TYPE_MEID, "Unable to retrieve MEID");
     }
 
+    @CddTest(requirement="9.11.4")
     @Test
     public void testMandatoryDeviceidAttestation() {
         // ID attestation is only mandatory on devices that have shipped with T and

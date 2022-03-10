@@ -19,6 +19,7 @@ package android.os.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -26,6 +27,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Process;
 import android.util.Log;
@@ -242,11 +244,23 @@ public class ProcessTest {
     @Test
     public void testSdkSandboxUids() {
         assertEquals(SANDBOX_SDK_UID, Process.toSdkSandboxUid(APP_UID));
-        assertEquals(APP_UID, Process.sdkSandboxToAppUid(SANDBOX_SDK_UID));
+        assertEquals(APP_UID, Process.getAppUidForSdkSandboxUid(SANDBOX_SDK_UID));
 
         assertFalse(Process.isSdkSandboxUid(APP_UID));
         assertTrue(Process.isSdkSandboxUid(SANDBOX_SDK_UID));
 
         assertFalse(Process.isSdkSandbox());
+    }
+
+    /**
+     * Tests that the reserved UID is not taken by an actual package.
+     */
+    @Test
+    public void testReservedVirtualUid() {
+        PackageManager pm = mContext.getPackageManager();
+        final String name = pm.getNameForUid(Process.SDK_SANDBOX_VIRTUAL_UID);
+        assertNull(name);
+        final String[] packages = pm.getPackagesForUid(Process.SDK_SANDBOX_VIRTUAL_UID);
+        assertNull(packages);
     }
 }

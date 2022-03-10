@@ -516,6 +516,10 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                     "addCrossProfileIntents", mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
                     "startSwitchToOtherProfileIntent", mProfileUserId);
+
+            // TODO(b/223178698): Investigate potential increase in latency
+            Thread.sleep(30000);
+
             assertResolverActivityInForeground(mProfileUserId);
         } finally {
             pressHome();

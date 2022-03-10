@@ -586,6 +586,9 @@ public class TestUtils {
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(1);
             if (grantStoragePermission) {
                 grantPermission(packageName, Manifest.permission.READ_EXTERNAL_STORAGE);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_IMAGE);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_AUDIO);
+                grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
             }
         } finally {
             uiAutomation.dropShellPermissionIdentity();

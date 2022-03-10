@@ -151,6 +151,11 @@ public final class HdmiCecConstants {
     public static final File CEC_MAP_FOLDER =
             new File(System.getProperty("java.io.tmpdir"), "cec-cts-temp");
 
+    // CEC Settings
+    public static final String SETTING_VOLUME_CONTROL_ENABLED = "volume_control_enabled";
+
+    // CEC Settings Values
+    public static final String VOLUME_CONTROL_ENABLED = "1";
 
     // Power Control Modes for source devices
     public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";

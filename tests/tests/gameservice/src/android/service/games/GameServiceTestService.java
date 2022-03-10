@@ -20,7 +20,6 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -154,37 +153,36 @@ public final class GameServiceTestService extends Service {
         }
 
         @Override
-        public Bitmap getBitmapScreenshotForFocusedGameSession() {
+        public boolean takeScreenshotForFocusedGameSession() {
+            boolean result = false;
             TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
-            if (focusedGameSession == null) {
-                return null;
+            if (focusedGameSession != null) {
+                CountDownLatch countDownLatch = new CountDownLatch(1);
+                final boolean[] ret = new boolean[1];
+                ScreenshotCallback callback =
+                        new ScreenshotCallback() {
+                            @Override
+                            public void onFailure(int statusCode) {
+                                ret[0] = false;
+                                countDownLatch.countDown();
+                            }
+
+                            @Override
+                            public void onSuccess() {
+                                ret[0] = true;
+                                countDownLatch.countDown();
+                            }
+                        };
+                focusedGameSession.takeScreenshot(Runnable::run, callback);
+                try {
+                    countDownLatch.await(
+                            SCREENSHOT_CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    return false;
+                }
+                result = ret[0];
             }
-
-            CountDownLatch countDownLatch = new CountDownLatch(1);
-            Bitmap[] ret = new Bitmap[1];
-            ScreenshotCallback callback =
-                    new ScreenshotCallback() {
-                        @Override
-                        public void onFailure(int statusCode) {
-                            countDownLatch.countDown();
-                        }
-
-                        @Override
-                        public void onSuccess(Bitmap bitmap) {
-                            ret[0] = bitmap;
-                            countDownLatch.countDown();
-                        }
-                    };
-            focusedGameSession.takeScreenshot(Runnable::run, callback);
-
-            try {
-                countDownLatch.await(
-                        SCREENSHOT_CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                return null;
-            }
-
-            return ret[0];
+            return result;
         }
 
         public OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo() {
