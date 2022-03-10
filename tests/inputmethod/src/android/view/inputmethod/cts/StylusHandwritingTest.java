@@ -247,11 +247,11 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     NOT_EXPECT_TIMEOUT);
 
             final int touchSlop = getTouchSlop();
-            final int startX = 50;
-            final int startY = 50;
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
             final int endX = startX + 2 * touchSlop;
-            final int endY = startY + 2 * touchSlop;
-            final int number = 10;
+            final int endY = startY;
+            final int number = 5;
             TestUtils.injectStylusDownEvent(editText, startX, startY);
             TestUtils.injectStylusMoveEvents(editText, startX, startY,
                     endX, endY, number);
@@ -273,6 +273,69 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                             .getReturnBooleanValue());
 
             TestUtils.injectStylusUpEvent(editText, endX, endY);
+        }
+    }
+
+    @FlakyTest(bugId = 222840964)
+    @Test
+    /**
+     * Inject Stylus events on top of focused editor and verify Handwriting can be initiated
+     * multiple times.
+     */
+    public void testHandwritingInitMultipleTimes() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+
+            // Try to init handwriting for multiple times.
+            for (int i = 0; i < 3; ++i) {
+                TestUtils.injectStylusDownEvent(editText, startX, startY);
+                TestUtils.injectStylusMoveEvents(editText, startX, startY,
+                        endX, endY, number);
+                // Handwriting should already be initiated before ACTION_UP.
+                // keyboard shouldn't show up.
+                notExpectEvent(
+                        stream,
+                        editorMatcher("onStartInputView", marker),
+                        NOT_EXPECT_TIMEOUT);
+                // Handwriting should start
+                expectEvent(
+                        stream,
+                        editorMatcher("onStartStylusHandwriting", marker),
+                        TIMEOUT);
+
+
+                // Verify Stylus Handwriting window is shown
+                assertTrue(expectCommand(
+                        stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
+                        .getReturnBooleanValue());
+
+                TestUtils.injectStylusUpEvent(editText, endX, endY);
+
+                imeSession.callFinishStylusHandwriting();
+                expectEvent(
+                        stream,
+                        editorMatcher("onFinishStylusHandwriting", marker),
+                        TIMEOUT);
+            }
         }
     }
 
@@ -337,7 +400,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     NOT_EXPECT_TIMEOUT);
 
             // Inject stylus events out of the editor boundary.
-            TestUtils.injectStylusEvents(editText, 50, -50);
+            TestUtils.injectStylusEvents(editText, editText.getWidth() / 2, -50);
             // keyboard shouldn't show up.
             notExpectEvent(
                     stream,
@@ -381,13 +444,13 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     NOT_EXPECT_TIMEOUT);
 
             final int touchSlop = getTouchSlop();
-            final int startX = 50;
+            final int startX = unfocusedEditText.getWidth() / 2;
             final int startY = 2 * touchSlop;
             // (endX, endY) is out of bound to avoid that unfocusedEditText is focused due to the
             // stylus touch.
-            final int endX = -2 * touchSlop;
-            final int endY = 50;
-            final int number = 10;
+            final int endX = startX;
+            final int endY = unfocusedEditText.getHeight() + 2 * touchSlop;
+            final int number = 5;
 
             TestUtils.injectStylusDownEvent(unfocusedEditText, startX, startY);
             TestUtils.injectStylusMoveEvents(unfocusedEditText, startX, startY,
@@ -447,7 +510,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             // stylus touch.
             final int endX = -2 * touchSlop;
             final int endY = 50;
-            final int number = 10;
+            final int number = 5;
             TestUtils.injectStylusDownEvent(unfocusedEditText, startX, startY);
             TestUtils.injectStylusMoveEvents(unfocusedEditText, startX, startY,
                     endX, endY, number);

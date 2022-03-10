@@ -16,8 +16,6 @@
 
 package android.media.decoder.cts;
 
-import static org.junit.Assert.fail;
-
 import android.content.res.AssetFileDescriptor;
 import android.media.decoder.cts.R;
 import android.media.MediaCodec;
@@ -31,6 +29,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MediaUtils;
@@ -39,8 +38,9 @@ import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,9 +49,13 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Conformance test for decoders on the device.
@@ -62,7 +66,7 @@ import java.util.HashMap;
  * based on the YUV 420 plannar format.
  */
 @AppModeFull(reason = "There should be no instant apps specific behavior related to conformance")
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class DecoderConformanceTest extends MediaTestBase {
     private enum Status {
         FAIL,
@@ -73,14 +77,51 @@ public class DecoderConformanceTest extends MediaTestBase {
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static final String TAG = "DecoderConformanceTest";
     private static final String CONFORMANCE_SUBDIR = "conformance_vectors/";
-    private DeviceReportLog mReportLog;
-    private MediaCodec mDecoder;
-    private MediaExtractor mExtractor;
-    static final String mInpPrefix = WorkDir.getMediaDirString() + CONFORMANCE_SUBDIR;
-
-    private static final Map<String, String> MIMETYPE_TO_TAG = new HashMap <String, String>() {{
+    private static final String CODEC_PREFIX_KEY = "codec-prefix";
+    private static final String mInpPrefix = WorkDir.getMediaDirString() + CONFORMANCE_SUBDIR;
+    private static final Map<String, String> MIMETYPE_TO_TAG = new HashMap<String, String>() {{
         put(MediaFormat.MIMETYPE_VIDEO_VP9, "vp9");
     }};
+    private static String mCodecPrefix;
+
+    private final String mDecoderName;
+    private final String mMediaType;
+    private final String mTestVector;
+
+    private MediaCodec mDecoder;
+    private MediaExtractor mExtractor;
+
+    private DeviceReportLog mReportLog;
+
+    static {
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
+    }
+
+    @Parameterized.Parameters(name = "{index}({0})")
+    public static Collection<Object[]> input() throws Exception {
+        final String[] mediaTypeList = new String[] {MediaFormat.MIMETYPE_VIDEO_VP9};
+        final List<Object[]> argsList = new ArrayList<>();
+        for (String mediaType : mediaTypeList) {
+            String[] componentNames = MediaUtils.getDecoderNamesForMime(mediaType);
+            List<String> testVectors = readCodecTestVectors(mediaType);
+            for (String testVector : testVectors) {
+                for (String name : componentNames) {
+                    if (mCodecPrefix != null && !name.startsWith(mCodecPrefix)) {
+                        continue;
+                    }
+                    argsList.add(new Object[] {name, mediaType, testVector});
+                }
+            }
+        }
+        return argsList;
+    }
+
+    public DecoderConformanceTest(String decodername, String mediaType, String testvector) {
+        mDecoderName = decodername;
+        mMediaType = mediaType;
+        mTestVector = testvector;
+    }
 
     @Before
     @Override
@@ -94,24 +135,7 @@ public class DecoderConformanceTest extends MediaTestBase {
         super.tearDown();
     }
 
-    /**
-     * Test VP9 decoders from vendor.
-     */
-    @Test
-    public void testVP9Other() throws Exception {
-        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, false /* isGoog */);
-    }
-
-    /**
-     * Test Google's VP9 decoder from libvpx.
-     */
-    @Test
-    public void testVP9Goog() throws Exception {
-        decodeTestVectors(MediaFormat.MIMETYPE_VIDEO_VP9, true /* isGoog */);
-    }
-
-    private List<String> readResourceLines(String fileName) throws Exception {
-        Preconditions.assertTestFileExists(mInpPrefix + fileName);
+    private static List<String> readResourceLines(String fileName) throws Exception {
         InputStream is = new FileInputStream(mInpPrefix + fileName);
         BufferedReader in = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
@@ -128,7 +152,7 @@ public class DecoderConformanceTest extends MediaTestBase {
         return lines;
     }
 
-    private List<String> readCodecTestVectors(String mime) throws Exception {
+    private static List<String> readCodecTestVectors(String mime) throws Exception {
         String tag = MIMETYPE_TO_TAG.get(mime);
         String testVectorFileName = tag + "_test_vectors";
         return readResourceLines(testVectorFileName);
@@ -202,44 +226,26 @@ public class DecoderConformanceTest extends MediaTestBase {
         }
     }
 
-    void decodeTestVectors(String mime, boolean isGoog) throws Exception {
-        MediaFormat format = new MediaFormat();
-        format.setString(MediaFormat.KEY_MIME, mime);
-        String[] decoderNames = MediaUtils.getDecoderNames(isGoog, format);
-        for (String decoderName: decoderNames) {
-            List<String> testVectors = readCodecTestVectors(mime);
-            for (String vectorName: testVectors) {
-                boolean pass = false;
-                Log.d(TAG, "Decode vector " + vectorName + " with " + decoderName);
-                try {
-                    Status stat = decodeTestVector(mime, decoderName, vectorName);
-                    if (stat == Status.PASS) {
-                        pass = true;
-                    } else if (stat == Status.SKIP) {
-                        release();
-                        continue;
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "Decode " + vectorName + " fail");
-                    fail("Received exception " + e);
-                }
-
-                String streamName = "decoder_conformance_test";
-                mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
-                mReportLog.addValue("mime", mime, ResultType.NEUTRAL, ResultUnit.NONE);
-                mReportLog.addValue("is_goog", isGoog, ResultType.NEUTRAL, ResultUnit.NONE);
-                mReportLog.addValue("pass", pass, ResultType.NEUTRAL, ResultUnit.NONE);
-                mReportLog.addValue("vector_name", vectorName, ResultType.NEUTRAL, ResultUnit.NONE);
-                mReportLog.addValue("decode_name", decoderName, ResultType.NEUTRAL,
-                        ResultUnit.NONE);
-                mReportLog.submit(getInstrumentation());
-
-                if (!pass) {
-                    // Release mediacodec in failure or exception cases.
-                    release();
-                }
-            }
-
+    @Test
+    public void testDecoderConformance() {
+        Log.d(TAG, "Decode vector " + mTestVector + " with " + mDecoderName);
+        Status stat = Status.PASS;
+        try {
+            stat = decodeTestVector(mMediaType, mDecoderName, mTestVector);
+        } catch (Exception e) {
+            Log.e(TAG, "Decode " + mTestVector + " fail");
+            fail("Received exception " + e);
+        } finally {
+            release();
         }
+        String streamName = "decoder_conformance_test";
+        mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
+        mReportLog.addValue("mime", mMediaType, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("pass", stat != Status.FAIL, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("vector_name", mTestVector, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.addValue("decode_name", mDecoderName, ResultType.NEUTRAL, ResultUnit.NONE);
+        mReportLog.submit(InstrumentationRegistry.getInstrumentation());
+        assumeTrue(mDecoderName + " failed for " + mTestVector, stat != Status.FAIL);
+        assumeTrue(mDecoderName + " skipped for " + mTestVector, stat != Status.SKIP);
     }
 }

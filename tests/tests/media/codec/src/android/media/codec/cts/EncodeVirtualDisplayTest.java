@@ -47,6 +47,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
@@ -55,8 +56,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests connecting a virtual display to the input of a MediaCodec encoder.
@@ -77,36 +89,24 @@ import java.util.concurrent.TimeUnit;
 @Presubmit
 @SmallTest
 @RequiresDevice
-public class EncodeVirtualDisplayTest extends AndroidTestCase {
+@RunWith(Parameterized.class)
+public class EncodeVirtualDisplayTest {
     private static final String TAG = "EncodeVirtualTest";
     private static final boolean VERBOSE = false;           // lots of logging
     private static final boolean DEBUG_SAVE_FILE = false;   // save copy of encoded movie
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/test.";
-
-    // Encoder parameters table, sort by encoder level from high to low.
-    private static final int[][] ENCODER_PARAM_TABLE = {
-        // width,  height,  bitrate,    framerate  /* level */
-        { 1280,     720,    14000000,   30 },  /* AVCLevel31 */
-        {  720,     480,    10000000,   30 },  /* AVCLevel3  */
-        {  720,     480,    4000000,    15 },  /* AVCLevel22 */
-        {  352,     576,    4000000,    25 },  /* AVCLevel21 */
-    };
+    private static final String CODEC_PREFIX_KEY = "codec-prefix";
+    private static String mCodecPrefix;
 
     // Virtual display characteristics.  Scaled down from full display size because not all
     // devices can encode at the resolution of their own display.
     private static final String NAME = TAG;
-    private static int sWidth = ENCODER_PARAM_TABLE[ENCODER_PARAM_TABLE.length-1][0];
-    private static int sHeight = ENCODER_PARAM_TABLE[ENCODER_PARAM_TABLE.length-1][1];
     private static final int DENSITY = DisplayMetrics.DENSITY_HIGH;
     private static final int UI_TIMEOUT_MS = 2000;
     private static final int UI_RENDER_PAUSE_MS = 400;
 
-    // Encoder parameters.  We use the same width/height as the virtual display.
-    private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private static int sFrameRate = 15;               // 15fps
     // 100 days between I-frames
     private static final int IFRAME_INTERVAL = 60 * 60 * 24 * 100;
-    private static int sBitRate = 6000000;            // 6Mbps
 
     // Colors to test (RGB).  These must convert cleanly to and from BT.601 YUV.
     private static final int TEST_COLORS[] = {
@@ -123,6 +123,14 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
     private Handler mUiHandler;                             // Handler on main Looper
     private DisplayManager mDisplayManager;
     volatile boolean mInputDone;
+    private Context mContext;
+    private String mEncoderName;
+    private String mMediaType;
+    private int mWidth;
+    private int mHeight;
+    private int mBitRate;
+    private int mFrameRate;
+    private MediaFormat mFormat;
 
     /* TEST_COLORS static initialization; need ARGB for ColorDrawable */
     private static int makeColor(int red, int green, int blue) {
@@ -132,13 +140,57 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
     private static boolean sIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    public EncodeVirtualDisplayTest(String encodername, String mediaType, int width, int height,
+            int bitrate, int framerate, @SuppressWarnings("unused") String level) {
+        mEncoderName = encodername;
+        mMediaType = mediaType;
+        mWidth = width;
+        mHeight = height;
+        mBitRate = bitrate;
+        mFrameRate = framerate;
+    }
 
+    @Before
+    public void setUp() throws Exception {
         mUiHandler = new Handler(Looper.getMainLooper());
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
-        setupEncoderParameters();
+    }
+
+    static private List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList) {
+        final List<Object[]> argsList = new ArrayList<>();
+        int argLength = exhaustiveArgsList.get(0).length;
+        for (Object[] arg : exhaustiveArgsList) {
+            String[] componentNames = MediaUtils.getEncoderNamesForMime((String)arg[0]);
+            for (String name : componentNames) {
+                if (mCodecPrefix != null && !name.startsWith(mCodecPrefix)) {
+                    continue;
+                }
+                Object[] testArgs = new Object[argLength + 1];
+                // Add codec name as first argument and then copy all other arguments passed
+                testArgs[0] = name;
+                System.arraycopy(arg, 0, testArgs, 1, argLength);
+                argsList.add(testArgs);
+            }
+        }
+        return argsList;
+    }
+
+    static {
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}:{6})")
+    public static Collection<Object[]> input() {
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+                // mediaType, width, height,  bitrate, framerate, level
+                {MediaFormat.MIMETYPE_VIDEO_AVC, 1280, 720, 14000000, 30, "AVCLevel31"},
+                {MediaFormat.MIMETYPE_VIDEO_AVC,  720, 480, 10000000, 30, "AVCLevel3"},
+                {MediaFormat.MIMETYPE_VIDEO_AVC,  720, 480,  4000000, 15, "AVCLevel22"},
+                {MediaFormat.MIMETYPE_VIDEO_AVC,  352, 576,  4000000, 25, "AVCLevel21"},
+        });
+        return prepareParamList(exhaustiveArgsList);
     }
 
     /**
@@ -146,9 +198,21 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
      *
      * @throws Exception
      */
+    @Test
     public void testEncodeVirtualDisplay() throws Throwable {
-
         if (!MediaUtils.check(sIsAtLeastR, "test needs Android 11")) return;
+        // Encoded video resolution matches virtual display.
+        mFormat = MediaFormat.createVideoFormat(mMediaType, mWidth, mHeight);
+        mFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        mFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
+        mFormat.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
+        mFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+        mFormat.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
+        mFormat.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT601_PAL);
+        mFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
+        assumeTrue(mEncoderName + " doesn't support format " + mFormat,
+                MediaUtils.supports(mEncoderName, mFormat));
 
         EncodeVirtualWrapper.runTest(this);
     }
@@ -188,41 +252,6 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
     }
 
     /**
-     * Returns true if the encoder level, specified in the ENCODER_PARAM_TABLE, can be supported.
-     */
-    private static boolean verifySupportForEncoderLevel(int i) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        MediaFormat format = MediaFormat.createVideoFormat(
-                MIME_TYPE, ENCODER_PARAM_TABLE[i][0], ENCODER_PARAM_TABLE[i][1]);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, ENCODER_PARAM_TABLE[i][2]);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, ENCODER_PARAM_TABLE[i][3]);
-        return mcl.findEncoderForFormat(format) != null;
-    }
-
-    /**
-     * Initialize the encoder parameters according to the device capability.
-     */
-    private static void setupEncoderParameters() {
-
-        // Loop over each tabel entry until a proper encoder setting is found.
-        for (int i = 0; i < ENCODER_PARAM_TABLE.length; i++) {
-
-            // Check if we can support it?
-            if (verifySupportForEncoderLevel(i)) {
-
-                sWidth = ENCODER_PARAM_TABLE[i][0];
-                sHeight = ENCODER_PARAM_TABLE[i][1];
-                sBitRate = ENCODER_PARAM_TABLE[i][2];
-                sFrameRate = ENCODER_PARAM_TABLE[i][3];
-
-                Log.d(TAG, "encoder parameters changed: width = " + sWidth + ", height = " + sHeight
-                    + ", bitrate = " + sBitRate + ", framerate = " + sFrameRate);
-                break;
-            }
-        }
-    }
-
-    /**
      * Prepares the encoder, decoder, and virtual display.
      */
     private void encodeVirtualDisplayTest() throws IOException {
@@ -232,38 +261,19 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
         VirtualDisplay virtualDisplay = null;
 
         try {
-            // Encoded video resolution matches virtual display.
-            MediaFormat encoderFormat = MediaFormat.createVideoFormat(MIME_TYPE, sWidth, sHeight);
-            encoderFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                    MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-            encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, sBitRate);
-            encoderFormat.setInteger(MediaFormat.KEY_FRAME_RATE, sFrameRate);
-            encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-            encoderFormat.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
-            encoderFormat.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT601_PAL);
-            encoderFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
-
-            MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            String codec = mcl.findEncoderForFormat(encoderFormat);
-            if (codec == null) {
-                // Don't run the test if the codec isn't present.
-                Log.i(TAG, "SKIPPING test: no support for " + encoderFormat);
-                return;
-            }
-
-            encoder = MediaCodec.createByCodecName(codec);
-            encoder.configure(encoderFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            encoder = MediaCodec.createByCodecName(mEncoderName);
+            encoder.configure(mFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             Surface inputSurface = encoder.createInputSurface();
             encoder.start();
 
             // Create a virtual display that will output to our encoder.
             virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
-                    sWidth, sHeight, DENSITY, inputSurface, 0);
+                    mWidth, mHeight, DENSITY, inputSurface, 0);
 
             // We also need a decoder to check the output of the encoder.
-            decoder = MediaCodec.createDecoderByType(MIME_TYPE);
-            MediaFormat decoderFormat = MediaFormat.createVideoFormat(MIME_TYPE, sWidth, sHeight);
-            outputSurface = new OutputSurface(sWidth, sHeight);
+            decoder = MediaCodec.createDecoderByType(mMediaType);
+            MediaFormat decoderFormat = MediaFormat.createVideoFormat(mMediaType, mWidth, mHeight);
+            outputSurface = new OutputSurface(mWidth, mHeight);
             decoder.configure(decoderFormat, outputSurface.getSurface(), null, 0);
             decoder.start();
 
@@ -311,7 +321,7 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
         MediaMuxer muxer = null;
         int trackIndex = -1;
         if (DEBUG_SAVE_FILE) {
-            String fileName = DEBUG_FILE_NAME_BASE + sWidth + "x" + sHeight + ".mp4";
+            String fileName = DEBUG_FILE_NAME_BASE + mWidth + "x" + mHeight + ".mp4";
             try {
                 muxer = new MediaMuxer(fileName, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
                 Log.d(TAG, "encoded output will be saved as " + fileName);
@@ -497,8 +507,8 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
 
         // Read a pixel from the center of the surface.  Might want to read from multiple points
         // and average them together.
-        int x = sWidth / 2;
-        int y = sHeight / 2;
+        int x = mWidth / 2;
+        int y = mHeight / 2;
         GLES20.glReadPixels(x, y, 1, 1, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, mPixelBuf);
         int r = mPixelBuf.get(0) & 0xff;
         int g = mPixelBuf.get(1) & 0xff;
@@ -556,7 +566,7 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
                 runOnUiThread(() -> {
                     // Want to create presentation on UI thread so it finds the right Looper
                     // when setting up the Dialog.
-                    presentation[0] = new TestPresentation(getContext(), mDisplay, color);
+                    presentation[0] = new TestPresentation(mContext, mDisplay, color);
                     if (VERBOSE) Log.d(TAG, "showing color=0x" + Integer.toHexString(color));
                     presentation[0].show();
                     latch.countDown();
@@ -619,7 +629,7 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
             setTitle("Encode Virtual Test");
 
             // Create a solid color image to use as the content of the presentation.
-            ImageView view = new ImageView(getContext());
+            ImageView view = new ImageView(mContext);
             view.setImageDrawable(new ColorDrawable(mColor));
             view.setLayoutParams(new LayoutParams(
                     LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));

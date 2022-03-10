@@ -256,8 +256,8 @@ public final class TestUtils {
         // Inject stylus ACTION_MOVE
         for (int i = 0; i < number; i++) {
             long time = SystemClock.uptimeMillis();
-            float x = startX + incrementX * i;
-            float y = startY + incrementY * i;
+            float x = startX + incrementX * i + xy[0];
+            float y = startY + incrementY * i + xy[1];
             final MotionEvent moveEvent =
                     getMotionEvent(time, time, MotionEvent.ACTION_MOVE, x, y);
             injectMotionEvent(moveEvent, true /* sync */);

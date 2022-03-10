@@ -117,3 +117,25 @@ android_test {
     // sdk_version: "test_current",
     platform_apis: true,
 }
+
+android_test {
+    name: "CtsKeystoreWycheproofTestCases",
+    defaults: ["cts_defaults"],
+    manifest: "CtsKeystoreWycheproofTestManifest.xml",
+    test_config: "CtsKeystoreWycheproofTestConfig.xml",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+    static_libs: [
+        "cts-core-test-runner-axt",
+        "wycheproof-keystore",
+    ],
+    // sdk_version: "test_current",
+    platform_apis: true,
+}

@@ -30,7 +30,6 @@ import android.hdmicec.cts.RemoteControlPassthrough;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -205,13 +204,18 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
      * not turned on.
      */
     @Test
-    @Ignore("b/218266432")
     public void cect_sendVolumeKeyPressToTv() throws Exception {
         ITestDevice device = getDevice();
         String ucpMessage;
         String command = "cmd hdmi_control setsam ";
 
         simulateCecSinkConnected(device, getTargetLogicalAddress());
+        String volumeControlEnabled =
+                getSettingsValue(device, HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED);
+        setSettingsValue(
+                device,
+                HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
+                HdmiCecConstants.VOLUME_CONTROL_ENABLED);
 
         boolean wasSystemAudioModeOn = isSystemAudioModeOn(device);
         if (wasSystemAudioModeOn) {
@@ -243,6 +247,8 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
             if (wasSystemAudioModeOn) {
                 device.executeShellCommand(command + "on");
             }
+            setSettingsValue(
+                    device, HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED, volumeControlEnabled);
         }
     }
 }

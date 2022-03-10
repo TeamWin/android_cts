@@ -414,7 +414,7 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify return value if Bluetooth is not enabled
-        assertNull(mAdapter.getUuids());
+        assertEquals(mAdapter.getUuids().length, 0);
 
     }
 

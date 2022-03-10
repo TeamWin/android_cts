@@ -28,7 +28,6 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
@@ -57,21 +56,34 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
      * the audio rendering.
      */
     @Test
-    @Ignore("b/218266432")
     public void cect_hf4_10_5_RemoteControlCommandsWithSystemAudioControlProperty()
             throws Exception {
         setCec20();
 
         ITestDevice device = getDevice();
-        // Broadcast <Set System Audio Mode> ["off"].
-        broadcastSystemAudioModeMessage(false);
-        // All remote control commands should forward to the TV.
-        sendVolumeUpCommandAndCheckForUcp(LogicalAddress.TV);
+        String volumeControlEnabled =
+                getSettingsValue(device, HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED);
 
-        // Broadcast <Set System Audio Mode> ["on"].
-        broadcastSystemAudioModeMessage(true);
-        // All remote control commands should forward to the audio rendering device.
-        sendVolumeUpCommandAndCheckForUcp(LogicalAddress.AUDIO_SYSTEM);
+        try {
+            simulateCecSinkConnected(device, getTargetLogicalAddress());
+            setSettingsValue(
+                    device,
+                    HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
+                    HdmiCecConstants.VOLUME_CONTROL_ENABLED);
+
+            // Broadcast <Set System Audio Mode> ["off"].
+            broadcastSystemAudioModeMessage(false);
+            // All remote control commands should forward to the TV.
+            sendVolumeUpCommandAndCheckForUcp(LogicalAddress.TV);
+
+            // Broadcast <Set System Audio Mode> ["on"].
+            broadcastSystemAudioModeMessage(true);
+            // All remote control commands should forward to the audio rendering device.
+            sendVolumeUpCommandAndCheckForUcp(LogicalAddress.AUDIO_SYSTEM);
+        } finally {
+            setSettingsValue(
+                    device, HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED, volumeControlEnabled);
+        }
     }
 
     private void broadcastSystemAudioModeMessage(boolean val) throws Exception {
