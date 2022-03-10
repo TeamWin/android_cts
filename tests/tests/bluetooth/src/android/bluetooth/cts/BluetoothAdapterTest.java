@@ -479,25 +479,6 @@ public class BluetoothAdapterTest extends AndroidTestCase {
                 mAdapter.unregisterBluetoothConnectionCallback(callback));
     }
 
-    public void test_registerServiceLifecycleCallback() {
-        if (!mHasBluetooth) return;
-
-        BluetoothAdapter.ServiceLifecycleCallback callback =
-                new BluetoothAdapter.ServiceLifecycleCallback() {
-                    @Override
-                    public void onBluetoothServiceUp() {}
-                    @Override
-                    public void onBluetoothServiceDown() {}
-                };
-
-        // Verify parameter
-        assertThrows(NullPointerException.class,
-                () -> mAdapter.registerServiceLifecycleCallback(null));
-
-        assertThrows(NullPointerException.class,
-                () -> mAdapter.unregisterServiceLifecycleCallback(null));
-    }
-
     public void test_requestControllerActivityEnergyInfo() {
         if (!mHasBluetooth) return;
 
