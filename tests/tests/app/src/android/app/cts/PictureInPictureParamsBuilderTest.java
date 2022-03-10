@@ -16,6 +16,7 @@
 package android.app.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -61,5 +62,37 @@ public class PictureInPictureParamsBuilderTest {
         assertTrue(Float.compare(0f, params.getAspectRatio()) == 0);
         assertNull(params.getActions());
         assertNull(params.getSourceRectHint());
+    }
+
+    @Test
+    public void testBuilderDefaultCtor() {
+        // Construct the params with default Builder constructor
+        PictureInPictureParams params = new Builder().build();
+
+        // Ensures the PictureInPictureParams constructed has nothing being set
+        assertFalse(params.hasSetAspectRatio());
+        assertFalse(params.hasSetExpandedAspectRatio());
+        assertFalse(params.hasSetActions());
+        assertFalse(params.hasSetCloseAction());
+        assertFalse(params.hasSetTitle());
+        assertFalse(params.hasSetSubtitle());
+    }
+
+    @Test
+    public void testBuilderCopyCtor() {
+        // Construct a PictureInPictureParams with some parameters being set
+        PictureInPictureParams params = new Builder()
+                .setAspectRatio(new Rational(1, 2))
+                .setActions(new ArrayList<>())
+                .setSourceRectHint(new Rect(0, 0, 100, 100))
+                .build();
+
+        // Build a new PictureInPictureParams using the copy constructor
+        PictureInPictureParams newParams = new Builder(params).build();
+
+        // Ensures the two PictureInPictureParams share the same parameters
+        assertEquals(params.getAspectRatioRational(), newParams.getAspectRatioRational());
+        assertEquals(params.getActions(), params.getActions());
+        assertEquals(params.getSourceRectHint(), params.getSourceRectHint());
     }
 }
