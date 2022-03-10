@@ -242,15 +242,23 @@ public class SensorTest extends SensorTestCase {
         sensor =  mSensorManager.getDefaultSensor(Sensor.TYPE_HEADING);
         boolean hasHeadingSensor = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SENSOR_HEADING);
-        if (hasHeadingSensor) {
+        boolean isAutomotive = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE);
+        if (isAutomotive && hasHeadingSensor) {
             assertNotNull(sensor);
             assertEquals(Sensor.TYPE_HEADING, sensor.getType());
             assertSensorValues(sensor);
             assertTrue("Max range must not be greater or equal to 360. Range="
                     + sensor.getMaximumRange() + " " + sensor.getName(),
                     sensor.getMaximumRange() < 360);
-        } else {
+        } else if (isAutomotive) {
             assertNull(sensor);
+        } else {
+            // There isn't good test coverage for heading, particularly for non-automotive devices.
+            // So if a non-automotive device wants to implement this, requirements for the sensor
+            // and how to test for those requirements should be re-discussed.
+            assertNull("If the heading sensor is being implemented on a non-automotive device, "
+                    + "the team would love to hear from you. Please reach out!", sensor);
         }
     }
 
@@ -265,41 +273,6 @@ public class SensorTest extends SensorTestCase {
         if (sensor != null) {
             assertEquals(sensorType, sensor.getType());
             assertSensorValues(sensor);
-        }
-    }
-
-    public void testLimitedAxesImuConfiguration() {
-        boolean hasAccelerometer = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_ACCELEROMETER);
-        boolean hasLimitedAxesAccelerometer = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES);
-        boolean hasLimitedAxesAccelerometerUncalibrated =
-                getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_ACCELEROMETER_LIMITED_AXES_UNCALIBRATED);
-
-        // Only the 3-axis accelerometer or the limited axes accelerometer should be implemented
-        // by the system at the same time. The composite sensors for limited axes accelerometer can
-        // still be present when a 3-axis accelerometer is supported.
-        if (hasAccelerometer) {
-            assertFalse(hasLimitedAxesAccelerometer);
-            assertFalse(hasLimitedAxesAccelerometerUncalibrated);
-        }
-
-        boolean hasGyroscope = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_GYROSCOPE);
-        boolean hasLimitedAxesGyroscope = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES);
-        boolean hasLimitedAxesGyroscopeUncalibrated =
-                getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_SENSOR_GYROSCOPE_LIMITED_AXES_UNCALIBRATED);
-
-
-        // Only the 3-axis gyroscope or the limited axes gyroscope should be implemented by the
-        // system at the same time. The composite sensors for limited axes gyroscope can still be
-        // present when a 3-axis gyroscope is supported.
-        if (hasGyroscope) {
-            assertFalse(hasLimitedAxesGyroscope);
-            assertFalse(hasLimitedAxesGyroscopeUncalibrated);
         }
     }
 
