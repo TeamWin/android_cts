@@ -16,16 +16,17 @@
 
 package android.car.cts.builtin.util;
 
-import static android.car.cts.builtin.util.SlogfTest.Level.ASSERT;
-import static android.car.cts.builtin.util.SlogfTest.Level.DEBUG;
-import static android.car.cts.builtin.util.SlogfTest.Level.ERROR;
-import static android.car.cts.builtin.util.SlogfTest.Level.INFO;
-import static android.car.cts.builtin.util.SlogfTest.Level.VERBOSE;
-import static android.car.cts.builtin.util.SlogfTest.Level.WARN;
+import static android.car.cts.builtin.util.LogcatHelper.Level.ASSERT;
+import static android.car.cts.builtin.util.LogcatHelper.Level.DEBUG;
+import static android.car.cts.builtin.util.LogcatHelper.Level.ERROR;
+import static android.car.cts.builtin.util.LogcatHelper.Level.INFO;
+import static android.car.cts.builtin.util.LogcatHelper.Level.VERBOSE;
+import static android.car.cts.builtin.util.LogcatHelper.Level.WARN;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.builtin.util.Slogf;
+import android.car.cts.builtin.util.LogcatHelper.Level;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -50,20 +51,6 @@ public final class SlogfTest {
     private static final String NOT_LOGGED_MSG = "This message should not exist in logcat.";
     private static final String FORMATTED_MSG = "This message is a format with two args %s and %s.";
     private static final String EXCEPTION_MSG = "This message should exist in logcat.";
-
-    enum Level {
-        VERBOSE("V"), DEBUG("D"), INFO("I"), WARN("W"), ERROR("E"), ASSERT("A");
-
-        private String mValue;
-
-        public String getValue() {
-            return mValue;
-        }
-
-        Level(String v) {
-            mValue = v;
-        }
-    }
 
     @Before
     public void setup() {
@@ -428,15 +415,13 @@ public final class SlogfTest {
 
     private void assertNoLogcatMessage(Level level, String format, Object... args)
             throws Exception {
-        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG,
-                String.format(format, args));
-        LogcatHelper.assertNoLogcatMessage(match, NOT_LOGGED_WAIT_TIME_MS);
+        String message = String.format(format, args);
+        LogcatHelper.assertNoLogcatMessage(BUFFER, level, TAG, message, NOT_LOGGED_WAIT_TIME_MS);
     }
 
     private void assertLogcatMessage(Level level, String format, Object... args) {
-        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG,
-                String.format(format, args));
-        LogcatHelper.assertLogcatMessage(match, BUFFER, TIMEOUT_MS);
+        String message = String.format(format, args);
+        LogcatHelper.assertLogcatMessage(BUFFER, level, TAG, message, TIMEOUT_MS);
     }
 
     private void assertLogcatStackTrace(Level level, Throwable throwable) {

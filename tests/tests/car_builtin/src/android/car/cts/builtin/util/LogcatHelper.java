@@ -39,6 +39,8 @@ public final class LogcatHelper {
 
     private static final boolean VERBOSE = false;
 
+    private static final int DEFAULT_TIMEOUT_MS = 60_000;
+
     private LogcatHelper() {}
 
     /**
@@ -49,31 +51,52 @@ public final class LogcatHelper {
     }
 
     /**
-     * Asserts if a message appears in logcat messages within given timeout. All logcat buffers are
-     * searched.
-     *
-     * @param match to find in the logcat messages
-     * @param timeout for waiting the message
+     * Logcat levels to search.
      */
-    public static void assertLogcatMessage(String match, int timeout) {
-        assertLogcatMessage(match, Buffer.ALL, timeout);
+    public enum Level {
+        VERBOSE("V"), DEBUG("D"), INFO("I"), WARN("W"), ERROR("E"), ASSERT("A");
+
+        private String mValue;
+
+        public String getValue() {
+            return mValue;
+        }
+
+        Level(String v) {
+            mValue = v;
+        }
     }
 
     /**
-     * Asserts if a message appears in logcat messages within given timeout in the given buffer.
+     * Asserts that a message appears on {@code logcat}, using a default timeout.
      *
-     * @param match to find in the logcat messages
-     * @param buffer is logcat buffer to search
+     * @param buffer logcat buffer to search
+     * @param level expected log level
+     * @parma tag expected log tag
+     * @param message substring of the expected message
      * @param timeout for waiting the message
      */
-    public static void assertLogcatMessage(String match, Buffer buffer, int timeout) {
+    public static void assertLogcatMessage(Buffer buffer, Level level, String tag, String message) {
+        assertLogcatMessage(buffer, level, tag, message, DEFAULT_TIMEOUT_MS);
+    }
+
+    /**
+     * Asserts that a message appears on {@code logcat}.
+     *
+     * @param buffer logcat buffer to search
+     * @param level expected log level
+     * @parma tag expected log tag
+     * @param message substring of the expected message
+     * @param timeout for waiting the message
+     */
+    public static void assertLogcatMessage(Buffer buffer, Level level, String tag, String message,
+            int timeout) {
+        String match = String.format("%s %s: %s", level.mValue, tag, message);
         long startTime = SystemClock.elapsedRealtime();
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         String command = "logcat -b " + buffer.name().toLowerCase();
         ParcelFileDescriptor output = automation.executeShellCommand(command);
-        if (VERBOSE) {
-            Log.v(TAG, "ran '" + command + "'; will now look for '" + match + "'");
-        }
+        Log.d(TAG, "ran '" + command + "'; will now look for '" + match + "'");
         FileDescriptor fd = output.getFileDescriptor();
         FileInputStream fileInputStream = new FileInputStream(fd);
         try (BufferedReader bufferedReader = new BufferedReader(
@@ -84,9 +107,7 @@ public final class LogcatHelper {
                     Log.v(TAG, "Checking line '" + line + "'");
                 }
                 if (line.contains(match)) {
-                    if (VERBOSE) {
-                        Log.v(TAG, "Found match, returning");
-                    }
+                    Log.d(TAG, "Found match on line '" + line + "', returning");
                     return;
                 }
                 if ((SystemClock.elapsedRealtime() - startTime) > timeout) {
@@ -99,13 +120,17 @@ public final class LogcatHelper {
     }
 
     /**
-     * Asserts if a message does not appears in logcat messages within given timeout. If the message
-     * appears, then assertion will fail.
+     * Asserts that a message DOESN'T appears on {@code logcat}.
      *
-     * @param match to find in the logcat messages
+     * @param buffer is logcat buffer to search
+     * @param level expected log level
+     * @parma tag expected log tag
+     * @param message substring of the message that shouldn't appeard
      * @param timeout for waiting the message
      */
-    public static void assertNoLogcatMessage(String match, int timeout) throws Exception {
+    public static void assertNoLogcatMessage(Buffer buffer, Level level, String tag, String message,
+            int timeout) throws Exception {
+        String match = String.format("%s %s: %s", level.mValue, tag, message);
         long startTime = SystemClock.elapsedRealtime();
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         ParcelFileDescriptor output = automation.executeShellCommand("logcat -b all");
@@ -131,6 +156,9 @@ public final class LogcatHelper {
      * Clears all logs.
      */
     public static void clearLog() {
+        if (VERBOSE) {
+            Log.d(TAG, "Clearing logcat logs");
+        }
         SystemUtil.runShellCommand("logcat -b all -c");
     }
 }
