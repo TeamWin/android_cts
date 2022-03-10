@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.util;
 
-import static android.telephony.TelephonyManager.CarrierPrivilegesListener;
+import static android.telephony.TelephonyManager.CarrierPrivilegesCallback;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -58,10 +58,10 @@ public final class CarrierPrivilegeUtils {
         private final boolean mGain;
         private final boolean mIsShell;
         private final TelephonyManager mTelephonyManager;
-        private final CarrierPrivilegesListener mCarrierPrivilegesListener;
+        private final CarrierPrivilegesCallback mCarrierPrivilegesCallback;
 
         /**
-         * Construct a {@link CarrierPrivilegesListener} to monitor carrier privileges change.
+         * Construct a {@link CarrierPrivilegesCallback} to monitor carrier privileges change.
          * @param c context
          * @param subId subscriptionId to listen to
          * @param gain true if wait to grant carrier privileges, false if wait to revoke
@@ -76,26 +76,25 @@ public final class CarrierPrivilegeUtils {
                     TelephonyManager.class).createForSubscriptionId(subId);
             Objects.requireNonNull(mTelephonyManager);
 
-            mCarrierPrivilegesListener =
-                    (privilegedPackageNames, privilegedUids) -> {
-                        if (mTelephonyManager.hasCarrierPrivileges() == mGain) {
-                            mLatch.countDown();
-                        }
-                    };
+            mCarrierPrivilegesCallback = (privilegedPackageNames, privilegedUids) -> {
+                if (mTelephonyManager.hasCarrierPrivileges() == mGain) {
+                    mLatch.countDown();
+                }
+            };
 
             // Run with shell identify only when caller is not Shell to avoid overriding current
             // SHELL permissions
             if (mIsShell) {
-                mTelephonyManager.addCarrierPrivilegesListener(
+                mTelephonyManager.registerCarrierPrivilegesCallback(
                         SubscriptionManager.getSlotIndex(subId),
                         mContext.getMainExecutor(),
-                        mCarrierPrivilegesListener);
+                        mCarrierPrivilegesCallback);
             } else {
                 runWithShellPermissionIdentity(() -> {
-                    mTelephonyManager.addCarrierPrivilegesListener(
+                    mTelephonyManager.registerCarrierPrivilegesCallback(
                             SubscriptionManager.getSlotIndex(subId),
                             mContext.getMainExecutor(),
-                            mCarrierPrivilegesListener);
+                            mCarrierPrivilegesCallback);
                 }, Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             }
         }
@@ -105,11 +104,12 @@ public final class CarrierPrivilegeUtils {
             if (mTelephonyManager == null) return;
 
             if (mIsShell) {
-                mTelephonyManager.removeCarrierPrivilegesListener(mCarrierPrivilegesListener);
+                mTelephonyManager.unregisterCarrierPrivilegesCallback(mCarrierPrivilegesCallback);
             } else {
-                runWithShellPermissionIdentity(() -> {
-                    mTelephonyManager.removeCarrierPrivilegesListener(mCarrierPrivilegesListener);
-                }, Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+                runWithShellPermissionIdentity(
+                        () -> mTelephonyManager.unregisterCarrierPrivilegesCallback(
+                                mCarrierPrivilegesCallback),
+                        Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
             }
         }
 
