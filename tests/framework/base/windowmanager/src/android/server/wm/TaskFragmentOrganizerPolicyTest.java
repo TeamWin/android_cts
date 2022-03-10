@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.TaskFragmentOrganizerTestBase.assertEmptyTaskFragment;
-import static android.server.wm.TaskFragmentOrganizerTestBase.assertNotEmptyTaskFragment;
 import static android.server.wm.TaskFragmentOrganizerTestBase.getActivityToken;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
@@ -53,7 +52,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -177,16 +175,10 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
     }
 
     /**
-     * Verifies the behavior to start Activity from another process in a new created Task under
-     * TaskFragment with {@link android.permission#ACTIVITY_EMBEDDING}.
-     * <p>
-     * If the application to start Activity holds the permission, the activity is allowed to start
-     * on the Task. Otherwise, the TaskFragment should remain empty.
-     * </p>
+     * Verifies the behavior to start Activity in a new created Task in TaskFragment is forbidden.
      */
     @Test
-    @Ignore("b/197364677")
-    public void testStartActivityFromAnotherProcessInEmbeddedTask() {
+    public void testStartActivityFromAnotherProcessInNewTask_ThrowException() {
         final Activity activity = startNewActivity();
         final IBinder ownerToken = getActivityToken(activity);
         final TaskFragmentCreationParams params = mTaskFragmentOrganizer.generateTaskFragParams(
@@ -209,29 +201,13 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
 
         TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
 
-        // TaskFragment must remain empty because we don't hold EMBEDDING_ACTIVITY permission to
-        // launch Activity in the embedded Task.
+        // TaskFragment must remain empty because embedding activities in a new task is not allowed.
         assertEmptyTaskFragment(info, taskFragToken);
 
         mTaskFragmentOrganizer.waitForTaskFragmentError();
 
         assertThat(mTaskFragmentOrganizer.getThrowable()).isInstanceOf(SecurityException.class);
         assertThat(mTaskFragmentOrganizer.getErrorCallbackToken()).isEqualTo(errorCallbackToken);
-
-        final WindowContainerTransaction wctWithPermission = new WindowContainerTransaction()
-                .startActivityInTaskFragment(taskFragToken, ownerToken, intent,
-                        null /* activityOptions */);
-
-        NestedShellPermission.run(() -> mTaskFragmentOrganizer.applyTransaction(wctWithPermission),
-                "android.permission.ACTIVITY_EMBEDDING");
-
-        mTaskFragmentOrganizer.waitForTaskFragmentInfoChanged();
-
-        info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
-
-        // The new started Activity must be launched in the new created Task under the TaskFragment
-        // with token taskFragToken.
-        assertNotEmptyTaskFragment(info, taskFragToken);
     }
 
     /**
