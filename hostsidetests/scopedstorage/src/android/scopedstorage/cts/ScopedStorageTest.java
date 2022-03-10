@@ -300,7 +300,7 @@ public class ScopedStorageTest {
 
     @Test
     public void testAccess_OnlyImageFile() throws Exception {
-        pollForPermission(Manifest.permission.READ_MEDIA_IMAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
 
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
         final File otherAppVideo = new File(getDcimDir(), "other-" + VIDEO_FILE_NAME);
@@ -375,7 +375,7 @@ public class ScopedStorageTest {
 
     @Test
     public void testAccess_MediaFile() throws Exception {
-        pollForPermission(Manifest.permission.READ_MEDIA_IMAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
         pollForPermission(Manifest.permission.READ_MEDIA_AUDIO, /*granted*/ true);
         pollForPermission(Manifest.permission.READ_MEDIA_VIDEO, /*granted*/ true);
 
@@ -459,7 +459,7 @@ public class ScopedStorageTest {
     @Test
     public void testAccess_file() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
-        pollForPermission(Manifest.permission.READ_MEDIA_IMAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.READ_MEDIA_IMAGES, /*granted*/ true);
 
         final File downloadDir = getDownloadDir();
         final File otherAppPdf = new File(downloadDir, "other-" + NONMEDIA_FILE_NAME);

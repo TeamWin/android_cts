@@ -1267,7 +1267,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         testAppOpInvalidation(
                 APP_C,
                 new File(getDcimDir(), "read_storage.jpg"),
-                Manifest.permission.READ_MEDIA_IMAGE,
+                Manifest.permission.READ_MEDIA_IMAGES,
                 AppOpsManager.OPSTR_READ_MEDIA_IMAGES,
                 /* forWrite */ false);
     }
