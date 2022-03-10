@@ -19,6 +19,7 @@ package android.car.cts.builtin.util;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
+import android.car.cts.builtin.util.LogcatHelper.Level;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.util.Log;
@@ -160,5 +161,12 @@ public final class LogcatHelper {
             Log.d(TAG, "Clearing logcat logs");
         }
         SystemUtil.runShellCommand("logcat -b all -c");
+    }
+
+    /**
+     * Sets the log level of the given tag.
+     */
+    public static void setLogLevel(String tag, Level level) {
+        SystemUtil.runShellCommand("setprop log.tag." + tag + " " + level.getValue());
     }
 }
