@@ -749,6 +749,15 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                     }
                     continue;
                 }
+
+                // Verify that device supports decoding the encoded file
+                ArrayList<MediaFormat> formatList = new ArrayList<>();
+                formatList.add(format);
+                assertTrue("Device advertises support for encoding " +
+                                format.toString() + " but not decoding it",
+                        selectCodecs(mMime, formatList, null, false).size() > 0);
+                formatList.clear();
+
                 mOutputBuff.reset();
                 mInfoList.clear();
                 configureCodec(format, false, true, true);
