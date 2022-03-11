@@ -17,8 +17,6 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
-import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
@@ -47,7 +45,6 @@ import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -143,7 +140,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * Bundle)} to start Activity in TaskFragment without creating new Task.
      */
     @Test
-    @Ignore("b/197364677")
     public void testStartActivityInTaskFragment_reuseTask() {
         final TaskFragmentCreationParams params = generateTaskFragCreationParams();
         final IBinder taskFragToken = params.getFragmentToken();
@@ -173,47 +169,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
         assertWithMessage("The owner Activity's Task must be reused as"
                 + " the launching Activity's Task.").that(parentTask)
                 .isEqualTo(mWmState.getTaskByActivity(mLaunchingActivity));
-    }
-
-    /**
-     * Verifies the behavior of
-     * {@link WindowContainerTransaction#startActivityInTaskFragment(IBinder, IBinder, Intent,
-     * Bundle)} to start Activity on new created Task.
-     */
-    @Test
-    @Ignore("b/197364677")
-    public void testStartActivityInTaskFragment_createNewTask() {
-        final TaskFragmentCreationParams params = generateTaskFragCreationParams();
-        final IBinder taskFragToken = params.getFragmentToken();
-        final Intent intent = new Intent()
-                .setComponent(mLaunchingActivity)
-                .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .createTaskFragment(params)
-                .startActivityInTaskFragment(taskFragToken, mOwnerToken, intent,
-                        null /* activityOptions */);
-        mTaskFragmentOrganizer.applyTransaction(wct);
-
-        mTaskFragmentOrganizer.waitForTaskFragmentCreated();
-
-        TaskFragmentInfo info = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragToken);
-        assertNotEmptyTaskFragment(info, taskFragToken);
-
-        mWmState.waitForActivityState(mLaunchingActivity, STATE_RESUMED);
-
-        Task parentTask = mWmState.getRootTask(mOwnerActivity.getTaskId());
-        TaskFragment taskFragment = mWmState.getTaskFragmentByActivity(mLaunchingActivity);
-        Task childTask = mWmState.getTaskByActivity(mLaunchingActivity);
-
-        // Assert window hierarchy must be as follows
-        // - owner Activity's Task (parentTask)
-        //   - taskFragment
-        //     - new created Task
-        //       - LAUNCHING_ACTIVITY
-        //   - owner Activity
-        assertWindowHierarchy(parentTask, taskFragment, childTask,
-                mWmState.getActivity(mLaunchingActivity));
-        assertWindowHierarchy(parentTask, mWmState.getActivity(mOwnerActivityName));
     }
 
     /**

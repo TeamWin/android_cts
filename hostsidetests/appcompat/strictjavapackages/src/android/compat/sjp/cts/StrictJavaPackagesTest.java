@@ -20,12 +20,14 @@ import static android.compat.testing.Classpaths.ClasspathType.BOOTCLASSPATH;
 import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSPATH;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
 import android.compat.testing.Classpaths;
 import android.compat.testing.SharedLibraryInfo;
 
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -33,10 +35,13 @@ import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
@@ -48,6 +53,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -64,12 +70,14 @@ import java.util.stream.Stream;
 public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
 
     private static final String ANDROID_TEST_MOCK_JAR = "/system/framework/android.test.mock.jar";
+    private static final String TEST_HELPER_PACKAGE = "android.compat.sjp.app";
+    private static final String TEST_HELPER_APK = "StrictJavaPackagesTestApp.apk";
 
     private static ImmutableList<String> sBootclasspathJars;
     private static ImmutableList<String> sSystemserverclasspathJars;
     private static ImmutableList<String> sSharedLibJars;
     private static ImmutableList<SharedLibraryInfo> sSharedLibs;
-    private static ImmutableSetMultimap<String, String> sJarsToClasses;
+    private static ImmutableMultimap<String, String> sJarsToClasses;
 
     private DeviceSdkLevel mDeviceSdkLevel;
 
@@ -312,7 +320,428 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Lorg/chromium/net/UrlRequest;",
                     "Lorg/chromium/net/UrlResponseInfo;"
             );
-
+    // TODO: b/223837004
+    private static final ImmutableSet<String> BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST =
+        ImmutableSet.of(
+                // Already duplicate in BCP.
+                "Landroid/hidl/base/V1_0/DebugInfo;",
+                "Landroid/hidl/base/V1_0/IBase;",
+                // /apex/com.android.bluetooth/javalib/framework-bluetooth.jar
+                "Lcom/android/bluetooth/x/android/sysprop/AdbProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/ApkVerityProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/BluetoothProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/CarProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/ContactsProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/CryptoProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/DeviceProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/DisplayProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/HdmiProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/HypervisorProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/InputProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/MediaProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/NetworkProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/OtaProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/PowerProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/SetupWizardProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/SocProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/TelephonyProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/TraceProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/VndkProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/VoldProperties;",
+                "Lcom/android/bluetooth/x/android/sysprop/WifiProperties;",
+                "Lcom/android/bluetooth/x/com/android/modules/utils/ISynchronousResultReceiver;",
+                "Lcom/android/bluetooth/x/com/android/modules/utils/SynchronousResultReceiver-IA;",
+                "Lcom/android/bluetooth/x/com/android/modules/utils/SynchronousResultReceiver;",
+                // /system/framework/services.jar
+                "Landroid/net/DataStallReportParcelable;",
+                "Landroid/net/DhcpResultsParcelable;",
+                "Landroid/net/IIpMemoryStore;",
+                "Landroid/net/IIpMemoryStoreCallbacks;",
+                "Landroid/net/INetworkMonitor;",
+                "Landroid/net/INetworkMonitorCallbacks;",
+                "Landroid/net/INetworkStackConnector;",
+                "Landroid/net/INetworkStackStatusCallback;",
+                "Landroid/net/InformationElementParcelable;",
+                "Landroid/net/InitialConfigurationParcelable;",
+                "Landroid/net/IpMemoryStoreClient;",
+                "Landroid/net/Layer2InformationParcelable;",
+                "Landroid/net/Layer2PacketParcelable;",
+                "Landroid/net/NattKeepalivePacketDataParcelable;",
+                "Landroid/net/NetworkFactory;",
+                "Landroid/net/NetworkFactoryShim;",
+                "Landroid/net/NetworkMonitorManager;",
+                "Landroid/net/NetworkTestResultParcelable;",
+                "Landroid/net/PrivateDnsConfigParcel;",
+                "Landroid/net/ProvisioningConfigurationParcelable;",
+                "Landroid/net/ScanResultInfoParcelable;",
+                "Landroid/net/TcpKeepalivePacketDataParcelable;",
+                "Landroid/net/dhcp/DhcpLeaseParcelable;",
+                "Landroid/net/dhcp/DhcpServingParamsParcel;",
+                "Landroid/net/dhcp/IDhcpEventCallbacks;",
+                "Landroid/net/dhcp/IDhcpServer;",
+                "Landroid/net/dhcp/IDhcpServerCallbacks;",
+                "Landroid/net/ip/IIpClient;",
+                "Landroid/net/ip/IIpClientCallbacks;",
+                "Landroid/net/ip/IpClientCallbacks;",
+                "Landroid/net/ip/IpClientManager;",
+                "Landroid/net/ip/IpClientUtil;",
+                "Landroid/net/ipmemorystore/Blob;",
+                "Landroid/net/ipmemorystore/IOnBlobRetrievedListener;",
+                "Landroid/net/ipmemorystore/IOnL2KeyResponseListener;",
+                "Landroid/net/ipmemorystore/IOnNetworkAttributesRetrievedListener;",
+                "Landroid/net/ipmemorystore/IOnSameL3NetworkResponseListener;",
+                "Landroid/net/ipmemorystore/IOnStatusAndCountListener;",
+                "Landroid/net/ipmemorystore/IOnStatusListener;",
+                "Landroid/net/ipmemorystore/NetworkAttributes;",
+                "Landroid/net/ipmemorystore/NetworkAttributesParcelable;",
+                "Landroid/net/ipmemorystore/OnBlobRetrievedListener;",
+                "Landroid/net/ipmemorystore/OnDeleteStatusListener;",
+                "Landroid/net/ipmemorystore/OnL2KeyResponseListener;",
+                "Landroid/net/ipmemorystore/OnNetworkAttributesRetrievedListener;",
+                "Landroid/net/ipmemorystore/OnSameL3NetworkResponseListener;",
+                "Landroid/net/ipmemorystore/OnStatusListener;",
+                "Landroid/net/ipmemorystore/SameL3NetworkResponse;",
+                "Landroid/net/ipmemorystore/SameL3NetworkResponseParcelable;",
+                "Landroid/net/ipmemorystore/Status;",
+                "Landroid/net/ipmemorystore/StatusParcelable;",
+                "Landroid/net/networkstack/NetworkStackClientBase;",
+                "Landroid/net/networkstack/aidl/NetworkMonitorParameters;",
+                "Landroid/net/networkstack/aidl/dhcp/DhcpOption;",
+                "Landroid/net/networkstack/aidl/ip/ReachabilityLossInfoParcelable;",
+                "Landroid/net/networkstack/aidl/ip/ReachabilityLossReason;",
+                "Landroid/net/networkstack/aidl/quirks/IPv6ProvisioningLossQuirk;",
+                "Landroid/net/networkstack/aidl/quirks/IPv6ProvisioningLossQuirkParcelable;",
+                "Landroid/net/shared/InitialConfiguration;",
+                "Landroid/net/shared/IpConfigurationParcelableUtil;",
+                "Landroid/net/shared/Layer2Information;",
+                "Landroid/net/shared/ParcelableUtil;",
+                "Landroid/net/shared/PrivateDnsConfig;",
+                "Landroid/net/shared/ProvisioningConfiguration;",
+                "Landroid/net/util/KeepalivePacketDataUtil;",
+                "Landroid/net/IpMemoryStore;",
+                "Landroid/net/NetworkFactoryLegacyImpl;",
+                "Landroid/net/networkstack/ModuleNetworkStackClient;",
+                "Landroid/net/NetworkFactoryImpl;",
+                // /system/framework/framework.jar
+                "Landroid/bluetooth/BluetoothProtoEnums;",
+                "Landroid/bluetooth/a2dp/BluetoothA2dpProtoEnums;",
+                "Landroid/bluetooth/hci/BluetoothHciProtoEnums;",
+                "Landroid/bluetooth/hfp/BluetoothHfpProtoEnums;",
+                "Landroid/bluetooth/smp/BluetoothSmpProtoEnums;",
+                "Landroid/hardware/radio/V1_0/ActivityStatsInfo;",
+                "Landroid/hardware/radio/V1_0/ApnAuthType;",
+                "Landroid/hardware/radio/V1_0/ApnTypes;",
+                "Landroid/hardware/radio/V1_0/AppState;",
+                "Landroid/hardware/radio/V1_0/AppStatus;",
+                "Landroid/hardware/radio/V1_0/AppType;",
+                "Landroid/hardware/radio/V1_0/Call;",
+                "Landroid/hardware/radio/V1_0/CallForwardInfo;",
+                "Landroid/hardware/radio/V1_0/CallForwardInfoStatus;",
+                "Landroid/hardware/radio/V1_0/CallPresentation;",
+                "Landroid/hardware/radio/V1_0/CallState;",
+                "Landroid/hardware/radio/V1_0/CardState;",
+                "Landroid/hardware/radio/V1_0/CardStatus;",
+                "Landroid/hardware/radio/V1_0/Carrier;",
+                "Landroid/hardware/radio/V1_0/CarrierMatchType;",
+                "Landroid/hardware/radio/V1_0/CarrierRestrictions;",
+                "Landroid/hardware/radio/V1_0/CdmaBroadcastSmsConfigInfo;",
+                "Landroid/hardware/radio/V1_0/CdmaCallWaiting;",
+                "Landroid/hardware/radio/V1_0/CdmaCallWaitingNumberPlan;",
+                "Landroid/hardware/radio/V1_0/CdmaCallWaitingNumberPresentation;",
+                "Landroid/hardware/radio/V1_0/CdmaCallWaitingNumberType;",
+                "Landroid/hardware/radio/V1_0/CdmaDisplayInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaInfoRecName;",
+                "Landroid/hardware/radio/V1_0/CdmaInformationRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaInformationRecords;",
+                "Landroid/hardware/radio/V1_0/CdmaLineControlInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaNumberInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaOtaProvisionStatus;",
+                "Landroid/hardware/radio/V1_0/CdmaRedirectingNumberInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaRedirectingReason;",
+                "Landroid/hardware/radio/V1_0/CdmaRoamingType;",
+                "Landroid/hardware/radio/V1_0/CdmaSignalInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaSignalStrength;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsAck;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsAddress;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsDigitMode;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsErrorClass;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsMessage;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsNumberMode;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsNumberPlan;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsNumberType;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsSubaddress;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsSubaddressType;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsWriteArgs;",
+                "Landroid/hardware/radio/V1_0/CdmaSmsWriteArgsStatus;",
+                "Landroid/hardware/radio/V1_0/CdmaSubscriptionSource;",
+                "Landroid/hardware/radio/V1_0/CdmaT53AudioControlInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CdmaT53ClirInfoRecord;",
+                "Landroid/hardware/radio/V1_0/CellIdentity;",
+                "Landroid/hardware/radio/V1_0/CellIdentityCdma;",
+                "Landroid/hardware/radio/V1_0/CellIdentityGsm;",
+                "Landroid/hardware/radio/V1_0/CellIdentityLte;",
+                "Landroid/hardware/radio/V1_0/CellIdentityTdscdma;",
+                "Landroid/hardware/radio/V1_0/CellIdentityWcdma;",
+                "Landroid/hardware/radio/V1_0/CellInfo;",
+                "Landroid/hardware/radio/V1_0/CellInfoCdma;",
+                "Landroid/hardware/radio/V1_0/CellInfoGsm;",
+                "Landroid/hardware/radio/V1_0/CellInfoLte;",
+                "Landroid/hardware/radio/V1_0/CellInfoTdscdma;",
+                "Landroid/hardware/radio/V1_0/CellInfoType;",
+                "Landroid/hardware/radio/V1_0/CellInfoWcdma;",
+                "Landroid/hardware/radio/V1_0/CfData;",
+                "Landroid/hardware/radio/V1_0/ClipStatus;",
+                "Landroid/hardware/radio/V1_0/Clir;",
+                "Landroid/hardware/radio/V1_0/DataCallFailCause;",
+                "Landroid/hardware/radio/V1_0/DataProfileId;",
+                "Landroid/hardware/radio/V1_0/DataProfileInfo;",
+                "Landroid/hardware/radio/V1_0/DataProfileInfoType;",
+                "Landroid/hardware/radio/V1_0/DataRegStateResult;",
+                "Landroid/hardware/radio/V1_0/DeviceStateType;",
+                "Landroid/hardware/radio/V1_0/Dial;",
+                "Landroid/hardware/radio/V1_0/EvdoSignalStrength;",
+                "Landroid/hardware/radio/V1_0/GsmBroadcastSmsConfigInfo;",
+                "Landroid/hardware/radio/V1_0/GsmSignalStrength;",
+                "Landroid/hardware/radio/V1_0/GsmSmsMessage;",
+                "Landroid/hardware/radio/V1_0/HardwareConfig;",
+                "Landroid/hardware/radio/V1_0/HardwareConfigModem;",
+                "Landroid/hardware/radio/V1_0/HardwareConfigSim;",
+                "Landroid/hardware/radio/V1_0/HardwareConfigState;",
+                "Landroid/hardware/radio/V1_0/HardwareConfigType;",
+                "Landroid/hardware/radio/V1_0/IccIo;",
+                "Landroid/hardware/radio/V1_0/IccIoResult;",
+                "Landroid/hardware/radio/V1_0/ImsSmsMessage;",
+                "Landroid/hardware/radio/V1_0/IndicationFilter;",
+                "Landroid/hardware/radio/V1_0/LastCallFailCause;",
+                "Landroid/hardware/radio/V1_0/LastCallFailCauseInfo;",
+                "Landroid/hardware/radio/V1_0/LceDataInfo;",
+                "Landroid/hardware/radio/V1_0/LceStatus;",
+                "Landroid/hardware/radio/V1_0/LceStatusInfo;",
+                "Landroid/hardware/radio/V1_0/LteSignalStrength;",
+                "Landroid/hardware/radio/V1_0/MvnoType;",
+                "Landroid/hardware/radio/V1_0/NeighboringCell;",
+                "Landroid/hardware/radio/V1_0/NvItem;",
+                "Landroid/hardware/radio/V1_0/NvWriteItem;",
+                "Landroid/hardware/radio/V1_0/OperatorInfo;",
+                "Landroid/hardware/radio/V1_0/OperatorStatus;",
+                "Landroid/hardware/radio/V1_0/P2Constant;",
+                "Landroid/hardware/radio/V1_0/PcoDataInfo;",
+                "Landroid/hardware/radio/V1_0/PersoSubstate;",
+                "Landroid/hardware/radio/V1_0/PhoneRestrictedState;",
+                "Landroid/hardware/radio/V1_0/PinState;",
+                "Landroid/hardware/radio/V1_0/PreferredNetworkType;",
+                "Landroid/hardware/radio/V1_0/RadioAccessFamily;",
+                "Landroid/hardware/radio/V1_0/RadioBandMode;",
+                "Landroid/hardware/radio/V1_0/RadioCapability;",
+                "Landroid/hardware/radio/V1_0/RadioCapabilityPhase;",
+                "Landroid/hardware/radio/V1_0/RadioCapabilityStatus;",
+                "Landroid/hardware/radio/V1_0/RadioCdmaSmsConst;",
+                "Landroid/hardware/radio/V1_0/RadioConst;",
+                "Landroid/hardware/radio/V1_0/RadioError;",
+                "Landroid/hardware/radio/V1_0/RadioIndicationType;",
+                "Landroid/hardware/radio/V1_0/RadioResponseInfo;",
+                "Landroid/hardware/radio/V1_0/RadioResponseType;",
+                "Landroid/hardware/radio/V1_0/RadioState;",
+                "Landroid/hardware/radio/V1_0/RadioTechnology;",
+                "Landroid/hardware/radio/V1_0/RadioTechnologyFamily;",
+                "Landroid/hardware/radio/V1_0/RegState;",
+                "Landroid/hardware/radio/V1_0/ResetNvType;",
+                "Landroid/hardware/radio/V1_0/RestrictedState;",
+                "Landroid/hardware/radio/V1_0/SapApduType;",
+                "Landroid/hardware/radio/V1_0/SapConnectRsp;",
+                "Landroid/hardware/radio/V1_0/SapDisconnectType;",
+                "Landroid/hardware/radio/V1_0/SapResultCode;",
+                "Landroid/hardware/radio/V1_0/SapStatus;",
+                "Landroid/hardware/radio/V1_0/SapTransferProtocol;",
+                "Landroid/hardware/radio/V1_0/SelectUiccSub;",
+                "Landroid/hardware/radio/V1_0/SendSmsResult;",
+                "Landroid/hardware/radio/V1_0/SetupDataCallResult;",
+                "Landroid/hardware/radio/V1_0/SignalStrength;",
+                "Landroid/hardware/radio/V1_0/SimApdu;",
+                "Landroid/hardware/radio/V1_0/SimRefreshResult;",
+                "Landroid/hardware/radio/V1_0/SimRefreshType;",
+                "Landroid/hardware/radio/V1_0/SmsAcknowledgeFailCause;",
+                "Landroid/hardware/radio/V1_0/SmsWriteArgs;",
+                "Landroid/hardware/radio/V1_0/SmsWriteArgsStatus;",
+                "Landroid/hardware/radio/V1_0/SrvccState;",
+                "Landroid/hardware/radio/V1_0/SsInfoData;",
+                "Landroid/hardware/radio/V1_0/SsRequestType;",
+                "Landroid/hardware/radio/V1_0/SsServiceType;",
+                "Landroid/hardware/radio/V1_0/SsTeleserviceType;",
+                "Landroid/hardware/radio/V1_0/StkCcUnsolSsResult;",
+                "Landroid/hardware/radio/V1_0/SubscriptionType;",
+                "Landroid/hardware/radio/V1_0/SuppServiceClass;",
+                "Landroid/hardware/radio/V1_0/SuppSvcNotification;",
+                "Landroid/hardware/radio/V1_0/TdScdmaSignalStrength;",
+                "Landroid/hardware/radio/V1_0/TimeStampType;",
+                "Landroid/hardware/radio/V1_0/TtyMode;",
+                "Landroid/hardware/radio/V1_0/UiccSubActStatus;",
+                "Landroid/hardware/radio/V1_0/UssdModeType;",
+                "Landroid/hardware/radio/V1_0/UusDcs;",
+                "Landroid/hardware/radio/V1_0/UusInfo;",
+                "Landroid/hardware/radio/V1_0/UusType;",
+                "Landroid/hardware/radio/V1_0/VoiceRegStateResult;",
+                "Landroid/hardware/radio/V1_0/WcdmaSignalStrength;",
+                "Landroid/hardware/radio/V1_0/IRadio;",
+                "Landroid/hardware/radio/V1_0/IRadioIndication;",
+                "Landroid/hardware/radio/V1_0/IRadioResponse;",
+                "Landroid/hardware/radio/V1_0/ISap;",
+                "Landroid/hardware/radio/V1_0/ISapCallback;",
+                "Lcom/android/internal/util/IState;",
+                "Lcom/android/internal/util/StateMachine;",
+                "Lcom/google/android/mms/ContentType;",
+                "Lcom/google/android/mms/MmsException;",
+                "Lcom/google/android/mms/pdu/Base64;",
+                "Lcom/google/android/mms/pdu/CharacterSets;",
+                "Lcom/google/android/mms/pdu/EncodedStringValue;",
+                "Lcom/google/android/mms/pdu/GenericPdu;",
+                "Lcom/google/android/mms/pdu/PduBody;",
+                "Lcom/google/android/mms/pdu/PduComposer;",
+                "Lcom/google/android/mms/pdu/PduContentTypes;",
+                "Lcom/google/android/mms/pdu/PduHeaders;",
+                "Lcom/google/android/mms/pdu/PduParser;",
+                "Lcom/google/android/mms/pdu/PduPart;",
+                "Lcom/google/android/mms/pdu/PduPersister;",
+                "Lcom/google/android/mms/pdu/QuotedPrintable;",
+                "Lcom/google/android/mms/util/AbstractCache;",
+                "Lcom/google/android/mms/util/DownloadDrmHelper;",
+                "Lcom/google/android/mms/util/DrmConvertSession;",
+                "Lcom/google/android/mms/util/PduCacheEntry;",
+                "Lcom/google/android/mms/util/SqliteWrapper;",
+                "Lcom/android/internal/util/State;",
+                "Lcom/google/android/mms/InvalidHeaderValueException;",
+                "Lcom/google/android/mms/pdu/AcknowledgeInd;",
+                "Lcom/google/android/mms/pdu/DeliveryInd;",
+                "Lcom/google/android/mms/pdu/MultimediaMessagePdu;",
+                "Lcom/google/android/mms/pdu/NotificationInd;",
+                "Lcom/google/android/mms/pdu/NotifyRespInd;",
+                "Lcom/google/android/mms/pdu/ReadOrigInd;",
+                "Lcom/google/android/mms/pdu/ReadRecInd;",
+                "Lcom/google/android/mms/pdu/SendConf;",
+                "Lcom/google/android/mms/util/PduCache;",
+                "Lcom/google/android/mms/pdu/RetrieveConf;",
+                "Lcom/google/android/mms/pdu/SendReq;"
+        );
+    private static final ImmutableSet<String> PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                "Lcom/android/modules/utils/build/SdkLevel;",
+                "Lcom/android/settingslib/RestrictedLockUtils;"
+            );
+    // TODO: b/223837599
+    private static final ImmutableSet<String> TETHERING_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                "Landroid/hidl/base/V1_0/DebugInfo;",
+                // /system/framework/services.jar
+                "Landroid/net/DataStallReportParcelable;",
+                "Landroid/net/DhcpResultsParcelable;",
+                "Landroid/net/INetd;",
+                "Landroid/net/INetdUnsolicitedEventListener;",
+                "Landroid/net/INetworkStackConnector;",
+                "Landroid/net/INetworkStackStatusCallback;",
+                "Landroid/net/InformationElementParcelable;",
+                "Landroid/net/InitialConfigurationParcelable;",
+                "Landroid/net/InterfaceConfigurationParcel;",
+                "Landroid/net/Layer2InformationParcelable;",
+                "Landroid/net/Layer2PacketParcelable;",
+                "Landroid/net/MarkMaskParcel;",
+                "Landroid/net/NativeNetworkConfig;",
+                "Landroid/net/NattKeepalivePacketDataParcelable;",
+                "Landroid/net/NetworkTestResultParcelable;",
+                "Landroid/net/PrivateDnsConfigParcel;",
+                "Landroid/net/ProvisioningConfigurationParcelable;",
+                "Landroid/net/RouteInfoParcel;",
+                "Landroid/net/ScanResultInfoParcelable;",
+                "Landroid/net/TcpKeepalivePacketDataParcelable;",
+                "Landroid/net/TetherConfigParcel;",
+                "Landroid/net/TetherOffloadRuleParcel;",
+                "Landroid/net/TetherStatsParcel;",
+                "Landroid/net/UidRangeParcel;",
+                "Landroid/net/dhcp/DhcpLeaseParcelable;",
+                "Landroid/net/dhcp/DhcpServingParamsParcel;",
+                "Landroid/net/dhcp/IDhcpEventCallbacks;",
+                "Landroid/net/dhcp/IDhcpServer;",
+                "Landroid/net/dhcp/IDhcpServerCallbacks;",
+                "Landroid/net/ipmemorystore/Blob;",
+                "Landroid/net/ipmemorystore/NetworkAttributesParcelable;",
+                "Landroid/net/ipmemorystore/SameL3NetworkResponseParcelable;",
+                "Landroid/net/ipmemorystore/StatusParcelable;",
+                "Landroid/net/netd/aidl/NativeUidRangeConfig;",
+                "Landroid/net/networkstack/aidl/NetworkMonitorParameters;",
+                "Landroid/net/networkstack/aidl/dhcp/DhcpOption;",
+                "Landroid/net/networkstack/aidl/ip/ReachabilityLossInfoParcelable;",
+                "Landroid/net/networkstack/aidl/quirks/IPv6ProvisioningLossQuirkParcelable;",
+                "Landroid/net/shared/NetdUtils;",
+                "Landroid/net/util/NetworkConstants;",
+                "Landroid/net/util/SharedLog;",
+                "Lcom/android/modules/utils/build/SdkLevel;",
+                ///system/framework/framework.jar
+                "Landroid/util/IndentingPrintWriter;",
+                "Lcom/android/internal/annotations/Keep;"
+            );
+    // TODO: b/223836161
+    private static final ImmutableSet<String> EXTSERVICES_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                ///system/framework/framework.jar
+                "Landroid/view/displayhash/DisplayHashResultCallback;",
+                "Landroid/view/displayhash/DisplayHash;",
+                "Landroid/view/displayhash/VerifiedDisplayHash;"
+            );
+    // TODO: b/223836163
+    private static final ImmutableSet<String> ODA_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                // /apex/com.android.ondevicepersonalization/javalib/framework-ondevicepersonalization.jar
+                "Landroid/ondevicepersonalization/aidl/IInitOnDevicePersonalizationCallback;",
+                "Landroid/ondevicepersonalization/aidl/IOnDevicePersonalizationManagerService;"
+            );
+    // TODO: b/223837016
+    private static final ImmutableSet<String> MEDIAPROVIDER_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                // /system/framework/services.jar
+                "Lcom/android/modules/utils/build/SdkLevel;"
+            );
+    // TODO: b/223837017
+    private static final ImmutableSet<String> CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST =
+            ImmutableSet.of(
+                // /system/framework/telephony-common.jar
+                "Lcom/android/cellbroadcastservice/CellBroadcastStatsLog;",
+                // /system/framework/framework.jar
+                "Lcom/android/internal/util/IState;",
+                "Lcom/android/internal/util/StateMachine;",
+                "Lcom/android/internal/util/State;"
+            );
+    private static final ImmutableMap<String, ImmutableSet<String>> FULL_APK_IN_APEX_BURNDOWN =
+        new ImmutableMap.Builder<String, ImmutableSet<String>>()
+            .put("/apex/com.android.bluetooth/app/Bluetooth/Bluetooth.apk",
+                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.permission/priv-app/PermissionController/PermissionController.apk",
+                PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.permission/priv-app/GooglePermissionController/GooglePermissionController.apk",
+                PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.tethering/priv-app/TetheringNextGoogle/TetheringNextGoogle.apk",
+                TETHERING_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.tethering/priv-app/TetheringGoogle/TetheringGoogle.apk",
+                TETHERING_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.tethering/priv-app/TetheringNext/TetheringNext.apk",
+                TETHERING_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.tethering/priv-app/Tethering/Tethering.apk",
+                TETHERING_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.extservices/priv-app/GoogleExtServices/GoogleExtServices.apk",
+                EXTSERVICES_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.extservices/priv-app/ExtServices/ExtServices.apk",
+                EXTSERVICES_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.ondevicepersonalization/app/OnDevicePersonalizationGoogle/OnDevicePersonalizationGoogle.apk",
+                ODA_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.ondevicepersonalization/app/OnDevicePersonalization/OnDevicePersonalization.apk",
+                ODA_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle/MediaProviderGoogle.apk",
+                MEDIAPROVIDER_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.mediaprovider/priv-app/MediaProvider/MediaProvider.apk",
+                MEDIAPROVIDER_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.cellbroadcast/priv-app/GoogleCellBroadcastServiceModule/GoogleCellBroadcastServiceModule.apk",
+                CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.cellbroadcast/priv-app/CellBroadcastServiceModule/CellBroadcastServiceModule.apk",
+                CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST)
+            .build();
     /**
      * Fetch all jar files in BCP, SSCP and shared libs and extract all the classes.
      *
@@ -336,6 +765,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 .map(sharedLibraryInfo -> sharedLibraryInfo.paths)
                 .flatMap(ImmutableCollection::stream)
                 .filter(file -> doesFileExist(file, testInfo.getDevice()))
+                // GmsCore should not contribute to *classpath.
+                .filter(file -> !file.contains("GmsCore"))
                 .collect(ImmutableList.toImmutableList());
 
         final ImmutableSetMultimap.Builder<String, String> jarsToClasses =
@@ -510,6 +941,71 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     return true;
                 });
         assertThat(filtered).isEmpty();
+    }
+
+    /**
+     * Ensure that no apk-in-apex bundles classes that could be eclipsed by jars in
+     * BOOTCLASSPATH, SYSTEMSERVERCLASSPATH.
+     */
+    @Test
+    public void testApkInApex_nonClasspathClasses() throws Exception {
+        HashMultimap<String, Multimap<String, String>> perApkClasspathDuplicates =
+                HashMultimap.create();
+        Arrays.stream(collectApkInApexPaths())
+                .parallel()
+                .forEach(apk -> {
+                    try {
+                        final ImmutableSet<String> apkClasses =
+                                Classpaths.getClassDefsFromJar(getDevice(), apk).stream()
+                                        .map(ClassDef::getType)
+                                        .collect(ImmutableSet.toImmutableSet());
+                        final ImmutableSet<String> burndownClasses =
+                                FULL_APK_IN_APEX_BURNDOWN.getOrDefault(apk, ImmutableSet.of());
+                        final Multimap<String, String> duplicates =
+                                Multimaps.filterValues(sJarsToClasses, apkClasses::contains);
+                        final Multimap<String, String> filteredDuplicates =
+                                Multimaps.filterValues(duplicates,
+                                    className -> !burndownClasses.contains(className));
+                        if (!filteredDuplicates.isEmpty()) {
+                            synchronized (perApkClasspathDuplicates) {
+                                perApkClasspathDuplicates.put(apk, filteredDuplicates);
+                            }
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        assertThat(perApkClasspathDuplicates).isEmpty();
+    }
+
+    private String[] collectApkInApexPaths() {
+        try {
+            final CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
+            final String installError = getDevice().installPackage(
+                    buildHelper.getTestFile(TEST_HELPER_APK), false);
+            assertWithMessage("Failed to install %s due to: %s", TEST_HELPER_APK, installError)
+                    .that(installError).isNull();
+            runDeviceTests(new DeviceTestRunOptions(TEST_HELPER_PACKAGE)
+                    .setDevice(getDevice())
+                    .setTestClassName(TEST_HELPER_PACKAGE + ".ApexDeviceTest")
+                    .setTestMethodName("testCollectApkInApexPaths"));
+            final String remoteFile = "/sdcard/apk-in-apex-paths.txt";
+            String content;
+            try {
+                content = getDevice().pullFileContents(remoteFile);
+            } finally {
+                getDevice().deleteFile(remoteFile);
+            }
+            return content.split("\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                getDevice().uninstallPackage(TEST_HELPER_PACKAGE);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**

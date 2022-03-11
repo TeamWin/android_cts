@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package android.security.cts;
 
 import android.platform.test.annotations.AsbSecurityTest;
@@ -29,28 +28,23 @@ import org.junit.runner.RunWith;
 import java.util.regex.Pattern;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2018_9558 extends SecurityTestCase {
+public class CVE_2021_39665 extends SecurityTestCase {
 
     /**
-     * b/112161557
-     * Vulnerability Behaviour: SIGABRT in self
-     * Vulnerable Library: libnfc-nci (As per AOSP code)
-     * Vulnerable Function: rw_t2t_handle_tlv_detect_rsp (As per AOSP code)
+     * b/204077881
+     * Vulnerability Behavior: SIGSEGV in self
+     * Vulnerable Library: libmediaplayerservice (As per AOSP code)
+     * Vulnerable Function: android::AAVCAssembler::checkSpsUpdated (As per AOSP code)
      */
+    @AsbSecurityTest(cveBugId = 204077881)
     @Test
-    @AsbSecurityTest(cveBugId = 112161557)
-    public void testPocCVE_2018_9558() throws Exception {
-        AdbUtils.assumeHasNfc(getDevice());
-        assumeIsSupportedNfcDevice(getDevice());
-        pocPusher.only64();
-        String[] signals = {CrashUtils.SIGABRT};
-        String binaryName = "CVE-2018-9558";
+    public void testPocCVE_2021_39665() throws Exception {
+        String[] signals = {CrashUtils.SIGSEGV};
+        String binaryName = "CVE-2021-39665";
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
         testConfig.config = new CrashUtils.Config().setProcessPatterns(Pattern.compile(binaryName))
-                .setBacktraceIncludes(new BacktraceFilterPattern("libnfc-nci",
-                        "rw_t2t_handle_tlv_detect_rsp"));
-        testConfig.config
-                .setBacktraceExcludes(new BacktraceFilterPattern("libdl", "__cfi_slowpath"));
+                .setBacktraceIncludes(new BacktraceFilterPattern("libmediaplayerservice",
+                        "android::AAVCAssembler::checkSpsUpdated"));
         testConfig.config.setSignals(signals);
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }

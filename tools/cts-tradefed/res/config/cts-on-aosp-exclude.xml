@@ -61,10 +61,10 @@
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActivityKeyboardShortcutsTest#testRequestShowKeyboardShortcuts" />
 
     <!-- b/161837932: Fix MediaPlayerTests that use "too small" resolution -->
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerTest#testOnSubtitleDataListener" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerTest#testChangeSubtitleTrack" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerTest#testDeselectTrackForSubtitleTracks" />
-    <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerTest#testGetTrackInfoForVideoWithSubtitleTracks" />
+    <option name="compatibility:exclude-filter" value="CtsMediaPlayerTestCases android.media.player.cts.MediaPlayerTest#testOnSubtitleDataListener" />
+    <option name="compatibility:exclude-filter" value="CtsMediaPlayerTestCases android.media.player.cts.MediaPlayerTest#testChangeSubtitleTrack" />
+    <option name="compatibility:exclude-filter" value="CtsMediaPlayerTestCases android.media.player.cts.MediaPlayerTest#testDeselectTrackForSubtitleTracks" />
+    <option name="compatibility:exclude-filter" value="CtsMediaPlayerTestCases android.media.player.cts.MediaPlayerTest#testGetTrackInfoForVideoWithSubtitleTracks" />
 
     <!-- b/152359655: ResumeOnReboot can't work on GSI -->
     <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.ResumeOnRebootHostTest" />

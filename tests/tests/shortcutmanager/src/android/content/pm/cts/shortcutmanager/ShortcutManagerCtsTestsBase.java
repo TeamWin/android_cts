@@ -18,6 +18,7 @@ package android.content.pm.cts.shortcutmanager;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.*;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -648,6 +649,7 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected boolean isAppSearchEnabled() {
         return SystemUtil.runWithShellPermissionIdentity(() ->
                 DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_SYSTEMUI,
-                        "shortcut_appsearch_integration", true));
+                        "shortcut_appsearch_integration", true))
+                && !getTestContext().getSystemService(ActivityManager.class).isLowRamDevice();
     }
 }

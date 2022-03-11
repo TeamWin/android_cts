@@ -43,7 +43,8 @@ import java.util.Set;
 public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String PLATFORM = "android";
-    private static final String PLATFORM_PERMISSION_PREFIX = "android.";
+    private static final String PLATFORM_ANDROID_PERMISSION_PREFIX = "android.permission.";
+    private static final String PLATFORM_MANIFEST_PERMISSION_PREFIX = "android.Manifest.permission.";
 
     private static final String PACKAGE = "package";
     private static final String NAME = "name";
@@ -54,12 +55,14 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String TARGET_SDK = "target_sdk";
 
     private static final String REQUESTED_PERMISSIONS = "requested_permissions";
+    private static final String DEFINED_PERMISSIONS = "defined_permissions";
     private static final String PERMISSION_NAME = "name";
     private static final String PERMISSION_FLAGS = "flags";
     private static final String PERMISSION_GROUP = "permission_group";
     private static final String PERMISSION_PROTECTION = "protection_level";
     private static final String PERMISSION_PROTECTION_FLAGS = "protection_level_flags";
     private static final String PERMISSION_IS_GRANTED = "is_granted";
+
 
     private static final String PERMISSION_TYPE = "type";
     private static final int PERMISSION_TYPE_SYSTEM = 1;
@@ -83,6 +86,21 @@ public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String CONFIG_ACCESSIBILITY_SERVICE = "config_defaultAccessibilityService";
     private static final String DEFAULT_ACCESSIBILITY_SERVICE = "is_default_accessibility_service";
+
+    private static final HashSet<String> ADDITIONAL_ANDROID_PERMISSIONS = new HashSet<>(Arrays.asList(new String[] {
+        "com.android.voicemail.permission.ADD_VOICEMAIL",
+        "com.android.voicemail.permission.WRITE_VOICEMAIL",
+        "com.android.voicemail.permission.READ_VOICEMAIL",
+        "com.android.browser.permission.READ_HISTORY_BOOKMARKS",
+        "com.android.browser.permission.WRITE_HISTORY_BOOKMARKS",
+        "com.android.alarm.permission.SET_ALARM",
+        "com.android.launcher.permission.INSTALL_SHORTCUT",
+        "com.android.launcher.permission.UNINSTALL_SHORTCUT",
+        "com.android.permission.INSTALL_EXISTING_PACKAGES",
+        "com.android.permission.USE_INSTALLER_V2",
+        "com.android.permission.USE_SYSTEM_DATA_LOADERS",
+        "android.intent.category.MASTER_CLEAR.permission.C2D_MESSAGE"
+    }));
 
 
     @Override
@@ -111,7 +129,9 @@ public class PackageDeviceInfo extends DeviceInfo {
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
-            collectPermissions(store, pm, platformPermissions, pkg);
+            collectRequestedPermissions(store, pm, platformPermissions, pkg);
+            collectDefinedPermissions(store, platformPermissions, pkg);
+
             collectionApplicationInfo(store, pm, pkg);
 
             store.addResult(HAS_DEFAULT_NOTIFICATION_ACCESS,
@@ -138,7 +158,7 @@ public class PackageDeviceInfo extends DeviceInfo {
         store.endArray(); // "package"
     }
 
-    private static void collectPermissions(DeviceInfoStore store,
+    private static void collectRequestedPermissions(DeviceInfoStore store,
                                            PackageManager pm,
                                            Set<String> systemPermissions,
                                            PackageInfo pkg) throws IOException
@@ -152,20 +172,7 @@ public class PackageDeviceInfo extends DeviceInfo {
                     final PermissionInfo pi = pm.getPermissionInfo(permission, 0);
 
                     store.startGroup();
-                    store.addResult(PERMISSION_NAME, permission);
-                    writePermissionsDetails(pi, store);
-
-                    final boolean isPlatformPermission = systemPermissions.contains(permission);
-                    if (isPlatformPermission) {
-                      final boolean isAndroidPermission = permission.startsWith(PLATFORM_PERMISSION_PREFIX);
-                      if (isAndroidPermission) {
-                        store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_SYSTEM);
-                      } else {
-                        store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_OEM);
-                      }
-                    } else {
-                      store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_CUSTOM);
-                    }
+                    writePermissionsDetails(pi, store, systemPermissions);
 
                     boolean isGranted = pm.checkPermission(
                             permission, pkg.packageName) == pm.PERMISSION_GRANTED;
@@ -178,6 +185,27 @@ public class PackageDeviceInfo extends DeviceInfo {
             }
         }
         store.endArray();
+    }
+
+    private static void collectDefinedPermissions(DeviceInfoStore store,
+                                                  Set<String> systemPermissions,
+                                                  PackageInfo pkg) throws IOException {
+        if (pkg.permissions != null && pkg.permissions.length > 0) {
+            store.startArray(DEFINED_PERMISSIONS);
+            for (PermissionInfo permission : pkg.permissions) {
+                if (permission == null) continue;
+                // Ignore "android" package defined AOSP permissions.
+                if (pkg.packageName.equals(PLATFORM)
+                        && isAndroidPermission(permission.name))
+                    continue;
+
+                store.startGroup();
+                writePermissionsDetails(permission, store, systemPermissions);
+                store.endGroup();
+
+            }
+            store.endArray();
+        }
     }
 
     private static void collectionApplicationInfo(DeviceInfoStore store,
@@ -231,8 +259,12 @@ public class PackageDeviceInfo extends DeviceInfo {
         return sharedPermissions.contains(PackageDeviceInfo.INSTALL_PACKAGES_PERMISSION);
     }
 
-    private static void writePermissionsDetails(PermissionInfo pi, DeviceInfoStore store)
-            throws IOException {
+    private static void writePermissionsDetails(PermissionInfo pi,
+                                                DeviceInfoStore store,
+                                                Set<String> systemPermissions) throws IOException {
+        final String permissionName = pi.name;
+        store.addResult(PERMISSION_NAME, permissionName);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             store.addResult(PERMISSION_FLAGS, pi.flags);
         } else {
@@ -249,6 +281,18 @@ public class PackageDeviceInfo extends DeviceInfo {
                     pi.protectionLevel & PermissionInfo.PROTECTION_MASK_BASE);
             store.addResult(PERMISSION_PROTECTION_FLAGS,
                     pi.protectionLevel & ~PermissionInfo.PROTECTION_MASK_BASE);
+        }
+
+        final boolean isPlatformPermission = systemPermissions.contains(permissionName);
+        if (isPlatformPermission) {
+            final boolean isAndroidPermission = isAndroidPermission(permissionName);
+            if (isAndroidPermission) {
+            store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_SYSTEM);
+            } else {
+            store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_OEM);
+            }
+        } else {
+            store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_CUSTOM);
         }
     }
 
@@ -296,6 +340,15 @@ public class PackageDeviceInfo extends DeviceInfo {
         return getContext()
                 .getResources()
                 .getIdentifier(name, type, "android");
+    }
+
+    /** Return a boolean value to whether the permission is an android permission defined by android package */
+    private static boolean isAndroidPermission(String permissionName) {
+        if(permissionName.startsWith(PLATFORM_ANDROID_PERMISSION_PREFIX)
+            || permissionName.startsWith(PLATFORM_MANIFEST_PERMISSION_PREFIX)
+            || ADDITIONAL_ANDROID_PERMISSIONS.contains(permissionName))
+            return true;
+        return false;
     }
 }
 

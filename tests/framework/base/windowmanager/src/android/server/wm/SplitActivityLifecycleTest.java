@@ -44,7 +44,6 @@ import android.window.TaskFragmentInfo;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -389,32 +388,6 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
         testActivityLaunchInExpandedTaskFragmentInternal();
     }
 
-    /**
-     * Verifies the behavior to launch Activity in expanded TaskFragment and occludes the embedded
-     * Task.
-     * <p>
-     * For example, given that Activity A and B are showed side-by-side, which Activity B is in
-     * embedded Task, this test verifies the behavior to launch Activity C in the TaskFragment which
-     * fills the Task bounds of owner Activity:
-     * <pre class="prettyprint">
-     *     - Fullscreen -
-     *     TaskFragmentC
-     *       - ActivityC <---- new started Activity
-     * - Left -      - Right -
-     * TaskFragmentA TaskFragmentB
-     *   - ActivityA   - Embedded Task
-     *                   - ActivityB
-     * </pre></p>
-     */
-    @Test
-    @Ignore("b/197364677")
-    public void testActivityLaunchInExpandedTaskFragment_AboveEmbeddedTask() {
-        // Initialize test environment by launching Activity A and B side-by-side.
-        initializeSplitActivities(true /* verifyEmbeddedTask */);
-
-        testActivityLaunchInExpandedTaskFragmentInternal();
-    }
-
     private void testActivityLaunchInExpandedTaskFragmentInternal() {
 
         final TaskFragmentCreationParams fullScreenParamsC = mTaskFragmentOrganizer
@@ -437,91 +410,6 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
                 "Activity A is occluded by Activity C, so it must be stopped.");
         waitAndAssertActivityState(mActivityB, STATE_STOPPED,
                 "Activity B is occluded by Activity C, so it must be stopped.");
-    }
-
-    /**
-     * Verifies the behavior to launch Activity above the embedded Task in TaskFragment.
-     * <p>
-     * For example, given that Activity A and B are showed side-by-side, which Activity B is in
-     * embedded Task, this test verifies the behavior to launch Activity C on top of the embedded
-     * Task in the same TaskFragment as Activity B:
-     * <pre class="prettyprint">
-     * - Left -      - Right -
-     * TaskFragmentA TaskFragmentB
-     *   - ActivityA   - ActivityC <---- new started Activity
-     *                 - Embedded Task
-     *                   - ActivityB
-     * </pre></p>
-     */
-    @Test
-    @Ignore("b/197364677")
-    public void testActivityLaunchAboveEmbeddedTaskInTaskFragment() {
-        // Initialize test environment by launching Activity A and B side-by-side.
-        initializeSplitActivities(true /* verifyEmbeddedTask */);
-
-        final IBinder taskFragTokenB = mTaskFragB.getTaskFragToken();
-
-        WindowContainerTransaction wct = new WindowContainerTransaction()
-                .startActivityInTaskFragment(taskFragTokenB, mOwnerToken, mIntent,
-                        null /* activityOptions */);
-
-        mTaskFragmentOrganizer.applyTransaction(wct);
-
-        mTaskFragmentOrganizer.waitForTaskFragmentInfoChanged();
-
-        final TaskFragmentInfo infoB = mTaskFragmentOrganizer.getTaskFragmentInfo(taskFragTokenB);
-
-        assertNotEmptyTaskFragment(infoB, taskFragTokenB);
-
-        waitAndAssertResumedActivity(mActivityC, "Activity C must be resumed.");
-        waitAndAssertResumedActivity(mActivityA, "Activity A must be resumed.");
-        waitAndAssertActivityState(mActivityB, WindowManagerState.STATE_STOPPED,
-                "Activity B is occluded by Activity C, so it must be stopped.");
-
-        final TaskFragment taskFragmentB = mWmState.getTaskFragmentByActivity(mActivityB);
-        assertWithMessage("TaskFragmentB must contain Activity C")
-                .that(taskFragmentB.mActivities).containsExactly(mWmState.getActivity(mActivityC));
-    }
-
-    /**
-     * Verifies the behavior to launch Activity to the embedded Task in TaskFragment.
-     * <p>
-     * For example, given that Activity A and B are showed side-by-side, which Activity B is in
-     * embedded Task, this test verifies the behavior to launch Activity C to the embedded Task
-     * and on top of Activity B:
-     * <pre class="prettyprint">
-     * - Left -      - Right -
-     * TaskFragmentA TaskFragmentB
-     *   - ActivityA   - Embedded Task
-     *                   - ActivityC <---- new started Activity
-     *                   - ActivityB
-     * </pre></p>
-     */
-    @Test
-    @Ignore("b/197364677")
-    public void testActivityLaunchToEmbeddedTaskInTaskFragment() {
-        // Initialize test environment by launching Activity A and B side-by-side.
-        initializeSplitActivities(true /* verifyEmbeddedTask */);
-
-        final IBinder taskFragTokenB = mTaskFragB.getTaskFragToken();
-        // Make Activity C launch to the embedded Task.
-        final Intent intent = new Intent(mIntent).addFlags(FLAG_ACTIVITY_NEW_TASK);
-
-        WindowContainerTransaction wct = new WindowContainerTransaction()
-                .startActivityInTaskFragment(taskFragTokenB, mOwnerToken, intent,
-                        null /* activityOptions */);
-
-        mTaskFragmentOrganizer.applyTransaction(wct);
-
-        waitAndAssertResumedActivity(mActivityC, "Activity C must be resumed.");
-        waitAndAssertResumedActivity(mActivityA, "Activity A must be resumed.");
-        waitAndAssertActivityState(mActivityB, STATE_STOPPED,
-                "Activity B is occluded by Activity C, so it must be stopped.");
-
-        final Task embeddedTask = mWmState.getTaskByActivity(mActivityB);
-        assertWithMessage("Embedded Task must contain Activity B and Activity C")
-                .that(embeddedTask.mActivities).containsExactly(mWmState.getActivity(mActivityB),
-                mWmState.getActivity(mActivityC));
     }
 
     /**

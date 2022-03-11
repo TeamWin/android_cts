@@ -47,10 +47,6 @@
         <option name="config-filename" value="CtsMediaMuxerTestCases" />
         <option name="version" value="1.0"/>
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <!-- MediaProjectionTest needs this one to not be granted, SuiteApkInstaller grants all of them by default.-->
-        <option name="run-command" value="pm revoke android.media.muxer.cts android.permission.SYSTEM_ALERT_WINDOW"/>
-    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.media.muxer.cts" />
         <!-- setup can be expensive so limit the number of shards -->

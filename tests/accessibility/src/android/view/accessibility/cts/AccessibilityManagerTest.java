@@ -109,12 +109,14 @@ public class AccessibilityManagerTest {
 
     @Rule
     public final RuleChain mRuleChain = RuleChain
-            .outerRule(mSpeakingAndVibratingAccessibilityServiceRule)
+            // SettingsStateChangerRule will suppress accessibility services, so it should be
+            // executed before enabling a11y services and after disabling a11y services.
+            .outerRule(mAudioDescriptionSetterRule)
+            .around(mSpeakingAndVibratingAccessibilityServiceRule)
             .around(mVibratingAccessibilityServiceRule)
             .around(mSpeakingAccessibilityServiceRule)
             // Inner rule capture failure and dump data before finishing activity and a11y service
-            .around(mDumpOnFailureRule)
-            .around(mAudioDescriptionSetterRule);
+            .around(mDumpOnFailureRule);
 
     private AccessibilityManager mAccessibilityManager;
 
