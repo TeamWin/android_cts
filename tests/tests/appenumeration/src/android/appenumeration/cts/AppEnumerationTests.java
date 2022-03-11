@@ -2016,6 +2016,36 @@ public class AppEnumerationTests {
                 is(emptyOrNullString()));
     }
 
+    @Test
+    public void makeUidVisible_throwsException() throws Exception {
+        final int recipientUid = sPm.getPackageUid(
+                QUERIES_NOTHING, PackageManager.PackageInfoFlags.of(0));
+        final int visibleUid = sPm.getPackageUid(
+                TARGET_NO_API, PackageManager.PackageInfoFlags.of(0));
+        assertThrows(SecurityException.class,
+                () -> sPm.makeUidVisible(recipientUid, visibleUid));
+    }
+
+    @Test
+    public void makeUidVisible_queriesNothing_canSeeStub() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        try {
+            assertNotVisible(QUERIES_NOTHING, TARGET_STUB);
+
+            final int recipientUid = sPm.getPackageUid(
+                    QUERIES_NOTHING, PackageManager.PackageInfoFlags.of(0));
+            final int visibleUid = sPm.getPackageUid(
+                    TARGET_STUB, PackageManager.PackageInfoFlags.of(0));
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> sPm.makeUidVisible(recipientUid, visibleUid),
+                            Manifest.permission.MAKE_UID_VISIBLE);
+
+            assertVisible(QUERIES_NOTHING, TARGET_STUB);
+        } finally {
+            ensurePackageIsNotInstalled(TARGET_STUB);
+        }
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
