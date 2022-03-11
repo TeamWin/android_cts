@@ -209,10 +209,6 @@ def arduino_rotate_servo(ch, angles, servo_speed, move_time, serial_port):
     serial_port: object; serial port
   """
 
-  # set servo speed
-  logging.debug('Servo speed: %d', servo_speed)
-  set_servo_speed(ch, servo_speed, serial_port, delay=0)
-
   for angle in angles:
     angle_norm = int(round(angle*ARDUINO_ANGLE_MAX/HS755HB_ANGLE_MAX, 0))
     arduino_rotate_servo_to_angle(ch, angle_norm, serial_port, move_time)
@@ -248,6 +244,9 @@ def rotation_rig(rotate_cntl, rotate_ch, num_rotations, angles, servo_speed,
     logging.debug('Moving servo to origin')
     arduino_rotate_servo_to_angle(rotate_ch, 0, arduino_serial_port, 1)
 
+    # set servo speed
+    set_servo_speed(rotate_ch, servo_speed, arduino_serial_port, delay=0)
+
   elif rotate_cntl.lower() == 'canakit':
     canakit_serial_port = serial_port_def('Canakit')
 
@@ -278,6 +277,7 @@ def set_servo_speed(ch, servo_speed, serial_port, delay=0):
     serial_port: object; serial port
     delay: int; time in seconds
   """
+  logging.debug('Servo speed: %d', servo_speed)
   if servo_speed < ARDUINO_SERVO_SPEED_MIN:
     logging.debug('Servo speed must be >= %d.', ARDUINO_SERVO_SPEED_MIN)
     servo_speed = ARDUINO_SERVO_SPEED_MIN
