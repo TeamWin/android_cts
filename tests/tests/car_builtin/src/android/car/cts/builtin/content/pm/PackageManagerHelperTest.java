@@ -23,14 +23,18 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.builtin.content.pm.PackageManagerHelper;
 import android.car.cts.builtin.R;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.os.Process;
 import android.os.SystemProperties;
 import android.os.UserHandle;
+import android.util.ArraySet;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -39,33 +43,37 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.function.ToIntFunction;
 
 @RunWith(AndroidJUnit4.class)
 public final class PackageManagerHelperTest {
 
     private static final String TAG = PackageManagerHelperTest.class.getSimpleName();
     private static final String ANDROID_CAR_PKG = "com.android.car";
+    private static final String ANDROID_CAR_SHELL_PKG = "com.android.shell";
+    private static final String ANDROID_CAR_SHELL_PKG_SHARED = "shared:android.uid.shell";
     private static final String CAR_BUILTIN_CTS_PKG = "android.car.cts.builtin";
+    private static final String[] CAR_BUILTIN_CTS_SERVICE_NAMES = {
+        "android.car.cts.builtin.os.SharedMemoryTestService",
+        "android.car.cts.builtin.os.ServiceManagerTestService"
+    };
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final PackageManager mPackageManager = mContext.getPackageManager();
 
     @Test
     public void testGetPackageInfoAsUser() throws Exception {
-        // setup
         String expectedActivityName = "android.car.cts.builtin.activity.SimpleActivity";
         int flags = PackageManager.GET_ACTIVITIES | PackageManager.GET_INSTRUMENTATION
                 | PackageManager.GET_SERVICES;
         int curUser = UserHandle.myUserId();
 
-        // execution
         PackageInfo pkgInfoUser = PackageManagerHelper.getPackageInfoAsUser(mPackageManager,
                 CAR_BUILTIN_CTS_PKG, flags, curUser);
         ApplicationInfo appInfo = pkgInfoUser.applicationInfo;
         ActivityInfo[] activities = pkgInfoUser.activities;
         ServiceInfo[] services = pkgInfoUser.services;
 
-        // assertion
         assertThat(appInfo).isNotNull();
         assertThat(appInfo.descriptionRes).isEqualTo(R.string.app_description);
         assertThat(activities).isNotNull();
@@ -75,13 +83,11 @@ public final class PackageManagerHelperTest {
 
     @Test
     public void testAppTypeChecking() throws Exception {
-        // setup
         ApplicationInfo systemApp = mPackageManager
                 .getApplicationInfo(ANDROID_CAR_PKG, /* flags= */ 0);
         ApplicationInfo ctsApp = mPackageManager
                 .getApplicationInfo(CAR_BUILTIN_CTS_PKG, /* flags= */ 0);
 
-        // execution and assertion
         assertThat(PackageManagerHelper.isSystemApp(systemApp)).isTrue();
         assertThat(PackageManagerHelper.isUpdatedSystemApp(systemApp)).isFalse();
         assertThat(PackageManagerHelper.isSystemExtApp(systemApp)).isFalse();
@@ -101,26 +107,73 @@ public final class PackageManagerHelperTest {
 
     @Test
     public void testGetSystemUiPackageName() throws Exception {
-        // TODO (b/201822684): implement this test case to test getSystemUiPackageName()
-        // builtin API
+        String systemuiPackageName = PackageManagerHelper.getSystemUiPackageName(mContext);
+        // The default SystemUI package name is com.android.systemui. But OEMs can override
+        // it via com.android.internal.R.string.config_systemUIServiceComponent.So, it can
+        // not assert with respect to a specific (constant) value.
+        Log.d(TAG, "System UI package name=" + systemuiPackageName);
+        assertThat(systemuiPackageName).isNotNull();
     }
 
     @Test
     public void testGetNamesForUids() throws Exception {
-        // TODO (b/201822684): implement this test case to test getNamesForUids()
-        // builtin API
+        String[] initPackageNames = {ANDROID_CAR_SHELL_PKG, CAR_BUILTIN_CTS_PKG};
+        // The CarShell has package name as com.android.shell but it also has sharedUserId as
+        // android.uid.shell. Therefore, the return from Android framework should be
+        // shared:com.android.shell instead of com.android.shell
+        String[][] expectedPackageNames = {
+            {ANDROID_CAR_SHELL_PKG_SHARED, CAR_BUILTIN_CTS_PKG},
+            {ANDROID_CAR_SHELL_PKG_SHARED},
+            {CAR_BUILTIN_CTS_PKG}
+        };
+
+        int[] packageUids = convertPackageNamesToUids(initPackageNames);
+        int[][] packageUidsList = {
+            packageUids,
+            {packageUids[0]},
+            {packageUids[1]}
+        };
+
+        for (int index = 0; index < expectedPackageNames.length; index++) {
+            String[] packageNames = PackageManagerHelper
+                    .getNamesForUids(mPackageManager, packageUidsList[index]);
+            assertThat(packageNames).isEqualTo(expectedPackageNames[index]);
+        }
     }
 
     @Test
     public void testGetPackageUidAsUser() throws Exception {
-        // TODO (b/201822684): implement this test case to test getPackageUidAsUser()
-        // builtin API
+        int userId = UserHandle.SYSTEM.getIdentifier();
+        int expectedUid = UserHandle.SYSTEM.getUid(Process.SYSTEM_UID);
+
+        // com.android.car package has the shared SYSTEM_UID
+        int actualUid = PackageManagerHelper
+                .getPackageUidAsUser(mPackageManager, ANDROID_CAR_PKG, userId);
+
+        assertThat(actualUid).isEqualTo(expectedUid);
     }
 
     @Test
     public void testGetComponentName() throws Exception {
-        // TODO (b/201822684): implement this test case to test getComponentName()
-        // builtin API
+        int flags = PackageManager.GET_ACTIVITIES | PackageManager.GET_INSTRUMENTATION
+                | PackageManager.GET_SERVICES;
+        int curUser = UserHandle.myUserId();
+        PackageInfo pkgInfoUser = PackageManagerHelper.getPackageInfoAsUser(mPackageManager,
+                CAR_BUILTIN_CTS_PKG, flags, curUser);
+        ServiceInfo[] serviceInfos = pkgInfoUser.services;
+
+        assertThat(serviceInfos).isNotNull();
+        ArraySet<String> serviceClassSet = new ArraySet<>();
+        for (ServiceInfo info : serviceInfos) {
+            ComponentName componentName = PackageManagerHelper.getComponentName(info);
+            Log.d(TAG, "class name: " + componentName.flattenToString());
+            assertThat(componentName).isNotNull();
+            assertThat(componentName.getPackageName()).isEqualTo(CAR_BUILTIN_CTS_PKG);
+            serviceClassSet.add(componentName.getClassName());
+        }
+
+        assertThat(serviceClassSet.containsAll(Arrays.asList(CAR_BUILTIN_CTS_SERVICE_NAMES)))
+                .isTrue();
     }
 
     @Test
@@ -140,5 +193,18 @@ public final class PackageManagerHelperTest {
 
     private boolean hasActivity(String activityName, ActivityInfo[] activities) {
         return Arrays.stream(activities).anyMatch(a -> activityName.equals(a.name));
+    }
+
+    private int[] convertPackageNamesToUids(String[] packageNames) {
+        ToIntFunction<String> packageNameToUid = (pkgName) -> {
+            int uid = Process.INVALID_UID;
+            try {
+                uid = mPackageManager.getPackageUid(pkgName, /* flags= */0);
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.wtf(TAG, pkgName + " does not exist", e);
+            }
+            return uid;
+        };
+        return Arrays.stream(packageNames).mapToInt(packageNameToUid).toArray();
     }
 }
