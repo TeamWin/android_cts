@@ -24,6 +24,7 @@ import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.inputmethods.InputMethods;
+import com.android.bedstead.nene.instrumentation.Instrumentation;
 import com.android.bedstead.nene.location.Locations;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
@@ -109,6 +110,12 @@ public final class TestApis {
     @Experimental
     public static InputMethods inputMethods() {
         return InputMethods.sInstance;
+    }
+
+    /** Access Test APIs related to instrumentation. */
+    @Experimental
+    public static Instrumentation instrumentation() {
+        return Instrumentation.sInstance;
     }
 
     /** @deprecated Use statically */
