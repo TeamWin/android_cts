@@ -158,7 +158,7 @@ public class TvInteractiveAppManagerTest {
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mManager.registerCallback(mCallback, getExecutor());
+                mManager.registerCallback(getExecutor(), mCallback);
             }
         });
     }

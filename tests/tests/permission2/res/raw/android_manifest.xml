@@ -1023,7 +1023,7 @@
       targetSdkVersion}</a> of {@link android.os.Build.VERSION_CODES#S} or lower, this permission
       must not be used and the READ_EXTERNAL_STORAGE permission must be used instead.
      <p>Protection level: dangerous -->
-    <permission android:name="android.permission.READ_MEDIA_IMAGE"
+    <permission android:name="android.permission.READ_MEDIA_IMAGES"
                 android:permissionGroup="android.permission-group.UNDEFINED"
                 android:label="@string/permlab_readMediaImage"
                 android:description="@string/permdesc_readMediaImage"
@@ -6158,7 +6158,7 @@
     <!-- Allows the use of FLAG_SLIPPERY, which permits touch events to slip from the current
          window to the window where the touch currently is on top of.  @hide -->
     <permission android:name="android.permission.ALLOW_SLIPPERY_TOUCHES"
-                android:protectionLevel="signature|recents" />
+                android:protectionLevel="signature|privileged|recents|role" />
     <!--  Allows the caller to change the associations between input devices and displays.
         Very dangerous! @hide -->
     <permission android:name="android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY"
@@ -6396,6 +6396,12 @@
     -->
     <permission android:name="android.permission.SET_UNRESTRICTED_KEEP_CLEAR_AREAS"
                 android:protectionLevel="signature|privileged" />
+
+    <!-- Allows an UID to be visible to the application based on an interaction between the
+         two apps. This permission is not intended to be held by apps.
+         @hide @TestApi  -->
+    <permission android:name="android.permission.MAKE_UID_VISIBLE"
+                android:protectionLevel="signature" />
 
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>

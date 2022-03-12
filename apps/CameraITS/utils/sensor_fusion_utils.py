@@ -17,10 +17,13 @@
 import bisect
 import codecs
 import logging
+import os
 import struct
 import time
 import unittest
 
+from matplotlib import pylab
+import matplotlib.pyplot
 import numpy as np
 import scipy.spatial
 import serial
@@ -62,6 +65,8 @@ _CORR_TIME_OFFSET_STEP = 0.5  # ms step for shifts.
 _MSEC_TO_NSEC = 1000000
 _NSEC_TO_SEC = 1E-9
 _SEC_TO_NSEC = int(1/_NSEC_TO_SEC)
+
+_NUM_GYRO_PTS_TO_AVG = 20
 
 
 def serial_port_def(name):
@@ -403,6 +408,52 @@ def get_best_alignment_offset(cam_times, cam_rots, gyro_events):
         f'Coefficients are < 0: a: {fit_coeffs[0]}, c: {fit_coeffs[2]}.')
 
   return exact_best_shift, fit_coeffs, shift_candidates, spatial_distances
+
+
+def plot_gyro_events(gyro_events, plot_name, log_path):
+  """Plot x, y, and z on the gyro events.
+
+  Samples are grouped into NUM_GYRO_PTS_TO_AVG groups and averaged to minimize
+  random spikes in data.
+
+  Args:
+    gyro_events: List of gyroscope events.
+    plot_name:  name of plot(s).
+    log_path: location to save data.
+  """
+
+  nevents = (len(gyro_events) // _NUM_GYRO_PTS_TO_AVG) * _NUM_GYRO_PTS_TO_AVG
+  gyro_events = gyro_events[:nevents]
+  times = np.array([(e['time'] - gyro_events[0]['time']) * _NSEC_TO_SEC
+                    for e in gyro_events])
+  x = np.array([e['x'] for e in gyro_events])
+  y = np.array([e['y'] for e in gyro_events])
+  z = np.array([e['z'] for e in gyro_events])
+
+  # Group samples into size-N groups & average each together to minimize random
+  # spikes in data.
+  times = times[_NUM_GYRO_PTS_TO_AVG//2::_NUM_GYRO_PTS_TO_AVG]
+  x = x.reshape(nevents//_NUM_GYRO_PTS_TO_AVG, _NUM_GYRO_PTS_TO_AVG).mean(1)
+  y = y.reshape(nevents//_NUM_GYRO_PTS_TO_AVG, _NUM_GYRO_PTS_TO_AVG).mean(1)
+  z = z.reshape(nevents//_NUM_GYRO_PTS_TO_AVG, _NUM_GYRO_PTS_TO_AVG).mean(1)
+
+  pylab.figure(plot_name)
+  # x & y on same axes
+  pylab.subplot(2, 1, 1)
+  pylab.title(f'{plot_name}(mean of {_NUM_GYRO_PTS_TO_AVG} pts)')
+  pylab.plot(times, x, 'r', label='x')
+  pylab.plot(times, y, 'g', label='y')
+  pylab.ylabel('gyro x & y movement (rads/s)')
+  pylab.legend()
+
+  # z on separate axes
+  pylab.subplot(2, 1, 2)
+  pylab.plot(times, z, 'b', label='z')
+  pylab.xlabel('time (seconds)')
+  pylab.ylabel('gyro z movement (rads/s)')
+  pylab.legend()
+  file_name = os.path.join(log_path, plot_name)
+  matplotlib.pyplot.savefig(f'{file_name}_gyro_events.png')
 
 
 class SensorFusionUtilsTests(unittest.TestCase):
