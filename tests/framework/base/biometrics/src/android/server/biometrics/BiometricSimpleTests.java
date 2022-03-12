@@ -174,13 +174,29 @@ public class BiometricSimpleTests extends BiometricTestBase {
         // Third case above. Since the deprecated API is intended to allow credential in addition
         // to biometrics, we should be receiving BIOMETRIC_ERROR_NO_BIOMETRICS.
         final boolean noSensors = mSensorProperties.isEmpty();
+        int expectedError;
+        if (noSensors) {
+            expectedError = BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL;
+        } else if (hasOnlyConvenienceSensors()) {
+            expectedError = BiometricPrompt.BIOMETRIC_ERROR_HW_NOT_PRESENT;
+        } else {
+            expectedError = BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS;
+        }
         callback = mock(BiometricPrompt.AuthenticationCallback.class);
         showDeviceCredentialAllowedBiometricPrompt(callback, new CancellationSignal(),
                 false /* shouldShow */);
         verify(callback).onAuthenticationError(
-                eq(noSensors ? BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL
-                        : BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS),
+                eq(expectedError),
                 any());
+    }
+
+    private boolean hasOnlyConvenienceSensors() {
+        for (SensorProperties sensor : mSensorProperties) {
+            if (sensor.getSensorStrength() != SensorProperties.STRENGTH_CONVENIENCE) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

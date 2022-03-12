@@ -37,7 +37,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,15 +89,17 @@ public class ApkPackageNameCheck {
                     if (prep instanceof FilePusher && ((FilePusher) prep).shouldAppendBitness()) {
                         for (File f : ((PushFilePreparer) prep).getPushSpecs(null).values()) {
                             String path = f.getPath();
-                            if (!new File(testcases, path + "32").exists()
-                                    || !new File(testcases, path + "64").exists()) {
+                            File file32 = FileUtil.findFile(config.getParentFile(), path + "32");
+                            File file64 = FileUtil.findFile(config.getParentFile(), path + "64");
+                            if (file32 == null || file64 == null) {
                                 // TODO: Enforce should abort on failure is True in CTS
                                 if (((FilePusher) prep).shouldAbortOnFailure()) {
                                     fail(
                                             String.format(
-                                                    "File %s[32/64] wasn't found in testcases/ while "
-                                                            + "it's expected to be pushed as part of "
-                                                            + "%s",
+                                                    "File %s[32/64] wasn't found in module "
+                                                            + "dependencies while "
+                                                            + "it's expected to be pushed as part"
+                                                            + " of %s.",
                                                     path, config.getName()));
                                 }
                             }
@@ -106,13 +107,15 @@ public class ApkPackageNameCheck {
                     } else if (prep instanceof PushFilePreparer) {
                         for (File f : ((PushFilePreparer) prep).getPushSpecs(null).values()) {
                             String path = f.getPath();
-                            if (!new File(testcases, path).exists()) {
+                            File toBePushed = FileUtil.findFile(config.getParentFile(), path);
+                            if (toBePushed == null) {
                                 // TODO: Enforce should abort on failure is True in CTS
                                 if (((PushFilePreparer) prep).shouldAbortOnFailure()) {
                                     fail(
                                             String.format(
-                                                    "File %s wasn't found in testcases/ while it's "
-                                                            + "expected to be pushed as part of %s",
+                                                    "File %s wasn't found in module dependencies "
+                                                            + "while it's expected to be pushed "
+                                                            + "as part of %s.",
                                                     path, config.getName()));
                                 }
                             }

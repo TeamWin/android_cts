@@ -113,7 +113,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
             android.Manifest.permission.ACCESS_MEDIA_LOCATION,
             android.Manifest.permission.READ_MEDIA_AUDIO,
-            android.Manifest.permission.READ_MEDIA_IMAGE,
+            android.Manifest.permission.READ_MEDIA_IMAGES,
             android.Manifest.permission.READ_MEDIA_VIDEO
         )
     }
@@ -185,7 +185,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.READ_MEDIA_AUDIO to
                 "@android:string/permgrouplab_readMediaAural",
             // Visual
-            android.Manifest.permission.READ_MEDIA_IMAGE to
+            android.Manifest.permission.READ_MEDIA_IMAGES to
                 "@android:string/permgrouplab_readMediaVisual",
             android.Manifest.permission.READ_MEDIA_VIDEO to
                 "@android:string/permgrouplab_readMediaVisual"

@@ -23,6 +23,7 @@ import android.media.MediaFormat;
 
 import androidx.test.filters.LargeTest;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -639,6 +640,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 assertEquals("width mismatch", mWidth, getWidth(mOutFormat));
                 assertEquals("height mismatch", mHeight, getHeight(mOutFormat));
             }
+            Assume.assumeFalse("skip checksum due to tonemapping", mSkipChecksumVerification);
             CodecDecoderTest.verify(ref, mRefFile, mRmsError, audioEncoding, mRefCRC);
         }
     }

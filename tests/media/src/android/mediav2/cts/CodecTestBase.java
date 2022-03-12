@@ -66,6 +66,7 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -293,36 +294,37 @@ class OutputManager {
     }
 
     void checksum(ByteBuffer buf, int size) {
-        checksum(buf, size, 0, 0, 0);
+        checksum(buf, size, 0, 0, 0, 0);
     }
 
-    void checksum(ByteBuffer buf, int size, int width, int height, int stride) {
+    void checksum(ByteBuffer buf, int size, int width, int height, int stride, int bytesPerSample) {
         int cap = buf.capacity();
         assertTrue("checksum() params are invalid: size = " + size + " cap = " + cap,
                 size > 0 && size <= cap);
         if (buf.hasArray()) {
-            if (width > 0 && height > 0 && stride > 0) {
+            if (width > 0 && height > 0 && stride > 0 && bytesPerSample > 0) {
                 int offset = buf.position() + buf.arrayOffset();
-                byte[] bb = new byte[width * height];
+                byte[] bb = new byte[width * height * bytesPerSample];
                 for (int i = 0; i < height; ++i) {
-                    System.arraycopy(buf.array(), offset, bb, i * width, width);
+                    System.arraycopy(buf.array(), offset, bb, i * width * bytesPerSample,
+                            width * bytesPerSample);
                     offset += stride;
                 }
-                mCrc32UsingBuffer.update(bb, 0, width * height);
+                mCrc32UsingBuffer.update(bb, 0, width * height * bytesPerSample);
             } else {
                 mCrc32UsingBuffer.update(buf.array(), buf.position() + buf.arrayOffset(), size);
             }
-        } else if (width > 0 && height > 0 && stride > 0) {
+        } else if (width > 0 && height > 0 && stride > 0 && bytesPerSample > 0) {
             // Checksum only the Y plane
             int pos = buf.position();
             int offset = pos;
-            byte[] bb = new byte[width * height];
+            byte[] bb = new byte[width * height * bytesPerSample];
             for (int i = 0; i < height; ++i) {
                 buf.position(offset);
-                buf.get(bb, i * width, width);
+                buf.get(bb, i * width * bytesPerSample, width * bytesPerSample);
                 offset += stride;
             }
-            mCrc32UsingBuffer.update(bb, 0, width * height);
+            mCrc32UsingBuffer.update(bb, 0, width * height * bytesPerSample);
             buf.position(pos);
         } else {
             int pos = buf.position();
@@ -340,7 +342,9 @@ class OutputManager {
 
     void checksum(Image image) {
         int format = image.getFormat();
-        assertEquals("unexpected image format", ImageFormat.YUV_420_888, format);
+        assertTrue("unexpected image format",
+                format == ImageFormat.YUV_420_888 || format == ImageFormat.YCBCR_P010);
+        int bytesPerSample = (ImageFormat.getBitsPerPixel(format) * 2) / (8 * 3);  // YUV420
 
         Rect cropRect = image.getCropRect();
         int imageWidth = cropRect.width();
@@ -356,6 +360,7 @@ class OutputManager {
             rowStride = planes[i].getRowStride();
             pixelStride = planes[i].getPixelStride();
             if (i == 0) {
+                assertEquals(bytesPerSample, pixelStride);
                 width = imageWidth;
                 height = imageHeight;
                 left = imageLeft;
@@ -368,30 +373,35 @@ class OutputManager {
             }
             int cropOffset = (left * pixelStride) + top * rowStride;
             // local contiguous pixel buffer
-            byte[] bb = new byte[width * height];
+            byte[] bb = new byte[width * height * bytesPerSample];
+
             if (buf.hasArray()) {
                 byte[] b = buf.array();
                 int offs = buf.arrayOffset() + cropOffset;
-                if (pixelStride == 1) {
+                if (pixelStride == bytesPerSample) {
                     for (y = 0; y < height; ++y) {
-                        System.arraycopy(b, offs + y * rowStride, bb, y * width, width);
+                        System.arraycopy(b, offs + y * rowStride, bb, y * width * bytesPerSample,
+                                width * bytesPerSample);
                     }
                 } else {
                     // do it pixel-by-pixel
                     for (y = 0; y < height; ++y) {
                         int lineOffset = offs + y * rowStride;
                         for (x = 0; x < width; ++x) {
-                            bb[y * width + x] = b[lineOffset + x * pixelStride];
+                            for (int bytePos = 0; bytePos < bytesPerSample; ++bytePos) {
+                                bb[y * width * bytesPerSample + x * bytesPerSample + bytePos] =
+                                        b[lineOffset + x * pixelStride + bytePos];
+                            }
                         }
                     }
                 }
             } else { // almost always ends up here due to direct buffers
                 int base = buf.position();
                 int pos = base + cropOffset;
-                if (pixelStride == 1) {
+                if (pixelStride == bytesPerSample) {
                     for (y = 0; y < height; ++y) {
                         buf.position(pos + y * rowStride);
-                        buf.get(bb, y * width, width);
+                        buf.get(bb, y * width * bytesPerSample, width * bytesPerSample);
                     }
                 } else {
                     // local line buffer
@@ -399,16 +409,20 @@ class OutputManager {
                     // do it pixel-by-pixel
                     for (y = 0; y < height; ++y) {
                         buf.position(pos + y * rowStride);
-                        // we're only guaranteed to have pixelStride * (width - 1) + 1 bytes
-                        buf.get(lb, 0, pixelStride * (width - 1) + 1);
+                        // we're only guaranteed to have pixelStride * (width - 1) +
+                        // bytesPerSample bytes
+                        buf.get(lb, 0, pixelStride * (width - 1) + bytesPerSample);
                         for (x = 0; x < width; ++x) {
-                            bb[y * width + x] = lb[x * pixelStride];
+                            for (int bytePos = 0; bytePos < bytesPerSample; ++bytePos) {
+                                bb[y * width * bytesPerSample + x * bytesPerSample + bytePos] =
+                                        lb[x * pixelStride + bytePos];
+                            }
                         }
                     }
                 }
                 buf.position(base);
             }
-            mCrc32UsingImage.update(bb, 0, width * height);
+            mCrc32UsingImage.update(bb, 0, width * height * bytesPerSample);
         }
     }
 
@@ -681,6 +695,35 @@ abstract class CodecTestBase {
         boolean isSupported = codecCapabilities.isFeatureSupported(feature);
         codec.release();
         return isSupported;
+    }
+
+    static boolean doesAnyFormatHaveHBDProfile(String mime, ArrayList<MediaFormat> formats) {
+        // check for HLG profiles
+        for (MediaFormat format : formats) {
+            assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
+            switch (mime) {
+                case MediaFormat.MIMETYPE_VIDEO_VP9: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE, VP9Profile0);
+                    if (profile == VP9Profile2 || profile == VP9Profile3) {
+                        return true;
+                    }
+                }
+                case MediaFormat.MIMETYPE_VIDEO_HEVC: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE, HEVCProfileMain);
+                    if (profile == HEVCProfileMain10) {
+                        return true;
+                    }
+                }
+                case MediaFormat.MIMETYPE_VIDEO_AV1: {
+                    int profile = format.getInteger(MediaFormat.KEY_PROFILE, AV1ProfileMain8);
+                    if (profile == AV1ProfileMain10) {
+                        return true;
+                    }
+                }
+            }
+        }
+        // check for HDR profiles (if necessary)
+        return doesAnyFormatHaveHDRProfile(mime, formats);
     }
 
     static boolean doesAnyFormatHaveHDRProfile(String mime, ArrayList<MediaFormat> formats) {
@@ -1225,6 +1268,7 @@ class CodecDecoderTestBase extends CodecTestBase {
     String mMime;
     String mTestFile;
     boolean mIsInterlaced;
+    boolean mSkipChecksumVerification;
 
     ArrayList<ByteBuffer> mCsdBuffers;
     private int mCurrCsdIdx;
@@ -1248,6 +1292,7 @@ class CodecDecoderTestBase extends CodecTestBase {
     }
 
     MediaFormat setUpSource(String prefix, String srcFile) throws IOException {
+        Preconditions.assertTestFileExists(prefix + srcFile);
         mExtractor = new MediaExtractor();
         mExtractor.setDataSource(prefix + srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
@@ -1265,11 +1310,15 @@ class CodecDecoderTestBase extends CodecTestBase {
                         }
                     }
                 } else {
-                    if (mSurface == null) {
-                        // COLOR_FormatYUV420Flexible must be supported by all components
-                        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-                    } else {
-                        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatSurface);
+                    ArrayList<MediaFormat> formatList = new ArrayList<>();
+                    formatList.add(format);
+                    boolean selectHBD = doesAnyFormatHaveHBDProfile(mMime, formatList) ||
+                            srcFile.contains("10bit");
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                            getColorFormat(mCodecName, mMime, mSurface != null, selectHBD));
+                    if (selectHBD && (format.getInteger(MediaFormat.KEY_COLOR_FORMAT) !=
+                            COLOR_FormatYUVP010)) {
+                        mSkipChecksumVerification = true;
                     }
                 }
                 // TODO: determine this from the extractor format when it becomes exposed.
@@ -1279,6 +1328,23 @@ class CodecDecoderTestBase extends CodecTestBase {
         }
         fail("No track with mime: " + mMime + " found in file: " + srcFile);
         return null;
+    }
+
+    int getColorFormat(String name, String mediaType, boolean surfaceMode, boolean hbdMode)
+            throws IOException {
+        if (surfaceMode) return COLOR_FormatSurface;
+        if (hbdMode) {
+            MediaCodec codec = MediaCodec.createByCodecName(name);
+            MediaCodecInfo.CodecCapabilities cap =
+                    codec.getCodecInfo().getCapabilitiesForType(mediaType);
+            codec.release();
+            for (int c : cap.colorFormats) {
+                if (c == COLOR_FormatYUVP010) {
+                    return c;
+                }
+            }
+        }
+        return COLOR_FormatYUV420Flexible;
     }
 
     boolean hasCSD(MediaFormat format) {
@@ -1371,15 +1437,18 @@ class CodecDecoderTestBase extends CodecTestBase {
             } else {
                 // tests both getOutputImage and getOutputBuffer. Can do time division
                 // multiplexing but lets allow it for now
-                MediaFormat format = mCodec.getOutputFormat();
-                int width = format.getInteger(MediaFormat.KEY_WIDTH);
-                int height = format.getInteger(MediaFormat.KEY_HEIGHT);
-                int stride = format.getInteger(MediaFormat.KEY_STRIDE);
-                mOutputBuff.checksum(buf, info.size, width, height, stride);
-
                 Image img = mCodec.getOutputImage(bufferIndex);
                 assertTrue(img != null);
                 mOutputBuff.checksum(img);
+                int imgFormat = img.getFormat();
+                int bytesPerSample = (ImageFormat.getBitsPerPixel(imgFormat) * 2) / (8 * 3);
+
+                MediaFormat format = mCodec.getOutputFormat();
+                buf = mCodec.getOutputBuffer(bufferIndex);
+                int width = format.getInteger(MediaFormat.KEY_WIDTH);
+                int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+                int stride = format.getInteger(MediaFormat.KEY_STRIDE);
+                mOutputBuff.checksum(buf, info.size, width, height, stride, bytesPerSample);
             }
         }
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {

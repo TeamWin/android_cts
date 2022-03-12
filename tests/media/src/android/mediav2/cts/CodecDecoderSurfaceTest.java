@@ -443,7 +443,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, float rmsError, long checksum);
+            String testFile, String refFile, int colorFormat, float rmsError, long checksum);
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -452,11 +452,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         mExtractor.release();
         mActivity.setScreenParams(getWidth(format), getHeight(format), false);
         assertTrue(nativeTestSimpleDecode(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
-                mInpPrefix + mReconfigFile, -1.0f, 0L));
+                mInpPrefix + mReconfigFile, format.getInteger(MediaFormat.KEY_COLOR_FORMAT), -1.0f,
+                0L));
     }
 
     private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
-            String testFile);
+            String testFile, int colorFormat);
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -464,6 +465,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
         mActivity.setScreenParams(getWidth(format), getHeight(format), true);
-        assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mInpPrefix + mTestFile));
+        assertTrue(nativeTestFlush(mCodecName, mSurface, mMime, mInpPrefix + mTestFile,
+                format.getInteger(MediaFormat.KEY_COLOR_FORMAT)));
     }
 }

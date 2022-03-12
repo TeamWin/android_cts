@@ -334,13 +334,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(2)),
                 extraString(EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(1)),
                 extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR, Integer.toString(1)),
-                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(5)));
+                extraString(EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR, Integer.toString(4)));
         // Wait for animation complete since we are comparing aspect ratio
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
         // Assert that we have entered PIP and that the aspect ratio is correct
         final Rect bounds = getPinnedStackBounds();
-        assertFloatEquals((float) bounds.width() / bounds.height(), (float) 1.0f / 5.0f);
+        assertFloatEquals((float) bounds.width() / bounds.height(), (float) 1.0f / 4.0f);
     }
 
     @Test

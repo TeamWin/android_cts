@@ -66,7 +66,7 @@ public class ScopedStorageCoreHostTest extends BaseHostTestCase {
                 "android.permission.READ_EXTERNAL_STORAGE",
                 "android.permission.READ_MEDIA_AUDIO",
                 "android.permission.READ_MEDIA_VIDEO",
-                "android.permission.READ_MEDIA_IMAGE");
+                "android.permission.READ_MEDIA_IMAGES");
     }
 
     @After
@@ -97,24 +97,24 @@ public class ScopedStorageCoreHostTest extends BaseHostTestCase {
     @Test
     public void testAccess_file() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
-        grantPermissions("android.permission.READ_MEDIA_IMAGE");
+        grantPermissions("android.permission.READ_MEDIA_IMAGES");
         try {
             runDeviceTest("testAccess_file");
         } finally {
             revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
-            revokePermissions("android.permission.READ_MEDIA_IMAGE");
+            revokePermissions("android.permission.READ_MEDIA_IMAGES");
         }
     }
 
     @Test
     public void testAccess_MediaFile() throws Exception {
-        grantPermissions("android.permission.READ_MEDIA_IMAGE");
+        grantPermissions("android.permission.READ_MEDIA_IMAGES");
         grantPermissions("android.permission.READ_MEDIA_AUDIO");
         grantPermissions("android.permission.READ_MEDIA_VIDEO");
         try {
             runDeviceTest("testAccess_MediaFile");
         } finally {
-            revokePermissions("android.permission.READ_MEDIA_IMAGE");
+            revokePermissions("android.permission.READ_MEDIA_IMAGES");
             revokePermissions("android.permission.READ_MEDIA_AUDIO");
             revokePermissions("android.permission.READ_MEDIA_VIDEO");
         }
@@ -142,11 +142,11 @@ public class ScopedStorageCoreHostTest extends BaseHostTestCase {
 
     @Test
     public void testAccess_OnlyImageFile() throws Exception {
-        grantPermissions("android.permission.READ_MEDIA_IMAGE");
+        grantPermissions("android.permission.READ_MEDIA_IMAGES");
         try {
             runDeviceTest("testAccess_OnlyImageFile");
         } finally {
-            revokePermissions("android.permission.READ_MEDIA_IMAGE");
+            revokePermissions("android.permission.READ_MEDIA_IMAGES");
         }
     }
 
