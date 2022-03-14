@@ -39,7 +39,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BluetoothSapTest extends AndroidTestCase {
-    private static final String TAG = BluetoothLeAudioTest.class.getSimpleName();
+    private static final String TAG = BluetoothSapTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 

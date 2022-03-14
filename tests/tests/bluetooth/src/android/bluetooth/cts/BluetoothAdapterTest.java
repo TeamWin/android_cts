@@ -54,7 +54,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * BluetoothAdapter}.
  */
 public class BluetoothAdapterTest extends AndroidTestCase {
-    private static final String TAG = "BasicAdapterTest";
+    private static final String TAG = "BluetoothAdapterTest";
     private static final int SET_NAME_TIMEOUT = 5000; // ms timeout for setting adapter name
 
     private boolean mHasBluetooth;
