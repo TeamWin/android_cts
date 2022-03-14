@@ -176,6 +176,26 @@ public class BluetoothA2dpTest extends AndroidTestCase {
         });
     }
 
+    public void test_setOptionalCodecsEnabled() {
+        if (!(mHasBluetooth && mIsA2dpSupported)) return;
+
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothA2dp);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mBluetoothA2dp.setOptionalCodecsEnabled(null, 0));
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        mUiAutomation.dropShellPermissionIdentity();
+        assertThrows(SecurityException.class, () -> mBluetoothA2dp
+                .setOptionalCodecsEnabled(testDevice, BluetoothA2dp.OPTIONAL_CODECS_PREF_UNKNOWN));
+        assertThrows(SecurityException.class, () -> mBluetoothA2dp
+                .setOptionalCodecsEnabled(testDevice, BluetoothA2dp.OPTIONAL_CODECS_PREF_DISABLED));
+        assertThrows(SecurityException.class, () -> mBluetoothA2dp
+                .setOptionalCodecsEnabled(testDevice, BluetoothA2dp.OPTIONAL_CODECS_PREF_ENABLED));
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+    }
+
     private static <T extends Exception> void assertThrows(Class<T> clazz, Runnable r) {
         try {
             r.run();
