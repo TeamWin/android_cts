@@ -17,6 +17,11 @@
 package com.android.bedstead.nene.packages;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.pm.PackageInstaller.EXTRA_STATUS;
+import static android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE;
+import static android.content.pm.PackageInstaller.STATUS_FAILURE;
+import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
+import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
 import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
@@ -27,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
@@ -45,8 +51,6 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -56,6 +60,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Test APIs relating to packages.
@@ -207,13 +212,6 @@ public final class Packages {
             return install(user, loadBytes(apkFile));
         }
 
-        User resolvedUser = user.resolve();
-
-        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
-            throw new NeneException("Packages can not be installed in non-started users "
-                    + "(Trying to install into user " + resolvedUser + ")");
-        }
-
         BlockingBroadcastReceiver broadcastReceiver =
                 registerPackageInstalledBroadcastReceiver(user);
 
@@ -265,111 +263,59 @@ public final class Packages {
      * <p>If the package is already installed, this will replace it.
      *
      * <p>If the package is marked testOnly, it will still be installed.
+     *
+     * <p>When running as an instant app, this will return null. On other versions it will return
+     * the installed package.
      */
     public PackageReference install(UserReference user, byte[] apkFile) {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
         }
 
-        if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-            return installPreS(user, apkFile);
-        }
+            try {
+                ShellCommand.builderForUser(user, "pm install")
+                        .addOperand("-t") // Allow installing test apks
+                        .addOperand("-r") // Replace existing apps
+                        .addOption("-S", apkFile.length) // Install from stdin
+                        .writeToStdIn(apkFile)
+                        .validate(ShellCommandUtils::startsWithSuccess)
+                        .execute();
+            } catch (AdbException e) {
+                throw new NeneException("Error installing from instant app", e);
+            }
 
-        User resolvedUser = user.resolve();
+            // Arbitrary sleep because the shell command doesn't block and we can't listen for
+            // the broadcast (instant app)
+            try {
+                Thread.sleep(10_000);
+            } catch (InterruptedException e) {
+                throw new NeneException("Interrupted while waiting for install", e);
+            }
 
-        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
-            throw new NeneException("Packages can not be installed in non-started users "
-                    + "(Trying to install into user " + resolvedUser + ")");
-        }
+            return null;
+    }
 
+    @Nullable
+    private PackageReference installPreS(UserReference user, byte[] apkFile) {
+        // This is not in the try because if the install fails we don't want to await the broadcast
         BlockingBroadcastReceiver broadcastReceiver =
                 registerPackageInstalledBroadcastReceiver(user);
+
+        // We should install using stdin with the byte array
         try {
-            // Expected output "Success"
             ShellCommand.builderForUser(user, "pm install")
-                    .addOption("-S", apkFile.length)
-                    .addOperand("-r")
-                    .addOperand("-t")
+                    .addOperand("-t") // Allow installing test apks
+                    .addOperand("-r") // Replace existing apps
+                    .addOption("-S", apkFile.length) // Install from stdin
                     .writeToStdIn(apkFile)
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-
             return waitForPackageAddedBroadcast(broadcastReceiver);
         } catch (AdbException e) {
-            throw new NeneException("Could not install from bytes for user " + user, e);
+            throw new NeneException("Error installing package", e);
         } finally {
-            broadcastReceiver.unregisterQuietly();
-        }
-
-        // TODO(scottjonathan): Re-enable this after we have a TestAPI which allows us to install
-        //   testOnly apks
-//        BlockingBroadcastReceiver broadcastReceiver =
-//                registerPackageInstalledBroadcastReceiver(user);
-//
-//        PackageManager packageManager =
-//                mTestApis.context().androidContextAsUser(user).getPackageManager();
-//        PackageInstaller packageInstaller = packageManager.getPackageInstaller();
-//
-//        try {
-//            int sessionId;
-//            try(PermissionContext p =
-//                        mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-//                PackageInstaller.SessionParams sessionParams =
-//                      new PackageInstaller.SessionParams(MODE_FULL_INSTALL);
-//                // TODO(scottjonathan): Enable installing test apps once there is a test
-//                //  API for this
-////                    sessionParams.installFlags =
-//                          sessionParams.installFlags | INSTALL_ALLOW_TEST;
-//                sessionId = packageInstaller.createSession(sessionParams);
-//            }
-//
-//            PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-//            try (OutputStream out =
-//                         session.openWrite("NAME", 0, apkFile.length)) {
-//                out.write(apkFile);
-//                session.fsync(out);
-//            }
-//
-//            try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
-//                try (PermissionContext p =
-//                             mTestApis.permissions().withPermission(INSTALL_PACKAGES)) {
-//                    session.commit(intentSender.intentSender());
-//                    session.close();
-//                }
-//
-//                Intent intent = intentSender.await();
-//                if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
-//                        != STATUS_SUCCESS) {
-//                    throw new NeneException("Not successful while installing package. "
-//                            + "Got status: "
-//                            + intent.getIntExtra(
-//                            EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
-//                            + " exta info: " + intent.getStringExtra(EXTRA_STATUS_MESSAGE));
-//                }
-//            }
-//
-//            return waitForPackageAddedBroadcast(broadcastReceiver);
-//        } catch (IOException e) {
-//            throw new NeneException("Could not install package", e);
-//        } finally {
-//            broadcastReceiver.unregisterQuietly();
-//        }
-    }
-
-    private PackageReference installPreS(UserReference user, byte[] apkFile) {
-        // Prior to S we cannot pass bytes to stdin so we write it to a temp file first
-        File outputDir = mTestApis.context().instrumentedContext().getCacheDir();
-        File outputFile = null;
-        try {
-            outputFile = File.createTempFile("tmp", ".apk", outputDir);
-            Files.write(apkFile, outputFile);
-            outputFile.setReadable(true, false);
-            return install(user, outputFile);
-        } catch (IOException e) {
-            throw new NeneException("Error when writing bytes to temp file", e);
-        } finally {
-            if (outputFile != null) {
-                outputFile.delete();
+            if (broadcastReceiver != null) {
+                broadcastReceiver.unregisterQuietly();
             }
         }
     }
