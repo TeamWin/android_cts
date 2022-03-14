@@ -16,16 +16,26 @@
 
 package android.car.cts.builtin.util;
 
+import static android.car.cts.builtin.util.LogcatHelper.Buffer.MAIN;
+import static android.car.cts.builtin.util.LogcatHelper.Level.INFO;
+import static android.car.cts.builtin.util.LogcatHelper.assertLogcatMessage;
+import static android.car.cts.builtin.util.LogcatHelper.clearLog;
+
 import android.car.builtin.util.TimeUtils;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.PrintWriter;
 
 public final class TimeUtilsTest {
-    private PrintWriter mWriter = new PrintWriter(System.out);
 
-    private static final int TIMEOUT_MS = 60_000;
+    private final PrintWriter mWriter = new PrintWriter(System.out);
+
+    @Before
+    public void clearLogcat() {
+        clearLog();
+    }
 
     @Test
     public void testDumpTime() {
@@ -33,7 +43,7 @@ public final class TimeUtilsTest {
         mWriter.flush();
 
         // Time utils change long into date-time format.
-        LogcatHelper.assertLogcatMessage("System.out: 1970-01-01 00:00:00.179", TIMEOUT_MS);
+        assertLogMessage("1970-01-01 00:00:00.179");
     }
 
     @Test
@@ -42,6 +52,10 @@ public final class TimeUtilsTest {
         mWriter.flush();
 
         // Time utils change long into human readable text.
-        LogcatHelper.assertLogcatMessage("System.out: +789ms", TIMEOUT_MS);
+        assertLogMessage("+789ms");
+    }
+
+    private void assertLogMessage(String message) {
+        assertLogcatMessage(MAIN, INFO, "System.out", message);
     }
 }
