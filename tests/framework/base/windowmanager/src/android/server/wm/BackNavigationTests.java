@@ -32,10 +32,9 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-
-import org.junit.Ignore;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -123,12 +122,12 @@ public class BackNavigationTests {
         CountDownLatch backRegisteredLatch = new CountDownLatch(1);
         mScenario.onActivity(activity -> {
             activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
-                    new OnBackInvokedCallback() {
+                    0, new OnBackInvokedCallback() {
                         @Override
                         public void onBackInvoked() {
                             backInvokedLatch.countDown();
                         }
-                    }, 0);
+                    });
             backRegisteredLatch.countDown();
         });
         try {

@@ -37,8 +37,9 @@ public class BackNavigationLegacyActivity extends Activity {
                         bundle -> bundle.putBoolean(Components.KEY_ON_BACK_INVOKED_CALLED, true));
             }
         };
-        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(onBackInvokedCallback,
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT);
+        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT, onBackInvokedCallback
+        );
     }
 
     @Override
