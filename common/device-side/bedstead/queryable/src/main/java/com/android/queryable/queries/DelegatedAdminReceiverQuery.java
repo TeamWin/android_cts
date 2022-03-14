@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 
-package com.android.eventlib.events.services;
+package com.android.queryable.queries;
 
-//TODO(b/204770471) Currently unable to create these tests without an instrumented service.
-//@RunWith(JUnit4.class)
-public class ServiceReboundEventTest {}
+import android.app.admin.DelegatedAdminReceiver;
+
+import com.android.queryable.Queryable;
+import com.android.queryable.info.DelegatedAdminReceiverInfo;
+
+/** Query for a {@link DelegatedAdminReceiver}. */
+public interface DelegatedAdminReceiverQuery<E extends Queryable>
+        extends Query<DelegatedAdminReceiverInfo>  {
+
+    static DelegatedAdminReceiverQuery<DelegatedAdminReceiverQuery<?>> delegatedAdminReceiver() {
+        return new DelegatedAdminReceiverQueryHelper<>();
+    }
+
+    BroadcastReceiverQuery<E> broadcastReceiver();
+}

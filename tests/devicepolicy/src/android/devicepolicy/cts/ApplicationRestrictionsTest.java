@@ -408,21 +408,21 @@ public final class ApplicationRestrictionsTest {
     private void assertBooleanKey(Bundle bundle, String key, boolean expectedValue) {
         boolean value = bundle.getBoolean(key);
         Log.v(TAG, "assertBooleanKey(): " + key + "=" + value);
-        assertWithMessage("bundle's '%s' key")
+        assertWithMessage("bundle's '%s' key", key)
                 .that(value).isEqualTo(expectedValue);
     }
 
     private void assertIntKey(Bundle bundle, String key, int expectedValue) {
         int value = bundle.getInt(key);
         Log.v(TAG, "assertIntKey(): " + key + "=" + value);
-        assertWithMessage("bundle's '%s' key")
+        assertWithMessage("bundle's '%s' key", key)
                 .that(value).isEqualTo(expectedValue);
     }
 
     private void assertStringKey(Bundle bundle, String key, String expectedValue) {
         String value = bundle.getString(key);
         Log.v(TAG, "assertStringKey(): " + key + "=" + value);
-        assertWithMessage("bundle's '%s' key")
+        assertWithMessage("bundle's '%s' key", key)
                 .that(value).isEqualTo(expectedValue);
     }
 
@@ -431,14 +431,14 @@ public final class ApplicationRestrictionsTest {
         Log.v(TAG, "assertStringsKey(): " + key + "="
                 + (value == null ? "null" : Arrays.toString(value)));
 
-        assertWithMessage("bundle's '%s' key").that(value).asList()
+        assertWithMessage("bundle's '%s' key", key).that(value).asList()
                 .containsExactlyElementsIn(expectedValue).inOrder();
     }
 
     private Bundle getBundleKey(Bundle bundle, String key) {
         Bundle value = bundle.getBundle(key);
         Log.v(TAG, "getBundleKey(): " + key + "=" + value);
-        assertWithMessage("bundle's '%s' key").that(value).isNotNull();
+        assertWithMessage("bundle's '%s' key", key).that(value).isNotNull();
         return value;
     }
 

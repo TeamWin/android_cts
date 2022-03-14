@@ -142,8 +142,6 @@ public final class DevicePolicyManagerTest {
     private static final String ACCOUNT_TYPE = "com.android.cts.test";
     private static final Account TEST_ACCOUNT = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
 
-    private static final String USER_SETUP_COMPLETE_KEY = "user_setup_complete";
-
     private static final String KEY_PRE_PROVISIONING_SYSTEM_APPS = "pre_provisioning_system_apps";
     private static final String KEY_PRE_PROVISIONING_NON_SYSTEM_APPS =
             "pre_provisioning_non_system_apps";

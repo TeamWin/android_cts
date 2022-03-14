@@ -82,7 +82,7 @@ public final class SupportMessageTest {
     public void setShortSupportMessage_validText_works() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
 
-        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin))
+        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin).toString())
                 .isEqualTo(VALID_SUPPORT_MESSAGE);
     }
 
@@ -91,7 +91,7 @@ public final class SupportMessageTest {
     public void setLongSupportMessage_validText_works() {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
 
-        assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin))
+        assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin).toString())
                 .isEqualTo(VALID_SUPPORT_MESSAGE);
     }
 
@@ -100,7 +100,7 @@ public final class SupportMessageTest {
     public void setShortSupportMessage_emptyText_works() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, EMPTY_SUPPORT_MESSAGE);
 
-        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin))
+        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin).toString())
                 .isEqualTo(EMPTY_SUPPORT_MESSAGE);
     }
 
@@ -110,7 +110,7 @@ public final class SupportMessageTest {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
         mDevicePolicyManager.setLongSupportMessage(mAdmin, /* charSequence= */ null);
 
-        assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin)).isEqualTo("null");
+        assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin).toString()).isEqualTo("null");
     }
 
     @PolicyAppliesTest(policy = SupportMessage.class)
@@ -119,7 +119,8 @@ public final class SupportMessageTest {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, VALID_SUPPORT_MESSAGE);
         mDevicePolicyManager.setShortSupportMessage(mAdmin, /* charSequence= */ null);
 
-        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin)).isEqualTo("null");
+        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin).toString())
+                .isEqualTo("null");
     }
 
     @PolicyAppliesTest(policy = SupportMessage.class)
@@ -127,7 +128,7 @@ public final class SupportMessageTest {
     public void setLongSupportMessage_emptyText_works() {
         mDevicePolicyManager.setLongSupportMessage(mAdmin, EMPTY_SUPPORT_MESSAGE);
 
-        assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin))
+        assertThat(mDevicePolicyManager.getLongSupportMessage(mAdmin).toString())
                 .isEqualTo(EMPTY_SUPPORT_MESSAGE);
     }
 
@@ -136,7 +137,7 @@ public final class SupportMessageTest {
     public void setShortSupportMessage_tooLongText_isTruncated() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, SHORT_SUPPORT_MESSAGE_TOO_LONG);
 
-        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin))
+        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin).toString())
                 .isEqualTo(SHORT_SUPPORT_MESSAGE_TOO_LONG_TRUNCATED);
     }
 
@@ -145,7 +146,7 @@ public final class SupportMessageTest {
     public void setLongSupportMessage_longText_notTruncated() {
         mDevicePolicyManager.setShortSupportMessage(mAdmin, LONG_SUPPORT_MESSAGE_REASONABLY_LONG);
 
-        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin))
+        assertThat(mDevicePolicyManager.getShortSupportMessage(mAdmin).toString())
                 .isEqualTo(LONG_SUPPORT_MESSAGE_REASONABLY_LONG);
     }
 

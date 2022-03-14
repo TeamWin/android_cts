@@ -63,8 +63,6 @@ public final class CrossProfileSharingTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private static final Context sContext = TestApis.context().instrumentedContext();
-
     private static final TestApp sTestApp = sDeviceState.testApps().query()
             .whereActivities().contains(
                     activity().intentFilters().contains(
