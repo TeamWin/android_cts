@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts.commontests;
 
+import static android.autofillservice.cts.testcore.Helper.DEVICE_CONFIG_AUTOFILL_DIALOG_HINTS;
 import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.content.Context.CLIPBOARD_SERVICE;
@@ -297,6 +298,11 @@ public final class AutoFillServiceTestCase {
                 .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
                         AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED,
                         Boolean.toString(false)))
+                //
+                // Hints list of Fill Dialog should be empty by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        DEVICE_CONFIG_AUTOFILL_DIALOG_HINTS,
+                        ""))
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
