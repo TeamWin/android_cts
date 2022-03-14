@@ -524,8 +524,11 @@ public class ExtractDecodeEditEncodeMuxTest
                         int expectedSampleRate = OUTPUT_AUDIO_SAMPLE_RATE_HZ;
 
                         // SBR mode halves the sample rate in the format.
-                        if (OUTPUT_AUDIO_AAC_PROFILE ==
-                                MediaCodecInfo.CodecProfileLevel.AACObjectHE) {
+                        // Query output profile. KEY_PROFILE gets precedence over KEY_AAC_PROFILE
+                        int aac_profile = trackFormat.getInteger(MediaFormat.KEY_AAC_PROFILE, -1);
+                        int profile = trackFormat.getInteger(MediaFormat.KEY_PROFILE, aac_profile);
+
+                        if (profile == MediaCodecInfo.CodecProfileLevel.AACObjectHE) {
                             expectedSampleRate /= 2;
                         }
                         assertEquals("sample rates should match", expectedSampleRate,
