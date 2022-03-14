@@ -304,7 +304,7 @@
         />
         <activity android:name=".ShowWhenLockedDialogActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Material.Dialog"
+            android:theme="@style/ShowWhenLockedDialogTheme"
         />
         <activity android:name=".ShowWhenLockedTranslucentActivity"
                   android:exported="true"
