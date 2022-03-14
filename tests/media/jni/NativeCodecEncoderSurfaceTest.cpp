@@ -140,7 +140,7 @@ bool CodecEncoderSurfaceTest::setUpExtractor(const char* srcFile) {
                 if (mime && strncmp(mime, "video/", strlen("video/")) == 0) {
                     AMediaExtractor_selectTrack(mExtractor, trackID);
                     AMediaFormat_setInt32(currFormat, AMEDIAFORMAT_KEY_COLOR_FORMAT,
-                                          COLOR_FormatYUV420Flexible);
+                                          COLOR_FormatSurface);
                     mDecFormat = currFormat;
                     break;
                 }
