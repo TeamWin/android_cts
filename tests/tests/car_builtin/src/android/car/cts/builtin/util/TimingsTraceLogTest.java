@@ -16,17 +16,25 @@
 
 package android.car.cts.builtin.util;
 
+import static android.car.cts.builtin.util.LogcatHelper.Buffer.SYSTEM;
+import static android.car.cts.builtin.util.LogcatHelper.Level.DEBUG;
 import static android.car.cts.builtin.util.LogcatHelper.assertLogcatMessage;
+import static android.car.cts.builtin.util.LogcatHelper.clearLog;
 
 import android.car.builtin.os.TraceHelper;
 import android.car.builtin.util.TimingsTraceLog;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public final class TimingsTraceLogTest {
 
     private static final String TAG = TimingsTraceLogTest.class.getSimpleName();
-    private static final int TIMEOUT_MS = 60_000;
+
+    @Before
+    public void clearLogcat() {
+        clearLog();
+    }
 
     @Test
     public void testTimingsTraceLog() {
@@ -35,8 +43,7 @@ public final class TimingsTraceLogTest {
         timingsTraceLog.traceBegin("testTimingsTraceLog");
         timingsTraceLog.traceEnd();
 
-        assertLogcatMessage("TimingsTraceLogTest: testTimingsTraceLog took to complete",
-                TIMEOUT_MS);
+        assertLogMessage("testTimingsTraceLog took to complete");
     }
 
     @Test
@@ -45,8 +52,10 @@ public final class TimingsTraceLogTest {
                 new TimingsTraceLog(TAG, TraceHelper.TRACE_TAG_CAR_SERVICE);
         timingsTraceLog.logDuration("testTimingsTraceLogDuration", 159);
 
-        assertLogcatMessage(
-                "TimingsTraceLogTest: testTimingsTraceLogDuration took to complete: 159ms",
-                TIMEOUT_MS);
+        assertLogMessage("testTimingsTraceLogDuration took to complete: 159ms");
+    }
+
+    private void assertLogMessage(String message) {
+        assertLogcatMessage(SYSTEM, DEBUG, TAG, message);
     }
 }

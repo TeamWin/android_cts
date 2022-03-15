@@ -130,7 +130,6 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
      */
     @Test
     @EnsureHasWorkProfile
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testPersonalApp_cannotAccessWorkProfile_default() throws Exception {
         assertBlockedByAdmin(/* isInvokedFromWorkProfile */ false);
     }

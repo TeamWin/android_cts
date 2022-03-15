@@ -420,14 +420,22 @@ public class AccessibilityMagnificationTest {
                 .setMode(MAGNIFICATION_MODE_WINDOW)
                 .setScale(2.0f)
                 .build();
-        mService.runOnServiceSync(
-                () -> controller.setMagnificationConfig(config, /* animate= */ false));
 
-        sUiAutomation.executeAndWaitForEvent(
-                () -> mService.runOnServiceSync(() -> mService.disableSelfAndRemove()),
-                event -> sUiAutomation.getWindows().stream().noneMatch(
-                        accessibilityWindowInfo -> accessibilityWindowInfo.getType()
-                                == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+        try {
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> controller.setMagnificationConfig(config, false),
+                    event -> sUiAutomation.getWindows().stream().anyMatch(
+                            accessibilityWindowInfo -> accessibilityWindowInfo.getType()
+                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> mService.runOnServiceSync(() -> mService.disableSelfAndRemove()),
+                    event -> sUiAutomation.getWindows().stream().noneMatch(
+                            accessibilityWindowInfo -> accessibilityWindowInfo.getType()
+                                    == AccessibilityWindowInfo.TYPE_MAGNIFICATION_OVERLAY), 5000);
+        } finally {
+            controller.resetCurrentMagnification(false);
+        }
     }
 
     @Test
