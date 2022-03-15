@@ -407,6 +407,57 @@ public class SpatializerTest extends CtsAndroidTestCase {
                 !spatEnabled, enabled.booleanValue());
     }
 
+    public void testHeadTrackerAvailable() throws Exception {
+        Spatializer spat = mAudioManager.getSpatializer();
+        if (spat.getImmersiveAudioLevel() == Spatializer.SPATIALIZER_IMMERSIVE_LEVEL_NONE) {
+            Log.i(TAG, "skipping testHeadTrackerAvailable, no Spatializer");
+            return;
+        }
+        final MyHeadTrackerAvailable htAvailableListener = new MyHeadTrackerAvailable();
+
+        assertThrows("null Executor allowed in addOnHeadTrackerAvailableListener",
+                IllegalArgumentException.class,
+                () -> spat.addOnHeadTrackerAvailableListener(null, htAvailableListener));
+        assertThrows("null listener allowed in addOnHeadTrackerAvailableListener",
+                IllegalArgumentException.class,
+                () -> spat.addOnHeadTrackerAvailableListener(Executors.newSingleThreadExecutor(),
+                        null));
+        final boolean enabled = spat.isEnabled();
+        // verify that with spatializer disabled, the head tracker is not available
+        if (!enabled) {
+            // spatializer not enabled
+            assertFalse("head tracker available despite spatializer disabled",
+                    spat.isHeadTrackerAvailable());
+        } else {
+            final MySpatStateListener stateListener = new MySpatStateListener();
+            spat.addOnSpatializerStateChangedListener(Executors.newSingleThreadExecutor(),
+                    stateListener);
+            // now disable the effect and check head tracker availability
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                    "android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS");
+            spat.setEnabled(false);
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            assertFalse("spatializer state listener not notified after disabling",
+                    stateListener.getEnabled());
+            assertFalse("head tracker available despite spatializer disabled",
+                    spat.isHeadTrackerAvailable());
+            // reset state and wait until done
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                    "android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS");
+            spat.setEnabled(true);
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            assertTrue("spatializer state listener not notified after enabling",
+                    stateListener.getEnabled());
+        }
+        assertThrows("null listener allowed in removeOnHeadTrackerAvailableListener",
+                IllegalArgumentException.class,
+                () -> spat.removeOnHeadTrackerAvailableListener(null));
+        spat.removeOnHeadTrackerAvailableListener(htAvailableListener);
+        assertThrows("able to remove listener twice in removeOnHeadTrackerAvailableListener",
+                IllegalArgumentException.class,
+                () -> spat.removeOnHeadTrackerAvailableListener(htAvailableListener));
+    }
+
     static class MySpatStateListener
             implements Spatializer.OnSpatializerStateChangedListener {
 
@@ -474,6 +525,13 @@ public class SpatializerTest extends CtsAndroidTestCase {
         @Override
         public void onHeadToSoundstagePoseUpdated(Spatializer spatializer, float[] pose) {
             Log.i(TAG, "onHeadToSoundstagePoseUpdated:" + Arrays.toString(pose));
+        }
+    }
+
+    static class MyHeadTrackerAvailable implements Spatializer.OnHeadTrackerAvailableListener {
+        @Override
+        public void onHeadTrackerAvailableChanged(Spatializer spatializer, boolean available) {
+            Log.i(TAG, "onHeadTrackerAvailable(" + available + ")");
         }
     }
 }
