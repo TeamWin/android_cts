@@ -343,12 +343,13 @@ public class WindowUntrustedTouchTest {
     /** SAWs */
 
     @Test
-    public void testWhenOneSawWindowAboveThreshold_blocksTouch() throws Throwable {
+    public void testWhenOneSawWindowAboveThreshold_allowsTouch() throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .9f);
 
         mTouchHelper.tapOnViewCenter(mContainer);
 
-        assertTouchNotReceived();
+        // Opacity will be automatically capped and touches will pass through.
+        assertTouchReceived();
     }
 
     @Test
@@ -414,14 +415,15 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
-    public void testWhenOneSawWindowAboveThresholdAndSelfSawWindow_blocksTouch()
+    public void testWhenOneSawWindowAboveThresholdAndSelfSawWindow_allowsTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .9f);
         addSawOverlay(APP_SELF, WINDOW_1, .7f);
 
         mTouchHelper.tapOnViewCenter(mContainer);
 
-        assertTouchNotReceived();
+        // Opacity will be automatically capped and touches will pass through.
+        assertTouchReceived();
     }
 
     @Test
@@ -460,14 +462,15 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
-    public void testWhenThresholdIs0AndSawWindowAboveThreshold_blocksTouch()
+    public void testWhenThresholdIs0AndSawWindowAboveThreshold_allowsTouch()
             throws Throwable {
         setMaximumObscuringOpacityForTouch(0);
         addSawOverlay(APP_A, WINDOW_1, .1f);
 
         mTouchHelper.tapOnViewCenter(mContainer);
 
-        assertTouchNotReceived();
+        // Opacity will be automatically capped and touches will pass through.
+        assertTouchReceived();
     }
 
     @Test
