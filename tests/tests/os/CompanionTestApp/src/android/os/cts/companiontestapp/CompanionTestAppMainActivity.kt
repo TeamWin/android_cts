@@ -16,6 +16,8 @@
 
 package android.os.cts.companiontestapp
 
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.CALL_PHONE
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
@@ -127,6 +129,21 @@ class CompanionTestAppMainActivity : Activity() {
                         toast("startObservingDevicePresence $address")
                         cdm.startObservingDevicePresence(address)
                     }
+                }
+            })
+
+            addView(Button(ctx).apply {
+                text = "Check location permission"
+                setOnClickListener {
+                    val locationAccess = ctx.checkSelfPermission(ACCESS_FINE_LOCATION)
+                    toast("location access: $locationAccess")
+                }
+            })
+
+            addView(Button(ctx).apply {
+                text = "Request location permission"
+                setOnClickListener {
+                    requestPermissions(arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION), 10)
                 }
             })
         })
