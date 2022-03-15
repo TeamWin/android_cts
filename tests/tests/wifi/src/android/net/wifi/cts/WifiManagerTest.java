@@ -5584,7 +5584,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         AtomicBoolean called = new AtomicBoolean(false);
         AtomicBoolean canBeCreated = new AtomicBoolean(false);
-        AtomicReference<List<WifiManager.InterfaceCreationImpact>>
+        AtomicReference<Set<WifiManager.InterfaceCreationImpact>>
                 interfacesWhichWillBeDeleted = new AtomicReference<>(null);
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.reportCreateInterfaceImpact(
