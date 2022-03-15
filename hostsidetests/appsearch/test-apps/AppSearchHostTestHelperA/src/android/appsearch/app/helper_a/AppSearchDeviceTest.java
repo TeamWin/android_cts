@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.appsearch.app.a;
+package android.appsearch.app.helper_a;
 
 import static android.app.appsearch.testutil.AppSearchTestUtils.checkIsBatchResultSuccess;
 import static android.app.appsearch.testutil.AppSearchTestUtils.doGet;
@@ -71,7 +71,7 @@ public class AppSearchDeviceTest {
                     .setCreationTimestampMillis(12345L)
                     .build();
 
-    private static final String PKG_B = "android.appsearch.app.b";
+    private static final String PKG_B = "android.appsearch.app.helper_b";
 
     // To generate, run `apksigner` on the build APK. e.g.
     //   ./apksigner verify --print-certs \
@@ -127,7 +127,8 @@ public class AppSearchDeviceTest {
 
             // Index a document
             AppSearchBatchResult<String, Void> result = checkIsBatchResultSuccess(
-                    db.put(new PutDocumentsRequest.Builder().addGenericDocuments(DOCUMENT).build()));
+                    db.put(new PutDocumentsRequest.Builder().addGenericDocuments(DOCUMENT)
+                            .build()));
             assertThat(result.getSuccesses()).containsExactly(ID, /*v0=*/null);
             assertThat(result.getFailures()).isEmpty();
 
