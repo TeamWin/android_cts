@@ -52,6 +52,7 @@ import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 
 import androidx.annotation.Nullable;
@@ -158,10 +159,11 @@ public class ScopedStorageTestHelper extends Activity {
         try {
             final String mode = queryType.equals(IS_URI_REDACTED_VIA_FILE_DESCRIPTOR_FOR_WRITE)
                     ? "w" : "r";
-            FileDescriptor fd = getContentResolver().openFileDescriptor(uri,
-                    mode).getFileDescriptor();
-            ExifInterface exifInterface = new ExifInterface(fd);
-            intent.putExtra(queryType, exifInterface.getGpsDateTime() == -1);
+            try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, mode)) {
+                FileDescriptor fd = pfd.getFileDescriptor();
+                ExifInterface exifInterface = new ExifInterface(fd);
+                intent.putExtra(queryType, exifInterface.getGpsDateTime() == -1);
+            }
         } catch (Exception e) {
             intent.putExtra(INTENT_EXCEPTION, e);
         }
