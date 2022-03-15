@@ -23,7 +23,6 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
-import android.view.SurfaceControl;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -73,34 +72,25 @@ public class DisplayRefreshRateTest {
         // to get the default display.
         Context context = mActivity.getApplicationContext();
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        long frameRateFlexibilityToken = 0;
-        try {
-            frameRateFlexibilityToken = SurfaceControl.acquireFrameRateFlexibilityToken();
-            Display dpy = wm.getDefaultDisplay();
-            float claimedFps = dpy.getRefreshRate();
 
-            for (int i = 0; i < 3; i++) {
-                float achievedFps = mFpsResult.waitResult();
-                Log.d(TAG, "claimed " + claimedFps + " fps, " +
-                           "achieved " + achievedFps + " fps");
-                fpsOk = Math.abs(claimedFps - achievedFps) <= FPS_TOLERANCE;
-                if (fpsOk) {
-                    break;
-                } else {
-                    // it could be other activity like bug report capturing for other failures
-                    // sleep for a while and re-try
-                    SystemClock.sleep(10000);
-                    mFpsResult.restart();
-                }
-            }
-            mActivity.finish();
-            assertTrue(fpsOk);
-        } finally {
-            if (frameRateFlexibilityToken != 0) {
-               SurfaceControl.releaseFrameRateFlexibilityToken(frameRateFlexibilityToken);
-               frameRateFlexibilityToken = 0;
+        Display dpy = wm.getDefaultDisplay();
+        float claimedFps = dpy.getRefreshRate();
+
+        for (int i = 0; i < 3; i++) {
+            float achievedFps = mFpsResult.waitResult();
+            Log.d(TAG, "claimed " + claimedFps + " fps, " +
+                       "achieved " + achievedFps + " fps");
+            fpsOk = Math.abs(claimedFps - achievedFps) <= FPS_TOLERANCE;
+            if (fpsOk) {
+                break;
+            } else {
+                // it could be other activity like bug report capturing for other failures
+                // sleep for a while and re-try
+                SystemClock.sleep(10000);
+                mFpsResult.restart();
             }
         }
-
+        mActivity.finish();
+        assertTrue(fpsOk);
     }
 }
