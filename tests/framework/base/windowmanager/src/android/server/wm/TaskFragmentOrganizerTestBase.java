@@ -67,6 +67,10 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         mOwnerToken = getActivityToken(mOwnerActivity);
         mOwnerActivityName = mOwnerActivity.getComponentName();
         mOwnerTaskId = mOwnerActivity.getTaskId();
+        // Make sure the activity is launched and resumed, otherwise the window state may not be
+        // stable.
+        waitAndAssertResumedActivity(mOwnerActivity.getComponentName(),
+                "The owner activity must be resumed.");
     }
 
     /** Setups the owner activity of the organized TaskFragment. */
@@ -155,10 +159,18 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
      */
     TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName,
             @NonNull Rect bounds) {
+        return createTaskFragment(componentName, bounds, new WindowContainerTransaction());
+    }
+
+    /**
+     * Same as {@link #createTaskFragment(ComponentName, Rect)}, but allows to specify the
+     * {@link WindowContainerTransaction} to use.
+     */
+    TaskFragmentInfo createTaskFragment(@Nullable ComponentName componentName,
+            @NonNull Rect bounds, @NonNull WindowContainerTransaction wct) {
         final TaskFragmentCreationParams params = generateTaskFragCreationParams(bounds);
         final IBinder taskFragToken = params.getFragmentToken();
-        final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .createTaskFragment(params);
+        wct.createTaskFragment(params);
         if (componentName != null) {
             wct.startActivityInTaskFragment(taskFragToken, mOwnerToken,
                     new Intent().setComponent(componentName), null /* activityOptions */);
