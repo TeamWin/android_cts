@@ -853,8 +853,12 @@ public class ToastTest {
     public void testTextToastNotAllowed_whenInTheBackground_withoutNotificationPermission()
             throws Throwable {
         assumeFalse("Skipping test: Watch does not support new Toast behavior yet", isWatch());
+
         // Make it background
         mActivityRule.finishActivity();
+        // may take time for the app process importance to get downgraded from foreground:
+        SystemClock.sleep(TIME_FOR_UI_OPERATION);
+
         List<TextToastInfo> toastInfoList = createTextToasts(1, "Text", Toast.LENGTH_SHORT);
 
         mActivityRule.runOnUiThread(

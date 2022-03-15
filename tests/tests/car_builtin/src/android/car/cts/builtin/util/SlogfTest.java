@@ -16,19 +16,19 @@
 
 package android.car.cts.builtin.util;
 
-import static android.car.cts.builtin.util.SlogfTest.Level.ASSERT;
-import static android.car.cts.builtin.util.SlogfTest.Level.DEBUG;
-import static android.car.cts.builtin.util.SlogfTest.Level.ERROR;
-import static android.car.cts.builtin.util.SlogfTest.Level.INFO;
-import static android.car.cts.builtin.util.SlogfTest.Level.VERBOSE;
-import static android.car.cts.builtin.util.SlogfTest.Level.WARN;
+import static android.car.cts.builtin.util.LogcatHelper.Level.ASSERT;
+import static android.car.cts.builtin.util.LogcatHelper.Level.DEBUG;
+import static android.car.cts.builtin.util.LogcatHelper.Level.ERROR;
+import static android.car.cts.builtin.util.LogcatHelper.Level.INFO;
+import static android.car.cts.builtin.util.LogcatHelper.Level.VERBOSE;
+import static android.car.cts.builtin.util.LogcatHelper.Level.WARN;
+import static android.car.cts.builtin.util.LogcatHelper.clearLog;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.builtin.util.Slogf;
+import android.car.cts.builtin.util.LogcatHelper.Level;
 import android.util.Log;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,8 +36,7 @@ import org.junit.Test;
 
 public final class SlogfTest {
     private static final String TAG = SlogfTest.class.getSimpleName();
-    // Comes from Slogf.CAR_TEST_TAG;
-    private static final String CAR_TEST_TAG = "CAR.TEST";
+
     private static final int TIMEOUT_MS = 10_000;
     // All Slogf would be logged to system buffer.
     private static final LogcatHelper.Buffer BUFFER = LogcatHelper.Buffer.SYSTEM;
@@ -50,20 +49,6 @@ public final class SlogfTest {
     private static final String NOT_LOGGED_MSG = "This message should not exist in logcat.";
     private static final String FORMATTED_MSG = "This message is a format with two args %s and %s.";
     private static final String EXCEPTION_MSG = "This message should exist in logcat.";
-
-    enum Level {
-        VERBOSE("V"), DEBUG("D"), INFO("I"), WARN("W"), ERROR("E"), ASSERT("A");
-
-        private String mValue;
-
-        public String getValue() {
-            return mValue;
-        }
-
-        Level(String v) {
-            mValue = v;
-        }
-    }
 
     @Before
     public void setup() {
@@ -389,15 +374,24 @@ public final class SlogfTest {
     @Test
     public void testIsLoggableFalse() throws Exception {
         setLogLevel(ERROR);
+        setCarTestTagLogLevel(ASSERT);
 
         assertThat(Slogf.isLoggable(TAG, Log.VERBOSE)).isFalse();
+    }
+
+    @Test
+    public void testIsLoggableFalse_withCarTestTagEnabled() throws Exception {
+        setLogLevel(ERROR);
+        setCarTestTagLogLevel(VERBOSE);
+
+        assertThat(Slogf.isLoggable(TAG, Log.VERBOSE)).isTrue();
     }
 
     @Test
     public void testSlogfIsfLoggableWorksSameAsLogIsLoggable() throws Exception {
         setLogLevel(INFO);
         // Emulate the tag as if it's not in the car tests.
-        setLogLevel(CAR_TEST_TAG, ASSERT);
+        setCarTestTagLogLevel(ASSERT);
 
         assertThat(Log.isLoggable(TAG, Log.DEBUG)).isFalse();
         assertThat(Slogf.isLoggable(TAG, Log.DEBUG)).isFalse();
@@ -414,29 +408,24 @@ public final class SlogfTest {
         assertThat(Slogf.isLoggable(TAG, Log.DEBUG)).isTrue();
     }
 
-    private void clearLog() {
-        LogcatHelper.clearLog();
-    }
-
     private void setLogLevel(Level level) {
-        setLogLevel(TAG, level);
+        LogcatHelper.setLogLevel(TAG, level);
     }
 
-    private void setLogLevel(String tag, Level level) {
-        SystemUtil.runShellCommand("setprop log.tag." + tag + " " + level.getValue());
+    private void setCarTestTagLogLevel(Level level) {
+        // CAR.TEST Comes from Slogf.CAR_TEST_TAG;
+        LogcatHelper.setLogLevel("CAR.TEST", level);
     }
 
     private void assertNoLogcatMessage(Level level, String format, Object... args)
             throws Exception {
-        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG,
-                String.format(format, args));
-        LogcatHelper.assertNoLogcatMessage(match, NOT_LOGGED_WAIT_TIME_MS);
+        String message = String.format(format, args);
+        LogcatHelper.assertNoLogcatMessage(BUFFER, level, TAG, message, NOT_LOGGED_WAIT_TIME_MS);
     }
 
     private void assertLogcatMessage(Level level, String format, Object... args) {
-        String match = String.format(LOGCAT_LINE_FORMAT, level.getValue(), TAG,
-                String.format(format, args));
-        LogcatHelper.assertLogcatMessage(match, BUFFER, TIMEOUT_MS);
+        String message = String.format(format, args);
+        LogcatHelper.assertLogcatMessage(BUFFER, level, TAG, message, TIMEOUT_MS);
     }
 
     private void assertLogcatStackTrace(Level level, Throwable throwable) {
