@@ -193,7 +193,7 @@ public class VideoEncodingStatisticsTest extends VideoCodecTestBase {
                 }
                 double differenceBitrate = TEST_BITRATES_SET[i] - TEST_BITRATES_SET[j];
                 double differenceAvgQp = avgSeqQp[i] - avgSeqQp[j];
-                if (differenceBitrate * differenceAvgQp > 0) {
+                if (differenceBitrate * differenceAvgQp >= 0) {
                     throw new RuntimeException("Target bitrates: " +
                             TEST_BITRATES_SET[j] + ", " + TEST_BITRATES_SET[i] +
                             ". Average QP: "
