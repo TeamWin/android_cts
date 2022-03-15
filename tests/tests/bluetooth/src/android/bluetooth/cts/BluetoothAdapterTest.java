@@ -440,7 +440,7 @@ public class BluetoothAdapterTest extends AndroidTestCase {
 
     public void test_BluetoothConnectionCallback_disconnectReasonText() {
         assertEquals("Reason unknown", BluetoothAdapter.BluetoothConnectionCallback
-                .disconnectReasonText(BluetoothStatusCodes.ERROR_UNKNOWN));
+                .disconnectReasonToString(BluetoothStatusCodes.ERROR_UNKNOWN));
     }
 
     public void test_registerBluetoothConnectionCallback() {
