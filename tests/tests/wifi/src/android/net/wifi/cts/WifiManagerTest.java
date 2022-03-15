@@ -5553,8 +5553,27 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Tests
-     * {@link WifiManager#reportCreateInterfaceImpact(int, boolean, Executor, BiConsumer)}.
+     * Verifies that
+     * {@link WifiManager#reportCreateInterfaceImpact(int, boolean, Executor, BiConsumer)} raises
+     * a security exception without permission.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testIsItPossibleToCreateInterfaceNotAllowed() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        assertThrows(SecurityException.class, () -> mWifiManager.reportCreateInterfaceImpact(
+                WifiManager.WIFI_INTERFACE_TYPE_AP, false, mExecutor,
+                (canBeCreatedLocal, interfacesWhichWillBeDeletedLocal) -> {
+                    // should not get here (security exception!)
+                }));
+    }
+
+    /**
+     * Verifies
+     * {@link WifiManager#reportCreateInterfaceImpact(int, boolean, Executor, BiConsumer)} .
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testIsItPossibleToCreateInterface() throws Exception {
@@ -5565,17 +5584,35 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         AtomicBoolean called = new AtomicBoolean(false);
         AtomicBoolean canBeCreated = new AtomicBoolean(false);
-        assertThrows(SecurityException.class, () -> mWifiManager.reportCreateInterfaceImpact(
-                WifiManager.WIFI_INTERFACE_TYPE_AP, false, mExecutor,
-                (canBeCreatedLocal, interfacesWhichWillBeDeleted) -> {
-                    synchronized (mLock) {
-                        canBeCreated.set(canBeCreatedLocal);
-                        called.set(true);
-                        mLock.notify();
-                    }
-                }));
+        AtomicReference<List<WifiManager.InterfaceCreationImpact>>
+                interfacesWhichWillBeDeleted = new AtomicReference<>(null);
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.reportCreateInterfaceImpact(
+                        WifiManager.WIFI_INTERFACE_TYPE_AP, false, mExecutor,
+                        (canBeCreatedLocal, interfacesWhichWillBeDeletedLocal) -> {
+                            synchronized (mLock) {
+                                canBeCreated.set(canBeCreatedLocal);
+                                called.set(true);
+                                interfacesWhichWillBeDeleted.set(interfacesWhichWillBeDeletedLocal);
+                                mLock.notify();
+                            }
+                        }));
         synchronized (mLock) {
             mLock.wait(TEST_WAIT_DURATION_MS);
+        }
+        assertTrue(called.get());
+        if (canBeCreated.get()) {
+            for (WifiManager.InterfaceCreationImpact entry : interfacesWhichWillBeDeleted.get()) {
+                int interfaceType = entry.getInterfaceType();
+                assertTrue(interfaceType == WifiManager.WIFI_INTERFACE_TYPE_STA
+                        || interfaceType == WifiManager.WIFI_INTERFACE_TYPE_AP
+                        || interfaceType == WifiManager.WIFI_INTERFACE_TYPE_DIRECT
+                        || interfaceType == WifiManager.WIFI_INTERFACE_TYPE_AWARE);
+                Set<String> packages = entry.getPackages();
+                for (String p : packages) {
+                    assertNotNull(p);
+                }
+            }
         }
     }
 }
