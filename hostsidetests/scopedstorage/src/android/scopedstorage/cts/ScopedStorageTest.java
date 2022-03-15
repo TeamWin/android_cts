@@ -680,7 +680,9 @@ public class ScopedStorageTest {
             assertCanQueryAndOpenFile(otherPendingFile, "r");
 
             // We can also read other app's pending file via MediaStore API
-            assertNotNull(openWithMediaProvider(otherPendingFile, "r"));
+            try (ParcelFileDescriptor pfd = openWithMediaProvider(otherPendingFile, "r")) {
+                assertNotNull(pfd);
+            }
         } finally {
             deleteFileAsNoThrow(APP_B_NO_PERMS, otherPendingFile.getAbsolutePath());
         }
