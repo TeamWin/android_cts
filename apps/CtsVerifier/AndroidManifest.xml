@@ -3005,6 +3005,7 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi.direct" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".managedprovisioning.RecentsRedactionActivity"
@@ -3485,6 +3486,7 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestActivity"
@@ -3492,6 +3494,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#connect|android.net.wifi.p2p.WifiP2pManager#discoverPeers" />
         </activity>
 
         <activity android:name=".p2p.GoNegResponderTestActivity"
@@ -3499,6 +3503,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#discoverPeers" />
         </activity>
 
         <activity android:name=".p2p.P2pClientTestListActivity"
@@ -3506,6 +3512,7 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".p2p.P2pClientTestActivity"
@@ -3513,6 +3520,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#connect|android.net.wifi.p2p.WifiP2pManager#discoverPeers" />
         </activity>
 
         <activity android:name=".p2p.GoTestActivity"
@@ -3520,6 +3529,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#createGroup|android.net.wifi.p2p.WifiP2pManager#removeGroup" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigTestListActivity"
@@ -3527,6 +3538,7 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfig2gBandTestListActivity"
@@ -3534,6 +3546,7 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestListActivity"
@@ -3541,6 +3554,7 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigTestActivity"
@@ -3548,6 +3562,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#connect|android.net.wifi.p2p.WifiP2pManager#discoverPeers" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfig2gBandTestActivity"
@@ -3555,6 +3571,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#connect|android.net.wifi.p2p.WifiP2pManager#discoverPeers" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestActivity"
@@ -3562,6 +3580,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#connect|android.net.wifi.p2p.WifiP2pManager#discoverPeers" />
         </activity>
 
         <activity android:name=".p2p.GoWithConfigTestActivity"
@@ -3569,6 +3589,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#createGroup|android.net.wifi.p2p.WifiP2pManager#removeGroup" />
         </activity>
 
         <activity android:name=".p2p.GoWithConfig2gBandTestActivity"
@@ -3576,6 +3598,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#createGroup|android.net.wifi.p2p.WifiP2pManager#removeGroup" />
         </activity>
 
         <activity android:name=".p2p.GoWithConfigFixedFrequencyTestActivity"
@@ -3583,6 +3607,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#createGroup|android.net.wifi.p2p.WifiP2pManager#removeGroup" />
         </activity>
 
         <activity android:name=".p2p.ServiceRequesterTestListActivity"
@@ -3590,6 +3616,7 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="NonApiTest" android:value="Helper class. List test activities" />
         </activity>
 
         <activity android:name=".p2p.ServiceRequesterTestActivity"
@@ -3597,6 +3624,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#discoverServices|android.net.wifi.p2p.WifiP2pManager#addServiceRequest|android.net.wifi.p2p.WifiP2pManager#setUpnpServiceResponseListener|android.net.wifi.p2p.WifiP2pManager#setDnsSdResponseListeners|android.net.wifi.p2p.WifiP2pManager#removeServiceRequest|android.net.wifi.p2p.WifiP2pManager#clearServiceRequests" />
         </activity>
 
         <activity android:name=".p2p.ServiceResponderTestActivity"
@@ -3604,6 +3633,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                    android:value="android.net.wifi.p2p.WifiP2pManager#addLocalService" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenUnsolicitedPublishTestActivity"
