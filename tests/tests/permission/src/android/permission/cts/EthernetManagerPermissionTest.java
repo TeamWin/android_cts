@@ -124,34 +124,4 @@ public class EthernetManagerPermissionTest {
         assertThrows("Should not be able to call updateConfiguration without automotive feature",
                 UnsupportedOperationException.class, () -> callUpdateConfiguration());
     }
-
-    /**
-     * Verify that calling {@link EthernetManager#connectNetwork(String, Executor, BiConsumer)}
-     * requires automotive feature.
-     * <p>Tests Feature:
-     *   {@link PackageManager#FEATURE_AUTOMOTIVE}.
-     */
-    @Test
-    public void testConnectNetworkHasAutomotiveFeature() {
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE));
-        assertThrows("Should not be able to call connectNetwork without automotive feature",
-                UnsupportedOperationException.class,
-                () -> mEthernetManager.connectNetwork(TEST_IFACE, null, null));
-    }
-
-    /**
-     * Verify that calling {@link EthernetManager#disconnectNetwork(String, Executor, BiConsumer)}
-     * requires automotive feature.
-     * <p>Tests Feature:
-     *   {@link PackageManager#FEATURE_AUTOMOTIVE}.
-     */
-    @Test
-    public void testDisconnectNetworkHasAutomotiveFeature() {
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE));
-        assertThrows("Should not be able to call disconnectNetwork without automotive feature",
-                UnsupportedOperationException.class,
-                () -> mEthernetManager.disconnectNetwork(TEST_IFACE, null, null));
-    }
 }
