@@ -88,7 +88,6 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
         try {
             return super.instantiateReceiver(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
-
             if (className.endsWith("DeviceAdminReceiver")) {
                 Log.d(LOG_TAG, "Broadcast Receiver class (" + className
                         + ") not found, routing to TestAppDeviceAdminReceiver");
@@ -97,6 +96,15 @@ public final class TestAppAppComponentFactory extends AppComponentFactory {
                                 classLoader, BaseTestAppDeviceAdminReceiver.class.getName(),
                                 intent);
                 receiver.setOverrideDeviceAdminReceiverClassName(className);
+                return receiver;
+            } else if (className.endsWith("DelegatedAdminReceiver")) {
+                Log.d(LOG_TAG, "Broadcast Receiver class (" + className
+                        + ") not found, routing to TestAppDelegatedAdminReceiver");
+                BaseTestAppDelegatedAdminReceiver receiver = (BaseTestAppDelegatedAdminReceiver)
+                        super.instantiateReceiver(
+                                classLoader, BaseTestAppDelegatedAdminReceiver.class.getName(),
+                                intent);
+                receiver.setOverrideDelegatedAdminReceiverClassName(className);
                 return receiver;
             }
 

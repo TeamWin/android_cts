@@ -36,10 +36,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,9 +45,6 @@ import java.util.Map;
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
 public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
-
-    private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
-    private static final String LOG_TAG_DEVICE_OWNER = "device-owner";
 
     private static final String ARG_SECURITY_LOGGING_BATCH_NUMBER = "batchNumber";
     private static final int SECURITY_EVENTS_BATCH_SIZE = 100;
@@ -122,14 +117,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "218408549",
             reason = "Will be migrated to new test infra")
-    public void testDelegation() throws Exception {
-        super.testDelegation();
-    }
-
-    @Override
-    @Test
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "218408549",
-            reason = "Will be migrated to new test infra")
     public void testDelegationCertSelection() throws Exception {
         super.testDelegationCertSelection();
     }
@@ -196,38 +183,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 .build());
 
         executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone_failIfAutoTimeZoneEnabled");
-    }
-
-    Map<String, DevicePolicyEventWrapper[]> getAdditionalDelegationTests() {
-        final Map<String, DevicePolicyEventWrapper[]> result = new HashMap<>();
-        DevicePolicyEventWrapper[] expectedMetrics = new DevicePolicyEventWrapper[] {
-                new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_LOGGING_ENABLED_VALUE)
-                        .setAdminPackageName(DELEGATE_APP_PKG)
-                        .setBoolean(true)
-                        .setInt(1)
-                        .setStrings(LOG_TAG_DEVICE_OWNER)
-                        .build(),
-                new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_NETWORK_LOGS_VALUE)
-                        .setAdminPackageName(DELEGATE_APP_PKG)
-                        .setBoolean(true)
-                        .setStrings(LOG_TAG_DEVICE_OWNER)
-                        .build(),
-                new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_LOGGING_ENABLED_VALUE)
-                        .setAdminPackageName(DELEGATE_APP_PKG)
-                        .setBoolean(true)
-                        .setInt(0)
-                        .setStrings(LOG_TAG_DEVICE_OWNER)
-                        .build(),
-        };
-        result.put(".NetworkLoggingDelegateTest", expectedMetrics);
-        return result;
-    }
-
-    @Override
-    List<String> getAdditionalDelegationScopes() {
-        final List<String> result = new ArrayList<>();
-        result.add(DELEGATION_NETWORK_LOGGING);
-        return result;
     }
 
     @Test

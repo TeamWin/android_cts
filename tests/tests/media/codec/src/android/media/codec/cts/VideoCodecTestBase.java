@@ -344,6 +344,7 @@ public class VideoCodecTestBase {
                 params.runInLooperThread = true;
             }
             outputParameters.add(params);
+            params.encodingStatisticsLevel = MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_NONE;
         }
         return outputParameters;
     }

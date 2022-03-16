@@ -8,4 +8,4 @@ include platform/frameworks/base:/graphics/java/android/graphics/OWNERS
 # Trust that people only touch their own resources.
 per-file *.xml=*
 # Only input tests use JSON so far
-per-file *.json=svv@google.com
+per-file *.json=file:platform/frameworks/base:/INPUT_OWNERS

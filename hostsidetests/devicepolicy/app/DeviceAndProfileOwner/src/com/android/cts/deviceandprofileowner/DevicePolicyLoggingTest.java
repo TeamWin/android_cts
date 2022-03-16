@@ -177,11 +177,6 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.enableSystemApp(ADMIN_RECEIVER_COMPONENT, intent);
     }
 
-    public void testSetUninstallBlockedLogged() {
-        mDevicePolicyManager.setUninstallBlocked(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME, true);
-        mDevicePolicyManager.setUninstallBlocked(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME, false);
-    }
-
     public void testSetPreferentialNetworkServiceEnabledLogged() {
         mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true);
         mDevicePolicyManager.setPreferentialNetworkServiceEnabled(false);

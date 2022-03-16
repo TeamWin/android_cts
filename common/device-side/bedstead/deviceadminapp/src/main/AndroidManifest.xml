@@ -29,5 +29,27 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
         </receiver>
+
+        <receiver android:name="com.android.eventlib.premade.EventLibDelegatedAdminReceiver"
+                  android:permission="android.permission.BIND_DEVICE_ADMIN"
+                  android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.app.action.CHOOSE_PRIVATE_KEY_ALIAS"/>
+                <action android:name="android.app.action.NETWORK_LOGS_AVAILABLE"/>
+                <action android:name="android.app.action.SECURITY_LOGS_AVAILABLE"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.android.eventlib.premade.EventLibDelegatedAdminReceiver"
+                  android:permission="android.permission.BIND_DEVICE_ADMIN"
+                  android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.app.action.CHOOSE_PRIVATE_KEY_ALIAS"/>
+                <action android:name="android.app.action.NETWORK_LOGS_AVAILABLE"/>
+                <action android:name="android.app.action.SECURITY_LOGS_AVAILABLE"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

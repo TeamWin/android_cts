@@ -35,15 +35,17 @@ public class NullBindingConnectionService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        sBindLatch.countDown();
+        CountDownLatch latch = sBindLatch;
         sUnbindLatch = new CountDownLatch(1);
+        latch.countDown();
         return null;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        sUnbindLatch.countDown();
+        CountDownLatch latch = sUnbindLatch;
         sBindLatch = new CountDownLatch(1);
+        latch.countDown();
         return false;
     }
 }

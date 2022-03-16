@@ -48,8 +48,8 @@ public final class RingtoneTest {
         NOTIFICATION(Settings.System.NOTIFICATION_SOUND, RingtoneManager.TYPE_NOTIFICATION),
         ALARM(Settings.System.ALARM_ALERT, RingtoneManager.TYPE_ALARM);
 
-        String mRingtoneName;
-        int mType;
+        final String mRingtoneName;
+        final int mType;
 
         RingtoneConfig(String ringtoneName, int type) {
             this.mRingtoneName = ringtoneName;

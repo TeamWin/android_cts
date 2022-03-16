@@ -94,14 +94,14 @@ public final class LostModeLocationTest {
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
-    @Ignore("b/216487148")
+    @Ignore("b/223148704")
     public void sendLostModeLocationUpdate_noTestProviders_returnFalse() throws Exception {
         sendLostModeLocationUpdate(/* expected= */ false);
     }
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
-    @Ignore("b/216487148")
+    @Ignore("b/223148704")
     public void sendLostModeLocationUpdate_noLocation_returnFalse() throws Exception {
         try (LocationProvider provider = TestApis.location().addLocationProvider()) {
             sendLostModeLocationUpdate(/* expected */ false);

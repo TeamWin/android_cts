@@ -19,7 +19,6 @@
      package="android.voiceinteraction.cts">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
-    <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION"/>
 
     <application>
       <uses-library android:name="android.test.runner"/>

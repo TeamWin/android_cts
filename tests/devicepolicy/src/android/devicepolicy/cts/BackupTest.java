@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
-import android.app.admin.DevicePolicyManager;
 import android.app.backup.BackupManager;
 import android.content.Context;
 
@@ -52,8 +51,6 @@ public final class BackupTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final Context sContext = TestApis.context().instrumentedContext();
-    private static final DevicePolicyManager sLocalDevicePolicyManager =
-            sContext.getSystemService(DevicePolicyManager.class);
     private static final BackupManager sLocalBackupManager = new BackupManager(sContext);
 
     @PolicyAppliesTest(policy = Backup.class)

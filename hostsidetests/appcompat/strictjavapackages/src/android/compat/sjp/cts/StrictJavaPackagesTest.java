@@ -693,12 +693,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 "Landroid/ondevicepersonalization/aidl/IInitOnDevicePersonalizationCallback;",
                 "Landroid/ondevicepersonalization/aidl/IOnDevicePersonalizationManagerService;"
             );
-    // TODO: b/223837016
-    private static final ImmutableSet<String> MEDIAPROVIDER_APK_IN_APEX_BURNDOWN_LIST =
-            ImmutableSet.of(
-                // /system/framework/services.jar
-                "Lcom/android/modules/utils/build/SdkLevel;"
-            );
     // TODO: b/223837017
     private static final ImmutableSet<String> CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST =
             ImmutableSet.of(
@@ -733,10 +727,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                 ODA_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.ondevicepersonalization/app/OnDevicePersonalization/OnDevicePersonalization.apk",
                 ODA_APK_IN_APEX_BURNDOWN_LIST)
-            .put("/apex/com.android.mediaprovider/priv-app/MediaProviderGoogle/MediaProviderGoogle.apk",
-                MEDIAPROVIDER_APK_IN_APEX_BURNDOWN_LIST)
-            .put("/apex/com.android.mediaprovider/priv-app/MediaProvider/MediaProvider.apk",
-                MEDIAPROVIDER_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.cellbroadcast/priv-app/GoogleCellBroadcastServiceModule/GoogleCellBroadcastServiceModule.apk",
                 CELLBROADCAST_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.cellbroadcast/priv-app/CellBroadcastServiceModule/CellBroadcastServiceModule.apk",

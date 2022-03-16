@@ -16,10 +16,6 @@
 
 package com.android.eventlib.events.services;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-
 //TODO(b/204770471) Currently unable to create these tests without an instrumented service.
-@RunWith(JUnit4.class)
+//@RunWith(JUnit4.class)
 public class ServiceMemoryTrimmedEventTest {}

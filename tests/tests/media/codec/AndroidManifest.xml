@@ -38,6 +38,14 @@
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>
         </service>
+        <activity android:name="android.media.codec.cts.MediaCodecResourceTestLowPriorityActivity"
+             android:label="MediaCodecResourceTestLowPriorityActivity"
+             android:process=":MediaCodecResourceTestLowPriorityProcess">
+        </activity>
+        <activity android:name="android.media.codec.cts.MediaCodecResourceTestHighPriorityActivity"
+             android:label="MediaCodecResourceTestHighPriorityActivity"
+             android:process=":MediaCodecResourceTestHighPriorityProcess">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -550,6 +550,39 @@
             </intent-filter>
 	</activity>
 
+        <!-- The test module disables manifest merging, so manually include AndroidX Activities -->
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$BootstrapActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyFloatingActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.content.res.cts.config.activity.ApplyOverrideConfigActivity" />
+
+        <activity android:name="android.content.res.cts.config.activity.CreateConfigBaseContextActivity" />
+
+        <activity android:name="android.content.res.cts.config.activity.CreateConfigInflaterContextActivity" />
+
+        <activity
+            android:name="android.content.res.cts.config.activity.ApplyOverrideConfigHandleOrientationActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"/>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

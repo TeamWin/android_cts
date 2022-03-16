@@ -899,11 +899,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
-            ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw");
-
-            assertRWR(readPfd, writePfd);
-            assertUpperFsFd(writePfd); // With cache
+            try (ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
+                 ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw")) {
+                assertRWR(readPfd, writePfd);
+                assertUpperFsFd(writePfd); // With cache
+            }
         } finally {
             file.delete();
         }
@@ -917,11 +917,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw");
-            ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
-
-            assertRWR(readPfd, writePfd);
-            assertLowerFsFdWithPassthrough(writePfd);
+            try (ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw");
+                 ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE)) {
+                assertRWR(readPfd, writePfd);
+                assertLowerFsFdWithPassthrough(writePfd);
+            }
         } finally {
             file.delete();
         }
@@ -935,11 +935,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            ParcelFileDescriptor writePfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
-            ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
-
-            assertRWR(readPfd, writePfd);
-            assertUpperFsFd(readPfd); // With cache
+            try (ParcelFileDescriptor writePfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
+                 ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw")) {
+                assertRWR(readPfd, writePfd);
+                assertUpperFsFd(readPfd); // With cache
+            }
         } finally {
             file.delete();
         }
@@ -953,11 +953,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
-            ParcelFileDescriptor writePfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
-
-            assertRWR(readPfd, writePfd);
-            assertLowerFsFdWithPassthrough(readPfd);
+            try (ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
+                 ParcelFileDescriptor writePfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE)) {
+                assertRWR(readPfd, writePfd);
+                assertLowerFsFdWithPassthrough(readPfd);
+            }
         } finally {
             file.delete();
         }
@@ -972,13 +972,13 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(file.createNewFile()).isTrue();
 
             // We upgrade 'w' only to 'rw'
-            ParcelFileDescriptor writePfd = openWithMediaProvider(file, "w");
-            ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
-
-            assertRWR(readPfd, writePfd);
-            assertRWR(writePfd, readPfd); // Can read on 'w' only pfd
-            assertLowerFsFdWithPassthrough(writePfd);
-            assertLowerFsFdWithPassthrough(readPfd);
+            try (ParcelFileDescriptor writePfd = openWithMediaProvider(file, "w");
+                 ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw")) {
+                assertRWR(readPfd, writePfd);
+                assertRWR(writePfd, readPfd); // Can read on 'w' only pfd
+                assertLowerFsFdWithPassthrough(writePfd);
+                assertLowerFsFdWithPassthrough(readPfd);
+            }
         } finally {
             file.delete();
         }
@@ -995,15 +995,13 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
             // Even if we close the original fd, since we have a dup open
             // the FUSE IO should still bypass the cache
-            try (ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw")) {
-                try (ParcelFileDescriptor writePfdDup = writePfd.dup();
-                     ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(
-                             file, MODE_READ_WRITE)) {
-                    writePfd.close();
+            try (ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw");
+                 ParcelFileDescriptor writePfdDup = writePfd.dup();
+                 ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE)) {
+                writePfd.close();
 
-                    assertRWR(readPfd, writePfdDup);
-                    assertLowerFsFdWithPassthrough(writePfdDup);
-                }
+                assertRWR(readPfd, writePfdDup);
+                assertLowerFsFdWithPassthrough(writePfdDup);
             }
         } finally {
             file.delete();
@@ -1030,12 +1028,13 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             writePfd.close();
 
             // Upper fs open and read without direct_io
-            ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE);
-            Os.pread(readPfd.getFileDescriptor(), readBuffer, 0, 10, 0);
+            try (ParcelFileDescriptor readPfd = ParcelFileDescriptor.open(file, MODE_READ_WRITE)) {
+                Os.pread(readPfd.getFileDescriptor(), readBuffer, 0, 10, 0);
 
-            // Last write on lower fs is visible via upper fs
-            assertThat(readBuffer).isEqualTo(writeBuffer);
-            assertThat(readPfd.getStatSize()).isEqualTo(writeBuffer.length);
+                // Last write on lower fs is visible via upper fs
+                assertThat(readBuffer).isEqualTo(writeBuffer);
+                assertThat(readPfd.getStatSize()).isEqualTo(writeBuffer.length);
+            }
         } finally {
             file.delete();
         }

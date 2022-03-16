@@ -167,7 +167,7 @@ public class PackageManagerTest {
     private static final String PERMISSION_TREE_ROOT =
             "android.content.cts.permission.TEST_DYNAMIC";
     // Number of activities/activity-alias in AndroidManifest
-    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 12;
+    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 19;
     public static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(10);
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";

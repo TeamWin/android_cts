@@ -1937,6 +1937,37 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void setAutoRevokeWhitelisted_targetIsNotExisting_setFailed() throws Exception {
+        final boolean result = SystemUtil.callWithShellPermissionIdentity(
+                () -> sPm.setAutoRevokeWhitelisted(TEST_NONEXISTENT_PACKAGE_NAME_1,
+                        false /* whitelisted */),
+                Manifest.permission.WHITELIST_AUTO_REVOKE_PERMISSIONS);
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void setAutoRevokeWhitelisted_cannotSeeTarget_setFailed() throws Exception {
+        final boolean result = SystemUtil.callWithShellPermissionIdentity(
+                () -> sPm.setAutoRevokeWhitelisted(QUERIES_PACKAGE, false /* whitelisted */),
+                Manifest.permission.WHITELIST_AUTO_REVOKE_PERMISSIONS);
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void setAutoRevokeWhitelisted_canSeeTarget_setSuccessful() throws Exception {
+        final boolean result = SystemUtil.callWithShellPermissionIdentity(
+                () -> sPm.setAutoRevokeWhitelisted(QUERIES_NOTHING, false /* whitelisted */),
+                Manifest.permission.WHITELIST_AUTO_REVOKE_PERMISSIONS);
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void setAutoRevokeWhitelisted_withoutPermission_throwsException() throws Exception {
+        assertThrows(SecurityException.class,
+                () -> sPm.setAutoRevokeWhitelisted(QUERIES_NOTHING, false /* whitelisted */));
+    }
+
+    @Test
     public void canPackageQuery_queriesActivityAction_canSeeFilters() throws Exception {
         assertThat(sPm.canPackageQuery(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS),
                 is(true));

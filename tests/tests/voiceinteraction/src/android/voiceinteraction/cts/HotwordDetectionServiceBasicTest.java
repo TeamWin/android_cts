@@ -120,6 +120,10 @@ public final class HotwordDetectionServiceBasicTest
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -153,6 +157,10 @@ public final class HotwordDetectionServiceBasicTest
                 performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
         verifyMicrophoneChip(true);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -185,6 +193,10 @@ public final class HotwordDetectionServiceBasicTest
                 performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
         verifyMicrophoneChip(true);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -200,6 +212,10 @@ public final class HotwordDetectionServiceBasicTest
         assertThat(performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_DSP_ONREJECT_TEST))
                 .isEqualTo(MainHotwordDetectionService.REJECTED_RESULT);
         verifyMicrophoneChip(false);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -216,6 +232,10 @@ public final class HotwordDetectionServiceBasicTest
                         Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
         verifyMicrophoneChip(true);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -232,6 +252,10 @@ public final class HotwordDetectionServiceBasicTest
                 performAndGetDetectionResult(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST),
                 MainHotwordDetectionService.DETECTED_RESULT);
         verifyMicrophoneChip(true);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -253,6 +277,10 @@ public final class HotwordDetectionServiceBasicTest
 
         verifyDetectedResult(
                 result, MainHotwordDetectionService.DETECTED_RESULT_AFTER_STOP_DETECTION);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -291,6 +319,10 @@ public final class HotwordDetectionServiceBasicTest
                 record.release();
             }
         });
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test
@@ -312,6 +344,10 @@ public final class HotwordDetectionServiceBasicTest
         // ActivityManager to restart the HotwordDetectionService, so that the service can be
         // destroyed after finishing this test case.
         Thread.sleep(TIMEOUT_MS);
+
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
     }
 
     @Test

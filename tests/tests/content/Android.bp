@@ -47,6 +47,7 @@ android_test {
         "testng",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "androidx.test.uiautomator_uiautomator",
         "cts-install-lib",
         "ShortcutManagerTestUtils",
         "libincfs-prebuilt",

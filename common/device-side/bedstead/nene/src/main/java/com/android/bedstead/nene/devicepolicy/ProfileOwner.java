@@ -138,6 +138,7 @@ public final class ProfileOwner extends DevicePolicyController {
 
             Poll.forValue(() -> dpm.isRemovingAdmin(mComponentName, mUser.id()))
                     .toNotBeEqualTo(true)
+                    .timeout(Duration.ofMinutes(5))
                     .errorOnFail()
                     .await();
         }

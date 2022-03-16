@@ -346,8 +346,10 @@ TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
   ASSERT_OK(iface->RepeatInterface(empty, &ret));
   EXPECT_EQ(empty.get(), ret.get());
 
-  // interfaces are always nullable in AIDL C++, and that behavior was carried
-  // over to the NDK backend for consistency
+  // b/210547999
+  // interface writes are always nullable in AIDL C++ (but reads are not
+  // nullable by default). However, the NDK backend follows the Java behavior
+  // and always allows interfaces to be nullable (for reads and writes).
   ASSERT_OK(iface->RepeatInterface(nullptr, &ret));
   EXPECT_EQ(nullptr, ret.get());
 
