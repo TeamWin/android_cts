@@ -20,6 +20,7 @@ import static android.Manifest.permission.TRIGGER_LOST_MODE;
 import static android.app.admin.DevicePolicyManager.ACTION_LOST_MODE_LOCATION_UPDATE;
 import static android.app.admin.DevicePolicyManager.EXTRA_LOST_MODE_LOCATION;
 import static android.content.Context.RECEIVER_EXPORTED;
+import static android.location.LocationManager.FUSED_PROVIDER;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -46,7 +47,6 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -61,7 +61,7 @@ public final class LostModeLocationTest {
     private static final double TEST_LATITUDE_2 = 22.0;
     private static final double TEST_LONGITUDE_2 = -10.5;
     private static final float TEST_ACCURACY_2 = 15.0f;
-    private static final int LOCATION_UPDATE_TIMEOUT_SECONDS = 60;
+    private static final int LOCATION_UPDATE_TIMEOUT_SECONDS = 180;
 
     @ClassRule
     @Rule
@@ -94,24 +94,20 @@ public final class LostModeLocationTest {
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
-    @Ignore("b/223148704")
-    public void sendLostModeLocationUpdate_noTestProviders_returnFalse() throws Exception {
-        sendLostModeLocationUpdate(/* expected= */ false);
-    }
-
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = LostMode.class)
-    @Ignore("b/223148704")
     public void sendLostModeLocationUpdate_noLocation_returnFalse() throws Exception {
-        try (LocationProvider provider = TestApis.location().addLocationProvider()) {
-            sendLostModeLocationUpdate(/* expected */ false);
+        try {
+            TestApis.location().setLocationEnabled(false);
+            sendLostModeLocationUpdate(/* expected= */ false);
+        } finally {
+            TestApis.location().setLocationEnabled(true);
         }
     }
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
-    public void sendLostModeLocationUpdate_returnTrueAndSendLocationUpdate() throws Exception {
-        try (LocationProvider provider = TestApis.location().addLocationProvider()) {
+    public void sendLostModeLocationUpdate_returnTrueAndSendLocationUpdate()
+            throws Exception {
+        try (LocationProvider provider = TestApis.location().addLocationProvider(FUSED_PROVIDER)) {
             provider.setLocation(TEST_LATITUDE, TEST_LONGITUDE, TEST_ACCURACY);
 
             sendLostModeLocationUpdate(/* expected= */ true);
@@ -133,7 +129,7 @@ public final class LostModeLocationTest {
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = LostMode.class)
     public void sendLostModeLocationUpdate_sendMostRecentLocation() throws Exception {
-        try (LocationProvider provider = TestApis.location().addLocationProvider()) {
+        try (LocationProvider provider = TestApis.location().addLocationProvider(FUSED_PROVIDER)) {
             provider.setLocation(TEST_LATITUDE, TEST_LONGITUDE, TEST_ACCURACY);
             provider.setLocation(TEST_LATITUDE_2, TEST_LONGITUDE_2, TEST_ACCURACY_2);
 
