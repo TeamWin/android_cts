@@ -60,6 +60,7 @@ import android.telephony.SignalThresholdInfo;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.data.NetworkSlicingConfig;
 import android.util.Base64;
 import android.util.Log;
 
@@ -81,6 +82,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1399,5 +1401,16 @@ public class CarrierApiTest extends BaseCarrierApiTest {
                 TelephonyManager.DATA_ENABLED_REASON_CARRIER, !isDataEnabled);
         mTelephonyManager.setDataEnabledForReason(
                 TelephonyManager.DATA_ENABLED_REASON_CARRIER, isDataEnabled);
+    }
+
+    /**
+     * This test checks that applications with carrier privileges can get network slicing
+     * configuration.
+     */
+    @Test
+    public void testGetNetworkSlicingConfiguration() {
+        CompletableFuture<NetworkSlicingConfig> resultFuture = new CompletableFuture<>();
+        mTelephonyManager.getNetworkSlicingConfiguration(
+                AsyncTask.SERIAL_EXECUTOR, resultFuture::complete);
     }
 }
