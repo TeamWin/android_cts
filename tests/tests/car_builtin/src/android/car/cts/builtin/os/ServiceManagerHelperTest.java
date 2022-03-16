@@ -18,11 +18,14 @@ package android.car.cts.builtin.os;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import android.app.Instrumentation;
+import android.car.Car;
 import android.car.builtin.os.ServiceManagerHelper;
 import android.content.ComponentName;
 import android.content.Context;
@@ -34,18 +37,25 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ServiceManagerHelperTest {
 
     private static final String SERVICE_PACKAGE_NAME = "android.car.cts.builtin";
+    private static final String CAR_SERVICE_NAME = "car_service";
+    private static final String SERVICE_LIST_COMMAND = "cmd -l";
+    private static final String SERVICE_LIST_SPLITTER_REGEX = "\\p{Blank}*\n\\p{Blank}*";
 
     private static final String[] SYSTEM_SERVICES = {
         Context.ACTIVITY_SERVICE,
@@ -118,10 +128,20 @@ public class ServiceManagerHelperTest {
         assertNull(ServiceManagerHelper.getService(testServiceName));
     }
 
+    // In the ICar binder service and CarService initialization, both waitForDeclaredService
+    // and addService APIs are called. So the existence of CarService valids the correct
+    // behavior of the APIs and code coverage
     @Test
     public void testCarServiceExistence() throws Exception {
-        // TODO (b/194743195): implement the test case to test waitForDeclaredService()
-        // and addService() builtin APIs.
+        Car theCar = Car.createCar(getContext());
+        assertThat(theCar).isNotNull();
+
+        String[] serviceList = SystemUtil
+                .runShellCommand(SERVICE_LIST_COMMAND).trim().split(SERVICE_LIST_SPLITTER_REGEX);
+        Predicate<String> checkCarServiceName = (serviceName) -> {
+            return CAR_SERVICE_NAME.equals(serviceName);
+        };
+        assertThat(Arrays.stream(serviceList).anyMatch(checkCarServiceName)).isTrue();
     }
 
     private void setUpService() throws Exception {
