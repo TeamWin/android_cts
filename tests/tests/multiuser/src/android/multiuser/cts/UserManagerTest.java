@@ -108,6 +108,28 @@ public final class UserManagerTest {
     }
 
     @Test
+    public void testIsRemoveResultSuccessful() {
+        assertThat(UserManager.isRemoveResultSuccessful(UserManager.REMOVE_RESULT_REMOVED))
+                .isTrue();
+        assertThat(UserManager.isRemoveResultSuccessful(UserManager.REMOVE_RESULT_DEFERRED))
+                .isTrue();
+        assertThat(UserManager
+                .isRemoveResultSuccessful(UserManager.REMOVE_RESULT_ALREADY_BEING_REMOVED))
+                        .isTrue();
+        assertThat(UserManager.isRemoveResultSuccessful(UserManager.REMOVE_RESULT_ERROR_UNKNOWN))
+                .isFalse();
+        assertThat(UserManager
+                .isRemoveResultSuccessful(UserManager.REMOVE_RESULT_ERROR_USER_RESTRICTION))
+                        .isFalse();
+        assertThat(UserManager
+                .isRemoveResultSuccessful(UserManager.REMOVE_RESULT_ERROR_USER_NOT_FOUND))
+                        .isFalse();
+        assertThat(
+                UserManager.isRemoveResultSuccessful(UserManager.REMOVE_RESULT_ERROR_SYSTEM_USER))
+                        .isFalse();
+    }
+
+    @Test
     public void testIsHeadlessSystemUserMode() throws Exception {
         boolean expected = getBooleanProperty(mInstrumentation,
                 "ro.fw.mu.headless_system_user");
