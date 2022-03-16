@@ -1000,8 +1000,8 @@ public final class LockTaskTest {
                 activity.activity().startActivity(intent);
 
                 if (TestApis.activities().foregroundActivity() != null) {
-                    assertThat(TestApis.activities().foregroundActivity().pkg()).isNotEqualTo(
-                            emergencyDialerPackageName);
+                    assertThat(TestApis.activities().foregroundActivity().pkg().packageName())
+                            .isNotEqualTo(emergencyDialerPackageName);
                 }
             } finally {
                 activity.stopLockTask();

@@ -440,7 +440,7 @@ public class BluetoothAdapterTest extends AndroidTestCase {
 
     public void test_BluetoothConnectionCallback_disconnectReasonText() {
         assertEquals("Reason unknown", BluetoothAdapter.BluetoothConnectionCallback
-                .disconnectReasonText(BluetoothStatusCodes.ERROR_UNKNOWN));
+                .disconnectReasonToString(BluetoothStatusCodes.ERROR_UNKNOWN));
     }
 
     public void test_registerBluetoothConnectionCallback() {
@@ -477,25 +477,6 @@ public class BluetoothAdapterTest extends AndroidTestCase {
                 mAdapter.registerBluetoothConnectionCallback(executor, callback));
         assertThrows(SecurityException.class, () ->
                 mAdapter.unregisterBluetoothConnectionCallback(callback));
-    }
-
-    public void test_registerServiceLifecycleCallback() {
-        if (!mHasBluetooth) return;
-
-        BluetoothAdapter.ServiceLifecycleCallback callback =
-                new BluetoothAdapter.ServiceLifecycleCallback() {
-                    @Override
-                    public void onBluetoothServiceUp() {}
-                    @Override
-                    public void onBluetoothServiceDown() {}
-                };
-
-        // Verify parameter
-        assertThrows(NullPointerException.class,
-                () -> mAdapter.registerServiceLifecycleCallback(null));
-
-        assertThrows(NullPointerException.class,
-                () -> mAdapter.unregisterServiceLifecycleCallback(null));
     }
 
     public void test_requestControllerActivityEnergyInfo() {

@@ -50,6 +50,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 
 import androidx.test.filters.SdkSuppress;
@@ -447,9 +448,10 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertUriIsUnredacted(img);
 
-            InputStream is = getContentResolver().openInputStream(redactedUri);
-            ExifInterface redactedExifInf = new ExifInterface(is);
-            assertUriIsRedacted(redactedExifInf);
+            try (InputStream is = getContentResolver().openInputStream(redactedUri)) {
+                ExifInterface redactedExifInf = new ExifInterface(is);
+                assertUriIsRedacted(redactedExifInf);
+            }
         } finally {
             img.delete();
         }
@@ -462,10 +464,12 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertUriIsUnredacted(img);
 
-            FileDescriptor fd = getContentResolver().openFileDescriptor(redactedUri,
-                    "r").getFileDescriptor();
-            ExifInterface redactedExifInf = new ExifInterface(fd);
-            assertUriIsRedacted(redactedExifInf);
+            try (ParcelFileDescriptor pfd =
+                    getContentResolver().openFileDescriptor(redactedUri, "r")) {
+                FileDescriptor fd = pfd.getFileDescriptor();
+                ExifInterface redactedExifInf = new ExifInterface(fd);
+                assertUriIsRedacted(redactedExifInf);
+            }
         } finally {
             img.delete();
         }

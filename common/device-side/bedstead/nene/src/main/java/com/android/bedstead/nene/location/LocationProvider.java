@@ -16,8 +16,8 @@
 
 package com.android.bedstead.nene.location;
 
-import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
+import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_MOCK_LOCATION;
 
 import android.app.AppOpsManager;
 import android.content.Context;
@@ -27,6 +27,7 @@ import android.location.LocationManager;
 import android.os.SystemClock;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 
 /** A test location provider on the device. */
 public final class LocationProvider implements AutoCloseable {
@@ -49,18 +50,18 @@ public final class LocationProvider implements AutoCloseable {
     }
 
     private void addTestProvider() {
-        // TODO(b/215671032): Allow app op to be adopted with permissions
-        TestApis.packages().instrumented().appOps().set(AppOpsManager.OPSTR_MOCK_LOCATION, ALLOWED);
-        sLocationManager.addTestProvider(sProviderName,
-                /* requiresNetwork= */ true,
-                /* requiresSatellite= */ false,
-                /* requiresCell= */ true,
-                /* hasMonetaryCost= */ false,
-                /* supportsAltitude= */ false,
-                /* supportsSpeed= */ false,
-                /* supportsBearing= */ false,
-                Criteria.POWER_MEDIUM,
-                Criteria.ACCURACY_COARSE);
+        try (PermissionContext p = TestApis.permissions().withAppOp(OPSTR_MOCK_LOCATION)) {
+            sLocationManager.addTestProvider(sProviderName,
+                    /* requiresNetwork= */ true,
+                    /* requiresSatellite= */ false,
+                    /* requiresCell= */ true,
+                    /* hasMonetaryCost= */ false,
+                    /* supportsAltitude= */ false,
+                    /* supportsSpeed= */ false,
+                    /* supportsBearing= */ false,
+                    Criteria.POWER_MEDIUM,
+                    Criteria.ACCURACY_COARSE);
+        }
     }
 
     private void enableTestProvider() {

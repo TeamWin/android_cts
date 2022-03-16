@@ -295,7 +295,7 @@ public class CameraTestUtils extends Assert {
             int format, Size targetSize, int numBuffers, String overridePhysicalCameraId,
             MultiResolutionStreamConfigurationMap multiResStreamConfig,
             boolean createMultiResiStreamConfig, ImageDropperListener listener, Handler handler,
-            long dynamicRangeProfile, int streamUseCase) {
+            long dynamicRangeProfile, long streamUseCase) {
         if (createMultiResiStreamConfig) {
             Collection<MultiResolutionStreamInfo> multiResolutionStreams =
                     multiResStreamConfig.getOutputInfo(format);

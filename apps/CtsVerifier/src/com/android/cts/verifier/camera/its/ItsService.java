@@ -177,7 +177,7 @@ public class ItsService extends Service implements SensorEventListener {
     private CameraCaptureSession mSession = null;
     private ImageReader[] mOutputImageReaders = null;
     private SparseArray<String> mPhysicalStreamMap = new SparseArray<String>();
-    private SparseArray<Integer> mStreamUseCaseMap = new SparseArray<Integer>();
+    private SparseArray<Long> mStreamUseCaseMap = new SparseArray<Long>();
     private ImageReader mInputImageReader = null;
     private CameraCharacteristics mCameraCharacteristics = null;
     private HashMap<String, CameraCharacteristics> mPhysicalCameraChars =
@@ -1604,7 +1604,7 @@ public class ItsService extends Service implements SensorEventListener {
 
                     outputSizes[i] = new Size(width, height);
                     if (!surfaceObj.isNull("useCase")) {
-                        mStreamUseCaseMap.put(i, surfaceObj.optInt("useCase"));
+                        mStreamUseCaseMap.put(i, surfaceObj.optLong("useCase"));
                     }
                 }
             } catch (org.json.JSONException e) {

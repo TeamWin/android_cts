@@ -27,12 +27,12 @@ import javax.annotation.Nonnull;
 
 public abstract class AppSearchHostTestBase extends BaseHostJUnit4Test {
     protected static final String TARGET_APK_A = "CtsAppSearchHostTestHelperA.apk";
-    protected static final String TARGET_PKG_A = "android.appsearch.app.a";
+    protected static final String TARGET_PKG_A = "android.appsearch.app.helper_a";
     protected static final String TEST_CLASS_A = TARGET_PKG_A + ".AppSearchDeviceTest";
     protected static final String TEST_STORAGE_AUGMENTER_CLASS_A =
             TARGET_PKG_A + ".AppSearchStorageAugmenterDeviceTest";
     protected static final String TARGET_APK_B = "CtsAppSearchHostTestHelperB.apk";
-    protected static final String TARGET_PKG_B = "android.appsearch.app.b";
+    protected static final String TARGET_PKG_B = "android.appsearch.app.helper_b";
     protected static final String TEST_CLASS_B = TARGET_PKG_B + ".AppSearchDeviceTest";
 
     protected static final String USER_ID_KEY = "userId";

@@ -106,9 +106,6 @@ public final class PermitInputMethodsTest {
                 SYSTEM_INPUT_METHODS_PACKAGES.isEmpty());
 
         List<String> enabledNonSystemImes = List.of(INPUT_METHOD_PACKAGE_NAME);
-        Set<String> permittedPlusSystem = new HashSet<>();
-        permittedPlusSystem.addAll(SYSTEM_INPUT_METHODS_PACKAGES);
-        permittedPlusSystem.addAll(enabledNonSystemImes);
 
         assertThat(sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                 sDeviceState.dpc().componentName(), /* packageNames= */ enabledNonSystemImes)
