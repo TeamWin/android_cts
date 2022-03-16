@@ -18,6 +18,7 @@ package android.translation.cts;
 
 import static android.content.Context.CONTENT_CAPTURE_MANAGER_SERVICE;
 import static android.content.Context.TRANSLATION_MANAGER_SERVICE;
+import static android.provider.Settings.Global.ANIMATOR_DURATION_SCALE;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_PAUSE;
 import static android.translation.cts.Helper.ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_RESUME;
@@ -39,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.icu.util.ULocale;
@@ -79,6 +81,7 @@ import androidx.test.uiautomator.UiObject2;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredServiceRule;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -237,6 +240,60 @@ public class UiTranslationManagerTest {
         pauseUiTranslation(contentCaptureContext);
 
         assertThat(helloText.getText()).isEqualTo(originalText.toString());
+    }
+
+    @Test
+    public void testUiTranslationWithoutAnimation() throws Throwable {
+        final float[] originalAnimationDurationScale = new float[1];
+        try {
+            // Disable animation
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                ContentResolver resolver =
+                        ApplicationProvider.getApplicationContext().getContentResolver();
+                originalAnimationDurationScale[0] =
+                        Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
+                Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
+            });
+
+            final Pair<List<AutofillId>, ContentCaptureContext> result =
+                    enableServicesAndStartActivityForTranslation();
+
+            final CharSequence originalText = mTextView.getText();
+            final List<AutofillId> views = result.first;
+            final ContentCaptureContext contentCaptureContext = result.second;
+
+            final String translatedText = "success";
+            final UiObject2 helloText = Helper.findObjectByResId(Helper.ACTIVITY_PACKAGE,
+                    SimpleActivity.HELLO_TEXT_ID);
+            assertThat(helloText).isNotNull();
+            // Set response
+            final TranslationResponse response =
+                    createViewsTranslationResponse(views, translatedText);
+            sTranslationReplier.addResponse(response);
+
+            startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+            assertThat(helloText.getText()).isEqualTo(translatedText);
+
+            pauseUiTranslation(contentCaptureContext);
+
+            assertThat(helloText.getText()).isEqualTo(originalText.toString());
+
+            resumeUiTranslation(contentCaptureContext);
+
+            assertThat(helloText.getText()).isEqualTo(translatedText);
+
+            finishUiTranslation(contentCaptureContext);
+
+            assertThat(helloText.getText()).isEqualTo(originalText.toString());
+        } finally {
+            // restore animation
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Global.putFloat(
+                        ApplicationProvider.getApplicationContext().getContentResolver(),
+                        ANIMATOR_DURATION_SCALE, originalAnimationDurationScale[0]);
+            });
+        }
     }
 
     @Test
