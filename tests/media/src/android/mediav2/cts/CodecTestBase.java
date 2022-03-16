@@ -512,13 +512,16 @@ abstract class CodecTestBase {
     static final String CODEC_PREFIX_KEY = "codec-prefix";
     static final String MIME_SEL_KEY = "mime-sel";
     static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
+    static final Map<String, String> mDefaultEncoders = new HashMap<>();
+    static final Map<String, String> mDefaultDecoders = new HashMap<>();
     static final boolean ENABLE_LOGS = false;
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final int UNSPECIFIED = 0;
-    static final int CODEC_ALL = 0; // All codecs should support
-    static final int CODEC_ANY = 1; // Atleast one codec should support
-    static final int CODEC_OPTIONAL = 2; // Codec support is optional
+    static final int CODEC_ALL = 0; // All codecs must support
+    static final int CODEC_ANY = 1; // At least one codec must support
+    static final int CODEC_DEFAULT = 2; // Default codec must support
+    static final int CODEC_OPTIONAL = 3; // Codec support is optional
     // Maintain Timeouts in sync with their counterpart in NativeMediaCommon.h
     static final long Q_DEQ_TIMEOUT_US = 5000; // block at most 5ms while looking for io buffers
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
@@ -642,6 +645,20 @@ abstract class CodecTestBase {
         }
         codec.release();
         return isSupported;
+    }
+
+    static boolean isDefaultCodec(String codecName, String mime, boolean isEncoder)
+            throws IOException {
+        Map<String,String> mDefaultCodecs = isEncoder ? mDefaultEncoders:  mDefaultDecoders;
+        if (mDefaultCodecs.containsKey(mime)) {
+            return mDefaultCodecs.get(mime).equalsIgnoreCase(codecName);
+        }
+        MediaCodec codec = isEncoder ? MediaCodec.createEncoderByType(mime)
+                : MediaCodec.createDecoderByType(mime);
+        boolean isDefault = codec.getName().equalsIgnoreCase(codecName);
+        mDefaultCodecs.put(mime, codec.getName());
+        codec.release();
+        return isDefault;
     }
 
     static ArrayList<String> compileRequiredMimeList(boolean isEncoder, boolean needAudio,

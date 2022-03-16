@@ -351,111 +351,111 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
 
                 // aac-he
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_16kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_16kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_22kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_22kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_24kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_24kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_32kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_32kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_44kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_44kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_48kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_48kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_5ch_16kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_5ch_16kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_5ch_22kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_5ch_22kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_5ch_24kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_5ch_24kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_5ch_32kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_5ch_32kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_5ch_44kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_5ch_44kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_5ch_48kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_5ch_48kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_6ch_16kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_6ch_16kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_6ch_22kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_6ch_22kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_6ch_24kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_6ch_24kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_6ch_32kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_6ch_32kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_6ch_44kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_6ch_44kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_6ch_48kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_6ch_48kHz_aac_he.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
 
                 // aac-eld
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_16kHz_aac_eld.m4a"},
-                        "audio/bbb_1ch_16kHz_s16le_3s.raw", -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_1ch_16kHz_s16le_3s.raw", -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_22kHz_aac_eld.m4a"},
-                        "audio/bbb_1ch_22kHz_s16le_3s.raw", 24.959969f, -1L, CODEC_ALL},
+                        "audio/bbb_1ch_22kHz_s16le_3s.raw", 24.959969f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_24kHz_aac_eld.m4a"},
-                        "audio/bbb_1ch_24kHz_s16le_3s.raw", 26.495283f, -1L, CODEC_ALL},
+                        "audio/bbb_1ch_24kHz_s16le_3s.raw", 26.495283f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_32kHz_aac_eld.m4a"},
-                        "audio/bbb_1ch_32kHz_s16le_3s.raw", 31.464266f, -1L, CODEC_ALL},
+                        "audio/bbb_1ch_32kHz_s16le_3s.raw", 31.464266f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_44kHz_aac_eld.m4a"},
-                        "audio/bbb_1ch_44kHz_s16le_3s.raw", 33.852623f, -1L, CODEC_ALL},
+                        "audio/bbb_1ch_44kHz_s16le_3s.raw", 33.852623f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_48kHz_aac_eld.m4a"},
-                        "audio/bbb_1ch_48kHz_s16le_3s.raw", 33.136082f, -1L, CODEC_ALL},
+                        "audio/bbb_1ch_48kHz_s16le_3s.raw", 33.136082f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_16kHz_aac_eld.m4a"},
-                        "audio/bbb_2ch_16kHz_s16le_3s.raw", -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_16kHz_s16le_3s.raw", -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_22kHz_aac_eld.m4a"},
-                        "audio/bbb_2ch_22kHz_s16le_3s.raw", 24.959969f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_22kHz_s16le_3s.raw", 24.959969f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_24kHz_aac_eld.m4a"},
-                        "audio/bbb_2ch_24kHz_s16le_3s.raw", 26.962938f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_24kHz_s16le_3s.raw", 26.962938f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_32kHz_aac_eld.m4a"},
-                        "audio/bbb_2ch_32kHz_s16le_3s.raw", 27.784887f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_32kHz_s16le_3s.raw", 27.784887f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_44kHz_aac_eld.m4a"},
-                        "audio/bbb_2ch_44kHz_s16le_3s.raw", 29.223278f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_44kHz_s16le_3s.raw", 29.223278f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_48kHz_aac_eld.m4a"},
-                        "audio/bbb_2ch_48kHz_s16le_3s.raw", 29.171904f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_48kHz_s16le_3s.raw", 29.171904f, -1L, CODEC_DEFAULT},
 
                 // aac-hev2
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_16kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_16kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_22kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_22kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_24kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_24kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_32kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_32kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_44kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_44kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
-                        "audio/bbb_2ch_48kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_ALL},
+                        "audio/bbb_2ch_48kHz_aac_hev2.m4a"}, null, -1.0f, -1L, CODEC_DEFAULT},
 
                 // aac-usac
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_8kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_16kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_22kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_24kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_32kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_44kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_1ch_48kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_8kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_16kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_22kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_24kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_32kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_44kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{"audio/bbb_2ch_48kHz_usac.m4a"},
-                        null, -1.0f, -1L, CODEC_ALL},
+                        null, -1.0f, -1L, CODEC_DEFAULT},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
@@ -475,9 +475,12 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             if (mSupport == CODEC_ALL) {
                 fail("format(s) not supported by component: " + mCodecName + " for mime : " +
                         mMime);
-            }
-            if (mSupport != CODEC_OPTIONAL && selectCodecs(mMime, formats, null, false).isEmpty()) {
+            } else if (mSupport == CODEC_ANY && selectCodecs(mMime, formats, null,
+                    false).isEmpty()) {
                 fail("format(s) not supported by any component for mime : " + mMime);
+            } else if (mSupport == CODEC_DEFAULT && isDefaultCodec(mCodecName, mMime, false)) {
+                fail("format(s) not supported by " + mCodecName
+                        + " which is a default codec for mime : " + mMime);
             }
             return;
         }
