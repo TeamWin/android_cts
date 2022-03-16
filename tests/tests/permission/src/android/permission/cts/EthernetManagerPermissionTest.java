@@ -82,33 +82,33 @@ public class EthernetManagerPermissionTest {
     }
 
     /**
-     * Verify that calling {@link EthernetManager#connectNetwork(String, Executor, BiConsumer)}
+     * Verify that calling {@link EthernetManager#enableInterface}
      * requires permissions.
      * <p>Tests Permission:
      *   {@link android.Manifest.permission#MANAGE_ETHERNET_NETWORKS}.
      */
     @Test
-    public void testConnectNetwork() {
+    public void testEnableInterface() {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUTOMOTIVE));
-        assertThrows("Should not be able to call connectNetwork without permission",
+        assertThrows("Should not be able to call enableInterface without permission",
                 SecurityException.class,
-                () -> mEthernetManager.connectNetwork(TEST_IFACE, null, null));
+                () -> mEthernetManager.enableInterface(TEST_IFACE, null, null));
     }
 
     /**
-     * Verify that calling {@link EthernetManager#disconnectNetwork(String, Executor, BiConsumer)}
+     * Verify that calling {@link EthernetManager#disableInterface}
      * requires permissions.
      * <p>Tests Permission:
      *   {@link android.Manifest.permission#MANAGE_ETHERNET_NETWORKS}.
      */
     @Test
-    public void testDisconnectNetwork() {
+    public void testDisableInterface() {
         assumeTrue(mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUTOMOTIVE));
-        assertThrows("Should not be able to call disconnectNetwork without permission",
+        assertThrows("Should not be able to call disableInterface without permission",
                 SecurityException.class,
-                () -> mEthernetManager.disconnectNetwork(TEST_IFACE, null, null));
+                () -> mEthernetManager.disableInterface(TEST_IFACE, null, null));
     }
 
     /**
