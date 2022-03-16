@@ -24,7 +24,7 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.REGEX_PACKAGE_NAME
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findPreviewAddButton;
-import static android.provider.CloudMediaProvider.CloudMediaSurfaceEventCallback.PLAYBACK_EVENT_READY;
+import static android.provider.CloudMediaProvider.CloudMediaSurfaceStateChangedCallback.PLAYBACK_STATE_READY;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -121,7 +121,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
 
         final int surfaceId = 0;
         verifyInitialVideoPreviewSetup(surfaceId, CLOUD_ID1);
-        // Remote Preview calls onMediaPlay when PLAYBACK_EVENT_READY is sent by the
+        // Remote Preview calls onMediaPlay when PLAYBACK_STATE_READY is sent by the
         // CloudMediaProvider
         verifyPlaybackStartedWhenPlayerReady(surfaceId);
 
@@ -155,7 +155,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
 
         final int surfaceIdForFirstVideoPreview = 0;
         verifyInitialVideoPreviewSetup(surfaceIdForFirstVideoPreview, CLOUD_ID2);
-        // Remote Preview calls onMediaPlay when PLAYBACK_EVENT_READY is sent by the
+        // Remote Preview calls onMediaPlay when PLAYBACK_STATE_READY is sent by the
         // CloudMediaProvider
         verifyPlaybackStartedWhenPlayerReady(surfaceIdForFirstVideoPreview);
 
@@ -191,7 +191,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
         // Remote Preview calls onSurfaceCreated with monotonically increasing surfaceIds
         int surfaceId = 0;
         verifyInitialVideoPreviewSetup(surfaceId, CLOUD_ID2);
-        // Remote Preview calls onMediaPlay when PLAYBACK_EVENT_READY is sent by the
+        // Remote Preview calls onMediaPlay when PLAYBACK_STATE_READY is sent by the
         // CloudMediaProvider
         verifyPlaybackStartedWhenPlayerReady(surfaceId);
 
@@ -263,7 +263,7 @@ public class RemoteVideoPreviewTest extends PhotoPickerBaseTest {
     }
 
     private void verifyPlaybackStartedWhenPlayerReady(int surfaceId) throws Exception {
-        CloudProviderPrimary.sendPlaybackEvent(surfaceId, PLAYBACK_EVENT_READY);
+        CloudProviderPrimary.setPlaybackState(surfaceId, PLAYBACK_STATE_READY);
         // Wait for photo picker to receive the event and invoke media play via binder calls.
         MediaStore.waitForIdle(mContext.getContentResolver());
         mAssertInOrder.verify(mSurfaceControllerListener).onMediaPlay(eq(surfaceId));
