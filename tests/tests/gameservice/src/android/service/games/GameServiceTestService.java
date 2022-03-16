@@ -144,15 +144,6 @@ public final class GameServiceTestService extends Service {
         }
 
         @Override
-        public void showOverlayForFocusedGameSession() {
-            TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
-            if (focusedGameSession == null) {
-                return;
-            }
-            focusedGameSession.showOverlay();
-        }
-
-        @Override
         public boolean takeScreenshotForFocusedGameSession() {
             boolean result = false;
             TestGameSession focusedGameSession = TestGameSessionService.getFocusedSession();
