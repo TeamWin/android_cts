@@ -29,6 +29,7 @@ import android.platform.test.annotations.AppModeInstant;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -38,6 +39,26 @@ import java.lang.reflect.Method;
 public class EndToEndImeTestBase {
     @Rule
     public TestName mTestName = new TestName();
+
+    /**
+     * Enters touch mode when instrumenting.
+     *
+     * Making the view focus state in instrumentation process more reliable in case when
+     * {@link android.view.View#clearFocus()} invoked but system may reFocus again when the view
+     * was not in touch mode. (i.e {@link android.view.View#isInTouchMode()} is {@code false}).
+     */
+    @Before
+    public final void enterTouchMode() {
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(true);
+    }
+
+    /**
+     * Restore to the default touch mode state after the test.
+     */
+    @After
+    public final void restoreTouchMode() {
+        InstrumentationRegistry.getInstrumentation().resetInTouchMode();
+    }
 
     /**
      * Our own safeguard in case "atest" command is regressed and start running tests with
