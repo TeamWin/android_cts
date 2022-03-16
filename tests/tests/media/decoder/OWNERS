@@ -1,2 +1,2 @@
 # Bug component: 1344
-include ../../../media/OWNERS
+include platform/frameworks/av:/media/janitors/codec_OWNERS
