@@ -404,10 +404,10 @@ public class PickerProviderMediaGenerator {
                 bundle = new Bundle();
             }
 
-            albumId = bundle.getString(CloudMediaProviderContract.EXTRA_FILTER_ALBUM, null);
-            mimeType = bundle.getString(CloudMediaProviderContract.EXTRA_FILTER_MIME_TYPE,
+            albumId = bundle.getString(CloudMediaProviderContract.EXTRA_ALBUM_ID, null);
+            mimeType = bundle.getString(CloudMediaProviderContract.EXTRA_MIME_TYPE,
                     null);
-            sizeBytes = bundle.getLong(CloudMediaProviderContract.EXTRA_FILTER_SIZE_BYTES, 0);
+            sizeBytes = bundle.getLong(CloudMediaProviderContract.EXTRA_SIZE_LIMIT_BYTES, 0);
             generation = bundle.getLong(CloudMediaProviderContract.EXTRA_SYNC_GENERATION, 0);
         }
     }
