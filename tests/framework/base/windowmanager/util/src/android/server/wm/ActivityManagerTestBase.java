@@ -2499,7 +2499,8 @@ public abstract class ActivityManagerTestBase {
                 String amStartCmd =
                         (mWindowingMode == -1 || mNewTask)
                                 ? getAmStartCmd(mLaunchingActivity)
-                                : getAmStartCmd(mLaunchingActivity, mWindowingMode);
+                                : getAmStartCmd(mLaunchingActivity, mDisplayId)
+                                        + " --windowingMode " + mWindowingMode;
                 // Use launching activity to launch the target.
                 commandBuilder.append(amStartCmd)
                         .append(" -f 0x20000020");
