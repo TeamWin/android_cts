@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.TaskInfo;
 import android.car.builtin.app.ActivityManagerHelper;
@@ -33,6 +34,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.os.Process;
 import android.os.UserHandle;
 import android.server.wm.ActivityManagerTestBase;
@@ -79,6 +81,21 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     private static final int OWNING_UID = UserHandle.ALL.getIdentifier();
     private static final int MAX_NUM_TASKS = 1_000;
     private static final int TIMEOUT_MS = 20_000;
+
+    // x coordinate of the left boundary line of the animation rectangle
+    private static final int ANIMATION_RECT_LEFT = 0;
+    // y coordinate of the top boundary line of the animation rectangle
+    private static final int ANIMATION_RECT_TOP = 200;
+    // x coordinate of the right boundary line of the animation rectangle
+    private static final int ANIMATION_RECT_RIGHT = 400;
+    // y coordinate of the bottom boundary line of the animation rectangle
+    private static final int ANIMATION_RECT_BOTTOM = 0;
+
+    private static final int RANDOM_NON_DEFAULT_DISPLAY_ID = 1;
+    private static final boolean NON_DEFAULT_LOCK_TASK_MODE = true;
+    private static final boolean
+            NON_DEFAULT_PENDING_INTENT_BACKGROUND_ACTIVITY_LAUNCH_ALLOWED = true;
+
 
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private final Context mContext = mInstrumentation.getContext();
@@ -185,6 +202,36 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
             ActivityManagerHelper.unregisterProcessObserverCallback(callbackImpl);
             mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    @Test
+    public void testCreateActivityOptions() {
+        Rect expectedRect = new Rect(ANIMATION_RECT_LEFT,
+                ANIMATION_RECT_TOP,
+                ANIMATION_RECT_RIGHT,
+                ANIMATION_RECT_BOTTOM);
+        int expectedDisplayId = RANDOM_NON_DEFAULT_DISPLAY_ID;
+        boolean expectedLockTaskMode = NON_DEFAULT_LOCK_TASK_MODE;
+        boolean expectedLaunchAllowed =
+                NON_DEFAULT_PENDING_INTENT_BACKGROUND_ACTIVITY_LAUNCH_ALLOWED;
+
+        ActivityOptions originalOptions =
+                ActivityOptions.makeCustomAnimation(mContext,
+                /* entResId= */ android.R.anim.fade_in,
+                /* exitResId= */ android.R.anim.fade_out);
+        originalOptions.setLaunchBounds(expectedRect);
+        originalOptions.setLaunchDisplayId(expectedDisplayId);
+        originalOptions.setLockTaskEnabled(expectedLockTaskMode);
+        originalOptions.setPendingIntentBackgroundActivityLaunchAllowed(expectedLaunchAllowed);
+
+        ActivityOptions createdOptions =
+                ActivityManagerHelper.createActivityOptions(originalOptions.toBundle());
+
+        assertThat(createdOptions.getLaunchBounds()).isEqualTo(expectedRect);
+        assertThat(createdOptions.getLaunchDisplayId()).isEqualTo(expectedDisplayId);
+        assertThat(createdOptions.getLockTaskMode()).isEqualTo(expectedLockTaskMode);
+        assertThat(createdOptions.isPendingIntentBackgroundActivityLaunchAllowed())
+                .isEqualTo(expectedLaunchAllowed);
     }
 
     private void assertComponentPermissionGranted(String permission) throws Exception {
