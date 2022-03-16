@@ -93,6 +93,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mDestroyBiIAppCount;
         public int mAdResponseCount;
         public int mBroadcastInfoResponseCount;
+        public int mSigningResultCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -125,6 +126,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mDestroyBiIAppCount = 0;
             mAdResponseCount = 0;
             mBroadcastInfoResponseCount = 0;
+            mSigningResultCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -404,6 +406,12 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         @Override
         public void onVideoUnavailable(int reason) {
             super.onVideoUnavailable(reason);
+        }
+
+        @Override
+        public void onSigningResult(String signingId, byte[] result) {
+            super.onSigningResult(signingId, result);
+            mSigningResultCount++;
         }
     }
 }
