@@ -39,6 +39,11 @@ android_app_certificate {
 }
 
 android_app_certificate {
+    name: "ec-p256_5",
+    certificate: "ec-p256_5",
+}
+
+android_app_certificate {
     name: "ec-p384",
     certificate: "ec-p384",
 }
@@ -117,6 +122,13 @@ filegroup {
     name: "ec-p256-por-1_2_4-default-caps",
     srcs: [
         "ec-p256-por-1_2_4-default-caps",
+    ],
+}
+
+filegroup {
+    name: "ec-p256-por-1_2_3_4_5-default-caps",
+    srcs: [
+        "ec-p256-por-1_2_3_4_5-default-caps",
     ],
 }
 
