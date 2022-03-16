@@ -226,4 +226,13 @@ public class GetSchemaResponseCtsTest {
                                         SetSchemaRequest.READ_EXTERNAL_STORAGE),
                                 ImmutableSet.of(SetSchemaRequest.READ_ASSISTANT_APP_SEARCH_DATA)));
     }
+
+    @Test
+    public void getEmptyVisibility() {
+        GetSchemaResponse getSchemaResponse =
+                new GetSchemaResponse.Builder().setVersion(42).build();
+        assertThat(getSchemaResponse.getSchemaTypesNotDisplayedBySystem()).isEmpty();
+        assertThat(getSchemaResponse.getSchemaTypesVisibleToPackages()).isEmpty();
+        assertThat(getSchemaResponse.getRequiredPermissionsForSchemaTypeVisibility()).isEmpty();
+    }
 }

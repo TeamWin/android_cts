@@ -44,7 +44,7 @@ public class AppSearchInstantAppTest {
 
         int userId = context.getUserId();
         ExecutionException exception = expectThrows(ExecutionException.class, () ->
-                AppSearchSessionShimImpl.createSearchSession(
+                AppSearchSessionShimImpl.createSearchSessionAsync(
                         new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
                         userId).get());
         assertThat(exception.getMessage()).contains(

@@ -54,7 +54,7 @@ public class AppSearchSessionPlatformCtsTest {
     @Before
     public void setUp() throws Exception {
         mDb =
-                AppSearchSessionShimImpl.createSearchSession(
+                AppSearchSessionShimImpl.createSearchSessionAsync(
                                 new AppSearchManager.SearchContext.Builder(DB_NAME).build())
                         .get();
 

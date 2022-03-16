@@ -26,14 +26,13 @@ import androidx.annotation.NonNull;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class GlobalSearchSessionCtsTest extends GlobalSearchSessionCtsTestBase {
-    @Override
-    protected ListenableFuture<AppSearchSessionShim> createSearchSession(@NonNull String dbName) {
-        return AppSearchSessionShimImpl.createSearchSession(
+    protected ListenableFuture<AppSearchSessionShim> createSearchSessionAsync(
+            @NonNull String dbName) {
+        return AppSearchSessionShimImpl.createSearchSessionAsync(
                 new AppSearchManager.SearchContext.Builder(dbName).build());
     }
 
-    @Override
-    protected ListenableFuture<GlobalSearchSessionShim> createGlobalSearchSession() {
-        return GlobalSearchSessionShimImpl.createGlobalSearchSession();
+    protected ListenableFuture<GlobalSearchSessionShim> createGlobalSearchSessionAsync() {
+        return GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync();
     }
 }
