@@ -350,35 +350,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return mObjectTracker.manage(new DisplayMetricsSession(displayId));
     }
 
-    public static class IgnoreOrientationRequestSession implements AutoCloseable {
-        private static final String WM_SET_IGNORE_ORIENTATION_REQUEST =
-                "wm set-ignore-orientation-request ";
-        private static final String WM_GET_IGNORE_ORIENTATION_REQUEST =
-                "wm get-ignore-orientation-request";
-        private static final Pattern IGNORE_ORIENTATION_REQUEST_PATTERN =
-                Pattern.compile("ignoreOrientationRequest (true|false) for displayId=\\d+");
-
-        final int mDisplayId;
-        final boolean mInitialValue;
-
-        IgnoreOrientationRequestSession(int displayId, boolean value) {
-            mDisplayId = displayId;
-            Matcher matcher = IGNORE_ORIENTATION_REQUEST_PATTERN.matcher(
-                    executeShellCommand(WM_GET_IGNORE_ORIENTATION_REQUEST + " -d " + mDisplayId));
-            assertTrue("get-ignore-orientation-request should match pattern", matcher.find());
-            mInitialValue = Boolean.parseBoolean(matcher.group(1));
-
-            executeShellCommand("wm set-ignore-orientation-request true -d " + mDisplayId);
-            executeShellCommand(WM_SET_IGNORE_ORIENTATION_REQUEST + value + " -d " + mDisplayId);
-        }
-
-        @Override
-        public void close() {
-            executeShellCommand(
-                    WM_SET_IGNORE_ORIENTATION_REQUEST + mInitialValue + " -d " + mDisplayId);
-        }
-    }
-
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected IgnoreOrientationRequestSession createManagedIgnoreOrientationRequestSession(
             int displayId, boolean value) {
