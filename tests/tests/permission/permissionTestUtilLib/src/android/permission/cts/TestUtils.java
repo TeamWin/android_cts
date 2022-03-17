@@ -39,6 +39,46 @@ public class TestUtils {
     }
 
     /**
+     * Make sure that a {@link ThrowingRunnable} finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param r       The {@link ThrowingRunnable} to run.
+     * @param timeout the maximum time to wait
+     */
+    public static void ensure(@NonNull ThrowingRunnable r, long timeout) throws Throwable {
+        ensure(() -> {
+            r.run();
+            return 0;
+        }, timeout);
+    }
+
+    /**
+     * Make sure that a {@link ThrowingCallable} finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param r       The {@link ThrowingCallable} to run.
+     * @param timeout the maximum time to wait
+     * @return the return value from the callable
+     * @throws NullPointerException If the return value never becomes non-null
+     */
+    public static <T> T ensure(@NonNull ThrowingCallable<T> r, long timeout) throws Throwable {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            T res = r.call();
+            if (res == null) {
+                throw new NullPointerException("No result");
+            }
+
+            if (System.currentTimeMillis() - start < timeout) {
+                Thread.sleep(500);
+            } else {
+                return res;
+            }
+        }
+    }
+
+    /**
      * Make sure that a {@link ThrowingRunnable} eventually finishes without throwing a {@link
      * Exception}.
      *
