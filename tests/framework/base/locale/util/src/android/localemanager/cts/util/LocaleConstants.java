@@ -28,9 +28,9 @@ public final class LocaleConstants {
     private LocaleConstants() {}
 
     public static final LocaleList DEFAULT_SYSTEM_LOCALES =
-            LocaleList.forLanguageTags("en_US,fr_FR");
+            LocaleList.forLanguageTags("en-US,fr-FR");
 
-    public static final LocaleList DEFAULT_APP_LOCALES = LocaleList.forLanguageTags("hi,fr_FR");
+    public static final LocaleList DEFAULT_APP_LOCALES = LocaleList.forLanguageTags("hi,fr-FR");
 
     public static final String CALLING_PACKAGE = "android.localemanager.cts";
 
