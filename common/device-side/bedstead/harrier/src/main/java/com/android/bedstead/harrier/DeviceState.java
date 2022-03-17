@@ -1208,6 +1208,7 @@ public final class DeviceState extends HarrierRule {
             mProfiles = new HashMap<>();
     private DevicePolicyController mDeviceOwner;
     private Map<UserReference, DevicePolicyController> mProfileOwners = new HashMap<>();
+    private RemotePolicyManager mDelegateDpc;
     private RemotePolicyManager mPrimaryPolicyManager;
     private UserType mOtherUserType;
 
@@ -1755,6 +1756,7 @@ public final class DeviceState extends HarrierRule {
                 broadcastReceiver.unregisterQuietly();
             }
             mRegisteredBroadcastReceivers.clear();
+            mDelegateDpc = null;
             mPrimaryPolicyManager = null;
             mOtherUserType = null;
             mTestApps.clear();
@@ -1928,6 +1930,7 @@ public final class DeviceState extends HarrierRule {
                     dpc.componentName(), delegate.packageName(), scopes);
 
             if (isPrimary) {
+                mDelegateDpc = dpc;
                 mPrimaryPolicyManager = delegate;
             }
         });
@@ -2373,6 +2376,22 @@ public final class DeviceState extends HarrierRule {
                 UserReference user = resolveUserTypeToUser(forUser);
                 pkg.uninstall(user);
             }
+        });
+    }
+
+    /**
+     * Behaves like {@link #dpc()} except that when running on a delegate, this will return
+     * the delegating DPC not the delegate.
+     */
+    public RemotePolicyManager dpcOnly() {
+        return mLogger.method("dpcOnly", () -> {
+            if (mPrimaryPolicyManager != null) {
+                if (mPrimaryPolicyManager.isDelegate()) {
+                    return mDelegateDpc;
+                }
+            }
+
+            return dpc();
         });
     }
 
