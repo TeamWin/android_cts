@@ -5248,6 +5248,18 @@
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".audio.AudioDescriptorActivity"
+                  android:exported="true"
+                  android:label="@string/audio_descriptor_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest" android:value="android.media.AudioDescriptor#getStandard|android.media.AudioDescriptor#getDescriptor" />
+        </activity>
+
         <service android:name=".tv.MockTvInputService"
                 android:exported="true"
             android:permission="android.permission.BIND_TV_INPUT">

@@ -6386,4 +6386,45 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="handheld_or_tablet_text_before_test">Is this a handheld or tablet device?</string>
     <string name="handheld_or_tablet_yes">Yes</string>
     <string name="handheld_or_tablet_not_applicable">Not applicable</string>
+
+    <!-- AudioDescriptor Test -->
+    <string name="audio_descriptor_test">Audio Descriptor Test</string>
+    <string name="audio_descriptor_test_info">
+        This test tests if the reported AudioDescriptor is valid and necessary.\n
+        AudioDescriptor must only be used to report audio device capabilities that are not able to
+        describe by Android defined enums.\n
+        \nTo execute test:\n
+        1. Plug in HDMI cable if HDMI is supported on the device.\n
+        2. The test will execute automatically and verify the reported AudioDescriptor when the
+        activity is created and when audio device connection is changed.
+    </string>
+    <string name="audio_descriptor_HDMI_support_label">HDMI support:</string>
+    <string name="audio_descriptor_has_hdmi_support">Has HDMI support</string>
+    <string name="audio_descriptor_NA">N/A</string>
+    <string name="audio_descriptor_hdmi_pending">No HDMI detected. Pending&#8230;</string>
+    <string name="audio_descriptor_pass">Pass</string>
+    <string name="audio_descriptor_hdmi_not_reported">No HDMI device connected</string>
+    <string name="audio_descriptor_standard_none">Standard is none.</string>
+    <string name="audio_descriptor_is_null">Audio descriptor is null.</string>
+    <string name="audio_descriptor_unrecognized_standard">Standard %1$d is unrecognized.</string>
+    <string name="audio_descriptor_length_error">
+        The length of short audio descriptor is %1$d, but it is expected to be 3.
+    </string>
+    <string name="audio_descriptor_cannot_get_hal_version">Cannot get audio HAL version</string>
+    <string name="audio_descriptor_invalid_hal_version">Invalid audio HAL version %1$s</string>
+    <string name="audio_descriptor_format_code_should_not_be_reported">
+        Format with format code as %1$d(%2$s) should not be reported by AudioDescriptor.
+        Instead, it should be reported by Android defined enums.
+    </string>
+    <string name="audio_descriptor_format_extended_code_should_not_be_reported">
+        Format with format extended code as %1$d(%2$s) should not be reported by AudioDescriptor.
+        Instead, it should be reported by Android defined enums.
+    </string>
+    <string name="audio_descriptor_format_extended_code_is_not_used">
+        Format extended code as %1$d is not used.
+    </string>
+    <string name="audio_descriptor_hdmi_info_title">HDMI Support</string>
+    <string name="audio_descriptor_hdmi_message">
+        Please connect an HDMI peripheral to validate AudioDescriptor.
+    </string>
 </resources>
