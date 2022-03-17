@@ -319,18 +319,21 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testHandleExitAnimationOnCreate() throws Exception {
         assumeFalse(isLeanBack());
+        assumeFalse(isCar());  // TODO(b/218485067): Remove this with the proper fix.
         launchRuntimeHandleExitAnimationActivity(true, false, false, true);
     }
 
     @Test
     public void testHandleExitAnimationOnResume() throws Exception {
         assumeFalse(isLeanBack());
+        assumeFalse(isCar());  // TODO(b/218485067): Remove this with the proper fix.
         launchRuntimeHandleExitAnimationActivity(false, true, false, true);
     }
 
     @Test
     public void testHandleExitAnimationCancel() throws Exception {
         assumeFalse(isLeanBack());
+        assumeFalse(isCar());  // TODO(b/218485067): Remove this with the proper fix.
         launchRuntimeHandleExitAnimationActivity(true, false, true, false);
     }
 
@@ -401,6 +404,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testHandleExitIconAnimatingActivity() throws Exception {
         assumeFalse(isLeanBack());
+        assumeFalse(isCar());  // TODO(b/218485067): Remove this with the proper fix.
         final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         TestJournalProvider.TestJournalContainer.start();
 
@@ -425,6 +429,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testCancelHandleExitIconAnimatingActivity() {
         assumeFalse(isLeanBack());
+        assumeFalse(isCar());  // TODO(b/218485067): Remove this with the proper fix.
         final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
         TestJournalProvider.TestJournalContainer.start();
         startActivityFromTestLauncher(homeActivity, SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, intent -> {
@@ -490,6 +495,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testOverrideSplashscreenTheme() {
         assumeFalse(isLeanBack());
+        assumeFalse(isCar());  // TODO(b/218485067): Remove this with the proper fix.
         final CommandSession.ActivitySession homeActivity = prepareTestLauncher();
 
         // Pre-launch the activity to ensure status is cleared on the device
