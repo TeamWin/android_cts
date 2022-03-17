@@ -53,11 +53,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RevokeOwnPermissionTest {
+public class RevokeSelfPermissionTest {
     private static final String APP_PKG_NAME =
-            "android.permission.cts.apptotestrevokeownpermission";
+            "android.permission.cts.apptotestrevokeselfpermission";
     private static final String APK =
-            "/data/local/tmp/cts/permissions/CtsAppToTestRevokeOwnPermission.apk";
+            "/data/local/tmp/cts/permissions/CtsAppToTestRevokeSelfPermission.apk";
     private static final long ONE_TIME_TIMEOUT_MILLIS = 500;
     private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 5000;
 
@@ -159,7 +159,7 @@ public class RevokeOwnPermissionTest {
 
     @Test
     public void testNoRevocationWhileForeground() throws Throwable {
-        // Even after calling revokeOwnPermissionOnKill, the permission should stay granted while
+        // Even after calling revokeSelfPermissionOnKill, the permission should stay granted while
         // the package is in the foreground.
         installApp();
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
@@ -187,6 +187,16 @@ public class RevokeOwnPermissionTest {
         assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_COARSE_LOCATION);
         grantPermission(APP_PKG_NAME, ACCESS_FINE_LOCATION);
         assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_FINE_LOCATION);
+        grantPermission(APP_PKG_NAME, ACCESS_BACKGROUND_LOCATION);
+        assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_BACKGROUND_LOCATION);
+        revokePermission(ACCESS_BACKGROUND_LOCATION);
+        killApp();
+        assertDenied(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
+                ACCESS_BACKGROUND_LOCATION);
+        assertGranted(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
+                ACCESS_COARSE_LOCATION);
+        assertGranted(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
+                ACCESS_FINE_LOCATION);
         grantPermission(APP_PKG_NAME, ACCESS_BACKGROUND_LOCATION);
         assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_BACKGROUND_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);

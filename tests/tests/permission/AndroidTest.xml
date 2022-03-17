@@ -78,7 +78,7 @@
         <option name="push" value="CtsInstallPermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionUserApp.apk" />
         <option name="push" value="CtsInstallPermissionEscalatorApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionEscalatorApp.apk" />
         <option name="push" value="CtsAppThatRequestsOneTimePermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk" />
-        <option name="push" value="CtsAppToTestRevokeOwnPermission.apk->/data/local/tmp/cts/permissions/CtsAppToTestRevokeOwnPermission.apk" />
+        <option name="push" value="CtsAppToTestRevokeSelfPermission.apk->/data/local/tmp/cts/permissions/CtsAppToTestRevokeSelfPermission.apk" />
         <option name="push" value="AppThatDefinesUndefinedPermissionGroupElement.apk->/data/local/tmp/cts/permissions/AppThatDefinesUndefinedPermissionGroupElement.apk" />
         <option name="push" value="CtsAppThatDefinesPermissionA.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionA.apk" />
         <option name="push" value="CtsAppThatAlsoDefinesPermissionA.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionA.apk" />
