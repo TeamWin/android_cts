@@ -37,6 +37,12 @@ public class HdmiControlManagerUtility {
     /** The method name of the set active source case. */
     private static final String SEND_INTERRUPTED_LONG_PRESS = "interruptedLongPress";
 
+    /** The method name of the set active source case. */
+    private static final String VENDOR_CMD_LISTENER_WITHOUT_ID = "vendorCmdListenerWithoutId";
+
+    /** The method name of the set active source case. */
+    private static final String VENDOR_CMD_LISTENER_WITH_ID = "vendorCmdListenerWithId";
+
     /** The key of the set active source case arguments. */
     private static final String LOGICAL_ADDR = "ARG_LOGICAL_ADDR";
 
@@ -64,5 +70,17 @@ public class HdmiControlManagerUtility {
      */
     public static void sendLongPressKeyevent(BaseHostJUnit4Test host) throws DeviceNotAvailableException {
         host.runDeviceTests(TEST_PKG, TEST_CLS, SEND_INTERRUPTED_LONG_PRESS);
+    }
+
+    /** Registers a vendor command listener without a vendor ID. */
+    public static void registerVendorCmdListenerWithoutId(BaseHostJUnit4Test host)
+            throws DeviceNotAvailableException {
+        host.runDeviceTests(TEST_PKG, TEST_CLS, VENDOR_CMD_LISTENER_WITHOUT_ID);
+    }
+
+    /** Registers a vendor command listener with vendor ID. */
+    public static void registerVendorCmdListenerWithId(BaseHostJUnit4Test host)
+            throws DeviceNotAvailableException {
+        host.runDeviceTests(TEST_PKG, TEST_CLS, VENDOR_CMD_LISTENER_WITH_ID);
     }
 }
