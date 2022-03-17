@@ -194,6 +194,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/os/IInputConstants;",
                     "Landroid/os/InputEventInjectionResult;",
                     "Landroid/os/InputEventInjectionSync;",
+                    "Landroid/os/ReconcileSdkDataArgs;",
                     "Lcom/android/internal/util/FrameworkStatsLog;"
             );
 
