@@ -68,4 +68,12 @@ public class SystemEmojiTest {
     public void doNotDrawLegacy() {
         assertThat(getFontName("\u263A")).isNotEqualTo("NotoColorEmojiLegacy.ttf");
     }
+
+    @Test
+    public void doNotRemoveLegacyFont() {
+        File legacyFile = new File("/system/fonts", "NotoColorEmojiLegacy.ttf");
+        assertThat(legacyFile.exists()).isTrue();
+        assertThat(legacyFile.isFile()).isTrue();
+        assertThat(legacyFile.canRead()).isTrue();
+    }
 }
