@@ -168,8 +168,7 @@ public class KeyAgreementTest {
         }
     }
 
-    private static KeyPair generateEphemeralAndroidKeyPair(String alias)
-            throws GeneralSecurityException {
+    private static KeyPair generateEphemeralAndroidKeyPair() throws Exception {
         KeyPairGenerator kpg =
                 KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore");
         kpg.initialize(
@@ -187,17 +186,7 @@ public class KeyAgreementTest {
             fail("Unable to get KeyInfo for created key.");
         }
 
-        // ECDH is only implemented in Secure Hardware if KeyMint is available.
-        int level = keyInfo.getSecurityLevel();
-        Context context = InstrumentationRegistry.getTargetContext();
-        if (TestUtils.getFeatureVersionKeystore(context) >= Attestation.KM_VERSION_KEYMINT_1) {
-            Assert.assertTrue(
-                level == KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT ||
-                level == KeyProperties.SECURITY_LEVEL_UNKNOWN_SECURE);
-        } else {
-            Assert.assertEquals(keyInfo.getSecurityLevel(),
-                    KeyProperties.SECURITY_LEVEL_SOFTWARE);
-        }
+        TestUtils.assertImplementedByKeyMintAfter(keyInfo, Attestation.KM_VERSION_KEYMINT_1);
 
         return kp;
     }
