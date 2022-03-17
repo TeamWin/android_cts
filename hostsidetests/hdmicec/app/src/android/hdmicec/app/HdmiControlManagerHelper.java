@@ -18,11 +18,9 @@ package android.hdmicec.app;
 
 import static android.Manifest.permission.HDMI_CEC;
 
-import android.app.Activity;
 import android.content.Context;
 import android.hardware.hdmi.HdmiClient;
 import android.hardware.hdmi.HdmiControlManager;
-import android.hardware.hdmi.HdmiPlaybackClient;
 import android.hardware.hdmi.HdmiTvClient;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -44,6 +42,12 @@ import org.junit.runner.RunWith;
 public final class HdmiControlManagerHelper {
     private static final String LOGICAL_ADDR = "ARG_LOGICAL_ADDR";
     private static final String TAG = HdmiControlManagerHelper.class.getSimpleName();
+    private static final int VENDOR_ID = 0xBADDAD;
+    private static final HdmiControlManager.VendorCommandListener vendorCommandListenerWithoutId =
+            new VendorCommandTestListener();
+    private static final HdmiControlManager.VendorCommandListener vendorCommandListenerWithId =
+            new VendorCommandTestListener(VENDOR_ID);
+
     HdmiControlManager mHdmiControlManager;
 
     @Before
@@ -113,5 +117,77 @@ public final class HdmiControlManagerHelper {
         } catch (InterruptedException ie) {
             Log.w(TAG, "Interrupted between keyevents, could not send all keyevents!");
         }
+    }
+
+    @Test
+    public void vendorCmdListenerWithId() throws InterruptedException {
+        HdmiClient client = mHdmiControlManager.getPlaybackClient();
+        if (client == null) {
+            client = mHdmiControlManager.getTvClient();
+        }
+
+        if (client == null) {
+            Log.i(TAG, "Could not get a TV/Playback client, cannot register listener");
+            return;
+        }
+
+        client.setVendorCommandListener(vendorCommandListenerWithId, VENDOR_ID);
+        Log.i(TAG, "Registered vendor command listener with ID");
+
+        // Sleep for 20s, 10s waiting for the registration confirmation and 10s waiting for the
+        // callback.
+        TimeUnit.SECONDS.sleep(20);
+    }
+
+    @Test
+    public void vendorCmdListenerWithoutId() throws InterruptedException {
+        HdmiClient client = mHdmiControlManager.getPlaybackClient();
+        if (client == null) {
+            client = mHdmiControlManager.getTvClient();
+        }
+
+        if (client == null) {
+            Log.i(TAG, "Could not get a TV/Playback client, cannot register listener");
+            return;
+        }
+
+        client.setVendorCommandListener(vendorCommandListenerWithoutId);
+        Log.i(TAG, "Registered vendor command listener without ID");
+
+        // Sleep for 20s, 10s waiting for the registration confirmation and 10s waiting for the
+        // callback.
+        TimeUnit.SECONDS.sleep(20);
+    }
+
+    private static class VendorCommandTestListener
+            implements HdmiControlManager.VendorCommandListener {
+
+        int mVendorId = 0xFFFFFF;
+
+        VendorCommandTestListener(int vendorId) {
+            mVendorId = vendorId;
+        }
+
+        VendorCommandTestListener() {}
+
+        @Override
+        public void onReceived(
+                int sourceAddress, int destAddress, byte[] params, boolean hasVendorId) {
+            if (hasVendorId) {
+                int receivedVendorId =
+                        ((params[0] & 0xFF) << 16) + ((params[1] & 0xFF) << 8) + (params[2] & 0xFF);
+
+                if (mVendorId == receivedVendorId) {
+                    Log.i(TAG, "Received vendor command with correct vendor ID");
+                } else {
+                    Log.i(TAG, "Received vendor command with wrong vendor ID");
+                }
+            } else {
+                Log.i(TAG, "Received vendor command without vendor ID");
+            }
+        }
+
+        @Override
+        public void onControlStateChanged(boolean enabled, int reason) {}
     }
 }
