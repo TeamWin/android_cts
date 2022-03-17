@@ -19,7 +19,6 @@ package android.media.misc.cts;
 import static android.content.Context.AUDIO_SERVICE;
 import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
-import static android.media.misc.cts.StubMediaRoute2ProviderService.FEATURES_ALL;
 import static android.media.misc.cts.StubMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.misc.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.misc.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
@@ -174,42 +173,6 @@ public class MediaRouter2Test {
 
         assertEquals(1, remoteRouteCount);
         assertNotNull(routes.get(ROUTE_ID_SPECIAL_FEATURE));
-    }
-
-    @Test
-    public void testNoAllowedPackages_returnsZeroRoutes() throws Exception {
-        RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(FEATURES_ALL, true)
-                        .setAllowedPackages(List.of("random package name"))
-                        .build();
-        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(preference);
-
-        int remoteRouteCount = 0;
-        for (MediaRoute2Info route : routes.values()) {
-            if (!route.isSystemRoute()) {
-                remoteRouteCount++;
-            }
-        }
-
-        assertEquals(0, remoteRouteCount);
-    }
-
-    @Test
-    public void testAllowedPackages() throws Exception {
-        RouteDiscoveryPreference preference =
-                new RouteDiscoveryPreference.Builder(FEATURES_ALL, true)
-                        .setAllowedPackages(List.of("android.media.misc.cts"))
-                        .build();
-        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(preference);
-
-        int remoteRouteCount = 0;
-        for (MediaRoute2Info route : routes.values()) {
-            if (!route.isSystemRoute()) {
-                remoteRouteCount++;
-            }
-        }
-
-        assertTrue(remoteRouteCount > 0);
     }
 
     @Test
