@@ -38,7 +38,7 @@ public class AppSearchStorageAugmenterDeviceTest {
 
     @Test
     public void connectToAppSearch() throws Exception {
-        AppSearchSessionShimImpl.createSearchSession(
+        AppSearchSessionShimImpl.createSearchSessionAsync(
                 new AppSearchManager.SearchContext.Builder("dbName").build()).get();
     }
 
