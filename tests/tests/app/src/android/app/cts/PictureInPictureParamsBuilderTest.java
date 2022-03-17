@@ -49,7 +49,7 @@ public class PictureInPictureParamsBuilderTest {
                 .setSourceRectHint(new Rect(0, 0, 100, 100));
 
         PictureInPictureParams params = builder.build();
-        assertTrue(Float.compare(0.5f, params.getAspectRatio()) == 0);
+        assertTrue(Float.compare(0.5f, params.getAspectRatioFloat()) == 0);
         assertTrue(params.getActions().isEmpty());
         assertEquals(new Rect(0, 0, 100, 100), params.getSourceRectHint());
 
@@ -59,7 +59,7 @@ public class PictureInPictureParamsBuilderTest {
                 .setSourceRectHint(null);
         params = builder.build();
 
-        assertTrue(Float.compare(0f, params.getAspectRatio()) == 0);
+        assertTrue(Float.compare(0f, params.getAspectRatioFloat()) == 0);
         assertNull(params.getActions());
         assertNull(params.getSourceRectHint());
     }
@@ -91,7 +91,7 @@ public class PictureInPictureParamsBuilderTest {
         PictureInPictureParams newParams = new Builder(params).build();
 
         // Ensures the two PictureInPictureParams share the same parameters
-        assertEquals(params.getAspectRatioRational(), newParams.getAspectRatioRational());
+        assertEquals(params.getAspectRatio(), newParams.getAspectRatio());
         assertEquals(params.getActions(), params.getActions());
         assertEquals(params.getSourceRectHint(), params.getSourceRectHint());
     }

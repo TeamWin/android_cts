@@ -21,10 +21,15 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
+import android.telephony.data.NetworkSlicingConfig;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.CompletableFuture;
 
 public class SimRestrictedApisTest {
     private static final byte[] TEST_PDU = { 0, 0 };
@@ -335,6 +340,22 @@ public class SimRestrictedApisTest {
                 mTelephonyManager.getUiccCardsInfo();
                 fail("Expected SecurityException. App doesn't have carrier privileges.");
             }
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
+     * Tests the TelephonyManager.getNetworkSlicingConfiguration() API. This makes a call to
+     * getNetworkSlicingConfiguration() API and expects a SecurityException since the test apk is
+     * not signed by certficate on the SIM.
+     */
+    @Test
+    public void testGetNetworkSlicingConfiguration() {
+        try {
+            CompletableFuture<NetworkSlicingConfig> resultFuture = new CompletableFuture<>();
+            mTelephonyManager.getNetworkSlicingConfiguration(
+                            AsyncTask.SERIAL_EXECUTOR, resultFuture::complete);
+            fail("Expected SecurityException. App doesn't have carrier privileges.");
         } catch (SecurityException expected) {
         }
     }

@@ -20,6 +20,7 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
+import android.os.IBinder;
 import android.service.quickaccesswallet.GetWalletCardsCallback;
 import android.service.quickaccesswallet.GetWalletCardsError;
 import android.service.quickaccesswallet.GetWalletCardsRequest;
@@ -29,6 +30,9 @@ import android.service.quickaccesswallet.SelectWalletCardRequest;
 import android.service.quickaccesswallet.WalletCard;
 import android.service.quickaccesswallet.WalletServiceEvent;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -58,24 +62,22 @@ public class TestQuickAccessWalletService extends QuickAccessWalletService {
         sRequestCountDownLatch = new CountDownLatch(0);
         sBindCounter = new CountDownLatch(0);
         sUnbindCounter = new CountDownLatch(0);
+        sServiceRef.clear();
     }
 
+    @Nullable
     @Override
-    public void onCreate() {
-        super.onCreate();
+    public IBinder onBind(@NonNull Intent intent) {
+        sBindCounter.countDown();
         sServiceRef = new WeakReference<>(this);
+        return super.onBind(intent);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
         sUnbindCounter.countDown();
-        return super.onUnbind(intent);
-    }
-
-    @Override
-    public void onDestroy() {
         sServiceRef.clear();
-        super.onDestroy();
+        return super.onUnbind(intent);
     }
 
     @Override
@@ -123,6 +125,14 @@ public class TestQuickAccessWalletService extends QuickAccessWalletService {
         if (service != null) {
             service.sendWalletServiceEvent(event);
         }
+    }
+
+    public static boolean testGetUseTargetActivityForQuickAccess() {
+        TestQuickAccessWalletService service = sServiceRef.get();
+        if (service != null) {
+            return service.getUseTargetActivityForQuickAccess();
+        }
+        return false;
     }
 
     public static List<SelectWalletCardRequest> getSelectRequests() {

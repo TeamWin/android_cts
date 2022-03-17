@@ -103,7 +103,8 @@ static std::string getTestName(const ::testing::TestParamInfo<CbTestParams>& inf
 }
 
 template<typename T>
-class AAudioStreamCallbackTest : public ::testing::TestWithParam<CbTestParams> {
+class AAudioStreamCallbackTest : public AAudioCtsBase,
+                                 public ::testing::WithParamInterface<CbTestParams> {
   protected:
     struct AAudioCallbackTestData {
         int32_t expectedFramesPerCallback;
@@ -201,6 +202,7 @@ aaudio_data_callback_result_t AAudioInputStreamCallbackTest::MyDataCallbackProc(
 }
 
 void AAudioInputStreamCallbackTest::SetUp() {
+    AAudioCtsBase::SetUp();
 
     mSetupSuccessful = false;
     if (!deviceSupportsFeature(FEATURE_RECORDING)) return;
@@ -351,6 +353,8 @@ aaudio_data_callback_result_t AAudioOutputStreamCallbackTest::MyDataCallbackProc
 }
 
 void AAudioOutputStreamCallbackTest::SetUp() {
+    AAudioCtsBase::SetUp();
+
     mSetupSuccessful = false;
     if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     mHelper.reset(new OutputStreamBuilderHelper(
