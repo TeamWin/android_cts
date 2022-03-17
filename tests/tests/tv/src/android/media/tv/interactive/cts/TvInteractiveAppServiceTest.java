@@ -722,7 +722,7 @@ public class TvInteractiveAppServiceTest {
         linkTvView();
 
         CommandRequest request = new CommandRequest(2, BroadcastInfoRequest.REQUEST_OPTION_REPEAT,
-                "nameSpace1", "name2", "requestArgs");
+                "nameSpace1", "name2", "requestArgs", CommandRequest.ARGUMENT_TYPE_XML);
         mSession.requestBroadcastInfo(request);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mInputSession.mBroadcastInfoRequestCount > 0);
@@ -732,9 +732,10 @@ public class TvInteractiveAppServiceTest {
         assertThat(request.getType()).isEqualTo(TvInputManager.BROADCAST_INFO_TYPE_COMMAND);
         assertThat(request.getRequestId()).isEqualTo(2);
         assertThat(request.getOption()).isEqualTo(BroadcastInfoRequest.REQUEST_OPTION_REPEAT);
-        assertThat(request.getNameSpace()).isEqualTo("nameSpace1");
+        assertThat(request.getNamespace()).isEqualTo("nameSpace1");
         assertThat(request.getName()).isEqualTo("name2");
         assertThat(request.getArguments()).isEqualTo("requestArgs");
+        assertThat(request.getArgumentType()).isEqualTo(CommandRequest.ARGUMENT_TYPE_XML);
     }
 
     @Test
@@ -877,7 +878,8 @@ public class TvInteractiveAppServiceTest {
         linkTvView();
 
         CommandResponse response = new CommandResponse(2, 22,
-                BroadcastInfoResponse.RESPONSE_RESULT_OK, "commandResponse");
+                BroadcastInfoResponse.RESPONSE_RESULT_OK, "commandResponse",
+                CommandResponse.RESPONSE_TYPE_JSON);
         mInputSession.notifyBroadcastInfoResponse(response);
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mBroadcastInfoResponseCount > 0);
@@ -890,6 +892,7 @@ public class TvInteractiveAppServiceTest {
         assertThat(response.getResponseResult()).isEqualTo(
                 BroadcastInfoResponse.RESPONSE_RESULT_OK);
         assertThat(response.getResponse()).isEqualTo("commandResponse");
+        assertThat(response.getResponseType()).isEqualTo(CommandResponse.RESPONSE_TYPE_JSON);
     }
 
     @Test
@@ -1008,7 +1011,7 @@ public class TvInteractiveAppServiceTest {
         assertThat(response.getResponseResult()).isEqualTo(
                 BroadcastInfoResponse.RESPONSE_RESULT_OK);
         assertThat(response.getEventId()).isEqualTo(666);
-        assertThat(response.getNpt()).isEqualTo(6666);
+        assertThat(response.getNptMillis()).isEqualTo(6666);
         assertNotNull(response.getData());
     }
 
@@ -1052,7 +1055,7 @@ public class TvInteractiveAppServiceTest {
         assertThat(response.getSequence()).isEqualTo(88);
         assertThat(response.getResponseResult()).isEqualTo(
                 BroadcastInfoResponse.RESPONSE_RESULT_OK);
-        assertThat(response.getSelector()).isEqualTo("test_selector");
+        assertThat(response.getSelector().toString()).isEqualTo("test_selector");
         assertThat(response.getUnitsPerTick()).isEqualTo(1);
         assertThat(response.getUnitsPerSecond()).isEqualTo(10);
         assertThat(response.getWallClock()).isEqualTo(100);

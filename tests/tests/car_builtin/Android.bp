@@ -30,6 +30,7 @@ android_test {
     ],
     resource_dirs: ["res"],
     libs: [
+        "android.car",
         "android.car.builtin",
         "android.test.base",
     ],

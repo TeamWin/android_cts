@@ -29,6 +29,6 @@ import org.junit.runner.RunWith;
 public final class CarBuiltinTest {
     @Test
     public void testMinorVersion() {
-        assertThat(CarBuiltin.API_VERSION_MINOR_INT).isAtLeast(0);
+        assertThat(CarBuiltin.PLATFORM_VERSION_MINOR_INT).isAtLeast(0);
     }
 }
