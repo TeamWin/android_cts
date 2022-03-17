@@ -5404,6 +5404,9 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data
+                android:name="ApiTest"
+                android:value="android.car.settings.CarSettings.Secure#KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE"/>
         </activity>
 
         <!-- 6DoF sensor test -->
