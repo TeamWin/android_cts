@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony2.cts;
+package android.telephony5.cts;
 
 import static org.junit.Assert.fail;
 
