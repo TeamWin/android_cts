@@ -192,32 +192,6 @@ public class TvInteractiveAppManagerTest {
     }
 
     @Test
-    public void testPrepare() throws Exception {
-        List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
-
-        TvInteractiveAppServiceInfo stubInfo = null;
-        for (TvInteractiveAppServiceInfo info : list) {
-            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
-                stubInfo = info;
-                break;
-            }
-        }
-        assertNotNull(stubInfo);
-        stubInfo.getSupportedTypes();
-
-        mManager.prepare(stubInfo.getId(), TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mIAppServiceId != null);
-        assertThat(mCallback.mIAppServiceId).isEqualTo(stubInfo.getId());
-        assertThat(mCallback.mType)
-                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
-        assertThat(StubTvInteractiveAppService.sType)
-                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
-        assertThat(mCallback.mState)
-                .isEqualTo(TvInteractiveAppManager.SERVICE_STATE_PREPARING);
-        assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_NONE);
-    }
-
-    @Test
     public void testAppLinkCommand() throws Exception {
         List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
