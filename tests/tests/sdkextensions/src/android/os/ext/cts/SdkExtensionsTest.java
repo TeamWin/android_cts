@@ -18,9 +18,22 @@ package android.os.ext.cts;
 
 import android.os.Build;
 import android.os.ext.SdkExtensions;
+import java.util.Set;
 import junit.framework.TestCase;
 
 public class SdkExtensionsTest extends TestCase {
+
+    // Android R launched with 0. Since then, version 1 and 2 were added.
+    private static final Set<Integer> ALLOWED_VERSIONS = Set.of(0, 1, 2);
+
+    private static void assertCorrectVersion(int version) throws Exception {
+        assertTrue(ALLOWED_VERSIONS.contains(version));
+    }
+
+    private static void assertCorrectVersion(String versionPropValue) throws Exception {
+        int version = Integer.parseInt(versionPropValue);
+        assertCorrectVersion(version);
+    }
 
     /** Verify that getExtensionVersion only accepts valid extension SDKs */
     public void testBadArgument() throws Exception {
@@ -35,8 +48,7 @@ public class SdkExtensionsTest extends TestCase {
 
     /** Verifies that getExtensionVersion only return existing versions */
     public void testValidValues() throws Exception {
-        int rExtensionVersion = SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R);
-        assertTrue(rExtensionVersion == 0 || rExtensionVersion == 1);
+        assertCorrectVersion(SdkExtensions.getExtensionVersion(Build.VERSION_CODES.R));
         int firstUnassigned = Build.VERSION_CODES.R + 1;
         for (int sdk = firstUnassigned; sdk <= 1_000_000; sdk++) {
             // No extension SDKs versions yet.
