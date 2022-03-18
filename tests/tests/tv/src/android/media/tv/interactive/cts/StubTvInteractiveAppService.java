@@ -53,15 +53,6 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     }
 
     @Override
-    public void onPrepare(int type) {
-        sType = type;
-        super.notifyStateChanged(
-                sType,
-                TvInteractiveAppManager.SERVICE_STATE_PREPARING,
-                TvInteractiveAppManager.ERROR_NONE);
-    }
-
-    @Override
     public void onAppLinkCommand(Bundle command) {
         super.onAppLinkCommand(command);
         sAppLinkCommand = command;
