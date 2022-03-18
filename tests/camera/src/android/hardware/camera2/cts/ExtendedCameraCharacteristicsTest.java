@@ -55,6 +55,7 @@ import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -2585,6 +2586,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     /**
      * Check camera orientation against device orientation
      */
+    @AppModeFull(reason = "DeviceStateManager is not accessible to instant apps")
     @CddTest(requirement="7.5.5/C-1-1")
     @Test
     public void testCameraOrientationAlignedWithDevice() {
