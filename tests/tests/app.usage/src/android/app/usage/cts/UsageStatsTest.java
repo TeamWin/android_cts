@@ -2329,10 +2329,14 @@ public class UsageStatsTest {
     }
 
     private void updateFlagWithDelay(DeviceConfigStateHelper deviceConfigStateHelper,
-            String key, String value) throws Exception {
+            String key, String value) {
         deviceConfigStateHelper.set(key, value);
-        // TODO (221176951): Add a way to check the value of the flag in AppStandbyController
-        SystemClock.sleep(1_000);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            final String actualValue = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS,
+                    () -> mUsageStatsManager.getAppStandbyConstant(key),
+                    result -> value.equals(result));
+            assertEquals("Error changing the value of " + key, value, actualValue);
+        });
     }
 
     private Notification buildNotification(String channelId, int notificationId,
