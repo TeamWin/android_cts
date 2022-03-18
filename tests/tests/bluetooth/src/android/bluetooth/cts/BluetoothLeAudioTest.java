@@ -190,6 +190,12 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
                     @Override
                     public void onCodecConfigChanged(int groupId,
                                                      BluetoothLeAudioCodecStatus status) {}
+                    @Override
+                    public void onGroupNodeAdded(BluetoothDevice device, int groupId) {}
+                    @Override
+                    public void onGroupNodeRemoved(BluetoothDevice device, int groupId) {}
+                    @Override
+                    public void onGroupStatusChanged(int groupId, int groupStatus) {}
                 };
 
         // Verify parameter
