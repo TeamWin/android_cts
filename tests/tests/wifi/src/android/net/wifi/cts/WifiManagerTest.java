@@ -5614,6 +5614,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 }
             }
         }
+
+        // verify the WifiManager.InterfaceCreationImpact APIs
+        int interfaceType = WifiManager.WIFI_INTERFACE_TYPE_STA;
+        Set<String> packages = Set.of("package1", "packages2");
+        WifiManager.InterfaceCreationImpact element = new WifiManager.InterfaceCreationImpact(
+                interfaceType, packages);
+        assertEquals(interfaceType, element.getInterfaceType());
+        assertEquals(packages, element.getPackages());
     }
 
     /**
