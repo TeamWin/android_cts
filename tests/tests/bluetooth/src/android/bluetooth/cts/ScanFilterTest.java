@@ -213,21 +213,21 @@ public class ScanFilterTest extends AndroidTestCase {
     }
 
     @SmallTest
-    public void testSetAdvertisingDataWithType() {
+    public void testSetAdvertisingDataTypeWithData() {
         if (mFilterBuilder == null) return;
         byte[] adData = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
         byte[] adDataMask = {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
                 (byte) 0xFF};
-        ScanFilter filter = mFilterBuilder.setAdvertisingDataWithType(
+        ScanFilter filter = mFilterBuilder.setAdvertisingDataTypeWithData(
                 AD_TYPE_RESOLVABLE_SET_IDENTIFIER, adData, adDataMask).build();
         assertEquals(AD_TYPE_RESOLVABLE_SET_IDENTIFIER, filter.getAdvertisingDataType());
         TestUtils.assertArrayEquals(adData, filter.getAdvertisingData());
         TestUtils.assertArrayEquals(adDataMask, filter.getAdvertisingDataMask());
         assertTrue("advertising data filter fails", filter.matches(mScanResult));
-        filter = mFilterBuilder.setAdvertisingDataWithType(0x01, adData, adDataMask).build();
+        filter = mFilterBuilder.setAdvertisingDataTypeWithData(0x01, adData, adDataMask).build();
         assertFalse("advertising data filter fails", filter.matches(mScanResult));
         byte[] nonMatchAdData = {0x01, 0x02, 0x04, 0x04, 0x05, 0x06};
-        filter = mFilterBuilder.setAdvertisingDataWithType(AD_TYPE_RESOLVABLE_SET_IDENTIFIER,
+        filter = mFilterBuilder.setAdvertisingDataTypeWithData(AD_TYPE_RESOLVABLE_SET_IDENTIFIER,
                 nonMatchAdData, adDataMask).build();
         assertFalse("advertising data filter fails", filter.matches(mScanResult));
     }
