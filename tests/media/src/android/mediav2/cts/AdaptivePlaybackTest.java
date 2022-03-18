@@ -191,7 +191,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
             formats.add(setUpSource(file));
             mExtractor.release();
         }
-        checkFormatSupport(mCodecName, mMime, formats,
+        checkFormatSupport(mCodecName, mMime, false, formats,
                 new String[]{MediaCodecInfo.CodecCapabilities.FEATURE_AdaptivePlayback},
                 mSupportRequirements);
         formats.clear();
