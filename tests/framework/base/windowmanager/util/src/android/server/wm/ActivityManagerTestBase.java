@@ -76,7 +76,6 @@ import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.UiDeviceUtils.waitForDeviceIdle;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
 import static android.server.wm.app.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
@@ -1113,21 +1112,6 @@ public abstract class ActivityManagerTestBase {
         mWmState.assertValidity();
         assertTrue(message, mWmState.hasActivityState(activityName, STATE_RESUMED));
         mWmState.assertVisibility(activityName, true /* visible */);
-    }
-
-    /**
-     * Waits and asserts that the activity represented by the given activity name is stopped and
-     * invisible.
-     *
-     * @param activityName the activity name
-     * @param message the error message
-     */
-    public void waitAndAssertStoppedActivity(ComponentName activityName, String message) {
-        mWmState.waitForValidState(activityName);
-        mWmState.waitForActivityState(activityName, STATE_STOPPED);
-        mWmState.assertValidity();
-        assertTrue(message, mWmState.hasActivityState(activityName, STATE_STOPPED));
-        mWmState.assertVisibility(activityName, false /* visible */);
     }
 
     // TODO: Switch to using a feature flag, when available.
