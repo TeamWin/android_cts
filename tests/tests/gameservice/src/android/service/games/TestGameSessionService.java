@@ -77,7 +77,6 @@ public final class TestGameSessionService extends GameSessionService {
             mPackageName = packageName;
             mTaskId = taskId;
             mRootView = new FrameLayout(context);
-            mRootView.setVisibility(View.GONE);
             mOnSystemBarVisibilityChangedInfo = new OnSystemBarVisibilityChangedInfo();
         }
 
@@ -95,10 +94,6 @@ public final class TestGameSessionService extends GameSessionService {
 
         OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo() {
             return mOnSystemBarVisibilityChangedInfo;
-        }
-
-        void showOverlay() {
-            mRootView.post(() -> mRootView.setVisibility(View.VISIBLE));
         }
 
         @Override
@@ -147,12 +142,8 @@ public final class TestGameSessionService extends GameSessionService {
         public void onTransientSystemBarVisibilityFromRevealGestureChanged(
                 boolean visibleDueToGesture) {
             if (visibleDueToGesture) {
-                mRootView.setVisibility(View.VISIBLE);
                 mOnSystemBarVisibilityChangedInfo.incrementTimesShown();
             } else {
-                mTouchableBounds.setEmpty();
-                mRootView.getRootSurfaceControl().setTouchableRegion(new Region());
-                mRootView.setVisibility(View.GONE);
                 mOnSystemBarVisibilityChangedInfo.incrementTimesHidden();
             }
         }
