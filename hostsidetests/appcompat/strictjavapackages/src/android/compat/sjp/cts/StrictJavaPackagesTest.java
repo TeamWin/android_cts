@@ -955,7 +955,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                                 Multimaps.filterValues(sJarsToClasses, apkClasses::contains);
                         final Multimap<String, String> filteredDuplicates =
                                 Multimaps.filterValues(duplicates,
-                                    className -> !burndownClasses.contains(className));
+                                    className -> !burndownClasses.contains(className)
+                                            // TODO: b/225341497
+                                            && !className.equals("Landroidx/annotation/Keep;"));
                         if (!filteredDuplicates.isEmpty()) {
                             synchronized (perApkClasspathDuplicates) {
                                 perApkClasspathDuplicates.put(apk, filteredDuplicates);
