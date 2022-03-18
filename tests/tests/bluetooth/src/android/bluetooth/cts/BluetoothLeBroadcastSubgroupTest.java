@@ -21,6 +21,7 @@ import static android.bluetooth.BluetoothStatusCodes.FEATURE_SUPPORTED;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -48,7 +49,7 @@ import org.junit.runner.RunWith;
 @SmallTest
 public class BluetoothLeBroadcastSubgroupTest {
     private static final int TEST_CODEC_ID = 42;
-    private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {null};
+    private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {};
 
     // For BluetoothLeAudioCodecConfigMetadata
     private static final long TEST_AUDIO_LOCATION_FRONT_LEFT = 0x01;
@@ -122,8 +123,7 @@ public class BluetoothLeBroadcastSubgroupTest {
         BluetoothLeBroadcastSubgroup.Builder builder = new BluetoothLeBroadcastSubgroup.Builder()
                 .setCodecId(TEST_CODEC_ID)
                 .setCodecSpecificConfig(codecMetadata)
-                .setContentMetadata(contentMetadata)
-                .setNoChannelPreference(true);
+                .setContentMetadata(contentMetadata);
         for (BluetoothLeBroadcastChannel channel : TEST_CHANNELS) {
             builder.addChannel(channel);
         }
@@ -131,7 +131,7 @@ public class BluetoothLeBroadcastSubgroupTest {
         assertEquals(TEST_CODEC_ID, subgroup.getCodecId());
         assertEquals(codecMetadata, subgroup.getCodecSpecificConfig());
         assertEquals(contentMetadata, subgroup.getContentMetadata());
-        assertTrue(subgroup.isNoChannelPreference());
+        assertFalse(subgroup.hasChannelPreference());
         assertArrayEquals(TEST_CHANNELS,
                 subgroup.getChannels().toArray(new BluetoothLeBroadcastChannel[0]));
         builder.clearChannel();
@@ -153,8 +153,7 @@ public class BluetoothLeBroadcastSubgroupTest {
         BluetoothLeBroadcastSubgroup.Builder builder = new BluetoothLeBroadcastSubgroup.Builder()
                 .setCodecId(TEST_CODEC_ID)
                 .setCodecSpecificConfig(codecMetadata)
-                .setContentMetadata(contentMetadata)
-                .setNoChannelPreference(true);
+                .setContentMetadata(contentMetadata);
         for (BluetoothLeBroadcastChannel channel : TEST_CHANNELS) {
             builder.addChannel(channel);
         }
@@ -164,7 +163,7 @@ public class BluetoothLeBroadcastSubgroupTest {
         assertEquals(TEST_CODEC_ID, subgroupCopy.getCodecId());
         assertEquals(codecMetadata, subgroupCopy.getCodecSpecificConfig());
         assertEquals(contentMetadata, subgroupCopy.getContentMetadata());
-        assertTrue(subgroupCopy.isNoChannelPreference());
+        assertFalse(subgroupCopy.hasChannelPreference());
         assertArrayEquals(TEST_CHANNELS,
                 subgroupCopy.getChannels().toArray(new BluetoothLeBroadcastChannel[0]));
         builder.clearChannel();
