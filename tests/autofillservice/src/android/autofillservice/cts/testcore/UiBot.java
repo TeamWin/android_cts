@@ -46,6 +46,7 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
@@ -133,11 +134,21 @@ public class UiBot {
     private static final String RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE =
             "autofill_save_accessibility_title";
 
+    private static final String RESOURCE_ID_FILL_DIALOG_PICKER = "autofill_dialog_picker";
+    private static final String RESOURCE_ID_FILL_DIALOG_HEADER = "autofill_dialog_header";
+    private static final String RESOURCE_ID_FILL_DIALOG_DATASET = "autofill_dialog_list";
 
     static final BySelector DATASET_PICKER_SELECTOR = By.res("android", RESOURCE_ID_DATASET_PICKER);
     private static final BySelector SAVE_UI_SELECTOR = By.res("android", RESOURCE_ID_SAVE_SNACKBAR);
     private static final BySelector DATASET_HEADER_SELECTOR =
             By.res("android", RESOURCE_ID_DATASET_HEADER);
+    private static final BySelector FILL_DIALOG_SELECTOR =
+            By.res("android", RESOURCE_ID_FILL_DIALOG_PICKER);
+    private static final BySelector FILL_DIALOG_HEADER_SELECTOR =
+            By.res("android", RESOURCE_ID_FILL_DIALOG_HEADER);
+    private static final BySelector FILL_DIALOG_DATASET_SELECTOR =
+            By.res("android", RESOURCE_ID_FILL_DIALOG_DATASET);
+
 
     // TODO: figure out a more reliable solution that does not depend on SystemUI resources.
     private static final String SPLIT_WINDOW_DIVIDER_ID =
@@ -1261,5 +1272,100 @@ public class UiBot {
         } catch (UiObjectNotFoundException e) {
             return false;
         }
+    }
+
+    /**
+     * Selects a view by id via UiDevice.
+     *
+     * Note: This used to avoid IME issue that some case IME will be not shown via
+     * UiObject2.click().
+     */
+    public UiObject2 selectByRelativeIdFromUiDevice(String id) throws Exception {
+        Log.v(TAG, "selectByRelativeIdFromDevice(): " + id);
+        final UiObject2 object = waitForObject(By.res(mPackageName, id));
+        final Point p = object.getVisibleCenter();
+        mDevice.click(p.x, p.y);
+        return object;
+    }
+
+    /**
+     * Asserts the header in the fill dialog.
+     */
+    public void assertFillDialogHeader(String expectedHeader) throws Exception {
+        final UiObject2 header = findFillDialogHeaderPicker();
+
+        assertWithMessage("wrong header for fill dialog")
+                .that(getChildrenAsText(header))
+                .containsExactlyElementsIn(Arrays.asList(expectedHeader)).inOrder();
+    }
+
+    /**
+     * Asserts reject button in the fill dialog.
+     */
+    public void assertFillDialogRejectButton() throws Exception {
+        final UiObject2 picker = findFillDialogPicker();
+
+        // "No thanks" button shown
+        assertWithMessage("wrong reject button in fill dialog")
+                .that(getChildrenAsText(picker))
+                .contains(getString(RESOURCE_STRING_SAVE_BUTTON_NO_THANKS));
+    }
+
+    /**
+     * Asserts accept button in the fill dialog.
+     */
+    public void assertFillDialogAcceptButton() throws Exception {
+        final UiObject2 picker = findFillDialogPicker();
+
+        // "Continue" button shown
+        assertWithMessage("wrong accept button in fill dialog")
+                .that(getChildrenAsText(picker))
+                .contains(getString(RESOURCE_STRING_CONTINUE_BUTTON_YES));
+    }
+
+    /**
+     * Asserts there is no accept button in the fill dialog.
+     */
+    public void assertFillDialogNoAcceptButton() throws Exception {
+        final UiObject2 picker = findFillDialogPicker();
+
+        // "Continue" button not shown
+        assertWithMessage("wrong accept button in fill dialog")
+                .that(getChildrenAsText(picker))
+                .doesNotContain(getString(RESOURCE_STRING_CONTINUE_BUTTON_YES));
+    }
+
+    /**
+     * Asserts the fill dialog is shown and contains the given datasets.
+     *
+     * @return the dataset picker object.
+     */
+    public UiObject2 assertFillDialogDatasets(String... datasets) throws Exception {
+        final UiObject2 picker = findFillDialogDatasetPicker();
+
+        assertWithMessage("wrong elements in fill dialog")
+                .that(getChildrenAsText(picker))
+                .containsExactlyElementsIn(datasets).inOrder();
+        return picker;
+    }
+
+    /**
+     * Asserts the fill dialog is shown and contains the given dataset. And then select the dataset
+     */
+    public void selectFillDialogDataset(String dataset) throws Exception {
+        final UiObject2 picker = assertFillDialogDatasets(dataset);
+        selectDataset(picker, dataset);
+    }
+
+    private UiObject2 findFillDialogPicker() throws Exception {
+        return waitForObject(FILL_DIALOG_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
+    }
+
+    private UiObject2 findFillDialogDatasetPicker() throws Exception {
+        return waitForObject(FILL_DIALOG_DATASET_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
+    }
+
+    private UiObject2 findFillDialogHeaderPicker() throws Exception {
+        return waitForObject(FILL_DIALOG_HEADER_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }
 }

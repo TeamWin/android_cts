@@ -29,6 +29,7 @@ import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.activities.AugmentedAuthActivity;
 import android.autofillservice.cts.activities.AuthenticationActivity;
+import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
@@ -201,6 +202,14 @@ public final class AutoFillServiceTestCase {
             mUiBot.assertShownByRelativeId(PreSimpleSaveActivity.ID_PRE_LABEL);
             return PreSimpleSaveActivity.getInstance();
         }
+
+        protected LoginActivity startLoginActivity() throws Exception {
+            final Intent intent = new Intent(mContext, LoginActivity.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
+            return LoginActivity.getCurrentActivity();
+        }
     }
 
     @RunWith(AndroidJUnit4.class)
@@ -283,6 +292,11 @@ public final class AutoFillServiceTestCase {
                 .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
                         AutofillManager.DEVICE_CONFIG_AUTOFILL_SMART_SUGGESTION_SUPPORTED_MODES,
                         Integer.toString(getSmartSuggestionMode())))
+                //
+                // Fill Dialog should be disabled by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED,
+                        Boolean.toString(false)))
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
