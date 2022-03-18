@@ -226,6 +226,7 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
         MediaCodec decoder = null;
         OutputSurface outputSurface = null;
         VirtualDisplay virtualDisplay = null;
+        ColorSlideShow slideShow = null;
 
         try {
             // Encoded video resolution matches virtual display.
@@ -265,13 +266,19 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
 
             // Run the color slide show on a separate thread.
             mInputDone = false;
-            new ColorSlideShow(virtualDisplay.getDisplay()).start();
+            slideShow = new ColorSlideShow(virtualDisplay.getDisplay());
+            slideShow.start();
 
             // Record everything we can and check the results.
             doTestEncodeVirtual(encoder, decoder, outputSurface);
 
         } finally {
             if (VERBOSE) Log.d(TAG, "releasing codecs, surfaces, and virtual display");
+            if (slideShow != null) {
+                try {
+                    slideShow.join();
+                } catch (InterruptedException ignore) {}
+            }
             if (virtualDisplay != null) {
                 virtualDisplay.release();
             }
