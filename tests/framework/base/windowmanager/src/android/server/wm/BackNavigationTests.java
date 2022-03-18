@@ -35,8 +35,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.junit.Ignore;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -63,7 +61,6 @@ public class BackNavigationTests {
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
     }
 
-    @Ignore ("b/222208384")
     @Test
     public void registerCallback_initialized() {
         CountDownLatch latch = registerBackCallback();
@@ -71,7 +68,6 @@ public class BackNavigationTests {
         invokeBackAndAssertCallbackIsCalled(latch);
     }
 
-    @Ignore ("b/222208384")
     @Test
     public void registerCallback_created() {
         mScenario.moveToState(Lifecycle.State.CREATED);
@@ -81,7 +77,6 @@ public class BackNavigationTests {
         invokeBackAndAssertCallbackIsCalled(latch);
     }
 
-    @Ignore ("b/222208384")
     @Test
     public void registerCallback_resumed() {
         mScenario.moveToState(Lifecycle.State.CREATED);
@@ -91,7 +86,6 @@ public class BackNavigationTests {
         invokeBackAndAssertCallbackIsCalled(latch);
     }
 
-    @Ignore ("b/222208384")
     @Test
     public void onBackPressedNotCalled() {
         mScenario.moveToState(Lifecycle.State.CREATED)

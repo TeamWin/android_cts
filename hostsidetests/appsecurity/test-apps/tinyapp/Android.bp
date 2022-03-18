@@ -98,6 +98,23 @@ android_test_helper_app {
 }
 
 // This is the test package signed using the V3 signature scheme with
+// a rotated key and multiple signers in the lineage with default
+// capabilities.
+android_test_helper_app {
+    name: "v3-ec-p256-with-por-1_2_3_4_5-default-caps",
+    certificate: ":ec-p256_5",
+    additional_certificates: [":ec-p256"],
+    lineage: ":ec-p256-por-1_2_3_4_5-default-caps",
+    srcs: ["src/**/*.java"],
+    // resource_dirs is the default value: ["res"]
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "current",
+}
+
+// This is the test package signed using the V3 signature scheme with
 // a rotated key and part of a shareduid. The capabilities of this lineage
 // grant access to the previous key in the lineage to join the sharedUid.
 android_test_helper_app {

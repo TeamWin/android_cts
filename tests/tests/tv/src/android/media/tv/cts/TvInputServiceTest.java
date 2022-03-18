@@ -37,7 +37,7 @@ import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingRecordingSession;
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingSession;
-import android.media.tv.interactive.TvInteractiveAppInfo;
+import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -879,12 +879,12 @@ public class TvInputServiceTest {
         resetPassedValues();
 
         session.notifyAitInfoUpdated(
-                new AitInfo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV, 2));
+                new AitInfo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV, 2));
         PollingCheck.waitFor(TIME_OUT, () -> mCallback.mAitInfoUpdatedCount > 0);
 
         assertThat(mCallback.mAitInfoUpdatedCount).isEqualTo(1);
         assertThat(mCallback.mAitInfo.getType())
-                .isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         assertThat(mCallback.mAitInfo.getVersion()).isEqualTo(2);
     }
 

@@ -533,6 +533,9 @@ public class Components extends ComponentsBase {
         // Intent action that will request the activity to change the PiP aspect ratio
         public static final String ACTION_CHANGE_ASPECT_RATIO =
                 "android.server.wm.app.LaunchIntoPip.change_aspect_ratio";
+        // Intent action that will request the activity to start a new translucent activity
+        public static final String ACTION_LAUNCH_TRANSLUCENT_ACTIVITY =
+                "android.server.wm.app.LaunchIntoPip.launch_translucent_activity";
 
         // Adds an assertion that we do not ever get onStop() before we enter picture in picture
         public static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP =

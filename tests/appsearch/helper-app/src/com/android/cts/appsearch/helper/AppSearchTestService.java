@@ -57,7 +57,7 @@ public class AppSearchTestService extends Service {
             // stub, it'll try to grab the context from ApplicationProvider. But that will fail
             // since this isn't instrumented.
             mGlobalSearchSessionShim =
-                    GlobalSearchSessionShimImpl.createGlobalSearchSession(this).get();
+                    GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(this).get();
 
         } catch (Exception e) {
             Log.e(TAG, "Error starting service.", e);
@@ -124,7 +124,7 @@ public class AppSearchTestService extends Service {
                 String databaseName, String namespace, String id, List<Bundle> permissionBundles) {
             try {
                 AppSearchSessionShim db =
-                        AppSearchSessionShimImpl.createSearchSession(
+                        AppSearchSessionShimImpl.createSearchSessionAsync(
                                 AppSearchTestService.this,
                                 new AppSearchManager.SearchContext.Builder(databaseName).build(),
                                 Executors.newCachedThreadPool())
@@ -168,7 +168,7 @@ public class AppSearchTestService extends Service {
                 String databaseName, String namespace, String id) {
             try {
                 AppSearchSessionShim db =
-                        AppSearchSessionShimImpl.createSearchSession(
+                        AppSearchSessionShimImpl.createSearchSessionAsync(
                                 AppSearchTestService.this,
                                 new AppSearchManager.SearchContext.Builder(databaseName).build(),
                                 Executors.newCachedThreadPool())
@@ -207,7 +207,7 @@ public class AppSearchTestService extends Service {
                 // Force override with empty schema will clear all previous schemas and their
                 // documents.
                 AppSearchSessionShim db =
-                        AppSearchSessionShimImpl.createSearchSession(
+                        AppSearchSessionShimImpl.createSearchSessionAsync(
                                 AppSearchTestService.this,
                                 new AppSearchManager.SearchContext.Builder(databaseName).build(),
                                 Executors.newCachedThreadPool())

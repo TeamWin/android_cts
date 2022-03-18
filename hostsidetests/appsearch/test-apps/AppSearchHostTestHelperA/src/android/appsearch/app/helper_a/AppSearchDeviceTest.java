@@ -89,7 +89,7 @@ public class AppSearchDeviceTest {
 
     @Before
     public void setUp() throws Exception {
-        mDb = AppSearchSessionShimImpl.createSearchSession(
+        mDb = AppSearchSessionShimImpl.createSearchSessionAsync(
                 new AppSearchManager.SearchContext.Builder(DB_NAME).build()).get();
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
@@ -116,7 +116,7 @@ public class AppSearchDeviceTest {
             int userId = Integer.parseInt(args.getString(USER_ID_KEY));
 
             // Initialize as other user
-            AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSession(
+            AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSessionAsync(
                     new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
                     userId).get();
 
@@ -151,7 +151,7 @@ public class AppSearchDeviceTest {
             int userId = Integer.parseInt(args.getString(USER_ID_KEY));
 
             // Initialize as other user
-            AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSession(
+            AppSearchSessionShim db = AppSearchSessionShimImpl.createSearchSessionAsync(
                     new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
                     userId).get();
 
@@ -194,7 +194,7 @@ public class AppSearchDeviceTest {
             Bundle args = InstrumentationRegistry.getArguments();
             int userId = Integer.parseInt(args.getString(USER_ID_KEY));
             ExecutionException exception = expectThrows(ExecutionException.class, () ->
-                    AppSearchSessionShimImpl.createSearchSession(
+                    AppSearchSessionShimImpl.createSearchSessionAsync(
                             new AppSearchManager.SearchContext.Builder(DB_NAME).build(),
                             userId).get());
             assertThat(exception.getMessage()).contains("is locked or not running.");

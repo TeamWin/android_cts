@@ -48,7 +48,7 @@ public class AppSearchDeviceTest {
 
     @Before
     public void setUp() throws Exception {
-        mGlobalSearch = GlobalSearchSessionShimImpl.createGlobalSearchSession().get();
+        mGlobalSearch = GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync().get();
     }
 
     @Test

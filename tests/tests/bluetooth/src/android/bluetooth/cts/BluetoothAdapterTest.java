@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
+import android.bluetooth.BluetoothActivityEnergyInfo;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -407,14 +408,14 @@ public class BluetoothAdapterTest extends AndroidTestCase {
 
         // Verify return value without permission.BLUETOOTH_CONNECT
         mUiAutomation.dropShellPermissionIdentity();
-        assertThrows(SecurityException.class, () -> mAdapter.getUuids());
+        assertThrows(SecurityException.class, () -> mAdapter.getUuidsList());
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
-        assertNotNull(mAdapter.getUuids());
+        assertNotNull(mAdapter.getUuidsList());
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify return value if Bluetooth is not enabled
-        assertEquals(mAdapter.getUuids().length, 0);
+        assertEquals(0, mAdapter.getUuidsList().size());
 
     }
 
@@ -482,9 +483,14 @@ public class BluetoothAdapterTest extends AndroidTestCase {
     public void test_requestControllerActivityEnergyInfo() {
         if (!mHasBluetooth) return;
 
+        BluetoothAdapter.OnBluetoothActivityEnergyInfoListener listener =
+                new BluetoothAdapter.OnBluetoothActivityEnergyInfoListener() {
+                    @Override
+                    public void onBluetoothActivityEnergyInfo(BluetoothActivityEnergyInfo info) {}
+                };
         // Verify parameter
         assertThrows(NullPointerException.class,
-                () -> mAdapter.requestControllerActivityEnergyInfo(null));
+                () -> mAdapter.requestControllerActivityEnergyInfo(null, listener));
     }
 
     public void test_factoryReset() {
