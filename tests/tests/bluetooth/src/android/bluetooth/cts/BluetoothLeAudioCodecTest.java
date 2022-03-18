@@ -49,10 +49,10 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         BluetoothLeAudioCodecConfig.BITS_PER_SAMPLE_32
     };
 
-    private int[] mChannelModeArray = new int[] {
-        BluetoothLeAudioCodecConfig.CHANNEL_MODE_NONE,
-        BluetoothLeAudioCodecConfig.CHANNEL_MODE_MONO,
-        BluetoothLeAudioCodecConfig.CHANNEL_MODE_STEREO
+    private int[] mChannelCountArray = new int[] {
+        BluetoothLeAudioCodecConfig.CHANNEL_COUNT_NONE,
+        BluetoothLeAudioCodecConfig.CHANNEL_COUNT_1,
+        BluetoothLeAudioCodecConfig.CHANNEL_COUNT_2
     };
 
     private int[] mFrameDurationArray = new int[] {
@@ -125,16 +125,17 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         }
     }
 
-    public void testGetChannelMode() {
-        for (int channelModeIdx = 0; channelModeIdx < mChannelModeArray.length; channelModeIdx++) {
-            int channelMode = mChannelModeArray[channelModeIdx];
+    public void testGetChannelCount() {
+        for (int channelCountIdx = 0; channelCountIdx < mChannelCountArray.length;
+                channelCountIdx++) {
+            int channelCount = mChannelCountArray[channelCountIdx];
 
             BluetoothLeAudioCodecConfig leAudioCodecConfig =
                     new BluetoothLeAudioCodecConfig.Builder()
-                        .setChannelMode(channelMode)
+                        .setChannelCount(channelCount)
                         .build();
 
-            assertEquals(channelMode, leAudioCodecConfig.getChannelMode());
+            assertEquals(channelCount, leAudioCodecConfig.getChannelCount());
         }
     }
 
@@ -176,7 +177,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
                 .setCodecPriority(BluetoothLeAudioCodecConfig.CODEC_PRIORITY_HIGHEST)
                 .setSampleRate(BluetoothLeAudioCodecConfig.SAMPLE_RATE_24000)
                 .setBitsPerSample(BluetoothLeAudioCodecConfig.BITS_PER_SAMPLE_24)
-                .setChannelMode(BluetoothLeAudioCodecConfig.CHANNEL_MODE_STEREO)
+                .setChannelCount(BluetoothLeAudioCodecConfig.CHANNEL_COUNT_2)
                 .setFrameDuration(BluetoothLeAudioCodecConfig.FRAME_DURATION_7500)
                 .setOctetsPerFrame(octetsPerFrame)
                 .build();
@@ -192,8 +193,8 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
                 leAudioCodecConfigFromParcel.getSampleRate());
         assertEquals(BluetoothLeAudioCodecConfig.BITS_PER_SAMPLE_24,
                 leAudioCodecConfigFromParcel.getBitsPerSample());
-        assertEquals(BluetoothLeAudioCodecConfig.CHANNEL_MODE_STEREO,
-                leAudioCodecConfigFromParcel.getChannelMode());
+        assertEquals(BluetoothLeAudioCodecConfig.CHANNEL_COUNT_2,
+                leAudioCodecConfigFromParcel.getChannelCount());
         assertEquals(BluetoothLeAudioCodecConfig.FRAME_DURATION_7500,
                 leAudioCodecConfigFromParcel.getFrameDuration());
         assertEquals(octetsPerFrame, leAudioCodecConfigFromParcel.getOctetsPerFrame());
@@ -207,7 +208,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
                 .setCodecPriority(BluetoothLeAudioCodecConfig.CODEC_PRIORITY_HIGHEST)
                 .setSampleRate(BluetoothLeAudioCodecConfig.SAMPLE_RATE_24000)
                 .setBitsPerSample(BluetoothLeAudioCodecConfig.BITS_PER_SAMPLE_24)
-                .setChannelMode(BluetoothLeAudioCodecConfig.CHANNEL_MODE_STEREO)
+                .setChannelCount(BluetoothLeAudioCodecConfig.CHANNEL_COUNT_2)
                 .setFrameDuration(BluetoothLeAudioCodecConfig.FRAME_DURATION_7500)
                 .setOctetsPerFrame(octetsPerFrame)
                 .build();
@@ -221,8 +222,8 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
                 toBuilderCodecConfig.getSampleRate());
         assertEquals(BluetoothLeAudioCodecConfig.BITS_PER_SAMPLE_24,
                 toBuilderCodecConfig.getBitsPerSample());
-        assertEquals(BluetoothLeAudioCodecConfig.CHANNEL_MODE_STEREO,
-                toBuilderCodecConfig.getChannelMode());
+        assertEquals(BluetoothLeAudioCodecConfig.CHANNEL_COUNT_2,
+                toBuilderCodecConfig.getChannelCount());
         assertEquals(BluetoothLeAudioCodecConfig.FRAME_DURATION_7500,
                 toBuilderCodecConfig.getFrameDuration());
         assertEquals(octetsPerFrame, toBuilderCodecConfig.getOctetsPerFrame());

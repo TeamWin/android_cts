@@ -17,7 +17,7 @@
 package android.car.cts.builtin.util;
 
 import static android.car.cts.builtin.util.LogcatHelper.Buffer.SYSTEM;
-import static android.car.cts.builtin.util.LogcatHelper.Level.DEBUG;
+import static android.car.cts.builtin.util.LogcatHelper.Level.VERBOSE;
 import static android.car.cts.builtin.util.LogcatHelper.assertLogcatMessage;
 import static android.car.cts.builtin.util.LogcatHelper.clearLog;
 
@@ -56,6 +56,6 @@ public final class TimingsTraceLogTest {
     }
 
     private void assertLogMessage(String message) {
-        assertLogcatMessage(SYSTEM, DEBUG, TAG, message);
+        assertLogcatMessage(SYSTEM, VERBOSE, TAG, message);
     }
 }

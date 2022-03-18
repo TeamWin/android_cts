@@ -85,8 +85,7 @@ public class BluetoothSapTest extends AndroidTestCase {
         super.tearDown();
         if (mHasBluetooth && mIsSapSupported) {
             if (mAdapter != null && mBluetoothSap != null) {
-                mAdapter.closeProfileProxy(BluetoothProfile.SAP, mBluetoothSap);
-                // mBluetoothSap.close();
+                mBluetoothSap.close();
                 mBluetoothSap = null;
                 mIsProfileReady = false;
             }

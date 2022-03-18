@@ -25,6 +25,7 @@ cc_library_shared {
     srcs: [
         "test_aaudio.cpp",
         "test_aaudio_attributes.cpp",
+        "test_aaudio_basic.cpp",
         "test_aaudio_callback.cpp",
         "test_aaudio_mmap.cpp",
         "test_aaudio_misc.cpp",

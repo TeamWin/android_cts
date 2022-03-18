@@ -20,6 +20,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_CHANGE_ASPECT_
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
+import static android.server.wm.app.Components.PipActivity.ACTION_LAUNCH_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
@@ -136,6 +137,9 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                                         EXTRA_SET_ASPECT_RATIO_NUMERATOR,
                                         EXTRA_SET_ASPECT_RATIO_DENOMINATOR))
                                 .build());
+                        break;
+                    case ACTION_LAUNCH_TRANSLUCENT_ACTIVITY:
+                        startActivity(new Intent(PipActivity.this, TranslucentTestActivity.class));
                         break;
                 }
             }
@@ -278,6 +282,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_FINISH);
         filter.addAction(ACTION_ON_PIP_REQUESTED);
         filter.addAction(ACTION_CHANGE_ASPECT_RATIO);
+        filter.addAction(ACTION_LAUNCH_TRANSLUCENT_ACTIVITY);
         registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
 
         // Don't dump configuration when entering PIP to avoid the verifier getting the intermediate

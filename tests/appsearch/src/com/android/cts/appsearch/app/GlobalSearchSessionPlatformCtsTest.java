@@ -142,7 +142,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     public void setUp() throws Exception {
         mContext = ApplicationProvider.getApplicationContext();
         mDb =
-                AppSearchSessionShimImpl.createSearchSession(
+                AppSearchSessionShimImpl.createSearchSessionAsync(
                                 new AppSearchManager.SearchContext.Builder(DB_NAME).build())
                         .get();
         cleanup();
@@ -325,7 +325,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -356,7 +357,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -372,7 +374,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -388,7 +391,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -404,7 +408,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -421,7 +426,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     public void testAllowPermissions_sameError() throws Exception {
         // Try to get document before we put them, this is not found error.
         mGlobalSearchSession =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
         AppSearchBatchResult<String, GenericDocument> nonExistentResult = mGlobalSearchSession
                 .getByDocumentIdAsync(PKG_A, "database",
                         new GetByDocumentIdRequest.Builder("namespace")
@@ -437,7 +442,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Try to get document w/o permission, this is unAuthority error.
         mGlobalSearchSession =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
         AppSearchBatchResult<String, GenericDocument> unAuthResult = mGlobalSearchSession
                 .getByDocumentIdAsync(PKG_A, "database",
                         new GetByDocumentIdRequest.Builder("namespace")
@@ -459,7 +464,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -490,7 +496,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     // Can't get the document
                     AppSearchBatchResult<String, GenericDocument> result = mGlobalSearchSession
@@ -514,7 +521,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     AppSearchBatchResult<String, GenericDocument> nonExistentResult =
                             mGlobalSearchSession.getByDocumentIdAsync(PKG_A, DB_NAME,
@@ -535,7 +543,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     AppSearchBatchResult<String, GenericDocument> unAuthResult =
                             mGlobalSearchSession.getByDocumentIdAsync(PKG_A, DB_NAME,
@@ -557,7 +566,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Can't get the document because we don't have global permissions
         mGlobalSearchSession =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
 
         AppSearchBatchResult<String, GenericDocument> noGlobalResult = mGlobalSearchSession
                 .getByDocumentIdAsync(PKG_A, DB_NAME,
@@ -582,7 +591,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     SearchResultsShim searchResults =
                             mGlobalSearchSession.search(
@@ -610,7 +620,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     SearchResultsShim searchResults =
                             mGlobalSearchSession.search(
@@ -635,7 +646,8 @@ public class GlobalSearchSessionPlatformCtsTest {
         SystemUtil.runWithShellPermissionIdentity(
                 () -> {
                     mGlobalSearchSession =
-                            GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext)
+                                    .get();
 
                     SearchResultsShim searchResults =
                             mGlobalSearchSession.search(
@@ -658,7 +670,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         indexGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
 
         mGlobalSearchSession =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
 
         SearchResultsShim searchResults =
                 mGlobalSearchSession.search(
@@ -706,7 +718,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mGlobalSearchSession =
-                    GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                    GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
             mGlobalSearchSession
                     .reportSystemUsage(
                             new ReportSystemUsageRequest.Builder(
@@ -732,7 +744,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Query the data
         mGlobalSearchSession =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
 
         // Sort by app usage count: id1 should win
         try (SearchResultsShim results = mDb.search(
@@ -794,7 +806,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Set up schema
         mGlobalSearchSession =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession(mContext).get();
+                GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(mContext).get();
         mDb.setSchema(new SetSchemaRequest.Builder()
                 .addSchemas(AppSearchEmail.SCHEMA).build()).get();
 

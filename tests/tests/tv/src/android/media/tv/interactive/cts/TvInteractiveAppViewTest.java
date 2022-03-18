@@ -22,12 +22,11 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
+import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
-import android.view.InputEvent;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -56,7 +55,7 @@ public class TvInteractiveAppViewTest {
     private TvInteractiveAppViewStubActivity mActivity;
     private TvInteractiveAppView mTvInteractiveAppView;
     private TvInteractiveAppManager mManager;
-    private TvInteractiveAppInfo mStubInfo;
+    private TvInteractiveAppServiceInfo mStubInfo;
 
     @Rule
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
@@ -127,7 +126,7 @@ public class TvInteractiveAppViewTest {
                 Context.TV_INTERACTIVE_APP_SERVICE);
         assertNotNull("Failed to get TvInteractiveAppManager.", mManager);
 
-        for (TvInteractiveAppInfo info : mManager.getTvInteractiveAppServiceList()) {
+        for (TvInteractiveAppServiceInfo info : mManager.getTvInteractiveAppServiceList()) {
             if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 mStubInfo = info;
             }

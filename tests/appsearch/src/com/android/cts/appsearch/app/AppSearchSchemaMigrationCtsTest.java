@@ -25,8 +25,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class AppSearchSchemaMigrationCtsTest extends AppSearchSchemaMigrationCtsTestBase {
     @Override
-    protected ListenableFuture<AppSearchSessionShim> createSearchSession(@NonNull String dbName) {
-        return AppSearchSessionShimImpl.createSearchSession(
+    protected ListenableFuture<AppSearchSessionShim> createSearchSessionAsync(
+            @NonNull String dbName) {
+        return AppSearchSessionShimImpl.createSearchSessionAsync(
                 new AppSearchManager.SearchContext.Builder(dbName).build());
     }
 }

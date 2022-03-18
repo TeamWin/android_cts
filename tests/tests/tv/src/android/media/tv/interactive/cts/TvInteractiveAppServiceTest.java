@@ -51,8 +51,8 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
-import android.media.tv.interactive.TvInteractiveAppInfo;
 import android.media.tv.interactive.TvInteractiveAppManager;
+import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.net.Uri;
 import android.os.Bundle;
@@ -98,7 +98,7 @@ public class TvInteractiveAppServiceTest {
 
     private TvView mTvView;
     private TvInteractiveAppManager mManager;
-    private TvInteractiveAppInfo mStubInfo;
+    private TvInteractiveAppServiceInfo mStubInfo;
     private StubTvInteractiveAppService.StubSessionImpl mSession;
     private TvInputManager mTvInputManager;
     private TvInputInfo mTvInputInfo;
@@ -299,7 +299,7 @@ public class TvInteractiveAppServiceTest {
                 Context.TV_INTERACTIVE_APP_SERVICE);
         assertNotNull("Failed to get TvInteractiveAppManager.", mManager);
 
-        for (TvInteractiveAppInfo info : mManager.getTvInteractiveAppServiceList()) {
+        for (TvInteractiveAppServiceInfo info : mManager.getTvInteractiveAppServiceList()) {
             if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
                 mStubInfo = info;
             }
@@ -578,13 +578,13 @@ public class TvInteractiveAppServiceTest {
         mTvInputCallback.resetValues();
 
         mInputSession.notifyAitInfoUpdated(
-                new AitInfo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV, 2));
+                new AitInfo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV, 2));
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT_MS, () -> mTvInputCallback.mAitInfoUpdatedCount > 0);
 
         assertThat(mTvInputCallback.mAitInfoUpdatedCount).isEqualTo(1);
         assertThat(mTvInputCallback.mAitInfo.getType())
-                .isEqualTo(TvInteractiveAppInfo.INTERACTIVE_APP_TYPE_HBBTV);
+                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         assertThat(mTvInputCallback.mAitInfo.getVersion()).isEqualTo(2);
     }
 

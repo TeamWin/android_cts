@@ -2535,8 +2535,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
         long startTime = System.currentTimeMillis();
         try {
-            // create a phone URI from which to receive a call
+            // create phone URIs from which to receive a call; one US, one non-US,
+            // both fully specified
             Uri phoneUri = makePhoneUri("+16175551212");
+            Uri phoneUri2 = makePhoneUri("+81 75 350 6006");
 
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     PRIORITY_CATEGORY_REPEAT_CALLERS, 0, 0));
@@ -2544,23 +2546,39 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
-            // not a repeat caller yet, so it shouldn't be allowed
+            // not repeat callers yet, so it shouldn't be allowed
             assertFalse(mNotificationManager.matchesCallFilter(phoneUri));
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri2));
 
-            // register a call from this number, then cancel the notification, which is when
+            // register a call from number 1, then cancel the notification, which is when
             // a call is actually recorded.
             sendNotification(1, null, R.drawable.blue, true, phoneUri);
             cancelAndPoll(1);
 
             // now this number should count as a repeat caller
             assertTrue(mNotificationManager.matchesCallFilter(phoneUri));
+            assertFalse(mNotificationManager.matchesCallFilter(phoneUri2));
 
             // also, any other variants of this phone number should also count as a repeat caller
-            Uri[] variants = { makePhoneUri("1-617-555-1212"),
-                    makePhoneUri(Uri.encode("+1-617-555-1212")),
-                    makePhoneUri("16175551212") };
+            Uri[] variants = { makePhoneUri(Uri.encode("+1-617-555-1212")),
+                    makePhoneUri("+1 (617) 555-1212") };
             for (int i = 0; i < variants.length; i++) {
-                assertTrue(mNotificationManager.matchesCallFilter(variants[i]));
+                assertTrue("phone variant " + variants[i] + " should still match",
+                        mNotificationManager.matchesCallFilter(variants[i]));
+            }
+
+            // register call 2
+            sendNotification(2, null, R.drawable.blue, true, phoneUri2);
+            cancelAndPoll(2);
+
+            // now this should be a repeat caller
+            assertTrue(mNotificationManager.matchesCallFilter(phoneUri2));
+
+            Uri[] variants2 = { makePhoneUri(Uri.encode("+81 75 350 6006")),
+                    makePhoneUri("+81753506006")};
+            for (int j = 0; j < variants2.length; j++) {
+                assertTrue("phone variant " + variants2[j] + " should still match",
+                        mNotificationManager.matchesCallFilter(variants2[j]));
             }
         } finally {
             mNotificationManager.setInterruptionFilter(origFilter);

@@ -19,7 +19,7 @@ package {
 }
 
 android_test_helper_app {
-    name: "CtsAppToTestRevokeOwnPermission",
+    name: "CtsAppToTestRevokeSelfPermission",
     defaults: [
         "cts_defaults",
         "mts-target-sdk-version-current",

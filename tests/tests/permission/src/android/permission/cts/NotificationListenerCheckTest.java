@@ -22,6 +22,7 @@ import static android.os.Process.myUserHandle;
 import static android.permission.cts.PermissionUtils.clearAppState;
 import static android.permission.cts.PermissionUtils.install;
 import static android.permission.cts.PermissionUtils.uninstallApp;
+import static android.permission.cts.TestUtils.ensure;
 import static android.permission.cts.TestUtils.eventually;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -80,10 +81,10 @@ import java.util.List;
 /**
  * Tests the {@code NotificationListenerCheck} in permission controller.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a notification"
         + " listener check notification for instant apps.")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class NotificationListenerCheckTest {
     private static final String LOG_TAG = NotificationListenerCheckTest.class.getSimpleName();
     private static final boolean DEBUG = false;
@@ -555,14 +556,15 @@ public class NotificationListenerCheckTest {
 
         runNotificationListenerCheck();
 
-        assertNull("Expected no notifications", getNotification(false));
+        ensure(() -> assertNull("Expected no notifications", getNotification(false)),
+                EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
     public void notificationIsShown() throws Throwable {
         runNotificationListenerCheck();
 
-        eventually(() -> assertNotNull("Expected notification, none found", getNotification(true)),
+        eventually(() -> assertNotNull("Expected notification, none found", getNotification(false)),
                 EXPECTED_TIMEOUT_MILLIS);
     }
 
@@ -573,7 +575,8 @@ public class NotificationListenerCheckTest {
 
         runNotificationListenerCheck();
 
-        eventually(() -> assertNull(getNotification(true)), UNEXPECTED_TIMEOUT_MILLIS);
+        ensure(() -> assertNull("Expected no notifications", getNotification(false)),
+                EXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
@@ -633,6 +636,7 @@ public class NotificationListenerCheckTest {
         runNotificationListenerCheck();
 
         // We don't expect a notification, but try to trigger one anyway
-        eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
+        ensure(() -> assertNull("Expected no notifications", getNotification(false)),
+                EXPECTED_TIMEOUT_MILLIS);
     }
 }

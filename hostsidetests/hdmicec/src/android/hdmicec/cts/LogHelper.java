@@ -59,6 +59,24 @@ public final class LogHelper {
         return testString;
     }
 
+    public static void waitForLog(
+            ITestDevice device, String tag, int waitSeconds, String expectedOutput)
+            throws Exception {
+        long timeoutMillis = waitSeconds * 1000;
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+
+        while ((endTime - startTime <= timeoutMillis)) {
+            String testString = getLog(device, tag);
+            if (testString.contains(expectedOutput)) {
+                return;
+            }
+            endTime = System.currentTimeMillis();
+        }
+
+        throw new Exception("Timed out, could not find the log message.");
+    }
+
     public static void assertLog(ITestDevice device, String tag, String ...expectedOutput)
             throws Exception {
         String testString = getLog(device, tag);

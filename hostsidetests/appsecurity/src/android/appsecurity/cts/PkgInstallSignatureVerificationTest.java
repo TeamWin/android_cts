@@ -1004,6 +1004,17 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "testGetApkContentsSignersShowsMultipleSigners");
     }
 
+    public void testInstallV3MultipleSignersInLineageGetSigningCertificateHistory()
+            throws Exception {
+        // The APK used for this test is signed with a lineage containing 5 keys in the signing
+        // history; this test verifies SigningInfo#getSigningCertificateHistory returns all of an
+        // APKs signers in their order of rotation.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por-1_2_3_4_5-default-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testGetSigningCertificateHistoryReturnsSignersInOrder");
+    }
+
     public void testInstallV3KeyRotationHasSigningCertificate() throws Exception {
         // tests that hasSigningCertificate() recognizes past and current signing certs
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
