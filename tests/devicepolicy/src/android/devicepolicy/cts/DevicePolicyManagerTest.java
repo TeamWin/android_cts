@@ -21,6 +21,8 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.MANAGE_ROLE_HOLDERS;
 import static android.Manifest.permission.PROVISION_DEMO_DEVICE;
 import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.admin.DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED;
+import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LOCALE;
@@ -30,11 +32,13 @@ import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SECU
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_WIFI_SSID;
 import static android.app.admin.DevicePolicyManager.MIME_TYPE_PROVISIONING_NFC;
 import static android.app.admin.ProvisioningException.ERROR_PRE_CONDITION_FAILED;
+import static android.content.Intent.EXTRA_USER;
 import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
+import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
 import static com.android.queryable.queries.ServiceQuery.service;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -57,6 +61,7 @@ import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
@@ -101,10 +106,12 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.bedstead.testapp.TestAppProvider;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -1733,5 +1740,107 @@ public final class DevicePolicyManagerTest {
                 ACCOUNT_WITH_EXISTING_TYPE,
                 TEST_PASSWORD,
                 /* userdata= */ null);
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void finalizeWorkProfileProvisioning_withoutPermission_throwsException() {
+        assertThrows(SecurityException.class, () ->
+                sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                        sDeviceState.workProfile().userHandle(),
+                        /* migratedAccount= */ null));
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void finalizeWorkProfileProvisioning_nullManagedProfileUser_throwsException() {
+        assertThrows(NullPointerException.class, () ->
+                sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                        /* managedProfileUser= */ null,
+                        /* migratedAccount= */ null));
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void finalizeWorkProfileProvisioning_nonExistingManagedProfileUser_throwsException() {
+        assertThrows(IllegalStateException.class, () ->
+                sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                        /* managedProfileUser= */ TestApis.users().nonExisting().userHandle(),
+                        /* migratedAccount= */ null));
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    @EnsureHasSecondaryUser
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void finalizeWorkProfileProvisioning_managedUser_throwsException() {
+        RemoteDpc dpc = RemoteDpc.setAsProfileOwner(sDeviceState.secondaryUser());
+        try {
+            assertThrows(IllegalStateException.class, () ->
+                    sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                            /* managedProfileUser= */ sDeviceState.secondaryUser().userHandle(),
+                            /* migratedAccount= */ null));
+        } finally {
+            dpc.remove();
+        }
+    }
+
+    @Test
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void finalizeWorkProfileProvisioning_managedProfileUserWithoutProfileOwner_throwsException() {
+        RemoteDpc dpc = sDeviceState.profileOwner(sDeviceState.workProfile());
+        try {
+            dpc.remove();
+            assertThrows(IllegalStateException.class, () ->
+                    sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                            /* managedProfileUser= */ sDeviceState.workProfile().userHandle(),
+                            /* migratedAccount= */ null));
+        } finally {
+            RemoteDpc.setAsProfileOwner(sDeviceState.workProfile());
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasWorkProfile
+    public void finalizeWorkProfileProvisioning_valid_sendsBroadcast() {
+        try (TestAppInstance personalInstance = REMOTE_DPC_TEST_APP.install()) {
+            personalInstance.registerReceiver(new IntentFilter(ACTION_MANAGED_PROFILE_PROVISIONED));
+            sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                    /* managedProfileUser= */ sDeviceState.workProfile().userHandle(),
+                    /* migratedAccount= */ null);
+
+            BroadcastReceivedEvent event = personalInstance.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(ACTION_MANAGED_PROFILE_PROVISIONED)
+                            .waitForEvent();
+            assertThat((UserHandle) event.intent().getParcelableExtra(EXTRA_USER))
+                    .isEqualTo(sDeviceState.workProfile().userHandle());
+
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @EnsureHasWorkProfile
+    public void finalizeWorkProfileProvisioning_withAccount_broadcastIncludesAccount() {
+        try (TestAppInstance personalInstance = REMOTE_DPC_TEST_APP.install()) {
+            personalInstance.registerReceiver(new IntentFilter(ACTION_MANAGED_PROFILE_PROVISIONED));
+
+            sDevicePolicyManager.finalizeWorkProfileProvisioning(
+                    /* managedProfileUser= */ sDeviceState.workProfile().userHandle(),
+                    /* migratedAccount= */ ACCOUNT_WITH_EXISTING_TYPE);
+
+            BroadcastReceivedEvent event = personalInstance.events().broadcastReceived()
+                    .whereIntent().action().isEqualTo(ACTION_MANAGED_PROFILE_PROVISIONED)
+                    .waitForEvent();
+            assertThat((Account) event.intent()
+                    .getParcelableExtra(EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE))
+                    .isEqualTo(ACCOUNT_WITH_EXISTING_TYPE);
+
+        }
     }
 }

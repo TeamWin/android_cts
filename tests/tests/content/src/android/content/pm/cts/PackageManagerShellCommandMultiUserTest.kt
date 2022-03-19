@@ -25,6 +25,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.cts.PackageManagerShellCommandTest.FullyRemovedBroadcastReceiver
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule
+import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
@@ -49,6 +50,7 @@ import java.io.File
 
 @EnsureHasSecondaryUser
 @RunWith(BedsteadJUnit4::class)
+@AppModeFull(reason = "Cannot query other apps if instant")
 class PackageManagerShellCommandMultiUserTest {
 
     companion object {

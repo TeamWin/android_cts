@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright 2022 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.media.router.cts.provider3"
-          android:versionCode="1"
-          android:versionName="1.0">
-
-    <application android:testOnly="true">
-        <service android:name=".StubMediaRoute2ProviderService3"
-                 android:exported="true">
+          package="android.compilation.cts.appusedbyotherapp">
+    <uses-sdk android:minSdkVersion="23"/>
+    <application>
+        <activity android:name=".MyActivity"
+                  android:exported="true">
             <intent-filter>
-                <action android:name="android.media.MediaRoute2ProviderService"/>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </service>
+        </activity>
     </application>
 </manifest>

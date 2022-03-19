@@ -588,7 +588,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             formats.add(setUpSource(file));
             mExtractor.release();
         }
-        checkFormatSupport(mCodecName, mMime, formats, null, mSupportRequirements);
+        checkFormatSupport(mCodecName, mMime, false, formats, null, mSupportRequirements);
         {
             OutputManager ref = null;
             mSaveToMem = true;

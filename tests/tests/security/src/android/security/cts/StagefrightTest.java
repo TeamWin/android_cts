@@ -1816,6 +1816,12 @@ public class StagefrightTest extends StsExtraBusinessLogicTestCase {
      before any existing test methods
      ***********************************************************/
     @Test
+    @AsbSecurityTest(cveBugId = 157906313)
+    public void testStagefright_cve_2020_11135() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_11135);
+    }
+
+    @Test
     @AsbSecurityTest(cveBugId = 136175447)
     public void testStagefright_cve_2019_2186() throws Exception {
         long end = System.currentTimeMillis() + 180000; // 3 minutes from now

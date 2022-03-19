@@ -655,6 +655,11 @@ abstract class CodecTestBase {
         codecPrefix = args.getString(CODEC_PREFIX_KEY);
     }
 
+    static boolean isCodecLossless(String mime) {
+        return mime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC) ||
+                mime.equals(MediaFormat.MIMETYPE_AUDIO_RAW);
+    }
+
     static boolean hasDecoder(String mime) {
         return CodecTestBase.selectCodecs(mime, null, null, false).size() != 0;
     }
@@ -663,7 +668,7 @@ abstract class CodecTestBase {
         return CodecTestBase.selectCodecs(mime, null, null, true).size() != 0;
     }
 
-    public static void checkFormatSupport(String codecName, String mime,
+    public static void checkFormatSupport(String codecName, String mime, boolean isEncoder,
             ArrayList<MediaFormat> formats, String[] features, SupportClass supportRequirements)
             throws IOException {
         if (!areFormatsSupported(codecName, mime, formats)) {
@@ -672,11 +677,11 @@ abstract class CodecTestBase {
                     fail("format(s) not supported by codec: " + codecName + " for mime : " + mime);
                     break;
                 case CODEC_ANY:
-                    if (selectCodecs(mime, formats, features, false).isEmpty())
+                    if (selectCodecs(mime, formats, features, isEncoder).isEmpty())
                         fail("format(s) not supported by any component for mime : " + mime);
                     break;
                 case CODEC_DEFAULT:
-                    if (isDefaultCodec(codecName, mime, false))
+                    if (isDefaultCodec(codecName, mime, isEncoder))
                         fail("format(s) not supported by default codec : " + codecName +
                                 "for mime : " + mime);
                     break;
@@ -1599,6 +1604,7 @@ class CodecEncoderTestBase extends CodecTestBase {
     int mMaxBFrames;
     int mChannels;
     int mSampleRate;
+    int mBytesPerSample;
 
     CodecEncoderTestBase(String encoder, String mime, int[] bitrates, int[] encoderInfo1,
             int[] encoderInfo2) {
@@ -1617,6 +1623,7 @@ class CodecEncoderTestBase extends CodecTestBase {
         mMaxBFrames = 0;
         mChannels = 1;
         mSampleRate = 8000;
+        mBytesPerSample = 2;
         mAsyncHandle = new CodecAsyncHandler();
         mIsAudio = mMime.startsWith("audio/");
         mInputFile = mIsAudio ? INPUT_AUDIO_FILE : INPUT_VIDEO_FILE;
@@ -1654,8 +1661,8 @@ class CodecEncoderTestBase extends CodecTestBase {
     void flushCodec() {
         super.flushCodec();
         if (mIsAudio) {
-            mInputOffsetPts =
-                    (mNumBytesSubmitted + 1024) * 1000000L / (2 * mChannels * mSampleRate);
+            mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000L /
+                    (mBytesPerSample * mChannels * mSampleRate);
         } else {
             mInputOffsetPts = (mInputCount + 5) * 1000000L / mFrameRate;
         }
@@ -1764,8 +1771,9 @@ class CodecEncoderTestBase extends CodecTestBase {
             int flags = 0;
             long pts = mInputOffsetPts;
             if (mIsAudio) {
-                pts += mNumBytesSubmitted * 1000000L / (2 * mChannels * mSampleRate);
+                pts += mNumBytesSubmitted * 1000000L / (mBytesPerSample * mChannels * mSampleRate);
                 size = Math.min(inputBuffer.capacity(), mInputData.length - mNumBytesSubmitted);
+                assertTrue(size % (mBytesPerSample * mChannels) == 0);
                 inputBuffer.put(mInputData, mNumBytesSubmitted, size);
                 if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
                     flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;

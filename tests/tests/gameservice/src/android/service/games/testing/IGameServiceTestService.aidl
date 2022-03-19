@@ -40,8 +40,6 @@ interface IGameServiceTestService {
 
     void restartFocusedGameSession();
 
-    void showOverlayForFocusedGameSession();
-
     boolean takeScreenshotForFocusedGameSession();
 
     OnSystemBarVisibilityChangedInfo getOnSystemBarVisibilityChangedInfo();

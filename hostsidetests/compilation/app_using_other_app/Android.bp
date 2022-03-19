@@ -1,4 +1,4 @@
-// Copyright 2022 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,20 +17,22 @@ package {
 }
 
 android_test_helper_app {
-    name: "CtsMediaRouterProviderApp1",
-    defaults: ["cts_defaults"],
+    name: "AppUsingOtherApp",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    sdk_version: "31",
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    srcs: [
-        "src/**/*.java",
-        ":CtsMediaSessionTestCommon",
-    ],
     static_libs: [
+        "androidx.test.ext.junit",
+        "androidx.test.ext.truth",
         "androidx.test.rules",
-        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
     ],
-    sdk_version: "test_current",
-    min_sdk_version: "31",
+    libs: [
+        "android.test.base",
+    ],
 }

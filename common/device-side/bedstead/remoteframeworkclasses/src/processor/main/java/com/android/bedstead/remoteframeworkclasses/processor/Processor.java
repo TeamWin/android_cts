@@ -122,6 +122,9 @@ public final class Processor extends AbstractProcessor {
                     + "String, @NonNull java.util.concurrent.Callable<"
                     + "android.graphics.drawable.Drawable>)",
             "public android.graphics.drawable.Drawable getDrawable(@NonNull String, @NonNull "
+                    + "String, @NonNull java.util.concurrent.Callable<"
+                    + "android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawable(@NonNull String, @NonNull "
                     + "String, @NonNull String, @NonNull java.util.concurrent.Callable<"
                     + "android.graphics.drawable.Drawable>)",
             "public android.graphics.drawable.Drawable getDrawableForDensity(@NonNull String, "
@@ -130,8 +133,22 @@ public final class Processor extends AbstractProcessor {
             "public android.graphics.drawable.Drawable getDrawableForDensity(@NonNull String, "
                     + "@NonNull String, @NonNull String, int, @NonNull "
                     + "java.util.concurrent.Callable<android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawable(@NonNull String, "
+                    + "@NonNull String, "
+                    + "@NonNull java.util.function.Supplier<android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawable(@NonNull String, "
+                    + "@NonNull String, @NonNull String, @NonNull "
+                    + "java.util.function.Supplier<android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawableForDensity(@NonNull String, "
+                    + "@NonNull String, int, @NonNull "
+                    + "java.util.function.Supplier<android.graphics.drawable.Drawable>)",
+            "public android.graphics.drawable.Drawable getDrawableForDensity(@NonNull String, "
+                    + "@NonNull String, @NonNull String, int, @NonNull "
+                    + "java.util.function.Supplier<android.graphics.drawable.Drawable>)",
 
-            // WifiManager
+
+
+    // WifiManager
 
             // Uses Executor
             "public void addSuggestionConnectionStatusListener(java.util.concurrent.Executor, "
@@ -145,12 +162,15 @@ public final class Processor extends AbstractProcessor {
                     + ".wifi.WifiManager.ScanResultsCallback)",
             "public void registerSubsystemRestartTrackingCallback(java.util.concurrent.Executor, "
                     + "android.net.wifi.WifiManager.SubsystemRestartTrackingCallback)",
-            "public void reportImpactToCreateIfaceRequest(int, boolean, @NonNull "
-                    + "java.util.concurrent.Executor, @NonNull java.util.function.BiConsumer<"
-                    + "java.lang.Boolean,java.util.List<android.util.Pair<java.lang.Integer,"
-                    + "java.lang.String[]>>>)",
+            "public void reportCreateInterfaceImpact(int, boolean, "
+                    + "@NonNull java.util.concurrent.Executor, @NonNull "
+                    + "java.util.function.BiConsumer<java.lang.Boolean,java.util.Set<"
+                    + "android.net.wifi.WifiManager.InterfaceCreationImpact>>)",
+            "public void queryAutojoinGlobal(@NonNull java.util.concurrent.Executor, "
+                    + "@NonNull java.util.function.Consumer<java.lang.Boolean>)",
 
-    // Uses WpsCallback
+
+            // Uses WpsCallback
             "public void cancelWps(android.net.wifi.WifiManager.WpsCallback)",
             // Uses MulticastLock
             "public android.net.wifi.WifiManager.MulticastLock createMulticastLock(String)",
@@ -979,8 +999,16 @@ public final class Processor extends AbstractProcessor {
             RoundEnvironment roundEnv) {
         if (!roundEnv.getElementsAnnotatedWith(RemoteFrameworkClasses.class).isEmpty()) {
             Set<MethodSignature> blocklistedMethodSignatures = BLOCKLISTED_METHODS.stream()
-                    .map(m -> MethodSignature.forApiString(
-                            m, processingEnv.getTypeUtils(), processingEnv.getElementUtils()))
+                    .map(m -> {
+                        try {
+                            return MethodSignature.forApiString(
+                                    m, processingEnv.getTypeUtils(),
+                                    processingEnv.getElementUtils());
+                        } catch (Exception e) {
+                            System.out.println("Error parsing blocklistedMethod " + m + ": " + e);
+                            return null;
+                        }
+                    })
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 

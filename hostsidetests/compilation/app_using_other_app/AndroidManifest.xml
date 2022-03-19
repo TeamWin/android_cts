@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright 2022 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.media.router.cts.provider1"
-          android:versionCode="1"
-          android:versionName="1.0">
-
-    <application android:testOnly="true">
-        <service android:name=".StubMediaRoute2ProviderService1"
-                 android:exported="true">
-            <intent-filter>
-                <action android:name="android.media.MediaRoute2ProviderService"/>
-            </intent-filter>
-        </service>
-    </application>
+          package="android.compilation.cts.appusingotherapp">
+    <uses-sdk android:minSdkVersion="23"/>
+    <queries>
+        <package android:name="android.compilation.cts.appusedbyotherapp" />
+    </queries>
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="android.compilation.cts.appusingotherapp"
+                     android:label="An instrumentation test that uses another app">
+        <meta-data android:name="listener"
+                   android:value="com.android.cts.runner.CtsTestRunListener" />
+    </instrumentation>
 </manifest>
