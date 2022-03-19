@@ -788,6 +788,22 @@ abstract class CodecTestBase {
         return isSupported;
     }
 
+    static boolean hasSupportForColorFormat(String name, String mime, int colorFormat)
+            throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(name);
+        MediaCodecInfo.CodecCapabilities cap =
+                codec.getCodecInfo().getCapabilitiesForType(mime);
+        boolean hasSupport = false;
+        for (int c : cap.colorFormats) {
+            if (c == colorFormat) {
+                hasSupport = true;
+                break;
+            }
+        }
+        codec.release();
+        return hasSupport;
+    }
+
     static boolean isDefaultCodec(String codecName, String mime, boolean isEncoder)
             throws IOException {
         Map<String,String> mDefaultCodecs = isEncoder ? mDefaultEncoders:  mDefaultDecoders;
@@ -1623,9 +1639,9 @@ class CodecEncoderTestBase extends CodecTestBase {
         mMaxBFrames = 0;
         mChannels = 1;
         mSampleRate = 8000;
-        mBytesPerSample = 2;
         mAsyncHandle = new CodecAsyncHandler();
         mIsAudio = mMime.startsWith("audio/");
+        mBytesPerSample = mIsAudio ? 2 : 1;
         mInputFile = mIsAudio ? INPUT_AUDIO_FILE : INPUT_VIDEO_FILE;
     }
 
@@ -1680,7 +1696,12 @@ class CodecEncoderTestBase extends CodecTestBase {
     }
 
     void fillImage(Image image) {
-        Assert.assertTrue(image.getFormat() == ImageFormat.YUV_420_888);
+        int format = image.getFormat();
+        assertTrue("unexpected image format",
+                format == ImageFormat.YUV_420_888 || format == ImageFormat.YCBCR_P010);
+        int bytesPerSample = (ImageFormat.getBitsPerPixel(format) * 2) / (8 * 3);  // YUV420
+        assertEquals("Invalid bytes per sample", bytesPerSample, mBytesPerSample);
+
         int imageWidth = image.getWidth();
         int imageHeight = image.getHeight();
         Image.Plane[] planes = image.getPlanes();
@@ -1699,17 +1720,18 @@ class CodecEncoderTestBase extends CodecTestBase {
                 tileWidth = INP_FRM_WIDTH / 2;
                 tileHeight = INP_FRM_HEIGHT / 2;
             }
-            if (pixelStride == 1) {
+            if (pixelStride == bytesPerSample) {
                 if (width == rowStride && width == tileWidth && height == tileHeight) {
-                    buf.put(mInputData, offset, width * height);
+                    buf.put(mInputData, offset, width * height * bytesPerSample);
                 } else {
                     for (int z = 0; z < height; z += tileHeight) {
                         int rowsToCopy = Math.min(height - z, tileHeight);
                         for (int y = 0; y < rowsToCopy; y++) {
                             for (int x = 0; x < width; x += tileWidth) {
                                 int colsToCopy = Math.min(width - x, tileWidth);
-                                buf.position((z + y) * rowStride + x);
-                                buf.put(mInputData, offset + y * tileWidth, colsToCopy);
+                                buf.position((z + y) * rowStride + x * bytesPerSample);
+                                buf.put(mInputData, offset + y * tileWidth * bytesPerSample,
+                                        colsToCopy * bytesPerSample);
                             }
                         }
                     }
@@ -1723,14 +1745,17 @@ class CodecEncoderTestBase extends CodecTestBase {
                         for (int x = 0; x < width; x += tileWidth) {
                             int colsToCopy = Math.min(width - x, tileWidth);
                             for (int w = 0; w < colsToCopy; w++) {
-                                buf.position(lineOffset + (x + w) * pixelStride);
-                                buf.put(mInputData[offset + y * tileWidth + w]);
+                                for (int bytePos = 0; bytePos < bytesPerSample; bytePos++) {
+                                    buf.position(lineOffset + (x + w) * pixelStride + bytePos);
+                                    buf.put(mInputData[offset + y * tileWidth * bytesPerSample +
+                                            w * bytesPerSample + bytePos]);
+                                }
                             }
                         }
                     }
                 }
             }
-            offset += tileWidth * tileHeight;
+            offset += tileWidth * tileHeight * bytesPerSample;
         }
     }
 
@@ -1752,13 +1777,15 @@ class CodecEncoderTestBase extends CodecTestBase {
                 for (int j = 0; j < rowsToCopy; j++) {
                     for (int i = 0; i < width; i += tileWidth) {
                         int colsToCopy = Math.min(width - i, tileWidth);
-                        inputBuffer.position(offset + (k + j) * width + i);
-                        inputBuffer.put(mInputData, frmOffset + j * tileWidth, colsToCopy);
+                        inputBuffer.position(
+                                offset + (k + j) * width * mBytesPerSample + i * mBytesPerSample);
+                        inputBuffer.put(mInputData, frmOffset + j * tileWidth * mBytesPerSample,
+                                colsToCopy * mBytesPerSample);
                     }
                 }
             }
-            offset += width * height;
-            frmOffset += tileWidth * tileHeight;
+            offset += width * height * mBytesPerSample;
+            frmOffset += tileWidth * tileHeight * mBytesPerSample;
         }
     }
 
@@ -1782,8 +1809,8 @@ class CodecEncoderTestBase extends CodecTestBase {
                 mNumBytesSubmitted += size;
             } else {
                 pts += mInputCount * 1000000L / mFrameRate;
-                size = mWidth * mHeight * 3 / 2;
-                int frmSize = INP_FRM_WIDTH * INP_FRM_HEIGHT * 3 / 2;
+                size = mBytesPerSample * mWidth * mHeight * 3 / 2;
+                int frmSize = mBytesPerSample * INP_FRM_WIDTH * INP_FRM_HEIGHT * 3 / 2;
                 if (mNumBytesSubmitted + frmSize > mInputData.length) {
                     fail("received partial frame to encode");
                 } else {
