@@ -812,12 +812,12 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Register this observer twice, on different packages.
         Executor executor = MoreExecutors.directExecutor();
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 executor,
                 observer);
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 /*observedPackage=*/fakePackage,
                 new ObserverSpec.Builder().addFilterSchemas("Gift").build(),
                 executor,
@@ -852,7 +852,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         observer.clear();
 
         // Unregister observer from com.example.package
-        mGlobalSearchSession.removeObserver("com.example.package", observer);
+        mGlobalSearchSession.unregisterObserverCallback("com.example.package", observer);
 
         // Index some more documents
         assertThat(observer.getDocumentChanges()).isEmpty();
@@ -871,7 +871,7 @@ public class GlobalSearchSessionPlatformCtsTest {
         observer.clear();
 
         // Unregister the final observer
-        mGlobalSearchSession.removeObserver(mContext.getPackageName(), observer);
+        mGlobalSearchSession.unregisterObserverCallback(mContext.getPackageName(), observer);
 
         // Index some more documents
         assertThat(observer.getDocumentChanges()).isEmpty();
