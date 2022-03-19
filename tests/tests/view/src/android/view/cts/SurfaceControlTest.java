@@ -17,10 +17,13 @@
 package android.view.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
+import static android.view.cts.util.ASurfaceControlTestUtils.getBufferId;
 import static android.view.cts.util.ASurfaceControlTestUtils.getQuadrantBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.getSolidBuffer;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -53,6 +56,8 @@ import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @LargeTest
@@ -1359,5 +1364,121 @@ public class SurfaceControlTest {
                 }
         );
         assertTrue(caughtException.get());
+    }
+
+    @Test
+    public void testReleaseBufferCallback() throws InterruptedException {
+        final int setBufferCount = 3;
+        CountDownLatch releaseCounter = new CountDownLatch(setBufferCount);
+        long[] bufferIds = new long[setBufferCount];
+        long[] receivedCallbacks = new long[setBufferCount];
+        SyncFence[] receivedFences = new SyncFence[setBufferCount];
+        long timeBeforeTest = System.nanoTime();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        for (int i = 0; i < setBufferCount; i++) {
+                            HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
+                                    DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                            final int receiveIndex = i;
+                            final long bufferId = getBufferId(buffer);
+                            bufferIds[receiveIndex] = bufferId;
+                            new SurfaceControl.Transaction()
+                                    .setBuffer(surfaceControl, buffer, null,
+                                            (SyncFence fence) -> {
+                                                receivedCallbacks[receiveIndex] = bufferId;
+                                                receivedFences[receiveIndex] = fence;
+                                                releaseCounter.countDown();
+                                            })
+                                    .apply();
+                            buffer.close();
+                        }
+                        setSolidBuffer(surfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+
+        assertTrue(releaseCounter.await(5, TimeUnit.SECONDS));
+        for (int i = 0; i < setBufferCount; i++) {
+            assertEquals(bufferIds[i], receivedCallbacks[i]);
+            if (i > 0) {
+                assertNotEquals(bufferIds[i], bufferIds[i - 1]);
+            }
+            SyncFence fence = receivedFences[i];
+            assertNotNull(fence);
+            if (fence.isValid()) {
+                fence.awaitForever();
+                assertTrue(fence.getSignalTime() > timeBeforeTest);
+                assertTrue(fence.getSignalTime() < System.nanoTime());
+                fence.close();
+            }
+        }
+    }
+
+    @Test
+    public void testReleaseBufferCallbackSameBuffer() throws InterruptedException {
+        final int setBufferCount = 3;
+        CountDownLatch releaseCounter = new CountDownLatch(setBufferCount);
+        long[] bufferIds = new long[setBufferCount];
+        long[] receivedCallbacks = new long[setBufferCount];
+        SyncFence[] receivedFences = new SyncFence[setBufferCount];
+        long timeBeforeTest = System.nanoTime();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        SurfaceControl surfaceControl = createFromWindow(holder);
+                        HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                        for (int i = 0; i < setBufferCount; i++) {
+                            final int receiveIndex = i;
+                            final long bufferId = getBufferId(buffer);
+                            bufferIds[receiveIndex] = bufferId;
+                            new SurfaceControl.Transaction()
+                                    .setBuffer(surfaceControl, buffer, null,
+                                            (SyncFence fence) -> {
+                                                receivedCallbacks[receiveIndex] = bufferId;
+                                                receivedFences[receiveIndex] = fence;
+                                                releaseCounter.countDown();
+                                            })
+                                    .apply();
+                        }
+                        buffer.close();
+                        setSolidBuffer(surfaceControl,
+                                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT, PixelColor.YELLOW);
+                    }
+                },
+                new PixelChecker(PixelColor.YELLOW) {
+                    @Override
+                    public boolean checkPixels(int matchingPixelCount, int width, int height) {
+                        return matchingPixelCount > 9000 && matchingPixelCount < 11000;
+                    }
+                }
+        );
+
+        assertTrue(releaseCounter.await(5, TimeUnit.SECONDS));
+        for (int i = 0; i < setBufferCount; i++) {
+            assertEquals(bufferIds[i], receivedCallbacks[i]);
+            if (i > 0) {
+                assertEquals(bufferIds[i], bufferIds[i - 1]);
+            }
+            SyncFence fence = receivedFences[i];
+            assertNotNull(fence);
+            if (fence.isValid()) {
+                fence.awaitForever();
+                assertTrue(fence.getSignalTime() > timeBeforeTest);
+                assertTrue(fence.getSignalTime() < System.nanoTime());
+                fence.close();
+            }
+        }
     }
 }
