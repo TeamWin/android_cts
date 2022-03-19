@@ -73,7 +73,7 @@ public abstract class RequiredMeasurement<T> {
 
         public abstract ImmutableMap.Builder<Integer, T> expectedValuesBuilder();
 
-        public final Builder<T> addRequiredValue(Integer performanceClass, T expectedValue) {
+        public final Builder<T> addExpectedValue(Integer performanceClass, T expectedValue) {
             expectedValuesBuilder().put(performanceClass, expectedValue);
             return this;
         }

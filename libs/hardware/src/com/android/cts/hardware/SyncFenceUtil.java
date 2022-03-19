@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.cts.util;
+package com.android.cts.hardware;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -41,10 +41,10 @@ public class SyncFenceUtil {
         int error;
 
         eglDisplay = EGL15.eglGetPlatformDisplay(EGL15.EGL_PLATFORM_ANDROID_KHR,
-                EGL14.EGL_DEFAULT_DISPLAY,
-                new long[] {
-                        EGL14.EGL_NONE },
-                0);
+            EGL14.EGL_DEFAULT_DISPLAY,
+            new long[] {
+                EGL14.EGL_NONE },
+            0);
         if (eglDisplay == EGL15.EGL_NO_DISPLAY) {
             throw new RuntimeException("no EGL display");
         }
@@ -70,9 +70,9 @@ public class SyncFenceUtil {
         EGLConfig[] configs = new EGLConfig[1];
         if (!EGL14.eglChooseConfig(eglDisplay,
                 new int[] {
-                        EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-                        EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
-                        EGL14.EGL_NONE},
+                    EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                    EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                    EGL14.EGL_NONE},
                 0, configs, 0, 1, numConfigs, 0)) {
             throw new RuntimeException("eglChooseConfig failed");
         }
@@ -84,7 +84,7 @@ public class SyncFenceUtil {
         eglConfig = configs[0];
 
         eglPbuffer = EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig,
-                new int[] {EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE}, 0);
+              new int[] {EGL14.EGL_WIDTH, 1, EGL14.EGL_HEIGHT, 1, EGL14.EGL_NONE}, 0);
         if (eglPbuffer == EGL15.EGL_NO_SURFACE) {
             throw new RuntimeException("eglCreatePbufferSurface failed");
         }
@@ -94,7 +94,7 @@ public class SyncFenceUtil {
         }
 
         eglContext = EGL14.eglCreateContext(eglDisplay, eglConfig, EGL14.EGL_NO_CONTEXT,
-                new int[] {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
+              new int[] {EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
         if (eglContext == EGL15.EGL_NO_CONTEXT) {
             throw new RuntimeException("eglCreateContext failed");
         }
@@ -117,7 +117,7 @@ public class SyncFenceUtil {
         if (eglExtensions.contains("EGL_ANDROID_native_fence_sync")) {
             EGLSync sync = EGL15.eglCreateSync(eglDisplay, EGLExt.EGL_SYNC_NATIVE_FENCE_ANDROID,
                     new long[] {
-                            EGL14.EGL_NONE },
+                        EGL14.EGL_NONE },
                     0);
             assertNotEquals(sync, EGL15.EGL_NO_SYNC);
             assertEquals(EGL14.EGL_SUCCESS, EGL14.eglGetError());

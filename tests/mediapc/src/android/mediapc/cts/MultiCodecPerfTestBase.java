@@ -84,7 +84,14 @@ public class MultiCodecPerfTestBase {
 
     // Returns the list of hardware codecs for given mime
     public static ArrayList<String> getHardwareCodecsForMime(String mime, boolean isEncoder) {
-        return selectHardwareCodecs(mime, null, null, isEncoder);
+        // All the multi-instance tests are limited to codecs that support at least 1280x720 @ 30fps
+        // This will exclude hevc constant quality encoders that are limited to max resolution of
+        // 512x512
+        MediaFormat fmt = MediaFormat.createVideoFormat(mime, 1280, 720);
+        fmt.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        ArrayList<MediaFormat> formatsList = new ArrayList<>();
+        formatsList.add(fmt);
+        return selectHardwareCodecs(mime, formatsList, null, isEncoder);
     }
 
     // Returns the max number of 30 fps instances that the given list of mimeCodecPairs

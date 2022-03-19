@@ -33,7 +33,7 @@ import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_INTERVAL_MI
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.server.job.nano.JobPackageHistoryProto.START_PERIODIC_JOB;
-import static com.android.server.job.nano.JobPackageHistoryProto.STOP_JOB;
+import static com.android.server.job.nano.JobPackageHistoryProto.STOP_PERIODIC_JOB;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -315,7 +315,7 @@ public class LocationAccessCheckTest {
         // We can't simply require startTime <= endTime because the time being reported isn't
         // accurate, and sometimes the end time may come before the start time by around 100 ms.
         eventually(() -> {
-            long stopTime = getLastJobTime(STOP_JOB);
+            long stopTime = getLastJobTime(STOP_PERIODIC_JOB);
             assertTrue(stopTime + " !> " + beforeJob, stopTime > beforeJob);
         }, EXPECTED_TIMEOUT_MILLIS);
     }
