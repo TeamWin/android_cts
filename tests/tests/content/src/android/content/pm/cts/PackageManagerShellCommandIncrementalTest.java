@@ -912,6 +912,9 @@ public class PackageManagerShellCommandIncrementalTest {
     @LargeTest
     @Test
     public void testInstallWithIdSigStreamPerUidTimeoutsIncompleteData() throws Exception {
+        // To disable verification.
+        installNonIncremental(TEST_APK);
+
         checkIncrementalDeliveryV2Feature();
 
         mSession =
@@ -928,13 +931,13 @@ public class PackageManagerShellCommandIncrementalTest {
                                 Paths.get(createApkPath(TEST_HW7_SPLIT3_IDSIG)))
                         .addApk(Paths.get(createApkPath(TEST_HW7_SPLIT4)),
                                 Paths.get(createApkPath(TEST_HW7_SPLIT4_IDSIG)))
-                        .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME)
+                        .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME, "--skip-verification")
                         .setLogger(new IncrementalDeviceConnection.Logger())
                         .build();
 
         executeShellCommand("atrace --async_start -b 10240 -c adb");
         try {
-            setDeviceProperty("incfs_default_timeouts", "10000000:10000000:10000000");
+            setDeviceProperty("incfs_default_timeouts", "20000000:20000000:20000000");
             setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
 
             final int beforeReadDelayMs = 1000;
@@ -1177,7 +1180,13 @@ public class PackageManagerShellCommandIncrementalTest {
         return TEST_APK_PATH + baseName;
     }
 
-    private Void installPackage(String baseName) throws IOException {
+    static void installNonIncremental(String baseName) throws IOException {
+        File file = new File(createApkPath(baseName));
+        assertEquals("Success\n",
+                executeShellCommand("pm install -t -g " + file.getPath()));
+    }
+
+    static Void installPackage(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
                 executeShellCommand("pm install-incremental -t -g " + file.getPath()));
@@ -1329,7 +1338,7 @@ public class PackageManagerShellCommandIncrementalTest {
         mSession = null;
     }
 
-    private void setDeviceProperty(String name, String value) {
+    static void setDeviceProperty(String name, String value) {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
@@ -1339,7 +1348,7 @@ public class PackageManagerShellCommandIncrementalTest {
         }
     }
 
-    private void setSystemProperty(String name, String value) throws Exception {
+    static void setSystemProperty(String name, String value) throws Exception {
         executeShellCommand("setprop " + name + " " + value);
     }
 
