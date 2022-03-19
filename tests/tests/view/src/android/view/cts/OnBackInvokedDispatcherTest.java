@@ -63,9 +63,9 @@ public class OnBackInvokedDispatcherTest {
         OnBackInvokedCallback callback1 = createBackCallback();
         OnBackInvokedCallback callback2 = createBackCallback();
         dispatcher.registerOnBackInvokedCallback(
-                callback1, OnBackInvokedDispatcher.PRIORITY_OVERLAY);
+                OnBackInvokedDispatcher.PRIORITY_OVERLAY, callback1);
         dispatcher.registerOnBackInvokedCallback(
-                callback2, OnBackInvokedDispatcher.PRIORITY_DEFAULT);
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback2);
         dispatcher.unregisterOnBackInvokedCallback(callback2);
         dispatcher.unregisterOnBackInvokedCallback(callback1);
         dispatcher.unregisterOnBackInvokedCallback(callback2);

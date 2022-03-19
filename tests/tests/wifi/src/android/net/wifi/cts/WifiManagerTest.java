@@ -5614,5 +5614,25 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 }
             }
         }
+
+        // verify the WifiManager.InterfaceCreationImpact APIs
+        int interfaceType = WifiManager.WIFI_INTERFACE_TYPE_STA;
+        Set<String> packages = Set.of("package1", "packages2");
+        WifiManager.InterfaceCreationImpact element = new WifiManager.InterfaceCreationImpact(
+                interfaceType, packages);
+        assertEquals(interfaceType, element.getInterfaceType());
+        assertEquals(packages, element.getPackages());
+    }
+
+    /**
+     * Tests {@link WifiManager#isEasyConnectDppAkmSupported)} does not crash.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    public void testIsEasyConnectDppAkmSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isEasyConnectDppAkmSupported();
     }
 }

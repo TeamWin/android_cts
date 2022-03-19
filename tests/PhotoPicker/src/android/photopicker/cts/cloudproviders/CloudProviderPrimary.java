@@ -102,7 +102,7 @@ public class CloudProviderPrimary extends CloudMediaProvider {
 
     @Override
     public CloudMediaSurfaceController onCreateCloudMediaSurfaceController(@NonNull Bundle config,
-            @NonNull CloudMediaSurfaceEventCallback callback) {
+            @NonNull CloudMediaSurfaceStateChangedCallback callback) {
         final boolean enableLoop = config.getBoolean(EXTRA_LOOPING_PLAYBACK_ENABLED, false);
         sSurfaceControllerImpl =
                 new CloudMediaSurfaceControllerImpl(getContext(), enableLoop, callback);
@@ -117,20 +117,20 @@ public class CloudProviderPrimary extends CloudMediaProvider {
         return sMockSurfaceControllerListener;
     }
 
-    public static void sendPlaybackEvent(int surfaceId, int event) {
+    public static void setPlaybackState(int surfaceId, int state) {
         if (sSurfaceControllerImpl == null) {
             throw new IllegalStateException("Surface Controller object expected to be not null");
         }
 
-        sSurfaceControllerImpl.sendPlaybackEvent(surfaceId, event);
+        sSurfaceControllerImpl.sendPlaybackEvent(surfaceId, state);
     }
 
     public static class CloudMediaSurfaceControllerImpl extends CloudMediaSurfaceController {
 
-        private final CloudMediaSurfaceEventCallback mCallback;
+        private final CloudMediaSurfaceStateChangedCallback mCallback;
 
         CloudMediaSurfaceControllerImpl(Context context, boolean enableLoop,
-                CloudMediaSurfaceEventCallback callback) {
+                CloudMediaSurfaceStateChangedCallback callback) {
             mCallback = callback;
             Log.d(TAG, "Surface controller created.");
         }
@@ -199,8 +199,8 @@ public class CloudProviderPrimary extends CloudMediaProvider {
             Log.d(TAG, "Surface controller destroyed.");
         }
 
-        public void sendPlaybackEvent(int surfaceId, int event) {
-            mCallback.onPlaybackEvent(surfaceId, event, null);
+        public void sendPlaybackEvent(int surfaceId, int state) {
+            mCallback.setPlaybackState(surfaceId, state, null);
         }
     }
 }

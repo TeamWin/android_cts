@@ -43,7 +43,7 @@ public class RemoteDpc extends RemotePolicyManager {
     );
 
     private static final TestAppProvider sTestAppProvider = new TestAppProvider();
-    private static final TestApp sTestApp = sTestAppProvider.query()
+    public static final TestApp REMOTE_DPC_TEST_APP = sTestAppProvider.query()
             .wherePackageName().isEqualTo(DPC_COMPONENT_NAME.getPackageName())
             .get();
 
@@ -226,13 +226,14 @@ public class RemoteDpc extends RemotePolicyManager {
     }
 
     private static void ensureInstalled(UserReference user) {
-        sTestApp.install(user);
+        REMOTE_DPC_TEST_APP.install(user);
     }
 
     private final DevicePolicyController mDevicePolicyController;
 
     RemoteDpc(DevicePolicyController devicePolicyController) {
-        super(sTestApp, devicePolicyController == null ? null : devicePolicyController.user());
+        super(REMOTE_DPC_TEST_APP, devicePolicyController == null ? null
+                : devicePolicyController.user());
         mDevicePolicyController = devicePolicyController;
     }
 
