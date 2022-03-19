@@ -212,16 +212,12 @@ public class IpcDataCacheTest {
     private static class TestCache extends IpcDataCache<Integer, String> {
         private final TestQuery mQuery;
 
-        TestCache() {
-            this(MODULE, API);
-        }
-
         TestCache(String module, String api) {
             this(module, api, new TestQuery());
         }
 
         TestCache(String module, String api, TestQuery query) {
-            super(4, module, api, "testCache7", query);
+            super(4, module, api, api, query);
             mQuery = query;
             setTestMode(true);
             testPropertyName();
@@ -234,7 +230,8 @@ public class IpcDataCacheTest {
 
     @Test
     public void testCacheRecompute() {
-        TestCache cache = new TestCache();
+        final String api = "testCacheRecompute";
+        TestCache cache = new TestCache(MODULE, api);
         cache.invalidateCache();
         assertEquals(cache.isDisabled(), false);
         assertEquals("foo5", cache.query(5));
@@ -248,7 +245,7 @@ public class IpcDataCacheTest {
         assertEquals("foo5", cache.query(5));
         assertEquals(3, cache.getRecomputeCount());
         // Invalidate the cache with a direct call to the property.
-        IpcDataCache.invalidateCache(MODULE, API);
+        IpcDataCache.invalidateCache(MODULE, api);
         assertEquals("foo5", cache.query(5));
         assertEquals("foo5", cache.query(5));
         assertEquals(4, cache.getRecomputeCount());
@@ -256,7 +253,8 @@ public class IpcDataCacheTest {
 
     @Test
     public void testCacheInitialState() {
-        TestCache cache = new TestCache();
+        final String api = "testCacheInitialState";
+        TestCache cache = new TestCache(MODULE, api);
         assertEquals("foo5", cache.query(5));
         assertEquals("foo5", cache.query(5));
         assertEquals(2, cache.getRecomputeCount());
@@ -268,8 +266,8 @@ public class IpcDataCacheTest {
 
     @Test
     public void testCachePropertyUnset() {
-        final String UNSET_API = "otherApi";
-        TestCache cache = new TestCache(MODULE, UNSET_API);
+        final String api = "testCachePropertyUnset";
+        TestCache cache = new TestCache(MODULE, api);
         assertEquals("foo5", cache.query(5));
         assertEquals("foo5", cache.query(5));
         assertEquals(2, cache.getRecomputeCount());
@@ -277,7 +275,8 @@ public class IpcDataCacheTest {
 
     @Test
     public void testCacheDisableState() {
-        TestCache cache = new TestCache();
+        final String api = "testCacheDisableState";
+        TestCache cache = new TestCache(MODULE, api);
         assertEquals("foo5", cache.query(5));
         assertEquals("foo5", cache.query(5));
         assertEquals(2, cache.getRecomputeCount());
@@ -295,9 +294,11 @@ public class IpcDataCacheTest {
         assertEquals(7, cache.getRecomputeCount());
     }
 
+    // Validate the member method disableForCurrentProcess().
     @Test
-    public void testLocalProcessDisable() {
-        TestCache cache = new TestCache();
+    public void testLocalProcessDisable1() {
+        final String api = "testLocalProcessDisable1";
+        TestCache cache = new TestCache(MODULE, api);
         assertEquals(cache.isDisabled(), false);
         cache.invalidateCache();
         assertEquals("foo5", cache.query(5));
@@ -310,5 +311,30 @@ public class IpcDataCacheTest {
         assertEquals("foo5", cache.query(5));
         assertEquals("foo5", cache.query(5));
         assertEquals(3, cache.getRecomputeCount());
+
+        // Clean up so this test can be re-run
+        cache.forgetDisableLocal();
+    }
+
+    // Validate the static method disableForCurrentProcess(String).
+    @Test
+    public void testLocalProcessDisable2() {
+        final String api = "testLocalProcessDisable2";
+        TestCache cache = new TestCache(MODULE, api);
+        assertEquals(cache.isDisabled(), false);
+        cache.invalidateCache();
+        assertEquals("foo5", cache.query(5));
+        assertEquals(1, cache.getRecomputeCount());
+        assertEquals("foo5", cache.query(5));
+        assertEquals(1, cache.getRecomputeCount());
+        assertEquals(cache.isDisabled(), false);
+        IpcDataCache.disableForCurrentProcess(api);
+        assertEquals(cache.isDisabled(), true);
+        assertEquals("foo5", cache.query(5));
+        assertEquals("foo5", cache.query(5));
+        assertEquals(3, cache.getRecomputeCount());
+
+        // Clean up so this test can be re-run
+        cache.forgetDisableLocal();
     }
 }
