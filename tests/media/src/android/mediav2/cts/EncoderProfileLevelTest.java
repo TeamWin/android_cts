@@ -50,7 +50,6 @@ import static org.junit.Assert.fail;
 @RunWith(Parameterized.class)
 public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderProfileLevelTest.class.getSimpleName();
-    private static final HashMap<String, int[]> mProfileMap = new HashMap<>();
     private static final HashMap<String, Pair<int[], Integer>> mProfileLevelCdd = new HashMap<>();
 
     private MediaFormat mConfigFormat;
@@ -80,7 +79,6 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 // Audio - CodecMime, bit-rate, sample rate, channel count
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 128000, 48000, 2, -1},
-
                 // Video - CodecMime, bit-rate, height, width, frame-rate
                 // TODO (b/151423508)
                 /*{MediaFormat.MIMETYPE_VIDEO_AVC, 64000, 176, 144, 15},
@@ -188,44 +186,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 176, 144, 20},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 480, 360, 20},
         });
-        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
-    }
 
-    static {
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_AVC,
-                new int[]{AVCProfileBaseline, AVCProfileMain, AVCProfileExtended, AVCProfileHigh,
-                        AVCProfileHigh10, AVCProfileHigh422, AVCProfileHigh444,
-                        AVCProfileConstrainedBaseline, AVCProfileConstrainedHigh});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_HEVC,
-                new int[]{HEVCProfileMain, HEVCProfileMain10, HEVCProfileMainStill,
-                          // TODO: test HDR profiles once they are supported by MediaMuxer
-                          /* HEVCProfileMain10HDR10, HEVCProfileMain10HDR10Plus */});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_H263,
-                new int[]{H263ProfileBaseline, H263ProfileH320Coding,
-                        H263ProfileBackwardCompatible, H263ProfileISWV2, H263ProfileISWV3,
-                        H263ProfileHighCompression, H263ProfileInternet, H263ProfileInterlace,
-                        H263ProfileHighLatency});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_MPEG2,
-                new int[]{MPEG2ProfileSimple, MPEG2ProfileMain, MPEG2Profile422, MPEG2ProfileSNR,
-                        MPEG2ProfileSpatial, MPEG2ProfileHigh});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_MPEG4,
-                new int[]{MPEG4ProfileSimple, MPEG4ProfileSimpleScalable, MPEG4ProfileCore,
-                        MPEG4ProfileMain, MPEG4ProfileNbit, MPEG4ProfileScalableTexture,
-                        MPEG4ProfileSimpleFace, MPEG4ProfileSimpleFBA, MPEG4ProfileBasicAnimated,
-                        MPEG4ProfileHybrid, MPEG4ProfileAdvancedRealTime,
-                        MPEG4ProfileCoreScalable, MPEG4ProfileAdvancedCoding,
-                        MPEG4ProfileAdvancedCore, MPEG4ProfileAdvancedScalable,
-                        MPEG4ProfileAdvancedSimple});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{VP8ProfileMain});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{VP9Profile0, VP9Profile1});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_AV1,
-                new int[]{AV1ProfileMain8, AV1ProfileMain10,
-                          // TODO: test HDR profiles once they are supported by MediaMuxer
-                          /* AV1ProfileMain10HDR10, AV1ProfileMain10HDR10Plus */});
-        mProfileMap.put(MediaFormat.MIMETYPE_AUDIO_AAC,
-                new int[]{AACObjectMain, AACObjectLC, AACObjectSSR, AACObjectLTP, AACObjectHE,
-                        AACObjectScalable, AACObjectERLC, AACObjectERScalable, AACObjectLD,
-                        AACObjectELD, AACObjectXHE});
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
     static {
@@ -688,7 +650,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
      */
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
-        int[] profiles = mProfileMap.get(mMime);
+        int[] profiles = mProfileSdrMap.get(mMime);
         assertTrue("no profile entry found for mime" + mMime, profiles != null);
         // cdd check initialization
         boolean cddSupportedMime = mProfileLevelCdd.get(mMime) != null;
