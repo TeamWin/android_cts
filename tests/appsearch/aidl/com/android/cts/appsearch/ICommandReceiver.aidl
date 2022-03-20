@@ -15,6 +15,7 @@
  */
 package com.android.cts.appsearch;
 
+import android.os.Bundle;
 import java.util.List;
 
 interface ICommandReceiver {

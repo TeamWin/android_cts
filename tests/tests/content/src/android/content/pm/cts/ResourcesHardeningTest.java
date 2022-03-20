@@ -374,7 +374,8 @@ public class ResourcesHardeningTest {
         final TestBlockFilter filter = new TestBlockFilter();
         final IncrementalInstallSession.Builder builder = new IncrementalInstallSession.Builder()
                 .addExtraArgs("--user", String.valueOf(getContext().getUserId()),
-                              "-t", "-i", getContext().getPackageName())
+                              "-t", "-i", getContext().getPackageName(),
+                              "--skip-verification")
                 .setLogger(new IncrementalDeviceConnection.Logger())
                 .setBlockFilter(filter);
         for (final String apk : apks) {

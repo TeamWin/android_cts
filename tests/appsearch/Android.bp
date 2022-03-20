@@ -19,11 +19,6 @@ package {
 android_test {
     name: "CtsAppSearchTestCases",
     defaults: ["cts_defaults"],
-    sdk_version: "module_current",
-    libs: [
-        "framework-annotations-lib",
-        "framework-appsearch.impl",
-    ],
     static_libs: [
         "AppSearchTestUtils",
         "androidx.test.ext.junit",

@@ -177,4 +177,5 @@ public class ASurfaceControlTestUtils {
     public static native HardwareBuffer getSolidBuffer(int width, int height, int color);
     public static native HardwareBuffer getQuadrantBuffer(int width, int height,
             int colorTopLeft, int colorTopRight, int colorBottomRight, int colorBottomLeft);
+    public static native long getBufferId(HardwareBuffer buffer);
 }

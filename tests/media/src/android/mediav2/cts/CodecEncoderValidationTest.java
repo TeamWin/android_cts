@@ -22,6 +22,7 @@ import android.media.MediaFormat;
 
 import androidx.test.filters.LargeTest;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,12 +36,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.mediav2.cts.CodecTestBase.SupportClass.*;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     private static final String INPUT_AUDIO_FILE_HBD = "audio/sd_2ch_48kHz_f32le.raw";
+    private static final String INPUT_VIDEO_FILE_HBD = "dpov_352x288_30fps_yuv420p16le.yuv";
+
     private final boolean mUseHBD;
     private final SupportClass mSupportRequirements;
     // Key: mediaType, Value: tolerance duration in ms
@@ -69,7 +73,8 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         final boolean needVideo = true;
         final List<Object[]> defArgsList = Arrays.asList(new Object[][]{
                 // Audio tests covering cdd sec 5.1.3
-                // mediaType, arrays of bit-rates, sample rates, channel counts, usefloat
+                // mediaType, arrays of bit-rates, sample rates, channel counts, useHBD,
+                // SupportClass
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 12000,
                         16000, 22050, 24000, 32000, 44100, 48000}, new int[]{1, 2}, false,
                         CODEC_ALL},
@@ -88,7 +93,7 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
                         true, CODEC_ALL},
 
-                // mediaType, arrays of bit-rates, width, height, Invalid Arg
+                // mediaType, arrays of bit-rates, width, height, useHBD, SupportClass
                 {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{32000, 64000}, new int[]{176},
                         new int[]{144}, false, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{32000, 64000}, new int[]{176},
@@ -108,6 +113,10 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     }
 
     void encodeAndValidate(String inputFile) throws IOException, InterruptedException {
+        if (!mIsAudio) {
+            int colorFormat = mFormats.get(0).getInteger(MediaFormat.KEY_COLOR_FORMAT);
+            Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, colorFormat));
+        }
         checkFormatSupport(mCodecName, mMime, true, mFormats, null, mSupportRequirements);
         setUpSource(inputFile);
         mOutputBuff = new OutputManager();
@@ -199,12 +208,22 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testEncodeAndValidate() throws IOException, InterruptedException {
         setUpParams(Integer.MAX_VALUE);
-        if (mIsAudio && mUseHBD) {
-            for (MediaFormat format : mFormats) {
-                format.setInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
+        String inputFile = mInputFile;
+        if (mUseHBD) {
+            if (mIsAudio) {
+                for (MediaFormat format : mFormats) {
+                    format.setInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_FLOAT);
+                }
+                mBytesPerSample = 4;
+                inputFile = INPUT_AUDIO_FILE_HBD;
+            } else {
+                for (MediaFormat format : mFormats) {
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUVP010);
+                }
+                mBytesPerSample = 2;
+                inputFile = INPUT_VIDEO_FILE_HBD;
             }
-            mBytesPerSample = 4;
         }
-        encodeAndValidate(mIsAudio && mUseHBD ? INPUT_AUDIO_FILE_HBD : mInputFile);
+        encodeAndValidate(inputFile);
     }
 }

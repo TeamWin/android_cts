@@ -881,11 +881,12 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeFalse(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
         assertThrows(
                 UnsupportedOperationException.class,
                 () ->
-                        mGlobalSearchSession.addObserver(
+                        mGlobalSearchSession.registerObserverCallback(
                                 mContext.getPackageName(),
                                 new ObserverSpec.Builder().build(),
                                 EXECUTOR,
@@ -893,7 +894,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assertThrows(
                 UnsupportedOperationException.class,
                 () ->
-                        mGlobalSearchSession.removeObserver(
+                        mGlobalSearchSession.unregisterObserverCallback(
                                 mContext.getPackageName(), new TestObserverCallback()));
     }
 
@@ -902,12 +903,13 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeTrue(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         TestObserverCallback observer = new TestObserverCallback();
 
         // Register observer. Note: the type does NOT exist yet!
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 EXECUTOR,
@@ -946,7 +948,8 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeTrue(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         TestObserverCallback unfilteredObserver = new TestObserverCallback();
         TestObserverCallback emailObserver = new TestObserverCallback();
@@ -967,12 +970,12 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 .get();
 
         // Register two observers. One has no filters, the other filters on email.
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
                 unfilteredObserver);
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 EXECUTOR,
@@ -1072,7 +1075,8 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeTrue(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         TestObserverCallback unfilteredObserver = new TestObserverCallback();
         TestObserverCallback emailObserver = new TestObserverCallback();
@@ -1096,7 +1100,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Register two observers. One, registered later, has no filters. The other, registered
         // now, filters on email.
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 EXECUTOR,
@@ -1132,7 +1136,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                         new PutDocumentsRequest.Builder().addGenericDocuments(gift1).build()));
 
         // Register the second observer
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
@@ -1204,7 +1208,8 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeTrue(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         TestObserverCallback unfilteredObserver = new TestObserverCallback();
         TestObserverCallback emailObserver = new TestObserverCallback();
@@ -1246,12 +1251,12 @@ public abstract class GlobalSearchSessionCtsTestBase {
                                 .build()));
 
         // Register observers
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
                 unfilteredObserver);
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 EXECUTOR,
@@ -1324,7 +1329,8 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeTrue(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         TestObserverCallback observer = new TestObserverCallback();
 
@@ -1341,12 +1347,12 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 .get();
 
         // Register the same observer twice: once for gift, once for email
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas("Gift").build(),
                 EXECUTOR,
                 observer);
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 EXECUTOR,
@@ -1388,7 +1394,8 @@ public abstract class GlobalSearchSessionCtsTestBase {
         assumeTrue(
                 mGlobalSearchSession
                         .getFeatures()
-                        .isFeatureSupported(Features.GLOBAL_SEARCH_SESSION_ADD_REMOVE_OBSERVER));
+                        .isFeatureSupported(
+                                Features.GLOBAL_SEARCH_SESSION_REGISTER_OBSERVER_CALLBACK));
 
         TestObserverCallback temporaryObserver = new TestObserverCallback();
         TestObserverCallback permanentObserver = new TestObserverCallback();
@@ -1412,17 +1419,17 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Register both observers. temporaryObserver is registered twice to ensure both instances
         // get removed.
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
                 EXECUTOR,
                 temporaryObserver);
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas("Gift").build(),
                 EXECUTOR,
                 temporaryObserver);
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
@@ -1477,7 +1484,8 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 .containsExactlyElementsIn(expectedChangesOrig);
 
         // Unregister temporaryObserver
-        mGlobalSearchSession.removeObserver(mContext.getPackageName(), temporaryObserver);
+        mGlobalSearchSession.unregisterObserverCallback(
+                mContext.getPackageName(), temporaryObserver);
 
         // Index some more documents
         checkIsBatchResultSuccess(
@@ -1614,7 +1622,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
     public void testAddObserver_schemaChange_added() throws Exception {
         // Register an observer
         TestObserverCallback observer = new TestObserverCallback();
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 /*targetPackageName=*/ mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
@@ -1670,7 +1678,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Register an observer
         TestObserverCallback observer = new TestObserverCallback();
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 /*targetPackageName=*/ mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
@@ -1713,7 +1721,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Register an observer
         TestObserverCallback observer = new TestObserverCallback();
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 /*targetPackageName=*/ mContext.getPackageName(),
                 new ObserverSpec.Builder().build(),
                 EXECUTOR,
@@ -1792,7 +1800,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Register an observer that only listens for Type2
         TestObserverCallback observer = new TestObserverCallback();
-        mGlobalSearchSession.addObserver(
+        mGlobalSearchSession.registerObserverCallback(
                 /*targetPackageName=*/ mContext.getPackageName(),
                 new ObserverSpec.Builder().addFilterSchemas("Type2").build(),
                 EXECUTOR,

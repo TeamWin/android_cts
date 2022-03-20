@@ -58,7 +58,7 @@ public class BluetoothLeBroadcastMetadataTest {
     private static final int TEST_PRESENTATION_DELAY_MS = 345;
 
     private static final int TEST_CODEC_ID = 42;
-    private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {null};
+    private static final BluetoothLeBroadcastChannel[] TEST_CHANNELS = {};
 
     // For BluetoothLeAudioCodecConfigMetadata
     private static final long TEST_AUDIO_LOCATION_FRONT_LEFT = 0x01;
@@ -212,8 +212,7 @@ public class BluetoothLeBroadcastMetadataTest {
         BluetoothLeBroadcastSubgroup.Builder builder = new BluetoothLeBroadcastSubgroup.Builder()
                 .setCodecId(TEST_CODEC_ID)
                 .setCodecSpecificConfig(codecMetadata)
-                .setContentMetadata(contentMetadata)
-                .setNoChannelPreference(true);
+                .setContentMetadata(contentMetadata);
         for (BluetoothLeBroadcastChannel channel : TEST_CHANNELS) {
             builder.addChannel(channel);
         }

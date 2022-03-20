@@ -162,6 +162,13 @@ jobject Utils_getQuadrantBuffer(JNIEnv* env, jobject /*clazz*/, jint width, jint
     return result;
 }
 
+jlong Utils_getBufferId(JNIEnv* env, jobject /*clazz*/, jobject jHardwareBuffer) {
+    AHardwareBuffer* buffer = AHardwareBuffer_fromHardwareBuffer(env, jHardwareBuffer);
+    uint64_t id = 0;
+    AHardwareBuffer_getId(buffer, &id);
+    return id;
+}
+
 jlong SurfaceTransaction_create(JNIEnv* /*env*/, jclass) {
     return reinterpret_cast<jlong>(ASurfaceTransaction_create());
 }
@@ -686,6 +693,7 @@ static const JNINativeMethod JNI_METHODS[] = {
         {"getSolidBuffer", "(III)Landroid/hardware/HardwareBuffer;", (void*)Utils_getSolidBuffer},
         {"getQuadrantBuffer", "(IIIIII)Landroid/hardware/HardwareBuffer;",
          (void*)Utils_getQuadrantBuffer},
+        {"getBufferId", "(Landroid/hardware/HardwareBuffer;)J", (void*)Utils_getBufferId},
 };
 
 static const JNINativeMethod FRAME_TIMELINE_JNI_METHODS[] = {

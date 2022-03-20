@@ -53,15 +53,6 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
     }
 
     @Override
-    public void onPrepare(int type) {
-        sType = type;
-        super.notifyStateChanged(
-                sType,
-                TvInteractiveAppManager.SERVICE_STATE_PREPARING,
-                TvInteractiveAppManager.ERROR_NONE);
-    }
-
-    @Override
     public void onAppLinkCommand(Bundle command) {
         super.onAppLinkCommand(command);
         sAppLinkCommand = command;
@@ -272,8 +263,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
-        public void onCreateBiInteractiveApp(Uri biIAppUri, Bundle params) {
-            super.onCreateBiInteractiveApp(biIAppUri, params);
+        public void onCreateBiInteractiveAppRequest(Uri biIAppUri, Bundle params) {
+            super.onCreateBiInteractiveAppRequest(biIAppUri, params);
             mCreateBiIAppCount++;
             mCreateBiIAppUri = biIAppUri;
             mCreateBiIAppParams = params;
@@ -281,8 +272,8 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         }
 
         @Override
-        public void onDestroyBiInteractiveApp(String biIAppId) {
-            super.onDestroyBiInteractiveApp(biIAppId);
+        public void onDestroyBiInteractiveAppRequest(String biIAppId) {
+            super.onDestroyBiInteractiveAppRequest(biIAppId);
             mDestroyBiIAppCount++;
             mDestroyBiIAppId = biIAppId;
         }

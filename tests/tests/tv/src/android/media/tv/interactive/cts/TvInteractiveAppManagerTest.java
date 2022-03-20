@@ -192,32 +192,6 @@ public class TvInteractiveAppManagerTest {
     }
 
     @Test
-    public void testPrepare() throws Exception {
-        List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
-
-        TvInteractiveAppServiceInfo stubInfo = null;
-        for (TvInteractiveAppServiceInfo info : list) {
-            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
-                stubInfo = info;
-                break;
-            }
-        }
-        assertNotNull(stubInfo);
-        stubInfo.getSupportedTypes();
-
-        mManager.prepare(stubInfo.getId(), TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
-        PollingCheck.waitFor(TIME_OUT_MS, () -> mCallback.mIAppServiceId != null);
-        assertThat(mCallback.mIAppServiceId).isEqualTo(stubInfo.getId());
-        assertThat(mCallback.mType)
-                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
-        assertThat(StubTvInteractiveAppService.sType)
-                .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
-        assertThat(mCallback.mState)
-                .isEqualTo(TvInteractiveAppManager.SERVICE_STATE_PREPARING);
-        assertThat(mCallback.mErr).isEqualTo(TvInteractiveAppManager.ERROR_NONE);
-    }
-
-    @Test
     public void testAppLinkCommand() throws Exception {
         List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
@@ -254,29 +228,33 @@ public class TvInteractiveAppManagerTest {
         }
         assertNotNull(stubInfo);
 
-        AppLinkInfo info = new AppLinkInfo.Builder("pkg_name", "clazz_name").build();
+        AppLinkInfo info = new AppLinkInfo("pkg_name", "clazz_name", "https://uri.test");
 
         mManager.registerAppLinkInfo(stubInfo.getId(), info);
         PollingCheck.waitFor(
                 TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo != null);
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getPackageName()).isEqualTo("pkg_name");
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getClassName()).isEqualTo("clazz_name");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getComponentName().getPackageName())
+                .isEqualTo("pkg_name");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getComponentName().getClassName())
+                .isEqualTo("clazz_name");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUri().toString())
+                .isEqualTo("https://uri.test");
 
         mManager.unregisterAppLinkInfo(stubInfo.getId(), info);
         PollingCheck.waitFor(
                 TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo == null);
 
-        info = new AppLinkInfo.Builder("pkg1", "class1").setUriScheme("url1").setUriHost("host2")
-                .setUriPrefix("prefix").build();
+        info = new AppLinkInfo("pkg2", "class2", "http://applinkinfo.com");
 
         mManager.registerAppLinkInfo(stubInfo.getId(), info);
         PollingCheck.waitFor(
                 TIME_OUT_MS, () -> StubTvInteractiveAppService.sAppLinkInfo != null);
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getPackageName()).isEqualTo("pkg2");
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getClassName()).isEqualTo("class2");
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriScheme()).isEqualTo("url1");
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriHost()).isEqualTo("host2");
-        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUriPrefix()).isEqualTo("prefix");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getComponentName().getPackageName())
+                .isEqualTo("pkg2");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getComponentName().getClassName())
+                .isEqualTo("class2");
+        assertThat(StubTvInteractiveAppService.sAppLinkInfo.getUri().toString())
+                .isEqualTo("http://applinkinfo.com");
     }
 
     private static void assertBundlesAreEqual(Bundle actual, Bundle expected) {

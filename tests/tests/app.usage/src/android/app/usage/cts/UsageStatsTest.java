@@ -16,6 +16,7 @@
 
 package android.app.usage.cts;
 
+import static android.Manifest.permission.ACCESS_BROADCAST_RESPONSE_STATS;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
@@ -44,6 +45,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.UiAutomation;
 import android.app.usage.BroadcastResponseStats;
 import android.app.usage.EventStats;
 import android.app.usage.UsageEvents;
@@ -961,6 +963,9 @@ public class UsageStatsTest {
                 TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
         sendBroadcastAndWaitForReceipt(intent, options.toBundle());
 
+        final UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        uiAutomation.revokeRuntimePermission(mTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
         setAppOpsMode("ignore");
         try {
             assertThrows(SecurityException.class, () -> {
@@ -968,6 +973,7 @@ public class UsageStatsTest {
             });
         } finally {
             resetAppOpsMode();
+            uiAutomation.grantRuntimePermission(mTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
         }
     }
 
@@ -976,6 +982,9 @@ public class UsageStatsTest {
     public void testQueryBroadcastResponseStats_noPermission() throws Exception {
         mUsageStatsManager.queryBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
 
+        final UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        uiAutomation.revokeRuntimePermission(mTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
         setAppOpsMode("ignore");
         try {
             assertThrows(SecurityException.class, () -> {
@@ -984,6 +993,7 @@ public class UsageStatsTest {
             });
         } finally {
             resetAppOpsMode();
+            uiAutomation.grantRuntimePermission(mTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
         }
     }
 
@@ -992,6 +1002,9 @@ public class UsageStatsTest {
     public void testClearBroadcastResponseStats_noPermission() throws Exception {
         mUsageStatsManager.clearBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
 
+        final UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        uiAutomation.revokeRuntimePermission(mTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
         setAppOpsMode("ignore");
         try {
             assertThrows(SecurityException.class, () -> {
@@ -1000,6 +1013,7 @@ public class UsageStatsTest {
             });
         } finally {
             resetAppOpsMode();
+            uiAutomation.grantRuntimePermission(mTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
         }
     }
 

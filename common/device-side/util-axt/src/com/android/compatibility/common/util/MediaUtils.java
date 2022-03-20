@@ -422,6 +422,9 @@ public class MediaUtils {
         } catch (IOException e) {
             Log.w(TAG, "codec not found: " + codecName);
             return false;
+        } catch (NullPointerException e) {
+            Log.w(TAG, "codec name is null");
+            return false;
         }
 
         String mime = format.getString(MediaFormat.KEY_MIME);
