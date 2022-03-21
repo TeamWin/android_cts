@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
 @EnsureHasDeviceOwner(isPrimary = true, affiliationIds = {})
-public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
+public @interface IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser {
     /**
      * Weight sets the order that annotations will be resolved.
      *
