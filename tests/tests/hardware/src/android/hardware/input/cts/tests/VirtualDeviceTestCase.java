@@ -43,6 +43,8 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.ImmutableList;
+
 import org.junit.Rule;
 
 import java.util.concurrent.CountDownLatch;
@@ -181,7 +183,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     }
 
     private void tapActivityToFocus() {
-        final Point p = getCenterOfActivityOnScreen(mTestActivity.getWindow().getDecorView());
+        final Point p = getViewCenterOnScreen(mTestActivity.getWindow().getDecorView());
         final int displayId = mTestActivity.getDisplayId();
 
         final long downTime = SystemClock.elapsedRealtime();
@@ -193,9 +195,11 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 MotionEvent.ACTION_UP, p.x, p.y, 0 /* metaState */);
         upEvent.setDisplayId(displayId);
         mInstrumentation.sendPointerSync(upEvent);
+
+        verifyEvents(ImmutableList.of(downEvent, upEvent));
     }
 
-    private static Point getCenterOfActivityOnScreen(@NonNull View view) {
+    private static Point getViewCenterOnScreen(@NonNull View view) {
         final int[] location = new int[2];
         view.getLocationOnScreen(location);
         return new Point(location[0] + view.getWidth() / 2,
