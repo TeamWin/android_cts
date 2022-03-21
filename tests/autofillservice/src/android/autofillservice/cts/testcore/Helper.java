@@ -26,6 +26,7 @@ import static android.service.autofill.FillEventHistory.Event.TYPE_DATASETS_SHOW
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
+import static android.service.autofill.FillEventHistory.Event.UI_TYPE_UNKNOWN;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -1089,6 +1090,13 @@ public final class Helper {
              .that(clientState).isNull();
     }
 
+    private static void assertFillEventPresentationType(FillEventHistory.Event event,
+            int expectedType) {
+        // TODO: assert UI_TYPE_UNKNOWN in other event type
+        assertThat(event.getUiType()).isNotEqualTo(UI_TYPE_UNKNOWN);
+        assertThat(event.getUiType()).isEqualTo(expectedType);
+    }
+
     /**
      * Asserts the content of a {@link android.service.autofill.FillEventHistory.Event}.
      *
@@ -1217,10 +1225,12 @@ public final class Helper {
      * @param event event to be asserted
      * @param key the only key expected in the client state bundle
      * @param value the only value expected in the client state bundle
+     * @param expectedPresentation the exptected ui presentation type
      */
     public static void assertFillEventForDatasetShown(@NonNull FillEventHistory.Event event,
-            @NonNull String key, @NonNull String value) {
+            @NonNull String key, @NonNull String value, int expectedPresentation) {
         assertFillEvent(event, TYPE_DATASETS_SHOWN, NULL_DATASET_ID, key, value, null);
+        assertFillEventPresentationType(event, expectedPresentation);
     }
 
     /**
@@ -1229,8 +1239,10 @@ public final class Helper {
      *
      * @param event event to be asserted
      */
-    public static void assertFillEventForDatasetShown(@NonNull FillEventHistory.Event event) {
+    public static void assertFillEventForDatasetShown(@NonNull FillEventHistory.Event event,
+            int expectedPresentation) {
         assertFillEvent(event, TYPE_DATASETS_SHOWN, NULL_DATASET_ID, null, null, null);
+        assertFillEventPresentationType(event, expectedPresentation);
     }
 
     /**
