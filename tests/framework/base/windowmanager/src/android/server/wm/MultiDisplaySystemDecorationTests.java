@@ -742,6 +742,12 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         assumeTrue("Skip the test if the size of the created displays aren't identical",
                 firstDisplay.getDisplayRect().equals(secondDisplay.getDisplayRect()));
 
+        // Make firstDisplay the top focus display.
+        tapOnDisplayCenter(firstDisplay.mId);
+
+        mWmState.waitForWithAmState(state -> state.getFocusedDisplayId() == firstDisplay.mId,
+                "First display must be top focused.");
+
         // Initialize IME test environment
         final MockImeSession mockImeSession = createManagedMockImeSession(this);
         final TestActivitySession<ImeTestActivity> imeTestActivitySession =
@@ -751,8 +757,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // display to the firstDisplay.
         ImeEventStream configChangeVerifyStream = clearOnConfigurationChangedFromStream(stream);
 
-        // Make firstDisplay the top focus display.
-        tapOnDisplayCenter(firstDisplay.mId);
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 firstDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
