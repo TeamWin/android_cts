@@ -5088,6 +5088,9 @@ You should be prompted to select credentials; choose the ones you just installed
     soundbar which can play Dolby Atmos. </string>
     <string name="tv_audio_capabilities_atmos_supported">Does your Android TV device support Dolby
     Atmos (either passthrough or decode)?  </string>
+    <string name="tv_audio_capabilities_skip_test"> This test is only applicable to OTT and STB
+        devices. Is your device a soundbar or panel TV?
+    </string>
 
     <!-- Hotplug Test -->
     <string name="tv_hotplug_test">Hotplug Test</string>
