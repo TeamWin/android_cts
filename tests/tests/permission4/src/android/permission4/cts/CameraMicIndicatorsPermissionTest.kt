@@ -43,6 +43,7 @@ import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
@@ -58,6 +59,8 @@ private const val USE_MICROPHONE = "use_microphone"
 private const val USE_HOTWORD = "use_hotword"
 private const val INTENT_ACTION = "test.action.USE_CAMERA_OR_MIC"
 private const val PRIVACY_CHIP_ID = "com.android.systemui:id/privacy_chip"
+private const val CAR_MIC_PRIVACY_CHIP_ID = "com.android.systemui:id/mic_privacy_chip"
+private const val CAR_CAMERA_PRIVACY_CHIP_ID = "com.android.systemui:id/camera_privacy_chip"
 private const val PRIVACY_ITEM_ID = "com.android.systemui:id/privacy_item"
 private const val INDICATORS_FLAG = "camera_mic_icons_enabled"
 private const val PERMISSION_INDICATORS_NOT_PRESENT = 162547999L
@@ -240,23 +243,22 @@ class CameraMicIndicatorsPermissionTest {
         useHotword: Boolean,
         chainUsage: Boolean
     ) {
-        // Ensure the privacy chip is present (or not)
-        var chipFound = false
-        try {
-            eventually {
-                val privacyChip = uiDevice.findObject(By.res(PRIVACY_CHIP_ID))
-                assertNotNull("view with id $PRIVACY_CHIP_ID not found", privacyChip)
-                privacyChip.click()
-                chipFound = true
+        eventually {
+            // Ensure the privacy chip is present (or not)
+            var micPrivacyChip = uiDevice.findObject(By.res(CAR_MIC_PRIVACY_CHIP_ID))
+            var cameraPrivacyChip = uiDevice.findObject(By.res(CAR_CAMERA_PRIVACY_CHIP_ID))
+            if (useMic) {
+                assertNotNull("Did not find mic chip", micPrivacyChip)
+                // Click to chip to show the panel.
+                micPrivacyChip.click()
+            } else if (useCamera) {
+                assertNotNull("Did not find camera chip", cameraPrivacyChip)
+                // Click to chip to show the panel.
+                cameraPrivacyChip.click()
+            } else if (useHotword) {
+                assertNull("Found mic chip, but did not expect to", micPrivacyChip)
+                assertNull("Found camera chip, but did not expect to", cameraPrivacyChip)
             }
-        } catch (e: Exception) {
-            // Handle more gracefully below
-        }
-
-        if (useMic) {
-            assertTrue("Did not find chip", chipFound)
-        } else if (useHotword || useCamera) {
-            assertFalse("Found chip, but did not expect to", chipFound)
         }
 
         eventually {
@@ -264,17 +266,27 @@ class CameraMicIndicatorsPermissionTest {
                 assertChainMicAndOtherCameraUsed()
                 return@eventually
             }
-            if (useCamera || useHotword) {
-                // There should be no microphone dialog when using hot word and/or camera
+            if (useHotword) {
+                // There should be no privacy panel when using hot word
                 val micLabelView = uiDevice.findObject(UiSelector().textContains(micLabel))
                 assertFalse("View with text $micLabel found, but did not expect to",
-                        micLabelView.exists())
+                    micLabelView.exists())
+                val cameraLabelView = uiDevice.findObject(UiSelector().textContains(cameraLabel))
+                assertFalse("View with text $cameraLabel found, but did not expect to",
+                    cameraLabelView.exists())
                 val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
                 assertFalse("View with text $APP_LABEL found, but did not expect to",
-                        appView.exists())
+                    appView.exists())
             } else if (useMic) {
+                // There should be a mic privacy panel after mic privacy chip is clicked
                 val micLabelView = uiDevice.findObject(UiSelector().textContains(micLabel))
                 assertTrue("View with text $micLabel not found", micLabelView.exists())
+                val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
+                assertTrue("View with text $APP_LABEL not found", appView.exists())
+            } else if (useCamera) {
+                // There should be a camera privacy panel after camera privacy chip is clicked
+                val cameraLabelView = uiDevice.findObject(UiSelector().textContains(cameraLabel))
+                assertTrue("View with text $cameraLabel not found", cameraLabelView.exists())
                 val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
                 assertTrue("View with text $APP_LABEL not found", appView.exists())
             }
