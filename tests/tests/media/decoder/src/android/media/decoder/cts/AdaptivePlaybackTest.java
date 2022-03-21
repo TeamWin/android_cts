@@ -1176,6 +1176,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
                 ByteBuffer buf = mInputBuffers[ix];
                 buf.clear();
                 buf.put((ByteBuffer)csdBuf.clear());
+                csdBuf.clear();
                 Log.v(TAG, "queue-CSD { [" + buf.position() + "]=" +
                         byteBufferToString(buf, 0, 16) + "} => #" + ix);
                 mCodec.queueInputBuffer(
