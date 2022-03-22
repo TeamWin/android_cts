@@ -38,8 +38,8 @@ import android.platform.test.annotations.Presubmit;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -58,23 +58,24 @@ public class StartActivityAsUserTests {
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
 
-    private int mSecondUserId;
+    private static int sSecondUserId;
     private WindowManagerStateHelper mAmWmState = new WindowManagerStateHelper();
 
-    @Before
-    public void createSecondUser() {
+    @BeforeClass
+    public static void createSecondUser() {
         assumeTrue(SUPPORTS_MULTIPLE_USERS);
 
-        final String output = runShellCommand("pm create-user --profileOf " + mContext.getUserId()
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final String output = runShellCommand("pm create-user --profileOf " + context.getUserId()
                 + " user2");
-        mSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
-        assertThat(mSecondUserId).isNotEqualTo(0);
-        runShellCommand("pm install-existing --user " + mSecondUserId + " android.server.wm.cts");
+        sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+        assertThat(sSecondUserId).isNotEqualTo(0);
+        runShellCommand("pm install-existing --user " + sSecondUserId + " android.server.wm.cts");
     }
 
-    @After
-    public void removeSecondUser() {
-        runShellCommand("pm remove-user " + mSecondUserId);
+    @AfterClass
+    public static void removeSecondUser() {
+        runShellCommand("pm remove-user " + sSecondUserId);
     }
 
     @Test
@@ -98,7 +99,7 @@ public class StartActivityAsUserTests {
     }
 
     private void verifyStartActivityAsValidUser(boolean withOptions) throws Throwable {
-        int[] secondUser= {-1};
+        int[] secondUser = {-1};
         CountDownLatch latch = new CountDownLatch(1);
         RemoteCallback cb = new RemoteCallback((Bundle result) -> {
             secondUser[0] = result.getInt(KEY_USER_ID);
@@ -118,7 +119,7 @@ public class StartActivityAsUserTests {
             }
         }, new IntentFilter(Intent.ACTION_USER_FOREGROUND));
 
-        UserHandle secondUserHandle = UserHandle.of(mSecondUserId);
+        UserHandle secondUserHandle = UserHandle.of(sSecondUserId);
 
         try {
             runWithShellPermissionIdentity(() -> {
@@ -139,14 +140,14 @@ public class StartActivityAsUserTests {
             throw e.getCause();
         }
 
-        assertThat(secondUser[0]).isEqualTo(mSecondUserId);
+        assertThat(secondUser[0]).isEqualTo(sSecondUserId);
 
         // Avoid the race between switch-user and remove-user.
         returnToOriginalUserLatch.await(20, TimeUnit.SECONDS);
     }
 
     private void verifyStartActivityAsInvalidUser(boolean withOptions) {
-        UserHandle secondUserHandle = UserHandle.of(mSecondUserId * 100);
+        UserHandle secondUserHandle = UserHandle.of(sSecondUserId * 100);
         int[] stackId = {-1};
 
         final Intent intent = new Intent(mContext, StartActivityAsUserActivity.class);
