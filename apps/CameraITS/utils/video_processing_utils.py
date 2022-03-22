@@ -17,30 +17,14 @@
 # CamcorderProfile. For Video ITS, we will currently test below qualities
 # only if supported by the camera device.
 _ITS_SUPPORTED_QUALITIES = (
-    "HIGH",
-    "2160P",
-    "1080P",
-    "720P",
-    "480P",
-    "CIF",
-    "QCIF",
-    "QVGA",
-    "LOW",
-    "VGA"
+    'HIGH',
+    '2160P',
+    '1080P',
+    '720P',
+    '480P',
+    'CIF',
+    'QCIF',
+    'QVGA',
+    'LOW',
+    'VGA'
 )
-
-
-def create_test_format_list(qualities):
-  """Returns the video quality levels to be tested.
-
-  Args:
-    qualities: List of all the quality levels supported by the camera device.
-  Returns:
-    test_qualities: Subset of test qualities to be tested from the
-    supported qualities.
-  """
-  test_qualities = []
-  for s in _ITS_SUPPORTED_QUALITIES:
-    if s in qualities:
-      test_qualities.append(s)
-  return test_qualities

@@ -24,6 +24,7 @@ import video_processing_utils
 
 _ANDROID13_API_LEVEL = 32
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
+_VIDEO_RECORDING_DURATION_SECONDS = 2
 
 
 class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
@@ -103,10 +104,17 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                                    self.tablet, chart_distance=0)
       supported_video_qualities = cam.get_supported_video_qualities(
           self.camera_id)
-      test_quality_list = video_processing_utils.create_test_format_list(
-          supported_video_qualities)
-      logging.debug('Video qualities to be tested: %s', test_quality_list)
-      # TODO(ruchamk):Add video recordin, aspect ratio and crop checks.
+      logging.debug('Supported video qualities: %s', supported_video_qualities)
+
+      for quality_profile_id_pair in supported_video_qualities:
+        quality = quality_profile_id_pair.split(':')[0]
+        profile_id = quality_profile_id_pair.split(':')[-1]
+        # Check if we support testing this quality.
+        if quality in video_processing_utils._ITS_SUPPORTED_QUALITIES:
+          logging.debug("Testing video recording for quality: %s" % quality)
+          cam.do_basic_recording(profile_id, quality, _VIDEO_RECORDING_DURATION_SECONDS)
+        # TODO(ruchamk): Add processing of video recordings, aspect ratio
+        # and crop checks.
 
 if __name__ == '__main__':
   test_runner.main()
