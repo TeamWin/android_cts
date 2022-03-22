@@ -70,6 +70,7 @@
 
     <!-- b/183234756, b/80388296, b/110260628, b/159295445, b/159294948 CtsDevicePolicyManagerTestCases -->
     <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases" />
 
     <!-- b/183985653 -->
     <option name="compatibility:module-arg" value="CtsDeqpTestCases:include-filter:dEQP-EGL.*" />
