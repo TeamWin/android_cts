@@ -661,6 +661,13 @@ public class WindowUntrustedTouchTest {
         assertThat(durationSet).isGreaterThan(
                 MAX_ANIMATION_DURATION_MS + ANIMATION_DURATION_TOLERANCE_MS);
         addExitAnimationActivity(APP_A);
+
+        // Wait for ExitAnimationActivity open transition to complete to avoid counting this
+        // transition in the duration of the exit animation below. Otherwise
+        // waitForAppTransitionRunningOnDisplay might return immediately if this transition is not
+        // done by then instead of waiting for the exit animation to start running.
+        assertTrue(mWmState.waitForAppTransitionIdleOnDisplay(Display.DEFAULT_DISPLAY));
+
         sendFinishToExitAnimationActivity(APP_A,
                 Components.ExitAnimationActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7);
         assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
@@ -707,6 +714,12 @@ public class WindowUntrustedTouchTest {
     @Test
     public void testWhenExitAnimationBelowThreshold_allowsTouch() {
         addExitAnimationActivity(APP_A);
+
+        // Wait for ExitAnimationActivity open transition to complete to avoid
+        // waitForAppTransitionRunningOnDisplay returning immediately if this transition is not
+        // done by then instead of waiting for the exit animation to start running.
+        assertTrue(mWmState.waitForAppTransitionIdleOnDisplay(Display.DEFAULT_DISPLAY));
+
         sendFinishToExitAnimationActivity(APP_A,
                 Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_7);
         assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
