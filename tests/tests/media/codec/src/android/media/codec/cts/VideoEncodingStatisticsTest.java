@@ -158,7 +158,7 @@ public class VideoEncodingStatisticsTest extends VideoCodecTestBase {
                     FPS,
                     bitRateMode,
                     TEST_BITRATES_SET[i],
-                    true);
+                    false);
             // Enable encoding statistics at VIDEO_ENCODING_STATISTICS_LEVEL_1
             params.encodingStatisticsLevel = MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_1;
             ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
