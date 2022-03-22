@@ -105,6 +105,28 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(1763L);
     }
 
+    // same as testPlaybackStateEvent, but we use the BundleSession transport.
+    public void testBundleSessionPlaybackStateEvent() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIA_PLAYBACK_STATE_CHANGED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testBundleSessionPlaybackStateEvent");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediaPlaybackStateChanged()).isTrue();
+        AtomsProto.MediaPlaybackStateChanged result =
+                data.get(0).getAtom().getMediaPlaybackStateChanged();
+        assertThat(result.getPlaybackState().toString()).isEqualTo("JOINING_FOREGROUND");
+        assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(1763L);
+    }
+
+
     public void testPlaybackErrorEvent_default() throws Exception {
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 AtomsProto.Atom.MEDIA_PLAYBACK_ERROR_REPORTED_FIELD_NUMBER);
