@@ -19,10 +19,13 @@ import android.content.ComponentName;
 import android.os.ConditionVariable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TestNotificationListener extends NotificationListenerService {
     public static final String TAG = "TestNotificationListener";
@@ -67,6 +70,7 @@ public class TestNotificationListener extends NotificationListenerService {
 
     @Override
     public void onListenerConnected() {
+        Log.d(TAG, "onListenerConnected() called");
         super.onListenerConnected();
         sNotificationListenerInstance = this;
         INSTANCE_AVAILABLE.open();
@@ -75,6 +79,7 @@ public class TestNotificationListener extends NotificationListenerService {
 
     @Override
     public void onListenerDisconnected() {
+        Log.d(TAG, "onListenerDisconnected() called");
         INSTANCE_AVAILABLE.close();
         sNotificationListenerInstance = null;
         isConnected = false;
@@ -88,6 +93,7 @@ public class TestNotificationListener extends NotificationListenerService {
     }
 
     public void resetData() {
+        Log.d(TAG, "resetData() called");
         mPosted.clear();
         mRemoved.clear();
         mIntercepted.clear();
@@ -103,7 +109,14 @@ public class TestNotificationListener extends NotificationListenerService {
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
-        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) { return; }
+        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) {
+            Log.d(TAG, "onNotificationPosted: skipping handling sbn=" + sbn + " testPackages="
+                    + listToString(mTestPackages));
+            return;
+        } else {
+            Log.d(TAG, "onNotificationPosted: sbn=" + sbn + " testPackages=" + listToString(
+                    mTestPackages));
+        }
         mRankingMap = rankingMap;
         updateInterceptedRecords(rankingMap);
         mPosted.add(sbn);
@@ -112,7 +125,14 @@ public class TestNotificationListener extends NotificationListenerService {
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap,
             int reason) {
-        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) { return; }
+        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) {
+            Log.d(TAG, "onNotificationRemoved: skipping handling sbn=" + sbn + " testPackages="
+                    + listToString(mTestPackages));
+            return;
+        } else {
+            Log.d(TAG, "onNotificationRemoved: sbn=" + sbn + " reason=" + reason
+                    + " testPackages=" + listToString(mTestPackages));
+        }
         mRankingMap = rankingMap;
         updateInterceptedRecords(rankingMap);
         mRemoved.put(sbn.getKey(), reason);
@@ -120,6 +140,7 @@ public class TestNotificationListener extends NotificationListenerService {
 
     @Override
     public void onNotificationRankingUpdate(RankingMap rankingMap) {
+        Log.d(TAG, "onNotificationRankingUpdate() called rankingMap=[" + rankingMap + "]");
         mRankingMap = rankingMap;
         updateInterceptedRecords(rankingMap);
     }
@@ -135,5 +156,18 @@ public class TestNotificationListener extends NotificationListenerService {
                 mIntercepted.put(key, !rank.matchesInterruptionFilter());
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "TestNotificationListener{"
+                + "mTestPackages=[" + listToString(mTestPackages)
+                + "], mPosted=[" + listToString(mPosted)
+                + ", mRemoved=[" + listToString(mRemoved.values())
+                + "]}";
+    }
+
+    private String listToString(Collection<?> list) {
+        return list.stream().map(Object::toString).collect(Collectors.joining(","));
     }
 }

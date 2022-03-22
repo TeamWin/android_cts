@@ -90,6 +90,9 @@ public abstract class InputTestCase {
         onSetUp();
 
         PollingCheck.waitFor(mTestActivity::hasWindowFocus);
+        assertTrue(mCurrentTestCase + ": Activity window must have focus",
+                mTestActivity.hasWindowFocus());
+
         mEvents.clear();
     }
 

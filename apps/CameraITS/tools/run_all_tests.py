@@ -504,13 +504,13 @@ def main():
         # Handle repeated test
         if 'tests/' in test:
           cmd = [
-              'python3',
+              'python',
               os.path.join(os.environ['CAMERA_ITS_TOP'], test), '-c',
               '%s' % new_yml_file_name
           ]
         else:
           cmd = [
-              'python3',
+              'python',
               os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests', s, test),
               '-c',
               '%s' % new_yml_file_name

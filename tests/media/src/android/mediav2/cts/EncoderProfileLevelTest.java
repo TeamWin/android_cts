@@ -153,8 +153,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_H263, 16384000, 720, 480, 60},
                 {MediaFormat.MIMETYPE_VIDEO_H263, 16384000, 720, 576, 50},
 
-                // TODO (b/151429828)
-                //{MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 176, 144, 15},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 128000, 176, 144, 15},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 1500000, 352, 288, 30},
                 // TODO (b/152576008) - Limit HEVC Encoder test to 512x512
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 3000000, 512, 512, 30},

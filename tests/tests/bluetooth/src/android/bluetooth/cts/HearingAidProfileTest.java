@@ -134,17 +134,18 @@ public class HearingAidProfileTest extends AndroidTestCase {
         assertTrue(mIsProfileReady);
         assertNotNull(mService);
 
-        // Create a dummy device
+        // Create a fake device
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
         assertNotNull(device);
 
         int connectionState = mService.getConnectionState(device);
-        // Dummy device should be disconnected
+        // Fake device should be disconnected
         assertEquals(connectionState, BluetoothProfile.STATE_DISCONNECTED);
     }
 
     /**
-     * Basic test case to make sure that a fictional device is disconnected.
+     * Basic test case to make sure that a fictional device throw a SecurityException when setting
+     * volume.
      */
     @MediumTest
     public void test_setVolume() {

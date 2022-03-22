@@ -52,6 +52,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -65,6 +66,8 @@ import java.util.concurrent.TimeUnit;
  * Tests bubbles related logic in NotificationManager.
  */
 public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
+
+    private static final String TAG = NotificationManagerBubbleTest.class.getSimpleName();
 
     // use a value of 10000 for consistency with other CTS tests (see
     // android.server.wm.intentLaunchRunner#ACTIVITY_LAUNCH_TIMEOUT)
@@ -152,27 +155,42 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
      * in this method.
      */
     private void verifyNotificationBubbleState(int id, boolean shouldBeBubble) {
-        // FLAG_BUBBLE relies on notification being posted, wait for notification listener
+        boolean notificationFound = false;
+        boolean bubbleStateMatches = false;
         try {
-            Thread.sleep(700);
+            // Wait up to 2 seconds for the notification
+            for (int i = 0; i < 20; i++) {
+                // FLAG_BUBBLE relies on notification being posted, wait for notification listener
+                Thread.sleep(100);
+                for (StatusBarNotification sbn : mListener.mPosted) {
+                    if (sbn.getId() == id) {
+                        notificationFound = true;
+                        boolean isBubble = (sbn.getNotification().flags & FLAG_BUBBLE) != 0;
+                        if (isBubble == shouldBeBubble) {
+                            bubbleStateMatches = true;
+                            break;
+                        }
+                    }
+                }
+            }
         } catch (InterruptedException ignored) {
         }
 
-        for (StatusBarNotification sbn : mListener.mPosted) {
-            if (sbn.getId() == id) {
-                boolean isBubble = (sbn.getNotification().flags & FLAG_BUBBLE) != 0;
-                if (isBubble != shouldBeBubble) {
-                    final String failure = shouldBeBubble
-                            ? "Notification with id= " + id + " wasn't a bubble"
-                            : "Notification with id= " + id + " was a bubble and shouldn't be";
-                    fail(failure);
-                } else {
-                    // pass
-                    return;
-                }
-            }
+        if (bubbleStateMatches) {
+            // pass
+            return;
         }
-        fail("Couldn't find posted notification with id= " + id);
+
+        String failure;
+        if (notificationFound) {
+            failure = shouldBeBubble
+                    ? "Notification with id= " + id + " wasn't a bubble"
+                    : "Notification with id= " + id + " was a bubble and shouldn't be";
+        } else {
+            failure = "Couldn't find posted notification with id=" + id;
+        }
+        Log.e(TAG, failure + " listener=" + mListener);
+        fail(failure);
     }
 
     private void setBubblesGlobal(boolean enabled) {

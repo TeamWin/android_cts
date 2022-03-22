@@ -220,11 +220,14 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             expectEvent(
                     stream, event -> "onStylusMotionEvent".equals(event.getEventName()), TIMEOUT);
 
-            // get Stylus events from Ink view.
-            ArrayList<MotionEvent> capturedEvents = expectCommand(
+            // get Stylus events from Ink view, splitting any batched events.
+            final ArrayList<MotionEvent> capturedBatchedEvents = expectCommand(
                     stream, imeSession.callGetStylusHandwritingEvents(), TIMEOUT)
                     .getReturnParcelableArrayListValue();
-            assertNotNull(capturedEvents);
+            assertNotNull(capturedBatchedEvents);
+            final ArrayList<MotionEvent> capturedEvents =  new ArrayList<>();
+            capturedBatchedEvents.forEach(
+                    e -> capturedEvents.addAll(TestUtils.splitBatchedMotionEvent(e)));
 
             // captured events should be same as injected.
             assertEquals(injectedEvents.size(), capturedEvents.size());

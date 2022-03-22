@@ -385,7 +385,7 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
 
         mTestAppConfigChangedInfoProvider.await();
         assertReceivedBroadcastContains(mTestAppConfigChangedInfoProvider, TEST_APP_PACKAGE,
-                DEFAULT_APP_LOCALES);
+                combineLocales(DEFAULT_APP_LOCALES, DEFAULT_SYSTEM_LOCALES));
     }
 
     @Test

@@ -3,12 +3,18 @@ package android.companion.cts.uiautomation
 import android.Manifest
 import android.annotation.CallSuper
 import android.app.Activity
+import android.app.Activity.RESULT_CANCELED
 import android.app.role.RoleManager
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest
 import android.companion.BluetoothDeviceFilter
 import android.companion.BluetoothDeviceFilterUtils
 import android.companion.CompanionDeviceManager
+import android.companion.CompanionDeviceManager.REASON_USER_REJECTED
+import android.companion.CompanionDeviceManager.REASON_DISCOVERY_TIMEOUT
+import android.companion.CompanionDeviceManager.REASON_CANCELED
+import android.companion.CompanionDeviceManager.RESULT_USER_REJECTED
+import android.companion.CompanionDeviceManager.RESULT_DISCOVERY_TIMEOUT
 import android.companion.DeviceFilter
 import android.companion.cts.common.CompanionActivity
 import android.companion.cts.common.DEVICE_PROFILES
@@ -87,7 +93,7 @@ open class UiAutomationTestBase(
         singleDevice: Boolean = false,
         selfManaged: Boolean = false,
         displayName: String? = null
-    ) = test_cancelled(singleDevice, selfManaged, displayName) {
+    ) = test_cancelled(singleDevice, selfManaged, userRejected = true, displayName) {
             // User "rejects" the request.
             if (singleDevice || selfManaged) {
                 confirmationUi.clickNegativeButton()
@@ -100,7 +106,7 @@ open class UiAutomationTestBase(
         singleDevice: Boolean = false,
         selfManaged: Boolean = false,
         displayName: String? = null
-    ) = test_cancelled(singleDevice, selfManaged, displayName) {
+    ) = test_cancelled(singleDevice, selfManaged, userRejected = false, displayName) {
             // User "dismisses" the request.
             uiDevice.pressBack()
         }
@@ -108,6 +114,7 @@ open class UiAutomationTestBase(
     private fun test_cancelled(
         singleDevice: Boolean,
         selfManaged: Boolean,
+        userRejected: Boolean,
         displayName: String?,
         cancelAction: () -> Unit
     ) {
@@ -118,18 +125,18 @@ open class UiAutomationTestBase(
         }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // onFailure() method.
+        val expectedError = if (userRejected) REASON_USER_REJECTED else REASON_CANCELED
         assertContentEquals(
             actual = callback.invocations,
-            expected = listOf(OnFailure("Cancelled."))
+            expected = listOf(OnFailure(expectedError))
         )
-
         // Wait until the Confirmation UI goes away.
         confirmationUi.waitUntilGone()
 
         // Check the result code delivered via onActivityResult()
         val (resultCode: Int, _) = CompanionActivity.waitForActivityResult()
-        assertEquals(actual = resultCode, expected = Activity.RESULT_CANCELED)
-
+        val expectedResultCode = if (userRejected) RESULT_USER_REJECTED else RESULT_CANCELED
+        assertEquals(actual = resultCode, expected = expectedResultCode)
         // Make sure no Associations were created.
         assertEmpty(cdm.myAssociations)
     }
@@ -150,7 +157,7 @@ open class UiAutomationTestBase(
         // onFailure() method.
         assertContentEquals(
             actual = callback.invocations,
-            expected = listOf(OnFailure("Timeout."))
+            expected = listOf(OnFailure(REASON_DISCOVERY_TIMEOUT))
         )
 
         // Wait until the Confirmation UI goes away.
@@ -158,7 +165,7 @@ open class UiAutomationTestBase(
 
         // Check the result code delivered via onActivityResult()
         val (resultCode: Int, _) = CompanionActivity.waitForActivityResult()
-        assertEquals(actual = resultCode, expected = Activity.RESULT_CANCELED)
+        assertEquals(actual = resultCode, expected = RESULT_DISCOVERY_TIMEOUT)
 
         // Make sure no Associations were created.
         assertEmpty(cdm.myAssociations)

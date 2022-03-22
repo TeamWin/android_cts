@@ -162,7 +162,7 @@ public class VideoEncodingStatisticsTest extends VideoCodecTestBase {
             // Enable encoding statistics at VIDEO_ENCODING_STATISTICS_LEVEL_1
             params.encodingStatisticsLevel = MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_1;
             ArrayList<ByteBuffer> codecConfigs = new ArrayList<>();
-            VideoEncodeOutput videoEncodeOutput = encode(params, codecConfigs);
+            VideoEncodeOutput videoEncodeOutput = encodeAsync(params, codecConfigs);
             bufInfos = videoEncodeOutput.bufferInfo;
             if (bufInfos == null) {
                 // parameters not supported, try other bitrates

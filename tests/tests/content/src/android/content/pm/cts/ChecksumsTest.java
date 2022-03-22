@@ -511,6 +511,7 @@ public class ChecksumsTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
 
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
@@ -663,6 +664,7 @@ public class ChecksumsTest {
         try {
             installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
 
             sessionId = installer.createSession(params);
             final Session session = installer.openSession(sessionId);
@@ -1307,6 +1309,7 @@ public class ChecksumsTest {
         try {
             final PackageInstaller installer = getPackageInstaller();
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            params.installFlags |= PackageManager.INSTALL_REPLACE_EXISTING;
             params.setDataLoaderParams(DataLoaderParams.forIncremental(new ComponentName("android",
                     PackageManagerShellCommandDataLoader.class.getName()), ""));
 

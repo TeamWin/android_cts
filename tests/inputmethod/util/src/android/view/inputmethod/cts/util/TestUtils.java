@@ -347,4 +347,63 @@ public final class TestUtils {
     private static int getTouchSlop(Context context) {
         return ViewConfiguration.get(context).getScaledTouchSlop();
     }
+
+    /**
+     * Since MotionEvents are batched together based on overall system timings (i.e. vsync), we
+     * can't rely on them always showing up batched in the same way. In order to make sure our
+     * test results are consistent, we instead split up the batches so they end up in a
+     * consistent and reproducible stream.
+     *
+     * Note, however, that this ignores the problem of resampling, as we still don't know how to
+     * distinguish resampled events from real events. Only the latter will be consistent and
+     * reproducible.
+     *
+     * @param event The (potentially) batched MotionEvent
+     * @return List of MotionEvents, with each event guaranteed to have zero history size, and
+     * should otherwise be equivalent to the original batch MotionEvent.
+     */
+    public static List<MotionEvent> splitBatchedMotionEvent(MotionEvent event) {
+        final List<MotionEvent> events = new ArrayList<>();
+        final int historySize = event.getHistorySize();
+        final int pointerCount = event.getPointerCount();
+        final MotionEvent.PointerProperties[] properties =
+                new MotionEvent.PointerProperties[pointerCount];
+        final MotionEvent.PointerCoords[] currentCoords =
+                new MotionEvent.PointerCoords[pointerCount];
+        for (int p = 0; p < pointerCount; p++) {
+            properties[p] = new MotionEvent.PointerProperties();
+            event.getPointerProperties(p, properties[p]);
+            currentCoords[p] = new MotionEvent.PointerCoords();
+            event.getPointerCoords(p, currentCoords[p]);
+        }
+        for (int h = 0; h < historySize; h++) {
+            final long eventTime = event.getHistoricalEventTime(h);
+            MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointerCount];
+
+            for (int p = 0; p < pointerCount; p++) {
+                coords[p] = new MotionEvent.PointerCoords();
+                event.getHistoricalPointerCoords(p, h, coords[p]);
+            }
+            final MotionEvent singleEvent =
+                    MotionEvent.obtain(event.getDownTime(), eventTime, event.getAction(),
+                            pointerCount, properties, coords,
+                            event.getMetaState(), event.getButtonState(),
+                            event.getXPrecision(), event.getYPrecision(),
+                            event.getDeviceId(), event.getEdgeFlags(),
+                            event.getSource(), event.getFlags());
+            singleEvent.setActionButton(event.getActionButton());
+            events.add(singleEvent);
+        }
+
+        final MotionEvent singleEvent =
+                MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(),
+                        pointerCount, properties, currentCoords,
+                        event.getMetaState(), event.getButtonState(),
+                        event.getXPrecision(), event.getYPrecision(),
+                        event.getDeviceId(), event.getEdgeFlags(),
+                        event.getSource(), event.getFlags());
+        singleEvent.setActionButton(event.getActionButton());
+        events.add(singleEvent);
+        return events;
+    }
 }

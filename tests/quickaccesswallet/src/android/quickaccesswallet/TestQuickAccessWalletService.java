@@ -65,6 +65,12 @@ public class TestQuickAccessWalletService extends QuickAccessWalletService {
         sServiceRef.clear();
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        sServiceRef = new WeakReference<>(this);
+    }
+
     @Nullable
     @Override
     public IBinder onBind(@NonNull Intent intent) {
@@ -76,7 +82,6 @@ public class TestQuickAccessWalletService extends QuickAccessWalletService {
     @Override
     public boolean onUnbind(Intent intent) {
         sUnbindCounter.countDown();
-        sServiceRef.clear();
         return super.onUnbind(intent);
     }
 

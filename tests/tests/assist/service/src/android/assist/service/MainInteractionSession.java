@@ -16,6 +16,9 @@
 
 package android.assist.service;
 
+import static android.view.WindowInsets.Type.displayCutout;
+import static android.view.WindowInsets.Type.statusBars;
+
 import android.app.assist.AssistContent;
 import android.app.assist.AssistStructure;
 import android.assist.common.Utils;
@@ -37,12 +40,9 @@ import android.view.DisplayCutout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
-
-import com.android.compatibility.common.util.PropertyUtil;
-
-import java.util.Objects;
 
 public class MainInteractionSession extends VoiceInteractionSession {
     static final String TAG = "MainInteractionSession";
@@ -132,10 +132,25 @@ public class MainInteractionSession extends VoiceInteractionSession {
                     mContentView.getViewTreeObserver().removeOnPreDrawListener(this);
                     Display d = mContentView.getDisplay();
                     Point displayPoint = new Point();
+                    // The voice interaction window layer is higher than keyguard, status bar,
+                    // nav bar now. So we should take both status bar, nav bar into consideration.
+                    // The voice interaction hide the nav bar, so the height only need to consider
+                    // status bar. The status bar may contain display cutout but the display cutout
+                    // is device specific, we need to check it.
                     WindowManager wm = mContext.getSystemService(WindowManager.class);
                     WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
                     Rect bound = windowMetrics.getBounds();
-                    displayPoint.y = bound.height();
+                    WindowInsets windowInsets = windowMetrics.getWindowInsets();
+                    android.graphics.Insets statusBarInsets =
+                            windowInsets.getInsets(statusBars());
+                    android.graphics.Insets displayCutoutInsets =
+                            windowInsets.getInsets(displayCutout());
+                    android.graphics.Insets min =
+                            android.graphics.Insets.min(statusBarInsets, displayCutoutInsets);
+                    boolean statusBarContainsCutout = !android.graphics.Insets.NONE.equals(min);
+                    Log.d(TAG, "statusBarContainsCutout=" + statusBarContainsCutout);
+                    displayPoint.y = statusBarContainsCutout
+                            ? bound.height() - min.top - min.bottom : bound.height();
                     displayPoint.x = bound.width();
                     DisplayCutout dc = d.getCutout();
                     if (dc != null) {
@@ -148,16 +163,10 @@ public class MainInteractionSession extends VoiceInteractionSession {
                             displayPoint.x -= (wi.left + wi.right);
                         }
                     }
-                    int WindowInsetTop = windowMetrics.getWindowInsets().getSystemWindowInsetTop();
-                    final String property = PropertyUtil.getProperty("ro.hardware.virtual_device");
-                    boolean isVirtual = Objects.equals(property, "1");
                     Bundle bundle = new Bundle();
                     bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION,
                             Utils.BROADCAST_CONTENT_VIEW_HEIGHT);
-                    // TODO: find reason why virtual device don't have problem
-                    bundle.putInt(Utils.EXTRA_CONTENT_VIEW_HEIGHT,
-                            isVirtual ? mContentView.getHeight()
-                                    : mContentView.getHeight() + WindowInsetTop);
+                    bundle.putInt(Utils.EXTRA_CONTENT_VIEW_HEIGHT, mContentView.getHeight());
                     bundle.putInt(Utils.EXTRA_CONTENT_VIEW_WIDTH, mContentView.getWidth());
                     bundle.putParcelable(Utils.EXTRA_DISPLAY_POINT, displayPoint);
                     mRemoteCallback.sendResult(bundle);
