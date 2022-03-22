@@ -835,13 +835,13 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
     /**
      * Test that for logical multi-camera of a Handheld device, the default FOV is
-     * between 50 and 90 degrees for all capture templates.
+     * between 50 and 95 degrees for all capture templates.
      */
     @Test
     @CddTest(requirement="7.5.4/C-1-1")
     public void testDefaultFov() throws Exception {
         final double MIN_FOV = 50;
-        final double MAX_FOV = 90;
+        final double MAX_FOV = 95;
         if (!isHandheldDevice()) {
             return;
         }
@@ -894,7 +894,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         Log.v(TAG, "Camera " +  id + " template " + template +
                                 "'s default FOV is " + fov);
                         mCollector.expectInRange("Camera " +  id + " template " + template +
-                                "'s default FOV must fall between [50, 90] degrees",
+                                "'s default FOV must fall between [50, 95] degrees",
                                 fov, MIN_FOV, MAX_FOV);
                     } catch (IllegalArgumentException e) {
                         if (template == CameraDevice.TEMPLATE_MANUAL &&
