@@ -90,7 +90,7 @@ public class JobThrottlingTest {
     private static final String TAG = JobThrottlingTest.class.getSimpleName();
     private static final long BACKGROUND_JOBS_EXPECTED_DELAY = 3_000;
     private static final long POLL_INTERVAL = 500;
-    private static final long DEFAULT_WAIT_TIMEOUT = 2000;
+    private static final long DEFAULT_WAIT_TIMEOUT = 5000;
     private static final long SHELL_TIMEOUT = 3_000;
     // TODO: mark Settings.System.SCREEN_OFF_TIMEOUT as @TestApi
     private static final String SCREEN_OFF_TIMEOUT = "screen_off_timeout";
@@ -266,8 +266,8 @@ public class JobThrottlingTest {
         Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
         toggleDozeState(false);
         assertFalse("Job for background app started immediately when device exited doze",
-                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-        Thread.sleep(BACKGROUND_JOBS_EXPECTED_DELAY - DEFAULT_WAIT_TIMEOUT);
+                mTestAppInterface.awaitJobStart(2000));
+        Thread.sleep(BACKGROUND_JOBS_EXPECTED_DELAY - 2000);
         assertTrue("Job for background app did not start after the expected delay of "
                         + BACKGROUND_JOBS_EXPECTED_DELAY + "ms",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -422,8 +422,8 @@ public class JobThrottlingTest {
         assertFalse("Job started above thermal throttling threshold",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
 
-        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
-                - (System.currentTimeMillis() - jobStopTime));
+        Thread.sleep(Math.max(0, TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
+                - (System.currentTimeMillis() - jobStopTime)));
         ThermalUtils.overrideThermalNotThrottling();
         runJob();
         assertTrue("Job did not start back from throttling",
@@ -456,8 +456,8 @@ public class JobThrottlingTest {
         assertFalse("Job started above thermal throttling threshold",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
 
-        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
-                - (System.currentTimeMillis() - jobStopTime));
+        Thread.sleep(Math.max(0, TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF
+                - (System.currentTimeMillis() - jobStopTime)));
         ThermalUtils.overrideThermalNotThrottling();
         runJob();
         assertTrue("Job did not start back from throttling",
