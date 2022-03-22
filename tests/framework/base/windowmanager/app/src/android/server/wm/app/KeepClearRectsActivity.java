@@ -17,7 +17,6 @@
 package android.server.wm.app;
 
 import static android.server.wm.app.Components.KeepClearRectsActivity.EXTRA_KEEP_CLEAR_RECTS;
-import static android.view.WindowInsets.Type.systemBars;
 
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -31,7 +30,6 @@ public class KeepClearRectsActivity extends BroadcastReceiverActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.keep_clear_rects_activity);
         getWindow().setDecorFitsSystemWindows(false);
-        getWindow().getInsetsController().hide(systemBars());
 
         final List<Rect> keepClearRects =
                 getIntent().getParcelableArrayListExtra(EXTRA_KEEP_CLEAR_RECTS);
