@@ -144,9 +144,14 @@ abstract class AbstractRecognitionServiceTest {
 
         errors.clear();
         RecognitionSupport rs = new RecognitionSupport.Builder()
-                .addInstalledLanguage("en")
-                .addPendingLanguage("jp")
-                .addSupportedLanguage("de")
+                .setInstalledOnDeviceLanguages(new ArrayList<>(List.of("es")))
+                .addInstalledOnDeviceLanguage("en")
+                .setPendingOnDeviceLanguages(new ArrayList<>(List.of("ru")))
+                .addPendingOnDeviceLanguage("jp")
+                .setSupportedOnDeviceLanguages(new ArrayList<>(List.of("pt")))
+                .addSupportedOnDeviceLanguage("de")
+                .setOnlineLanguages(new ArrayList<>(List.of("zh")))
+                .addOnlineLanguage("fr")
                 .build();
         CtsRecognitionService.sConsumerQueue.add(c -> c.onSupportResult(rs));
 
@@ -155,6 +160,14 @@ abstract class AbstractRecognitionServiceTest {
                 () -> supportResults.size() + errors.size() > 0);
         assertThat(errors).isEmpty();
         assertThat(supportResults).containsExactly(rs);
+        assertThat(rs.getInstalledOnDeviceLanguages())
+                .isEqualTo(List.of("es", "en"));
+        assertThat(rs.getPendingOnDeviceLanguages())
+                .isEqualTo(List.of("ru", "jp"));
+        assertThat(rs.getSupportedOnDeviceLanguages())
+                .isEqualTo(List.of("pt", "de"));
+        assertThat(rs.getOnlineLanguages())
+                .isEqualTo(List.of("zh", "fr"));
     }
 
     @Test
