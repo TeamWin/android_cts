@@ -173,28 +173,12 @@ public final class CannedFillResponse {
      */
     public FillResponse asFillResponse(@Nullable List<FillContext> contexts,
             @NonNull Function<String, ViewNode> nodeResolver) {
-        return asFillResponseWithAutofillId(contexts, (id)-> {
-            ViewNode node = nodeResolver.apply(id);
-            if (node == null) {
-                throw new AssertionError("No node with resource id " + id);
-            }
-            return node.getAutofillId();
-        });
-    }
-
-    /**
-     * Creates a new response, replacing the dataset field ids by the real ids from the assist
-     * structure.
-     */
-    public FillResponse asFillResponseWithAutofillId(@Nullable List<FillContext> contexts,
-            @NonNull Function<String, AutofillId> autofillIdResolver) {
         final FillResponse.Builder builder = new FillResponse.Builder()
                 .setFlags(mFillResponseFlags);
         if (mDatasets != null) {
             for (CannedDataset cannedDataset : mDatasets) {
-                final Dataset dataset =
-                        cannedDataset.asDatasetWithAutofillIdResolver(autofillIdResolver);
-                assertWithMessage("Cannot create dataset").that(dataset).isNotNull();
+                final Dataset dataset = cannedDataset.asDataset(nodeResolver);
+                assertWithMessage("Cannot create datase").that(dataset).isNotNull();
                 builder.addDataset(dataset);
             }
         }
@@ -207,14 +191,13 @@ public final class CannedFillResponse {
                 saveInfoBuilder = mRequiredSavableIds == null || mRequiredSavableIds.length == 0
                         ? new SaveInfo.Builder(mSaveType)
                             : new SaveInfo.Builder(mSaveType,
-                                    getAutofillIds(autofillIdResolver, mRequiredSavableIds));
+                                    getAutofillIds(nodeResolver, mRequiredSavableIds));
             }
 
             saveInfoBuilder.setFlags(mSaveInfoFlags);
 
             if (mOptionalSavableIds != null) {
-                saveInfoBuilder.setOptionalIds(
-                        getAutofillIds(autofillIdResolver, mOptionalSavableIds));
+                saveInfoBuilder.setOptionalIds(getAutofillIds(nodeResolver, mOptionalSavableIds));
             }
             if (mSaveDescription != null) {
                 saveInfoBuilder.setDescription(mSaveDescription);
@@ -236,7 +219,7 @@ public final class CannedFillResponse {
         if (saveInfoBuilder != null) {
             // TODO: merge decorator and visitor
             if (mSaveInfoDecorator != null) {
-                mSaveInfoDecorator.decorate(saveInfoBuilder, autofillIdResolver);
+                mSaveInfoDecorator.decorate(saveInfoBuilder, nodeResolver);
             }
             if (mSaveInfoVisitor != null) {
                 Log.d(TAG, "Visiting saveInfo " + saveInfoBuilder);
@@ -247,10 +230,10 @@ public final class CannedFillResponse {
             builder.setSaveInfo(saveInfo);
         }
         if (mIgnoredIds != null) {
-            builder.setIgnoredIds(getAutofillIds(autofillIdResolver, mIgnoredIds));
+            builder.setIgnoredIds(getAutofillIds(nodeResolver, mIgnoredIds));
         }
         if (mAuthenticationIds != null) {
-            builder.setAuthentication(getAutofillIds(autofillIdResolver, mAuthenticationIds),
+            builder.setAuthentication(getAutofillIds(nodeResolver, mAuthenticationIds),
                     mAuthentication, mPresentation, mInlinePresentation);
         }
         if (mDisableDuration > 0) {
@@ -265,7 +248,7 @@ public final class CannedFillResponse {
             builder.setFieldClassificationIds(fieldIds);
         } else if (mFieldClassificationIds != null) {
             builder.setFieldClassificationIds(
-                    getAutofillIds(autofillIdResolver, mFieldClassificationIds));
+                    getAutofillIds(nodeResolver, mFieldClassificationIds));
         }
         if (mExtras != null) {
             builder.setClientState(mExtras);
@@ -629,21 +612,7 @@ public final class CannedFillResponse {
         /**
          * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
          */
-        public Dataset asDatasetWithNodeResolver(Function<String, ViewNode> nodeResolver) {
-            return asDatasetWithAutofillIdResolver((id) -> {
-                ViewNode node = nodeResolver.apply(id);
-                if (node == null) {
-                    throw new AssertionError("No node with resource id " + id);
-                }
-                return node.getAutofillId();
-            });
-        }
-
-        /**
-         * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
-         */
-        public Dataset asDatasetWithAutofillIdResolver(
-                Function<String, AutofillId> autofillIdResolver) {
+        public Dataset asDataset(Function<String, ViewNode> nodeResolver) {
             final Presentations.Builder presentationsBuilder = new Presentations.Builder();
             if (mPresentation != null) {
                 presentationsBuilder.setMenuPresentation(mPresentation);
@@ -668,11 +637,11 @@ public final class CannedFillResponse {
             if (mFieldValues != null) {
                 for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
                     final String id = entry.getKey();
-
-                    final AutofillId autofillId = autofillIdResolver.apply(id);
-                    if (autofillId == null) {
+                    final ViewNode node = nodeResolver.apply(id);
+                    if (node == null) {
                         throw new AssertionError("No node with resource id " + id);
                     }
+                    final AutofillId autofillId = node.getAutofillId();
                     final Field.Builder fieldBuilder = new Field.Builder();
                     final AutofillValue value = entry.getValue();
                     if (value != null) {
@@ -976,6 +945,6 @@ public final class CannedFillResponse {
     }
 
     public interface SaveInfoDecorator {
-        void decorate(SaveInfo.Builder builder, Function<String, AutofillId> nodeResolver);
+        void decorate(SaveInfo.Builder builder, Function<String, ViewNode> nodeResolver);
     }
 }
