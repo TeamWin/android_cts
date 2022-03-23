@@ -15,8 +15,10 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.admin.DevicePolicyManager;
+import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -29,9 +31,12 @@ import android.os.Process;
 import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.PackageUtil;
 
+import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,6 +73,9 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final int PERMISSION_TYPE_SYSTEM = 1;
     private static final int PERMISSION_TYPE_OEM = 2;
     private static final int PERMISSION_TYPE_CUSTOM = 3;
+
+    private static final String REQUESTED_ROLES = "requested_roles";
+    private static final String ROLE_NAME = "name";
 
     private static final String HAS_SYSTEM_UID = "has_system_uid";
 
@@ -116,6 +124,8 @@ public class PackageDeviceInfo extends DeviceInfo {
 
         final ComponentName defaultAccessibilityComponent = getDefaultAccessibilityComponent();
 
+        final HashMap<String, List<String>> packageRolesData = getPackageRolesData();
+
         // Platform permission data used to tag permissions information with sourcing information
         final PackageInfo platformInfo = pm.getPackageInfo(PLATFORM , PackageManager.GET_PERMISSIONS);
         final Set<String> platformPermissions = new HashSet<String>();
@@ -152,6 +162,8 @@ public class PackageDeviceInfo extends DeviceInfo {
 
             String sha256_file = PackageUtil.computePackageFileDigest(pkg);
             store.addResult(SHA256_FILE, sha256_file);
+
+            collectRoles(store, packageRolesData, pkg);
 
             store.endGroup();
         }
@@ -349,6 +361,47 @@ public class PackageDeviceInfo extends DeviceInfo {
             || ADDITIONAL_ANDROID_PERMISSIONS.contains(permissionName))
             return true;
         return false;
+    }
+
+    private static void collectRoles(DeviceInfoStore store,
+                                     HashMap<String, List<String>> packageRolesData,
+                                     PackageInfo pkg) throws IOException {
+        String packageName = pkg.packageName;
+        if(packageRolesData.containsKey(packageName)) {
+            List<String> roleNames = packageRolesData.get(packageName);
+
+            store.startArray(REQUESTED_ROLES);
+            for(String roleName: roleNames) {
+                store.startGroup();
+                store.addResult(ROLE_NAME, roleName);
+                store.endGroup();
+            }
+            store.endArray();
+        }
+    }
+
+    /*
+        Return a map of PackageName -> List of RoleNames held by that package
+    */
+    private HashMap<String, List<String>> getPackageRolesData() throws Exception {
+        final RoleManager roleManager = getContext().getSystemService(RoleManager.class);
+        HashMap<String, List<String>> packageRolesData = new HashMap<>();
+
+        for(String roleName: RolesUtil.ROLE_NAMES) {
+            List<String> packageNames = getRoleHolders(roleName, roleManager);
+
+            for(String packageName: packageNames) {
+                packageRolesData.putIfAbsent(packageName, new ArrayList<>());
+                packageRolesData.get(packageName).add(roleName);
+            }
+        }
+        return packageRolesData;
+    }
+
+    public static List<String> getRoleHolders(String roleName, RoleManager roleManager) throws Exception {
+        return callWithShellPermissionIdentity(
+                () -> roleManager.getRoleHolders(roleName),
+                        Manifest.permission.MANAGE_ROLE_HOLDERS);
     }
 }
 
