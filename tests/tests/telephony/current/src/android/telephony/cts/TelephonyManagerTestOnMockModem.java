@@ -26,6 +26,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
+import android.os.SystemProperties;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -46,12 +48,14 @@ public class TelephonyManagerTestOnMockModem {
     private static final String TAG = "TelephonyManagerTestOnMockModem";
     private static MockModemManager sMockModemManager;
     private static TelephonyManager sTelephonyManager;
+    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
+    private static final boolean DEBUG = !"user".equals(Build.TYPE);
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#beforeAllTests()");
 
-        if (!hasTelephonyFeature()) {
+        if (!hasTelephonyFeature() || !isAllowedMockModem()) {
             return;
         }
 
@@ -67,7 +71,7 @@ public class TelephonyManagerTestOnMockModem {
     public static void afterAllTests() throws Exception {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#afterAllTests()");
 
-        if (!hasTelephonyFeature()) {
+        if (!hasTelephonyFeature() || !isAllowedMockModem()) {
             return;
         }
 
@@ -80,6 +84,7 @@ public class TelephonyManagerTestOnMockModem {
     @Before
     public void beforeTest() {
         assumeTrue(hasTelephonyFeature());
+        assumeTrue(isAllowedMockModem());
     }
 
     private static Context getContext() {
@@ -90,6 +95,16 @@ public class TelephonyManagerTestOnMockModem {
         final PackageManager pm = getContext().getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isAllowedMockModem() {
+        boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
+        if (!isAllowed && !DEBUG) {
+            Log.d(TAG, "Skipping MockModem tests in USER rom that requires mock modem permission"
+                    + " ,Developer options => Allow Mock Modem");
             return false;
         }
         return true;
