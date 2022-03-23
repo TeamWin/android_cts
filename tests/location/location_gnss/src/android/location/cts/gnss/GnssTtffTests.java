@@ -130,8 +130,9 @@ public class GnssTtffTests extends GnssTestCase {
     TestLocationListener networkLocationListener
         = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
     // fetch the networklocation first to make sure the ttff is not flaky
-    mTestLocationManager.requestNetworkLocationUpdates(networkLocationListener);
-    networkLocationListener.await();
+    if (mTestLocationManager.requestNetworkLocationUpdates(networkLocationListener)) {
+        networkLocationListener.await();
+    }
 
     TestGnssStatusCallback testGnssStatusCallback =
         new TestGnssStatusCallback(TAG, STATUS_TO_COLLECT_COUNT);

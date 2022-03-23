@@ -4982,6 +4982,8 @@ public class TelephonyManagerTest {
     public void getUiccSlotInfoTest() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
 
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
         UiccSlotInfo[] slotInfos = mTelephonyManager.getUiccSlotsInfo();
 
         if (slotInfos == null) {
@@ -5001,6 +5003,22 @@ public class TelephonyManagerTest {
                 portInfo.getLogicalSlotIndex();
                 portInfo.getPortIndex();
             }
+        }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testGetUiccSlotInfosFailsWithoutReadPhoneStatePrivilege() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION));
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+            mTelephonyManager.getUiccSlotsInfo();
+            fail("TelephonyManager#getUiccSlotsInfo must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
         }
     }
 

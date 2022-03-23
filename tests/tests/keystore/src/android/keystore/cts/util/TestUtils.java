@@ -38,7 +38,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.internal.util.HexDump;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -48,14 +48,12 @@ import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.KeyPairGeneratorSpi;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
-import java.security.ProviderException;
 import java.security.PublicKey;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
@@ -147,6 +145,47 @@ public class TestUtils {
 
         return featureVersionFromPm;
     }
+
+    /**
+     * Asserts that the given key is supported by KeyMint after a given (inclusive) version. The
+     * assertion checks that:
+     * 1. The current keystore feature version is less than <code>version</code> and
+     *    <code>keyInfo</code> is implemented in software.
+     *    OR
+     * 2. The current keystore feature version is greater than or equal to <code>version</code>,
+     *    and <code>keyInfo</code> is implemented by KeyMint.
+     */
+    public static void assertImplementedByKeyMintAfter(KeyInfo keyInfo, int version)
+            throws Exception {
+        // ECDSA keys are always implemented in keymaster since v1, so we can use an ECDSA
+        // to check whether the backend is implemented in HW or is SW-emulated.
+        int ecdsaSecurityLevel;
+        try {
+            KeyPairGenerator kpg =
+                    KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore");
+            kpg.initialize(
+                    new KeyGenParameterSpec.Builder("ecdsa-test-key",
+                            KeyProperties.PURPOSE_SIGN).build());
+            KeyPair kp = kpg.generateKeyPair();
+            KeyFactory factory = KeyFactory.getInstance(kp.getPrivate().getAlgorithm(),
+                    "AndroidKeyStore");
+            ecdsaSecurityLevel = factory.getKeySpec(kp.getPrivate(),
+                    KeyInfo.class).getSecurityLevel();
+        } finally {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            keyStore.deleteEntry("ecdsa-test-key");
+        }
+
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        if (getFeatureVersionKeystore(context) >= version) {
+            Assert.assertEquals(keyInfo.getSecurityLevel(), ecdsaSecurityLevel);
+        } else {
+            Assert.assertEquals(keyInfo.getSecurityLevel(),
+                    KeyProperties.SECURITY_LEVEL_SOFTWARE);
+        }
+    }
+
 
     /**
      * Returns whether 3DES KeyStore tests should run on this device. 3DES support was added in
