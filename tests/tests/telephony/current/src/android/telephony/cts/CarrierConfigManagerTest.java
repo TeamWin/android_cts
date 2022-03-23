@@ -375,5 +375,13 @@ public class CarrierConfigManagerTest {
             assertFalse(config.containsKey(KEY_CARRIER_VOLTE_PROVISIONED_BOOL));
             assertFalse(config.containsKey(CarrierConfigManager.Gps.KEY_SUPL_ES_STRING));
         }
+
+        config = mConfigManager.getConfigByComponentForSubId(
+                CarrierConfigManager.ImsVoice.KEY_PREFIX,
+                SubscriptionManager.getDefaultSubscriptionId());
+        if (config != null) {
+            assertTrue(config.containsKey(
+                    CarrierConfigManager.ImsVoice.KEY_AMRWB_PAYLOAD_DESCRIPTION_BUNDLE));
+        }
     }
 }

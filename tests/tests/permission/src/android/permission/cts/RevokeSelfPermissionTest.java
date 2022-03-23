@@ -23,6 +23,7 @@ import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.HIGH_SAMPLING_RATE_SENSORS;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
 import static android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED;
+import static android.content.pm.PackageManager.FLAG_PERMISSION_ONE_TIME;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_FIXED;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.permission.cts.PermissionUtils.getPermissionFlags;
@@ -198,6 +199,7 @@ public class RevokeSelfPermissionTest {
         assertGranted(ONE_TIME_TIMEOUT_MILLIS + ONE_TIME_TIMER_UPPER_GRACE_PERIOD,
                 ACCESS_FINE_LOCATION);
         grantPermission(APP_PKG_NAME, ACCESS_BACKGROUND_LOCATION);
+        setPermissionFlags(APP_PKG_NAME, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_ONE_TIME, 0);
         assertGranted(ONE_TIME_TIMER_UPPER_GRACE_PERIOD, ACCESS_BACKGROUND_LOCATION);
         revokePermission(ACCESS_FINE_LOCATION);
         killApp();

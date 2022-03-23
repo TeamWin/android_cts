@@ -179,6 +179,33 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
                             Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
                 }
+            } else if (testEvent
+                    == Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST) {
+                runWithShellPermissionIdentity(() -> {
+                    mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
+                    mAlwaysOnHotwordDetector.overrideAvailability(
+                            AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+                    // this test verifies that startRecognition does not throw an exception
+                    try {
+                        mAlwaysOnHotwordDetector.startRecognition(0,
+                                new byte[]{1, 2, 3, 4, 5});
+                        broadcastIntentWithResult(
+                                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT,
+                                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS);
+                    } catch (UnsupportedOperationException e) {
+                        Log.e(TAG, "DSP detector start recognition failed", e);
+                        broadcastIntentWithResult(
+                                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT,
+                                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_UNSUPPORTED_EXCEPTION);
+                    } catch (IllegalStateException e) {
+                        Log.e(TAG, "DSP detector start recognition failed", e);
+                        broadcastIntentWithResult(
+                                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT,
+                                Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_ILLEGAL_STATE_EXCEPTION);
+                    } finally {
+                        mAlwaysOnHotwordDetector.destroy();
+                    }
+                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
             }
         } catch (IllegalStateException e) {
             Log.w(TAG, "performing testEvent: " + testEvent + ", exception: " + e);

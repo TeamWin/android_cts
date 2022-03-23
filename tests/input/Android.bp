@@ -26,6 +26,7 @@ android_test {
     ],
     compile_multilib: "both",
     srcs: ["src/**/*.kt"],
+    resource_dirs: ["res"],
     static_libs: [
         "androidx.test.core",
         "androidx.test.ext.junit",

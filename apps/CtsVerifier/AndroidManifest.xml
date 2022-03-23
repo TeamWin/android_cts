@@ -4831,6 +4831,8 @@
                        android:value="android.software.leanback" />
             <meta-data android:name="test_required_configs"
                        android:value="config_hdmi_source" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.media.AudioTrack#isDirectPlaybackSupported" />
         </activity>
 
         <activity android:name=".tv.display.HotplugTestActivity"

@@ -293,6 +293,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName KEEP_CLEAR_RECTS_ACTIVITY =
             component("KeepClearRectsActivity");
 
+    public static final ComponentName KEEP_CLEAR_RECTS_ACTIVITY2 =
+            component("KeepClearRectsActivity2");
+
     /**
      * The keys used by {@link CustomTransitionExitActivity} to select the animation to run.
      */

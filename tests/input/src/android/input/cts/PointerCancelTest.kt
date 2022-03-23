@@ -28,7 +28,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +51,7 @@ class PointerCancelTest {
     private lateinit var activity: CaptureEventActivity
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var verifier: EventVerifier
+
     @Before
     fun setUp() {
         activityRule.getScenario().onActivity {
@@ -82,12 +82,12 @@ class PointerCancelTest {
         sendPointersEvent(downTime, ACTION_POINTER_1_DOWN,
                 arrayOf(pointerInDecorView, secondPointer),
                 0 /*flags*/, true /*sync*/)
-        verifier.assertReceivedPointerDown()
+        verifier.assertReceivedPointerDown(1)
 
         sendPointersEvent(downTime, ACTION_POINTER_1_UP,
                 arrayOf(pointerInDecorView, secondPointer),
                 MotionEvent.FLAG_CANCELED, true /*sync*/)
-        verifier.assertReceivedPointerCancel()
+        verifier.assertReceivedPointerCancel(1)
 
         sendEvent(downTime, MotionEvent.ACTION_UP, pointerInDecorView, true /*sync*/)
         verifier.assertReceivedUp()
@@ -197,44 +197,10 @@ class PointerCancelTest {
         return view
     }
 
-    inner class EventVerifier(val getInputEvent: () -> InputEvent?) {
-        fun assertReceivedPointerCancel() {
-            val event = getInputEvent() as MotionEvent
-            assertEquals(MotionEvent.ACTION_POINTER_UP, event.actionMasked)
-            assertEquals(MotionEvent.FLAG_CANCELED, event.flags and MotionEvent.FLAG_CANCELED)
-        }
-
-        fun assertReceivedCancel() {
-            val event = getInputEvent() as MotionEvent
-            assertEquals(MotionEvent.ACTION_CANCEL, event.actionMasked)
-            assertEquals(MotionEvent.FLAG_CANCELED, event.flags and MotionEvent.FLAG_CANCELED)
-        }
-
-        fun assertReceivedDown() {
-            val event = getInputEvent() as MotionEvent
-            assertEquals(MotionEvent.ACTION_DOWN, event.actionMasked)
-        }
-
-        fun assertReceivedPointerDown() {
-            val event = getInputEvent() as MotionEvent
-            assertEquals(MotionEvent.ACTION_POINTER_DOWN, event.actionMasked)
-        }
-
-        fun assertReceivedMove() {
-            val event = getInputEvent() as MotionEvent
-            assertEquals(MotionEvent.ACTION_MOVE, event.actionMasked)
-        }
-
-        fun assertReceivedUp() {
-            val event = getInputEvent() as MotionEvent
-            assertEquals(MotionEvent.ACTION_UP, event.actionMasked)
-        }
-    }
-
     companion object {
-        val ACTION_POINTER_1_DOWN = (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or
+        const val ACTION_POINTER_1_DOWN = (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or
                 MotionEvent.ACTION_POINTER_DOWN
-        val ACTION_POINTER_1_UP = (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or
+        const val ACTION_POINTER_1_UP = (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT) or
                 MotionEvent.ACTION_POINTER_UP
     }
 }

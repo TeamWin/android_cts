@@ -43,6 +43,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
     private static final int CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS = 30000;
+    private static final int CONTENT_PROVIDER_SETUP_TIMEOUT_MS = 50000;
 
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
     private static final String IMAGE_NAME_TO_BE_DISPLAYED_KEY = "imageNameToBeDisplayed";
@@ -52,27 +53,46 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
             "imageNameToBeVerifiedInCloneProfile";
     private static final String CLONE_USER_ID = "cloneUserId";
     private static final String MEDIA_PROVIDER_IMAGES_PATH = "/external/images/media/";
+    private static final String CONTENT_PROVIDER_SETUP_FAILURE =
+            "ContentProviderHandler Setup Failure";
     private ContentProviderHandler mContentProviderHandler;
+
+    private void contentProviderHandlerSetup() throws Exception {
+        mContentProviderHandler = new ContentProviderHandler(mDevice);
+        eventually(() -> mContentProviderHandler.setUp(), CONTENT_PROVIDER_SETUP_TIMEOUT_MS,
+                CONTENT_PROVIDER_SETUP_FAILURE);
+    }
 
     @Before
     public void setup() throws Exception {
         super.baseHostSetup();
-
-        mContentProviderHandler = new ContentProviderHandler(getDevice());
-        mContentProviderHandler.setUp();
     }
 
-    @After
-    public void tearDown() throws Exception {
-        super.baseHostTeardown();
-
+    private void contentProviderHandlerTearDown() throws Exception {
         if (mContentProviderHandler != null) {
             mContentProviderHandler.tearDown();
         }
     }
 
+    @After
+    public void tearDown() throws Exception {
+        super.baseHostTeardown();
+    }
+
     @Test
     public void testCreateCloneUserFile() throws Exception {
+        try {
+            contentProviderHandlerSetup();
+
+            // createCloneUserFile Test Logic
+            createCloneUserFileTest();
+        } finally {
+
+            contentProviderHandlerTearDown();
+        }
+    }
+
+    private void createCloneUserFileTest() throws Exception {
         CommandResult out;
 
         // Check that the clone user directories exist
@@ -163,6 +183,9 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     @Test
     public void testPrivateAppDataDirectoryForCloneUser() throws Exception {
+        // Install the app in clone user space
+        installPackage(APP_A, "--user " + Integer.valueOf(mCloneUserId));
+
         eventually(() -> {
             // Wait for finish.
             assertThat(isPackageInstalled(APP_A_PACKAGE, mCloneUserId)).isTrue();
@@ -171,13 +194,18 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     @Test
     public void testCrossUserMediaAccess() throws Exception {
+        // Install the app in both the user spaces
+        installPackage(APP_A, "--user all");
+
+        int currentUserId = getCurrentUserId();
+
         // Run save image test in owner user space
         Map<String, String> ownerArgs = new HashMap<>();
         ownerArgs.put(IMAGE_NAME_TO_BE_DISPLAYED_KEY, "WeirdOwnerProfileImage");
         ownerArgs.put(IMAGE_NAME_TO_BE_CREATED_KEY, "owner_profile_image");
 
         runDeviceTestAsUserInPkgA("testMediaStoreManager_writeImageToSharedStorage",
-                getCurrentUserId(), ownerArgs);
+                currentUserId, ownerArgs);
 
         // Run save image test in clone user space
         Map<String, String> cloneArgs = new HashMap<>();
@@ -195,8 +223,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
         // From owner user space
         runDeviceTestAsUserInPkgA(
-                "testMediaStoreManager_verifyCrossUserImagesInSharedStorage",
-                getCurrentUserId(), args);
+                "testMediaStoreManager_verifyCrossUserImagesInSharedStorage", currentUserId, args);
 
         // From clone user space
         runDeviceTestAsUserInPkgA(
@@ -207,9 +234,14 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     @Test
     public void testGetStorageVolumesIncludingSharedProfiles() throws Exception {
         assumeTrue(isAtLeastT());
+        int currentUserId = getCurrentUserId();
+
+        // Install the app in owner user space
+        installPackage(APP_A, "--user " + currentUserId);
+
         Map<String, String> args = new HashMap<>();
         args.put(CLONE_USER_ID, mCloneUserId);
         runDeviceTestAsUserInPkgA("testStorageManager_verifyInclusionOfSharedProfileVolumes",
-                getCurrentUserId(), args);
+                currentUserId, args);
     }
 }

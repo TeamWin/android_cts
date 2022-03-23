@@ -412,7 +412,7 @@ def main():
     auto_scene_switch = True
   else:
     auto_scene_switch = False
-    logging.info('Manual testing: no tablet defined or testing scene5.')
+    logging.info('No tablet: manual, sensor_fusion, or scene5 testing.')
 
   for camera_id in camera_id_combos:
     test_params_content['camera'] = camera_id

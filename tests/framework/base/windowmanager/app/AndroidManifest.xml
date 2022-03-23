@@ -630,6 +630,9 @@
         <activity android:name=".KeepClearRectsActivity"
             android:exported="true"
             android:theme="@style/NoInsetsTheme"/>
+        <activity android:name=".KeepClearRectsActivity2"
+            android:exported="true"
+            android:theme="@style/NoInsetsTheme"/>
 
         <!-- Splash Screen Test Activities -->
         <activity android:name=".HandleSplashScreenExitActivity"

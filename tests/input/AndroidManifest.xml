@@ -16,9 +16,6 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="android.input.cts">
-
-    <uses-permission android:name="android.permission.INJECT_EVENTS"/>
-
     <application android:label="InputTest">
         <activity android:name=".OverlayActivity"
                   android:label="Overlay activity"

@@ -17,6 +17,7 @@
 package android.location.cts.privileged;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.location.GnssExcessPathInfo;
@@ -54,14 +55,32 @@ public class GnssExcessPathInfoTest {
         parcel.recycle();
     }
 
-    static GnssExcessPathInfo createTestGnssExcessPathInfo() {
-        GnssExcessPathInfo.Builder builder = new GnssExcessPathInfo.Builder()
+    @Test
+    public void testClear() {
+        GnssExcessPathInfo.Builder builder = createTestGnssExcessPathInfoBuilder();
+        builder.clearExcessPathLengthMeters();
+        builder.clearExcessPathLengthUncertaintyMeters();
+        builder.setReflectingPlane(null);
+        builder.clearAttenuationDb();
+        GnssExcessPathInfo gnssExcessPathInfo = builder.build();
+
+        assertFalse(gnssExcessPathInfo.hasExcessPathLength());
+        assertFalse(gnssExcessPathInfo.hasExcessPathLengthUncertainty());
+        assertFalse(gnssExcessPathInfo.hasReflectingPlane());
+        assertFalse(gnssExcessPathInfo.hasAttenuation());
+    }
+
+    private static GnssExcessPathInfo.Builder createTestGnssExcessPathInfoBuilder() {
+        return new GnssExcessPathInfo.Builder()
                 .setExcessPathLengthMeters(10.5f)
                 .setExcessPathLengthUncertaintyMeters(5.2f)
                 .setReflectingPlane(
                         GnssSingleSatCorrectionTest.createTestReflectingPlane())
                 .setAttenuationDb(2.9f);
-        return builder.build();
+    }
+
+    static GnssExcessPathInfo createTestGnssExcessPathInfo() {
+        return createTestGnssExcessPathInfoBuilder().build();
     }
 
     static void verifyTestValues(GnssExcessPathInfo gnssExcessPathInfo) {

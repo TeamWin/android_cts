@@ -41,6 +41,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.CallbackAsserter;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ProtoUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.server.power.nano.PowerManagerServiceDumpProto;
@@ -54,10 +55,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(BedsteadJUnit4.class)
 public class LowPowerStandbyTest {
     private static final int BROADCAST_TIMEOUT_SEC = 3;
+    private static final long LOW_POWER_STANDBY_ACTIVATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     private static final String SYSTEM_WAKE_LOCK_TAG = "LowPowerStandbyTest:KeepSystemAwake";
     private static final String TEST_WAKE_LOCK_TAG = "LowPowerStandbyTest:TestWakeLock";
@@ -86,6 +89,7 @@ public class LowPowerStandbyTest {
                 mPowerManager.forceLowPowerStandbyActive(false);
             }, Manifest.permission.MANAGE_LOW_POWER_STANDBY);
         }
+        unforceDoze();
     }
 
     @Test
@@ -168,6 +172,50 @@ public class LowPowerStandbyTest {
         assertTrue("Test wakelock not disabled", isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
     }
 
+    @Test
+    @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
+    @EnsureHasPermission({Manifest.permission.MANAGE_LOW_POWER_STANDBY,
+            Manifest.permission.DEVICE_POWER})
+    public void testSetLowPowerStandbyActiveDuringMaintenance() throws Exception {
+        assumeTrue(mPowerManager.isLowPowerStandbySupported());
+
+        // Keep system awake with system wakelock
+        WakeLock systemWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK | SYSTEM_WAKELOCK,
+                SYSTEM_WAKE_LOCK_TAG);
+        systemWakeLock.acquire();
+
+        // Acquire test wakelock, which should be disabled by LPS
+        WakeLock testWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK,
+                TEST_WAKE_LOCK_TAG);
+        testWakeLock.acquire();
+
+        mPowerManager.setLowPowerStandbyEnabled(true);
+        mPowerManager.setLowPowerStandbyActiveDuringMaintenance(true);
+
+        goToSleep();
+        forceDoze();
+
+        PollingCheck.check(
+                "Test wakelock still enabled, expected to be disabled by Low Power Standby",
+                LOW_POWER_STANDBY_ACTIVATE_TIMEOUT, () -> isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        enterDozeMaintenance();
+
+        assertTrue(isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mPowerManager.setLowPowerStandbyActiveDuringMaintenance(false);
+        PollingCheck.check(
+                "Test wakelock disabled during doze maintenance, even though Low Power Standby "
+                        + "should not be active during maintenance",
+                500, () -> !isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+
+        mPowerManager.setLowPowerStandbyActiveDuringMaintenance(true);
+        PollingCheck.check(
+                "Test wakelock enabled during doze maintenance, even though Low Power Standby "
+                        + "should be active during maintenance",
+                500, () -> isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
+    }
+
     private void goToSleep() throws Exception {
         final BlockingBroadcastReceiver screenOffReceiver = new BlockingBroadcastReceiver(mContext,
                 Intent.ACTION_SCREEN_OFF);
@@ -188,6 +236,27 @@ public class LowPowerStandbyTest {
 
         screenOnReceiver.awaitForBroadcast(1000);
         screenOnReceiver.unregisterQuietly();
+    }
+
+    private void forceDoze() throws Exception {
+        executeShellCommand("dumpsys deviceidle force-idle deep");
+    }
+
+    private void unforceDoze() throws Exception {
+        executeShellCommand("dumpsys deviceidle unforce");
+    }
+
+    private void enterDozeMaintenance() throws Exception {
+        executeShellCommand("dumpsys deviceidle force-idle deep");
+
+        for (int i = 0; i < 4; i++) {
+            String stepResult = executeShellCommand("dumpsys deviceidle step deep");
+            if (stepResult != null && stepResult.contains("IDLE_MAINTENANCE")) {
+                return;
+            }
+        }
+
+        fail("Failed to enter doze maintenance mode");
     }
 
     private boolean isWakeLockDisabled(@NonNull String tag) throws Exception {

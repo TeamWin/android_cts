@@ -25,38 +25,57 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 
+import java.util.function.BooleanSupplier;
+
 
 abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     private int mCurrentUserId = NativeDevice.INVALID_USER_ID;
     private static final String ERROR_MESSAGE_TAG = "[ERROR]";
+    protected ITestDevice mDevice = null;
+
+    protected void setDevice() {
+        mDevice = getDevice();
+    }
 
     protected String executeShellCommand(String cmd, Object... args) throws Exception {
-        return getDevice().executeShellCommand(String.format(cmd, args));
+        return mDevice.executeShellCommand(String.format(cmd, args));
     }
 
     protected CommandResult executeShellV2Command(String cmd, Object... args) throws Exception {
-        return getDevice().executeShellV2Command(String.format(cmd, args));
+        return mDevice.executeShellV2Command(String.format(cmd, args));
     }
 
     protected boolean isPackageInstalled(String packageName, String userId) throws Exception {
-        return getDevice().isPackageInstalled(packageName, userId);
+        return mDevice.isPackageInstalled(packageName, userId);
     }
 
     // TODO (b/174775905) remove after exposing the check from ITestDevice.
     protected boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
-        String result = getDevice()
+        String result = mDevice
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
     }
 
     protected boolean isAtLeastS() throws DeviceNotAvailableException {
-        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(getDevice());
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(mDevice);
         return deviceSdkLevel.isDeviceAtLeastS();
     }
 
     protected boolean isAtLeastT() throws DeviceNotAvailableException {
-        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(getDevice());
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(mDevice);
         return deviceSdkLevel.isDeviceAtLeastT();
+    }
+
+    protected static void throwExceptionIfTimeout(long start, long timeoutMillis, Throwable e) {
+        if (System.currentTimeMillis() - start < timeoutMillis) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new RuntimeException(e);
+        }
     }
 
     protected static void eventually(ThrowingRunnable r, long timeoutMillis) {
@@ -67,15 +86,24 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
                 r.run();
                 return;
             } catch (Throwable e) {
-                if (System.currentTimeMillis() - start < timeoutMillis) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ignored) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    throw new RuntimeException(e);
+                throwExceptionIfTimeout(start, timeoutMillis, e);
+            }
+        }
+    }
+
+    protected static void eventually(ThrowingBooleanSupplier booleanSupplier,
+            long timeoutMillis, String failureMessage) {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                if (booleanSupplier.getAsBoolean()) {
+                    return;
                 }
+
+                throw new RuntimeException(failureMessage);
+            } catch (Throwable e) {
+                throwExceptionIfTimeout(start, timeoutMillis, e);
             }
         }
     }
@@ -101,8 +129,7 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     private void setCurrentUserId() throws Exception {
         if (mCurrentUserId != NativeDevice.INVALID_USER_ID) return;
 
-        ITestDevice device = getDevice();
-        mCurrentUserId = device.getCurrentUser();
+        mCurrentUserId = mDevice.getCurrentUser();
         CLog.i("Current user: %d");
     }
 
@@ -111,5 +138,12 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
          * Similar to {@link Runnable#run} but has {@code throws Exception}.
          */
         void run() throws Exception;
+    }
+
+    protected interface ThrowingBooleanSupplier {
+        /**
+         * Similar to {@link BooleanSupplier#getAsBoolean} but has {@code throws Exception}.
+         */
+        boolean getAsBoolean() throws Exception;
     }
 }

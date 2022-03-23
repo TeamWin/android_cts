@@ -26,6 +26,7 @@ import android.provider.MediaStore;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Calendar;
 
 public class MediaStoreWriteOperation {
 
@@ -47,7 +48,7 @@ public class MediaStoreWriteOperation {
         // Publish a new image
         ContentValues newImageDetails = new ContentValues();
         newImageDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
-                displayName + ".jpg");
+                displayName + "_" + Calendar.getInstance().getTime() + ".jpg");
         newImageDetails.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
         newImageDetails.put(MediaStore.Images.Media.WIDTH, bitmap.getWidth());
         newImageDetails.put(MediaStore.Images.Media.HEIGHT, bitmap.getHeight());
