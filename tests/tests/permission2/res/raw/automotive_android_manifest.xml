@@ -435,11 +435,6 @@
         android:label="@string/car_permission_label_collect_car_watchdog_metrics"
         android:description="@string/car_permission_desc_collect_car_watchdog_metrics"/>
 
-    <permission android:name="android.car.permission.USE_CAR_TELEMETRY_SERVICE"
-        android:protectionLevel="signature|privileged"
-        android:label="@string/car_permission_label_use_telemetry_service"
-        android:description="@string/car_permission_desc_use_telemetry_service"/>
-
     <permission android:name="android.car.permission.CONTROL_CAR_EVS_ACTIVITY"
         android:protectionLevel="signature|privileged"
         android:label="@string/car_permission_label_control_evs_activity"
