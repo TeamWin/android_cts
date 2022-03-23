@@ -97,6 +97,7 @@ _CORR_TIME_OFFSET_STEP = 0.5  # ms step for shifts.
 _MSEC_TO_NSEC = 1000000
 _NSEC_TO_SEC = 1E-9
 _SEC_TO_NSEC = int(1/_NSEC_TO_SEC)
+_RADS_TO_DEGS = 180/math.pi
 
 _NUM_GYRO_PTS_TO_AVG = 20
 
@@ -321,6 +322,27 @@ def set_servo_speed(ch, servo_speed, serial_port, delay=0):
   time.sleep(delay)
 
 
+def calc_max_rotation_angle(rotations, sensor_type):
+  """Calculates the max angle of deflection from rotations.
+
+  Args:
+    rotations: numpy array of rotation per event
+    sensor_type: string 'Camera' or 'Gyro'
+
+  Returns:
+    maximum angle of rotation for the given rotations
+  """
+  rotations *= _RADS_TO_DEGS
+  rotations_sum = np.cumsum(rotations)
+  rotation_max = max(rotations_sum)
+  rotation_min = min(rotations_sum)
+  logging.debug('%s min: %.2f, max %.2f rotation (degrees)',
+                sensor_type, rotation_min, rotation_max)
+  logging.debug('%s max rotation: %.2f degrees',
+                sensor_type, (rotation_max-rotation_min))
+  return rotation_max-rotation_min
+
+
 def get_gyro_rotations(gyro_events, cam_times):
   """Get the rotation values of the gyro.
 
@@ -491,10 +513,11 @@ def get_cam_rotations(frames, facing, h, file_name_stem, start_frame):
 
   rotations = np.array(rotations)
   rot_per_frame_max = max(abs(rotations))
-  logging.debug('Max rotation: %.4f radians', rot_per_frame_max)
+  logging.debug('Max rotation in frame: %.2f degrees',
+                rot_per_frame_max*_RADS_TO_DEGS)
   if rot_per_frame_max < _ROTATION_PER_FRAME_MIN:
     raise AssertionError(f'Device not moved enough: {rot_per_frame_max:.3f} '
-                         f'movement. THRESH: {_ROTATION_PER_FRAME_MIN}.')
+                         f'movement. THRESH: {_ROTATION_PER_FRAME_MIN} rads.')
   return rotations
 
 
