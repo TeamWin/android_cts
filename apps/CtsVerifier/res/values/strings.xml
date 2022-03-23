@@ -1199,7 +1199,7 @@
 
     <string name="nfc_screen_off_hce_payment_emulator">Screen off HCE Payment (Emulator)</string>
     <string name="nfc_screen_off_hce_payment_reader">Screen off HCE Payment (Reader)</string>
-    <string name="nfc_screen_off_hce_payment_help">This test verifies emulator responds when device is in screen off state. Please put the emulator to screen off state.</string>
+    <string name="nfc_screen_off_hce_payment_help">This is an optional test for Android version beofre S. This is okay to set this test to passed and continue. This test verifies emulator responds when device is in screen off state. Please put the emulator to screen off state.</string>
 
     <string name="nfc_payment_service_desc">NFC Payment service</string>
     <string name="ppse">PPSE</string>
