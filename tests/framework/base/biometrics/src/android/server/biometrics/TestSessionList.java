@@ -33,12 +33,18 @@ import java.util.Map;
  * Prefer to simply use a try block with a single session when possible.
  */
 public class TestSessionList implements AutoCloseable {
-    private final BiometricTestBase mTest;
+    private final Idler mIdler;
     private final List<BiometricTestSession> mSessions = new ArrayList<>();
     private final Map<Integer, BiometricTestSession> mSessionMap = new HashMap<>();
 
-    public TestSessionList(@NonNull BiometricTestBase test) {
-        mTest = test;
+    public interface Idler {
+        /** Wait for all sensor to be idle. */
+        void waitForIdleSensors();
+    }
+
+    /** Create a list with the given idler.  */
+    public TestSessionList(@NonNull Idler idler) {
+        mIdler = idler;
     }
 
     /** Add a session. */
@@ -69,6 +75,6 @@ public class TestSessionList implements AutoCloseable {
         for (BiometricTestSession session : mSessions) {
             session.close();
         }
-        mTest.waitForIdleSensors();
+        mIdler.waitForIdleSensors();
     }
 }
