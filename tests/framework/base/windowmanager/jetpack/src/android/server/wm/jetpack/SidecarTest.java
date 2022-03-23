@@ -79,7 +79,6 @@ import java.util.List;
  *     atest CtsWindowManagerJetpackTestCases:SidecarTest
  */
 @LargeTest
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class SidecarTest extends WindowManagerJetpackTestBase {
     private static final String TAG = "SidecarTest";
