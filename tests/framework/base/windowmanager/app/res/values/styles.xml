@@ -55,4 +55,7 @@
     <style name="Theme_NoSwipeDismiss" parent="android:Theme">
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
+    <style name="ShowWhenLockedDialogTheme" parent="@android:style/Theme.Material.Dialog">
+        <!-- no-op except on Wear, where dialog theme has been converted to non-floating -->
+    </style>
 </resources>
