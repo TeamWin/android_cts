@@ -101,6 +101,7 @@ import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CarrierPrivilegeUtils;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
@@ -2257,7 +2258,16 @@ public class TelephonyManagerTest {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
             return;
         }
-        // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
+
+        // The API requires either READ_PRIVILEGED_PHONE_STATE or carrier privileges
+        try {
+            mTelephonyManager.getUiccCardsInfo();
+            fail("Telephony#getUiccCardsInfo should throw SecurityException without "
+                    + "READ_PRIVILEGED_PHONE_STATE nor carrier privileges");
+        } catch (SecurityException expected) {
+        }
+
+        // With READ_PRIVILEGED_PHONE_STATE only, it should work
         List<UiccCardInfo> infos =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getUiccCardsInfo());
@@ -2271,6 +2281,19 @@ public class TelephonyManagerTest {
             info.getPorts();
             info.getPhysicalSlotIndex();
             info.isRemovable();
+        }
+
+        // With carrier privileges only, it should also work
+        try {
+            CarrierPrivilegeUtils.withCarrierPrivileges(
+                    getContext(),
+                    SubscriptionManager.getDefaultSubscriptionId(),
+                    () -> mTelephonyManager.getUiccCardsInfo());
+        } catch (SecurityException se) {
+            fail("TelephonyManager.getUiccCardsInfo should not throw SecurityException with "
+                    + "carrier privileges");
+        } catch (Exception e) {
+            fail("Exception thrown when try to get carrier privileges.");
         }
     }
 
