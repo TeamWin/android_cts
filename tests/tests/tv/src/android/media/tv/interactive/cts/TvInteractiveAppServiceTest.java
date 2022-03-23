@@ -386,6 +386,19 @@ public class TvInteractiveAppServiceTest {
     }
 
     @Test
+    public void testNotifyError() {
+        assertNotNull(mSession);
+        mSession.resetValues();
+
+        mTvIAppView.notifyError("msg", new Bundle());
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT_MS, () -> mSession.mErrorCount > 0);
+
+        assertThat(mSession.mErrorCount).isEqualTo(1);
+        // TODO: check values
+    }
+
+    @Test
     public void testSetSurface() throws Throwable {
         assertNotNull(mSession);
 
