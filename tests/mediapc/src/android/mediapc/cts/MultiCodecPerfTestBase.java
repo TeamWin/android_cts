@@ -18,7 +18,6 @@ package android.mediapc.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
-
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodec;
@@ -30,7 +29,6 @@ import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
-import org.junit.Assume;
 import org.junit.Before;
 
 import java.io.IOException;
@@ -45,6 +43,7 @@ public class MultiCodecPerfTestBase {
     static final boolean[] boolStates = {true, false};
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES = 6;
     static final int REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9 = 2;
+    static final int REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES = 2;
     // allowed tolerance in measured fps vs expected fps in percentage, i.e. codecs achieving fps
     // that is greater than (FPS_TOLERANCE_FACTOR * expectedFps) will be considered as
     // passing the test
@@ -53,6 +52,7 @@ public class MultiCodecPerfTestBase {
     static Map<String, String> mTestFiles = new HashMap<>();
     static Map<String, String> m720pTestFiles = new HashMap<>();
     static Map<String, String> m1080pTestFiles = new HashMap<>();
+    static Map<String, String> m1080pWidevineTestFiles = new HashMap<>();
 
     static {
         mMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
@@ -73,6 +73,16 @@ public class MultiCodecPerfTestBase {
         m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1920x1080_4mbps_30fps_hevc.mp4");
         m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1920x1080_4mbps_30fps_vp9.webm");
         m1080pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_1920x1080_4mbps_30fps_av1.mp4");
+
+        m1080pWidevineTestFiles
+                .put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1920x1080_6mbps_30fps_avc_cenc.mp4");
+        m1080pWidevineTestFiles
+                .put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1920x1080_4mbps_30fps_hevc_cenc.mp4");
+        // TODO(b/230682028)
+        // m1080pWidevineTestFiles
+        //         .put(MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_1920x1080_4mbps_30fps_vp9_cenc.webm");
+        m1080pWidevineTestFiles
+                .put(MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_1920x1080_4mbps_30fps_av1_cenc.mp4");
     }
 
     String mMime;
@@ -125,7 +135,8 @@ public class MultiCodecPerfTestBase {
             assertTrue(pps.size() > 0);
 
             boolean hasVP9 = mimeCodecPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
-            int requiredFrameRate = getRequiredMinConcurrentInstances(hasVP9) * 30;
+            int requiredFrameRate = getRequiredMinConcurrentInstances(hasVP9, mimeCodecPair.second,
+                    mimeCodecPair.first) * 30;
 
             maxInstances[loopCount] = cap.getMaxSupportedInstances();
             PerformancePoint PPRes = new PerformancePoint(width, height, requiredFrameRate);
@@ -166,7 +177,17 @@ public class MultiCodecPerfTestBase {
                 (int) (minOfMaxMacroBlockRates / ((width / 16) * (height / 16)) / 30.0)));
     }
 
-    public int getRequiredMinConcurrentInstances(boolean hasVP9) {
+    public int getRequiredMinConcurrentInstances(boolean hasVP9) throws IOException {
+        return getRequiredMinConcurrentInstances(hasVP9, null, null);
+    }
+
+    public int getRequiredMinConcurrentInstances(boolean hasVP9, String codecName, String mime)
+            throws IOException {
+        if (codecName != null && mime != null) {
+            if (isSecureSupportedCodec(codecName, mime)) {
+                return REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES;
+            }
+        }
         // Below T, VP9 requires 60 fps at 720p and minimum of 2 instances
         if (!Utils.isTPerfClass() && hasVP9) {
             return REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
