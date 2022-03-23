@@ -263,6 +263,10 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testSpeakerphoneIntent() throws Exception {
+        //  Speaker Phone Not supported in Automotive
+        if (isAutomotive()) {
+            return;
+        }
         final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
                 AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED);
         final boolean initialSpeakerphoneState = mAudioManager.isSpeakerphoneOn();
@@ -450,6 +454,10 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertTrueCheckTimeout(mAudioManager, p -> !p.isBluetoothScoOn(),
                 DEFAULT_ASYNC_CALL_TIMEOUT_MS, "isBluetoothScoOn returned true");
 
+        //  Speaker Phone Not supported in Automotive
+        if (isAutomotive()) {
+            return;
+        }
         mAudioManager.setSpeakerphoneOn(true);
         assertTrueCheckTimeout(mAudioManager, p -> p.isSpeakerphoneOn(),
                 DEFAULT_ASYNC_CALL_TIMEOUT_MS, "isSpeakerPhoneOn() returned false");
@@ -1941,6 +1949,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
         assertTrue(errorString, result);
     }
+
+    private boolean isAutomotive() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
+    }
+
 
     // getParameters() & setParameters() are deprecated, so don't test
 
