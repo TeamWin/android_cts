@@ -43,6 +43,8 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
+import android.service.displayhash.DisplayHashParams;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.SurfaceControl;
 import android.view.View;
@@ -423,6 +425,22 @@ public class DisplayHashManagerTest {
         assertEquals(mTestViewSize.x, verifiedDisplayHash.getBoundsInWindow().width());
         assertEquals(mTestViewSize.y, verifiedDisplayHash.getBoundsInWindow().height());
         assertArrayEquals(expectedImageHash, verifiedDisplayHash.getImageHash());
+    }
+
+    @Test
+    public void testDisplayHashParams() {
+        int width = 10;
+        int height = 20;
+        boolean isGrayscale = true;
+        DisplayHashParams displayHashParams = new DisplayHashParams.Builder()
+                .setBufferSize(width, height)
+                .setGrayscaleBuffer(isGrayscale)
+                .build();
+
+        Size bufferSize = displayHashParams.getBufferSize();
+        assertEquals(width, bufferSize.getWidth());
+        assertEquals(height, bufferSize.getHeight());
+        assertEquals(isGrayscale, displayHashParams.isGrayscaleBuffer());
     }
 
     private DisplayHash generateDisplayHash(Rect bounds) {
