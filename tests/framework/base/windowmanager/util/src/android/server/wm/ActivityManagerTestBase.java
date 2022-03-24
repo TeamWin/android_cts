@@ -1333,6 +1333,11 @@ public abstract class ActivityManagerTestBase {
         return mObjectTracker.manage(new FontScaleSession());
     }
 
+    /** Allows requesting orientation in case ignore_orientation_request is set to true. */
+    protected void disableIgnoreOrientationRequest() {
+        mObjectTracker.manage(new IgnoreOrientationRequestSession(DEFAULT_DISPLAY, false));
+    }
+
     /**
      * Test @Rule class that disables screen doze settings before each test method running and
      * restoring to initial values after test method finished.

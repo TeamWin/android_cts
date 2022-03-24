@@ -366,6 +366,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     @Test
     public void testTranslucentAppOrientationRequests() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
+        disableIgnoreOrientationRequest();
 
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -537,6 +538,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // TODO(b/209920544) remove assumeFalse after issue fix.
         assumeFalse(ENABLE_SHELL_TRANSITIONS);
+        disableIgnoreOrientationRequest();
 
         final RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
@@ -555,6 +557,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     @Test
     public void testTaskCloseRestoreFixedOrientation() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
+        disableIgnoreOrientationRequest();
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -760,6 +763,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // TODO(b/110533226): Fix test on devices with display cutout
         assumeFalse("Skipping test: display cutout present, can't predict exact lifecycle",
                 hasDisplayCutout());
+        disableIgnoreOrientationRequest();
 
         // Start portrait-fixed activity
         separateTestJournal();
@@ -803,6 +807,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     @Test
     public void testTaskMoveToBackOrientation() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
+        disableIgnoreOrientationRequest();
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
