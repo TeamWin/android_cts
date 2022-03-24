@@ -58,6 +58,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,10 +83,10 @@ public class ImsCallingTest {
     public static final int WAIT_FOR_SERVICE_TO_UNBOUND = 40000;
     public static final int WAIT_FOR_CONDITION = 3000;
     public static final int WAIT_FOR_CALL_STATE = 10000;
-    public static final int WAIT_FOR_CALL_DISCONNECT = 5000;
+    public static final int WAIT_FOR_CALL_DISCONNECT = 1000;
     public static final int WAIT_FOR_CALL_CONNECT = 5000;
-    public static final int WAIT_FOR_CALL_STATE_HOLD = 3000;
-    public static final int WAIT_FOR_CALL_STATE_RESUME = 3000;
+    public static final int WAIT_FOR_CALL_STATE_HOLD = 2000;
+    public static final int WAIT_FOR_CALL_STATE_RESUME = 1000;
     public static final int WAIT_FOR_CALL_STATE_ACTIVE = 15000;
     public static final int LATCH_WAIT = 0;
     public static final int LATCH_INCALL_SERVICE_BOUND = 1;
@@ -110,6 +112,7 @@ public class ImsCallingTest {
     private static CarrierConfigReceiver sReceiver;
     private static SubscriptionManager sSubcriptionManager;
 
+    private int mParticipantCount = 0;
     private final Object mLock = new Object();
     private InCallServiceCallbacks mServiceCallBack;
     private Context mContext;
@@ -369,6 +372,11 @@ public class ImsCallingTest {
         if (!mCalls.isEmpty() && (mCurrentCallId != null)) {
             Call call = mCalls.get(mCurrentCallId);
             call.disconnect();
+        }
+
+        //Set the untracked CountDownLatches which are reseted in ServiceCallBack
+        for (int i = 0; i < LATCH_MAX; i++) {
+            sLatches[i] = new CountDownLatch(1);
         }
 
         if (sServiceConnector != null && sIsBound) {
@@ -847,6 +855,154 @@ public class ImsCallingTest {
         waitForUnboundService();
     }
 
+    @Test
+    public void testConferenceCall() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        Log.i(LOG_TAG, "testConference ");
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+        addOutgoingCalls();
+        addConferenceCall(mCall1, mCall2);
+
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_ADDED, WAIT_FOR_CALL_STATE));
+        assertTrue("Conference call is not added", mServiceCallBack.getService()
+                .getConferenceCallCount() > 0);
+
+        Call conferenceCall = mServiceCallBack.getService().getLastConferenceCall();
+        assertNotNull("Unable to add conference call, its null", conferenceCall);
+
+        ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getConferenceHelper();
+
+        TestImsCallSessionImpl confcallSession = confHelper.getConferenceSession();
+        assertTrue("Conference call is not Active", confcallSession.isInCall());
+
+        //Verify mCall1 and mCall2 disconnected after conference Merge success
+        assertParticiapantDisconnected(mCall1);
+        assertParticiapantDisconnected(mCall2);
+
+        //Verify conference participant connections are connected.
+        assertParticiapantAddedToConference(2);
+
+        //Disconnect the conference call.
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE);
+        conferenceCall.disconnect();
+
+        //Verify conference participant connections are disconnected.
+        assertParticiapantAddedToConference(0);
+        isCallDisconnected(conferenceCall, confcallSession);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+        resetCallSessionObjects();
+        waitForUnboundService();
+    }
+
+    @Test
+    public void testConferenceCallFailure() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        Log.i(LOG_TAG, "testConferenceCallFailure ");
+        bindImsService();
+        mServiceCallBack = new ServiceCallBack();
+        InCallServiceStateValidator.setCallbacks(mServiceCallBack);
+        addOutgoingCalls();
+        mCallSession2.addTestType(TestImsCallSessionImpl.TEST_TYPE_CONFERENCE_FAILED);
+        addConferenceCall(mCall1, mCall2);
+
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_STATE);
+        //Verify foreground call is in Active state after merge failed.
+        assertTrue("Call is not in Active State", (mCall2.getDetails().getState()
+                == Call.STATE_ACTIVE));
+        //Verify background call is in Hold state after merge failed.
+        assertTrue("Call is not in Holding State", (mCall1.getDetails().getState()
+                == Call.STATE_HOLDING));
+
+        callingTestLatchCountdown(LATCH_WAIT, WAIT_FOR_CALL_DISCONNECT);
+        mCall2.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall2, mCallSession2);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        //Wait till background call is in active state
+        isCallActive(mCall1, mCallSession1);
+        mCall1.disconnect();
+        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_DISCONNECTING, WAIT_FOR_CALL_STATE));
+        isCallDisconnected(mCall1, mCallSession1);
+        assertTrue(callingTestLatchCountdown(LATCH_IS_ON_CALL_REMOVED, WAIT_FOR_CALL_STATE));
+
+        resetCallSessionObjects();
+        waitForUnboundService();
+    }
+
+    void addConferenceCall(Call call1, Call call2) {
+        InCallServiceStateValidator inCallService = mServiceCallBack.getService();
+        int currentConfCallCount = 0;
+        if (inCallService != null) {
+            currentConfCallCount = inCallService.getConferenceCallCount();
+        }
+
+        // Verify that the calls have each other on their conferenceable list before proceeding
+        List<Call> callConfList = new ArrayList<>();
+        callConfList.add(call2);
+        assertCallConferenceableList(call1, callConfList);
+
+        callConfList.clear();
+        callConfList.add(call1);
+        assertCallConferenceableList(call2, callConfList);
+
+        call2.conference(call1);
+    }
+
+    void assertCallConferenceableList(final Call call, final List<Call> conferenceableList) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return conferenceableList;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getConferenceableCalls();
+                    }
+                }, WAIT_FOR_CONDITION,
+                        "Call: " + call + " does not have the correct conferenceable call list."
+        );
+    }
+
+    private void assertParticiapantDisconnected(Call call) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return ((call.getState() == Call.STATE_DISCONNECTED)) ? true : false;
+                    }
+                }, WAIT_FOR_CALL_DISCONNECT, "Call Disconnected");
+    }
+
+    private void assertParticiapantAddedToConference(int count) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return (mParticipantCount == count) ? true : false;
+                    }
+                }, WAIT_FOR_CALL_CONNECT, "Call Added");
+    }
+
     private void addOutgoingCalls() throws Exception {
         TelecomManager telecomManager = (TelecomManager) InstrumentationRegistry
                 .getInstrumentation().getContext().getSystemService(Context.TELECOM_SERVICE);
@@ -905,6 +1061,11 @@ public class ImsCallingTest {
     private void resetCallSessionObjects() {
         mCall1 = mCall2 = null;
         mCallSession1 = mCallSession2 = null;
+        ConferenceHelper confHelper = sServiceConnector.getCarrierService().getMmTelFeature()
+                .getConferenceHelper();
+        if (confHelper != null) {
+            confHelper.clearSessions();
+        }
     }
 
     public void waitForUnboundService() {
@@ -1059,6 +1220,13 @@ public class ImsCallingTest {
                 }
                 default:
                     break;
+            }
+        }
+
+        @Override
+        public void onChildrenChanged(Call call, List<Call> children) {
+            if (call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
+                mParticipantCount = children.size();
             }
         }
     }
