@@ -22,8 +22,8 @@ import android.content.ComponentName;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.SensorProperties;
-import android.os.SystemProperties;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.server.wm.Condition;
@@ -66,7 +66,7 @@ public class Utils {
      * @throws Exception
      */
     public static void waitForIdleService(@NonNull SensorStatesSupplier supplier) throws Exception {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             if (!supplier.getSensorStates().areAllSensorsIdle()) {
                 Log.d(TAG, "Not idle yet..");
                 Thread.sleep(300);
