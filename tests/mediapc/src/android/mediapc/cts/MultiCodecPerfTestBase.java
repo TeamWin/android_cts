@@ -17,12 +17,14 @@
 package android.mediapc.cts;
 
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
+
 import static org.junit.Assert.assertTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
+import android.mediapc.cts.common.Utils;
 import android.util.Log;
 import android.util.Pair;
 
