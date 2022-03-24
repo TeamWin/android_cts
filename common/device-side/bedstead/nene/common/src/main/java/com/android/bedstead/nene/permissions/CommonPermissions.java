@@ -1845,7 +1845,6 @@ public class CommonPermissions {
     /** See {@code Manifest#SEND_SAFETY_CENTER_UPDATE} */
     public static final String SEND_SAFETY_CENTER_UPDATE =
             "android.permission.SEND_SAFETY_CENTER_UPDATE";
-    /** See {@code Manifest#SEND_LOST_MODE_LOCATION_UPDATES} */
-    public static final String SEND_LOST_MODE_LOCATION_UPDATES = "android.permission"
-            + ".SEND_LOST_MODE_LOCATION_UPDATES";
+    /** See {@code Manifest#TRIGGER_LOST_MODE} */
+    public static final String TRIGGER_LOST_MODE = "android.permission.TRIGGER_LOST_MODE";
 }
