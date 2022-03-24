@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -55,6 +56,8 @@ public final class PermitInputMethodsTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    private static final String TAG = PermitInputMethodsTest.class.getSimpleName();
+
     private static final DevicePolicyManager sLocalDevicePolicyManager = TestApis.context()
             .instrumentedContext().getSystemService(DevicePolicyManager.class);
 
@@ -70,8 +73,13 @@ public final class PermitInputMethodsTest {
 
     @After
     public void teardown() {
-        sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
-                sDeviceState.dpc().componentName(), /* packageNames= */ null);
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packageNames= */ null);
+        } catch (Exception e) {
+            // Required for tests with invalid admins.
+            Log.w(TAG, "Failed to clean up the permitted input methods", e);
+        }
     }
 
     @Postsubmit(reason = "New test")

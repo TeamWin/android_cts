@@ -28,13 +28,15 @@ import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createResult
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
 import android.companion.virtual.VirtualDeviceManager;
@@ -43,8 +45,10 @@ import android.companion.virtual.VirtualDeviceParams;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.media.ImageReader;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.util.EmptyActivity;
@@ -115,18 +119,8 @@ public class ActivityBlockingTest {
 
     @Test
     public void nonTrustedDisplay_startNonEmbeddableActivity_shouldThrowSecurityException() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay(DEFAULT_VIRTUAL_DEVICE_PARAMS,
+                /* virtualDisplayFlags= */ 0);
 
         Intent intent = TestAppHelper.createNoEmbedIntent()
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -137,18 +131,8 @@ public class ActivityBlockingTest {
 
     @Test
     public void cannotDisplayOnRemoteActivity_shouldBeBlockedFromLaunching() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay(DEFAULT_VIRTUAL_DEVICE_PARAMS,
+                /* virtualDisplayFlags= */ 0);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
@@ -157,30 +141,21 @@ public class ActivityBlockingTest {
                                         | Intent.FLAG_ACTIVITY_CLEAR_TASK),
                         createActivityOptions(virtualDisplay));
 
-        emptyActivity.startActivity(
-                TestAppHelper.createCannotDisplayOnRemoteIntent(mResultReceiver));
+        emptyActivity.startActivity(TestAppHelper.createCannotDisplayOnRemoteIntent(
+                /* newTask= */ true, mResultReceiver));
+        verify(mOnReceiveResultListener, after(3000).never())
+                .onReceiveResult(anyInt(), any());
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(
-                eq(Activity.RESULT_OK),
-                argThat(result ->
-                        result.getInt(TestAppHelper.EXTRA_DISPLAY)
-                                == virtualDisplay.getDisplay().getDisplayId()));
+        emptyActivity.startActivity(TestAppHelper.createCannotDisplayOnRemoteIntent(
+                /* newTask= */ false, mResultReceiver));
+        verify(mOnReceiveResultListener, after(3000).never())
+                .onReceiveResult(anyInt(), any());
     }
 
     @Test
     public void trustedDisplay_startNonEmbeddableActivity_shouldSucceed() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED,
-                Runnable::run,
-                mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay(DEFAULT_VIRTUAL_DEVICE_PARAMS,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
 
         Intent intent = TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -198,20 +173,10 @@ public class ActivityBlockingTest {
     public void setAllowedActivities_shouldBlockNonAllowedActivities() {
         Context context = getApplicationContext();
         ComponentName emptyActivityComponentName = new ComponentName(context, EmptyActivity.class);
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        new VirtualDeviceParams.Builder()
-                                .setAllowedActivities(Set.of(emptyActivityComponentName))
-                                .build());
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay(new VirtualDeviceParams.Builder()
+                        .setAllowedActivities(Set.of(emptyActivityComponentName))
+                        .build(),
+                /* virtualDisplayFlags= */ 0);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
@@ -223,31 +188,18 @@ public class ActivityBlockingTest {
         emptyActivity.startActivity(
                 TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver));
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(
-                eq(Activity.RESULT_OK),
-                argThat(result ->
-                        result.getInt(TestAppHelper.EXTRA_DISPLAY)
-                                == virtualDisplay.getDisplay().getDisplayId()));
+        verify(mOnReceiveResultListener, after(3000).never())
+                .onReceiveResult(anyInt(), any());
     }
 
     @Test
     public void setBlockedActivities_shouldBlockActivityFromLaunching() {
         Context context = getApplicationContext();
         ComponentName emptyActivityComponentName = new ComponentName(context, EmptyActivity.class);
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        new VirtualDeviceParams.Builder()
-                                .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
-                                .build());
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay(new VirtualDeviceParams.Builder()
+                        .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                        .build(),
+                /* virtualDisplayFlags= */ 0);
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
@@ -256,17 +208,27 @@ public class ActivityBlockingTest {
                                         | Intent.FLAG_ACTIVITY_CLEAR_TASK),
                         createActivityOptions(virtualDisplay));
 
-        EmptyActivity.Callback callback = mock(EmptyActivity.Callback.class);
-        emptyActivity.setCallback(callback);
-        final int requestCode = 1;
-        emptyActivity.startActivityForResult(
-                TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver), requestCode);
+        emptyActivity.startActivity(
+                TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver));
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(
-                eq(Activity.RESULT_OK),
-                argThat(result ->
-                        result.getInt(TestAppHelper.EXTRA_DISPLAY)
-                                == virtualDisplay.getDisplay().getDisplayId()));
+        verify(mOnReceiveResultListener, after(3000).never())
+                .onReceiveResult(anyInt(), any());
+    }
+
+    private VirtualDisplay createVirtualDisplay(@NonNull VirtualDeviceParams virtualDeviceParams,
+            int virtualDisplayFlags) {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(), virtualDeviceParams);
+        ImageReader reader = ImageReader.newInstance(/* width= */ 100, /* height= */ 100,
+                PixelFormat.RGBA_8888, /* maxImages= */ 1);
+        return mVirtualDevice.createVirtualDisplay(
+                /* width= */ 100,
+                /* height= */ 100,
+                /* densityDpi= */ 240,
+                reader.getSurface(),
+                virtualDisplayFlags,
+                Runnable::run,
+                mVirtualDisplayCallback);
     }
 }
 

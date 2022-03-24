@@ -899,6 +899,8 @@ public class SurfaceControlTest {
                     @Override
                     public void surfaceCreated(SurfaceHolder holder) {
                         SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.YELLOW);
                         try {
                             new SurfaceControl.Transaction()
                                     .setCrop(surfaceControl, new Rect(0, 0, -1, 100))
@@ -926,6 +928,8 @@ public class SurfaceControlTest {
                     @Override
                     public void surfaceCreated(SurfaceHolder holder) {
                         SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.YELLOW);
                         try {
                             new SurfaceControl.Transaction()
                                     .setCrop(surfaceControl, new Rect(0, 0, 100, -1))
@@ -1321,6 +1325,8 @@ public class SurfaceControlTest {
                     @Override
                     public void surfaceCreated(SurfaceHolder holder) {
                         SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.YELLOW);
                         try {
                             new SurfaceControl.Transaction()
                                     .setScale(surfaceControl, -1, 1)
@@ -1348,6 +1354,8 @@ public class SurfaceControlTest {
                     @Override
                     public void surfaceCreated(SurfaceHolder holder) {
                         SurfaceControl surfaceControl = createFromWindow(holder);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.YELLOW);
                         try {
                             new SurfaceControl.Transaction()
                                     .setScale(surfaceControl, 1, -1)

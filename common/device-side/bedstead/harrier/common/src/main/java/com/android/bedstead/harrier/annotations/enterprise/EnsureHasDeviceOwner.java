@@ -22,6 +22,7 @@ import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_A
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -50,7 +51,7 @@ public @interface EnsureHasDeviceOwner {
 
     int DO_PO_WEIGHT = MIDDLE;
 
-     /** Behaviour if the device owner cannot be set. */
+    /** Behaviour if the device owner cannot be set. */
     FailureMode failureMode() default FailureMode.FAIL;
 
     /**
@@ -77,4 +78,10 @@ public @interface EnsureHasDeviceOwner {
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
     int weight() default DO_PO_WEIGHT;
+
+    /**
+     * The type of device owner that is managing the device which can be {@link
+     * DeviceOwnerType#DEFAULT} or {@link DeviceOwnerType#FINANCED}.
+     */
+    int type() default DeviceOwnerType.DEFAULT;
 }

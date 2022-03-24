@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     private static final String INPUT_AUDIO_FILE_HBD = "audio/sd_2ch_48kHz_f32le.raw";
-    private static final String INPUT_VIDEO_FILE_HBD = "dpov_352x288_30fps_yuv420p16le.yuv";
+    private static final String INPUT_VIDEO_FILE_HBD = "cosmat_cif_24fps_yuv420p16le.yuv";
 
     private final boolean mUseHBD;
     private final SupportClass mSupportRequirements;
@@ -71,7 +71,7 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         final boolean isEncoder = true;
         final boolean needAudio = true;
         final boolean needVideo = true;
-        final List<Object[]> defArgsList = Arrays.asList(new Object[][]{
+        List<Object[]> defArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 // Audio tests covering cdd sec 5.1.3
                 // mediaType, arrays of bit-rates, sample rates, channel counts, useHBD,
                 // SupportClass
@@ -108,7 +108,21 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                         new int[]{240, 360}, false, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000}, new int[]{352, 480},
                         new int[]{240, 360}, false, CODEC_ALL},
-        });
+        }));
+        // P010 support was added in Android T, hence limit the following tests to Android T and
+        // above
+        if (IS_AT_LEAST_T) {
+            defArgsList.addAll(Arrays.asList(new Object[][]{
+                    {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{256000}, new int[]{352, 480},
+                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                    {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{256000}, new int[]{352, 480},
+                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                    {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{256000}, new int[]{352, 480},
+                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                    {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000}, new int[]{352, 480},
+                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+            }));
+        }
         return prepareParamList(defArgsList, isEncoder, needAudio, needVideo, false);
     }
 

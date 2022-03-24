@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_FINANCED_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CAN_BE_DELEGATED;
@@ -32,8 +33,9 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#isUninstallBlocked(ComponentName)}.
  */
 @EnterprisePolicy(
-        dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER
+        dpc = {APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER
                 | APPLIES_TO_OWN_USER | CAN_BE_DELEGATED,
+                APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIES_TO_OWN_USER},
         delegatedScopes = DELEGATION_BLOCK_UNINSTALL
 )
 public final class BlockUninstall {

@@ -25,6 +25,7 @@ import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.READ_CALENDAR;
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_SMS;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED;
@@ -38,6 +39,7 @@ import static com.android.bedstead.nene.notifications.NotificationListenerQueryS
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -50,10 +52,13 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.policies.SetPermissionGrantState;
 import com.android.bedstead.harrier.policies.SetSensorPermissionGranted;
 import com.android.bedstead.harrier.policies.SetSmsPermissionGranted;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.notifications.NotificationListener;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
@@ -63,6 +68,7 @@ import com.android.bedstead.testapp.TestAppInstance;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.lang.annotation.Retention;
@@ -555,6 +561,8 @@ public final class PermissionGrantTest {
 
     @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
     public void grantSmsPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState() {
+        skipTestForFinancedDevice();
+
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), READ_SMS);
@@ -589,6 +597,8 @@ public final class PermissionGrantTest {
     @CannotSetPolicyTest(policy = SetSensorPermissionGranted.class)
     public void grantSensorPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState(
             @SensorPermissionTestParameter String permission) {
+        skipTestForFinancedDevice();
+
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
@@ -808,5 +818,40 @@ public final class PermissionGrantTest {
                     sDeviceState.dpc().componentName(), sTestApp.packageName(),
                     GRANTABLE_PERMISSION, existingGrantState);
         }
+    }
+
+    @Test
+    @IncludeRunOnFinancedDeviceOwnerUser
+    public void grantReadPhoneStatePermission_setsGrantState() {
+        int existingGrantState = sDeviceState.dpc().devicePolicyManager()
+                .getPermissionGrantState(sDeviceState.dpc().componentName(),
+                        sDeviceState.dpc().packageName(), READ_PHONE_STATE);
+
+        try {
+            boolean wasSet = sDeviceState.dpc().devicePolicyManager()
+                    .setPermissionGrantState(
+                            sDeviceState.dpc().componentName(), sDeviceState.dpc().packageName(),
+                            READ_PHONE_STATE, PERMISSION_GRANT_STATE_GRANTED);
+
+            assertWithMessage("setPermissionGrantState did not return true")
+                    .that(wasSet).isTrue();
+            assertWithMessage("Permission grant state should be set to granted but was not")
+                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
+                            sDeviceState.dpc().componentName(), sDeviceState.dpc().packageName(),
+                            READ_PHONE_STATE))
+                    .isEqualTo(PERMISSION_GRANT_STATE_GRANTED);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
+                    sDeviceState.dpc().componentName(), sDeviceState.dpc().packageName(),
+                    READ_PHONE_STATE, existingGrantState);
+        }
+    }
+
+    private void skipTestForFinancedDevice() {
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+
+        // TODO(): Determine a pattern to special case states so that they are not considered in
+        //  tests.
+        assumeFalse(deviceOwner != null && deviceOwner.getType() == DeviceOwnerType.FINANCED);
     }
 }

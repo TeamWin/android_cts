@@ -32,6 +32,7 @@ import static org.junit.Assert.assertThrows;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.IntentFilter;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -68,6 +69,8 @@ import java.util.List;
 //  requirement to manually uninstall or use the 'try' block.
 @EnsureHasNoDelegate
 public final class DelegationScopesTest {
+
+    private static final String TAG = DelegationScopesTest.class.getSimpleName();
 
     private static final String TEST_SCOPE = DELEGATION_CERT_INSTALL;
     private static final String TEST_SCOPE_2 = DELEGATION_APP_RESTRICTIONS;
@@ -247,11 +250,9 @@ public final class DelegationScopesTest {
 
     @CannotSetPolicyTest(policy = Delegation.class, includeNonDeviceAdminStates = false)
     public void getDelegatePackages_invalidAdmin_throwsSecurityException() {
-        try (TestAppInstance testApp = sTestApp.install(sUser)) {
-            assertThrows(SecurityException.class, () ->
-                    sDeviceState.dpc().devicePolicyManager().getDelegatePackages(
-                            sDeviceState.dpc().componentName(), testApp.packageName()));
-        }
+        assertThrows(SecurityException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().getDelegatePackages(
+                        sDeviceState.dpc().componentName(), TEST_SCOPE));
     }
 
     @CanSetPolicyTest(policy = Delegation.class)
@@ -336,7 +337,12 @@ public final class DelegationScopesTest {
                                 testApp.packageName(),
                                 Collections.singletonList(DELEGATION_NETWORK_LOGGING)));
             } finally {
-                resetDelegatedScopes(testApp);
+                try {
+                    resetDelegatedScopes(testApp);
+                } catch (Exception e) {
+                    // Can happen when API is not allowed to be called by a financed device owner.
+                    Log.w(TAG, "Failed to reset delegated scopes", e);
+                }
             }
         }
     }

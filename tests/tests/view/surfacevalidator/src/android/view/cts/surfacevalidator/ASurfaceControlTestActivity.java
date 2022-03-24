@@ -40,6 +40,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
+import android.view.WindowInsetsAnimation;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
@@ -51,6 +53,7 @@ import org.junit.rules.TestName;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -75,6 +78,7 @@ public class ASurfaceControlTestActivity extends Activity {
 
     private Instrumentation mInstrumentation;
 
+    private final InsetsAnimationCallback mInsetsAnimationCallback = new InsetsAnimationCallback();
     private final CountDownLatch mReadyToStart = new CountDownLatch(1);
     private CountDownLatch mTransactionCommittedLatch;
 
@@ -93,10 +97,12 @@ public class ASurfaceControlTestActivity extends Activity {
             return;
         }
 
-        getWindow().getDecorView().setSystemUiVisibility(
+        final View decorView = getWindow().getDecorView();
+        decorView.setWindowInsetsAnimationCallback(mInsetsAnimationCallback);
+        decorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
         // Set the NULL pointer icon so that it won't obstruct the captured image.
-        getWindow().getDecorView().setPointerIcon(
+        decorView.setPointerIcon(
                 PointerIcon.getSystemIcon(this, PointerIcon.TYPE_NULL));
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -168,6 +174,13 @@ public class ASurfaceControlTestActivity extends Activity {
     }
 
     public void verifyScreenshot(PixelChecker pixelChecker, TestName name) {
+        // Wait for the stable insets update. The position of the surface view is in correct before
+        // the update. Sometimes this callback isn't called, so we don't want to fail the test
+        // because it times out.
+        if (!mInsetsAnimationCallback.waitForInsetsAnimation()) {
+            Log.w(TAG, "Insets animation wait timed out.");
+        }
+
         final CountDownLatch countDownLatch = new CountDownLatch(1);
         UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
         mHandler.post(() -> {
@@ -351,6 +364,34 @@ public class ASurfaceControlTestActivity extends Activity {
             fileStream.flush();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static class InsetsAnimationCallback extends WindowInsetsAnimation.Callback {
+        private CountDownLatch mLatch = new CountDownLatch(1);
+
+        private InsetsAnimationCallback() {
+            super(DISPATCH_MODE_CONTINUE_ON_SUBTREE);
+        }
+
+        @Override
+        public WindowInsets onProgress(
+                WindowInsets insets, List<WindowInsetsAnimation> runningAnimations) {
+            return insets;
+        }
+
+        @Override
+        public void onEnd(WindowInsetsAnimation animation) {
+            mLatch.countDown();
+        }
+
+        private boolean waitForInsetsAnimation() {
+            try {
+                return mLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // Should never happen
+                throw new RuntimeException(e);
+            }
         }
     }
 }

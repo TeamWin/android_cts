@@ -77,7 +77,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
         final boolean needAudio = false;
         final boolean needVideo = true;
         // mediaType, array list of test files, SupportClass
-        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+        final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
                         "bbb_800x640_768kbps_30fps_avc_2b.mp4",
                         "bbb_800x640_768kbps_30fps_avc_nob.mp4",
@@ -124,7 +124,41 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
                         "bbb_1280x720_1mbps_30fps_mpeg2_nob.mp4",
                         "bbb_640x360_512kbps_30fps_mpeg2_nob.mp4",
                         "bbb_640x360_512kbps_30fps_mpeg2_2b.mp4"}, CODEC_ALL},
-        });
+        }));
+        // P010 support was added in Android T, hence limit the following tests to Android T and
+        // above
+        if (IS_AT_LEAST_T) {
+            exhaustiveArgsList.addAll(Arrays.asList(new Object[][]{
+                    {MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                            "cosmat_800x640_24fps_crf22_avc_10bit_2b.mkv",
+                            "cosmat_800x640_24fps_crf22_avc_10bit_nob.mkv",
+                            "cosmat_1280x720_24fps_crf22_avc_10bit_2b.mkv",
+                            "cosmat_640x360_24fps_crf22_avc_10bit_nob.mkv",
+                            "cosmat_1280x720_24fps_crf22_avc_10bit_nob.mkv",
+                            "cosmat_640x360_24fps_crf22_avc_10bit_2b.mkv",
+                            "cosmat_1280x720_24fps_crf22_avc_10bit_nob.mkv",
+                            "cosmat_640x360_24fps_crf22_avc_10bit_nob.mkv",
+                            "cosmat_640x360_24fps_crf22_avc_10bit_2b.mkv"}, CODEC_OPTIONAL},
+                    {MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
+                            "cosmat_800x640_24fps_crf22_hevc_10bit_2b.mkv",
+                            "cosmat_800x640_24fps_crf22_hevc_10bit_nob.mkv",
+                            "cosmat_1280x720_24fps_crf22_hevc_10bit_2b.mkv",
+                            "cosmat_640x360_24fps_crf22_hevc_10bit_nob.mkv",
+                            "cosmat_1280x720_24fps_crf22_hevc_10bit_nob.mkv",
+                            "cosmat_640x360_24fps_crf22_hevc_10bit_2b.mkv",
+                            "cosmat_1280x720_24fps_crf22_hevc_10bit_nob.mkv",
+                            "cosmat_640x360_24fps_crf22_hevc_10bit_nob.mkv",
+                            "cosmat_640x360_24fps_crf22_hevc_10bit_2b.mkv"}, CODEC_OPTIONAL},
+                    {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{
+                            "cosmat_640x360_24fps_crf22_vp9_10bit.mkv",
+                            "cosmat_1280x720_24fps_crf22_vp9_10bit.mkv",
+                            "cosmat_800x640_24fps_crf22_vp9_10bit.mkv"}, CODEC_OPTIONAL},
+                    {MediaFormat.MIMETYPE_VIDEO_AV1, new String[]{
+                            "cosmat_640x360_24fps_512kbps_av1_10bit.mkv",
+                            "cosmat_1280x720_24fps_1200kbps_av1_10bit.mkv",
+                            "cosmat_800x640_24fps_768kbps_av1_10bit.mkv"}, CODEC_ALL},
+            }));
+        }
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 

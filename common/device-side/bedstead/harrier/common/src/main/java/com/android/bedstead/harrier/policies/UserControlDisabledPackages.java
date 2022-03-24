@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.policies;
 
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_FINANCED_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -28,6 +29,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#setUserControlDisabledPackages(ComponentName, List)} and
  * {@code DevicePolicyManager#getUserControlDisabledPackages(ComponentName)}.
  */
-@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIES_GLOBALLY)
+@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_FINANCED_DEVICE_OWNER
+        | APPLIES_GLOBALLY)
 public final class UserControlDisabledPackages {
 }

@@ -93,10 +93,15 @@ public class TestAppHelper {
         return new Intent().setClassName(PACKAGE_NAME, NO_EMBED_ACTIVITY);
     }
 
-    public static Intent createCannotDisplayOnRemoteIntent(ResultReceiver resultReceiver) {
-        return new Intent(ACTION_CALL_RESULT_RECEIVER)
+    public static Intent createCannotDisplayOnRemoteIntent(boolean newTask,
+            ResultReceiver resultReceiver) {
+        Intent intent = new Intent(ACTION_CALL_RESULT_RECEIVER)
                 .setClassName(PACKAGE_NAME, CANNOT_DISPLAY_ON_REMOTE_ACTIVITY)
                 .putExtra(EXTRA_ACTIVITY_LAUNCHED_RECEIVER, resultReceiver);
+        if (newTask) {
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        }
+        return intent;
     }
 
     public static Intent createActivityLaunchedReceiverIntent(ResultReceiver resultReceiver) {

@@ -89,6 +89,7 @@ import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.devicepolicy.DevicePolicyController;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -514,7 +515,8 @@ public final class DeviceState extends HarrierRule {
                             ensureHasDeviceOwnerAnnotation.isPrimary(),
                             new HashSet<>(
                                     Arrays.asList(
-                                            ensureHasDeviceOwnerAnnotation.affiliationIds())));
+                                            ensureHasDeviceOwnerAnnotation.affiliationIds())),
+                            ensureHasDeviceOwnerAnnotation.type());
                     continue;
                 }
 
@@ -1218,6 +1220,8 @@ public final class DeviceState extends HarrierRule {
     private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
     private boolean mHasChangedDeviceOwner = false;
     private DevicePolicyController mOriginalDeviceOwner;
+    private Integer mOriginalDeviceOwnerType;
+    private boolean mHasChangedDeviceOwnerType;
     private Map<UserReference, DevicePolicyController> mChangedProfileOwners = new HashMap<>();
     private UserReference mOriginalSwitchedUser;
     private Boolean mOriginalBluetoothEnabled;
@@ -1794,8 +1798,24 @@ public final class DeviceState extends HarrierRule {
                     TestApis.devicePolicy().setDeviceOwner(
                             mOriginalDeviceOwner.componentName());
                 }
+
+                if (mOriginalDeviceOwner != null && mOriginalDeviceOwnerType != null) {
+                    ((DeviceOwner) mOriginalDeviceOwner).setType(mOriginalDeviceOwnerType);
+                }
+
                 mHasChangedDeviceOwner = false;
                 mOriginalDeviceOwner = null;
+
+                mHasChangedDeviceOwnerType = false;
+                mOriginalDeviceOwnerType = null;
+            } else {
+                // Device owner type changed but the device owner is the same.
+                if (mHasChangedDeviceOwnerType) {
+                    ((DeviceOwner) mDeviceOwner).setType(mOriginalDeviceOwnerType);
+
+                    mHasChangedDeviceOwnerType = false;
+                    mOriginalDeviceOwnerType = null;
+                }
             }
 
             for (Map.Entry<UserReference, DevicePolicyController> originalProfileOwner :
@@ -2061,7 +2081,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void ensureHasDeviceOwner(FailureMode failureMode, boolean isPrimary,
-            Set<String> affiliationIds) {
+            Set<String> affiliationIds, int type) {
         mLogger.method("ensureHasDeviceOwner", failureMode, isPrimary, affiliationIds, () -> {
             // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
 
@@ -2116,8 +2136,9 @@ public final class DeviceState extends HarrierRule {
                 ensureHasNoProfileOwner(userReference);
 
                 if (!mHasChangedDeviceOwner) {
-                    mOriginalDeviceOwner = currentDeviceOwner;
+                    recordDeviceOwner();
                     mHasChangedDeviceOwner = true;
+                    mHasChangedDeviceOwnerType = true;
                 }
 
                 mDeviceOwner = RemoteDpc.setAsDeviceOwner().devicePolicyController();
@@ -2127,10 +2148,30 @@ public final class DeviceState extends HarrierRule {
                 mPrimaryPolicyManager = RemoteDpc.forDevicePolicyController(mDeviceOwner);
             }
 
-            RemoteDpc.forDevicePolicyController(mDeviceOwner)
-                    .devicePolicyManager()
-                    .setAffiliationIds(REMOTE_DPC_COMPONENT_NAME, affiliationIds);
+            int deviceOwnerType = ((DeviceOwner) mDeviceOwner).getType();
+            if (deviceOwnerType != type) {
+                if (!mHasChangedDeviceOwnerType) {
+                    mOriginalDeviceOwnerType = deviceOwnerType;
+                    mHasChangedDeviceOwnerType = true;
+                }
+
+                ((DeviceOwner) mDeviceOwner).setType(type);
+            }
+
+            if (type != DeviceOwnerType.FINANCED) {
+                // API is not allowed to be called by a financed device owner.
+                RemoteDpc.forDevicePolicyController(mDeviceOwner)
+                        .devicePolicyManager()
+                        .setAffiliationIds(REMOTE_DPC_COMPONENT_NAME, affiliationIds);
+            }
         });
+    }
+
+    private void recordDeviceOwner() {
+        mOriginalDeviceOwner = TestApis.devicePolicy().getDeviceOwner();
+        mOriginalDeviceOwnerType =
+                mOriginalDeviceOwner != null ? ((DeviceOwner) mOriginalDeviceOwner).getType()
+                        : null;
     }
 
     private void ensureHasProfileOwner(UserType onUser, boolean isPrimary,
@@ -2209,8 +2250,9 @@ public final class DeviceState extends HarrierRule {
             }
 
             if (!mHasChangedDeviceOwner) {
-                mOriginalDeviceOwner = deviceOwner;
+                recordDeviceOwner();
                 mHasChangedDeviceOwner = true;
+                mHasChangedDeviceOwnerType = true;
             }
 
             mDeviceOwner = null;

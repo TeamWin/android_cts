@@ -81,6 +81,13 @@ public class DeviceOwnerTest {
         assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull();
     }
 
+    @Test
+    public void setDeviceOwnerType_setsDeviceOwnerType() {
+        mDeviceOwner.setType(DeviceOwnerType.FINANCED);
+
+        assertThat(mDeviceOwner.getType()).isEqualTo(DeviceOwnerType.FINANCED);
+    }
+
 
     @Test
     @EnsureHasNoDpc

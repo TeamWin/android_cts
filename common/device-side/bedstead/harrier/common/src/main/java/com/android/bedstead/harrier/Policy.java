@@ -20,6 +20,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_FINANCED_DEVICE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE;
@@ -55,6 +56,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffili
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnAffiliatedProfileOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfCorporateOwnedProfileOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
@@ -136,6 +138,8 @@ public final class Policy {
 
                     .put(APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnParentOfProfileOwnerUsingParentInstance()))
 
+                    .put(APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIES_TO_OWN_USER, singleAnnotation(includeRunOnFinancedDeviceOwnerUser()))
+
                     .build();
     // This must contain one key for every APPLIED_BY that is being used, and maps to the
     // "default" for testing that DPC type
@@ -148,6 +152,7 @@ public final class Policy {
                     .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
                     .put(APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO, singleAnnotation(includeRunOnProfileOwnerPrimaryUser()))
                     .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE, singleAnnotation(includeRunOnProfileOwnerProfileWithNoDeviceOwner()))
+                    .put(APPLIED_BY_FINANCED_DEVICE_OWNER, singleAnnotation(includeRunOnFinancedDeviceOwnerUser()))
                     .build();
     private static final Map<Integer, Function<EnterprisePolicy, Set<Annotation>>>
             DPC_STATE_ANNOTATIONS = DPC_STATE_ANNOTATIONS_BASE.entrySet().stream()
@@ -157,7 +162,8 @@ public final class Policy {
                     | APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE
                     | APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_USER
                     | APPLIED_BY_AFFILIATED_PROFILE_OWNER_USER
-                    | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER;
+                    | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER
+                    | APPLIED_BY_FINANCED_DEVICE_OWNER;
     private static final Map<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>>
             ANNOTATIONS_MAP = calculateAnnotationsMap(STATE_ANNOTATIONS);
 
@@ -250,6 +256,11 @@ public final class Policy {
     @AutoAnnotation
     private static IncludeRunOnParentOfProfileOwnerUsingParentInstance includeRunOnParentOfProfileOwnerUsingParentInstance() {
         return new AutoAnnotation_Policy_includeRunOnParentOfProfileOwnerUsingParentInstance();
+    }
+
+    @AutoAnnotation
+    private static IncludeRunOnFinancedDeviceOwnerUser includeRunOnFinancedDeviceOwnerUser() {
+        return new AutoAnnotation_Policy_includeRunOnFinancedDeviceOwnerUser();
     }
 
     private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(
