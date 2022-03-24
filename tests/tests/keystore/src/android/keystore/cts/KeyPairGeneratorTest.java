@@ -165,6 +165,11 @@ public class KeyPairGeneratorTest {
         Set<String> actualAlgsLowerCase = new HashSet<String>();
         Set<String> expectedAlgsLowerCase = new HashSet<String>(
                 Arrays.asList(TestUtils.toLowerCase(EXPECTED_ALGORITHMS)));
+
+        // XDH is also a supported algorithm, but not available for other tests as the keys
+        // generated with it have more limited set of uses.
+        expectedAlgsLowerCase.add("xdh");
+
         for (Service service : services) {
             if ("KeyPairGenerator".equalsIgnoreCase(service.getType())) {
                 String algLowerCase = service.getAlgorithm().toLowerCase(Locale.US);
