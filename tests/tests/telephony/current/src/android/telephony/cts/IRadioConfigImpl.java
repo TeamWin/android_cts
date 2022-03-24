@@ -265,4 +265,14 @@ public class IRadioConfigImpl extends IRadioConfig.Stub {
             Log.e(TAG, "null mRadioConfigIndication");
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioConfig.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioConfig.VERSION;
+    }
 }
