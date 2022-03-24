@@ -67,6 +67,9 @@ public class PermissionPolicyTest {
     private static final String MANAGE_COMPANION_DEVICES_PERMISSION
             = "android.permission.MANAGE_COMPANION_DEVICES";
 
+    private static final String ALLOW_SLIPPERY_TOUCHES_PERMISSION
+            = "android.permission.ALLOW_SLIPPERY_TOUCHES";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -441,6 +444,9 @@ public class PermissionPolicyTest {
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
             case MANAGE_COMPANION_DEVICES_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(MANAGE_COMPANION_DEVICES_PATCH_DATE);
+            case ALLOW_SLIPPERY_TOUCHES_PERMISSION:
+                // In R and S branches, skip this permission
+                return true;
             default:
                 return false;
         }
