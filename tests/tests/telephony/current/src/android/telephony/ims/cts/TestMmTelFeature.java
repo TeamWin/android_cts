@@ -38,6 +38,7 @@ public class TestMmTelFeature extends MmTelFeature {
     private final TestImsService.CapabilitiesSetListener mCapSetListener;
 
     private static final String TAG = "CtsTestImsService";
+    public static ConferenceHelper sConferenceHelper = new ConferenceHelper();
 
     private MmTelCapabilities mCapabilities =
             new MmTelCapabilities(MmTelCapabilities.CAPABILITY_TYPE_SMS);
@@ -142,6 +143,7 @@ public class TestMmTelFeature extends MmTelFeature {
     public ImsCallSessionImplBase createCallSession(ImsCallProfile profile) {
         ImsCallSessionImplBase s = new TestImsCallSessionImpl(profile);
         mCallSession = (TestImsCallSessionImpl) s;
+        onCallCreate(mCallSession);
         return s != null ? s : null;
     }
 
@@ -189,5 +191,16 @@ public class TestMmTelFeature extends MmTelFeature {
         executor.execute(() -> {
             notifyIncomingCall(incomingSession, extras);
         });
+    }
+
+    private void onCallCreate(TestImsCallSessionImpl session) {
+        if (sConferenceHelper != null) {
+            sConferenceHelper.addSession(session);
+            session.setConferenceHelper(sConferenceHelper);
+        }
+    }
+
+    public ConferenceHelper getConferenceHelper() {
+        return sConferenceHelper;
     }
 }
