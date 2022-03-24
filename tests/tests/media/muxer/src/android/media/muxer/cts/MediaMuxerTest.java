@@ -92,8 +92,7 @@ public class MediaMuxerTest extends AndroidTestCase {
     /**
      * Test: make sure the muxer handles dovi profile 8.4 video track only file correctly.
      */
-    // TODO(b/216824291) Enable once extractor issue is fixed
-    public void SKIP_testDolbyVisionVideoOnlyP8() throws Exception {
+    public void testDolbyVisionVideoOnlyP8() throws Exception {
         final String source = "video_dovi_1920x1080_60fps_dvhe_08_04.mp4";
         String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP8videoOnly", ".mp4")
                 .getAbsolutePath();

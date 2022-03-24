@@ -25,7 +25,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.Choreographer;
 
 import androidx.test.annotation.UiThreadTest;
@@ -43,6 +46,7 @@ import java.util.Set;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class ChoreographerTest {
+    private static final String TAG = ChoreographerTest.class.getSimpleName();
     private static final long NOMINAL_VSYNC_PERIOD = 16;
     private static final long DELAY_PERIOD = NOMINAL_VSYNC_PERIOD * 5;
     private static final long NANOS_PER_MS = 1000000;
@@ -436,6 +440,38 @@ public class ChoreographerTest {
                     expectedPresentationTime > lastValue);
             lastValue = expectedPresentationTime;
         }
+    }
+
+    @Test
+    public void testPostVsyncCallbackFrameDelayed() {
+        final Choreographer.VsyncCallback addedCallback = mock(
+                Choreographer.VsyncCallback.class);
+        long postTimeNanos = System.nanoTime();
+        mChoreographer.postVsyncCallback(addedCallback);
+
+        // The callback is posted and pending. Wait using the handler which is using the same UI
+        // thread as Choreographer, so that the thread is busy and the frame delayed logic can
+        // run for test.
+        long sleepTimeMs = NOMINAL_VSYNC_PERIOD * 3;
+        Looper looper = Looper.getMainLooper();
+        Handler handler = new Handler(looper);
+        handler.post(new Runnable(){
+            @Override
+            public void run() {
+                SystemClock.sleep(sleepTimeMs);
+                Log.d(TAG, "Slept for ms: " + sleepTimeMs);
+            }
+        });
+
+        ArgumentCaptor<Choreographer.FrameData> captor = ArgumentCaptor.forClass(
+                Choreographer.FrameData.class);
+        verify(addedCallback, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).onVsync(
+                captor.capture());
+
+        Choreographer.FrameData frameData = captor.getValue();
+        long frameInterval = NOMINAL_VSYNC_PERIOD * 1000000;
+        assertTrue("Expected frame time updated to be later", frameData.getFrameTimeNanos()
+                > postTimeNanos + sleepTimeMs * 1000000 - frameInterval);
     }
 
     @Test(expected = IllegalArgumentException.class)
