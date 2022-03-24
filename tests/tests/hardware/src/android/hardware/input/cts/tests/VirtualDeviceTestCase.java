@@ -16,7 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP;
+
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityOptions;
 import android.companion.AssociationInfo;
@@ -24,6 +27,7 @@ import android.companion.CompanionDeviceManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.display.VirtualDisplay;
@@ -89,6 +93,10 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     @Override
     void onBeforeLaunchActivity() {
         final Context context = InstrumentationRegistry.getTargetContext();
+        final PackageManager packageManager = context.getPackageManager();
+        // TVs do not support companion
+        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+
         final String packageName = context.getPackageName();
         associateCompanionDevice(packageName);
         AssociationInfo associationInfo = null;
