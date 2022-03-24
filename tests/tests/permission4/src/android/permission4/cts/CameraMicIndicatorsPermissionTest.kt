@@ -79,6 +79,7 @@ class CameraMicIndicatorsPermissionTest {
         context.getSystemService(PermissionManager::class.java)!!
 
     private val isTv = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    private val isCar = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
     private var wasEnabled = false
     private val micLabel = packageManager.getPermissionGroupInfo(
         Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
@@ -176,6 +177,9 @@ class CameraMicIndicatorsPermissionTest {
     fun testChainUsageWithOtherUsage() {
         // TV has only the mic icon
         assumeFalse(isTv)
+        // Car has separate panels for mic and camera for now.
+        // TODO(b/218788634): enable this test for car once the new camera indicator is implemented.
+        assumeFalse(isCar)
         testCameraAndMicIndicator(useMic = false, useCamera = true, chainUsage = true)
     }
 
@@ -203,7 +207,7 @@ class CameraMicIndicatorsPermissionTest {
 
             if (isTv) {
                 assertTvIndicatorsShown(useMic, useCamera, useHotword)
-            } else if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            } else if (isCar) {
                 assertCarIndicatorsShown(useMic, useCamera, useHotword, chainUsage)
             } else {
                 // Hotword gets remapped to RECORD_AUDIO on handheld, so handheld should show a mic
