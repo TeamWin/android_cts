@@ -226,7 +226,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.native_crash",
-                /* waitTimeMs= */ 5000L);
+                /* waitTimeMs= */  10000L);
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
