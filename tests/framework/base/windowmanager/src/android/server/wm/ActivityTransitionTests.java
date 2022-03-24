@@ -324,10 +324,15 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         Optional<WindowManagerState.WindowState> screenDecorOverlayBottom =
                 windows.stream().filter(
                         w -> w.getName().equals("ScreenDecorOverlayBottom")).findFirst();
+        Optional<WindowManagerState.WindowState> navigationBar =
+                windows.stream().filter(
+                        w -> w.getName().equals("NavigationBar0")).findFirst();
 
         final int screenDecorOverlayHeight = screenDecorOverlay.map(
                 WindowManagerState.WindowState::getRequestedHeight).orElse(0);
         final int screenDecorOverlayBottomHeight = screenDecorOverlayBottom.map(
+                WindowManagerState.WindowState::getRequestedHeight).orElse(0);
+        final int navigationBarHeight = navigationBar.map(
                 WindowManagerState.WindowState::getRequestedHeight).orElse(0);
 
         WindowManager windowManager = (WindowManager) androidx.test.InstrumentationRegistry
@@ -335,8 +340,10 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         assertNotNull(windowManager);
         final Rect displayBounds = windowManager.getCurrentWindowMetrics().getBounds();
 
+        final int bottomHeightToIgnore =
+                Math.max(screenDecorOverlayBottomHeight, navigationBarHeight);
         return new Rect(displayBounds.left, displayBounds.top + screenDecorOverlayHeight,
-                displayBounds.right, displayBounds.bottom - screenDecorOverlayBottomHeight);
+                displayBounds.right, displayBounds.bottom - bottomHeightToIgnore);
     }
 
     private void setDefaultAnimationScale() {
