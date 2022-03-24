@@ -21,6 +21,8 @@ import static android.mediapc.cts.common.Utils.MIN_MEMORY_PERF_CLASS_CANDIDATE_M
 import static android.mediapc.cts.common.Utils.MIN_MEMORY_PERF_CLASS_T_MB;
 import static android.util.DisplayMetrics.DENSITY_400;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
@@ -31,6 +33,7 @@ import android.media.MediaCodecList;
 import android.media.MediaDrm;
 import android.media.MediaFormat;
 import android.media.UnsupportedSchemeException;
+import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
 import android.os.Build;
 import android.util.DisplayMetrics;
@@ -46,7 +49,9 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.Assume;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,6 +64,9 @@ public class PerformanceClassTest {
     private static final String TAG = "PerformanceClassTest";
     private static final UUID WIDEVINE_UUID = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
     static ArrayList<String> mMimeSecureSupport = new ArrayList<>();
+
+    @Rule
+    public final TestName mTestName = new TestName();
 
     static {
         mMimeSecureSupport.add(MediaFormat.MIMETYPE_VIDEO_AVC);
@@ -186,7 +194,14 @@ public class PerformanceClassTest {
     }
 
     @Test
-    @CddTest(requirement="2.2.7.3/7.1.1.1,7.1.1.3,7.6.1/H-1-1,H-2-1")
+    @CddTest(requirements={
+        "2.2.7.3/7.1.1.1/H-1-1",
+        "2.2.7.3/7.1.1.1/H-2-1",
+        "2.2.7.3/7.1.1.3/H-1-1",
+        "2.2.7.3/7.1.1.3/H-2-1",
+        "2.2.7.3/7.6.1/H-1-1",
+        "2.2.7.3/7.6.1/H-2-1",
+        "2.2.7.3/7.6.1/H-3-1"})
     public void testMinimumMemory() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -210,23 +225,21 @@ public class PerformanceClassTest {
         Log.i(TAG, String.format("minDpi=%d minSize=%dx%dpix", minDpi, minLong, minShort));
         Log.i(TAG, String.format("dpi=%d size=%dx%dpix", density, longPix, shortPix));
 
-        if (Utils.isPerfClass()) {
-            assertTrue("Display density " + density + " must be at least " + minDpi + "dpi",
-                    density >= minDpi);
-            assertTrue("Display resolution " + longPix + "x" + shortPix + "pix must be at least " +
-                            minLong + "x" + minShort + "pix",
-                    longPix >= minLong && shortPix >= minShort);
-        } else {
-            int pc = density >= minDpi && longPix >= minLong && shortPix >= minShort
-                    ? Build.VERSION_CODES.S : 0;
-            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs",  "Display");
-            log.addValue("DisplayDensity", density, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.addValue("ResolutionLong", longPix, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.addValue("ResolutionShort", shortPix, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.3/7.1.1.1,7.1.1.3/H-1-1,H-2-1 performance_class", pc,
-                    ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.ResolutionRequirement r7_1_1_1__h_1_1 = pce.addR7_1_1_1__H_1_1();
+        PerformanceClassEvaluator.DensityRequirement r7_1_1_3__h_1_1 = pce.addR7_1_1_3__H_1_1();
+        PerformanceClassEvaluator.ResolutionRequirement r7_1_1_1__h_2_1 = pce.addR7_1_1_1__H_2_1();
+        PerformanceClassEvaluator.DensityRequirement r7_1_1_3__h_2_1 = pce.addR7_1_1_3__H_2_1();
+
+        r7_1_1_1__h_1_1.setLongResolution(longPix);
+        r7_1_1_1__h_2_1.setLongResolution(longPix);
+        r7_1_1_1__h_1_1.setShortResolution(shortPix);
+        r7_1_1_1__h_2_1.setShortResolution(shortPix);
+
+        r7_1_1_3__h_1_1.setDisplayDensity(density);
+        r7_1_1_3__h_2_1.setDisplayDensity(density);
+
+        pce.submitAndCheck();
     }
 
     /** Asserts that the given values conform to the specs in CDD 7.6.1 */
@@ -235,24 +248,15 @@ public class PerformanceClassTest {
         long totalMemoryMb = getTotalMemory(activityManager) / 1024 / 1024;
 
         Log.i(TAG, String.format("Total device memory = %,d MB", totalMemoryMb));
-        if (Utils.isPerfClass()) {
-            long minMb = Utils.isTPerfClass() ? MIN_MEMORY_PERF_CLASS_T_MB :
-                    Utils.MIN_MEMORY_PERF_CLASS_CANDIDATE_MB;
-            Log.i(TAG, String.format("Minimum required memory = %,d MB", minMb));
-            assertTrue(String.format("Does not meet minimum memory requirements (CDD 7.6.1)."
-                    + "Found = %d, Minimum = %d", totalMemoryMb, minMb), totalMemoryMb >= minMb);
-        } else {
-            int pc = 0;
-            if (totalMemoryMb >= MIN_MEMORY_PERF_CLASS_T_MB)
-                pc = Build.VERSION_CODES.TIRAMISU;
-            else if (totalMemoryMb >= MIN_MEMORY_PERF_CLASS_CANDIDATE_MB)
-                pc = Build.VERSION_CODES.S;
-            DeviceReportLog log = new DeviceReportLog("MediaPerformanceClassLogs", "MinMemory");
-            log.addValue("MemoryMB", totalMemoryMb, ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.setSummary("CDD 2.2.7.3/7.6.1/H-1-1,H-2-1  performance_class", pc,
-                    ResultType.HIGHER_BETTER, ResultUnit.NONE);
-            log.submit(InstrumentationRegistry.getInstrumentation());
-        }
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_1_1 = pce.addR7_6_1__H_1_1();
+        PerformanceClassEvaluator.MemoryRequirement r7_6_1_h_2_1 = pce.addR7_6_1__H_2_1();
+
+        r7_6_1_h_1_1.setPhysicalMemory(totalMemoryMb);
+        r7_6_1_h_2_1.setPhysicalMemory(totalMemoryMb);
+
+        pce.submitAndCheck();
     }
 
     /**
