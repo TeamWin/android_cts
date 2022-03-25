@@ -1,10 +1,15 @@
 package android.companion.cts.uiautomation
 
+import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
+import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
+import android.companion.AssociationRequest.DEVICE_PROFILE_COMPUTER
+
 import android.platform.test.annotations.AppModeFull
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+
+import org.junit.Assume.assumeFalse
 
 /**
  * Tests the Association Flow end-to-end.
@@ -20,22 +25,29 @@ class AssociationEndToEndSingleDeviceTest(
     profileName: String // Used only by the Parameterized test runner for tagging.
 ) : UiAutomationTestBase(profile, profilePermission) {
 
+    override fun setUp() {
+        super.setUp()
+
+        // TODO(b/211722613): Add support for DEVICE_PROFILE_APP_STREAMING
+        // DEVICE_PROFILE_COMPUTER and DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
+        // profiles in the confirmation UI (the "single_device" flow variant).
+        assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
+        assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
+        assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
+    }
+
     @Test
-    @Ignore("b/211722613")
     fun test_userRejected() =
             super.test_userRejected(singleDevice = true, selfManaged = false, displayName = null)
 
     @Test
-    @Ignore("b/211722613")
     fun test_userDismissed() =
             super.test_userDismissed(singleDevice = true, selfManaged = false, displayName = null)
 
     @Test
-    @Ignore("b/211722613")
     fun test_timeout() = super.test_timeout(singleDevice = true)
 
     @Test
-    @Ignore("b/211722613")
     fun test_userConfirmed() = super.test_userConfirmed_foundDevice(singleDevice = true) {
         // Wait until a device is found, which should activate the "positive" button, and click on
         // the button.
