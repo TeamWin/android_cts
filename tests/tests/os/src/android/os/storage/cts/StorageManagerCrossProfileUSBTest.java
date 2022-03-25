@@ -29,10 +29,13 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +45,10 @@ import java.util.Optional;
 
 @RunWith(BedsteadJUnit4.class)
 public class StorageManagerCrossProfileUSBTest {
+
+    @ClassRule
+    @Rule
+    public static DeviceState sDeviceState = new DeviceState();
 
     private StorageManager mStorageManager;
     private Context mContext;
