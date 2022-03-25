@@ -63,9 +63,9 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
         if (!mHasBluetooth) return;
 
         Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
+                "com.android.bluetooth.services");
         int a2dpSinkSupportId = bluetoothResources.getIdentifier(
-                PROFILE_SUPPORTED_A2DP_SINK, "bool", "com.android.bluetooth");
+                PROFILE_SUPPORTED_A2DP_SINK, "bool", "com.android.bluetooth.services");
         assertTrue("resource profile_supported_a2dp not found", a2dpSinkSupportId != 0);
         mIsA2dpSinkSupported = bluetoothResources.getBoolean(a2dpSinkSupportId);
         if (!mIsA2dpSinkSupported) return;

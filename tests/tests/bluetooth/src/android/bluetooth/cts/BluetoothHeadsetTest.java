@@ -72,9 +72,9 @@ public class BluetoothHeadsetTest extends AndroidTestCase {
         mBluetoothHeadset = null;
 
         Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
+                "com.android.bluetooth.services");
         int headsetSupportId = bluetoothResources.getIdentifier(
-                PROFILE_SUPPORTED_HEADSET, "bool", "com.android.bluetooth");
+                PROFILE_SUPPORTED_HEADSET, "bool", "com.android.bluetooth.services");
         assertTrue("resource profile_supported_hs_hfp not found", headsetSupportId != 0);
         mIsHeadsetSupported = bluetoothResources.getBoolean(headsetSupportId);
         if (!mIsHeadsetSupported) return;

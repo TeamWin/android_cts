@@ -47,7 +47,7 @@ class TestUtils {
     /**
      * Bluetooth package name
      */
-    static final String BLUETOOTH_PACKAGE_NAME = "com.android.bluetooth";
+    static final String BLUETOOTH_PACKAGE_NAME = "com.android.bluetooth.services";
 
     /**
      * Get the Config.xml name tag for a particular Bluetooth profile
