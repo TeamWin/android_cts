@@ -46,6 +46,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioAttributes;
+import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
@@ -748,6 +749,9 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("measureCamera1080pJpegCaptureMs".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doMeasureCamera1080pJpegCaptureMs(cameraId);
+                } else if ("getSupportedVideoQualities".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    doGetSupportedVideoQualities(cameraId);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -1653,6 +1657,34 @@ public class ItsService extends Service implements SensorEventListener {
             }
         }
     }
+
+    private void doGetSupportedVideoQualities(String id) throws ItsException {
+        int cameraId = Integer.parseInt(id);
+        StringBuilder profiles = new StringBuilder();
+        appendSupportProfile(profiles, "480", CamcorderProfile.QUALITY_480P, cameraId);
+        appendSupportProfile(profiles, "1080", CamcorderProfile.QUALITY_1080P, cameraId);
+        appendSupportProfile(profiles, "2160", CamcorderProfile.QUALITY_2160P, cameraId);
+        appendSupportProfile(profiles, "2k", CamcorderProfile.QUALITY_2K, cameraId);
+        appendSupportProfile(profiles, "4KDCI", CamcorderProfile.QUALITY_4KDCI, cameraId);
+        appendSupportProfile(profiles, "720", CamcorderProfile.QUALITY_720P, cameraId);
+        appendSupportProfile(profiles, "8KUHD", CamcorderProfile.QUALITY_8KUHD, cameraId);
+        appendSupportProfile(profiles, "CIF", CamcorderProfile.QUALITY_CIF, cameraId);
+        appendSupportProfile(profiles, "HIGH", CamcorderProfile.QUALITY_HIGH, cameraId);
+        appendSupportProfile(profiles, "LOW", CamcorderProfile.QUALITY_LOW, cameraId);
+        appendSupportProfile(profiles, "QCIF", CamcorderProfile.QUALITY_QCIF, cameraId);
+        appendSupportProfile(profiles, "QHD", CamcorderProfile.QUALITY_QHD, cameraId);
+        appendSupportProfile(profiles, "QVGA", CamcorderProfile.QUALITY_QVGA, cameraId);
+        appendSupportProfile(profiles, "VGA", CamcorderProfile.QUALITY_VGA,cameraId);
+        mSocketRunnableObj.sendResponse("supportedVideoQualities", profiles.toString());
+    }
+
+    private void appendSupportProfile(StringBuilder profiles, String name, int profile,
+            int cameraId) {
+        if (CamcorderProfile.hasProfile(cameraId, profile)) {
+            profiles.append(name).append(';');
+        }
+    }
+
 
     private void doCapture(JSONObject params) throws ItsException {
         try {
