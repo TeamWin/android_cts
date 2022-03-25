@@ -41,4 +41,9 @@
     <style name="NoInsetsTheme.Translucent" parent="NoInsetsTheme">
         <item name="android:windowIsTranslucent">true</item>
     </style>
+    <style name="Theme.WhiteBackground" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:background">#ffffff</item>
+        <item name="android:windowBackground">#ffffff</item>
+        <item name="android:colorBackground">#ffffff</item>
+    </style>
 </resources>

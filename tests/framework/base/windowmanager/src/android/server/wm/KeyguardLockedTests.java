@@ -30,7 +30,6 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
-import static android.server.wm.app.Components.TURN_SCREEN_ON_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.ime;
@@ -51,7 +50,6 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.app.Components;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -173,6 +171,20 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         // Make sure we stay on Keyguard.
         mWmState.assertKeyguardShowingAndOccluded();
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+    }
+
+    @Test
+    public void testDismissKeyguardIfInsecure_notAllowed() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential().gotoKeyguard();
+
+        mWmState.assertKeyguardShowingAndNotOccluded();
+        launchActivityWithDismissKeyguardIfInsecure(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+
+        // Make sure we stay on Keyguard.
+        mWmState.assertKeyguardShowingAndOccluded();
     }
 
     @Test

@@ -124,7 +124,20 @@ public class AppSearchMultiUserTest extends AppSearchHostTestBase {
         getDevice().stopUser(sSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
         uninstallPackage(TARGET_PKG_A);
         getDevice().startUser(sSecondaryUserId, /*waitFlag=*/true);
-        runDeviceTestAsUserInPkgB("testGlobalGetDocuments_nonexist", sSecondaryUserId);
+        // Max waiting time is 5 second.
+        for (int i = 0; i < 5; i++) {
+            try {
+                // query the document from another package, verify the document of package A is
+                // removed
+                runDeviceTestAsUserInPkgB("testGlobalGetDocuments_nonexist", sSecondaryUserId);
+                // The test is passed.
+                return;
+            } catch (AssertionError e) {
+                // The package hasn't uninstalled yet, sleeping 1s before polling again.
+                Thread.sleep(1000);
+            }
+        }
+        throw new AssertionError("Failed to prune package data after 5 seconds");
     }
 
     @Test

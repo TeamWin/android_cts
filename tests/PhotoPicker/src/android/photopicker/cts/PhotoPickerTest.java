@@ -46,6 +46,7 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -349,6 +350,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once we find work around for b/226318844")
     public void testMultiSelect_previewVideoPlayPause() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
 
@@ -371,10 +373,9 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
 
         final UiObject playPauseButton = findPlayPauseButton();
         final UiObject muteButton = findMuteButton();
-        final UiObject playerView = findPlayerView();
 
-        // set-up and wait for player controls to be sticky
-        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+        // check that player controls are visible
+        assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Test 1: Initial state of the mute Button
         // Check that initial state of mute button is mute, i.e., volume off
@@ -396,8 +397,9 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         // Go back and launch preview again
         mDevice.pressBack();
         clickAndWait(findViewSelectedButton());
-        // set-up and wait for player controls to be sticky
-        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+
+        // check that player controls are visible
+        assertPlayerControlsVisible(playPauseButton, muteButton);
         assertMuteButtonState(muteButton, /* isMuted */ false);
 
         // We don't test the result of the picker here because the intention of the test is only to
@@ -412,8 +414,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         final UiObject muteButton = findMuteButton();
         final UiObject playerView = findPlayerView();
 
-        // set-up and wait for player controls to be sticky
-        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+        // check that player controls are visible
+        assertPlayerControlsVisible(playPauseButton, muteButton);
 
         // Test 1: Swipe resumes mute state, with state of the button is 'volume off' / 'mute'
         assertMuteButtonState(muteButton, /* isMuted */ true);
@@ -429,8 +431,8 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
         assertMuteButtonState(muteButton, /* isMuted */ false);
         // check that next video resumed previous video's mute state
         swipeLeftAndWait();
-        // set-up and wait for player controls to be sticky
-        setUpAndAssertStickyPlayerControls(playerView, playPauseButton, muteButton);
+        // check that player controls are visible
+        assertPlayerControlsVisible(playPauseButton, muteButton);
         assertMuteButtonState(muteButton, /* isMuted */ false);
 
         // We don't test the result of the picker here because the intention of the test is only to
@@ -438,6 +440,7 @@ public class PhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable once we find work around for b/226318844")
     public void testMultiSelect_previewVideoControlsVisibility() throws Exception {
         launchPreviewMultipleWithVideos(/* videoCount */ 3);
 

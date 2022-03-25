@@ -29,9 +29,9 @@ import its_session_utils
 import opencv_processing_utils
 
 ALIGN_TOL_MM = 4.0  # mm
-ALIGN_TOL = 0.0075  # multiplied by sensor diagonal to convert to pixels
+ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
 CIRCLE_COLOR = 0  # [0: black, 255: white]
-CIRCLE_MIN_AREA = 0.01  # multiplied by image size
+CIRCLE_MIN_AREA = 0.0075  # multiplied by image size
 CIRCLE_RTOL = 0.1  # 10%
 CM_TO_M = 1E-2
 FMT_CODE_RAW = 0x20

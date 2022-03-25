@@ -199,7 +199,7 @@ public class IntentFiltersTestHelper {
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            forwardedIntentsFromManaged.addAll(Arrays.asList(
+            forwardingOptionalIntentsFromManaged.addAll(Arrays.asList(
                     new Intent(MediaStore.ACTION_IMAGE_CAPTURE),
                     new Intent(MediaStore.ACTION_VIDEO_CAPTURE),
                     new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA),
@@ -221,7 +221,8 @@ public class IntentFiltersTestHelper {
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
-            forwardedIntentsFromManaged.add(new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION));
+            forwardingOptionalIntentsFromManaged.add(
+                    new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION));
         }
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_LOCATION)) {

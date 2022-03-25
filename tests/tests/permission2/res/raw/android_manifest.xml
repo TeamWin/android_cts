@@ -3808,23 +3808,6 @@
     <permission android:name="android.permission.REQUEST_INCIDENT_REPORT_APPROVAL"
         android:protectionLevel="signature|privileged" />
 
-    <!-- ========================================= -->
-    <!-- Permissions for AdServices -->
-    <!-- ========================================= -->
-    <eat-comment />
-
-    <!-- Allows an application to access AdServices Topics API. -->
-    <permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS"
-        android:protectionLevel="normal" />
-
-    <!-- Allows an application to access AdServices Attribution APIs. -->
-    <permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
-        android:protectionLevel="normal" />
-
-    <!-- Allows an application to access AdServices Custom Audiences APIs. -->
-    <permission android:name="android.permission.ACCESS_ADSERVICES_CUSTOM_AUDIENCES"
-        android:protectionLevel="normal" />
-
     <!-- ==================================== -->
     <!-- Private permissions                  -->
     <!-- ==================================== -->

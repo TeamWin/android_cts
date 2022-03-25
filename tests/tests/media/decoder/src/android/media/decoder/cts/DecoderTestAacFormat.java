@@ -53,6 +53,9 @@ public class DecoderTestAacFormat {
     static final String mInpPrefix = WorkDir.getMediaDirString();
     private static final boolean sIsAndroidRAndAbove =
             ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    // TODO: replace > Sv2 with >= T once T is assigned.
+    private static final boolean sIsAtLeastT =
+            ApiLevelUtil.isAfter(Build.VERSION_CODES.S_V2);
 
     @Before
     public void setUp() throws Exception {
@@ -95,24 +98,29 @@ public class DecoderTestAacFormat {
                 assertEquals("Number of channels differs for codec:" + codecName
                                 + " when downmixing with KEY_AAC_MAX_OUTPUT_CHANNEL_COUNT",
                         2, aacDownmixParams.getNumChannels());
-                // - with codec-agnostic key
-                AudioParameter downmixParams = new AudioParameter();
-                decodeUpdateFormat(codecName, (String) sample[0] /* resource */, downmixParams,
-                        2 /*stereo downmix*/,
-                        MediaFormat.KEY_MAX_OUTPUT_CHANNEL_COUNT);
-                assertEquals("Number of channels differs for codec:" + codecName
-                                + " when downmixing with KEY_MAX_OUTPUT_CHANNEL_COUNT",
-                        2, downmixParams.getNumChannels());
 
-                // verify setting value larger than actual channel count behaves like no downmixing
-                AudioParameter bigChanParams = new AudioParameter();
-                final int tooManyChannels = ((Integer) sample[1]).intValue() + 99;
-                decodeUpdateFormat(codecName, (String) sample[0] /*resource*/, bigChanParams,
-                        tooManyChannels, MediaFormat.KEY_MAX_OUTPUT_CHANNEL_COUNT);
-                assertEquals("Number of channels differs for codec:" + codecName
-                                + " when setting " + tooManyChannels
-                                + " on KEY_MAX_OUTPUT_CHANNEL_COUNT",
-                        sample[1], bigChanParams.getNumChannels());
+                if (sIsAtLeastT) {
+                    // KEY_MAX)OUTPUT_CHANNEL_COUNT introduced in T
+                    // - with codec-agnostic key
+                    AudioParameter downmixParams = new AudioParameter();
+                    decodeUpdateFormat(codecName, (String) sample[0] /* resource */, downmixParams,
+                            2 /*stereo downmix*/,
+                            MediaFormat.KEY_MAX_OUTPUT_CHANNEL_COUNT);
+                    assertEquals("Number of channels differs for codec:" + codecName
+                                    + " when downmixing with KEY_MAX_OUTPUT_CHANNEL_COUNT",
+                            2, downmixParams.getNumChannels());
+
+                    // verify setting value larger than actual channel count behaves like
+                    // no downmixing
+                    AudioParameter bigChanParams = new AudioParameter();
+                    final int tooManyChannels = ((Integer) sample[1]).intValue() + 99;
+                    decodeUpdateFormat(codecName, (String) sample[0] /*resource*/, bigChanParams,
+                            tooManyChannels, MediaFormat.KEY_MAX_OUTPUT_CHANNEL_COUNT);
+                    assertEquals("Number of channels differs for codec:" + codecName
+                                    + " when setting " + tooManyChannels
+                                    + " on KEY_MAX_OUTPUT_CHANNEL_COUNT",
+                            sample[1], bigChanParams.getNumChannels());
+                }
             }
         }
     }

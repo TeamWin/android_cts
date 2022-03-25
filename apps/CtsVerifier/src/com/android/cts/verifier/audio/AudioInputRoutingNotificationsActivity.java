@@ -70,6 +70,8 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
 
             if (v.getId() == R.id.audio_routingnotification_recordBtn) {
                 startRecording();
+            } else if (v.getId() == R.id.audio_routingnotification_recordStopBtn) {
+                stopRecording();
             }
         }
     }

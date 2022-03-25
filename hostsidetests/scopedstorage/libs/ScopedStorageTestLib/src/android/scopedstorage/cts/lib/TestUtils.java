@@ -111,6 +111,8 @@ public class TestUtils {
     public static final String IS_URI_REDACTED_VIA_FILEPATH =
             "android.scopedstorage.cts.is_uri_redacted_via_filepath";
     public static final String QUERY_URI = "android.scopedstorage.cts.query_uri";
+    public static final String QUERY_MAX_ROW_ID = "android.scopedstorage.cts.query_max_row_id";
+    public static final String QUERY_MIN_ROW_ID = "android.scopedstorage.cts.query_min_row_id";
     public static final String OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.openfile_read";
     public static final String OPEN_FILE_FOR_WRITE_QUERY =
@@ -892,6 +894,16 @@ public class TestUtils {
 
     public static void setShouldForceStopTestApp(boolean value) {
         sShouldForceStopTestApp = value;
+    }
+
+    public static long readMaximumRowIdFromDatabaseAs(TestApp app, Uri uri) throws Exception {
+        final String actionName = QUERY_MAX_ROW_ID;
+        return getFromTestApp(app, uri, actionName).getLong(actionName, Long.MIN_VALUE);
+    }
+
+    public static long readMinimumRowIdFromDatabaseAs(TestApp app, Uri uri) throws Exception {
+        final String actionName = QUERY_MIN_ROW_ID;
+        return getFromTestApp(app, uri, actionName).getLong(actionName, Long.MAX_VALUE);
     }
 
     /**
@@ -1895,4 +1907,33 @@ public class TestUtils {
                 .that(getContentResolver().update(uri, values, Bundle.EMPTY)).isEqualTo(1);
     }
 
+    public static void waitForMountedAndIdleState(ContentResolver resolver) throws Exception {
+        // We purposefully perform these operations twice in this specific
+        // order, since clearing the data on a package can asynchronously
+        // perform a vold reset, which can make us think storage is ready and
+        // mounted when it's moments away from being torn down.
+        pollForExternalStorageMountedState();
+        MediaStore.waitForIdle(resolver);
+        pollForExternalStorageMountedState();
+        MediaStore.waitForIdle(resolver);
+    }
+
+    private static void pollForExternalStorageMountedState() throws Exception {
+        final File target = Environment.getExternalStorageDirectory();
+        pollForCondition(() -> isExternalStorageDirectoryMounted(target),
+                "Timed out while waiting for ExternalStorageState to be MEDIA_MOUNTED");
+    }
+
+    private static boolean isExternalStorageDirectoryMounted(File target) {
+        boolean isMounted = Environment.MEDIA_MOUNTED.equals(
+                Environment.getExternalStorageState(target));
+        if (isMounted) {
+            try {
+                return Os.statvfs(target.getAbsolutePath()).f_blocks > 0;
+            } catch (Exception e) {
+                // Waiting for external storage to be mounted
+            }
+        }
+        return false;
+    }
 }
