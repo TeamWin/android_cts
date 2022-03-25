@@ -381,7 +381,6 @@ public class ImsCallingTest {
 
         if (sServiceConnector != null && sIsBound) {
             sServiceConnector.disconnectCarrierImsService();
-            sServiceConnector.disconnectServices();
             sIsBound = false;
         }
     }
