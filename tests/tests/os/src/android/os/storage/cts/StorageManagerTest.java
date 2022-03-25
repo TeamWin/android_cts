@@ -348,7 +348,8 @@ public class StorageManagerTest extends AndroidTestCase {
         mStorageManager.registerStorageVolumeCallback(mContext.getMainExecutor(), callback);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("sm unmount emulated;" + UserHandle.myUserId());
-        assertTrue(unmounted.await(15, TimeUnit.SECONDS));
+        // 30s timeout for unmounting because we may need to wait for processes to be killed.
+        assertTrue(unmounted.await(30, TimeUnit.SECONDS));
 
         // Now unregister and verify we don't hear future events
         mStorageManager.unregisterStorageVolumeCallback(callback);
