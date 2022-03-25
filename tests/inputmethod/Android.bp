@@ -39,6 +39,7 @@ android_test {
         "CtsLegacyImeClientTestLib",
         "testng",
         "kotlin-test",
+        "cts-wm-util",
     ],
     srcs: [
         "src/**/*.java",

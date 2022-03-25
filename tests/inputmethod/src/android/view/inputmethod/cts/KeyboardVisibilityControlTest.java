@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.View.VISIBLE;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowInsets.Type.ime;
@@ -44,6 +45,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.AlertDialog;
@@ -56,6 +58,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.server.wm.WindowManagerState;
 import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
 import android.util.Log;
@@ -676,6 +679,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Test
     public void testRestoreImeVisibility() throws Exception {
+        // TODO(b/226110728): Remove after we can send ime restore signal to DisplayAreaOrganizer.
+        assumeFalse(isImeOrganized(DEFAULT_DISPLAY));
         runRestoreImeVisibility(TestSoftInputMode.UNCHANGED_WITH_BACKWARD_NAV, true);
     }
 
@@ -972,5 +977,14 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 CompatChanges.isChangeEnabled(CLEAR_SHOW_FORCED_FLAG_WHEN_LEAVING, packageName,
                         UserHandle.CURRENT)));
         return result.get();
+    }
+
+    /** Whether the IME DisplayArea is organized by WM Shell. */
+    private static boolean isImeOrganized(int displayId) {
+        final WindowManagerState wmState = new WindowManagerState();
+        wmState.computeState();
+        WindowManagerState.DisplayArea imeContainer =  wmState.getImeContainer(displayId);
+        assertNotNull("ImeContainer not found for display id: " + displayId, imeContainer);
+        return imeContainer.isOrganized();
     }
 }
