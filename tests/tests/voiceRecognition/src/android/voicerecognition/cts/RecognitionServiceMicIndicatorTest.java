@@ -114,6 +114,8 @@ public final class RecognitionServiceMicIndicatorTest {
             Log.v(TAG, "setup(): mOriginalIndicatorsState=" + mOriginalIndicatorsState);
         });
         setIndicatorsEnabledState(Boolean.toString(true));
+        // Wait for any privacy indicator to disappear to avoid the test becoming flaky.
+        SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);
     }
 
     @After
