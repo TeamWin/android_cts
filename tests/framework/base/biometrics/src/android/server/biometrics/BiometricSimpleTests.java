@@ -238,6 +238,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
 
     @Test
     public void testSimpleBiometricAuth_convenience() throws Exception {
+        assumeTrue(Utils.isFirstApiLevel29orGreater());
         for (SensorProperties props : mSensorProperties) {
             if (props.getSensorStrength() != SensorProperties.STRENGTH_CONVENIENCE) {
                 continue;
