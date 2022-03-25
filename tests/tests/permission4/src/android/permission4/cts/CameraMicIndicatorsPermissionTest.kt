@@ -24,6 +24,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.camera2.CameraManager
+import android.os.Build
 import android.os.Process
 import android.permission.PermissionManager
 import android.provider.DeviceConfig
@@ -32,6 +33,7 @@ import android.server.wm.WindowManagerStateHelper
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiSelector
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
@@ -48,6 +50,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -62,6 +65,7 @@ private const val PRIVACY_CHIP_ID = "com.android.systemui:id/privacy_chip"
 private const val CAR_MIC_PRIVACY_CHIP_ID = "com.android.systemui:id/mic_privacy_chip"
 private const val CAR_CAMERA_PRIVACY_CHIP_ID = "com.android.systemui:id/camera_privacy_chip"
 private const val PRIVACY_ITEM_ID = "com.android.systemui:id/privacy_item"
+private const val SAFETY_CENTER_ITEM_ID = "com.android.permissioncontroller:id/parent_card_view"
 private const val INDICATORS_FLAG = "camera_mic_icons_enabled"
 private const val PERMISSION_INDICATORS_NOT_PRESENT = 162547999L
 private const val IDLE_TIMEOUT_MILLIS: Long = 1000
@@ -85,11 +89,21 @@ class CameraMicIndicatorsPermissionTest {
         Manifest.permission_group.MICROPHONE, 0).loadLabel(packageManager).toString()
     private val cameraLabel = packageManager.getPermissionGroupInfo(
         Manifest.permission_group.CAMERA, 0).loadLabel(packageManager).toString()
-
+    private var isScreenOn = false
     private var screenTimeoutBeforeTest: Long = 0L
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()
+
+    companion object {
+        const val SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
+        const val DELAY_MILLIS = 3000L
+    }
+
+    private val safetyCenterEnabled = callWithShellPermissionIdentity {
+        DeviceConfig.getString(DeviceConfig.NAMESPACE_PRIVACY,
+                SAFETY_CENTER_ENABLED, false.toString())
+    }
 
     @Before
     fun setUp() {
@@ -100,11 +114,16 @@ class CameraMicIndicatorsPermissionTest {
             Settings.System.putLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT, 1800000L
             )
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    SAFETY_CENTER_ENABLED, false.toString(), false)
         }
 
-        uiDevice.wakeUp()
-        runShellCommand(instrumentation, "wm dismiss-keyguard")
-
+        if (!isScreenOn) {
+            uiDevice.wakeUp()
+            runShellCommand(instrumentation, "wm dismiss-keyguard")
+            Thread.sleep(DELAY_MILLIS)
+            isScreenOn = true
+        }
         uiDevice.findObject(By.text("Close"))?.click()
         wasEnabled = setIndicatorsEnabledStateIfNeeded(true)
         // If the change Id is not present, then isChangeEnabled will return true. To bypass this,
@@ -138,13 +157,14 @@ class CameraMicIndicatorsPermissionTest {
                 screenTimeoutBeforeTest
             )
         }
+        changeSafetyCenterFlag(safetyCenterEnabled)
         if (!isTv) {
             pressBack()
             pressBack()
         }
         pressHome()
         pressHome()
-        Thread.sleep(3000)
+        Thread.sleep(DELAY_MILLIS)
     }
 
     private fun openApp(useMic: Boolean, useCamera: Boolean, useHotword: Boolean) {
@@ -160,16 +180,19 @@ class CameraMicIndicatorsPermissionTest {
     fun testCameraIndicator() {
         val manager = context.getSystemService(CameraManager::class.java)!!
         assumeTrue(manager.cameraIdList.isNotEmpty())
+        changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = false, useCamera = true)
     }
 
     @Test
     fun testMicIndicator() {
+        changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = true, useCamera = false)
     }
 
     @Test
     fun testHotwordIndicatorBehavior() {
+        changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = false, useCamera = false, useHotword = true)
     }
 
@@ -180,14 +203,72 @@ class CameraMicIndicatorsPermissionTest {
         // Car has separate panels for mic and camera for now.
         // TODO(b/218788634): enable this test for car once the new camera indicator is implemented.
         assumeFalse(isCar)
+        changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = false, useCamera = true, chainUsage = true)
+    }
+
+    // Enable when safety center sends a broadcast on safety center flag value change
+    @Test
+    @Ignore
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testSafetyCenterCameraIndicator() {
+        assumeFalse(isTv)
+        assumeFalse(isCar)
+        val manager = context.getSystemService(CameraManager::class.java)!!
+        assumeTrue(manager.cameraIdList.isNotEmpty())
+        changeSafetyCenterFlag(true.toString())
+        testCameraAndMicIndicator(useMic = false, useCamera = true, safetyCenterEnabled = true)
+    }
+
+    // Enable when safety center sends a broadcast on safety center flag value change
+    @Test
+    @Ignore
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testSafetyCenterMicIndicator() {
+        assumeFalse(isTv)
+        assumeFalse(isCar)
+        changeSafetyCenterFlag(true.toString())
+        testCameraAndMicIndicator(useMic = true, useCamera = false, safetyCenterEnabled = true)
+    }
+
+    // Enable when safety center sends a broadcast on safety center flag value change
+    @Test
+    @Ignore
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testSafetyCenterHotwordIndicatorBehavior() {
+        assumeFalse(isTv)
+        assumeFalse(isCar)
+        changeSafetyCenterFlag(true.toString())
+        testCameraAndMicIndicator(
+            useMic = false,
+            useCamera = false,
+            useHotword = true,
+            safetyCenterEnabled = true
+        )
+    }
+
+    // Enable when safety center sends a broadcast on safety center flag value change
+    @Test
+    @Ignore
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    fun testSafetyCenterChainUsageWithOtherUsage() {
+        assumeFalse(isTv)
+        assumeFalse(isCar)
+        changeSafetyCenterFlag(true.toString())
+        testCameraAndMicIndicator(
+            useMic = false,
+            useCamera = true,
+            chainUsage = true,
+            safetyCenterEnabled = true
+        )
     }
 
     private fun testCameraAndMicIndicator(
         useMic: Boolean,
         useCamera: Boolean,
         useHotword: Boolean = false,
-        chainUsage: Boolean = false
+        chainUsage: Boolean = false,
+        safetyCenterEnabled: Boolean = false
     ) {
         var chainAttribution: AttributionSource? = null
         openApp(useMic, useCamera, useHotword)
@@ -213,7 +294,12 @@ class CameraMicIndicatorsPermissionTest {
                 // Hotword gets remapped to RECORD_AUDIO on handheld, so handheld should show a mic
                 // indicator
                 uiDevice.openQuickSettings()
-                assertPrivacyChipAndIndicatorsPresent(useMic || useHotword, useCamera, chainUsage)
+                assertPrivacyChipAndIndicatorsPresent(
+                    useMic || useHotword,
+                    useCamera,
+                    chainUsage,
+                    safetyCenterEnabled
+                )
             }
         } finally {
             if (chainAttribution != null) {
@@ -267,7 +353,8 @@ class CameraMicIndicatorsPermissionTest {
 
         eventually {
             if (chainUsage) {
-                assertChainMicAndOtherCameraUsed()
+                // Not applicable for car
+                assertChainMicAndOtherCameraUsed(false)
                 return@eventually
             }
             if (useHotword) {
@@ -300,7 +387,8 @@ class CameraMicIndicatorsPermissionTest {
     private fun assertPrivacyChipAndIndicatorsPresent(
         useMic: Boolean,
         useCamera: Boolean,
-        chainUsage: Boolean
+        chainUsage: Boolean,
+        safetyCenterEnabled: Boolean = false
     ) {
         // Ensure the privacy chip is present
         eventually {
@@ -311,7 +399,7 @@ class CameraMicIndicatorsPermissionTest {
 
         eventually {
             if (chainUsage) {
-                assertChainMicAndOtherCameraUsed()
+                assertChainMicAndOtherCameraUsed(safetyCenterEnabled)
                 return@eventually
             }
             if (useMic) {
@@ -324,6 +412,10 @@ class CameraMicIndicatorsPermissionTest {
             }
             val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
             assertTrue("View with text $APP_LABEL not found", appView.exists())
+            if (safetyCenterEnabled) {
+                assertTrue("Did not find safety center views",
+                    uiDevice.findObjects(By.res(SAFETY_CENTER_ITEM_ID)).size > 0)
+            }
         }
     }
 
@@ -343,7 +435,7 @@ class CameraMicIndicatorsPermissionTest {
         return attrSource
     }
 
-    private fun assertChainMicAndOtherCameraUsed() {
+    private fun assertChainMicAndOtherCameraUsed(safetyCenterEnabled: Boolean) {
         val shellLabel = try {
             context.packageManager.getApplicationInfo(SHELL_PKG, 0)
                 .loadLabel(context.packageManager).toString()
@@ -351,7 +443,11 @@ class CameraMicIndicatorsPermissionTest {
             "Did not find shell package"
         }
 
-        val usageViews = uiDevice.findObjects(By.res(PRIVACY_ITEM_ID))
+        val usageViews = if (safetyCenterEnabled) {
+            uiDevice.findObjects(By.res(SAFETY_CENTER_ITEM_ID))
+        } else {
+            uiDevice.findObjects(By.res(PRIVACY_ITEM_ID))
+        }
         assertEquals("Expected two usage views", 2, usageViews.size)
         val appViews = uiDevice.findObjects(By.textContains(APP_LABEL))
         assertEquals("Expected two $APP_LABEL view", 2, appViews.size)
@@ -371,4 +467,11 @@ class CameraMicIndicatorsPermissionTest {
 
     private fun waitForIdle() =
         uiAutomation.waitForIdle(IDLE_TIMEOUT_MILLIS, TIMEOUT_MILLIS)
+
+    private fun changeSafetyCenterFlag(safetyCenterEnabled: String) {
+        runWithShellPermissionIdentity {
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    SAFETY_CENTER_ENABLED, safetyCenterEnabled, false)
+        }
+    }
 }
