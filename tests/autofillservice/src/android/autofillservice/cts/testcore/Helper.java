@@ -51,6 +51,7 @@ import android.graphics.Bitmap;
 import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
@@ -78,6 +79,7 @@ import androidx.autofill.inline.v1.InlineSuggestionUi;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.compatibility.common.util.DeviceConfigStateManager;
 import com.android.compatibility.common.util.OneTimeSettingsListener;
 import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.ShellUtils;
@@ -1640,6 +1642,16 @@ public final class Helper {
      */
     public static void clearApplicationAutofillOptions(@NonNull Context context) {
         context.getApplicationContext().setAutofillOptions(null);
+    }
+
+    /**
+     * Enable fill dialog feature
+     */
+    public static  void enableFillDialogFeature(@NonNull Context context) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED);
+        deviceConfigStateManager.set("true");
     }
 
     private Helper() {
