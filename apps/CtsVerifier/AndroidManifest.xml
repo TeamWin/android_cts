@@ -230,6 +230,8 @@
                        android:value="android.software.companion_device_setup" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="{android.companion.CompanionDeviceManager#associate}" />
         </activity>
 
         <activity android:name=".companion.CompanionDeviceServiceTestActivity"
@@ -245,6 +247,9 @@
                        android:value="android.software.companion_device_setup" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="{android.companion.CompanionDeviceManager#startObservingDevicePresence|
+                       android.companion.CompanionDeviceManager#stopObservingDevicePresence}" />
         </activity>
 
         <service
@@ -255,6 +260,9 @@
             <intent-filter>
                 <action android:name="android.companion.CompanionDeviceService" />
             </intent-filter>
+            <meta-data android:name="ApiTest"
+                       android:value="{android.companion.CompanionDeviceManager#startObservingDevicePresence|
+                       android.companion.CompanionDeviceManager#stopObservingDevicePresence}" />
         </service>
 
         <!-- A generic activity for intent based tests.
