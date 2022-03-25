@@ -200,6 +200,9 @@
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive:android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="2.2.4/8.3/H-1-1|2.3.4/8.3/T-1-1|2.4.4/8.3/W-SR|8.3/C-SR" />
+            <meta-data android:name="ApiTest" android:value="android.os.PowerManager#isPowerSaveMode" />
         </activity>
 
         <activity
@@ -214,6 +217,9 @@
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive:android.hardware.type.television" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="8.3/C-1-6" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.os.PowerManager#isIgnoringBatteryOptimizations|android.app.usage.UsageStatsManager#getAppStandbyBucket|android.provider.Settings#ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS|android.provider.Settings#ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
         </activity>
 
         <activity android:name=".forcestop.RecentTaskRemovalTestActivity"
