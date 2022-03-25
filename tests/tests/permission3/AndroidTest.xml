@@ -43,6 +43,7 @@
         <option name="push" value="CtsAccessMicrophoneApp.apk->/data/local/tmp/cts/permission3/CtsAccessMicrophoneApp.apk" />
         <option name="push" value="CtsAccessMicrophoneApp2.apk->/data/local/tmp/cts/permission3/CtsAccessMicrophoneApp2.apk" />
         <option name="push" value="CtsAccessMicrophoneAppLocationProvider.apk->/data/local/tmp/cts/permission3/CtsAccessMicrophoneAppLocationProvider.apk" />
+        <option name="push" value="CtsAppLocationProviderWithSummary.apk->/data/local/tmp/cts/permission3/CtsAppLocationProviderWithSummary.apk" />
         <option name="push" value="CtsPermissionPolicyApp25.apk->/data/local/tmp/cts/permission3/CtsPermissionPolicyApp25.apk" />
         <option name="push" value="CtsUsePermissionApp22.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22.apk" />
         <option name="push" value="CtsUsePermissionApp22CalendarOnly.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22CalendarOnly.apk" />
