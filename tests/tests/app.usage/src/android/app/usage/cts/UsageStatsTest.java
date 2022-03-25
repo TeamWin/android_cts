@@ -114,6 +114,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -904,6 +905,7 @@ public class UsageStatsTest {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @MediumTest
     @Test
     public void testNotificationSeen_verifyBucket() throws Exception {
         // Skip the test for wearable devices, televisions and automotives; none of them have
@@ -940,16 +942,22 @@ public class UsageStatsTest {
                 connection.unbind();
             }
             setStandByBucket(TEST_APP_PKG, "rare");
+            executeShellCmd("cmd usagestats clear-last-used-timestamps " + TEST_APP_PKG);
             waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
                     STANDBY_BUCKET_RARE);
             mUiDevice.openNotification();
             waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
                     STANDBY_BUCKET_FREQUENT);
-            // TODO(206518483): Verify the behavior after the promoted duration expires (which
-            // currently doesn't work as expected).
-            // SystemClock.sleep(promotedBucketHoldDurationMs);
-            // assertEquals(STANDBY_BUCKET_RARE, mUsageStatsManager.getAppStandbyBucket(
-            //                 TEST_APP_PKG));
+            SystemClock.sleep(promotedBucketHoldDurationMs);
+            // Verify that after the promoted duration expires, the app drops into a
+            // lower standby bucket.
+            // Note: "set-standby-bucket" command only updates the bucket of the app and not
+            // it's last used timestamps. So, it is possible when the standby bucket is calculated
+            // the app is not going to be back in RARE bucket we set earlier. So, just verify
+            // the app gets demoted to some lower bucket.
+            waitUntil(() -> mUsageStatsManager.getAppStandbyBucket(TEST_APP_PKG),
+                    result -> result > STANDBY_BUCKET_FREQUENT,
+                    "bucket should be > FREQUENT");
             mUiDevice.pressHome();
         }
     }
@@ -2788,10 +2796,19 @@ public class UsageStatsTest {
         return events;
     }
 
-    private <T> void waitUntil(Supplier<T> resultSupplier, T expectedResult) throws Exception {
+    private <T> void waitUntil(Supplier<T> resultSupplier, T expectedResult) {
         final T actualResult = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS, resultSupplier,
                 result -> Objects.equals(expectedResult, result));
         assertEquals(expectedResult, actualResult);
+    }
+
+    private <T> void waitUntil(Supplier<T> resultSupplier, Function<T, Boolean> condition,
+            String conditionDesc) {
+        final T actualResult = PollingCheck.waitFor(DEFAULT_TIMEOUT_MS, resultSupplier,
+                condition);
+        Log.d(TAG, "Expecting '" + conditionDesc + "'; actual result=" + actualResult);
+        assertTrue("Timed out waiting for '" + conditionDesc + "', actual=" + actualResult,
+                condition.apply(actualResult));
     }
 
     static class AggrEventData {

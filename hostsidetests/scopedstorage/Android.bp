@@ -354,6 +354,7 @@ android_test {
     static_libs: [
         "truth-prebuilt",
         "cts-scopedstorage-lib",
+        "androidx.test.uiautomator_uiautomator",
     ],
     compile_multilib: "both",
     test_suites: [

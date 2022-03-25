@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.content.pm.ApplicationInfo.PRIVATE_FLAG_EXT_ENABLE_ON_BACK_INVOKED_CALLBACK;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -6867,6 +6869,40 @@ public class TextViewTest {
 
         // Action mode was started
         verify(mockActionModeCallback, times(1)).onDestroyActionMode(any(ActionMode.class));
+    }
+
+    @Test
+    public void testOnBackInvokedCallback() throws Throwable {
+        final String text = "abcde";
+        // Enable the new back dispatch
+        mActivity.getApplicationInfo().privateFlagsExt |=
+                PRIVATE_FLAG_EXT_ENABLE_ON_BACK_INVOKED_CALLBACK;
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = new EditText(mActivity);
+            mActivity.setContentView(mTextView);
+            mTextView.setText(text, BufferType.SPANNABLE);
+            mTextView.setTextIsSelectable(true);
+            mTextView.requestFocus();
+            mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
+        });
+
+        mInstrumentation.waitForIdleSync();
+        mActivityRule.runOnUiThread(() -> {
+            // Set selection and try to start action mode.
+            final Bundle args = new Bundle();
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0);
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length());
+            mTextView.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_SET_SELECTION, args);
+        });
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mTextView.hasSelection());
+
+        // Trigger back
+        mInstrumentation.sendCharacterSync(KeyEvent.KEYCODE_BACK);
+        mInstrumentation.waitForIdleSync();
+        assertFalse(mTextView.hasSelection());
     }
 
     @UiThreadTest

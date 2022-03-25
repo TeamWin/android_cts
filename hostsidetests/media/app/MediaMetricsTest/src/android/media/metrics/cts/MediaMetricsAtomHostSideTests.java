@@ -32,6 +32,7 @@ import android.media.metrics.RecordingSession;
 import android.media.metrics.TrackChangeEvent;
 import android.media.metrics.TranscodingSession;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
@@ -360,6 +361,22 @@ public class MediaMetricsAtomHostSideTests {
             assertThat(idObj).isNotEqualTo(null);
             assertThat(idObj.getStringId().length()).isGreaterThan(0);
         }
+    }
+
+    @Test
+    public void testBundleSessionPlaybackStateEvent() throws Exception {
+        turnOnForTesting();
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        BundleSession s = manager.createBundleSession();
+        PersistableBundle b = new PersistableBundle();
+        b.putInt(BundleSession.KEY_STATSD_ATOM, 322);
+                // eventually want these keys from within the service side.
+        b.putString("playbackstateevent-sessionid", s.getSessionId().getStringId());
+        b.putInt("playbackstateevent-state", PlaybackStateEvent.STATE_JOINING_FOREGROUND);
+        b.putLong("playbackstateevent-lifetime", 1763L);
+        s.reportBundleMetrics(b);
+        resetProperties();
     }
 
     @Test

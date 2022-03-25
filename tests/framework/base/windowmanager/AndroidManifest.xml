@@ -434,6 +434,13 @@
 
         <activity android:name="android.server.wm.ActivityTransitionTests$TransitionActivity"/>
 
+        <activity android:name="android.server.wm.ActivityTransitionTests$OverridePendingTransitionActivity"/>
+
+        <activity android:name="android.server.wm.ActivityTransitionTests$TransitionActivityWithWhiteBackground"
+            android:theme="@style/Theme.WhiteBackground"
+            android:exported="true"
+            android:colorMode="wideColorGamut"/>
+
         <activity android:name="android.server.wm.WindowUntrustedTouchTest$TestActivity"
                   android:exported="true"
                   android:configChanges="screenSize|screenLayout|orientation"

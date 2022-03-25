@@ -38,6 +38,60 @@ import java.util.Set;
 public class VirtualDeviceParamsTest {
 
     @Test
+    public void setAllowedAndBlockedCrossTaskNavigations_shouldThrowException() {
+        VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
+        assertThrows(IllegalArgumentException.class, () -> {
+            paramsBuilder.setAllowedCrossTaskNavigations(Set.of(
+                    TestAppHelper.MAIN_ACTIVITY_COMPONENT));
+            paramsBuilder.setBlockedCrossTaskNavigations(Set.of());
+        });
+
+    }
+
+    @Test
+    public void setBlockedAndAllowedCrossTaskNavigations_shouldThrowException() {
+        VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
+        assertThrows(IllegalArgumentException.class, () -> {
+            paramsBuilder.setBlockedCrossTaskNavigations(Set.of(
+                    TestAppHelper.MAIN_ACTIVITY_COMPONENT));
+            paramsBuilder.setAllowedCrossTaskNavigations(Set.of());
+        });
+
+    }
+
+    @Test
+    public void getAllowedCrossTaskNavigations_shouldReturnConfiguredSet() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setAllowedCrossTaskNavigations(
+                        Set.of(
+                                new ComponentName("test", "test.Activity1"),
+                                new ComponentName("test", "test.Activity2")))
+                .build();
+
+        assertThat(params.getAllowedCrossTaskNavigations()).containsExactly(
+                new ComponentName("test", "test.Activity1"),
+                new ComponentName("test", "test.Activity2"));
+        assertThat(params.getDefaultNavigationPolicy())
+                .isEqualTo(VirtualDeviceParams.NAVIGATION_POLICY_DEFAULT_BLOCKED);
+    }
+
+    @Test
+    public void getBlockedCrossTaskNavigations_shouldReturnConfiguredSet() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setBlockedCrossTaskNavigations(
+                        Set.of(
+                                new ComponentName("test", "test.Activity1"),
+                                new ComponentName("test", "test.Activity2")))
+                .build();
+
+        assertThat(params.getBlockedCrossTaskNavigations()).containsExactly(
+                new ComponentName("test", "test.Activity1"),
+                new ComponentName("test", "test.Activity2"));
+        assertThat(params.getDefaultNavigationPolicy())
+                .isEqualTo(VirtualDeviceParams.NAVIGATION_POLICY_DEFAULT_ALLOWED);
+    }
+
+    @Test
     public void setAllowedAndBlockedActivities_shouldThrowException() {
         VirtualDeviceParams.Builder paramsBuilder = new VirtualDeviceParams.Builder();
         assertThrows(IllegalArgumentException.class, () -> {

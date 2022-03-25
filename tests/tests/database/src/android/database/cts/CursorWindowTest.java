@@ -458,6 +458,19 @@ public class CursorWindowTest {
         fail("Didn't catch CursorWindowAllocationException: actual=" + actual);
     }
 
+    @Test
+    public void testCursorWindowAllocationException() {
+        String exceptionDescription = "description test";
+        CursorWindowAllocationException newException =
+                new CursorWindowAllocationException(exceptionDescription);
+        assertEquals(exceptionDescription, newException.getMessage());
+        try {
+            throw newException;
+        } catch (CursorWindowAllocationException exception) {
+            assertEquals(exceptionDescription, exception.getMessage());
+        }
+    }
+
     private class MockCursorWindow extends CursorWindow {
         private boolean mHasReleasedAllReferences = false;
 
