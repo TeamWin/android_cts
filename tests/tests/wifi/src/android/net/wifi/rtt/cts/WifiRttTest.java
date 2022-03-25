@@ -16,21 +16,36 @@
 
 package android.net.wifi.rtt.cts;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 import android.net.MacAddress;
 import android.net.wifi.ScanResult;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.cts.WifiBuildCompat;
+import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.ResponderConfig;
 import android.net.wifi.rtt.ResponderLocation;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +55,8 @@ import java.util.List;
  * Wi-Fi RTT CTS test: range to all available Access Points which support IEEE 802.11mc.
  */
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
+@LargeTest
+@RunWith(AndroidJUnit4.class)
 public class WifiRttTest extends TestBase {
     // Number of scans to do while searching for APs supporting IEEE 802.11mc
     private static final int NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP = 5;
@@ -76,13 +93,10 @@ public class WifiRttTest extends TestBase {
      *   - Failure ratio < threshold (constant)
      *   - Result margin < threshold (constant)
      */
+    @Test
     public void testRangingToTest11mcApUsingScanResult() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
-            return;
-        }
-
         // Scan for IEEE 802.11mc supporting APs
-        ScanResult testAp = scanForTest11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getS11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
                         + "your test setup includes them!", testAp);
@@ -113,13 +127,10 @@ public class WifiRttTest extends TestBase {
      *   - Failure ratio < threshold (constant)
      *   - Result margin < threshold (constant)
      */
+    @Test
     public void testRangingToTest11mcApUsingResponderConfig() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
-            return;
-        }
-
         // Scan for IEEE 802.11mc supporting APs
-        ScanResult testAp = scanForTest11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getS11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
                         + "your test setup includes them!", testAp);
@@ -174,13 +185,10 @@ public class WifiRttTest extends TestBase {
      *   - Failure ratio < threshold (constant)
      *   - Result margin < threshold (constant)
      */
+    @Test
     public void testRangingToTest11mcApUsingListResponderConfig() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
-            return;
-        }
-
         // Scan for IEEE 802.11mc supporting APs
-        ScanResult testAp = scanForTest11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getS11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
                         + "your test setup includes them!", testAp);
@@ -215,6 +223,7 @@ public class WifiRttTest extends TestBase {
      */
     private void range11mcApRequest(RangingRequest request, ScanResult testAp)
             throws InterruptedException {
+        Thread.sleep(5000);
         List<RangingResult> allResults = new ArrayList<>();
         int numFailures = 0;
         int distanceSum = 0;
@@ -282,10 +291,12 @@ public class WifiRttTest extends TestBase {
                 byte[] currentLci = result.getLci();
                 byte[] currentLcr = result.getLcr();
                 if (i - numFailures > 0) {
-                    assertTrue("Wi-Fi RTT results: invalid result (LCI mismatch) on iteration " + i,
-                            Arrays.equals(currentLci, lastLci));
-                    assertTrue("Wi-Fi RTT results: invalid result (LCR mismatch) on iteration " + i,
-                            Arrays.equals(currentLcr, lastLcr));
+                    assertArrayEquals(
+                            "Wi-Fi RTT results: invalid result (LCI mismatch) on iteration " + i,
+                            currentLci, lastLci);
+                    assertArrayEquals(
+                            "Wi-Fi RTT results: invalid result (LCR mismatch) on iteration " + i,
+                            currentLcr, lastLcr);
                 }
                 lastLci = currentLci;
                 lastLcr = currentLcr;
@@ -327,8 +338,8 @@ public class WifiRttTest extends TestBase {
                             + (distanceAvg - distanceMin),
                     (distanceAvg - distanceMin) <= MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM);
             for (int i = 0; i < numGoodResults; ++i) {
-                assertNotSame("Number of attempted measurements is 0", 0, numAttempted[i]);
-                assertNotSame("Number of successful measurements is 0", 0, numSuccessful[i]);
+                assertNotEquals("Number of attempted measurements is 0", 0, numAttempted[i]);
+                assertNotEquals("Number of successful measurements is 0", 0, numSuccessful[i]);
             }
         }
     }
@@ -339,11 +350,9 @@ public class WifiRttTest extends TestBase {
      * Validate that when a request contains more range operations than allowed (by API) that we
      * get an exception.
      */
+    @Test
     public void testRequestTooLarge() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
-            return;
-        }
-        ScanResult testAp = scanForTest11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getS11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
                         + "your test setup includes them!", testAp);
@@ -357,7 +366,7 @@ public class WifiRttTest extends TestBase {
 
         ScanResult testApNon80211mc = null;
         if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
-            testApNon80211mc = scanForTestNon11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+            testApNon80211mc = getNone11McScanResult();
         }
         if (testApNon80211mc == null) {
             builder.addAccessPoints(List.of(testAp, testAp, testAp));
@@ -379,12 +388,10 @@ public class WifiRttTest extends TestBase {
     /**
      * Verify ResponderLocation API
      */
+    @Test
     public void testRangingToTestApWithResponderLocation() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
-            return;
-        }
         // Scan for IEEE 802.11mc supporting APs
-        ScanResult testAp = scanForTest11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getS11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
                         + "your test setup includes them!", testAp);
@@ -533,8 +540,9 @@ public class WifiRttTest extends TestBase {
     /**
      * Verify ranging request with aware peer Mac address and peer handle.
      */
+    @Test
     public void testAwareRttWithMacAddress() throws InterruptedException {
-        if (!(shouldTestWifiRtt(getContext()) && shouldTestWifiAware(getContext()))) {
+        if (!WifiFeature.isAwareSupported(getContext())) {
             return;
         }
         RangingRequest request = new RangingRequest.Builder()
@@ -552,8 +560,9 @@ public class WifiRttTest extends TestBase {
     /**
      * Verify ranging request with aware peer handle.
      */
+    @Test
     public void testAwareRttWithPeerHandle() throws InterruptedException {
-        if (!(shouldTestWifiRtt(getContext()) && shouldTestWifiAware(getContext()))) {
+        if (WifiFeature.isAwareSupported(getContext())) {
             return;
         }
         PeerHandle peerHandle = mock(PeerHandle.class);
@@ -578,14 +587,14 @@ public class WifiRttTest extends TestBase {
      *   - Failure ratio < threshold (constant)
      *   - Result margin < threshold (constant)
      */
+    @Test
     public void testRangingToTestNon11mcApUsingScanResult() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())
-                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
 
         // Scan for Non-IEEE 802.11mc supporting APs
-        ScanResult testAp = scanForTestNon11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getNone11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which are Non-IEEE 802.11mc - please verify that"
                         + " your test setup includes them!", testAp);
@@ -610,14 +619,14 @@ public class WifiRttTest extends TestBase {
      *   - Failure ratio < threshold (constant)
      *   - Result margin < threshold (constant)
      */
+    @Test
     public void testRangingToTestNon11mcApUsingResponderConfig() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())
-                || !WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(getContext())) {
             return;
         }
 
         // Scan for Non-IEEE 802.11mc supporting APs
-        ScanResult testAp = scanForTestNon11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        ScanResult testAp = getNone11McScanResult();
         assertNotNull(
                 "Cannot find any test APs which are Non-IEEE 802.11mc - please verify that"
                         + " your test setup includes them!", testAp);
@@ -702,10 +711,12 @@ public class WifiRttTest extends TestBase {
                 byte[] currentLci = result.getLci();
                 byte[] currentLcr = result.getLcr();
                 if (i - numFailures > 0) {
-                    assertTrue("Wi-Fi RTT results: invalid result (LCI mismatch) on iteration " + i,
-                            Arrays.equals(currentLci, lastLci));
-                    assertTrue("Wi-Fi RTT results: invalid result (LCR mismatch) on iteration " + i,
-                            Arrays.equals(currentLcr, lastLcr));
+                    assertArrayEquals(
+                            "Wi-Fi RTT results: invalid result (LCI mismatch) on iteration " + i,
+                            currentLci, lastLci);
+                    assertArrayEquals(
+                            "Wi-Fi RTT results: invalid result (LCR mismatch) on iteration " + i,
+                            currentLcr, lastLcr);
                 }
                 lastLci = currentLci;
                 lastLcr = currentLcr;
@@ -783,8 +794,8 @@ public class WifiRttTest extends TestBase {
                             + (distanceAvg - distanceMin),
                     (distanceAvg - distanceMin) <= variationLimit);
             for (int i = 0; i < numGoodResults; ++i) {
-                assertNotSame("Number of attempted measurements is 0", 0, numAttempted[i]);
-                assertNotSame("Number of successful measurements is 0", 0, numSuccessful[i]);
+                assertNotEquals("Number of attempted measurements is 0", 0, numAttempted[i]);
+                assertNotEquals("Number of successful measurements is 0", 0, numSuccessful[i]);
             }
         }
 
