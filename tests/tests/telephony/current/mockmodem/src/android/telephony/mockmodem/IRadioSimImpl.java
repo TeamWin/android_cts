@@ -16,6 +16,9 @@
 
 package android.telephony.mockmodem;
 
+import static android.telephony.mockmodem.MockSimService.COMMAND_GET_RESPONSE;
+import static android.telephony.mockmodem.MockSimService.COMMAND_READ_BINARY;
+
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
@@ -34,6 +37,8 @@ import java.util.ArrayList;
 
 public class IRadioSimImpl extends IRadioSim.Stub {
     private static final String TAG = "MRSIM";
+
+    private static final int EF_ICCID = 0x2FE2;
 
     private final MockModemService mService;
     private IRadioSimResponse mRadioSimResponse;
@@ -244,26 +249,28 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         boolean isFacilitySupport = true;
         int responseData = -1;
 
-        // TODO: check service class
-        for (simAppIdx = 0;
-                simAppIdx < numOfSimApp && isFacilitySupport && !isHandled;
-                simAppIdx++) {
-            switch (facility) {
-                case "FD": // FDN status query
-                    if (appId.equals(mSimAppList.get(simAppIdx).getAid())) {
-                        responseData = mSimAppList.get(simAppIdx).getFdnStatus();
-                        isHandled = true;
-                    }
-                    break;
-                case "SC": // PIN1 status query
-                    if (appId.equals(mSimAppList.get(simAppIdx).getAid())) {
-                        responseData = mSimAppList.get(simAppIdx).getPin1State();
-                        isHandled = true;
-                    }
-                    break;
-                default:
-                    isFacilitySupport = false;
-                    break;
+        synchronized (mCacheUpdateMutex) {
+            // TODO: check service class
+            for (simAppIdx = 0;
+                    simAppIdx < numOfSimApp && isFacilitySupport && !isHandled;
+                    simAppIdx++) {
+                switch (facility) {
+                    case "FD": // FDN status query
+                        if (appId.equals(mSimAppList.get(simAppIdx).getAid())) {
+                            responseData = mSimAppList.get(simAppIdx).getFdnStatus();
+                            isHandled = true;
+                        }
+                        break;
+                    case "SC": // PIN1 status query
+                        if (appId.equals(mSimAppList.get(simAppIdx).getAid())) {
+                            responseData = mSimAppList.get(simAppIdx).getPin1State();
+                            isHandled = true;
+                        }
+                        break;
+                    default:
+                        isFacilitySupport = false;
+                        break;
+                }
             }
         }
 
@@ -311,10 +318,14 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         int simAppIdx;
         boolean isHandled;
 
-        for (simAppIdx = 0, isHandled = false; simAppIdx < numOfSimApp && !isHandled; simAppIdx++) {
-            if (aid.equals(mSimAppList.get(simAppIdx).getAid())) {
-                imsi = mSimAppList.get(simAppIdx).getImsi();
-                isHandled = true;
+        synchronized (mCacheUpdateMutex) {
+            for (simAppIdx = 0, isHandled = false;
+                    simAppIdx < numOfSimApp && !isHandled;
+                    simAppIdx++) {
+                if (aid.equals(mSimAppList.get(simAppIdx).getAid())) {
+                    imsi = mSimAppList.get(simAppIdx).getImsi();
+                    isHandled = true;
+                }
             }
         }
 
@@ -371,14 +382,117 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         }
     }
 
+    private String encodeBcdString(String str) {
+        StringBuffer bcdString = new StringBuffer();
+
+        if (str.length() % 2 != 0) {
+            Log.d(TAG, "Invalid string(" + str + ") for Bcd format");
+            return "";
+        }
+
+        for (int i = 0; i < str.length(); i += 2) {
+            bcdString.append(str.substring(i + 1, i + 2));
+            bcdString.append(str.substring(i, i + 1));
+        }
+
+        return bcdString.toString();
+    }
+
+    private int getIccIoResult(
+            android.hardware.radio.sim.IccIoResult iccIoResult,
+            int command,
+            int fileId,
+            String path,
+            int p1,
+            int p2,
+            int p3,
+            String aid) {
+        int numOfSimApp = mSimAppList.size();
+        int simAppIdx;
+        boolean foundAid;
+        int responseError = RadioError.GENERIC_FAILURE;
+
+        if (iccIoResult == null) {
+            return responseError;
+        }
+
+        synchronized (mCacheUpdateMutex) {
+            for (simAppIdx = 0, foundAid = false; simAppIdx < numOfSimApp; simAppIdx++) {
+                if (aid.equals(mSimAppList.get(simAppIdx).getAid())) {
+                    foundAid = true;
+                    break;
+                }
+            }
+
+            if (!foundAid) {
+                Log.e(TAG, "Not support sim application aid = " + aid);
+                iccIoResult.sw1 = 0x6A;
+                iccIoResult.sw2 = 0x82;
+            } else {
+                switch (fileId) {
+                    case EF_ICCID:
+                        if (command == COMMAND_READ_BINARY) {
+                            String bcdIccid =
+                                    encodeBcdString(mSimAppList.get(simAppIdx).getIccid());
+                            iccIoResult.simResponse = bcdIccid;
+                            Log.d(TAG, "Get IccIo result: ICCID = " + iccIoResult.simResponse);
+                            iccIoResult.sw1 = 0x90;
+                            responseError = RadioError.NONE;
+                        } else if (command == COMMAND_GET_RESPONSE) {
+                            iccIoResult.simResponse = mSimAppList.get(simAppIdx).getIccidInfo();
+                            Log.d(TAG, "Get IccIo result: ICCID = " + iccIoResult.simResponse);
+                            iccIoResult.sw1 = 0x90;
+                            responseError = RadioError.NONE;
+                        } else {
+                            Log.d(
+                                    TAG,
+                                    "Command("
+                                            + command
+                                            + ") not support for file id = 0x"
+                                            + Integer.toHexString(fileId));
+                            iccIoResult.sw1 = 0x6A;
+                            iccIoResult.sw2 = 0x82;
+                        }
+                        break;
+                    default:
+                        Log.d(TAG, "Not find EF file id = 0x" + Integer.toHexString(fileId));
+                        iccIoResult.sw1 = 0x6A;
+                        iccIoResult.sw2 = 0x82;
+                        break;
+                }
+            }
+        }
+
+        return responseError;
+    }
+
     @Override
     public void iccIoForApp(int serial, android.hardware.radio.sim.IccIo iccIo) {
         Log.d(TAG, "iccIoForApp");
-        // TODO: cache value
+        int responseError = RadioError.NONE;
         android.hardware.radio.sim.IccIoResult iccIoResult =
                 new android.hardware.radio.sim.IccIoResult();
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        switch (iccIo.command) {
+            case COMMAND_READ_BINARY:
+            case COMMAND_GET_RESPONSE:
+                responseError =
+                        getIccIoResult(
+                                iccIoResult,
+                                iccIo.command,
+                                iccIo.fileId,
+                                iccIo.path,
+                                iccIo.p1,
+                                iccIo.p2,
+                                iccIo.p3,
+                                iccIo.aid);
+                break;
+            default:
+                responseError = RadioError.REQUEST_NOT_SUPPORTED;
+                break;
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, responseError);
         try {
             mRadioSimResponse.iccIoForAppResponse(rsp, iccIoResult);
         } catch (RemoteException ex) {
