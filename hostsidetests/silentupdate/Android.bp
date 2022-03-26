@@ -32,7 +32,7 @@ java_test_host {
     ],
     data: [
         ":SilentInstallCurrent",
+        ":SilentInstallR",
         ":SilentInstallQ",
-        ":SilentInstallP",
     ]
 }

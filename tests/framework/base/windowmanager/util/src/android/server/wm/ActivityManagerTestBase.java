@@ -104,6 +104,7 @@ import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -165,6 +166,7 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
@@ -243,6 +245,7 @@ public abstract class ActivityManagerTestBase {
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
     private static Boolean sSupportsInsecureLockScreen = null;
     private static Boolean sIsAssistantOnTop = null;
+    private static Boolean sIsTablet = null;
     private static boolean sIllegalTaskStateFound;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -1064,9 +1067,20 @@ public abstract class ActivityManagerTestBase {
         return hasDeviceFeature(FEATURE_TELEVISION);
     }
 
-    protected boolean isTablet() {
-        // Larger than approx 7" tablets
-        return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+    public static boolean isTablet() {
+        if (sIsTablet == null) {
+            // Use WindowContext with type application overlay to prevent the metrics overridden by
+            // activity bounds. Note that process configuration may still be overridden by
+            // foreground Activity.
+            final Context appContext = ApplicationProvider.getApplicationContext();
+            final Display defaultDisplay = appContext.getSystemService(DisplayManager.class)
+                    .getDisplay(DEFAULT_DISPLAY);
+            final Context windowContext = appContext.createWindowContext(defaultDisplay,
+                    TYPE_APPLICATION_OVERLAY, null /* options */);
+            sIsTablet = windowContext.getResources()
+                    .getConfiguration().smallestScreenWidthDp >= 600;
+        }
+        return sIsTablet;
     }
 
     protected boolean isOperatorTierDevice() {

@@ -73,6 +73,7 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -278,6 +279,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         }
     }
 
+    @FlakyTest(bugId = 210680326)
     @Test
     public void testHandlesConfigChanges() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(

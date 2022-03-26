@@ -44,7 +44,7 @@ public class BluetoothSharingRestrictionTest extends BaseManagedProfileTest {
     private static final int POLL_TIME_MS = 400;
     /** Activity that handles Bluetooth sharing. */
     private static final ComponentName OPP_LAUNCHER_COMPONENT = new ComponentName(
-            "com.android.bluetooth", "com.android.bluetooth.opp.BluetoothOppLauncherActivity");
+            "com.android.bluetooth.services", "com.android.bluetooth.opp.BluetoothOppLauncherActivity");
 
     /**
      * Tests that Bluetooth sharing activity gets disabled when the restriction is enforced.

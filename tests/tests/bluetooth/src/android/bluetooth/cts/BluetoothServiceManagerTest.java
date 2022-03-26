@@ -23,6 +23,7 @@ import android.os.BluetoothServiceManager;
 import android.os.BluetoothServiceManager.ServiceNotFoundException;
 import android.os.BluetoothServiceManager.ServiceRegisterer;
 import android.os.IBinder;
+import android.os.ServiceManager;
 import android.test.AndroidTestCase;
 
 public class BluetoothServiceManagerTest extends AndroidTestCase {
@@ -58,6 +59,21 @@ public class BluetoothServiceManagerTest extends AndroidTestCase {
             assertNotNull(bluetoothServiceBinder);
         } catch (ServiceNotFoundException exception) {
             fail("ServiceNotFoundException should not be thrown");
+        }
+    }
+
+    public void test_ServiceNotFoundException() {
+        ServiceManager.ServiceNotFoundException baseException =
+                new ServiceManager.ServiceNotFoundException("");
+        String exceptionDescription = "description test";
+        String baseExceptionDescription = baseException.getMessage();
+        ServiceNotFoundException newException =
+                new ServiceNotFoundException(exceptionDescription);
+        assertEquals(baseExceptionDescription + exceptionDescription, newException.getMessage());
+        try {
+            throw newException;
+        } catch (ServiceNotFoundException exception) {
+            assertEquals(baseExceptionDescription + exceptionDescription, exception.getMessage());
         }
     }
 }

@@ -17,8 +17,8 @@
 package android.wallpapereffectsgeneration.cts;
 
 import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_ERROR;
+import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_NOT_READY;
 import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_OK;
-import static android.app.wallpapereffectsgeneration.CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_UNKNOWN;
 
 import android.app.wallpapereffectsgeneration.CinematicEffectRequest;
 import android.app.wallpapereffectsgeneration.CinematicEffectResponse;
@@ -62,15 +62,15 @@ public class CtsWallpaperEffectsGenerationService extends WallpaperEffectsGenera
             return;
         }
         if (taskId.contains("error")) {
-            returnCinematicEffectResponse(
+            super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_ERROR));
         } else if (taskId.contains("initial")) {
             // Use this status code to tell the difference between initial call and calls in the
             // real test case.
-            returnCinematicEffectResponse(
-                    createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_UNKNOWN));
+            super.returnCinematicEffectResponse(
+                    createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_NOT_READY));
         } else {
-            returnCinematicEffectResponse(
+            super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_OK));
         }
         sWatcher.requested.countDown();

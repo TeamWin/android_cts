@@ -50,7 +50,7 @@ public class BluetoothIntentsTest extends StsExtraBusinessLogicTestCase {
     try {
       Intent should_be_protected_broadcast = new Intent();
       should_be_protected_broadcast.setComponent(
-          new ComponentName("com.android.bluetooth",
+          new ComponentName("com.android.bluetooth.services",
             "com.android.bluetooth.opp.BluetoothOppReceiver"));
       should_be_protected_broadcast.setAction(prefix + action);
       getInstrumentation().getContext().sendBroadcast(should_be_protected_broadcast);

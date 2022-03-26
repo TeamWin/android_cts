@@ -38,7 +38,7 @@ android_test_helper_app {
     ],
     java_resources: [
         ":SilentInstallCurrent",
+        ":SilentInstallR",
         ":SilentInstallQ",
-        ":SilentInstallP",
     ]
 }
