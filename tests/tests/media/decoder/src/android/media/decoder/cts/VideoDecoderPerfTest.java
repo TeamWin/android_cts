@@ -189,9 +189,9 @@ public class VideoDecoderPerfTest extends MediaTestBase {
         // Ensure we can finish this test within the test timeout. Allow 25% slack (4/5).
         long maxTimeMs = Math.min(
                 MAX_TEST_TIMEOUT_MS * 4 / 5 / NUMBER_OF_REPEATS, MAX_TIME_MS);
-        // reduce test run on non-real device
+        // reduce test run on non-real device to maximum of 2 seconds
         if (MediaUtils.onFrankenDevice()) {
-            maxTimeMs /= 10;
+            maxTimeMs = Math.min(2000, maxTimeMs);
         }
         double measuredFps[] = new double[NUMBER_OF_REPEATS];
 
