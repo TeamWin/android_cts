@@ -54,7 +54,9 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
 
     @Override
     void onTearDownVirtualInputDevice() {
-        mVirtualMouse.close();
+        if (mVirtualMouse != null) {
+            mVirtualMouse.close();
+        }
     }
 
     @Test
