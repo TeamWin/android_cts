@@ -90,9 +90,9 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
         mExecutor = Executors.newSingleThreadExecutor();
 
         Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
+                "com.android.bluetooth.services");
         int hidSupportId = bluetoothResources.getIdentifier(PROFILE_SUPPORTED_HID_DEVICE, "bool",
-                "com.android.bluetooth");
+                "com.android.bluetooth.services");
         mIsHidSupported = bluetoothResources.getBoolean(hidSupportId);
         if (!mIsHidSupported) return;
 

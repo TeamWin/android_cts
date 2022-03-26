@@ -194,6 +194,63 @@ public final class PreferentialNetworkServiceTest {
     }
 
     @CanSetPolicyTest(policy = PreferentialNetworkService.class)
+    public void setPreferentialNetworkServiceConfigs_fallback_isSet() {
+        PreferentialNetworkServiceConfig fallbackConfig =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true)
+                        .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_1)
+                        .setFallbackToDefaultConnectionAllowed(true)
+                        .build();
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
+                    List.of(fallbackConfig));
+
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPreferentialNetworkServiceConfigs().get(0).isEnabled()).isTrue();
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPreferentialNetworkServiceConfigs().get(0)
+                    .isFallbackToDefaultConnectionAllowed()).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
+                    List.of(PreferentialNetworkServiceConfig.DEFAULT));
+        }
+    }
+
+    @CanSetPolicyTest(policy = PreferentialNetworkService.class)
+    public void setPreferentialNetworkServiceConfigs_enabled_isSet_excludedUids_set() {
+        PreferentialNetworkServiceConfig slice1Config =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true)
+                        .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_1)
+                        .setExcludedUids(new int[]{1})
+                        .build();
+        PreferentialNetworkServiceConfig slice2Config =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true)
+                        .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_2)
+                        .setIncludedUids(new int[]{1})
+                        .build();
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
+                    List.of(slice1Config, slice2Config));
+
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPreferentialNetworkServiceConfigs().get(0).isEnabled()).isTrue();
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPreferentialNetworkServiceConfigs().get(0)
+                    .getExcludedUids()).isEqualTo(new int[]{1});
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPreferentialNetworkServiceConfigs().get(1).isEnabled()).isTrue();
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPreferentialNetworkServiceConfigs().get(1)
+                    .getIncludedUids()).isEqualTo(new int[]{1});
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
+                    List.of(PreferentialNetworkServiceConfig.DEFAULT));
+        }
+    }
+
+    @CanSetPolicyTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceConfigs_default_isNotSet() {
         sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
                 List.of(PreferentialNetworkServiceConfig.DEFAULT));

@@ -44,7 +44,9 @@ public class VirtualKeyboardTest extends VirtualDeviceTestCase {
 
     @Override
     void onTearDownVirtualInputDevice() {
-        mVirtualKeyboard.close();
+        if (mVirtualKeyboard != null) {
+            mVirtualKeyboard.close();
+        }
     }
 
     @Test

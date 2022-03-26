@@ -330,10 +330,10 @@ public class BluetoothAdapterTest extends AndroidTestCase {
         int maxConnectedAudioDevicesConfig = 0;
         try {
             Resources bluetoothRes = mContext.getPackageManager()
-                    .getResourcesForApplication("com.android.bluetooth");
+                    .getResourcesForApplication("com.android.bluetooth.services");
             maxConnectedAudioDevicesConfig = bluetoothRes.getInteger(
                     bluetoothRes.getIdentifier("config_bluetooth_max_connected_audio_devices",
-                    "integer", "com.android.bluetooth"));
+                    "integer", "com.android.bluetooth.services"));
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }

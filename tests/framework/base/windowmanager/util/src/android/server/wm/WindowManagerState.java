@@ -29,6 +29,7 @@ import static android.server.wm.StateLogger.logE;
 import static android.server.wm.TestTaskOrganizer.INVALID_TASK_ID;
 import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.window.DisplayAreaOrganizer.FEATURE_IME;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -514,6 +515,15 @@ public class WindowManagerState {
                 .that(result.size()).isAtMost(1);
 
         return result.stream().findFirst().orElse(null);
+    }
+
+    @Nullable
+    public DisplayArea getImeContainer(int displayId) {
+        final DisplayContent displayContent = getDisplay(displayId);
+        if (displayContent == null) {
+            return null;
+        }
+        return displayContent.getImeContainer();
     }
 
     int getFrontRootTaskId(int displayId) {
@@ -1269,6 +1279,18 @@ public class WindowManagerState {
             return result.stream().findFirst().orElse(null);
         }
 
+        @NonNull
+        DisplayArea getImeContainer() {
+            final List<DisplayArea> imeContainers = new ArrayList<>();
+            final Predicate<DisplayArea> p = da -> da.getFeatureId() == FEATURE_IME;
+            collectDescendantsOfTypeIf(DisplayArea.class, p, this, imeContainers);
+
+            assertWithMessage("There must be exactly one ImeContainer per DisplayContent.")
+                    .that(imeContainers.size()).isEqualTo(1);
+
+            return imeContainers.get(0);
+        }
+
         ArrayList<Task> getRootTasks() {
             return mRootTasks;
         }
@@ -1829,7 +1851,7 @@ public class WindowManagerState {
             return mFeatureId;
         }
 
-        boolean isOrganized() {
+        public boolean isOrganized() {
             return mIsOrganized;
         }
 

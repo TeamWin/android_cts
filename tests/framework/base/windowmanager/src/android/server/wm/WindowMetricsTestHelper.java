@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.server.wm.ActivityManagerTestBase.isTablet;
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -119,6 +120,11 @@ public class WindowMetricsTestHelper {
      * @param display the display to compare bounds against
      */
     static void assertBoundsMatchDisplay(Rect maxBounds, Rect currentBounds, Display display) {
+        // TODO(b/224404595): remove the logic after we can revert ag/17076728 back.
+        if (isTablet()) {
+            return;
+        }
+
         // Check window bounds
         final Point displaySize = new Point();
         display.getSize(displaySize);

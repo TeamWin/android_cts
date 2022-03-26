@@ -452,6 +452,22 @@ class ItsSession(object):
     self.sock.settimeout(self.SOCK_TIMEOUT)
     return data['objValue']
 
+  def get_supported_video_qualities(self, camera_id):
+    """Get all supported video qualities for this camera device.
+      Args:
+        camera_id: device id
+      Returns:
+        List of all supported video qualities
+    """
+    cmd = {}
+    cmd['cmdName'] = 'getSupportedVideoQualities'
+    cmd['cameraId'] = camera_id
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'supportedVideoQualities':
+      raise error_util.CameraItsError('Invalid command response')
+    return data['strValue'].split(';')[:-1] # remove the last appended ';'
+
   def do_capture(self,
                  cap_request,
                  out_surfaces=None,

@@ -21,6 +21,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.DynamicRangeProfiles;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
@@ -102,8 +103,9 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * 10-bit output capable logical devices must support switching between all the
-     * backwards-compatible physical cameras via the CONTROL_ZOOM_RATIO control.
+     * 10-bit output capable logical devices must also support switching between the same physical
+     * cameras via the CONTROL_ZOOM_RATIO control, that the device supports switching between for
+     * 8-bit outputs.
      */
     @CddTest(requirement="7.5/C-3-1")
     @Test
@@ -141,8 +143,17 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                 }
                 candidateZoomRatios.add(ZOOM_RATIO_STEPS - 1, zoomRatioRange.getUpper());
 
+                Set<String> activePhysicalIdsSeen8bit = new HashSet<String>();
                 bufferFormatZoomTestByCamera(ImageFormat.YUV_420_888, candidateZoomRatios,
-                        true /*checkPhysicalDevices*/);
+                        activePhysicalIdsSeen8bit /*activePhysicalIdsSeen*/);
+                Set<String> activePhysicalIdsSeen10bit = new HashSet<String>();
+                bufferFormatZoomTestByCamera(ImageFormat.YCBCR_P010, candidateZoomRatios,
+                        activePhysicalIdsSeen10bit /*activePhysicalIdsSeen*/);
+
+                assertEquals("The physical ids seen when zooming with 8-bit output: " +
+                        activePhysicalIdsSeen8bit + " must match with the 10-bit output: " +
+                        activePhysicalIdsSeen10bit, activePhysicalIdsSeen8bit,
+                        activePhysicalIdsSeen10bit);
             } finally {
                 closeDevice(id);
             }
@@ -150,12 +161,13 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
     }
 
     private void bufferFormatZoomTestByCamera(int format) throws Exception {
+        Set<String> activePhysicalIdsSeen = new HashSet<String>();
         bufferFormatZoomTestByCamera(format, CameraTestUtils.getCandidateZoomRatios(mStaticInfo),
-                false /*/checkPhysicalDevices*/);
+                activePhysicalIdsSeen /*/activePhysicalIdSeen*/);
     }
 
     private void bufferFormatZoomTestByCamera(int format, List<Float> candidateZoomRatios,
-            boolean checkPhysicalDevices) throws Exception {
+            Set<String> activePhysicalIdsSeen) throws Exception {
         Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
         if (availableSizes.length == 0) {
@@ -177,12 +189,14 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
 
             ArrayList<OutputConfiguration> outputConfigs = new ArrayList<>();
             OutputConfiguration config = new OutputConfiguration(mReader.getSurface());
+            if (format == ImageFormat.YCBCR_P010) {
+                config.setDynamicRangeProfile(DynamicRangeProfiles.HLG10);
+            }
             outputConfigs.add(config);
 
             CaptureRequest.Builder requestBuilder = prepareCaptureRequestForConfigs(
                     outputConfigs, CameraDevice.TEMPLATE_PREVIEW);
 
-            Set<String> activePhysicalIdsSeen = new HashSet<String>();
             boolean checkActivePhysicalIdConsistency =
                     PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.S;
             for (Float zoomRatio : candidateZoomRatios) {
@@ -234,18 +248,6 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
                         " change at different zoom levels.", activePhysicalIdsSeen.size() == 1);
             }
 
-            if (checkPhysicalDevices) {
-                HashSet<String> colorPhysicalCameraIds = new HashSet<>(physicalCameraIds.size());
-                for (String physicalId : physicalCameraIds) {
-                    if (mAllStaticInfo.get(physicalId).isColorOutputSupported()) {
-                        colorPhysicalCameraIds.add(physicalId);
-                    }
-                }
-
-                assertEquals("Absent backwards compatible physical devices when scanning" +
-                        " through the zoom ratio range!", activePhysicalIdsSeen,
-                        colorPhysicalCameraIds);
-            }
         } finally {
             closeDefaultImageReader();
         }

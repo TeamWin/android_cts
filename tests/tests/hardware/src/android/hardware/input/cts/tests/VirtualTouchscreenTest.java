@@ -45,7 +45,9 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
 
     @Override
     void onTearDownVirtualInputDevice() {
-        mVirtualTouchscreen.close();
+        if (mVirtualTouchscreen != null) {
+            mVirtualTouchscreen.close();
+        }
     }
 
     @Test

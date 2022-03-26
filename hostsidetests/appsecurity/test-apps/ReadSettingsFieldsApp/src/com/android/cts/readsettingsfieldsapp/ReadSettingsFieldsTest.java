@@ -49,7 +49,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
             try {
                 callGetStringMethod(settingsClass, key);
             } catch (SecurityException ex) {
-                if (isSettingsDeprecated(ex)) {
+                if (isSettingsDeprecated(ex) || isAvailableForLowerOrEqualTargetedSDK(ex)) {
                     continue;
                 }
                 fail("Reading non-hidden " + settingsClass.getSimpleName() + " settings key <" + key
@@ -92,6 +92,10 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
 
     private boolean isSettingsDeprecated(SecurityException ex) {
         return ex.getMessage().contains("is deprecated and no longer accessible");
+    }
+
+    private boolean isAvailableForLowerOrEqualTargetedSDK(SecurityException ex) {
+        return ex.getMessage().contains("targetSdkVersion lower than or equal");
     }
 
     /** Test hidden keys are readable with annotation */

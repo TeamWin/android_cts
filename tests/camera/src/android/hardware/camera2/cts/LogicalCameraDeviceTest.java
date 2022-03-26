@@ -849,7 +849,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      * between 50 and 95 degrees for all capture templates.
      */
     @Test
-    @CddTest(requirement="7.5.4/C-1-1")
+    @CddTest(requirement="7.5.4/H-1-1")
     public void testDefaultFov() throws Exception {
         final double MIN_FOV = 50;
         final double MAX_FOV = 95;

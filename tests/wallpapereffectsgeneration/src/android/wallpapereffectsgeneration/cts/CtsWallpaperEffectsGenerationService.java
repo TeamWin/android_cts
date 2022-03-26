@@ -62,15 +62,15 @@ public class CtsWallpaperEffectsGenerationService extends WallpaperEffectsGenera
             return;
         }
         if (taskId.contains("error")) {
-            returnCinematicEffectResponse(
+            super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_ERROR));
         } else if (taskId.contains("initial")) {
             // Use this status code to tell the difference between initial call and calls in the
             // real test case.
-            returnCinematicEffectResponse(
+            super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_NOT_READY));
         } else {
-            returnCinematicEffectResponse(
+            super.returnCinematicEffectResponse(
                     createCinematicEffectResponse(taskId, CINEMATIC_EFFECT_STATUS_OK));
         }
         sWatcher.requested.countDown();

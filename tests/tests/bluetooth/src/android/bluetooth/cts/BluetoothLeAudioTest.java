@@ -78,9 +78,9 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
             mBluetoothLeAudio = null;
 
             Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                    "com.android.bluetooth");
+                    "com.android.bluetooth.services");
             int leAudioSupportId = bluetoothResources.getIdentifier(
-                    PROFILE_SUPPORTED_LE_AUDIO, "bool", "com.android.bluetooth");
+                    PROFILE_SUPPORTED_LE_AUDIO, "bool", "com.android.bluetooth.services");
             if (leAudioSupportId == 0) return;
             mIsLeAudioSupported = bluetoothResources.getBoolean(leAudioSupportId);
             if (!mIsLeAudioSupported) return;

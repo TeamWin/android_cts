@@ -1031,8 +1031,7 @@ public class StagedInstallTest {
                         .getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
         assertThat(shim.getLongVersionCode()).isEqualTo(1);
         // Check that APEX on /data wins.
-        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
-                .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
         assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(
                 ApplicationInfo.FLAG_INSTALLED);
         assertThat(shim.applicationInfo.sourceDir)
@@ -1219,7 +1218,7 @@ public class StagedInstallTest {
         boolean isSystemApp = (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
         boolean isUpdatedSystemApp =
                 (info.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
-        assertThat(isSystemApp).isTrue();
+        assertThat(isSystemApp).isFalse();
         assertThat(isUpdatedSystemApp).isTrue();
     }
 
@@ -1244,8 +1243,7 @@ public class StagedInstallTest {
         {
             PackageInfo apex = pm.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             assertThat(apex.getLongVersionCode()).isEqualTo(2);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
-                    .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                     .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/data/apex/active");
@@ -1273,8 +1271,7 @@ public class StagedInstallTest {
         {
             PackageInfo apex = pm.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             assertThat(apex.getLongVersionCode()).isEqualTo(3);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
-                    .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                     .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/data/apex/active");
@@ -1301,8 +1298,7 @@ public class StagedInstallTest {
         {
             PackageInfo apex = pm.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             assertThat(apex.getLongVersionCode()).isEqualTo(3);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
-                    .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                     .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/data/apex/active");
