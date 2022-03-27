@@ -28,6 +28,7 @@ import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
+import android.media.cts.TestUtils;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
@@ -45,6 +46,7 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -97,6 +99,7 @@ public class VideoDecoderPerfTest extends MediaTestBase {
     private int mBitrate;
 
     private boolean mSkipRateChecking = false;
+    private boolean mUpdatedSwCodec = false;
     static final String mInpPrefix = WorkDir.getMediaDirString();
 
     static private List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList) {
@@ -173,6 +176,9 @@ public class VideoDecoderPerfTest extends MediaTestBase {
         super.setUp();
         Bundle bundle = InstrumentationRegistry.getArguments();
         mSkipRateChecking = TextUtils.equals("true", bundle.getString("mts-media"));
+
+        mUpdatedSwCodec =
+                !TestUtils.isMainlineModuleFactoryVersion("com.google.android.media.swcodec");
     }
 
     @After
@@ -207,8 +213,11 @@ public class VideoDecoderPerfTest extends MediaTestBase {
             // doDecode(name, video, width, height, null, i, maxTimeMs);
         }
 
+        // allow improvements in mainline-updated google-supplied software codecs.
+        boolean fasterIsOk = mUpdatedSwCodec & name.startsWith("c2.android.");
         String error =
-            MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
+            MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height,
+                           fasterIsOk,  measuredFps);
         // Performance numbers only make sense on real devices, so skip on non-real devices
         if ((MediaUtils.onFrankenDevice() || mSkipRateChecking) && error != null) {
             // ensure there is data, but don't insist that it is correct
