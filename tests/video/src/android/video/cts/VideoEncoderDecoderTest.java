@@ -124,6 +124,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     private double mRmsErrorMargin;
     private Random mRandom;
 
+    private boolean mUpdatedSwCodec = false;
+
     private class TestConfig {
         public boolean mTestPixels = true;
         public boolean mReportFrameTime = false;
@@ -157,6 +159,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
     protected void setUp() throws Exception {
         mEncodedOutputBuffer = new LinkedList<Pair<ByteBuffer, BufferInfo>>();
         mRmsErrorMargin = PIXEL_RMS_ERROR_MARGIN;
+        mUpdatedSwCodec =
+                !TestUtils.isMainlineModuleFactoryVersion("com.google.android.media.swcodec");
         // Use time as a seed, hoping to prevent checking pixels in the same pattern
         long now = System.currentTimeMillis();
         mRandom = new Random(now);
@@ -819,8 +823,10 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         }
 
         if (isPerf) {
+            // allow improvements in mainline-updated google-supplied software codecs.
+            boolean fasterIsOk =  mUpdatedSwCodec & encoderName.startsWith("c2.android.");
             String error = MediaPerfUtils.verifyAchievableFrameRates(
-                    encoderName, mimeType, w, h, measuredFps);
+                    encoderName, mimeType, w, h, fasterIsOk, measuredFps);
             // Performance numbers only make sense on real devices, so skip on non-real devices
             //
             // Also ignore verification on non-preferred ABIs due to the possibility of
