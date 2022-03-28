@@ -431,7 +431,8 @@ public class EuiccServiceTest {
                     public void onComplete(int result) {
                         assertEquals(EuiccService.RESULT_OK, result);
                     }
-                });
+                },
+                false /* usePortIndex */);
 
         try {
             mCountDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
