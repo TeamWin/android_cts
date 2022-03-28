@@ -1447,23 +1447,6 @@ public class VideoEncoderTest extends MediaTestBase {
         intraRefresh(new Encoder[]{mEncHandle}, 480, 360);
     }
 
-    // Tests encoder profiles required by CDD.
-    @Test
-    public void testLowQualitySDSupport() {
-        Assume.assumeTrue("Test is currently enabled only for avc and vp8 encoders",
-                mEncHandle.mMime.equals(MediaFormat.MIMETYPE_VIDEO_AVC) ||
-                mEncHandle.mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8));
-        support(new Encoder[]{mEncHandle}, 720, 480, 20, 384 * 1000);
-    }
-
-    @Test
-    public void testHighQualitySDSupport() {
-        Assume.assumeTrue("Test is currently enabled only for avc and vp8 encoders",
-                mEncHandle.mMime.equals(MediaFormat.MIMETYPE_VIDEO_AVC) ||
-                        mEncHandle.mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8));
-        support(new Encoder[]{mEncHandle}, 720, 480, 30, 2 * 1000000);
-    }
-
     @Test
     public void testFlexQVGA20fps384kbps() {
         Assume.assumeTrue("Test is currently enabled only for avc and vp8 encoders",
@@ -1654,22 +1637,4 @@ public class VideoEncoderTest extends MediaTestBase {
         }
     }
 
-    /* test size and rate are supported */
-    private void support(Encoder[] encoders, int width, int height, int frameRate, int bitRate) {
-        boolean supported = false;
-        if (encoders.length == 0) {
-            MediaUtils.skipTest("no such encoder present");
-            return;
-        }
-        for (Encoder encoder : encoders) {
-            if (encoder.testSupport(width, height, frameRate, bitRate)) {
-                supported = true;
-                break;
-            }
-        }
-        if (!supported) {
-            fail("unsupported format " + width + "x" + height + " " +
-                    frameRate + "fps " + bitRate + "bps");
-        }
-    }
 }
