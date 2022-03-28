@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeFalse;
 
 import android.alarmmanager.alarmtestapp.cts.PermissionStateChangedReceiver;
 import android.alarmmanager.alarmtestapp.cts.policy_permission.RequestReceiver;
+import android.alarmmanager.alarmtestapp.cts.policy_permission_32.RequestReceiverSdk32;
 import android.alarmmanager.alarmtestapp.cts.sdk30.TestReceiver;
 import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.app.Activity;
@@ -305,7 +306,7 @@ public class ExactAlarmsTest {
     }
 
     @Test
-    public void canScheduleExactAlarmWithPolicyPermissionOnly() throws Exception {
+    public void canScheduleExactAlarmWithPolicyPermission() throws Exception {
         final CountDownLatch resultLatch = new CountDownLatch(1);
         final AtomicBoolean apiResult = new AtomicBoolean(false);
         final AtomicInteger result = new AtomicInteger(-1);
@@ -328,6 +329,33 @@ public class ExactAlarmsTest {
                 resultLatch.await(10, TimeUnit.SECONDS));
         assertEquals(Activity.RESULT_OK, result.get());
         assertTrue("canScheduleExactAlarm returned false", apiResult.get());
+    }
+
+    @Test
+    public void canScheduleExactAlarmWithPolicyPermissionSdk32() throws Exception {
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final AtomicBoolean apiResult = new AtomicBoolean(true);
+        final AtomicInteger result = new AtomicInteger(-1);
+
+        final Intent requestToTestApp = new Intent(
+                RequestReceiverSdk32.ACTION_GET_CAN_SCHEDULE_EXACT_ALARM)
+                .setClassName(RequestReceiverSdk32.PACKAGE_NAME,
+                        RequestReceiverSdk32.class.getName())
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        sContext.sendOrderedBroadcast(requestToTestApp, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                result.set(getResultCode());
+                final String resultStr = getResultData();
+                apiResult.set(Boolean.parseBoolean(resultStr));
+                resultLatch.countDown();
+            }
+        }, null, Activity.RESULT_CANCELED, null, null);
+
+        assertTrue("Timed out waiting for response from helper app",
+                resultLatch.await(10, TimeUnit.SECONDS));
+        assertEquals(Activity.RESULT_OK, result.get());
+        assertFalse("canScheduleExactAlarm returned true", apiResult.get());
     }
 
     @Test(expected = SecurityException.class)
