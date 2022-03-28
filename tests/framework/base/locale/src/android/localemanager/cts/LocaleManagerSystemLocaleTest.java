@@ -32,8 +32,9 @@ import android.server.wm.ActivityManagerTestBase;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,11 +45,31 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 public class LocaleManagerSystemLocaleTest extends ActivityManagerTestBase {
-    private Context mContext;
-    private LocaleManager mLocaleManager;
+    private static Context sContext;
+    private static LocaleManager sLocaleManager;
 
     /* System locales that were set on the device prior to running tests */
-    private LocaleList mPreviousSystemLocales;
+    private static LocaleList sPreviousSystemLocales;
+
+    @BeforeClass
+    public static void setUpClass() {
+        sContext = InstrumentationRegistry.getTargetContext();
+        sLocaleManager = sContext.getSystemService(LocaleManager.class);
+
+        // Set custom system locales for these tests.
+        // Store the existing system locales and reset back to it in tearDown.
+        sPreviousSystemLocales = sLocaleManager.getSystemLocales();
+        runWithShellPermissionIdentity(() ->
+                        sLocaleManager.setSystemLocales(DEFAULT_SYSTEM_LOCALES),
+                Manifest.permission.CHANGE_CONFIGURATION, Manifest.permission.WRITE_SETTINGS);
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        runWithShellPermissionIdentity(() ->
+                        sLocaleManager.setSystemLocales(sPreviousSystemLocales),
+                Manifest.permission.CHANGE_CONFIGURATION, Manifest.permission.WRITE_SETTINGS);
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -56,41 +77,24 @@ public class LocaleManagerSystemLocaleTest extends ActivityManagerTestBase {
         // to be in the foreground/background.
         super.setUp();
 
-        mContext = InstrumentationRegistry.getTargetContext();
-        mLocaleManager = mContext.getSystemService(LocaleManager.class);
-
-        // Set custom system locales for these tests.
-        // Store the existing system locales and reset back to it in tearDown.
-        mPreviousSystemLocales = mLocaleManager.getSystemLocales();
-        runWithShellPermissionIdentity(() ->
-                        mLocaleManager.setSystemLocales(DEFAULT_SYSTEM_LOCALES),
-                Manifest.permission.CHANGE_CONFIGURATION, Manifest.permission.WRITE_SETTINGS);
-
         // Reset locales for the calling app.
-        mLocaleManager.setApplicationLocales(LocaleList.getEmptyLocaleList());
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        runWithShellPermissionIdentity(() ->
-                        mLocaleManager.setSystemLocales(mPreviousSystemLocales),
-                Manifest.permission.CHANGE_CONFIGURATION, Manifest.permission.WRITE_SETTINGS);
+        sLocaleManager.setApplicationLocales(LocaleList.getEmptyLocaleList());
     }
 
     @Test
     public void testGetSystemLocales_noAppLocaleSet_returnsCorrectList()
             throws Exception {
-        assertEquals(DEFAULT_SYSTEM_LOCALES, mLocaleManager.getSystemLocales());
+        assertEquals(DEFAULT_SYSTEM_LOCALES, sLocaleManager.getSystemLocales());
     }
 
     @Test
     public void testGetSystemLocales_appLocaleSet_returnsCorrectList()
             throws Exception {
-        mLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
+        sLocaleManager.setApplicationLocales(DEFAULT_APP_LOCALES);
         assertLocalesCorrectlySetForCallingApp(DEFAULT_APP_LOCALES);
 
         // ensure that getSystemLocales still returns the system locales
-        assertEquals(DEFAULT_SYSTEM_LOCALES, mLocaleManager.getSystemLocales());
+        assertEquals(DEFAULT_SYSTEM_LOCALES, sLocaleManager.getSystemLocales());
     }
 
 
@@ -99,7 +103,7 @@ public class LocaleManagerSystemLocaleTest extends ActivityManagerTestBase {
      * by fetching the locales of the app with a binder call.
      */
     private void assertLocalesCorrectlySetForCallingApp(LocaleList expectedLocales) {
-        assertEquals(expectedLocales, mLocaleManager.getApplicationLocales());
+        assertEquals(expectedLocales, sLocaleManager.getApplicationLocales());
     }
 
 }
