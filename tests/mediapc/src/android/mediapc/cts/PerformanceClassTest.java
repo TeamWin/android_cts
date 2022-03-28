@@ -17,9 +17,10 @@
 package android.mediapc.cts;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.FEATURE_SecurePlayback;
-import static android.mediapc.cts.Utils.MIN_MEMORY_PERF_CLASS_CANDIDATE_MB;
-import static android.mediapc.cts.Utils.MIN_MEMORY_PERF_CLASS_T_MB;
+import static android.mediapc.cts.common.Utils.MIN_MEMORY_PERF_CLASS_CANDIDATE_MB;
+import static android.mediapc.cts.common.Utils.MIN_MEMORY_PERF_CLASS_T_MB;
 import static android.util.DisplayMetrics.DENSITY_400;
+
 import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
@@ -30,6 +31,7 @@ import android.media.MediaCodecList;
 import android.media.MediaDrm;
 import android.media.MediaFormat;
 import android.media.UnsupportedSchemeException;
+import android.mediapc.cts.common.Utils;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
