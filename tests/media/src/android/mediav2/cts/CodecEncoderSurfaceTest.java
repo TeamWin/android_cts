@@ -175,8 +175,17 @@ public class CodecEncoderSurfaceTest {
             String mime = format.getString(MediaFormat.KEY_MIME);
             if (mime.startsWith("video/")) {
                 mExtractor.selectTrack(trackID);
-                format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                        MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+                ArrayList<MediaFormat> formatList = new ArrayList<>();
+                formatList.add(format);
+                boolean selectHBD = CodecTestBase.doesAnyFormatHaveHDRProfile(mime, formatList) ||
+                        srcFile.contains("10bit");
+                if (selectHBD) {
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010);
+                } else {
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
+                }
                 return format;
             }
         }
@@ -571,7 +580,7 @@ public class CodecEncoderSurfaceTest {
     }
 
     private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mime,
-            String testFile, String muxFile, int bitrate, int framerate);
+            String testFile, String muxFile, int bitrate, int framerate, int colorFormat);
 
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -584,8 +593,9 @@ public class CodecEncoderSurfaceTest {
             } else {
                 tmpPath = File.createTempFile("tmp", ".mp4").getAbsolutePath();
             }
+            int colorFormat = mDecoderFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT, -1);
             assertTrue(nativeTestSimpleEncode(mCompName, mDecoderName, mMime,
-                    mInpPrefix + mTestFile, tmpPath, mBitrate, mFrameRate));
+                    mInpPrefix + mTestFile, tmpPath, mBitrate, mFrameRate, colorFormat));
         }
     }
 }
