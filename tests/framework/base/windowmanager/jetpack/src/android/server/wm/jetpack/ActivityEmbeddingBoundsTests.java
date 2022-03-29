@@ -27,22 +27,17 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
-import android.server.wm.jetpack.utils.ActivityEmbeddingTestBase;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.util.LayoutDirection;
 import android.util.Pair;
 import android.util.Size;
-import android.view.Display;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.embedding.SplitPairRule;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -59,18 +54,6 @@ import java.util.Set;
  */
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
-
-    private ReportedDisplayMetrics mReportedDisplayMetrics;
-
-    @Before
-    public void initializeDisplayMetrics() {
-        mReportedDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(Display.DEFAULT_DISPLAY);
-    }
-
-    @After
-    public void restoreDisplayMetrics() {
-        mReportedDisplayMetrics.restoreDisplayMetrics();
-    }
 
     /**
      * Tests that when two activities are in a split and the parent bounds shrink such that
