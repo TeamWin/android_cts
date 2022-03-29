@@ -2838,7 +2838,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
-                       android:value="android.software.leanback" />
+                       android:value="android.software.leanback:android.hardware.microphone" />
         </activity>
 
         <activity android:name=".screenpinning.ScreenPinningTestActivity"
