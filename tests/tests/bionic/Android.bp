@@ -183,6 +183,7 @@ cc_test {
         "libtest_init_fini_order_root",
         "libtest_init_fini_order_root2",
         "libtest_invalid-empty_shdr_table",
+        "libtest_invalid-local-tls",
         "libtest_invalid-rw_load_segment",
         "libtest_invalid-textrels",
         "libtest_invalid-textrels2",
