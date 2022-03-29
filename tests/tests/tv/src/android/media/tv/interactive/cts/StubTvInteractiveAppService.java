@@ -85,6 +85,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public int mAdResponseCount;
         public int mBroadcastInfoResponseCount;
         public int mSigningResultCount;
+        public int mErrorCount;
 
         public Integer mKeyDownCode;
         public Integer mKeyUpCode;
@@ -118,6 +119,7 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
             mAdResponseCount = 0;
             mBroadcastInfoResponseCount = 0;
             mSigningResultCount = 0;
+            mErrorCount = 0;
 
             mKeyDownCode = null;
             mKeyUpCode = null;
@@ -403,6 +405,12 @@ public class StubTvInteractiveAppService extends TvInteractiveAppService {
         public void onSigningResult(String signingId, byte[] result) {
             super.onSigningResult(signingId, result);
             mSigningResultCount++;
+        }
+
+        @Override
+        public void onError(String errMsg, Bundle params) {
+            super.onError(errMsg, params);
+            mErrorCount++;
         }
     }
 }

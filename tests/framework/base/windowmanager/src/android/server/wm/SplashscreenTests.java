@@ -110,6 +110,8 @@ import java.util.function.Consumer;
 public class SplashscreenTests extends ActivityManagerTestBase {
 
     private static final int CENTER_ICON_SIZE = 192;
+    private static final int BRANDING_HEIGHT = 80;
+    private static final int BRANDING_DEFAULT_MARGIN = 60;
 
     @Rule
     public final DumpOnFailure dumpOnFailure = new DumpOnFailure();
@@ -357,6 +359,19 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         result.setPixel(x + debugOffsetX, y, debugPixel);
     }
 
+    // Roughly check whether the height of the window is high enough to display the brand image.
+    private boolean canShowBranding() {
+        final int iconHeight = WindowManagerState.dpToPx(CENTER_ICON_SIZE,
+                mContext.getResources().getConfiguration().densityDpi);
+        final int brandingHeight = WindowManagerState.dpToPx(BRANDING_HEIGHT,
+                mContext.getResources().getConfiguration().densityDpi);
+        final int brandingDefaultMargin = WindowManagerState.dpToPx(BRANDING_DEFAULT_MARGIN,
+                mContext.getResources().getConfiguration().densityDpi);
+        final WindowMetrics windowMetrics = mWm.getMaximumWindowMetrics();
+        final Rect drawableBounds = new Rect(windowMetrics.getBounds());
+        final int leftHeight = (drawableBounds.height() - iconHeight) / 2;
+        return leftHeight > brandingHeight + brandingDefaultMargin;
+    }
     @Test
     public void testHandleExitAnimationOnCreate() throws Exception {
         assumeFalse(isLeanBack());
@@ -624,8 +639,9 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assertEquals(iconAnimatable, journal.extras.getBoolean(CENTER_VIEW_IS_SURFACE_VIEW));
         assertEquals(iconAnimatable, (iconAnimationStart != 0));
         assertEquals(iconAnimatable ? 500 : 0, iconAnimationDuration);
-        assertEquals(containsBranding, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
-
+        if (containsBranding && canShowBranding()) {
+            assertEquals(containsBranding, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+        }
         if (containsIcon && !iconAnimatable) {
             assertEquals(Color.BLUE, journal.extras.getInt(ICON_BACKGROUND_COLOR, Color.YELLOW));
         } else {

@@ -3,5 +3,10 @@
     {
       "name": "CtsBluetoothTestCases"
     }
+  ],
+  "hwasan-postsubmit": [
+    {
+      "name": "CtsBluetoothTestCases"
+    }
   ]
 }

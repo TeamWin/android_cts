@@ -452,12 +452,53 @@ class ItsSession(object):
     self.sock.settimeout(self.SOCK_TIMEOUT)
     return data['objValue']
 
+  def do_basic_recording(self, profile_id, quality, duration):
+    """Issue a recording request and read back the video recording object.
+
+    The recording will be done with the format specified in quality. These
+    quality levels correspond to the profiles listed in CamcorderProfile.
+    The duration is the time in seconds for which the video will be recorded.
+    The recorded object consists of a path on the device at which the
+    recorded video is saved.
+
+    Args:
+      profile_id: int; profile id corresponding to the quality level.
+      quality: Video recording quality such as High, Low, VGA.
+      duration: The time in seconds for which the video will be recorded.
+    Returns:
+      video_recorded_object: The recorded object returned from ItsService which
+      contains path at which the recording is saved on the device, quality of the
+      recorded video, video size of the recorded video, video frame rate.
+      Ex:
+      VideoRecordingObject: {
+        'tag': 'recordingResponse',
+        'objValue': {
+          'recordedOutputPath': '/storage/emulated/0/Android/data/com.android.cts.verifier'
+                                '/files/VideoITS/VID_20220324_080414_0_CIF_352x288.mp4',
+          'quality': 'CIF',
+          'videoFrameRate': 30,
+          'videoSize': '352x288'
+        }
+      }
+    """
+    cmd = {'cmdName': 'doBasicRecording', 'cameraId': self._camera_id,
+        'profileId': profile_id, 'quality': quality, 'recordingDuration': duration}
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+    timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
+    self.sock.settimeout(timeout)
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'recordingResponse':
+      raise error_util.CameraItsError(f'Invalid response for command: {cmd[cmdName]}')
+    logging.debug('VideoRecordingObject: %s' % data)
+    return data['objValue']
+
   def get_supported_video_qualities(self, camera_id):
     """Get all supported video qualities for this camera device.
       Args:
         camera_id: device id
       Returns:
-        List of all supported video qualities
+        List of all supported video qualities and corresponding profileIds.
+        Ex: ['480:4', '1080:6', '2160:8', '720:5', 'CIF:3', 'HIGH:1', 'LOW:0', 'QCIF:2', 'QVGA:7']
     """
     cmd = {}
     cmd['cmdName'] = 'getSupportedVideoQualities'

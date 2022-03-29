@@ -22,9 +22,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.os.SystemClock
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.StaleObjectException
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
 import android.text.Html
@@ -139,22 +141,41 @@ abstract class BasePermissionTest {
 
     protected fun waitFindObject(selector: BySelector): UiObject2 {
         waitForIdle()
-        return UiAutomatorUtils.waitFindObject(selector)
+        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObject(selector, t) })!!
     }
 
     protected fun waitFindObject(selector: BySelector, timeoutMillis: Long): UiObject2 {
         waitForIdle()
-        return UiAutomatorUtils.waitFindObject(selector, timeoutMillis)
+        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObject(selector, t) },
+                timeoutMillis)!!
     }
 
     protected fun waitFindObjectOrNull(selector: BySelector): UiObject2? {
         waitForIdle()
-        return UiAutomatorUtils.waitFindObjectOrNull(selector)
+        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObjectOrNull(selector, t) })
     }
 
     protected fun waitFindObjectOrNull(selector: BySelector, timeoutMillis: Long): UiObject2? {
         waitForIdle()
-        return UiAutomatorUtils.waitFindObjectOrNull(selector, timeoutMillis)
+        return findObjectWithRetry({ t -> UiAutomatorUtils.waitFindObjectOrNull(selector, t) },
+                timeoutMillis)
+    }
+
+    private fun findObjectWithRetry(
+        automatorMethod: (timeoutMillis: Long) -> UiObject2?,
+        timeoutMillis: Long = 20_000L
+    ): UiObject2? {
+        waitForIdle()
+        val startTime = SystemClock.elapsedRealtime()
+        return try {
+            automatorMethod(timeoutMillis)
+        } catch (e: StaleObjectException) {
+            val remainingTime = timeoutMillis - (SystemClock.elapsedRealtime() - startTime)
+            if (remainingTime <= 0) {
+                throw e
+            }
+            automatorMethod(remainingTime)
+        }
     }
 
     protected fun click(selector: BySelector, timeoutMillis: Long = 20_000) {

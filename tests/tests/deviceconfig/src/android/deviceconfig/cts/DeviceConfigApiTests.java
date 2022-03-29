@@ -21,8 +21,8 @@ import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.os.SystemClock;
@@ -889,7 +889,7 @@ public final class DeviceConfigApiTests {
     public void testDeleteProperty_withNonExistingProperty() {
         assertNull(DeviceConfig.getProperty(NAMESPACE1, KEY1));
         // Test that deletion returns true when the key doesn't exist
-        deletePropertyAndAssertSuccessfulChange(NAMESPACE1, KEY1);
+        deletePropertyAndAssertNoChange(NAMESPACE1, KEY1);
     }
 
     @Test
@@ -1208,6 +1208,27 @@ public final class DeviceConfigApiTests {
         assertEquals("Failed to receive update to OnPropertiesChangedListener",
                 receivedUpdates.size(), 1);
         PropertyUpdate propertiesUpdate = receivedUpdates.get(0);
+        propertiesUpdate.assertEqual(namespace, name, null);
+
+        return propertiesUpdate.properties;
+    }
+
+    private Properties deletePropertyAndAssertNoChange(String namespace, String name) {
+        final List<PropertyUpdate> receivedUpdates = new ArrayList<>();
+        OnPropertiesChangedListener changeListener = createOnPropertiesChangedListener(
+                receivedUpdates);
+
+        DeviceConfig.addOnPropertiesChangedListener(namespace, EXECUTOR, changeListener);
+
+        assertTrue(DeviceConfig.deleteProperty(namespace, name));
+        assertNull("DeviceConfig.getProperty() must return null if property is deleted",
+                DeviceConfig.getProperty(namespace, name));
+        DeviceConfig.removeOnPropertiesChangedListener(changeListener);
+
+        assertEquals("Received unexpected update to OnPropertiesChangedListener",
+                receivedUpdates.size(), 0);
+        PropertyUpdate propertiesUpdate = new PropertyUpdate(DeviceConfig.getProperties(
+                namespace, ""));
         propertiesUpdate.assertEqual(namespace, name, null);
 
         return propertiesUpdate.properties;

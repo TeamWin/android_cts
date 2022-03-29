@@ -106,6 +106,39 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     @Test
+    public void testHandwritingDoesNotStartWhenNoStylusDown() throws Exception {
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            imm.startStylusHandwriting(editText);
+
+            // Handwriting should not start
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Verify Stylus Handwriting window is not shown
+            assertFalse(expectCommand(
+                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
+                    .getReturnBooleanValue());
+        }
+    }
+
+    @Test
     public void testHandwritingStartAndFinish() throws Exception {
         final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
         try (MockImeSession imeSession = MockImeSession.create(
@@ -116,6 +149,11 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
             final String marker = getTestMarker();
             final EditText editText = launchTestActivity(marker);
+
+            // Touch down with a stylus
+            final int x = 10;
+            final int y = 10;
+            TestUtils.injectStylusDownEvent(editText, x, y);
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             notExpectEvent(
@@ -143,6 +181,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             assertTrue(expectCommand(
                     stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
                             .getReturnBooleanValue());
+
+            // Release the stylus pointer
+            TestUtils.injectStylusUpEvent(editText, x, y);
 
             // Verify calling finishStylusHandwriting() calls onFinishStylusHandwriting().
             imeSession.callFinishStylusHandwriting();
@@ -186,6 +227,12 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             final String marker = getTestMarker();
             final EditText editText = launchTestActivity(marker);
 
+            final List<MotionEvent> injectedEvents = new ArrayList<>();
+            // Touch down with a stylus
+            final int startX = 10;
+            final int startY = 10;
+            injectedEvents.add(TestUtils.injectStylusDownEvent(editText, startX, startY));
+
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             notExpectEvent(
                     stream,
@@ -212,10 +259,11 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                         TIMEOUT).getReturnBooleanValue());
             }
 
-            // inject Stylus touch events to screen
-            List<MotionEvent> injectedEvents =
-                    TestUtils.getStylusMoveEventsOnDisplay(0 /* displayId */);
-            TestUtils.injectAll(injectedEvents);
+            final int endX = startX + 500;
+            final int endY = startY + 500;
+            injectedEvents.addAll(
+                    TestUtils.injectStylusMoveEvents(editText, startX, startY, endX, endY, 10));
+            injectedEvents.add(TestUtils.injectStylusUpEvent(editText, endX, endY));
 
             expectEvent(
                     stream, event -> "onStylusMotionEvent".equals(event.getEventName()), TIMEOUT);

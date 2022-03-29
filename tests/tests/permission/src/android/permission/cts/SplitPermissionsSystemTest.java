@@ -105,7 +105,15 @@ public class SplitPermissionsSystemTest {
                     }
                     break;
                 case WRITE_EXTERNAL_STORAGE:
-                    assertSplit(split, NO_TARGET, READ_EXTERNAL_STORAGE);
+                    if (newPermissions.contains(READ_EXTERNAL_STORAGE)) {
+                        assertSplit(split, NO_TARGET, READ_EXTERNAL_STORAGE);
+                    } else if (newPermissions.contains(READ_MEDIA_AUDIO)) {
+                        assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_AUDIO);
+                    } else if (newPermissions.contains(READ_MEDIA_VIDEO)) {
+                        assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_VIDEO);
+                    } else if (newPermissions.contains(READ_MEDIA_IMAGES)) {
+                        assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_IMAGES);
+                    }
                     break;
                 case READ_CONTACTS:
                     assertSplit(split, Build.VERSION_CODES.JELLY_BEAN, READ_CALL_LOG);
@@ -144,7 +152,7 @@ public class SplitPermissionsSystemTest {
             }
         }
 
-        assertEquals(17, seenSplits.size());
+        assertEquals(20, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, int targetSdk, String... permission) {

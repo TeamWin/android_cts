@@ -19,6 +19,7 @@ package android.os.cts;
 import static android.os.PowerManager.PARTIAL_WAKE_LOCK;
 import static android.os.PowerManager.SYSTEM_WAKELOCK;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -28,6 +29,8 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.platform.test.annotations.AppModeFull;
@@ -71,12 +74,15 @@ public class LowPowerStandbyTest {
 
     private Context mContext;
     private PowerManager mPowerManager;
+    private ConnectivityManager mConnectivityManager;
     private boolean mOriginalEnabled;
+    private WakeLock mSystemWakeLock;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mPowerManager = mContext.getSystemService(PowerManager.class);
+        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mOriginalEnabled = mPowerManager.isLowPowerStandbyEnabled();
     }
 
@@ -90,6 +96,10 @@ public class LowPowerStandbyTest {
             }, Manifest.permission.MANAGE_LOW_POWER_STANDBY);
         }
         unforceDoze();
+
+        if (mSystemWakeLock != null) {
+            mSystemWakeLock.release();
+        }
     }
 
     @Test
@@ -152,15 +162,10 @@ public class LowPowerStandbyTest {
             Manifest.permission.DEVICE_POWER})
     public void testLowPowerStandby_wakelockIsDisabled() throws Exception {
         assumeTrue(mPowerManager.isLowPowerStandbySupported());
-
-        // Keep system awake with system wakelock
-        WakeLock systemWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK | SYSTEM_WAKELOCK,
-                SYSTEM_WAKE_LOCK_TAG);
-        systemWakeLock.acquire();
+        keepSystemAwake();
 
         // Acquire test wakelock, which should be disabled by LPS
-        WakeLock testWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK,
-                TEST_WAKE_LOCK_TAG);
+        WakeLock testWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK, TEST_WAKE_LOCK_TAG);
         testWakeLock.acquire();
 
         mPowerManager.setLowPowerStandbyEnabled(true);
@@ -216,7 +221,38 @@ public class LowPowerStandbyTest {
                 500, () -> isWakeLockDisabled(TEST_WAKE_LOCK_TAG));
     }
 
+    @Test
+    @AppModeFull(reason = "Instant apps cannot hold MANAGE_LOW_POWER_STANDBY permission")
+    @EnsureHasPermission({Manifest.permission.MANAGE_LOW_POWER_STANDBY,
+            Manifest.permission.ACCESS_NETWORK_STATE, Manifest.permission.DEVICE_POWER})
+    public void testLowPowerStandby_networkIsBlocked() throws Exception {
+        assumeTrue(mPowerManager.isLowPowerStandbySupported());
+        keepSystemAwake();
+
+        NetworkBlockedStateAsserter asserter = new NetworkBlockedStateAsserter(mContext);
+        asserter.register();
+
+        try {
+            mPowerManager.setLowPowerStandbyEnabled(true);
+            goToSleep();
+            mPowerManager.forceLowPowerStandbyActive(true);
+
+            asserter.assertNetworkBlocked("Network is not blocked", true);
+
+            wakeUp();
+            mPowerManager.forceLowPowerStandbyActive(false);
+
+            asserter.assertNetworkBlocked("Network is blocked after waking up", false);
+        } finally {
+            asserter.unregister();
+        }
+    }
+
     private void goToSleep() throws Exception {
+        if (!mPowerManager.isInteractive()) {
+            return;
+        }
+
         final BlockingBroadcastReceiver screenOffReceiver = new BlockingBroadcastReceiver(mContext,
                 Intent.ACTION_SCREEN_OFF);
         screenOffReceiver.register();
@@ -228,6 +264,10 @@ public class LowPowerStandbyTest {
     }
 
     private void wakeUp() throws Exception {
+        if (mPowerManager.isInteractive()) {
+            return;
+        }
+
         final BlockingBroadcastReceiver screenOnReceiver = new BlockingBroadcastReceiver(mContext,
                 Intent.ACTION_SCREEN_ON);
         screenOnReceiver.register();
@@ -274,8 +314,56 @@ public class LowPowerStandbyTest {
                 PowerManagerServiceDumpProto.class, "dumpsys power --proto");
     }
 
+    private void keepSystemAwake() {
+        mSystemWakeLock = mPowerManager.newWakeLock(PARTIAL_WAKE_LOCK | SYSTEM_WAKELOCK,
+                SYSTEM_WAKE_LOCK_TAG);
+        mSystemWakeLock.acquire();
+    }
+
     private String executeShellCommand(String command) throws IOException {
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         return uiDevice.executeShellCommand(command);
+    }
+
+    private static class NetworkBlockedStateAsserter {
+        private final ConnectivityManager mConnectivityManager;
+        private final ConnectivityManager.NetworkCallback mNetworkCallback;
+
+        private final Object mLock = new Object();
+        private boolean mIsBlocked = false;
+
+        NetworkBlockedStateAsserter(Context context) {
+            mConnectivityManager = context.getSystemService(ConnectivityManager.class);
+            mNetworkCallback =
+                    new ConnectivityManager.NetworkCallback() {
+                        @Override
+                        public void onBlockedStatusChanged(Network network, boolean blocked) {
+                            synchronized (mLock) {
+                                if (mIsBlocked != blocked) {
+                                    mIsBlocked = blocked;
+                                    mLock.notify();
+                                }
+                            }
+                        }
+                    };
+        }
+
+        private void register() {
+            mConnectivityManager.registerDefaultNetworkCallback(mNetworkCallback);
+        }
+
+        private void assertNetworkBlocked(String message, boolean expected) throws Exception {
+            synchronized (mLock) {
+                if (mIsBlocked == expected) {
+                    return;
+                }
+                mLock.wait(5000);
+                assertEquals(message, expected, mIsBlocked);
+            }
+        }
+
+        private void unregister() {
+            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        }
     }
 }

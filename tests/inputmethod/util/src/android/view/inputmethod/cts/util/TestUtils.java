@@ -204,8 +204,9 @@ public final class TestUtils {
      * @param view  view whose coordinates are used to compute the event location.
      * @param x the x coordinates of the stylus event in the view's location coordinates.
      * @param y the y coordinates of the stylus event in the view's location coordinates.
+     * @return the injected MotionEvent.
      */
-    public static void injectStylusDownEvent(@NonNull View view, int x, int y) {
+    public static MotionEvent injectStylusDownEvent(@NonNull View view, int x, int y) {
         int[] xy = new int[2];
         view.getLocationOnScreen(xy);
         x += xy[0];
@@ -213,8 +214,10 @@ public final class TestUtils {
 
         // Inject stylus ACTION_DOWN
         long downTime = SystemClock.uptimeMillis();
-        MotionEvent downEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y);
+        final MotionEvent downEvent =
+                getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y);
         injectMotionEvent(downEvent, true /* sync */);
+        return downEvent;
     }
 
     /**
@@ -222,8 +225,9 @@ public final class TestUtils {
      * @param view  view whose coordinates are used to compute the event location.
      * @param x the x coordinates of the stylus event in the view's location coordinates.
      * @param y the y coordinates of the stylus event in the view's location coordinates.
+     * @return the injected MotionEvent.
      */
-    public static void injectStylusUpEvent(@NonNull View view, int x, int y) {
+    public static MotionEvent injectStylusUpEvent(@NonNull View view, int x, int y) {
         int[] xy = new int[2];
         view.getLocationOnScreen(xy);
         x += xy[0];
@@ -231,8 +235,9 @@ public final class TestUtils {
 
         // Inject stylus ACTION_DOWN
         long downTime = SystemClock.uptimeMillis();
-        MotionEvent downEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y);
-        injectMotionEvent(downEvent, true /* sync */);
+        final MotionEvent upEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y);
+        injectMotionEvent(upEvent, true /* sync */);
+        return upEvent;
     }
 
     /**
@@ -244,15 +249,17 @@ public final class TestUtils {
      * @param endX the end x coordinates of the stylus event in the view's local coordinates.
      * @param endY the end y coordinates of the stylus event in the view's local coordinates.
      * @param number the number of the motion events injected to the view.
+     * @return the injected MotionEvents.
      */
-    public static void injectStylusMoveEvents(@NonNull View view, int startX, int startY,
-            int endX, int endY, int number) {
+    public static List<MotionEvent> injectStylusMoveEvents(@NonNull View view, int startX,
+            int startY, int endX, int endY, int number) {
         int[] xy = new int[2];
         view.getLocationOnScreen(xy);
 
         final float incrementX = ((float) (endX - startX)) / (number - 1);
         final float incrementY = ((float) (endY - startY)) / (number - 1);
 
+        final List<MotionEvent> injectedEvents = new ArrayList<>(number);
         // Inject stylus ACTION_MOVE
         for (int i = 0; i < number; i++) {
             long time = SystemClock.uptimeMillis();
@@ -261,7 +268,9 @@ public final class TestUtils {
             final MotionEvent moveEvent =
                     getMotionEvent(time, time, MotionEvent.ACTION_MOVE, x, y);
             injectMotionEvent(moveEvent, true /* sync */);
+            injectedEvents.add(moveEvent);
         }
+        return injectedEvents;
     }
 
     /**
@@ -281,30 +290,6 @@ public final class TestUtils {
         injectStylusMoveEvents(view, x, y, endX, y, 10);
         injectStylusUpEvent(view, endX, y);
 
-    }
-
-    public static List<MotionEvent> getStylusMoveEventsOnDisplay(int displayId) {
-        // TODO(b/210039666): use screen center.
-        // TODO(b/210039666): try combining with #injectStylusEvents().
-        int x = 500;
-        int y = 500;
-        List<MotionEvent> events = new ArrayList<>();
-        final long downTime = SystemClock.uptimeMillis();
-        events.add(getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId));
-
-        int j = 0;
-        for (int i = 0; i < 10; i++) {
-            final long moveTime = SystemClock.uptimeMillis();
-            j = i * 5;
-            events.add(getMotionEvent(
-                    moveTime, moveTime, MotionEvent.ACTION_MOVE, x + j, y + j, displayId));
-        }
-
-        final long upTime = SystemClock.uptimeMillis();
-        events.add(getMotionEvent(
-                upTime, upTime, MotionEvent.ACTION_UP, x + j, y + j, displayId));
-
-        return events;
     }
 
     private static MotionEvent getMotionEvent(long downTime, long eventTime, int action,
