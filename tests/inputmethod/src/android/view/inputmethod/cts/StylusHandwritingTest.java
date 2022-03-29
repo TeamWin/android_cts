@@ -37,8 +37,11 @@ import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.NoOpInputConnection;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.widget.EditText;
@@ -491,6 +494,57 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
 
     @Test
     /**
+     * Inject Stylus events on top of a focused customized editor and verify Handwriting is started
+     * and InkWindow is displayed.
+     */
+    public void testHandwritingInCustomizedEditor() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final View editText = launchTestActivityCustomizedEditor(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            final int touchSlop = getTouchSlop();
+            final int startX = 50;
+            final int startY = 50;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY + 2 * touchSlop;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY,
+                    endX, endY, number);
+            // Handwriting should already be initiated before ACTION_UP.
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+
+            // Verify Stylus Handwriting window is shown
+            assertTrue(expectCommand(
+                    stream, imeSession.callGetStylusHandwritingWindowVisibility(), TIMEOUT)
+                    .getReturnBooleanValue());
+
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
+        }
+    }
+
+    @Test
+    /**
      * Inject Stylus events on top of an unfocused editor which disabled the autoHandwriting and
      * verify Handwriting is not started and InkWindow is not displayed.
      */
@@ -587,5 +641,45 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             return layout;
         });
         return new Pair<>(focusedEditTextRef.get(), nonFocusedEditTextRef.get());
+    }
+
+
+    private View launchTestActivityCustomizedEditor(@NonNull String marker) {
+        final AtomicReference<View> view = new AtomicReference<>();
+        TestActivity.startSync(activity -> {
+            final LinearLayout layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            // Adding some top padding tests that inject stylus event out of the view boundary.
+            layout.setPadding(0, 100, 0, 0);
+
+            final View customizedEditor = new View(activity) {
+                @Override
+                public boolean onCheckIsTextEditor() {
+                    return true;
+                }
+
+                @Override
+                public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                    outAttrs.inputType = EditorInfo.TYPE_CLASS_TEXT;
+                    outAttrs.privateImeOptions = marker;
+                    return new NoOpInputConnection();
+                }
+
+                @Override
+                public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                    // This View needs a valid size to be focusable.
+                    setMeasuredDimension(300, 100);
+                }
+            };
+            customizedEditor.setFocusable(true);
+            customizedEditor.setFocusableInTouchMode(true);
+            customizedEditor.setAutoHandwritingEnabled(true);
+            customizedEditor.requestFocus();
+            layout.addView(customizedEditor);
+
+            view.set(customizedEditor);
+            return layout;
+        });
+        return view.get();
     }
 }
