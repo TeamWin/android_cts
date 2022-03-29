@@ -67,7 +67,6 @@ import org.junit.Before;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
@@ -107,6 +106,14 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
      */
     void launchActivity(@NonNull ComponentName componentName) {
         super.launchActivity(componentName);
+    }
+
+    void waitForIdleSensors() {
+        try {
+            Utils.waitForIdleService(this::getSensorStates);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception when waiting for idle", e);
+        }
     }
 
     /** @see Utils#getBiometricServiceCurrentState() */
@@ -497,39 +504,8 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     public void cleanup() {
         mInstrumentation.waitForIdleSync();
 
-        try {
-            Utils.waitForIdleService(this::getSensorStates);
-        } catch (Exception e) {
-            Log.e(TAG, "Exception when waiting for idle", e);
-        }
-
-        try {
-            final BiometricServiceState state = getCurrentState();
-
-            for (Map.Entry<Integer, SensorState> sensorEntry
-                    : state.mSensorStates.sensorStates.entrySet()) {
-                for (Map.Entry<Integer, UserState> userEntry
-                        : sensorEntry.getValue().getUserStates().entrySet()) {
-                    if (userEntry.getValue().numEnrolled != 0) {
-                        Log.w(TAG, "Cleaning up for sensor: " + sensorEntry.getKey()
-                                + ", user: " + userEntry.getKey());
-                        BiometricTestSession session = mBiometricManager.createTestSession(
-                                sensorEntry.getKey());
-                        session.cleanupInternalState(userEntry.getKey());
-                        session.close();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Unable to get current state in cleanup()");
-        }
-
         // Authentication lifecycle is done
-        try {
-            Utils.waitForIdleService(this::getSensorStates);
-        } catch (Exception e) {
-            Log.e(TAG, "Exception when waiting for idle", e);
-        }
+        waitForIdleSensors();
 
         if (mWakeLock != null) {
             mWakeLock.release();
