@@ -60,7 +60,7 @@ public class PictureInPictureParamsBuilderTest {
         params = builder.build();
 
         assertTrue(Float.compare(0f, params.getAspectRatioFloat()) == 0);
-        assertNull(params.getActions());
+        assertTrue(params.getActions().isEmpty());
         assertNull(params.getSourceRectHint());
     }
 
