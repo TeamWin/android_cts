@@ -1220,6 +1220,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasProfileOwner
     @RequireRunOnSecondaryUser
+    @RequireFeature(FEATURE_MANAGED_USERS)
     public void checkProvisioningPreCondition_actionPO_onManagedUser_returnsHasProfileOwner() {
         assertThat(
                 sDevicePolicyManager.checkProvisioningPrecondition(
@@ -1426,6 +1427,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasNoDpc
+    @RequireFeature(FEATURE_MANAGED_USERS)
     public void setUserProvisioningState_unmanagedDevice_stateUserSetupIncomplete_throwsIllegalStateException() {
         assertThrows(IllegalStateException.class, () ->
                 sDevicePolicyManager.setUserProvisioningState(
