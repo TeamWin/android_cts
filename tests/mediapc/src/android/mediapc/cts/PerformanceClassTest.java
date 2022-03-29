@@ -198,21 +198,10 @@ public class PerformanceClassTest {
         "2.2.7.3/7.1.1.1/H-1-1",
         "2.2.7.3/7.1.1.1/H-2-1",
         "2.2.7.3/7.1.1.3/H-1-1",
-        "2.2.7.3/7.1.1.3/H-2-1",
-        "2.2.7.3/7.6.1/H-1-1",
-        "2.2.7.3/7.6.1/H-2-1",
-        "2.2.7.3/7.6.1/H-3-1"})
-    public void testMinimumMemory() {
+        "2.2.7.3/7.1.1.3/H-2-1",})
+    public void testMinimumResolutionAndDensity() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
-        // Verify minimum screen density and resolution
-        assertMinDpiAndPixels(context, DENSITY_400, 1920, 1080);
-        // Verify minimum memory
-        assertMinMemoryMb(context);
-    }
-
-    /** Asserts that the given values conform to the specs in CDD */
-    private void assertMinDpiAndPixels(Context context, int minDpi, int minLong, int minShort) {
         // Verify display DPI. We only seem to be able to get the primary display.
         DisplayMetrics metrics = new DisplayMetrics();
         WindowManager windowManager =
@@ -222,7 +211,6 @@ public class PerformanceClassTest {
         int longPix = Math.max(metrics.widthPixels, metrics.heightPixels);
         int shortPix = Math.min(metrics.widthPixels, metrics.heightPixels);
 
-        Log.i(TAG, String.format("minDpi=%d minSize=%dx%dpix", minDpi, minLong, minShort));
         Log.i(TAG, String.format("dpi=%d size=%dx%dpix", density, longPix, shortPix));
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
@@ -242,8 +230,15 @@ public class PerformanceClassTest {
         pce.submitAndCheck();
     }
 
-    /** Asserts that the given values conform to the specs in CDD 7.6.1 */
-    private void assertMinMemoryMb(Context context) {
+    @Test
+    @CddTest(requirements={
+        "2.2.7.3/7.6.1/H-1-1",
+        "2.2.7.3/7.6.1/H-2-1",
+        "2.2.7.3/7.6.1/H-3-1"})
+    public void testMinimumMemory() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+
+        // Verify minimum memory
         ActivityManager activityManager = context.getSystemService(ActivityManager.class);
         long totalMemoryMb = getTotalMemory(activityManager) / 1024 / 1024;
 
