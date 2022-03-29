@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThrows;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
+import android.bluetooth.BluetoothActivityEnergyInfo;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -501,9 +502,21 @@ public class BluetoothAdapterTest extends AndroidTestCase {
     public void test_requestControllerActivityEnergyInfo() {
         if (!mHasBluetooth) return;
 
+        BluetoothAdapter.OnBluetoothActivityEnergyInfoCallback callback =
+                new BluetoothAdapter.OnBluetoothActivityEnergyInfoCallback() {
+                    @Override
+                    public void onBluetoothActivityEnergyInfoAvailable(
+                            BluetoothActivityEnergyInfo info) {
+                        assertNotNull(info);
+                    }
+
+                    @Override
+                    public void onBluetoothActivityEnergyInfoError(int errorCode) {}
+                };
+
         // Verify parameter
         assertThrows(NullPointerException.class,
-                () -> mAdapter.requestControllerActivityEnergyInfo(null));
+                () -> mAdapter.requestControllerActivityEnergyInfo(null, callback));
     }
 
     public void test_clearBluetooth() {
