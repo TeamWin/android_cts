@@ -289,4 +289,8 @@
         value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testSuspendPackage" />
     <option name="compatibility:exclude-filter"
         value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testSuspendPackage" />
+
+    <!-- b/223640691 -->
+    <option name="compatibility:exclude-filter" value="CtsInputMethodTestCases android.view.inputmethod.cts.KeyboardVisibilityControlTest#testRestoreImeVisibility" />
+
 </configuration>
