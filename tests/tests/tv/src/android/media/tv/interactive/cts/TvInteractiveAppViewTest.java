@@ -27,6 +27,7 @@ import android.media.tv.interactive.TvInteractiveAppServiceInfo;
 import android.media.tv.interactive.TvInteractiveAppView;
 import android.os.ConditionVariable;
 import android.tv.cts.R;
+import android.view.InputEvent;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -56,6 +57,7 @@ public class TvInteractiveAppViewTest {
     private TvInteractiveAppView mTvInteractiveAppView;
     private TvInteractiveAppManager mManager;
     private TvInteractiveAppServiceInfo mStubInfo;
+    private TvInteractiveAppView.OnUnhandledInputEventListener mOnUnhandledInputEventListener;
 
     @Rule
     public RequiredFeatureRule featureRule = new RequiredFeatureRule(
@@ -178,6 +180,25 @@ public class TvInteractiveAppViewTest {
                         && mCallback.mState
                         == TvInteractiveAppManager.INTERACTIVE_APP_STATE_RUNNING
                         && mCallback.mErr == TvInteractiveAppManager.ERROR_NONE;
+            }
+        }.run();
+    }
+
+    @Test
+    public void testGetOnUnhandledInputEventListener() {
+        mOnUnhandledInputEventListener = new TvInteractiveAppView.OnUnhandledInputEventListener() {
+            @Override
+            public boolean onUnhandledInputEvent(InputEvent event) {
+                return true;
+            }
+        };
+        mTvInteractiveAppView.setOnUnhandledInputEventListener(getExecutor(),
+                mOnUnhandledInputEventListener);
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mTvInteractiveAppView.getOnUnhandledInputEventListener()
+                        == mOnUnhandledInputEventListener;
             }
         }.run();
     }
