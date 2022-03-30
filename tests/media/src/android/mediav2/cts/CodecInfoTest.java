@@ -160,6 +160,8 @@ public class CodecInfoTest {
     @Test
     public void testDecoderAvailability() {
         Assume.assumeTrue("Test is applicable only for encoders", mCodecInfo.isEncoder());
+        Assume.assumeTrue("Test is applicable for video/audio codecs",
+                mMediaType.startsWith("video/") || mMediaType.startsWith("audio/"));
         if (selectCodecs(mMediaType, null, null, true).size() > 0) {
             assertTrue("Device advertises support for encoding " + mMediaType +
                             ", but not decoding it",
