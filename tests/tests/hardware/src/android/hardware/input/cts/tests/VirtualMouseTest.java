@@ -16,6 +16,8 @@
 
 package android.hardware.input.cts.tests;
 
+import static org.junit.Assert.assertEquals;
+
 import android.graphics.PointF;
 import android.hardware.input.VirtualMouse;
 import android.hardware.input.VirtualMouseButtonEvent;
@@ -142,6 +144,30 @@ public class VirtualMouseTest extends VirtualDeviceTestCase {
                         START_POSITION.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
                         /* vScroll= */ 1f, /* hScroll= */ 0f, /* buttonState= */ 0,
                         /* pressure= */ 0f)));
+    }
+
+    @Test
+    public void getCursorPosition() {
+        // Trigger a position update without moving the cursor off the starting position.
+        mVirtualMouse.sendButtonEvent(new VirtualMouseButtonEvent.Builder()
+                .setAction(VirtualMouseButtonEvent.ACTION_BUTTON_PRESS)
+                .setButtonCode(VirtualMouseButtonEvent.BUTTON_PRIMARY)
+                .build());
+        final MotionEvent buttonPressEvent = createMotionEvent(MotionEvent.ACTION_BUTTON_PRESS,
+                START_POSITION.x, START_POSITION.y, /* relativeX= */ 0f, /* relativeY= */ 0f,
+                /* vScroll= */ 0f, /* hScroll= */ 0f, MotionEvent.BUTTON_PRIMARY,
+                /* pressure= */ 1.0f);
+        buttonPressEvent.setActionButton(MotionEvent.BUTTON_PRIMARY);
+        verifyEvents(Arrays.asList(
+                createMotionEvent(MotionEvent.ACTION_DOWN, START_POSITION.x, START_POSITION.y,
+                        /* relativeX= */ 0f, /* relativeY= */ 0f, /* vScroll= */ 0f,
+                        /* hScroll= */ 0f, MotionEvent.BUTTON_PRIMARY, /* pressure= */ 1.0f),
+                buttonPressEvent));
+
+        final PointF position = mVirtualMouse.getCursorPosition();
+
+        assertEquals("Cursor position x differs", START_POSITION.x, position.x, 0.0001f);
+        assertEquals("Cursor position y differs", START_POSITION.y, position.y, 0.0001f);
     }
 
     private MotionEvent createMotionEvent(int action, float x, float y, float relativeX,
