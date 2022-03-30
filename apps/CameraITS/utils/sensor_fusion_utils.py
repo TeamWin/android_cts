@@ -615,7 +615,8 @@ def plot_gyro_events(gyro_events, plot_name, log_path):
   pylab.title(f'{plot_name}(mean of {_NUM_GYRO_PTS_TO_AVG} pts)')
   pylab.plot(times, x, 'r', label='x')
   pylab.plot(times, y, 'g', label='y')
-  pylab.ylabel('gyro x & y movement (rads/s)')
+  pylab.ylim([np.amin(z), np.amax(z)])
+  pylab.ylabel('gyro x,y movement (rads/s)')
   pylab.legend()
 
   # z on separate axes

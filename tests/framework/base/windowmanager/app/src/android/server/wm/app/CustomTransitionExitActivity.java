@@ -38,6 +38,10 @@ public class CustomTransitionExitActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.background_image);
 
+        // Ensure the activity is edge-to-edge
+        // In tests we rely on the activity's content filling the entire window
+        getWindow().setDecorFitsSystemWindows(false);
+
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
         mTransitionType = bundle.getString("transitionType");

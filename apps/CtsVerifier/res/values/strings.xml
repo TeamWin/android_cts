@@ -3307,6 +3307,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_work_notification_instruction">
         Please press the Go button to trigger a notification.\n
         \n
+        If a permission is requested, grant it and press the Go button again.\n
+        \n
         Verify that the notification is badged (see sample badge below). Then mark this test accordingly.
     </string>
     <string name="provisioning_byod_notification_title">This is a notification</string>
@@ -3610,7 +3612,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_turn_off_work_prepare_notifications">Prepare a work notification</string>
     <string name="provisioning_byod_turn_off_work_prepare_notifications_instruction">
         This is a test setup step.\n
-        1. Press the go button to send a work notification.\n
+        1. Press the go button to send a work notification. (if a permission is requested, grant it and press the go button again). \n
         2. Verify that the notification is displayed and mark this test as passed.\n
         (Note: in the following test, you will be asked to verify the notification disappears after work profile is turned off.)
     </string>

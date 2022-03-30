@@ -16,11 +16,18 @@
 
 package android.hardware.multiprocess.camera.cts;
 
+import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+import static org.mockito.Mockito.*;
+
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraDevice;
@@ -28,20 +35,21 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.cts.CameraCtsActivity;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
-
-import android.Manifest;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.WindowMetrics;
 
 import androidx.test.InstrumentationRegistry;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
-
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for multi-process camera usage behavior.
@@ -337,6 +345,85 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             }
         }
     }
+
+    private void injectTapEvent(int x, int y) {
+        final int motionEventTimeDeltaMs = 100;
+        MotionEvent downEvent = MotionEvent.obtain(SystemClock.uptimeMillis(),
+                SystemClock.uptimeMillis() + motionEventTimeDeltaMs,
+                (int) MotionEvent.ACTION_DOWN, x, y, 0);
+        downEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        mUiAutomation.injectInputEvent(downEvent, true);
+
+        MotionEvent upEvent = MotionEvent.obtain(SystemClock.uptimeMillis(),
+                SystemClock.uptimeMillis() + motionEventTimeDeltaMs, (int) MotionEvent.ACTION_UP,
+                x, y, 0);
+        upEvent.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        mUiAutomation.injectInputEvent(upEvent, true);
+    }
+
+    /**
+     * Test camera availability access callback in split window mode.
+     */
+    public void testCamera2AccessCallbackInSplitMode() throws Throwable {
+        if (!ActivityTaskManager.supportsSplitScreenMultiWindow(getActivity())) {
+            return;
+        }
+
+        final int permissionCallbackTimeoutMs = 3000;
+        CameraManager manager = mContext.getSystemService(CameraManager.class);
+        assertNotNull(manager);
+        String[] cameraIds = manager.getCameraIdListNoLazy();
+
+        if (cameraIds.length == 0) {
+            Log.i(TAG, "Skipping testCamera2AccessCallback, device has no cameras.");
+            return;
+        }
+
+        assertTrue(mContext.getMainLooper() != null);
+
+        // Setup camera manager
+        Handler cameraHandler = new Handler(mContext.getMainLooper());
+
+        WindowMetrics metrics = getActivity().getWindowManager().getCurrentWindowMetrics();
+        Rect initialBounds = metrics.getBounds();
+
+        startRemoteProcess(Camera2Activity.class, "camera2ActivityProcess",
+                true /*splitScreen*/);
+
+        // Verify that the remote camera did open as expected
+        List<ErrorLoggingService.LogEvent> allEvents = mErrorServiceConnection.getLog(SETUP_TIMEOUT,
+                TestConstants.EVENT_CAMERA_CONNECT);
+        assertNotNull("Camera device not setup in remote process!", allEvents);
+
+        CameraManager.AvailabilityCallback mockAvailCb = mock(
+                CameraManager.AvailabilityCallback.class);
+        manager.registerAvailabilityCallback(mockAvailCb, cameraHandler);
+        metrics = getActivity().getWindowManager().getCurrentWindowMetrics();
+        Rect splitBounds = metrics.getBounds();
+
+        // The original of the initial and split activity bounds should remain the same
+        assertTrue((initialBounds.left == splitBounds.left)
+                && (initialBounds.top == splitBounds.top));
+
+        Rect secondBounds;
+        if (initialBounds.right > splitBounds.right) {
+            secondBounds = new Rect(splitBounds.right + 1, initialBounds.top, initialBounds.right,
+                    initialBounds.bottom);
+        } else {
+            secondBounds = new Rect(initialBounds.left, splitBounds.bottom + 1, initialBounds.right,
+                    initialBounds.bottom);
+        }
+
+        // Priorities are also expected to change when a second activity only gains or loses focus
+        // while running in split screen mode
+        injectTapEvent(splitBounds.centerX(), splitBounds.centerY());
+        injectTapEvent(secondBounds.centerX(), secondBounds.centerY());
+        injectTapEvent(splitBounds.centerX(), splitBounds.centerY());
+
+        verify(mockAvailCb, timeout(
+                permissionCallbackTimeoutMs).atLeastOnce()).onCameraAccessPrioritiesChanged();
+    }
+
     /**
      * Test camera availability access callback.
      */
@@ -361,7 +448,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         manager.registerAvailabilityCallback(mockAvailCb, cameraHandler);
 
         // Remove current task from top of stack. This will impact the camera access
-        // pririorties.
+        // priorities.
         getActivity().moveTaskToBack(/*nonRoot*/true);
 
         verify(mockAvailCb, timeout(
@@ -580,6 +667,19 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
      */
     public void startRemoteProcess(java.lang.Class<?> klass, String processName)
             throws InterruptedException {
+        startRemoteProcess(klass, processName, false /*splitScreen*/);
+    }
+
+    /**
+     * Start an activity of the given class running in a remote process with the given name.
+     *
+     * @param klass the class of the {@link android.app.Activity} to start.
+     * @param processName the remote activity name.
+     * @param splitScreen Start new activity in split screen mode.
+     * @throws InterruptedException
+     */
+    public void startRemoteProcess(java.lang.Class<?> klass, String processName,
+            boolean splitScreen) throws InterruptedException {
         // Ensure no running activity process with same name
         Activity a = getActivity();
         String cameraActivityName = a.getPackageName() + ":" + processName;
@@ -589,6 +689,9 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
 
         // Start activity in a new top foreground process
         Intent activityIntent = new Intent(a, klass);
+        if (splitScreen) {
+            activityIntent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT);
+        }
         a.startActivity(activityIntent);
         Thread.sleep(WAIT_TIME);
 

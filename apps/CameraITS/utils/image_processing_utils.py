@@ -245,6 +245,19 @@ def decompress_jpeg_to_rgb_image(jpeg_buffer):
   h = img.size[1]
   return numpy.array(img).reshape(h, w, 3) / 255.0
 
+def convert_image_to_numpy_array(image_path):
+  """
+  Converts an image at the path image_path to numpy array and returns the array.
+
+  Args:
+    image_path: file path
+  Returns:
+    numpy array
+  """
+  if not os.path.exists(image_path):
+    raise assertionError(f'{image_path} does not exist.')
+  image = Image.open(image_path)
+  return numpy.array(image)
 
 def convert_capture_to_planes(cap, props=None):
   """Convert a captured image object to separate image planes.

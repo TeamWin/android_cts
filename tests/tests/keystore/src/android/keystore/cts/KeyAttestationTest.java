@@ -304,10 +304,7 @@ public class KeyAttestationTest {
         }
     }
 
-    @RestrictedBuildTest
-    @RequiresDevice
-    @Test
-    public void testEcAttestation_DeviceLocked() throws Exception {
+    private void testEcAttestation_DeviceLocked(Boolean expectStrongBox) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -325,11 +322,11 @@ public class KeyAttestationTest {
                     .setAttestationChallenge(new byte[128])
                     .setKeyValidityStart(now)
                     .setKeyValidityForOriginationEnd(originationEnd)
-                    .setKeyValidityForConsumptionEnd(consumptionEnd);
+                    .setKeyValidityForConsumptionEnd(consumptionEnd)
+                    .setIsStrongBoxBacked(expectStrongBox);
 
-        if (TestUtils.hasStrongBox(getContext())) {
+        if (expectStrongBox) {
             builder.setDigests(DIGEST_NONE, DIGEST_SHA256);
-            builder.setIsStrongBoxBacked(true);
         } else {
             builder.setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512);
         }
@@ -341,13 +338,30 @@ public class KeyAttestationTest {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates, TestUtils.hasStrongBox(getContext()));
+            verifyCertificateChain(certificates, expectStrongBox);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             checkDeviceLocked(Attestation.loadFromCertificate(attestationCert));
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
+    }
+
+    @RestrictedBuildTest
+    @RequiresDevice
+    @Test
+    public void testEcAttestation_DeviceLocked() throws Exception {
+        testEcAttestation_DeviceLocked(false /* expectStrongBox */);
+    }
+
+    @RestrictedBuildTest
+    @RequiresDevice
+    @Test
+    public void testEcAttestation_DeviceLockedStrongbox() throws Exception {
+        if (!TestUtils.hasStrongBox(getContext()))
+            return;
+
+        testEcAttestation_DeviceLocked(true /* expectStrongBox */);
     }
 
     @Test
@@ -603,10 +617,7 @@ public class KeyAttestationTest {
         }
     }
 
-    @RestrictedBuildTest
-    @RequiresDevice  // Emulators have no place to store the needed key
-    @Test
-    public void testRsaAttestation_DeviceLocked() throws Exception {
+    private void testRsaAttestation_DeviceLocked(Boolean expectStrongBox) throws Exception {
         if (!TestUtils.isAttestationSupported()) {
             return;
         }
@@ -624,11 +635,11 @@ public class KeyAttestationTest {
                     .setAttestationChallenge("challenge".getBytes())
                     .setKeyValidityStart(now)
                     .setKeyValidityForOriginationEnd(originationEnd)
-                    .setKeyValidityForConsumptionEnd(consumptionEnd);
+                    .setKeyValidityForConsumptionEnd(consumptionEnd)
+                    .setIsStrongBoxBacked(expectStrongBox);
 
-        if (TestUtils.hasStrongBox(getContext())) {
+        if (expectStrongBox) {
             builder.setDigests(DIGEST_NONE, DIGEST_SHA256);
-            builder.setIsStrongBoxBacked(true);
         } else {
             builder.setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512);
         }
@@ -640,13 +651,30 @@ public class KeyAttestationTest {
 
         try {
             Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
-            verifyCertificateChain(certificates, TestUtils.hasStrongBox(getContext()));
+            verifyCertificateChain(certificates, expectStrongBox);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             checkDeviceLocked(Attestation.loadFromCertificate(attestationCert));
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
+    }
+
+    @RestrictedBuildTest
+    @RequiresDevice  // Emulators have no place to store the needed key
+    @Test
+    public void testRsaAttestation_DeviceLocked() throws Exception {
+        testRsaAttestation_DeviceLocked(false /* expectStrongbox */);
+    }
+
+    @RestrictedBuildTest
+    @RequiresDevice  // Emulators have no place to store the needed key
+    @Test
+    public void testRsaAttestation_DeviceLockedStrongbox() throws Exception {
+        if (!TestUtils.hasStrongBox(getContext()))
+            return;
+
+        testRsaAttestation_DeviceLocked(true /* expectStrongbox */);
     }
 
     @Test

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.mediapc.cts;
+package android.mediapc.cts.common;
 
 import static android.util.DisplayMetrics.DENSITY_400;
 import static org.junit.Assume.assumeTrue;
@@ -36,7 +36,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 /**
  * Test utilities.
  */
-/* package private */ class Utils {
+public class Utils {
     private static final int sPc;
 
     private static final String TAG = "PerformanceClassTestUtils";

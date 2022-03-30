@@ -16,7 +16,16 @@
 
 package android.mediapc.cts;
 
+import static android.mediapc.cts.CodecTestBase.selectCodecs;
+import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
+
 import android.media.MediaFormat;
+import android.mediapc.cts.common.Utils;
 import android.util.Log;
 import android.view.Surface;
 
@@ -30,13 +39,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static android.mediapc.cts.CodecTestBase.selectCodecs;
-import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 public class FrameDropTestBase {
     private static final String LOG_TAG = FrameDropTestBase.class.getSimpleName();

@@ -18,6 +18,7 @@ package android.mediapc.cts;
 
 import static android.mediapc.cts.CodecTestBase.selectCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -31,6 +32,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
+import android.mediapc.cts.common.Utils;
 import android.os.Build;
 import android.util.Log;
 import android.util.Pair;

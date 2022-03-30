@@ -32,7 +32,7 @@
         <activity android:name="android.hardware.cts.CameraCtsActivity"
             android:label="CameraCtsActivity"
             android:screenOrientation="locked"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
         </activity>
 
         <activity android:name="android.hardware.camera2.cts.Camera2SurfaceViewCtsActivity"

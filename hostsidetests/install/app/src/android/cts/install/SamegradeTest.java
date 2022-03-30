@@ -139,7 +139,6 @@ public final class SamegradeTest {
 
     @Test
     public void assert_systemApex_postReboot_phase() throws Exception {
-        final int INSTALLED_ON_DATA_PART = 0;
         assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionApplied()).isTrue();
 
         final PackageInfo shim = getPackageInfo(SHIM_APEX_PACKAGE_NAME);
@@ -148,8 +147,8 @@ public final class SamegradeTest {
                 .isEqualTo(VERSION_CODE_SAMEGRADE_SYSTEM);
 
         // Check that APEX on /data wins.
-        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM)
-                .isEqualTo(INSTALLED_ON_DATA_PART);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
+                .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
         assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                 .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
         assertThat(shim.applicationInfo.sourceDir)

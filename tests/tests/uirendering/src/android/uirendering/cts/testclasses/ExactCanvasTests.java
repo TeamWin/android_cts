@@ -69,6 +69,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                     p.setAntiAlias(false);
                     p.setStrokeWidth(1f);
                     p.setColor(Color.BLACK);
+                    canvas.translate(0.5f, 0.5f);
                     for (int i = 0; i < 10; i++) {
                         canvas.drawPoint(i * 10, i * 10, p);
                     }
@@ -129,7 +130,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                     };
                     canvas.drawLines(pts, p);
                 })
-                .runWithComparer(mExactComparer);
+                .runWithComparer(new MSSIMComparer(0.99));
     }
 
     @Test
@@ -150,7 +151,7 @@ public class ExactCanvasTests extends ActivityTestBase {
                     p.setStrokeWidth(5);
                     canvas.drawText(testString, 30, 50, p);
                 })
-                .runWithComparer(mExactComparer);
+                .runWithComparer(new MSSIMComparer(0.99));
     }
 
     private void drawTestTextOnPath(Canvas canvas) {

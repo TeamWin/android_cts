@@ -46,7 +46,7 @@ android_test {
     static_libs: [
         "cts-media-common",
         "ctstestrunner-axt",
-        "exoplayer2-metadataretriever-mediamuxer",
+        "exoplayer-mediamuxer_tests",
     ],
     jni_libs: [
         "libctsmediamuxertest_jni",

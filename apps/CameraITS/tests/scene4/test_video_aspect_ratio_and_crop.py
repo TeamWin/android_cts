@@ -14,6 +14,7 @@
 """Validate video aspect ratio, crop and FoV vs format."""
 
 import logging
+import math
 import os.path
 from mobly import test_runner
 
@@ -21,10 +22,29 @@ import its_base_test
 import camera_properties_utils
 import its_session_utils
 import video_processing_utils
+import capture_request_utils
+import image_processing_utils
+import opencv_processing_utils
+import image_fov_utils
+
 
 _ANDROID13_API_LEVEL = 32
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _VIDEO_RECORDING_DURATION_SECONDS = 2
+_FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
+_AR_CHECKED_PRE_API_30 = ('4:3', '16:9', '18:9')
+_AR_DIFF_ATOL = 0.01
+
+
+def _check_fov(circle, ref_fov, w, h):
+  """Check the FoV for correct size."""
+  fov_percent = image_fov_utils.calc_circle_image_ratio(circle['r'], w, h)
+  chk_percent = image_fov_utils.calc_expected_circle_image_ratio(ref_fov, w, h)
+  if math.isclose(fov_percent, chk_percent, rel_tol=_FOV_PERCENT_RTOL):
+    e_msg = 'FoV %%: %.2f, Ref FoV %%: %.2f, ' % (fov_percent, chk_percent)
+    e_msg += 'TOL=%.f%%, img: %dx%d, ref: %dx%d' % (
+        _FOV_PERCENT_RTOL*100, w, h, ref_fov['w'], ref_fov['h'])
+    return e_msg
 
 
 class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
@@ -111,10 +131,68 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
         profile_id = quality_profile_id_pair.split(':')[-1]
         # Check if we support testing this quality.
         if quality in video_processing_utils._ITS_SUPPORTED_QUALITIES:
-          logging.debug("Testing video recording for quality: %s" % quality)
-          cam.do_basic_recording(profile_id, quality, _VIDEO_RECORDING_DURATION_SECONDS)
-        # TODO(ruchamk): Add processing of video recordings, aspect ratio
-        # and crop checks.
+          logging.debug('Testing video recording for quality: %s' % quality)
+          video_recording_obj = cam.do_basic_recording(profile_id, quality,
+              _VIDEO_RECORDING_DURATION_SECONDS)
+          logging.debug('video_recording_obj: %s', video_recording_obj)
+          # TODO(ruchamk): Modify video recording object to send videoFrame
+          # width and height instead of videoSize to avoid string operation here.
+          video_size = video_recording_obj['videoSize']
+          width = int(video_size.split('x')[0])
+          height = int(video_size.split('x')[-1])
+
+          # Pull the video recording file from the device.
+          self.dut.adb.pull([video_recording_obj['recordedOutputPath'], self.log_path])
+          logging.debug('Recorded video is available at: %s',
+              self.log_path)
+          mp4_file_name = video_recording_obj['recordedOutputPath'].split('/')[-1]
+          logging.debug('mp4_file_name: %s', mp4_file_name)
+
+          key_frame_files = []
+          key_frame_files = video_processing_utils.extract_key_frames_from_video(
+              self.log_path, mp4_file_name)
+          logging.debug('key_frame_files:%s', key_frame_files)
+
+          # Get the key frame file to process.
+          last_key_frame_file = video_processing_utils.get_key_frame_to_process(key_frame_files)
+          logging.debug('last_key_frame: %s', last_key_frame_file)
+          last_key_frame_path = os.path.join(self.log_path, last_key_frame_file)
+
+          # Convert lastKeyFrame to numpy array
+          np_image = image_processing_utils.convert_image_to_numpy_array(last_key_frame_path)
+          logging.debug('numpy image shape: %s', np_image.shape)
+
+          # Determine camera capabilities.
+          raw_avlb = camera_properties_utils.raw16(props)
+          fls_logical = props['android.lens.info.availableFocalLengths']
+          logging.debug('logical available focal lengths: %s', str(fls_logical))
+          fls_physical = props['android.lens.info.availableFocalLengths']
+          logging.debug('physical available focal lengths: %s',
+              str(fls_physical))
+
+          req = capture_request_utils.auto_capture_request()
+          ref_img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
+
+          if raw_avlb and (fls_physical == fls_logical):
+            logging.debug('RAW')
+            ref_fov, cc_ct_gt, aspect_ratio_gt = (
+                image_fov_utils.find_fov_reference(
+                    cam, req, props, 'RAW', ref_img_name_stem))
+          else:
+            logging.debug('JPEG')
+            ref_fov, cc_ct_gt, aspect_ratio_gt = (
+                image_fov_utils.find_fov_reference(
+                    cam, req, props, 'JPEG', ref_img_name_stem))
+
+          # Check fov
+          circle = opencv_processing_utils.find_circle(
+              np_image, ref_img_name_stem, image_fov_utils.CIRCLE_MIN_AREA,
+                  image_fov_utils.CIRCLE_COLOR)
+          first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+          # TODO(ruchamk): Add part to append circle center to image
+
+          # Check pass/fail for fov coverage for all fmts in AR_CHECKED
+          fov_chk_msg = _check_fov(circle, ref_fov, width, height)
 
 if __name__ == '__main__':
   test_runner.main()

@@ -58,8 +58,7 @@ const val CONTINUE_ALLOW = "to continue sending you"
 const val INTENT_ACTION = "usepermission.createchannels.MAIN"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
 const val NOTIFICATION_PERMISSION_ENABLED = "notification_permission_enabled"
-const val DELAY_MS = 5000L
-const val DELAY_MS_SHORT = 500L
+const val EXPECTED_TIMEOUT_MS = 2000L
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class NotificationPermissionTest : BaseUsePermissionTest() {
@@ -211,8 +210,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(startSecondActivity = true)
         pressBack()
-        assertDialogNotShowing(DELAY_MS_SHORT)
-        Thread.sleep(DELAY_MS)
         clickPermissionRequestAllowButton()
     }
 
@@ -220,7 +217,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     fun notificationPromptNotShownForSubsequentStartsIfTaskStartWasNotLauncher() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(mainIntent = false, startSecondActivity = true)
-        Thread.sleep(DELAY_MS)
         assertDialogNotShowing()
     }
 
@@ -228,7 +224,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     fun notificationPromptShownForChannelCreateInSecondActivityIfTaskStartWasLauncher() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(startSecondActivity = true, createChannels = false)
-        Thread.sleep(DELAY_MS)
         clickPermissionRequestAllowButton()
     }
 
@@ -236,7 +231,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     fun notificationPromptNotShownForChannelCreateInSecondActivityIfTaskStartWasntLauncher() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(mainIntent = false, startSecondActivity = true, createChannels = false)
-        Thread.sleep(DELAY_MS)
         assertDialogNotShowing()
     }
 
@@ -246,7 +240,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         installPackage(APP_APK_PATH_OTHER_APP, expectSuccess = true)
         // perform a launcher start, then start a secondary app
         launchApp(startSecondaryAppAndCreateChannelsAfterSecondStart = true)
-        Thread.sleep(DELAY_MS)
         try {
             waitFindObject(By.textContains(SECOND_ACTIVITY_LABEL))
             assertDialogNotShowing()
@@ -312,7 +305,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
             context.startActivity(grantPermission)
         }
         try {
-            clickPermissionRequestAllowButton()
+            clickPermissionRequestAllowButton(timeoutMillis = EXPECTED_TIMEOUT_MS)
             Assert.fail("Expected not to find permission request dialog")
         } catch (expected: RuntimeException) {
             // Do nothing
@@ -323,7 +316,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     fun mergeAppPermissionRequestIntoNotificationAndVerifyResult() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(requestPermissionsDelayed = true)
-        Thread.sleep(DELAY_MS)
         clickPermissionRequestAllowButton()
         assertAppPermissionGrantedState(POST_NOTIFICATIONS, granted = true)
         clickPermissionRequestAllowForegroundButton()
@@ -337,7 +329,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     fun mergeNotificationRequestIntoAppPermissionRequestAndVerifyResult() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(createChannels = false, createChannelsDelayed = true, requestPermissions = true)
-        Thread.sleep(DELAY_MS)
         clickPermissionRequestAllowForegroundButton()
         assertAppPermissionGrantedState(RECORD_AUDIO, granted = true)
         clickPermissionRequestAllowButton()
@@ -390,7 +381,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
         launchApp(createChannels = false, requestNotificationPermission = true)
         try {
-            clickPermissionRequestAllowButton()
+            clickPermissionRequestAllowButton(timeoutMillis = EXPECTED_TIMEOUT_MS)
             Assert.fail("Expected not to find permission request dialog")
         } catch (expected: RuntimeException) {
             // Do nothing
@@ -430,7 +421,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     private fun launchApp(
         createChannels: Boolean = true,
         createChannelsDelayed: Boolean = false,
-        deleteChannels: Boolean = false,
         requestNotificationPermission: Boolean = false,
         requestPermissions: Boolean = false,
         requestPermissionsDelayed: Boolean = false,
@@ -453,7 +443,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         if (!createChannels) {
             intent.putExtra(EXTRA_CREATE_CHANNELS_DELAYED, createChannelsDelayed)
         }
-        intent.putExtra(EXTRA_DELETE_CHANNELS_ON_CLOSE, deleteChannels)
         intent.putExtra(EXTRA_REQUEST_OTHER_PERMISSIONS, requestPermissions)
         if (!requestPermissions) {
             intent.putExtra(EXTRA_REQUEST_PERMISSIONS_DELAYED, requestPermissionsDelayed)
@@ -481,7 +470,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         waitForIdle()
     }
 
-    private fun assertDialogNotShowing(timeoutMillis: Long = DELAY_MS) {
+    private fun assertDialogNotShowing(timeoutMillis: Long = EXPECTED_TIMEOUT_MS) {
         try {
             clickPermissionRequestAllowButton(timeoutMillis)
             Assert.fail("Expected not to find permission request dialog")

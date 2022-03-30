@@ -33,6 +33,7 @@ import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.invoker.shard.token.TokenProperty;
 import com.android.tradefed.targetprep.DeviceSetup;
 import com.android.tradefed.targetprep.ITargetPreparer;
+import com.android.tradefed.targetprep.PythonVirtualenvPreparer;
 import com.android.tradefed.testtype.AndroidJUnitTest;
 import com.android.tradefed.testtype.GTest;
 import com.android.tradefed.testtype.HostTest;
@@ -48,6 +49,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,6 +57,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Test that configuration in CTS can load and have expected properties.
@@ -62,6 +65,7 @@ import java.util.Set;
 @RunWith(JUnit4.class)
 public class CtsConfigLoadingTest {
 
+    private static final Pattern TODO_BUG_PATTERN = Pattern.compile(".*TODO\\(b/[0-9]+\\).*", Pattern.DOTALL);
     private static final String METADATA_COMPONENT = "component";
     private static final Set<String> KNOWN_COMPONENTS =
             new HashSet<>(
@@ -211,6 +215,7 @@ public class CtsConfigLoadingTest {
             if (c.getDeviceConfig().size() > 2) {
                 throw new ConfigurationException(String.format("%s declares more than 2 devices.", config));
             }
+            int deviceCount = 0;
             for (IDeviceConfiguration dConfig : c.getDeviceConfig()) {
                 // Ensure the deprecated ApkInstaller is not used anymore.
                 for (ITargetPreparer prep : dConfig.getTargetPreparers()) {
@@ -238,7 +243,12 @@ public class CtsConfigLoadingTest {
                                                  config.getName(), prep.getClass()));
                        }
                     }
+                    if (prep.getClass().isAssignableFrom(PythonVirtualenvPreparer.class)) {
+                        // Ensure each modules has a tracking bug to be imported.
+                        checkPythonModules(config, deviceCount);
+                    }
                 }
+                deviceCount++;
             }
             // We can ensure that Host side tests are not empty.
             for (IRemoteTest test : c.getTests()) {
@@ -411,5 +421,23 @@ public class CtsConfigLoadingTest {
             families.put(family, false);
         }
         return families;
+    }
+
+    /**
+     * For each usage of python virtualenv preparer, make sure we have tracking bugs to import as
+     * source the python libs.
+     */
+    private void checkPythonModules(File config, int deviceCount)
+            throws IOException, ConfigurationException {
+        if (deviceCount != 0) {
+            throw new ConfigurationException(
+                    String.format("%s: PythonVirtualenvPreparer should only be declared for "
+                            + "the first <device> tag in the config", config.getName()));
+        }
+        if (!TODO_BUG_PATTERN.matcher(FileUtil.readStringFromFile(config)).matches()) {
+            throw new ConfigurationException(
+                    String.format("%s: Contains some virtualenv python lib usage but no "
+                            + "tracking bug to import them as source.", config.getName()));
+        }
     }
 }
