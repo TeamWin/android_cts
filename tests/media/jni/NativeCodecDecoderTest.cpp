@@ -472,8 +472,10 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile) {
         AMediaExtractor_seekTo(mExtractor, 0, mode);
         test->reset();
         if (!doWork(23)) return false;
-        CHECK_ERR(!test->isPtsStrictlyIncreasing(mPrevOutputPts), "",
-                  "pts is not strictly increasing", isPass);
+        if (!mIsInterlaced) {
+            CHECK_ERR(!test->isPtsStrictlyIncreasing(mPrevOutputPts), "",
+                          "pts is not strictly increasing", isPass);
+        }
 
         /* test flush in running state */
         if (!flushCodec()) return false;
@@ -560,8 +562,13 @@ bool CodecDecoderTest::testOnlyEos(const char* decoder, const char* testFile) {
         CHECK_ERR(loopCounter != 0 && (!ref->equals(test)), log, "output is flaky", isPass);
         CHECK_ERR(loopCounter == 0 && mIsAudio && (!ref->isPtsStrictlyIncreasing(mPrevOutputPts)),
                   log, "pts is not strictly increasing", isPass);
-        CHECK_ERR(loopCounter == 0 && !mIsAudio && (!ref->isOutPtsListIdenticalToInpPtsList(false)),
-                  log, "input pts list and output pts list are not identical", isPass);
+        // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+        // produce multiple progressive frames?) For now, do not verify timestamps.
+        if (!mIsInterlaced) {
+            CHECK_ERR(loopCounter == 0 && !mIsAudio &&
+                      (!ref->isOutPtsListIdenticalToInpPtsList(false)),
+                      log, "input pts list and output pts list are not identical", isPass);
+        }
         loopCounter++;
     }
     return isPass;
@@ -638,9 +645,13 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
                 CHECK_ERR(loopCounter == 0 && mIsAudio &&
                           (!ref->isPtsStrictlyIncreasing(mPrevOutputPts)),
                           log, "pts is not strictly increasing", isPass);
-                CHECK_ERR(loopCounter == 0 && !mIsAudio &&
-                                  (!ref->isOutPtsListIdenticalToInpPtsList(false)),
-                          log, "input pts list and output pts list are not identical", isPass);
+                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+                // produce multiple progressive frames?) For now, do not verify timestamps.
+                if (!mIsInterlaced) {
+                    CHECK_ERR(loopCounter == 0 && !mIsAudio &&
+                                      (!ref->isOutPtsListIdenticalToInpPtsList(false)),
+                              log, "input pts list and output pts list are not identical", isPass);
+                }
                 if (validateFormat) {
                     if (mIsCodecInAsyncMode ? !mAsyncHandle.hasOutputFormatChanged()
                                             : !mSignalledOutFormatChanged) {
