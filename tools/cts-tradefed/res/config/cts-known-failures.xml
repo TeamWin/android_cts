@@ -290,4 +290,7 @@
     <!-- b/223640691 -->
     <option name="compatibility:exclude-filter" value="CtsInputMethodTestCases android.view.inputmethod.cts.KeyboardVisibilityControlTest#testRestoreImeVisibility" />
 
+    <!-- b/225190177 -->
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testImeWindowCanSwitchToDifferentDisplays" />
+
 </configuration>
