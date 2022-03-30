@@ -3549,8 +3549,6 @@ public class TelephonyManagerTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
         List<UiccCardInfo> cardsInfo = mTelephonyManager.getUiccCardsInfo();
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
         for (UiccCardInfo cardInfo : cardsInfo) {
             for (UiccPortInfo portInfo : cardInfo.getPorts()) {
                 int simCardState = mTelephonyManager.getSimCardState(cardInfo
@@ -3562,6 +3560,8 @@ public class TelephonyManagerTest {
                         TelephonyManager.SIM_STATE_PRESENT).contains(simCardState));
             }
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     private boolean isDataEnabled() {
