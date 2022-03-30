@@ -111,6 +111,7 @@ public class ImageReaderDecoderTest {
     public String mCodecName;
     public MediaAsset mMediaAsset;
     public int mMode;
+    public String mTestId;
     MediaCodec mDecoder = null;
     MediaExtractor mExtractor = null;
 
@@ -120,6 +121,7 @@ public class ImageReaderDecoderTest {
         mCodecName = codecName;
         mMediaAsset = asset;
         mMode = mode;
+        mTestId = testId;
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1}_{4})")
@@ -500,9 +502,7 @@ public class ImageReaderDecoderTest {
 
                 if (doRender) {
                     outputFrameCount++;
-                    String fileName = DEBUG_FILE_NAME_BASE + MediaUtils.getTestName()
-                            + (mode == MODE_IMAGE ? "_image_" : "_reader_")
-                            + width + "x" + height + "_" + outputFrameCount + ".yuv";
+                    String fileName = DEBUG_FILE_NAME_BASE + mCodecName + "_" + mTestId + ".yuv";
 
                     Image image = null;
                     try {
