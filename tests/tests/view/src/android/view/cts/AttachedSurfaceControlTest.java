@@ -17,12 +17,14 @@ package android.view.cts;
 
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
+import android.server.wm.ActivityManagerTestBase;
 import android.view.AttachedSurfaceControl;
 
 import androidx.lifecycle.Lifecycle;
@@ -34,6 +36,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +51,7 @@ import java.util.function.IntConsumer;
 @RequiresDevice
 public class AttachedSurfaceControlTest {
     private static final String TAG = "AttachedSurfaceControlTest";
+    private ActivityManagerTestBase.IgnoreOrientationRequestSession mOrientationSession;
 
     private static class TransformHintListener implements
             AttachedSurfaceControl.OnBufferTransformHintChangedListener {
@@ -77,7 +81,6 @@ public class AttachedSurfaceControlTest {
         }
     }
 
-
     @Before
     public void setup() {
         PackageManager pm =
@@ -85,6 +88,12 @@ public class AttachedSurfaceControlTest {
         boolean supportsRotation = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
                 && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE);
         Assume.assumeTrue(supportsRotation);
+        mOrientationSession = new ActivityManagerTestBase.IgnoreOrientationRequestSession(DEFAULT_DISPLAY, false);
+    }
+
+    @After
+    public void teardown() {
+        mOrientationSession.close();
     }
 
     @Test
@@ -175,10 +184,9 @@ public class AttachedSurfaceControlTest {
             // If the device is already in landscape, do nothing.
             if (firstCallback[0] != null) {
                 Assert.assertTrue(firstCallback[0].await(3, TimeUnit.SECONDS));
-            }
-            // Check the callback value matches the call to get the transform hint.
-            scenario.onActivity(activity -> Assert.assertEquals(transformHintResult[0],
+                scenario.onActivity(activity -> Assert.assertEquals(transformHintResult[0],
                     activity.getWindow().getRootSurfaceControl().getBufferTransformHint()));
+            }
 
             scenario.onActivity(activity -> {
                 TransformHintListener listener = new TransformHintListener(activity,
