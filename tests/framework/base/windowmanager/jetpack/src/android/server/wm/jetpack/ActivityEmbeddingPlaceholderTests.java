@@ -29,21 +29,16 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
-import android.server.wm.jetpack.utils.ActivityEmbeddingTestBase;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.util.Pair;
 import android.util.Size;
-import android.view.Display;
 import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.embedding.SplitPlaceholderRule;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -67,17 +62,6 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
     private static final String PRIMARY_ACTIVITY_ID = "primaryActivity";
     private static final String PLACEHOLDER_ACTIVITY_ID = "placeholderActivity";
-    private ReportedDisplayMetrics mReportedDisplayMetrics;
-
-    @Before
-    public void initializeDisplayMetrics() {
-        mReportedDisplayMetrics = ReportedDisplayMetrics.getDisplayMetrics(Display.DEFAULT_DISPLAY);
-    }
-
-    @After
-    public void restoreDisplayMetrics() {
-        mReportedDisplayMetrics.restoreDisplayMetrics();
-    }
 
     /**
      * Tests that an activity with a matching {@link SplitPlaceholderRule} is successfully able to
