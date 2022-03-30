@@ -74,11 +74,16 @@ public class AuthBoundKeyAppTest extends AndroidTestCase {
         keyStore.load(null);
         try {
             SecretKey secretKey = (SecretKey) keyStore.getKey(KEY_NAME, null);
+            if(secretKey == null) {
+                // Correct behavior as we can also get a null key
+                return;
+            }
         } catch (UnrecoverableKeyException e) {
             // This is correct behavior
             return;
         }
-        fail("Expected an UnrecoverableKeyException");
+
+        fail("Expected a null key");
     }
 
 }
