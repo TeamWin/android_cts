@@ -46,7 +46,6 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     private static final String INPUT_VIDEO_FILE_HBD = "cosmat_cif_24fps_yuv420p16le.yuv";
 
     private final boolean mUseHBD;
-    private final SupportClass mSupportRequirements;
     // Key: mediaType, Value: tolerance duration in ms
     private static final Map<String, Integer> toleranceMap = new HashMap<>();
 
@@ -59,11 +58,9 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
     }
 
     public CodecEncoderValidationTest(String encoder, String mediaType, int[] bitrates,
-            int[] encoderInfo1, int[] encoderInfo2, boolean useHBD,
-            SupportClass supportRequirements) {
+            int[] encoderInfo1, int[] encoderInfo2, boolean useHBD) {
         super(encoder, mediaType, bitrates, encoderInfo1, encoderInfo2);
         mUseHBD = useHBD;
-        mSupportRequirements = supportRequirements;
     }
 
     @Parameterized.Parameters(name = "{index}({0})")
@@ -73,54 +70,51 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         final boolean needVideo = true;
         List<Object[]> defArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
                 // Audio tests covering cdd sec 5.1.3
-                // mediaType, arrays of bit-rates, sample rates, channel counts, useHBD,
-                // SupportClass
+                // mediaType, arrays of bit-rates, sample rates, channel counts, useHBD
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 12000,
-                        16000, 22050, 24000, 32000, 44100, 48000}, new int[]{1, 2}, false,
-                        CODEC_ALL},
+                        16000, 22050, 24000, 32000, 44100, 48000}, new int[]{1, 2}, false},
                 {MediaFormat.MIMETYPE_AUDIO_OPUS, new int[]{64000, 128000}, new int[]{8000, 12000
-                        , 16000, 24000, 48000}, new int[]{1, 2}, false, CODEC_ALL},
+                        , 16000, 24000, 48000}, new int[]{1, 2}, false},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_NB, new int[]{4750, 5150, 5900, 6700, 7400, 7950,
-                        10200, 12200}, new int[]{8000}, new int[]{1}, false, CODEC_ALL},
+                        10200, 12200}, new int[]{8000}, new int[]{1}, false},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, new int[]{6600, 8850, 12650, 14250, 15850,
-                        18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1}, false,
-                        CODEC_ALL},
+                        18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1}, false},
                 /* TODO(169310292) */
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
-                        false, CODEC_ALL},
+                        false},
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
-                        true, CODEC_ALL},
+                        true},
 
-                // mediaType, arrays of bit-rates, width, height, useHBD, SupportClass
+                // mediaType, arrays of bit-rates, width, height, useHBD
                 {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{32000, 64000}, new int[]{176},
-                        new int[]{144}, false, CODEC_ALL},
+                        new int[]{144}, false},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{32000, 64000}, new int[]{176},
-                        new int[]{144}, false, CODEC_ALL},
+                        new int[]{144}, false},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false, CODEC_ALL},
+                        new int[]{240, 360}, false},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false, CODEC_ALL},
+                        new int[]{240, 360}, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false, CODEC_ALL},
+                        new int[]{240, 360}, false},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false, CODEC_ALL},
+                        new int[]{240, 360}, false},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000}, new int[]{352, 480},
-                        new int[]{240, 360}, false, CODEC_ALL},
+                        new int[]{240, 360}, false},
         }));
         // P010 support was added in Android T, hence limit the following tests to Android T and
         // above
         if (IS_AT_LEAST_T) {
             defArgsList.addAll(Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                            new int[]{240, 360}, true},
                     {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                            new int[]{240, 360}, true},
                     {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                            new int[]{240, 360}, true},
                     {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000}, new int[]{352, 480},
-                            new int[]{240, 360}, true, CODEC_OPTIONAL},
+                            new int[]{240, 360}, true},
             }));
         }
         return prepareParamList(defArgsList, isEncoder, needAudio, needVideo, false);
@@ -131,7 +125,7 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
             int colorFormat = mFormats.get(0).getInteger(MediaFormat.KEY_COLOR_FORMAT);
             Assume.assumeTrue(hasSupportForColorFormat(mCodecName, mMime, colorFormat));
         }
-        checkFormatSupport(mCodecName, mMime, true, mFormats, null, mSupportRequirements);
+        checkFormatSupport(mCodecName, mMime, true, mFormats, null, CODEC_OPTIONAL);
         setUpSource(inputFile);
         mOutputBuff = new OutputManager();
         {
