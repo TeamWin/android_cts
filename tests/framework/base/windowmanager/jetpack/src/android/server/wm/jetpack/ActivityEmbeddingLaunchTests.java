@@ -92,19 +92,16 @@ public class ActivityEmbeddingLaunchTests extends ActivityEmbeddingTestBase {
                     Integer.toString(activityLaunchIndex) /* secondActivityId */,
                     mSplitInfoConsumer);
 
-            // Verify the split states match with the current and previous launches
+            // Verify that the secondary container has all the secondary activities
             secondaryActivities.add(secondaryActivity);
             final List<SplitInfo> lastReportedSplitInfoList =
                     mSplitInfoConsumer.getLastReportedValue();
             splitInfosList.add(lastReportedSplitInfoList);
-            assertEquals(secondaryActivities.size(), lastReportedSplitInfoList.size());
-            for (int splitInfoIndex = 0; splitInfoIndex < lastReportedSplitInfoList.size();
-                    splitInfoIndex++) {
-                final SplitInfo splitInfo = lastReportedSplitInfoList.get(splitInfoIndex);
-                assertEquals(primaryActivity, getPrimaryStackTopActivity(splitInfo));
-                assertEquals(secondaryActivities.get(splitInfoIndex),
-                        getSecondaryStackTopActivity(splitInfo));
-            }
+            assertEquals(1, lastReportedSplitInfoList.size());
+            final SplitInfo splitInfo = lastReportedSplitInfoList.get(0);
+            assertEquals(primaryActivity, getPrimaryStackTopActivity(splitInfo));
+            assertEquals(secondaryActivities, splitInfo.getSecondaryActivityStack()
+                    .getActivities());
         }
 
         // Iteratively finish each secondary activity and verify that the primary activity is split
