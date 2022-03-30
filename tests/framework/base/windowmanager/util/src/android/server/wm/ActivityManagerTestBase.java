@@ -2670,7 +2670,7 @@ public abstract class ActivityManagerTestBase {
         final int mDisplayId;
         final boolean mInitialIgnoreOrientationRequest;
 
-        IgnoreOrientationRequestSession(int displayId, boolean enable) {
+        public IgnoreOrientationRequestSession(int displayId, boolean enable) {
             mDisplayId = displayId;
             Matcher matcher = IGNORE_ORIENTATION_REQUEST_PATTERN.matcher(
                     executeShellCommand(WM_GET_IGNORE_ORIENTATION_REQUEST + " -d " + mDisplayId));
