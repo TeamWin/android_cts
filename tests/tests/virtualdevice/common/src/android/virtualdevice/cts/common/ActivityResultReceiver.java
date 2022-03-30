@@ -37,6 +37,9 @@ public class ActivityResultReceiver extends BroadcastReceiver {
     /** Extra for sending the computed power spectrum off expected audio frequency. */
     public static final String EXTRA_POWER_SPECTRUM_NOT_FREQUENCY = "powerSpectrumNotFrequency";
 
+    /** Extra for sending the value of recorded audio data. */
+    public static final String EXTRA_LAST_RECORDED_NONZERO_VALUE = "lastRecordedNonZeroValue";
+
     public interface Callback {
         void onActivityResult(Intent data);
     }
