@@ -24,7 +24,7 @@ import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AsbSecurityTest;
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -38,16 +38,7 @@ import java.io.RandomAccessFile;
 
 import android.security.cts.R;
 
-import org.junit.Before;
-import org.junit.After;
-import static org.junit.Assert.*;
-
-import androidx.test.runner.AndroidJUnit4;
-import org.junit.runner.RunWith;
-import org.junit.Test;
-
-@RunWith(AndroidJUnit4.class)
-public class MediaServerCrashTest extends StsExtraBusinessLogicTestCase {
+public class MediaServerCrashTest extends AndroidTestCase {
     private static final String TAG = "MediaServerCrashTest";
 
     private static final String MIMETYPE_DRM_MESSAGE = "application/vnd.oma.drm.message";
@@ -58,8 +49,9 @@ public class MediaServerCrashTest extends StsExtraBusinessLogicTestCase {
     private final ConditionVariable mOnPrepareCalled = new ConditionVariable();
     private final ConditionVariable mOnCompletionCalled = new ConditionVariable();
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         mFlFilePath = new File(getContext().getFilesDir(), "temp.fl").getAbsolutePath();
 
         mOnPrepareCalled.close();
@@ -91,12 +83,12 @@ public class MediaServerCrashTest extends StsExtraBusinessLogicTestCase {
         });
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
         new File(mFlFilePath).delete();
     }
 
-    @Test
     @AsbSecurityTest(cveBugId = 25070434)
     public void testInvalidMidiNullPointerAccess() throws Exception {
         testIfMediaServerDied(R.raw.midi_crash);
@@ -123,17 +115,16 @@ public class MediaServerCrashTest extends StsExtraBusinessLogicTestCase {
         }
     }
 
-    @Test
     @AsbSecurityTest(cveBugId = 25070434)
     public void testDrmManagerClientReset() throws Exception {
         checkIfMediaServerDiedForDrm(R.raw.drm_uaf);
     }
 
     private void checkIfMediaServerDiedForDrm(int res) throws Exception {
-        AssetFileDescriptor afd = getInstrumentation().getContext().getResources().openRawResourceFd(res);
+        AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(res);
         FileInputStream dmStream = afd.createInputStream();
         RandomAccessFile flFile = new RandomAccessFile(mFlFilePath, "rw");
-        if (!MediaUtils.convertDmToFl(getInstrumentation().getContext(), dmStream, flFile)) {
+        if (!MediaUtils.convertDmToFl(mContext, dmStream, flFile)) {
             Log.w(TAG, "Can not convert dm to fl, skip checkIfMediaServerDiedForDrm");
             mMediaPlayer.release();
             return;
