@@ -311,7 +311,7 @@ public class DeviceAtomTestCase extends AtomTestCase {
             .that(waitForStatsServiceStart(60_000)).isTrue();
         assertWithMessage("System failed to boot")
             .that(waitForSystemBootComplete(60_000)).isTrue();
-        Thread.sleep(2_000);
+        Thread.sleep(20_000);
     }
 
     protected boolean waitForStatsServiceStart(final long waitTime) throws Exception {
