@@ -38,6 +38,7 @@ import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.remotedpc.RemoteDpc.REMOTE_DPC_TEST_APP;
 import static com.android.queryable.queries.ServiceQuery.service;
 
@@ -102,6 +103,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.users.UserType;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
@@ -216,6 +218,8 @@ public final class DevicePolicyManagerTest {
     private static final PersistableBundle ADMIN_EXTRAS_BUNDLE = createAdminExtrasBundle();
     private static final String TEST_KEY = "test_key";
     private static final String TEST_VALUE = "test_value";
+    private static final UserType MANAGED_PROFILE_USER_TYPE =
+            TestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
 
     @Before
     public void setUp() {
@@ -1708,6 +1712,7 @@ public final class DevicePolicyManagerTest {
                 /* userdata= */ null);
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
@@ -1719,6 +1724,7 @@ public final class DevicePolicyManagerTest {
                         /* migratedAccount= */ null));
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void finalizeWorkProfileProvisioning_nullManagedProfileUser_throwsException() {
@@ -1728,6 +1734,7 @@ public final class DevicePolicyManagerTest {
                         /* migratedAccount= */ null));
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void finalizeWorkProfileProvisioning_nonExistingManagedProfileUser_throwsException() {
@@ -1737,6 +1744,7 @@ public final class DevicePolicyManagerTest {
                         /* migratedAccount= */ null));
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
@@ -1753,6 +1761,7 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
@@ -1770,6 +1779,7 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasWorkProfile
@@ -1789,6 +1799,7 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+    @Postsubmit(reason = "new test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasWorkProfile
@@ -1808,5 +1819,46 @@ public final class DevicePolicyManagerTest {
                     .isEqualTo(ACCOUNT_WITH_EXISTING_TYPE);
 
         }
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasNoDpc
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void getPolicyManagedProfiles_noManagedProfiles_returnsEmptyList() {
+        assertThat(sDevicePolicyManager.getPolicyManagedProfiles(
+                TestApis.context().instrumentationContext().getUser())).isEmpty();
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void getPolicyManagedProfiles_hasWorkProfile_returnsWorkProfileUser() {
+        assertThat(sDevicePolicyManager.getPolicyManagedProfiles(
+                TestApis.context().instrumentationContext().getUser()))
+                .containsExactly(sDeviceState.workProfile().userHandle());
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasNoDpc
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void getPolicyManagedProfiles_hasManagedProfileNoProfileOwner_returnsEmptyList() {
+        try (UserReference user = TestApis.users().createUser().type(MANAGED_PROFILE_USER_TYPE)
+                .parent(TestApis.users().instrumented()).create()) {
+            assertThat(sDevicePolicyManager.getPolicyManagedProfiles(
+                    TestApis.context().instrumentationContext().getUser()))
+                    .isEmpty();
+        }
+    }
+
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasNoDpc
+    @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    public void getPolicyManagedProfiles_noPermission_returnsEmptyList() {
+        assertThrows(SecurityException.class, () -> sDevicePolicyManager.getPolicyManagedProfiles(
+                TestApis.context().instrumentationContext().getUser()));
     }
 }
