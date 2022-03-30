@@ -14,7 +14,6 @@
 """Validate video aspect ratio, crop and FoV vs format."""
 
 import logging
-import math
 import os.path
 from mobly import test_runner
 
@@ -27,24 +26,36 @@ import image_processing_utils
 import opencv_processing_utils
 import image_fov_utils
 
-
 _ANDROID13_API_LEVEL = 32
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_VIDEO_RECORDING_DURATION_SECONDS = 2
+_VIDEO_RECORDING_DURATION_SECONDS = 3
 _FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
 _AR_CHECKED_PRE_API_30 = ('4:3', '16:9', '18:9')
 _AR_DIFF_ATOL = 0.01
 
 
-def _check_fov(circle, ref_fov, w, h):
-  """Check the FoV for correct size."""
-  fov_percent = image_fov_utils.calc_circle_image_ratio(circle['r'], w, h)
-  chk_percent = image_fov_utils.calc_expected_circle_image_ratio(ref_fov, w, h)
-  if math.isclose(fov_percent, chk_percent, rel_tol=_FOV_PERCENT_RTOL):
-    e_msg = 'FoV %%: %.2f, Ref FoV %%: %.2f, ' % (fov_percent, chk_percent)
-    e_msg += 'TOL=%.f%%, img: %dx%d, ref: %dx%d' % (
-        _FOV_PERCENT_RTOL*100, w, h, ref_fov['w'], ref_fov['h'])
-    return e_msg
+def _print_failed_test_results(failed_ar, failed_fov, failed_crop,
+                               quality):
+  """Print failed test results."""
+  if failed_ar:
+    logging.error('Aspect ratio test summary for %s', quality)
+    logging.error('Images failed in the aspect ratio test:')
+    logging.error('Aspect ratio value: width / height')
+    for fa in failed_ar:
+      logging.error('%s', fa)
+
+  if failed_fov:
+    logging.error('FoV test summary for %s', quality)
+    logging.error('Images failed in the FoV test:')
+    for fov in failed_fov:
+      logging.error('%s', str(fov))
+
+  if failed_crop:
+    logging.error('Crop test summary for %s', quality)
+    logging.error('Images failed in the crop test:')
+    logging.error('Circle center (H x V) relative to the image center.')
+    for fc in failed_crop:
+      logging.error('%s', fc)
 
 
 class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
@@ -106,6 +117,10 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
   def test_video_aspect_ratio_and_crop(self):
     logging.debug('Starting %s', _NAME)
+    failed_ar = []  # Streams failed the aspect ratio test.
+    failed_crop = []  # Streams failed the crop test.
+    failed_fov = []  # Streams that fail FoV test.
+
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -126,25 +141,52 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           self.camera_id)
       logging.debug('Supported video qualities: %s', supported_video_qualities)
 
+      # Determine camera capabilities.
+      full_or_better = camera_properties_utils.full_or_better(props)
+      raw_avlb = camera_properties_utils.raw16(props)
+      fls_logical = props['android.lens.info.availableFocalLengths']
+      logging.debug('logical available focal lengths: %s', str(fls_logical))
+      fls_physical = props['android.lens.info.availableFocalLengths']
+      logging.debug('physical available focal lengths: %s',
+                    str(fls_physical))
+
+      req = capture_request_utils.auto_capture_request()
+      ref_img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
+
+      if raw_avlb and (fls_physical == fls_logical):
+        logging.debug('RAW')
+        ref_fov, cc_ct_gt, aspect_ratio_gt = (
+            image_fov_utils.find_fov_reference(
+                cam, req, props, 'RAW', ref_img_name_stem))
+      else:
+        logging.debug('JPEG')
+        ref_fov, cc_ct_gt, aspect_ratio_gt = (
+            image_fov_utils.find_fov_reference(
+                cam, req, props, 'JPEG', ref_img_name_stem))
+
+      run_crop_test = full_or_better and raw_avlb
+
       for quality_profile_id_pair in supported_video_qualities:
         quality = quality_profile_id_pair.split(':')[0]
         profile_id = quality_profile_id_pair.split(':')[-1]
         # Check if we support testing this quality.
-        if quality in video_processing_utils._ITS_SUPPORTED_QUALITIES:
-          logging.debug('Testing video recording for quality: %s' % quality)
-          video_recording_obj = cam.do_basic_recording(profile_id, quality,
-              _VIDEO_RECORDING_DURATION_SECONDS)
+        if quality in video_processing_utils.ITS_SUPPORTED_QUALITIES:
+          logging.debug('Testing video recording for quality: %s', quality)
+          video_recording_obj = cam.do_basic_recording(
+              profile_id, quality, _VIDEO_RECORDING_DURATION_SECONDS)
           logging.debug('video_recording_obj: %s', video_recording_obj)
           # TODO(ruchamk): Modify video recording object to send videoFrame
-          # width and height instead of videoSize to avoid string operation here.
+          # width and height instead of videoSize to avoid string operation
+          # here.
           video_size = video_recording_obj['videoSize']
           width = int(video_size.split('x')[0])
           height = int(video_size.split('x')[-1])
 
           # Pull the video recording file from the device.
-          self.dut.adb.pull([video_recording_obj['recordedOutputPath'], self.log_path])
+          self.dut.adb.pull([video_recording_obj['recordedOutputPath'],
+                             self.log_path])
           logging.debug('Recorded video is available at: %s',
-              self.log_path)
+                        self.log_path)
           mp4_file_name = video_recording_obj['recordedOutputPath'].split('/')[-1]
           logging.debug('mp4_file_name: %s', mp4_file_name)
 
@@ -154,45 +196,72 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           logging.debug('key_frame_files:%s', key_frame_files)
 
           # Get the key frame file to process.
-          last_key_frame_file = video_processing_utils.get_key_frame_to_process(key_frame_files)
+          last_key_frame_file = video_processing_utils.get_key_frame_to_process(
+              key_frame_files)
           logging.debug('last_key_frame: %s', last_key_frame_file)
           last_key_frame_path = os.path.join(self.log_path, last_key_frame_file)
 
           # Convert lastKeyFrame to numpy array
-          np_image = image_processing_utils.convert_image_to_numpy_array(last_key_frame_path)
+          np_image = image_processing_utils.convert_image_to_numpy_array(
+              last_key_frame_path)
           logging.debug('numpy image shape: %s', np_image.shape)
-
-          # Determine camera capabilities.
-          raw_avlb = camera_properties_utils.raw16(props)
-          fls_logical = props['android.lens.info.availableFocalLengths']
-          logging.debug('logical available focal lengths: %s', str(fls_logical))
-          fls_physical = props['android.lens.info.availableFocalLengths']
-          logging.debug('physical available focal lengths: %s',
-              str(fls_physical))
-
-          req = capture_request_utils.auto_capture_request()
-          ref_img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
-
-          if raw_avlb and (fls_physical == fls_logical):
-            logging.debug('RAW')
-            ref_fov, cc_ct_gt, aspect_ratio_gt = (
-                image_fov_utils.find_fov_reference(
-                    cam, req, props, 'RAW', ref_img_name_stem))
-          else:
-            logging.debug('JPEG')
-            ref_fov, cc_ct_gt, aspect_ratio_gt = (
-                image_fov_utils.find_fov_reference(
-                    cam, req, props, 'JPEG', ref_img_name_stem))
 
           # Check fov
           circle = opencv_processing_utils.find_circle(
               np_image, ref_img_name_stem, image_fov_utils.CIRCLE_MIN_AREA,
-                  image_fov_utils.CIRCLE_COLOR)
-          first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+              image_fov_utils.CIRCLE_COLOR)
+          # img_name = '%s_%s_w%d_h%d' % (
+          #     os.path.join(self.log_path, _NAME), quality, width, height)
           # TODO(ruchamk): Add part to append circle center to image
 
           # Check pass/fail for fov coverage for all fmts in AR_CHECKED
-          fov_chk_msg = _check_fov(circle, ref_fov, width, height)
+          fov_chk_msg = image_fov_utils.check_fov(
+              circle, ref_fov, width, height)
+          if fov_chk_msg:
+            img_name = '%s_%s_w%d_h%d_fov.png' % (
+                os.path.join(self.log_path, _NAME), quality, width, height)
+            fov_chk_quality_msg = f'Quality: {quality} {fov_chk_msg}'
+            failed_fov.append(fov_chk_quality_msg)
+            image_processing_utils.write_image(np_image/255, img_name, True)
+
+          # Check pass/fail for aspect ratio.
+          ar_chk_msg = image_fov_utils.check_ar(
+              circle, aspect_ratio_gt, width, height,
+              f'{quality}')
+          if ar_chk_msg:
+            img_name = '%s_%s_w%d_h%d_ar.png' % (
+                os.path.join(self.log_path, _NAME), quality, width, height)
+            failed_ar.append(ar_chk_msg)
+            image_processing_utils.write_image(np_image/255, img_name, True)
+
+          # Check pass/fail for crop.
+          if run_crop_test:
+            # Normalize the circle size to 1/4 of the image size, so that
+            # circle size won't affect the crop test result
+            crop_thresh_factor = ((min(ref_fov['w'], ref_fov['h']) / 4.0) /
+                                  max(ref_fov['circle_w'], ref_fov['circle_h']))
+            crop_chk_msg = image_fov_utils.check_crop(
+                circle, cc_ct_gt, width, height,
+                f'{quality}', crop_thresh_factor)
+            if crop_chk_msg:
+              img_name = '%s_%s_w%d_h%d_crop.png' % (
+                  os.path.join(self.log_path, _NAME), quality, width, height)
+              failed_crop.append(crop_chk_msg)
+              image_processing_utils.write_image(np_image/255, img_name, True)
+          else:
+            logging.debug('Crop test skipped')
+
+      # Print any failed test results.
+      _print_failed_test_results(failed_ar, failed_fov, failed_crop, quality)
+      e_msg = ''
+      if failed_ar:
+        e_msg = 'Aspect ratio '
+      if failed_fov:
+        e_msg += 'FoV  '
+      if failed_crop:
+        e_msg += 'Crop '
+      if e_msg:
+        raise AssertionError(f'{e_msg}check failed.')
 
 if __name__ == '__main__':
   test_runner.main()
