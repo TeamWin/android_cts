@@ -28,7 +28,6 @@ import its_session_utils
 import opencv_processing_utils
 
 _ANDROID11_API_LEVEL = 30
-_FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PREVIEW_SIZE = (1920, 1080)
 
@@ -138,21 +137,6 @@ def _is_checked_aspect_ratio(first_api_level, w, h):
       return True
 
   return False
-
-
-def _check_fov(circle, ref_fov, w, h, first_api_level):
-  """Check the FoV for correct size."""
-  fov_percent = image_fov_utils.calc_circle_image_ratio(
-      circle['r'], w, h)
-  chk_percent = image_fov_utils.calc_expected_circle_image_ratio(
-      ref_fov, w, h)
-  chk_enabled = _is_checked_aspect_ratio(first_api_level, w, h)
-  if chk_enabled and not np.isclose(fov_percent, chk_percent,
-                                    rtol=_FOV_PERCENT_RTOL):
-    e_msg = 'FoV %%: %.2f, Ref FoV %%: %.2f, ' % (fov_percent, chk_percent)
-    e_msg += 'TOL=%.f%%, img: %dx%d, ref: %dx%d' % (
-        _FOV_PERCENT_RTOL*100, w, h, ref_fov['w'], ref_fov['h'])
-    return e_msg
 
 
 class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
@@ -305,11 +289,12 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
           # Check pass/fail for fov coverage for all fmts in AR_CHECKED
           img /= 255  # image_processing_utils uses [0, 1].
-          fov_chk_msg = _check_fov(circle, ref_fov, w_iter, h_iter,
-                                   first_api_level)
-          if fov_chk_msg:
-            failed_fov.append(fov_chk_msg)
-            image_processing_utils.write_image(img, img_name, True)
+          if _is_checked_aspect_ratio(first_api_level, w_iter, h_iter):
+            fov_chk_msg = image_fov_utils.check_fov(
+                circle, ref_fov, w_iter, h_iter)
+            if fov_chk_msg:
+              failed_fov.append(fov_chk_msg)
+              image_processing_utils.write_image(img, img_name, True)
 
           # Check pass/fail for aspect ratio.
           ar_chk_msg = image_fov_utils.check_ar(
