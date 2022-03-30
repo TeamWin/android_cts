@@ -81,6 +81,9 @@ public class PermissionPolicyTest {
     private static final String RECEIVE_KEYCODE_EVENTS_PERMISSION =
             "android.permission.RECEIVE_KEYCODE_EVENTS";
 
+    private static final String ALLOW_SLIPPERY_TOUCHES_PERMISSION
+            = "android.permission.ALLOW_SLIPPERY_TOUCHES";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -501,6 +504,8 @@ public class PermissionPolicyTest {
             case READ_DREAM_SUPPRESSION_PERMISSION:
                 return true;
             case RECEIVE_KEYCODE_EVENTS_PERMISSION:
+                return true;
+            case ALLOW_SLIPPERY_TOUCHES_PERMISSION:
                 return true;
             default:
                 return false;
