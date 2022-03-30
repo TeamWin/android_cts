@@ -670,7 +670,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         intentFilter.addAction(WifiAwareManager.ACTION_WIFI_AWARE_RESOURCE_CHANGED);
         WifiAwareResourcesBroadcastReceiver receiver = new WifiAwareResourcesBroadcastReceiver();
         mContext.registerReceiver(receiver, intentFilter);
-        final String serviceName = "ValidName";
+        final String serviceName = "PublishName";
 
         WifiAwareSession session = attachAndGetSession();
 
@@ -735,7 +735,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             return;
         }
 
-        final String serviceName = "ValidName";
+        final String serviceName = "PublishName";
         final int ttlSec = 5;
 
         WifiAwareSession session = attachAndGetSession();
@@ -774,7 +774,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             return;
         }
 
-        final String serviceName = "ValidName";
+        final String serviceName = "PublishName";
         final String passphrase = "SomePassword";
         final byte[] pmk = "01234567890123456789012345678901".getBytes();
         final byte[] pmkId = "0123456789012345".getBytes();
@@ -845,7 +845,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         if (!characteristics.isInstantCommunicationModeSupported()) {
             return;
         }
-        final String serviceName = "ValidName";
+        final String serviceName = "PublishName";
         WifiAwareSession session = attachAndGetSession();
 
         PublishConfig publishConfig = new PublishConfig.Builder()
@@ -887,7 +887,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         intentFilter.addAction(WifiAwareManager.ACTION_WIFI_AWARE_RESOURCE_CHANGED);
         WifiAwareResourcesBroadcastReceiver receiver = new WifiAwareResourcesBroadcastReceiver();
         mContext.registerReceiver(receiver, intentFilter);
-        final String serviceName = "ValidName";
+        final String serviceName = "SubscribeName";
 
         WifiAwareSession session = attachAndGetSession();
 
@@ -963,7 +963,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         if (!characteristics.isInstantCommunicationModeSupported()) {
             return;
         }
-        final String serviceName = "ValidName";
+        final String serviceName = "SubscribeName";
         WifiAwareSession session = attachAndGetSession();
 
         SubscribeConfig subscribeConfig = new SubscribeConfig.Builder()
@@ -1003,7 +1003,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             return;
         }
 
-        final String serviceName = "ValidName";
+        final String serviceName = "SubscribeName";
         final int ttlSec = 5;
 
         WifiAwareSession session = attachAndGetSession();

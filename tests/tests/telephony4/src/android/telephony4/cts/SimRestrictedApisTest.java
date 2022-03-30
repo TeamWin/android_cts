@@ -19,8 +19,10 @@ package android.telephony4.cts;
 import static androidx.test.InstrumentationRegistry.getContext;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
@@ -37,6 +39,9 @@ public class SimRestrictedApisTest {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY));
+
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
     }

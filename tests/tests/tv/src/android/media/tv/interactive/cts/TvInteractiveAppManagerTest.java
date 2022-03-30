@@ -181,7 +181,10 @@ public class TvInteractiveAppManagerTest {
         List<TvInteractiveAppServiceInfo> list = mManager.getTvInteractiveAppServiceList();
 
         for (TvInteractiveAppServiceInfo info : list) {
-            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())) {
+            if (info.getServiceInfo().name.equals(StubTvInteractiveAppService.class.getName())
+                    && info.getSupportedTypes()
+                    == (TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV
+                            | TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_GINGA)) {
                 return;
             }
         }

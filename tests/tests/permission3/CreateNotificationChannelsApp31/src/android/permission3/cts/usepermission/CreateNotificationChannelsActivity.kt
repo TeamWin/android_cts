@@ -25,7 +25,6 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 
-const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
 const val EXTRA_CREATE_CHANNELS = "extra_create"
 const val EXTRA_CREATE_CHANNELS_DELAYED = "extra_create_delayed"
 const val EXTRA_REQUEST_NOTIF_PERMISSION = "extra_request_notif_permission"
@@ -38,12 +37,16 @@ const val SECONDARY_APP_PKG = "android.permission3.cts.usepermissionother"
 const val CHANNEL_ID_31 = "test_channel_id"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
 const val DELAY_MS = 1000L
-const val LONG_DELAY_MS = 5000L
+const val LONG_DELAY_MS = 2000L
 
 class CreateNotificationChannelsActivity : Activity() {
     lateinit var notificationManager: NotificationManager
+    var launchActivityOnSecondResume = false
+    var isFirstResume = true
+    val handler = Handler(Looper.getMainLooper())
+
     override fun onStart() {
-        val handler = Handler(Looper.getMainLooper())
+        val launchSecondActivity = intent.getBooleanExtra(EXTRA_START_SECOND_ACTIVITY, false)
         notificationManager = baseContext.getSystemService(NotificationManager::class.java)!!
         if (intent.getBooleanExtra(EXTRA_START_SECOND_APP, false)) {
             handler.postDelayed({
@@ -57,11 +60,19 @@ class CreateNotificationChannelsActivity : Activity() {
             }, LONG_DELAY_MS)
         } else if (intent.getBooleanExtra(EXTRA_CREATE_CHANNELS, false)) {
             createChannel()
+            if (launchSecondActivity) {
+                launchActivityOnSecondResume = true
+            }
         } else if (intent.getBooleanExtra(EXTRA_CREATE_CHANNELS_DELAYED, false)) {
             handler.postDelayed({
                 createChannel()
             }, DELAY_MS)
+        } else {
+            if (launchSecondActivity) {
+                launchSecondActivity()
+            }
         }
+
 
         if (intent.getBooleanExtra(EXTRA_REQUEST_OTHER_PERMISSIONS, false)) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 0)
@@ -74,17 +85,18 @@ class CreateNotificationChannelsActivity : Activity() {
         if (intent.getBooleanExtra(EXTRA_REQUEST_NOTIF_PERMISSION, false)) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
         }
-        if (intent.getBooleanExtra(EXTRA_START_SECOND_ACTIVITY, false)) {
-            handler.postDelayed({
-                val intent2 = Intent(Intent.ACTION_MAIN)
-                intent2.`package` = packageName
-                intent2.addCategory(Intent.CATEGORY_DEFAULT)
-                intent2.putExtra(EXTRA_CREATE_CHANNELS_DELAYED, true)
-                startActivity(intent2)
-            }, LONG_DELAY_MS)
-        }
 
         super.onStart()
+    }
+
+    private fun launchSecondActivity() {
+        handler.postDelayed({
+            val intent2 = Intent(Intent.ACTION_MAIN)
+            intent2.`package` = packageName
+            intent2.addCategory(Intent.CATEGORY_DEFAULT)
+            intent2.putExtra(EXTRA_CREATE_CHANNELS_DELAYED, true)
+            startActivity(intent2)
+                            }, LONG_DELAY_MS)
     }
 
     private fun createChannel() {
@@ -94,11 +106,12 @@ class CreateNotificationChannelsActivity : Activity() {
         }
     }
 
-    override fun onPause() {
-        if (intent.getBooleanExtra(EXTRA_DELETE_CHANNELS_ON_CLOSE, false)) {
-            notificationManager.deleteNotificationChannel(CHANNEL_ID_31)
+    override fun onResume() {
+        super.onResume()
+        if (!isFirstResume && launchActivityOnSecondResume) {
+            launchSecondActivity()
         }
-        super.onPause()
+        isFirstResume = false
     }
 
     override fun onRequestPermissionsResult(

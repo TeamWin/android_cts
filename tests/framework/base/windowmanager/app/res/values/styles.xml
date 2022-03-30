@@ -101,6 +101,8 @@
         <item name="android:background">#ffffff</item>
         <item name="android:windowBackground">#ffffff</item>
         <item name="android:colorBackground">#ffffff</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <style name="NoInsetsTheme" parent="@android:style/Theme.NoTitleBar">

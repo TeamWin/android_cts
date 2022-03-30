@@ -16,7 +16,10 @@
 
 package android.mediapc.cts;
 
+import static org.junit.Assert.assertTrue;
+
 import android.media.MediaCodecInfo;
+import android.mediapc.cts.common.Utils;
 import android.os.Build;
 
 import androidx.test.filters.LargeTest;
@@ -32,8 +35,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Collection;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * The following test class validates the frame drops of AdaptivePlayback for the hardware decoders

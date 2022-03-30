@@ -51,6 +51,7 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_PASSWORD_COMPLEXITY" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.flash" android:required="false"/>
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
@@ -2948,6 +2949,7 @@
                     android:value="android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="7.7.1/H-1-1" />
         </activity>
 
         <activity android:name=".usb.accessory.AccessoryAttachmentHandler"
@@ -2977,6 +2979,9 @@
                     android:value="android.hardware.type.watch" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="7.7.2/C-1-1" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.usb.UsbDeviceConnection#controlTransfer|android.hardware.usb.UsbDeviceConnection#bulkTransfer" />
         </activity>
 
         <activity android:name=".usb.mtp.MtpHostTestActivity" android:label="@string/mtp_host_test"
@@ -2991,6 +2996,7 @@
                        android:value="android.hardware.type.automotive:android.hardware.type.television" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="7.7.2/C-3-1" />
         </activity>
 
 <!-- Turned off Sensor Power Test in initial L release

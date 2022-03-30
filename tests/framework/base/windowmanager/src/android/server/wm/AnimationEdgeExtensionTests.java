@@ -40,6 +40,9 @@ import org.junit.Test;
 @android.server.wm.annotation.Group1
 public class AnimationEdgeExtensionTests extends CustomActivityTransitionTestBase {
 
+    // We need to allow for some variation stemming from color conversions
+    private static final float COLOR_VALUE_VARIANCE_TOLERANCE = 0.03f;
+
     /**
      * Checks that when an activity transition with a left edge extension is run that the animating
      * activity is extended on the left side by clamping the edge pixels of the activity.
@@ -158,7 +161,7 @@ public class AnimationEdgeExtensionTests extends CustomActivityTransitionTestBas
                         new float[] {
                                 expectedColor.red(), expectedColor.green(), expectedColor.blue() },
                         new float[] { sRgbColor.red(), sRgbColor.green(), sRgbColor.blue() },
-                        0.03f); // need to allow for some variation stemming from conversions
+                        COLOR_VALUE_VARIANCE_TOLERANCE);
             }
         }
     }
@@ -174,12 +177,21 @@ public class AnimationEdgeExtensionTests extends CustomActivityTransitionTestBas
             final Color c = screen.getColor(x, y)
                     .convert(ColorSpace.get(ColorSpace.Named.SRGB));
 
-            if (prevColor.red() != c.red() || prevColor.green() != c.green()
-                    || prevColor.blue() != c.blue()) {
+            if (!colorsEqual(prevColor, c)) {
                 return x;
             }
         }
 
         throw new RuntimeException("Failed to find color change index");
+    }
+
+    private boolean colorsEqual(Color c1, Color c2) {
+        return almostEquals(c1.red(), c2.red(), COLOR_VALUE_VARIANCE_TOLERANCE)
+                && almostEquals(c1.green(), c2.green(), COLOR_VALUE_VARIANCE_TOLERANCE)
+                && almostEquals(c1.blue(), c2.blue(), COLOR_VALUE_VARIANCE_TOLERANCE);
+    }
+
+    private boolean almostEquals(float a, float b, float delta) {
+        return Math.abs(a - b) < delta;
     }
 }
