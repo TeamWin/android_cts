@@ -2165,6 +2165,37 @@ public class ImsServiceTest {
             automation.dropShellPermissionIdentity();
         }
 
+        // Reply the SIP code 504 SERVER TIMEOUT
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 504;
+            String reason = "SERVER TIMEOUT";
+            cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
+        });
+
+        // Notify framework to send the PUBLISH request to the ImsService.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        try {
+            // Verify the publish state callback is received.
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_PUBLISHING,
+                    waitForIntResult(publishStateQueue));
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR,
+                    waitForIntResult(publishStateQueue));
+            // Verify the value of getting from the API is PUBLISH_STATE_RCS_PROVISION_ERROR
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_RCS_PROVISION_ERROR, publishState);
+        } finally {
+            publishStateQueue.clear();
+            automation.dropShellPermissionIdentity();
+        }
+
         LinkedBlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
         LinkedBlockingQueue<Long> errorRetryQueue = new LinkedBlockingQueue<>();
         LinkedBlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
