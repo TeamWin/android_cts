@@ -27,10 +27,60 @@ import java.util.List;
 
 /** Utility class for common UICC- and SIM-related operations. */
 public final class UiccUtil {
+
     // A table mapping from a number to a hex character for fast encoding hex strings.
     private static final char[] HEX_CHARS = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     };
+
+    /**
+     * Data class representing a single APDU transmission.
+     *
+     * <p>Constants are defined in TS 102 221 Section 10.1.2.
+     */
+    public static final class ApduCommand {
+        public static final int INS_GET_RESPONSE = 0xC0;
+
+        public final int cla;
+        public final int ins;
+        public final int p1;
+        public final int p2;
+        public final int p3;
+        @Nullable public final String data;
+
+        public ApduCommand(int cla, int ins, int p1, int p2, int p3, @Nullable String data) {
+            this.cla = cla;
+            this.ins = ins;
+            this.p1 = p1;
+            this.p2 = p2;
+            this.p3 = p3;
+            this.data = data;
+        }
+
+        @Override
+        public String toString() {
+            return "cla=0x"
+                    + Integer.toHexString(cla)
+                    + ", ins=0x"
+                    + Integer.toHexString(ins)
+                    + ", p1=0x"
+                    + Integer.toHexString(p1)
+                    + ", p2=0x"
+                    + Integer.toHexString(p2)
+                    + ", p3=0x"
+                    + Integer.toHexString(p3)
+                    + ", data="
+                    + data;
+        }
+    }
+
+    /** Various APDU status words and their meanings, as defined in TS 102 221 Section 10.2.1 */
+    public static final class ApduResponse {
+        public static final String SW1_MORE_RESPONSE = "61";
+
+        public static final String SW1_SW2_OK = "9000";
+        public static final String SW1_OK_PROACTIVE_COMMAND = "91";
+    }
 
     /** The hashes of all supported CTS UICC test keys and their corresponding specification. */
     @StringDef({UiccCertificate.CTS_UICC_LEGACY, UiccCertificate.CTS_UICC_2021})
@@ -83,16 +133,15 @@ public final class UiccUtil {
      * Converts a byte array into a String of hexadecimal characters.
      *
      * @param bytes an array of bytes
-     *
      * @return hex string representation of bytes array
      */
     @Nullable
     public static String bytesToHexString(@Nullable byte[] bytes) {
         if (bytes == null) return null;
 
-        StringBuilder ret = new StringBuilder(2*bytes.length);
+        StringBuilder ret = new StringBuilder(2 * bytes.length);
 
-        for (int i = 0 ; i < bytes.length ; i++) {
+        for (int i = 0; i < bytes.length; i++) {
             int b;
             b = 0x0f & (bytes[i] >> 4);
             ret.append(HEX_CHARS[b]);
