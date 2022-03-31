@@ -210,9 +210,6 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
           circle = opencv_processing_utils.find_circle(
               np_image, ref_img_name_stem, image_fov_utils.CIRCLE_MIN_AREA,
               image_fov_utils.CIRCLE_COLOR)
-          # img_name = '%s_%s_w%d_h%d' % (
-          #     os.path.join(self.log_path, _NAME), quality, width, height)
-          # TODO(ruchamk): Add part to append circle center to image
 
           # Check pass/fail for fov coverage for all fmts in AR_CHECKED
           fov_chk_msg = image_fov_utils.check_fov(
@@ -244,10 +241,13 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                 circle, cc_ct_gt, width, height,
                 f'{quality}', crop_thresh_factor)
             if crop_chk_msg:
-              img_name = '%s_%s_w%d_h%d_crop.png' % (
+              crop_img_name = '%s_%s_w%d_h%d_crop.png' % (
                   os.path.join(self.log_path, _NAME), quality, width, height)
+              opencv_processing_utils.append_circle_center_to_img(
+                  circle, np_image*255, crop_img_name)
               failed_crop.append(crop_chk_msg)
-              image_processing_utils.write_image(np_image/255, img_name, True)
+              image_processing_utils.write_image(np_image/255,
+                                                 crop_img_name, True)
           else:
             logging.debug('Crop test skipped')
 
@@ -257,7 +257,7 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       if failed_ar:
         e_msg = 'Aspect ratio '
       if failed_fov:
-        e_msg += 'FoV  '
+        e_msg += 'FoV '
       if failed_crop:
         e_msg += 'Crop '
       if e_msg:
