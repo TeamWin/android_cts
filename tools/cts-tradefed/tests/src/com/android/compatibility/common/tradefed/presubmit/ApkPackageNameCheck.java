@@ -129,7 +129,7 @@ public class ApkPackageNameCheck {
                     File apkFile = FileUtil.findFile(config.getParentFile(), apkName);
                     if (apkFile == null || !apkFile.exists()) {
                         fail(String.format("Module %s is trying to install %s which does not "
-                                + "exists in testcases/", config.getName(), apkFile));
+                                + "exists in testcases/", config.getName(), apkName));
                     }
                     AaptParser res = AaptParser.parse(apkFile);
                     assertNotNull(res);
