@@ -35,7 +35,6 @@ import android.quickaccesswallet.QuickAccessWalletDelegateTargetActivityService;
 import android.quickaccesswallet.QuickAccessWalletSettingsActivity;
 import android.quickaccesswallet.TestHostApduService;
 import android.quickaccesswallet.TestQuickAccessWalletService;
-import android.quickaccesswallet.UseTargetActivityForQuickAccessWalletService;
 import android.service.quickaccesswallet.GetWalletCardsError;
 import android.service.quickaccesswallet.GetWalletCardsRequest;
 import android.service.quickaccesswallet.GetWalletCardsResponse;
@@ -106,8 +105,6 @@ public class QuickAccessWalletClientTest {
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
         setServiceState(NoPermissionQuickAccessWalletService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
-        setServiceState(UseTargetActivityForQuickAccessWalletService.class,
-                PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
         setServiceState(QuickAccessWalletDelegateTargetActivityService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
         TestQuickAccessWalletService.resetStaticFields();
@@ -141,31 +138,10 @@ public class QuickAccessWalletClientTest {
     }
 
     @Test
-    public void testUseTargetActivityForQuickAccess_isFalse() {
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
-
-        assertThat(client.useTargetActivityForQuickAccess()).isFalse();
-    }
-
-    @Test
-    public void testUseTargetActivityForQuickAccess_serviceSpecifies_isTrue() {
-        setServiceState(UseTargetActivityForQuickAccessWalletService.class,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
-        setServiceState(TestQuickAccessWalletService.class,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
-
-        QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
-
-        assertThat(client.useTargetActivityForQuickAccess()).isTrue();
-    }
-
-    @Test
     public void testGetWalletPendingIntent_serviceWithOverride_notNull_ableToSend()
             throws Exception {
         setServiceState(QuickAccessWalletDelegateTargetActivityService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
-        setServiceState(UseTargetActivityForQuickAccessWalletService.class,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
         setServiceState(TestQuickAccessWalletService.class,
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED);
 
