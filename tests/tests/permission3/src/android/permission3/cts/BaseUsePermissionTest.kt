@@ -105,6 +105,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val DENY_AND_DONT_ASK_AGAIN_BUTTON_TEXT =
                 "grant_dialog_button_deny_and_dont_ask_again"
         const val NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON_TEXT = "grant_dialog_button_no_upgrade"
+        const val ALERT_DIALOG_MESSAGE = "android:id/message"
 
         const val REQUEST_LOCATION_MESSAGE = "permgrouprequest_location"
 
@@ -591,6 +592,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 click(By.text(getPermissionControllerString(DENY_ANYWAY_BUTTON_TEXT)))
             } else if (!alreadyChecked && isLegacyApp && wasGranted) {
                 if (!isTv) {
+                    // Wait for alert dialog to popup, then scroll to the bottom of it
+                    waitFindObject(By.res(ALERT_DIALOG_MESSAGE))
                     scrollToBottom()
                 }
 
