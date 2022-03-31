@@ -22,7 +22,7 @@ import subprocess
 import time
 
 
-_ITS_SUPPORTED_QUALITIES = (
+ITS_SUPPORTED_QUALITIES = (
     'HIGH',
     '2160P',
     '1080P',
