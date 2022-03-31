@@ -28,6 +28,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
 import android.os.Process;
+import android.os.UserHandle;
 import android.os.UserManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -52,6 +53,7 @@ import org.junit.runner.RunWith;
 public class UserReferenceTest {
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
+    public static final UserHandle USER_HANDLE = new UserHandle(USER_ID);
     private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
@@ -60,6 +62,11 @@ public class UserReferenceTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    @Test
+    public void of_returnsUserReferenceWithValidId() {
+        assertThat(UserReference.of(USER_HANDLE)).isEqualTo(USER_ID);
+    }
 
     @Test
     public void id_returnsId() {
