@@ -599,6 +599,7 @@ abstract class CodecTestBase {
     }
 
     static final String CODEC_PREFIX_KEY = "codec-prefix";
+    static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
     static final String MIME_SEL_KEY = "mime-sel";
     static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
     static final Map<String, String> mDefaultEncoders = new HashMap<>();
@@ -653,6 +654,7 @@ abstract class CodecTestBase {
     static final PackageManager pm = mContext.getPackageManager();
     static String mimeSelKeys;
     static String codecPrefix;
+    static String mediaTypePrefix;
 
     CodecAsyncHandler mAsyncHandle;
     boolean mIsCodecInAsyncMode;
@@ -700,6 +702,7 @@ abstract class CodecTestBase {
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         mimeSelKeys = args.getString(MIME_SEL_KEY);
         codecPrefix = args.getString(CODEC_PREFIX_KEY);
+        mediaTypePrefix = args.getString(MEDIA_TYPE_PREFIX_KEY);
 
         mProfileSdrMap.put(MediaFormat.MIMETYPE_VIDEO_AVC, AVC_SDR_PROFILES);
         mProfileSdrMap.put(MediaFormat.MIMETYPE_VIDEO_HEVC, HEVC_SDR_PROFILES);
@@ -926,12 +929,18 @@ abstract class CodecTestBase {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
                 String[] types = codecInfo.getSupportedTypes();
                 for (String type : types) {
+                    if (mediaTypePrefix != null && !type.startsWith(mediaTypePrefix)) {
+                        continue;
+                    }
                     if (!needAudio && type.startsWith("audio/")) continue;
                     if (!needVideo && type.startsWith("video/")) continue;
                     if (!mimes.contains(type)) {
                         mimes.add(type);
                     }
                 }
+            }
+            if (mediaTypePrefix != null) {
+                return mimes;
             }
             // feature_video_output is not exposed to package manager. Testing for video output
             // ports, such as VGA, HDMI, DisplayPort, or a wireless port for display is also not
