@@ -26,13 +26,24 @@ import opencv_processing_utils
 
 CIRCLE_COLOR = 0  # [0: black, 255: white]
 CIRCLE_MIN_AREA = 0.01  # 1% of image size
-
+FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
 LARGE_SIZE_IMAGE = 2000  # Size of a large image (compared against max(w, h))
 THRESH_AR_L = 0.02  # Aspect ratio test threshold of large images
 THRESH_AR_S = 0.075  # Aspect ratio test threshold of mini images
 THRESH_CROP_L = 0.02  # Crop test threshold of large images
 THRESH_CROP_S = 0.075  # Crop test threshold of mini images
 THRESH_MIN_PIXEL = 4  # Crop test allowed offset
+
+
+def check_fov(circle, ref_fov, w, h):
+  """Check the FoV for correct size."""
+  fov_percent = calc_circle_image_ratio(circle['r'], w, h)
+  chk_percent = calc_expected_circle_image_ratio(ref_fov, w, h)
+  if not math.isclose(fov_percent, chk_percent, rel_tol=FOV_PERCENT_RTOL):
+    e_msg = (f'FoV %: {fov_percent:.2f}, Ref FoV %: {chk_percent:.2f}, '
+             f'TOL={FOV_PERCENT_RTOL*100}%, img: {w}x{h}, ref: '
+             f"{ref_fov['w']}x{ref_fov['h']}")
+    return e_msg
 
 
 def check_ar(circle, ar_gt, w, h, e_msg_stem):

@@ -19,6 +19,7 @@ package android.uidmigration.cts
 object Const {
     const val CTS_TEST_PKG = "android.uidmigration.cts"
     const val INSTALL_TEST_PKG = "android.uidmigration.cts.InstallTestApp"
+    const val INSTALL_TEST_PKG2 = "${INSTALL_TEST_PKG}2"
     const val PERM_TEST_PKG = "android.uidmigration.cts.PermissionTestApp"
     const val DATA_TEST_PKG = "android.uidmigration.cts.DataTestApp"
     const val ACTION_UPDATE_ACK = "android.uidmigration.cts.ACTION_UPDATE_ACK"

@@ -16,6 +16,7 @@
 
 package android.keystore.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -87,5 +88,53 @@ public class KeyStoreExceptionTest {
         }
 
         return errorFieldsBuilder.build();
+    }
+
+    @Test
+    public void testRkpFailureServerUnavailable() {
+        KeyStoreException ex = new KeyStoreException(22, "RKP failure",
+                1 /* temporarily unavailable */);
+        assertEquals("Error must indicate key exhaustion",
+                KeyStoreException.ERROR_ATTESTATION_KEYS_UNAVAILABLE,
+                ex.getNumericErrorCode());
+        assertTrue("Must indicate a system issue",
+                ex.isSystemError());
+        assertTrue("Must indicate a transient failure",
+                ex.isTransientFailure());
+        assertEquals("Retry policy must be exponential back-off",
+                KeyStoreException.RETRY_WITH_EXPONENTIAL_BACKOFF,
+                ex.getRetryPolicy());
+    }
+
+    @Test
+    public void testRkpFailurePendingConnectivity() {
+        KeyStoreException ex = new KeyStoreException(22, "RKP failure",
+                3 /* fetching pending connectivity */);
+        assertEquals("Error must indicate key exhaustion",
+                KeyStoreException.ERROR_ATTESTATION_KEYS_UNAVAILABLE,
+                ex.getNumericErrorCode());
+        assertTrue("Must indicate a system issue",
+                ex.isSystemError());
+        assertTrue("Must indicate a transient failure",
+                ex.isTransientFailure());
+        assertEquals("Retry policy must be when connectivity is resumed",
+                KeyStoreException.RETRY_WHEN_CONNECTIVITY_AVAILABLE,
+                ex.getRetryPolicy());
+    }
+
+    @Test
+    public void testRkpFailureDeviceNotRegistered() {
+        KeyStoreException ex = new KeyStoreException(22, "RKP failure",
+                2 /* server refused issuance */);
+        assertEquals("Error must indicate key exhaustion",
+                KeyStoreException.ERROR_ATTESTATION_KEYS_UNAVAILABLE,
+                ex.getNumericErrorCode());
+        assertTrue("Must indicate a system issue",
+                ex.isSystemError());
+        assertFalse("Must indicate a permanent failure",
+                ex.isTransientFailure());
+        assertEquals("Retry policy must be never",
+                KeyStoreException.RETRY_NEVER,
+                ex.getRetryPolicy());
     }
 }

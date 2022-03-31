@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation
+@ParameterizedAnnotation(shadows = IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner.class)
 @RequireRunOnPrimaryUser
 // TODO(scottjonathan): Add annotation to create corporate-owned profile
 public @interface IncludeRunOnParentOfCorporateOwnedProfileOwner {

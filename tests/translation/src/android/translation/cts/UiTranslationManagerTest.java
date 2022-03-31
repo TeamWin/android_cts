@@ -620,9 +620,191 @@ public class UiTranslationManagerTest {
         // Make sure onFinished will not be called twice.
         mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
         mActivityScenario = null;
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
         Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
 
         // TODO(b/191417938): add a test to verify startUiTranslation + Activity destroyed.
+    }
+
+    @Test
+    public void testCallbackRegisteredAfterTranslationStarted() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        UiTranslationManager manager =
+                sContext.getSystemService(UiTranslationManager.class);
+        // Set response
+        sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        // Register callback
+        final Executor executor = Executors.newSingleThreadExecutor();
+        UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
+        manager.registerUiTranslationStateCallback(executor, mockCallback);
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+
+        // Callback should receive onStarted.
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onStarted(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        pauseUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onPaused(any(String.class));
+
+        resumeUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onResumed(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        finishUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+
+        // Make sure onFinished will not be called twice.
+        mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        mActivityScenario = null;
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+    }
+
+    @Test
+    public void testCallbackRegisteredAfterTranslationStartedAndPaused() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        UiTranslationManager manager =
+                sContext.getSystemService(UiTranslationManager.class);
+        // Set response
+        sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        pauseUiTranslation(contentCaptureContext);
+
+        // Register callback
+        final Executor executor = Executors.newSingleThreadExecutor();
+        UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
+        manager.registerUiTranslationStateCallback(executor, mockCallback);
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+
+        // Callback should receive onStarted and onPaused events.
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onStarted(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onPaused(any(String.class));
+
+        resumeUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onResumed(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        finishUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+
+        // Make sure onFinished will not be called twice.
+        mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        mActivityScenario = null;
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+    }
+
+    @Test
+    public void testCallbackRegisteredAfterTranslationStartedPausedAndResumed() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        UiTranslationManager manager =
+                sContext.getSystemService(UiTranslationManager.class);
+        // Set response
+        sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        pauseUiTranslation(contentCaptureContext);
+
+        resumeUiTranslation(contentCaptureContext);
+
+        // Register callback
+        final Executor executor = Executors.newSingleThreadExecutor();
+        UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
+        manager.registerUiTranslationStateCallback(executor, mockCallback);
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+
+        // Callback should receive onStarted event but NOT an onPaused event, because translation
+        // was already resumed prior to registration.
+        Mockito.verify(mockCallback, Mockito.times(1))
+                .onStarted(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        Mockito.verify(mockCallback, Mockito.never()).onPaused(any(String.class));
+
+        Mockito.verify(mockCallback, Mockito.never())
+                .onResumed(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        finishUiTranslation(contentCaptureContext);
+
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+
+        // Make sure onFinished will not be called twice.
+        mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        mActivityScenario = null;
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+        Mockito.verify(mockCallback, Mockito.times(1)).onFinished(any(String.class));
+    }
+
+    @Test
+    public void testCallbackRegisteredAfterTranslationFinished() throws Throwable {
+        final Pair<List<AutofillId>, ContentCaptureContext> result =
+                enableServicesAndStartActivityForTranslation();
+
+        final List<AutofillId> views = result.first;
+        final ContentCaptureContext contentCaptureContext = result.second;
+
+        UiTranslationManager manager =
+                sContext.getSystemService(UiTranslationManager.class);
+        // Set response
+        sTranslationReplier.addResponse(createViewsTranslationResponse(views, "success"));
+
+        startUiTranslation(/* shouldPadContent */ false, views, contentCaptureContext);
+
+        pauseUiTranslation(contentCaptureContext);
+
+        resumeUiTranslation(contentCaptureContext);
+
+        finishUiTranslation(contentCaptureContext);
+
+        // Register callback
+        final Executor executor = Executors.newSingleThreadExecutor();
+        UiTranslationStateCallback mockCallback = Mockito.mock(UiTranslationStateCallback.class);
+        manager.registerUiTranslationStateCallback(executor, mockCallback);
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+
+        // Callback should receive no events.
+        Mockito.verify(mockCallback, Mockito.never())
+                .onStarted(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        Mockito.verify(mockCallback, Mockito.never()).onPaused(any(String.class));
+
+        Mockito.verify(mockCallback, Mockito.never())
+                .onResumed(any(ULocale.class), any(ULocale.class), any(String.class));
+
+        Mockito.verify(mockCallback, Mockito.never()).onFinished(any(String.class));
+
+        // Make sure onFinished will not be called at all.
+        mActivityScenario.moveToState(Lifecycle.State.DESTROYED);
+        mActivityScenario = null;
+        SystemClock.sleep(UI_WAIT_TIMEOUT);
+        Mockito.verify(mockCallback, Mockito.never()).onFinished(any(String.class));
     }
 
     @Test

@@ -20,7 +20,7 @@ package {
 }
 
 android_test {
-    name: "CtsAmbientContextDetectionServiceDeviceTestCases",
+    name: "CtsAmbientContextServiceTestCases",
     defaults: ["cts_defaults"],
     dex_preopt: {
         enabled: false,

@@ -26,6 +26,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -92,7 +93,7 @@ public class BTAdapterUtils {
 
         Log.d(TAG, "Enabling bluetooth adapter");
         UiAutomation auto = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        Set<String> permissions = auto.getAdoptedShellPermissions();
+        Set<String> permissions = new HashSet(auto.getAdoptedShellPermissions());
         Set<String> savedPermissions = Set.copyOf(permissions);
         permissions.add(android.Manifest.permission.NETWORK_SETTINGS);
         auto.adoptShellPermissionIdentity(permissions.toArray(new String[permissions.size()]));
@@ -129,7 +130,7 @@ public class BTAdapterUtils {
 
         Log.d(TAG, "Disabling bluetooth adapter");
         UiAutomation auto = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        Set<String> permissions = auto.getAdoptedShellPermissions();
+        Set<String> permissions = new HashSet(auto.getAdoptedShellPermissions());
         Set<String> savedPermissions = Set.copyOf(permissions);
         permissions.add(android.Manifest.permission.NETWORK_SETTINGS);
         auto.adoptShellPermissionIdentity(permissions.toArray(new String[permissions.size()]));

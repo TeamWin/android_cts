@@ -16,6 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.meta;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -34,4 +35,19 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @RequiresBedsteadJUnit4
 public @interface ParameterizedAnnotation {
+
+    /**
+     * Other parameterized annotations which are less powerful versions of this one.
+     *
+     * <p>For example, if this annotation represents a permission, and there is another annotation
+     * representing a permission which allows a subset of this one, then this annotation may shadow
+     * that one.
+     *
+     * <p>This will mean that these annotations will never be used together - one will be removed
+     * depending on whether the test requires the most powerful or least powerful state.
+     *
+     * <p>This should not be used if you want to explicitly test the state represented by each
+     * annotation.
+     */
+    Class<? extends Annotation>[] shadows() default {};
 }

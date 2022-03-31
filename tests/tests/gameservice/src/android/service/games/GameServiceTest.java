@@ -224,29 +224,10 @@ public final class GameServiceTest {
 
         launchAndWaitForPackage(GAME_PACKAGE_NAME);
 
-        Rect touchableBounds = waitForTouchableOverlayBounds();
+        waitForTouchableOverlayBounds();
 
-        Bitmap overlayScreenshot = Bitmap.createBitmap(
-                getInstrumentation().getUiAutomation().takeScreenshot(),
-                touchableBounds.left,
-                touchableBounds.top,
-                touchableBounds.width(),
-                touchableBounds.height());
-
-        // TODO(b/218901969): UI automator does not appear to have visibility into the overlay;
-        //                    therefore, it cannot be used to validate the overlay's contents.
-        //                    We should try and see if we can expose the overlay to UI automator in
-        //                    order to have a more foolproof validation check. We will use this
-        //                    magenta background check in the meantime.
-        // The overlay background is set to magenta. Verify that it has been rendered by checking
-        // the corners.
-        assertThat(overlayScreenshot.getPixel(0, 0)).isEqualTo(Color.MAGENTA);
-        assertThat(overlayScreenshot.getPixel(0, overlayScreenshot.getHeight() - 1)).isEqualTo(
-                Color.MAGENTA);
-        assertThat(overlayScreenshot.getPixel(overlayScreenshot.getWidth() - 1, 0)).isEqualTo(
-                Color.MAGENTA);
-        assertThat(overlayScreenshot.getPixel(overlayScreenshot.getWidth() - 1,
-                overlayScreenshot.getHeight() - 1)).isEqualTo(Color.MAGENTA);
+        assertThat(UiAutomatorUtils.getUiDevice().findObject(
+                By.text("Overlay was rendered on: " + GAME_PACKAGE_NAME))).isNotNull();
     }
 
     @Test

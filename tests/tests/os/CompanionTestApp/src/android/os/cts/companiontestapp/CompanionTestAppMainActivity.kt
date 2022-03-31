@@ -133,6 +133,21 @@ class CompanionTestAppMainActivity : Activity() {
             })
 
             addView(Button(ctx).apply {
+                text = "Request permission transfer"
+                setOnClickListener {
+                    cdm.myAssociations.firstNotNullOf { associationInfo ->
+                        val associationId = associationInfo.id
+                        toast("requestSystemDataTransfer $associationId")
+                        val intentSender = cdm.buildPermissionTransferUserConsentIntent(
+                                associationId)
+                        if (intentSender != null) {
+                            startIntentSender(intentSender, null, 0, 0, 0)
+                        }
+                    }
+                }
+            })
+
+            addView(Button(ctx).apply {
                 text = "Check location permission"
                 setOnClickListener {
                     val locationAccess = ctx.checkSelfPermission(ACCESS_FINE_LOCATION)

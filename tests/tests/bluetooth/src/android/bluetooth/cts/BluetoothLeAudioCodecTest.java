@@ -163,6 +163,26 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         assertEquals(octetsPerFrame, leAudioCodecConfig.getOctetsPerFrame());
     }
 
+    public void testGetMinOctetsPerFrame() {
+        final int minOctetsPerFrame = 100;
+        BluetoothLeAudioCodecConfig leAudioCodecConfig =
+                new BluetoothLeAudioCodecConfig.Builder()
+                    .setMinOctetsPerFrame(minOctetsPerFrame)
+                    .build();
+
+        assertEquals(minOctetsPerFrame, leAudioCodecConfig.getMinOctetsPerFrame());
+    }
+
+    public void testGetMaxOctetsPerFrame() {
+        final int maxOctetsPerFrame = 100;
+        BluetoothLeAudioCodecConfig leAudioCodecConfig =
+                new BluetoothLeAudioCodecConfig.Builder()
+                    .setMaxOctetsPerFrame(maxOctetsPerFrame)
+                    .build();
+
+        assertEquals(maxOctetsPerFrame, leAudioCodecConfig.getMaxOctetsPerFrame());
+    }
+
     public void testDescribeContents() {
         BluetoothLeAudioCodecConfig leAudioCodecConfig =
             new BluetoothLeAudioCodecConfig.Builder().build();
@@ -202,6 +222,8 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
 
     public void testBuilderWithExistingObject() {
         final int octetsPerFrame = 100;
+        final int minOctectsPerFrame = 50;
+        final int maxOctectsPerFrame = 150;
         BluetoothLeAudioCodecConfig oriLeAudioCodecConfig =
             new BluetoothLeAudioCodecConfig.Builder()
                 .setCodecType(BluetoothLeAudioCodecConfig.SOURCE_CODEC_TYPE_LC3)
@@ -211,6 +233,8 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
                 .setChannelCount(BluetoothLeAudioCodecConfig.CHANNEL_COUNT_2)
                 .setFrameDuration(BluetoothLeAudioCodecConfig.FRAME_DURATION_7500)
                 .setOctetsPerFrame(octetsPerFrame)
+                .setMinOctetsPerFrame(minOctectsPerFrame)
+                .setMaxOctetsPerFrame(maxOctectsPerFrame)
                 .build();
         BluetoothLeAudioCodecConfig toBuilderCodecConfig =
                 new BluetoothLeAudioCodecConfig.Builder(oriLeAudioCodecConfig).build();
@@ -227,5 +251,7 @@ public class BluetoothLeAudioCodecTest extends AndroidTestCase {
         assertEquals(BluetoothLeAudioCodecConfig.FRAME_DURATION_7500,
                 toBuilderCodecConfig.getFrameDuration());
         assertEquals(octetsPerFrame, toBuilderCodecConfig.getOctetsPerFrame());
+        assertEquals(minOctectsPerFrame, toBuilderCodecConfig.getMinOctetsPerFrame());
+        assertEquals(maxOctectsPerFrame, toBuilderCodecConfig.getMaxOctetsPerFrame());
     }
 }

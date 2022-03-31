@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation
+@ParameterizedAnnotation(shadows = IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser.class)
 @RequireRunOnSecondaryUser
 @EnsureHasDeviceOwner(isPrimary = true, affiliationIds = "affiliated")
 @EnsureHasProfileOwner(affiliationIds = "affiliated")

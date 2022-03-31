@@ -29,7 +29,6 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -72,6 +71,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Binder;
 import android.os.Bundle;
@@ -109,9 +109,7 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -156,9 +154,6 @@ public class ActivityManagerTest {
 
     private static final String MCC_TO_UPDATE = "987";
     private static final String MNC_TO_UPDATE = "654";
-    private static final String SHELL_COMMAND_GET_CONFIG = "am get-config";
-    private static final String SHELL_COMMAND_RESULT_CONFIG_NAME_MCC = "mcc";
-    private static final String SHELL_COMMAND_RESULT_CONFIG_NAME_MNC = "mnc";
 
     // Return states of the ActivityReceiverFilter.
     public static final int RESULT_PASS = 1;
@@ -722,48 +717,22 @@ public class ActivityManagerTest {
             return;
         }
 
-        // Store the original mcc mnc to set back
-        String[] mccMncConfigOriginal = new String[2];
-        // Store other configs to check they won't be affected
-        Set<String> otherConfigsOriginal = new HashSet<>();
-        getMccMncConfigsAndOthers(mccMncConfigOriginal, otherConfigsOriginal);
-
+        Configuration originalConfig = mTargetContext.getResources().getConfiguration();
         String[] mccMncConfigToUpdate = new String[] {MCC_TO_UPDATE, MNC_TO_UPDATE};
         boolean success = ShellIdentityUtils.invokeMethodWithShellPermissions(mActivityManager,
                 (am) -> am.updateMccMncConfiguration(mccMncConfigToUpdate[0],
                         mccMncConfigToUpdate[1]));
 
         if (success) {
-            String[] mccMncConfigUpdated = new String[2];
-            Set<String> otherConfigsUpdated = new HashSet<>();
-            getMccMncConfigsAndOthers(mccMncConfigUpdated, otherConfigsUpdated);
-            // Check the mcc mnc are updated as expected
-            assertArrayEquals(mccMncConfigToUpdate, mccMncConfigUpdated);
-            // Check other configs are not changed
-            assertEquals(otherConfigsOriginal, otherConfigsUpdated);
+            Configuration changedConfig = mTargetContext.getResources().getConfiguration();
+            assertEquals(MNC_TO_UPDATE, Integer.toString(changedConfig.mnc));
+            assertEquals(MCC_TO_UPDATE, Integer.toString(changedConfig.mcc));
         }
 
-        // Set mcc mnc configs back in the end of the test
+        // Set mcc mnc configs back in the end of the test if they were set to something else.
         ShellIdentityUtils.invokeMethodWithShellPermissions(mActivityManager,
-                (am) -> am.updateMccMncConfiguration(mccMncConfigOriginal[0],
-                        mccMncConfigOriginal[1]));
-    }
-
-    private void getMccMncConfigsAndOthers(String[] mccMncConfigs, Set<String> otherConfigs)
-            throws Exception {
-        String[] configs = SystemUtil.runShellCommand(
-                mInstrumentation, SHELL_COMMAND_GET_CONFIG).split(" |\\-");
-        for (String config : configs) {
-            if (config.startsWith(SHELL_COMMAND_RESULT_CONFIG_NAME_MCC)) {
-                mccMncConfigs[0] = config.substring(
-                        SHELL_COMMAND_RESULT_CONFIG_NAME_MCC.length());
-            } else if (config.startsWith(SHELL_COMMAND_RESULT_CONFIG_NAME_MNC)) {
-                mccMncConfigs[1] = config.substring(
-                        SHELL_COMMAND_RESULT_CONFIG_NAME_MNC.length());
-            } else {
-                otherConfigs.add(config);
-            }
-        }
+                (am) -> am.updateMccMncConfiguration(Integer.toString(originalConfig.mcc),
+                        Integer.toString(originalConfig.mnc)));
     }
 
     /**

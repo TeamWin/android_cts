@@ -949,6 +949,11 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                                 Classpaths.getClassDefsFromJar(getDevice(), apk).stream()
                                         .map(ClassDef::getType)
                                         .collect(ImmutableSet.toImmutableSet());
+                        // b/226559955: The directory paths containing APKs contain the build ID,
+                        // so strip out the @BUILD_ID portion.
+                        // e.g. /apex/com.android.bluetooth/app/Bluetooth@SC-DEV/Bluetooth.apk ->
+                        //      /apex/com.android.bluetooth/app/Bluetooth/Bluetooth.apk
+                        apk = apk.replaceFirst("@[^/]*", "");
                         final ImmutableSet<String> burndownClasses =
                                 FULL_APK_IN_APEX_BURNDOWN.getOrDefault(apk, ImmutableSet.of());
                         final Multimap<String, String> duplicates =

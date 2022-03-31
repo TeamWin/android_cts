@@ -70,7 +70,7 @@ class AppIdMigrationTest {
         // Both app should share the same UID.
         val uid = mPm.getPackageUid(Const.INSTALL_TEST_PKG, PackageInfoFlags.of(0))
         var pkgs = mPm.getPackagesForUid(uid).assertNotNull()
-        assertEquals(2, pkgs.size)
+        assertTrue(pkgs.sameAs(Const.INSTALL_TEST_PKG, Const.INSTALL_TEST_PKG + "2"))
 
         // Should not allow upgrading to an APK that directly removes sharedUserId.
         assertFalse(installPackage(InstallTest.APK3))
@@ -78,7 +78,7 @@ class AppIdMigrationTest {
         // Leave shared UID.
         assertTrue(installPackage(InstallTest.APK4))
         pkgs = mPm.getPackagesForUid(uid).assertNotNull()
-        assertEquals(1, pkgs.size)
+        assertTrue(pkgs.sameAs(Const.INSTALL_TEST_PKG + "2"))
 
         uninstallPackage(Const.INSTALL_TEST_PKG)
         uninstallPackage(Const.INSTALL_TEST_PKG + "2")

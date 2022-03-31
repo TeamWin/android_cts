@@ -16,10 +16,15 @@
 
 package android.virtualdevice.cts.common;
 
+import static android.media.AudioRecord.READ_BLOCKING;
+import static android.media.AudioRecord.READ_NON_BLOCKING;
+
+import android.annotation.IntDef;
 import android.companion.virtual.audio.AudioCapture;
-import android.media.AudioFormat;
 import android.media.AudioRecord;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -33,17 +38,44 @@ public final class AudioHelper {
     /** Tells the activity to record audio for testing. */
     public static final String ACTION_RECORD_AUDIO = "android.virtualdevice.cts.RECORD_AUDIO";
 
+    /** Tells the activity to play or record for which audio data type. */
+    public static final String EXTRA_AUDIO_DATA_TYPE = "audio_data_type";
+
+    @IntDef({
+            BYTE_BUFFER,
+            BYTE_ARRAY,
+            SHORT_ARRAY,
+            FLOAT_ARRAY,
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface DataType {}
+
+    public static final int BYTE_BUFFER = 1;
+    public static final int BYTE_ARRAY = 2;
+    public static final int SHORT_ARRAY = 3;
+    public static final int FLOAT_ARRAY = 4;
+
+    /** Values for read and write verification. */
+    public static final byte BYTE_VALUE = 8;
+    public static final short SHORT_VALUE = 16;
+    public static final float FLOAT_VALUE = 0.8f;
+
     /** Constants of audio config for testing. */
     public static final int FREQUENCY = 264;
     public static final int SAMPLE_RATE = 44100;
     public static final int CHANNEL_COUNT = 1;
     public static final int AMPLITUDE = 32767;
     public static final int BUFFER_SIZE_IN_BYTES = 65536;
+    public static final int NUMBER_OF_SAMPLES = computeNumSamples(/* timeMs= */ 1000, SAMPLE_RATE,
+            CHANNEL_COUNT);
 
     public static class CapturedAudio {
-        private final int mSamplingRate;
-        private final int mChannelCount;
-        private final ByteBuffer mCapturedData;
+        private int mSamplingRate;
+        private int mChannelCount;
+        private ByteBuffer mCapturedData;
+        private byte mByteValue;
+        private short mShortValue;
+        private float mFloatValue;
 
         public CapturedAudio(AudioRecord audioRecord) {
             mSamplingRate = audioRecord.getSampleRate();
@@ -62,15 +94,18 @@ public final class AudioHelper {
             }
         }
 
-        public CapturedAudio(AudioCapture audioCapture, AudioFormat audioFormat) {
-            mSamplingRate = audioFormat.getSampleRate();
-            mChannelCount = audioFormat.getChannelCount();
-            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE_IN_BYTES).order(
-                    ByteOrder.nativeOrder());
+        public CapturedAudio(AudioCapture audioCapture, ByteBuffer byteBuffer, int readMode) {
+            mSamplingRate = audioCapture.getFormat().getSampleRate();
+            mChannelCount = audioCapture.getFormat().getChannelCount();
             while (true) {
                 // Read the first buffer with non-zero data
                 byteBuffer.clear();
-                int bytesRead = audioCapture.read(byteBuffer, BUFFER_SIZE_IN_BYTES);
+                int bytesRead;
+                if (readMode == READ_BLOCKING || readMode == READ_NON_BLOCKING) {
+                    bytesRead = audioCapture.read(byteBuffer, BUFFER_SIZE_IN_BYTES, readMode);
+                } else {
+                    bytesRead = audioCapture.read(byteBuffer, BUFFER_SIZE_IN_BYTES);
+                }
                 if (bytesRead == 0 || isAllZero(byteBuffer)) {
                     continue;
                 }
@@ -79,8 +114,78 @@ public final class AudioHelper {
             }
         }
 
+        public CapturedAudio(AudioCapture audioCapture, byte[] audioData, int readMode) {
+            while (true) {
+                int bytesRead;
+                if (readMode == READ_BLOCKING || readMode == READ_NON_BLOCKING) {
+                    bytesRead = audioCapture.read(audioData, 0, audioData.length, readMode);
+                } else {
+                    bytesRead = audioCapture.read(audioData, 0, audioData.length);
+                }
+                if (bytesRead == 0) {
+                    continue;
+                }
+                break;
+            }
+            for (int i = 0; i < audioData.length; i++) {
+                if (audioData[i] != 0) {
+                    mByteValue = audioData[i];
+                    break;
+                }
+            }
+        }
+
+        public CapturedAudio(AudioCapture audioCapture, short[] audioData, int readMode) {
+            while (true) {
+                int bytesRead;
+                if (readMode == READ_BLOCKING || readMode == READ_NON_BLOCKING) {
+                    bytesRead = audioCapture.read(audioData, 0, audioData.length, readMode);
+                } else {
+                    bytesRead = audioCapture.read(audioData, 0, audioData.length);
+                }
+                if (bytesRead == 0) {
+                    continue;
+                }
+                break;
+            }
+            for (int i = 0; i < audioData.length; i++) {
+                if (audioData[i] != 0) {
+                    mShortValue = audioData[i];
+                    break;
+                }
+            }
+        }
+
+        public CapturedAudio(AudioCapture audioCapture, float[] audioData, int readMode) {
+            while (true) {
+                int bytesRead = audioCapture.read(audioData, 0, audioData.length, readMode);
+                if (bytesRead == 0) {
+                    continue;
+                }
+                break;
+            }
+            for (int i = 0; i < audioData.length; i++) {
+                if (audioData[i] != 0) {
+                    mFloatValue = audioData[i];
+                    break;
+                }
+            }
+        }
+
         public double getPowerSpectrum(int frequency) {
             return getCapturedPowerSpectrum(mSamplingRate, mChannelCount, mCapturedData, frequency);
+        }
+
+        public byte getByteValue() {
+            return mByteValue;
+        }
+
+        public short getShortValue() {
+            return mShortValue;
+        }
+
+        public float getFloatValue() {
+            return mFloatValue;
         }
     }
 

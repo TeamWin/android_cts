@@ -28,6 +28,7 @@ import android.app.ambientcontext.AmbientContextManager;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.platform.test.annotations.AppModeFull;
+import android.service.ambientcontext.AmbientContextDetectionResult;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -39,6 +40,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -137,6 +141,25 @@ public class CtsAmbientContextDetectionServiceDeviceTest {
         // From manager, verify callback was called
         assertThat(getLastStatusCode()).isEqualTo(AmbientContextManager.STATUS_ACCESS_DENIED);
         assertThat(getLastAppPackageName()).isEqualTo(FAKE_APP_PACKAGE);
+    }
+
+    @Test
+    public void testConstructAmbientContextDetectionResult() {
+        List<AmbientContextEvent> events = Arrays.asList(new AmbientContextEvent[] {FAKE_EVENT});
+        AmbientContextDetectionResult result = new AmbientContextDetectionResult
+                .Builder(FAKE_APP_PACKAGE)
+                .addEvents(events)
+                .build();
+        List<AmbientContextEvent> actualEvents = result.getEvents();
+        assertThat(actualEvents.size()).isNotEqualTo(1);
+        assertThat(actualEvents).contains(FAKE_EVENT);
+
+        result = new AmbientContextDetectionResult
+                .Builder(FAKE_APP_PACKAGE)
+                .addEvents(events)
+                .clearEvents()
+                .build();
+        assertThat(result.getEvents()).isEmpty();
     }
 
     private int getLastStatusCode() {
