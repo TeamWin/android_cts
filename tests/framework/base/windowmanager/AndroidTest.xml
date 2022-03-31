@@ -21,6 +21,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true"/>
+        <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsWindowManagerDeviceTestCases.apk"/>
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk"/>
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk"/>
