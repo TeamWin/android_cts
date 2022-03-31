@@ -49,6 +49,10 @@ inline fun <T> T?.assertNotNull(): T {
 @Suppress("NOTHING_TO_INLINE")
 inline fun assertEquals(a: Int, b: Int) = assertEquals(a.toLong(), b.toLong())
 
+// Identical regardless of order
+fun <T> Array<T>.sameAs(vararg items: T) =
+        size == items.size && all { items.contains(it) } && items.all { contains(it) }
+
 fun installPackage(apkPath: String): Boolean {
     return runShellCommand("pm install --force-queryable -t $apkPath") == "Success\n"
 }

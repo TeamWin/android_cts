@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.utils;
+package android.server.wm.jetpack;
 
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
 
 import static org.junit.Assume.assumeNotNull;
 
+import android.server.wm.ActivityManagerTestBase.ReportedDisplayMetrics;
+import android.server.wm.jetpack.utils.TestValueCountConsumer;
+import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
+import android.view.Display;
+
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
 import androidx.window.extensions.embedding.SplitInfo;
 
+import org.junit.After;
 import org.junit.Before;
 
 import java.util.List;
@@ -37,6 +43,8 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
 
     protected ActivityEmbeddingComponent mActivityEmbeddingComponent;
     protected TestValueCountConsumer<List<SplitInfo>> mSplitInfoConsumer;
+    protected ReportedDisplayMetrics mReportedDisplayMetrics =
+            ReportedDisplayMetrics.getDisplayMetrics(Display.DEFAULT_DISPLAY);
 
     @Override
     @Before
@@ -49,5 +57,10 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
         assumeNotNull(mActivityEmbeddingComponent);
         mSplitInfoConsumer = new TestValueCountConsumer<>();
         mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
+    }
+
+    @After
+    public void cleanUp() {
+        mReportedDisplayMetrics.restoreDisplayMetrics();
     }
 }

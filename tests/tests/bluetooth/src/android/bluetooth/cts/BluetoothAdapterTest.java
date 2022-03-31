@@ -483,14 +483,21 @@ public class BluetoothAdapterTest extends AndroidTestCase {
     public void test_requestControllerActivityEnergyInfo() {
         if (!mHasBluetooth) return;
 
-        BluetoothAdapter.OnBluetoothActivityEnergyInfoListener listener =
-                new BluetoothAdapter.OnBluetoothActivityEnergyInfoListener() {
+        BluetoothAdapter.OnBluetoothActivityEnergyInfoCallback callback =
+                new BluetoothAdapter.OnBluetoothActivityEnergyInfoCallback() {
                     @Override
-                    public void onBluetoothActivityEnergyInfo(BluetoothActivityEnergyInfo info) {}
+                    public void onBluetoothActivityEnergyInfoAvailable(
+                            BluetoothActivityEnergyInfo info) {
+                        assertNotNull(info);
+                    }
+
+                    @Override
+                    public void onBluetoothActivityEnergyInfoError(int errorCode) {}
                 };
+
         // Verify parameter
         assertThrows(NullPointerException.class,
-                () -> mAdapter.requestControllerActivityEnergyInfo(null, listener));
+                () -> mAdapter.requestControllerActivityEnergyInfo(null, callback));
     }
 
     public void test_clearBluetooth() {

@@ -1703,12 +1703,12 @@ public class ItsService extends Service implements SensorEventListener {
     private void doGetSupportedVideoQualities(String id) throws ItsException {
         int cameraId = Integer.parseInt(id);
         StringBuilder profiles = new StringBuilder();
-        appendSupportProfile(profiles, "480", CamcorderProfile.QUALITY_480P, cameraId);
-        appendSupportProfile(profiles, "1080", CamcorderProfile.QUALITY_1080P, cameraId);
-        appendSupportProfile(profiles, "2160", CamcorderProfile.QUALITY_2160P, cameraId);
+        appendSupportProfile(profiles, "480P", CamcorderProfile.QUALITY_480P, cameraId);
+        appendSupportProfile(profiles, "1080P", CamcorderProfile.QUALITY_1080P, cameraId);
+        appendSupportProfile(profiles, "2160P", CamcorderProfile.QUALITY_2160P, cameraId);
         appendSupportProfile(profiles, "2k", CamcorderProfile.QUALITY_2K, cameraId);
         appendSupportProfile(profiles, "4KDCI", CamcorderProfile.QUALITY_4KDCI, cameraId);
-        appendSupportProfile(profiles, "720", CamcorderProfile.QUALITY_720P, cameraId);
+        appendSupportProfile(profiles, "720P", CamcorderProfile.QUALITY_720P, cameraId);
         appendSupportProfile(profiles, "8KUHD", CamcorderProfile.QUALITY_8KUHD, cameraId);
         appendSupportProfile(profiles, "CIF", CamcorderProfile.QUALITY_CIF, cameraId);
         appendSupportProfile(profiles, "HIGH", CamcorderProfile.QUALITY_HIGH, cameraId);

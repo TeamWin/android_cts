@@ -42,6 +42,8 @@ namespace {
 
 using testing::AnyOf;
 using testing::Eq;
+using testing::Ge;
+using testing::NotNull;
 
 #define FORMAT_CASE(x) case AHARDWAREBUFFER_FORMAT_ ## x: os << #x ; break
 
@@ -431,6 +433,57 @@ TEST(AHardwareBufferTest, PlanarLockAndUnlockYuvSucceed) {
     EXPECT_TRUE(planes.planes[2].data != NULL);
     EXPECT_THAT(planes.planes[2].pixelStride, AnyOf(Eq(1U), Eq(2U)));
     EXPECT_TRUE(planes.planes[2].rowStride >= 8);
+
+    // Unlock
+    err = AHardwareBuffer_unlock(buffer, nullptr);
+    EXPECT_EQ(NO_ERROR, err);
+
+    AHardwareBuffer_release(buffer);
+}
+
+TEST(AHardwareBufferTest, PlanarLockAndUnlockYuvP010Succeed) {
+    AHardwareBuffer* buffer = NULL;
+    AHardwareBuffer_Desc desc = {};
+
+    desc.width = 32;
+    desc.height = 32;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    desc.format = AHARDWAREBUFFER_FORMAT_YCbCr_P010;
+
+    if (!AHardwareBuffer_isSupported(&desc)) {
+        ALOGI("Test skipped: AHARDWAREBUFFER_FORMAT_YCbCr_P010 not supported.");
+        return;
+    }
+
+    // Allocate the buffer.
+    int err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, err);
+
+    // Lock its planes
+    AHardwareBuffer_Planes planes;
+    err = AHardwareBuffer_lockPlanes(buffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY, -1, NULL,
+        &planes);
+
+    // Make sure everything looks right
+    EXPECT_EQ(NO_ERROR, err);
+    EXPECT_EQ(3U, planes.planeCount);
+
+    const uint32_t yPlaneWidth = desc.width;
+    const uint32_t cPlaneWidth = desc.width / 2;
+    const uint32_t bytesPerPixel = 2;
+
+    EXPECT_THAT(planes.planes[0].data, NotNull());
+    EXPECT_THAT(planes.planes[0].pixelStride, Eq(bytesPerPixel));
+    EXPECT_THAT(planes.planes[0].rowStride, Ge(yPlaneWidth * bytesPerPixel));
+
+    EXPECT_THAT(planes.planes[1].data, NotNull());
+    EXPECT_THAT(planes.planes[1].pixelStride, Eq(bytesPerPixel * /*interleaved=*/2));
+    EXPECT_THAT(planes.planes[1].rowStride, Ge(cPlaneWidth * bytesPerPixel));
+
+    EXPECT_THAT(planes.planes[2].data, NotNull());
+    EXPECT_THAT(planes.planes[2].pixelStride, Eq(bytesPerPixel * /*interleaved=*/2));
+    EXPECT_THAT(planes.planes[2].rowStride, Ge(cPlaneWidth * bytesPerPixel));
 
     // Unlock
     err = AHardwareBuffer_unlock(buffer, nullptr);
