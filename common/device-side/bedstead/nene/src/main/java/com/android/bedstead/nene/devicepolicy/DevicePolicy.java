@@ -21,11 +21,11 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 
-import static com.android.bedstead.nene.permissions.CommonPermissions.BYPASS_ROLE_QUALIFICATION;
 import static com.android.bedstead.nene.permissions.CommonPermissions.FORCE_DEVICE_POLICY_MANAGER_LOGS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_ADMINS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
+import static com.android.bedstead.nene.utils.Versions.T;
 
 import static org.junit.Assert.fail;
 
@@ -48,7 +48,6 @@ import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
-import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.Retry;
@@ -397,12 +396,15 @@ public final class DevicePolicy {
     @Experimental
     public void setDevicePolicyManagementRoleHolder(String packageName)
             throws InterruptedException {
+        if (!Versions.meetsMinimumSdkVersionRequirement(T)) {
+            return;
+        }
         try (PermissionContext p = TestApis.permissions().withPermission(
-                MANAGE_ROLE_HOLDERS, BYPASS_ROLE_QUALIFICATION)) {
+                MANAGE_ROLE_HOLDERS)) {
             DefaultBlockingCallback blockingCallback = new DefaultBlockingCallback();
             RoleManager roleManager = TestApis.context().instrumentedContext()
                     .getSystemService(RoleManager.class);
-            roleManager.setBypassingRoleQualification(true);
+            TestApis.roles().setBypassingRoleQualification(true);
             roleManager.addRoleHolderAsUser(
                     RoleManager.ROLE_DEVICE_POLICY_MANAGEMENT,
                     packageName,
@@ -426,8 +428,11 @@ public final class DevicePolicy {
     @Experimental
     public void unsetDevicePolicyManagementRoleHolder(String packageName)
             throws InterruptedException {
+        if (!Versions.meetsMinimumSdkVersionRequirement(T)) {
+            return;
+        }
         try (PermissionContext p = TestApis.permissions().withPermission(
-                MANAGE_ROLE_HOLDERS, BYPASS_ROLE_QUALIFICATION)) {
+                MANAGE_ROLE_HOLDERS)) {
             DefaultBlockingCallback blockingCallback = new DefaultBlockingCallback();
             RoleManager roleManager = TestApis.context().instrumentedContext()
                     .getSystemService(RoleManager.class);
@@ -438,7 +443,7 @@ public final class DevicePolicy {
                     TestApis.context().instrumentationContext().getUser(),
                     TestApis.context().instrumentedContext().getMainExecutor(),
                     blockingCallback::triggerCallback);
-            roleManager.setBypassingRoleQualification(false);
+            TestApis.roles().setBypassingRoleQualification(false);
 
             boolean success = blockingCallback.await();
             if (!success) {
