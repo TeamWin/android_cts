@@ -3228,7 +3228,7 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
             <meta-data android:name="android.service.notification.default_filter_types"
-                       android:value="alerting|silent" />
+                       android:value="conversations|alerting|silent" />
             <meta-data android:name="android.service.notification.disabled_filter_types"
                        android:value="ongoing" />
         </service>
