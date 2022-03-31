@@ -608,6 +608,9 @@ abstract class CodecTestBase {
     static final Map<String, String> mDefaultDecoders = new HashMap<>();
     static final HashMap<String, int[]> mProfileMap = new HashMap<>();
     static final HashMap<String, int[]> mProfileSdrMap = new HashMap<>();
+    static final HashMap<String, int[]> mProfileHlgMap = new HashMap<>();
+    static final HashMap<String, int[]> mProfileHdr10Map = new HashMap<>();
+    static final HashMap<String, int[]> mProfileHdr10PlusMap = new HashMap<>();
     static final HashMap<String, int[]> mProfileHdrMap = new HashMap<>();
     static final boolean ENABLE_LOGS = false;
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
@@ -633,20 +636,29 @@ abstract class CodecTestBase {
     static final int[] AVC_SDR_PROFILES = new int[]{AVCProfileBaseline, AVCProfileMain,
             AVCProfileExtended, AVCProfileHigh, AVCProfileConstrainedBaseline,
             AVCProfileConstrainedHigh};
-    static final int[] AVC_HDR_PROFILES = new int[]{AVCProfileHigh10, AVCProfileHigh422,
-            AVCProfileHigh444};
+    static final int[] AVC_HLG_PROFILES = new int[]{AVCProfileHigh10};
+    static final int[] AVC_HDR_PROFILES = AVC_HLG_PROFILES;
     static final int[] AVC_PROFILES = combine(AVC_SDR_PROFILES, AVC_HDR_PROFILES);
-    static final int[] VP9_SDR_PROFILES = new int[]{VP9Profile0, VP9Profile1};
-    static final int[] VP9_HDR_PROFILES = new int[]{VP9Profile2, VP9Profile3,
-            VP9Profile2HDR, VP9Profile3HDR, VP9Profile2HDR10Plus, VP9Profile3HDR10Plus};
+    static final int[] VP9_SDR_PROFILES = new int[]{VP9Profile0};
+    static final int[] VP9_HLG_PROFILES = new int[]{VP9Profile2};
+    static final int[] VP9_HDR10_PROFILES = new int[]{VP9Profile2HDR};
+    static final int[] VP9_HDR10Plus_PROFILES = new int[]{VP9Profile2HDR10Plus};
+    static final int[] VP9_HDR_PROFILES =
+            combine(VP9_HLG_PROFILES, combine(VP9_HDR10_PROFILES, VP9_HDR10Plus_PROFILES));
     static final int[] VP9_PROFILES = combine(VP9_SDR_PROFILES, VP9_HDR_PROFILES);
     static final int[] HEVC_SDR_PROFILES = new int[]{HEVCProfileMain, HEVCProfileMainStill};
-    static final int[] HEVC_HDR_PROFILES = new int[]{HEVCProfileMain10,
-            HEVCProfileMain10HDR10, HEVCProfileMain10HDR10Plus};
+    static final int[] HEVC_HLG_PROFILES = new int[]{HEVCProfileMain10};
+    static final int[] HEVC_HDR10_PROFILES = new int[]{HEVCProfileMain10HDR10};
+    static final int[] HEVC_HDR10Plus_PROFILES = new int[]{HEVCProfileMain10HDR10Plus};
+    static final int[] HEVC_HDR_PROFILES =
+            combine(HEVC_HLG_PROFILES, combine(HEVC_HDR10_PROFILES, HEVC_HDR10Plus_PROFILES));
     static final int[] HEVC_PROFILES = combine(HEVC_SDR_PROFILES, HEVC_HDR_PROFILES);
     static final int[] AV1_SDR_PROFILES = new int[]{AV1ProfileMain8};
-    static final int[] AV1_HDR_PROFILES = new int[]{AV1ProfileMain10,
-            AV1ProfileMain10HDR10, AV1ProfileMain10HDR10Plus};
+    static final int[] AV1_HLG_PROFILES = new int[]{AV1ProfileMain10};
+    static final int[] AV1_HDR10_PROFILES = new int[]{AV1ProfileMain10HDR10};
+    static final int[] AV1_HDR10Plus_PROFILES = new int[]{AV1ProfileMain10HDR10Plus};
+    static final int[] AV1_HDR_PROFILES =
+            combine(AV1_HLG_PROFILES, combine(AV1_HDR10_PROFILES, AV1_HDR10Plus_PROFILES));
     static final int[] AV1_PROFILES = combine(AV1_SDR_PROFILES, AV1_HDR_PROFILES);
     static final int[] AAC_PROFILES = new int[]{AACObjectMain, AACObjectLC, AACObjectSSR,
             AACObjectLTP, AACObjectHE, AACObjectScalable, AACObjectERLC, AACObjectERScalable,
@@ -715,6 +727,19 @@ abstract class CodecTestBase {
         mProfileSdrMap.put(MediaFormat.MIMETYPE_VIDEO_VP9, VP9_SDR_PROFILES);
         mProfileSdrMap.put(MediaFormat.MIMETYPE_VIDEO_AV1, AV1_SDR_PROFILES);
         mProfileSdrMap.put(MediaFormat.MIMETYPE_AUDIO_AAC, AAC_PROFILES);
+
+        mProfileHlgMap.put(MediaFormat.MIMETYPE_VIDEO_AVC, AVC_HLG_PROFILES);
+        mProfileHlgMap.put(MediaFormat.MIMETYPE_VIDEO_HEVC, HEVC_HLG_PROFILES);
+        mProfileHlgMap.put(MediaFormat.MIMETYPE_VIDEO_VP9, VP9_HLG_PROFILES);
+        mProfileHlgMap.put(MediaFormat.MIMETYPE_VIDEO_AV1, AV1_HLG_PROFILES);
+
+        mProfileHdr10Map.put(MediaFormat.MIMETYPE_VIDEO_HEVC, HEVC_HDR10_PROFILES);
+        mProfileHdr10Map.put(MediaFormat.MIMETYPE_VIDEO_VP9, VP9_HDR10_PROFILES);
+        mProfileHdr10Map.put(MediaFormat.MIMETYPE_VIDEO_AV1, AV1_HDR10_PROFILES);
+
+        mProfileHdr10PlusMap.put(MediaFormat.MIMETYPE_VIDEO_HEVC, HEVC_HDR10Plus_PROFILES);
+        mProfileHdr10PlusMap.put(MediaFormat.MIMETYPE_VIDEO_VP9, VP9_HDR10Plus_PROFILES);
+        mProfileHdr10PlusMap.put(MediaFormat.MIMETYPE_VIDEO_AV1, AV1_HDR10Plus_PROFILES);
 
         mProfileHdrMap.put(MediaFormat.MIMETYPE_VIDEO_AVC, AVC_HDR_PROFILES);
         mProfileHdrMap.put(MediaFormat.MIMETYPE_VIDEO_HEVC, HEVC_HDR_PROFILES);
