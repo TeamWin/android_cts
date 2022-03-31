@@ -72,9 +72,6 @@ public class OnBackInvokedDispatcherTest {
     }
 
     private OnBackInvokedCallback createBackCallback() {
-        return new OnBackInvokedCallback() {
-            @Override
-            public void onBackInvoked() {}
-        };
+        return () -> {};
     }
 }
