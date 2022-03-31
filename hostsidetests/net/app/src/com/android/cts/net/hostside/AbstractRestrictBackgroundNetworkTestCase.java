@@ -1076,6 +1076,11 @@ abstract class AbstractRestrictBackgroundNetworkTestCase extends Instrumentation
         }
     }
 
+    protected void startActivity() throws Exception {
+        final Intent launchIntent = getIntentForComponent(TYPE_COMPONENT_ACTIVTIY);
+        mContext.startActivity(launchIntent);
+    }
+
     private void startForegroundService() throws Exception {
         final Intent launchIntent = getIntentForComponent(TYPE_COMPONENT_FOREGROUND_SERVICE);
         mContext.startForegroundService(launchIntent);
