@@ -16,9 +16,14 @@
 
 package android.mediapc.cts.common;
 
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiPredicate;
 
 /**
@@ -26,80 +31,97 @@ import java.util.function.BiPredicate;
  */
 @AutoValue
 public abstract class RequiredMeasurement<T> {
+    private static final String TAG = RequiredMeasurement.class.getSimpleName();
 
-    private T mMeasuredValue;  // Note this is not part of the equals calculations
+    private T measuredValue;  // Note this is not part of the equals calculations
 
-    public void setMeasuredValue(T measuredValue) {
-        mMeasuredValue = measuredValue;
-    }
-
-    static <T> Builder<T> builder(Class<T> clazz) {
-        return new AutoValue_RequiredMeasurement.Builder<>();
+    public static <T> Builder<T> builder() {
+        return new AutoValue_RequiredMeasurement.Builder<T>();
     }
 
     public abstract String id();
 
     /**
      * Tests if the measured value satisfies the  expected value(eg >=)
-     *
      * measuredValue, expectedValue
      */
-    public abstract BiPredicate<T, T> meetsRequirementPredicate();
-
+    public abstract BiPredicate<T, T> predicate();
 
     /**
      * Maps MPC level to the expected value.
      */
     public abstract ImmutableMap<Integer, T> expectedValues();
 
-
-    public final Requirement.Result meetsPerformanceClass(
-            int mediaPerformanceClass) {
-        if (!expectedValues().containsKey(mediaPerformanceClass)) {
-            return Requirement.Result.NA;
-        }
-        return mMeasuredValue == null || !meetsRequirementPredicate().test(mMeasuredValue,
-                expectedValues().get(mediaPerformanceClass))
-                ? Requirement.Result.UNMET
-                : Requirement.Result.MET;
+    public void setMeasuredValue(T measuredValue) {
+        this.measuredValue = measuredValue;
     }
 
     @AutoValue.Builder
-    public abstract static class Builder<T> {
+    public static abstract class Builder<T> {
 
         public abstract Builder<T> setId(String id);
 
-        public abstract Builder<T> setMeetsRequirementPredicate(BiPredicate<T, T> predicate);
+        public abstract Builder<T> setPredicate(BiPredicate<T, T> predicate);
 
         public abstract ImmutableMap.Builder<Integer, T> expectedValuesBuilder();
 
-        public final Builder<T> addExpectedValue(Integer performanceClass, T expectedValue) {
-            expectedValuesBuilder().put(performanceClass, expectedValue);
+        public Builder<T> addRequiredValue(Integer performanceClass, T expectedValue) {
+            this.expectedValuesBuilder().put(performanceClass, expectedValue);
             return this;
         }
 
         public abstract RequiredMeasurement<T> build();
     }
 
-    public static final BiPredicate<Long, Long> LONG_GTE = RequiredMeasurement.gte();
-
-    /**
-     * Creates a >= predicate.
-     *
-     * This is convenience method to get the types right.
-     */
-    public static <T, S extends Comparable<T>> BiPredicate<S, T> gte() {
-        return new BiPredicate<S, T>() {
-            @Override
-            public boolean test(S actual, T expected) {
-                return actual.compareTo(expected) >= 0;
-            }
-
-            @Override
-            public String toString() {
-                return "Greater than or equal to";
-            }
-        };
+    private final RequirementConstants.Result meetsPerformanceClass(int mediaPerformanceClass) {
+        if (!this.expectedValues().containsKey(mediaPerformanceClass)) {
+            return RequirementConstants.Result.NA;
+        } else if (this.measuredValue == null || !this.predicate().test(this.measuredValue,
+                this.expectedValues().get(mediaPerformanceClass))) {
+            return RequirementConstants.Result.UNMET;
+        } else {
+            return RequirementConstants.Result.MET;
+        }
     }
 
+    /**
+     * @return map PerfomenaceClass to result if that performance class has been met
+     */
+    public Map<Integer, RequirementConstants.Result> getPerformanceClass() {
+        Map<Integer, RequirementConstants.Result> perfClassResults = new HashMap<>();
+        for (Integer pc: this.expectedValues().keySet()) {
+            perfClassResults.put(pc, this.meetsPerformanceClass(pc));
+        }
+        return perfClassResults;
+    }
+
+    @Override
+    public final String toString() {
+        return "Required Measurement with:"
+            + "\n\tId: " + this.id()
+            + "\n\tPredicate: " + this.predicate()
+            + "\n\tMeasured Value: " + this.measuredValue
+            + "\n\tExpected Values: " + this.expectedValues();
+    }
+
+    public void writeValue(DeviceReportLog log) {
+        if (this.measuredValue instanceof Integer) {
+            log.addValue(this.id(), (int)this.measuredValue, ResultType.NEUTRAL, ResultUnit.NONE);
+        } else if (this.measuredValue instanceof Long) {
+            log.addValue(this.id(), (long)this.measuredValue, ResultType.NEUTRAL, ResultUnit.NONE);
+        } else if (this.measuredValue instanceof Double) {
+            log.addValue(this.id(), (double)this.measuredValue, ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        } else if (this.measuredValue instanceof Boolean) {
+            log.addValue(this.id(), (boolean)this.measuredValue, ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        } else if (this.measuredValue instanceof String) {
+            log.addValue(this.id(), (String)this.measuredValue, ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        } else {
+            // reporting all other types as Strings using toString()
+            log.addValue(this.id(), this.measuredValue.toString(), ResultType.NEUTRAL,
+                ResultUnit.NONE);
+        }
+    }
 }
