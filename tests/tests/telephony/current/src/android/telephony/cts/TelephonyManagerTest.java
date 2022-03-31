@@ -4390,7 +4390,9 @@ public class TelephonyManagerTest {
                             || (band >= AccessNetworkConstants.NgranBands.BAND_257
                             && band <= AccessNetworkConstants.NgranBands.BAND_261));
                 }
-                connectedToNrCell = true;
+                if (cellInfo.isRegistered()) {
+                    connectedToNrCell = true;
+                }
             } else {
                 continue;
             }
