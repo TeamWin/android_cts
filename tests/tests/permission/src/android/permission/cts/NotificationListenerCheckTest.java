@@ -16,6 +16,7 @@
 
 package android.permission.cts;
 
+import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.os.Process.myUserHandle;
@@ -59,7 +60,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.ProtoUtils;
 import com.android.compatibility.common.util.mainline.MainlineModule;
 import com.android.compatibility.common.util.mainline.ModuleDetector;
@@ -71,6 +72,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -105,6 +107,9 @@ public class NotificationListenerCheckTest {
     private static final String PROPERTY_NOTIFICATION_LISTENER_CHECK_ENABLED =
             "notification_listener_check_enabled";
 
+    /** Name of the flag that determines whether SafetyCenter is enabled. */
+    private static final String PROPERTY_SAFETY_CENTER_ENABLED = "safety_center_is_enabled";
+
     /**
      * Device config property for time period in milliseconds after which current enabled
      * notification
@@ -116,17 +121,15 @@ public class NotificationListenerCheckTest {
     private static final Long OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS =
             SECONDS.toMillis(1);
 
-    /**
-     * Device config property for time period in milliseconds after which a followup notification
-     * can be
-     * posted for an enabled notification listener
-     */
-    private static final String PROPERTY_NOTIFICATION_LISTENER_CHECK_PACKAGE_INTERVAL_MILLIS =
-            "notification_listener_check_pkg_interval_millis";
+    private static final String PROPERTY_JOB_SCHEDULER_MAX_JOB_PER_RATE_LIMIT_WINDOW =
+            "qc_max_job_count_per_rate_limiting_window";
+
+    private static final String PROPERTY_JOB_SCHEDULER_RATE_LIMIT_WINDOW_MILLIS =
+            "qc_rate_limiting_window_ms";
 
     /**
      * ID for notification shown by
-     * {@link com.android.permissioncontroller.permission.service.NotificationListenerCheck}.
+     * {@link com.android.permissioncontroller.permission.service.v33.NotificationListenerCheck}.
      */
     public static final int NOTIFICATION_LISTENER_CHECK_NOTIFICATION_ID = 3;
 
@@ -141,39 +144,77 @@ public class NotificationListenerCheckTest {
     private static final String PERMISSION_CONTROLLER_PKG = sContext.getPackageManager()
             .getPermissionControllerPackageName();
 
-    private static DeviceConfigStateHelper sPrivacyDeviceConfig =
-            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_PRIVACY);
-    private static DeviceConfigStateHelper sJobSchedulerDeviceConfig =
-            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
-
     private static List<ComponentName> sPreviouslyEnabledNotificationListeners;
 
-    /**
-     * Enable notification listener check
-     */
-    private static void enableNotificationListenerCheckFeature() {
-        sPrivacyDeviceConfig.set(PROPERTY_NOTIFICATION_LISTENER_CHECK_ENABLED,
-                String.valueOf(true));
+    // Override SafetyCenter enabled flag
+    @Rule
+    public DeviceConfigStateChangerRule sPrivacyDeviceConfigSafetyCenterEnabled =
+            new DeviceConfigStateChangerRule(sContext,
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_SAFETY_CENTER_ENABLED,
+                    Boolean.toString(true));
+
+    // Override NlsCheck enabled flag
+    @Rule
+    public DeviceConfigStateChangerRule sPrivacyDeviceConfigNlsCheckEnabled =
+            new DeviceConfigStateChangerRule(sContext,
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_NOTIFICATION_LISTENER_CHECK_ENABLED,
+                    Boolean.toString(true));
+
+    // Override general notification interval from once every day to once ever 1 second
+    @Rule
+    public DeviceConfigStateChangerRule sPrivacyDeviceConfigNlsCheckIntervalMillis =
+            new DeviceConfigStateChangerRule(sContext,
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS,
+                    Long.toString(OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS));
+
+    // Disable job scheduler throttling by allowing 300000 jobs per 30 sec
+    @Rule
+    public DeviceConfigStateChangerRule sJobSchedulerDeviceConfig1 =
+            new DeviceConfigStateChangerRule(sContext,
+                    DeviceConfig.NAMESPACE_JOB_SCHEDULER,
+                    PROPERTY_JOB_SCHEDULER_MAX_JOB_PER_RATE_LIMIT_WINDOW,
+                    Integer.toString(3000000));
+
+    // Disable job scheduler throttling by allowing 300000 jobs per 30 sec
+    @Rule
+    public DeviceConfigStateChangerRule sJobSchedulerDeviceConfig2 =
+            new DeviceConfigStateChangerRule(sContext,
+                    DeviceConfig.NAMESPACE_JOB_SCHEDULER,
+                    PROPERTY_JOB_SCHEDULER_RATE_LIMIT_WINDOW_MILLIS,
+                    Integer.toString(30000));
+
+    private static void setDeviceConfigPrivacyProperty(String propertyName, String value) {
+        runWithShellPermissionIdentity(() -> {
+            boolean valueWasSet =  DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_PRIVACY,
+                    /* name = */ propertyName,
+                    /* value = */ value,
+                    /* makeDefault = */ false);
+            if (!valueWasSet) {
+                throw new  IllegalStateException("Could not set " + propertyName + " to " + value);
+            }
+        }, WRITE_DEVICE_CONFIG);
     }
 
     /**
-     * Disable notification listener check
+     * Enabled or disable Safety Center
      */
-    private static void disableNotificationListenerCheckFeature() {
-        sPrivacyDeviceConfig.set(PROPERTY_NOTIFICATION_LISTENER_CHECK_ENABLED,
-                String.valueOf(false));
+    private static void setSafetyCenterEnabled(boolean enabled) {
+        setDeviceConfigPrivacyProperty(
+                PROPERTY_SAFETY_CENTER_ENABLED,
+                /* value = */ String.valueOf(enabled));
     }
 
-    private static void setNotificationListenerCheckInterval(long intervalMs) {
-        // Override general notification interval
-        sPrivacyDeviceConfig.set(PROPERTY_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS,
-                Long.toString(intervalMs));
-    }
-
-    private static void setNotificationListenerCheckPackageInterval(long intervalMs) {
-        // Override package notification interval
-        sPrivacyDeviceConfig.set(PROPERTY_NOTIFICATION_LISTENER_CHECK_PACKAGE_INTERVAL_MILLIS,
-                Long.toString(intervalMs));
+    /**
+     * Enable or disable notification listener check
+     */
+    private static void setNotificationListenerCheckEnabled(boolean enabled) {
+        setDeviceConfigPrivacyProperty(
+                PROPERTY_NOTIFICATION_LISTENER_CHECK_ENABLED,
+                /* value = */ String.valueOf(enabled));
     }
 
     /**
@@ -186,6 +227,32 @@ public class NotificationListenerCheckTest {
         String command = " cmd notification " + (allowed ? "allow_listener " : "disallow_listener ")
                 + listenerComponent.flattenToString();
         runShellCommand(command);
+    }
+
+    private static void disallowPreexistingNotificationListeners() {
+        runWithShellPermissionIdentity(() -> {
+            NotificationManager notificationManager =
+                    sContext.getSystemService(NotificationManager.class);
+            sPreviouslyEnabledNotificationListeners =
+                    notificationManager.getEnabledNotificationListeners();
+        });
+        if (DEBUG) {
+            Log.d(LOG_TAG, "Found " + sPreviouslyEnabledNotificationListeners.size()
+                    + " previously allowed notification listeners. Disabling before test run.");
+        }
+        for (ComponentName listener : sPreviouslyEnabledNotificationListeners) {
+            setNotificationListenerServiceAllowed(listener, false);
+        }
+    }
+
+    private static void reallowPreexistingNotificationListeners() {
+        if (DEBUG) {
+            Log.d(LOG_TAG, "Re-allowing " + sPreviouslyEnabledNotificationListeners.size()
+                    + " previously allowed notification listeners found before test run.");
+        }
+        for (ComponentName listener : sPreviouslyEnabledNotificationListeners) {
+            setNotificationListenerServiceAllowed(listener, true);
+        }
     }
 
     private void allowTestAppNotificationListenerService() {
@@ -334,88 +401,23 @@ public class NotificationListenerCheckTest {
     }
 
     @BeforeClass
-    public static void beforeClassSetup() {
+    public static void beforeClassSetup() throws Exception {
         // Disallow any OEM enabled NLS
         disallowPreexistingNotificationListeners();
 
         // Allow NLS used to verify notifications sent
         setNotificationListenerServiceAllowed(
                 new ComponentName(sContext, NotificationListener.class), true);
-
-        reduceDelays();
     }
 
     @AfterClass
     public static void afterClassTearDown() throws Throwable {
-        resetJobSchedulerConfig();
-        resetPermissionControllerConfig();
-
         // Disallow NLS used to verify notifications sent
         setNotificationListenerServiceAllowed(
                 new ComponentName(sContext, NotificationListener.class), false);
 
         // Reallow any previously OEM allowed NLS
         reallowPreexistingNotificationListeners();
-    }
-
-    private static void disallowPreexistingNotificationListeners() {
-        runWithShellPermissionIdentity(() -> {
-            NotificationManager notificationManager =
-                    sContext.getSystemService(NotificationManager.class);
-            sPreviouslyEnabledNotificationListeners =
-                    notificationManager.getEnabledNotificationListeners();
-        });
-        if (DEBUG) {
-            Log.d(LOG_TAG, "Found " + sPreviouslyEnabledNotificationListeners.size()
-                    + " previously allowed notification listeners. Disabling before test run.");
-        }
-        for (ComponentName listener : sPreviouslyEnabledNotificationListeners) {
-            setNotificationListenerServiceAllowed(listener, false);
-        }
-    }
-
-    private static void reallowPreexistingNotificationListeners() {
-        if (DEBUG) {
-            Log.d(LOG_TAG, "Re-allowing " + sPreviouslyEnabledNotificationListeners.size()
-                    + " previously allowed notification listeners found before test run.");
-        }
-        for (ComponentName listener : sPreviouslyEnabledNotificationListeners) {
-            setNotificationListenerServiceAllowed(listener, true);
-        }
-    }
-
-    /**
-     * Change settings so that permission controller can show notification listener notifications
-     * more often.
-     */
-    private static void reduceDelays() {
-        runWithShellPermissionIdentity(() -> {
-            // Override general notification interval from once every day to once ever 1 second
-            setNotificationListenerCheckInterval(
-                    OVERRIDE_NOTIFICATION_LISTENER_CHECK_INTERVAL_MILLIS);
-
-            // Disable job scheduler throttling by allowing 300000 jobs per 30 sec
-            sJobSchedulerDeviceConfig.set("qc_max_job_count_per_rate_limiting_window", "3000000");
-            sJobSchedulerDeviceConfig.set("qc_rate_limiting_window_ms", "30000");
-        });
-    }
-
-    /**
-     * Reset job scheduler configs.
-     */
-    private static void resetJobSchedulerConfig() throws Throwable {
-        runWithShellPermissionIdentity(() -> {
-            sJobSchedulerDeviceConfig.restoreOriginalValues();
-        });
-    }
-
-    /**
-     * Reset privacy configs.
-     */
-    private static void resetPermissionControllerConfig() {
-        runWithShellPermissionIdentity(() -> {
-            sPrivacyDeviceConfig.restoreOriginalValues();
-        });
     }
 
     @Before
@@ -464,9 +466,6 @@ public class NotificationListenerCheckTest {
      * Reset the permission controllers state before each test
      */
     private void resetPermissionControllerBeforeEachTest() throws Throwable {
-        // Has to be before resetPermissionController
-        enableNotificationListenerCheckFeature();
-
         resetPermissionController();
 
         // ensure no posted notification listener notifications exits
@@ -552,7 +551,17 @@ public class NotificationListenerCheckTest {
 
     @Test
     public void noNotificationIfFeatureDisabled() throws Throwable {
-        disableNotificationListenerCheckFeature();
+        setNotificationListenerCheckEnabled(false);
+
+        runNotificationListenerCheck();
+
+        ensure(() -> assertNull("Expected no notifications", getNotification(false)),
+                EXPECTED_TIMEOUT_MILLIS);
+    }
+
+    @Test
+    public void noNotificationIfSafetyCenterDisabled() throws Throwable {
+        setSafetyCenterEnabled(false);
 
         runNotificationListenerCheck();
 
