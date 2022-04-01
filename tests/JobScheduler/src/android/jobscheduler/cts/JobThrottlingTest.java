@@ -1075,6 +1075,72 @@ public class JobThrottlingTest {
                 mTestAppInterface.getLastParams().getStopReason());
     }
 
+    /*
+    Tests currently disabled because they require changes inside the framework to lower the minimum
+    EJ quota to one minute (from 5 minutes).
+    TODO(224533485): make JS testable enough to enable these tests
+
+    @Test
+    public void testRestrictingStopReason_ExpeditedQuota_startOnCharging() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
+        assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
+
+        // Reduce allowed time for testing. System to cap the time above 30 seconds.
+        mDeviceConfigStateHelper.set("qc_ej_limit_rare_ms", "30000");
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", "30000");
+        // Start with charging so JobScheduler thinks the job can run for the maximum amount of
+        // time. We turn off charging later so quota clearly comes into effect.
+        setChargingState(true);
+        setTestPackageStandbyBucket(Bucket.RARE);
+
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, true);
+        runJob();
+        assertTrue("New job didn't start",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue(mTestAppInterface.getLastParams().isExpeditedJob());
+        setChargingState(false);
+
+        assertFalse("Job stopped before using up quota",
+                mTestAppInterface.awaitJobStop(45_000));
+        Thread.sleep(15_000);
+
+        assertTrue("Job didn't stop after using up quota",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        assertEquals(JobParameters.STOP_REASON_QUOTA,
+                mTestAppInterface.getLastParams().getStopReason());
+    }
+
+    @Test
+    public void testRestrictingStopReason_ExpeditedQuota_noCharging() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice); // Test needs battery
+        assumeFalse("not testable in leanback device", mLeanbackOnly); // Test needs battery
+
+        // Reduce allowed time for testing.
+        mDeviceConfigStateHelper.set("qc_ej_limit_rare_ms", "30000");
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", "30000");
+        setChargingState(false);
+        setTestPackageStandbyBucket(Bucket.RARE);
+
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, true);
+        runJob();
+        assertTrue("New job didn't start",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue(mTestAppInterface.getLastParams().isExpeditedJob());
+
+        assertFalse("Job stopped before using up quota",
+                mTestAppInterface.awaitJobStop(45_000));
+        Thread.sleep(15_000);
+
+        assertTrue("Job didn't stop after using up quota",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        // Charging state was false when the job started, so the trigger the timeout before
+        // QuotaController officially marks the quota finished.
+        final int stopReason = mTestAppInterface.getLastParams().getStopReason();
+        assertTrue(stopReason == JobParameters.STOP_REASON_TIMEOUT
+                || stopReason == JobParameters.STOP_REASON_QUOTA);
+    }
+     */
+
     @Test
     public void testRestrictingStopReason_BatterySaver() throws Exception {
         BatteryUtils.assumeBatterySaverFeature();
