@@ -162,11 +162,13 @@ public class SmsMessageTest {
         assertRemaining(sms.getMessageBody().length(), result[2], SmsMessage.MAX_USER_DATA_SEPTETS);
         assertEquals(SmsMessage.ENCODING_7BIT, result[3]);
 
-        // Test createFromPdu to test ENCODING_KSC5601
+        // Test createFromPdu to test ENCODING_KSC5601 (0x84 as DCS in pdu)
+        // The only way of retrieving the Data Coding Scheme is via SmsMessage#calculateLength,
+        // but it never returns ENCODING_KSC5601, so we're testing for ENCODING_16BIT instead.
         pdu = "07916164260220F0040B914151245584F600846060605130308A04D4F29C0E";
         sms = SmsMessage.createFromPdu(hexStringToByteArray(pdu), SmsMessage.FORMAT_3GPP);
-        result = SmsMessage.calculateLength(sms.getMessageBody(), true);
-        assertEquals(SmsMessage.ENCODING_KSC5601, result[3]);
+        result = SmsMessage.calculateLength(sms.getMessageBody(), false);
+        assertEquals(SmsMessage.ENCODING_16BIT, result[3]);
     }
 
     private void assertRemaining(int messageLength, int remaining, int maxChars) {
