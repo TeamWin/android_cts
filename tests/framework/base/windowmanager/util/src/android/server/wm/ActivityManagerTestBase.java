@@ -46,6 +46,7 @@ import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.os.UserHandle.USER_SYSTEM;
 import static android.server.wm.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.wm.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.wm.ActivityLauncher.KEY_INTENT_EXTRAS;
@@ -184,10 +185,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1366,27 +1365,11 @@ public abstract class ActivityManagerTestBase {
      * Test @Rule class that disables screen doze settings before each test method running and
      * restoring to initial values after test method finished.
      */
-    protected static class DisableScreenDozeRule implements TestRule {
+    protected class DisableScreenDozeRule implements TestRule {
+        AmbientDisplayConfiguration mConfig;
 
-        /** Copied from android.provider.Settings.Secure since these keys are hidden. */
-        private static final String[] DOZE_SETTINGS = {
-                "doze_enabled",
-                "doze_always_on",
-                "doze_pulse_on_pick_up",
-                "doze_pulse_on_long_press",
-                "doze_pulse_on_double_tap",
-                "doze_wake_screen_gesture",
-                "doze_wake_display_gesture",
-                "doze_tap_gesture",
-                "doze_quick_pickup_gesture"
-        };
-
-        private String get(String key) {
-            return executeShellCommand("settings get secure " + key).trim();
-        }
-
-        private void put(String key, String value) {
-            executeShellCommand("settings put secure " + key + " " + value);
+        DisableScreenDozeRule() {
+            mConfig = new AmbientDisplayConfiguration(mContext);
         }
 
         @Override
@@ -1394,13 +1377,18 @@ public abstract class ActivityManagerTestBase {
             return new Statement() {
                 @Override
                 public void evaluate() throws Throwable {
-                    final Map<String, String> initialValues = new HashMap<>();
-                    Arrays.stream(DOZE_SETTINGS).forEach(k -> initialValues.put(k, get(k)));
                     try {
-                        Arrays.stream(DOZE_SETTINGS).forEach(k -> put(k, "0"));
+                        SystemUtil.runWithShellPermissionIdentity(() -> {
+                            // disable current doze settings
+                            mConfig.disableDozeSettings(true /* shouldDisableNonUserConfigurable */,
+                                    USER_SYSTEM);
+                        });
                         base.evaluate();
                     } finally {
-                        Arrays.stream(DOZE_SETTINGS).forEach(k -> put(k, initialValues.get(k)));
+                        SystemUtil.runWithShellPermissionIdentity(() -> {
+                            // restore doze settings
+                            mConfig.restoreDozeSettings(USER_SYSTEM);
+                        });
                     }
                 }
             };

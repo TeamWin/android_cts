@@ -1465,7 +1465,8 @@ public class ActivityManagerFgsBgStartTest {
     /**
      * After startForeground() and stopForeground(), the second startForeground() can succeed or not
      * depends on the service's app proc state.
-     * Test startForegroundService() -> startForeground() -> stopForeground() -> startForeground().
+     * Test startForegroundService() -> startForeground() -> stopForeground() -> startForeground()
+     * -> startForeground().
      */
     @Test
     public void testSecondStartForeground() throws Exception {
@@ -1478,10 +1479,10 @@ public class ActivityManagerFgsBgStartTest {
             enableFgsRestriction(true, true, null);
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGS_RESULT);
-            // bypass bg-service-start restriction.
+            // Bypass bg-service-start restriction.
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "dumpsys deviceidle whitelist +" + PACKAGE_NAME_APP1);
-            // start foreground service.
+            // Start foreground service from APP1, the service can enter FGS.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
@@ -1489,7 +1490,7 @@ public class ActivityManagerFgsBgStartTest {
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "dumpsys deviceidle whitelist -" + PACKAGE_NAME_APP1);
 
-            // stopForeground()
+            // stopForeground(), the service exits FGS, become a background service.
             Bundle extras = LocalForegroundService.newCommand(
                     LocalForegroundService.COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_SERVICE,
@@ -1497,18 +1498,22 @@ public class ActivityManagerFgsBgStartTest {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE,
                     new Integer(PROCESS_CAPABILITY_NONE));
 
-            // startForeground() again.
+            // APP2 is in the background, from APP2, call startForeground().
+            // When APP2 calls Context.startService(), setFgsRestrictionLocked() is called,
+            // because APP2 is in the background, mAllowStartForeground is set to false.
+            // When Service.startForeground() is called, setFgsRestrictionLocked() is called again,
+            // APP1's proc state is in the background and mAllowStartForeground is set to false.
             extras = LocalForegroundService.newCommand(
                     LocalForegroundService.COMMAND_START_FOREGROUND);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP1, 0, extras);
             try {
                 uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
                 fail("Service should not enter foreground service state");
             } catch (Exception e) {
             }
 
-            // Put app to a TOP proc state.
+            // Put APP1 to a TOP proc state.
             allowBgActivityStart(PACKAGE_NAME_APP1, true);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
@@ -1516,17 +1521,24 @@ public class ActivityManagerFgsBgStartTest {
                     new Integer(PROCESS_CAPABILITY_ALL));
             allowBgActivityStart(PACKAGE_NAME_APP1, false);
 
-            // Call startForeground() second time.
+            // APP2 is in the background, from APP2, call startForeground() second time.
+            // When APP2 calls Context.startService(), setFgsRestrictionLocked() is called,
+            // because APP2 is in the background, mAllowStartForeground is set to false.
+            // When Service.startForeground() is called, setFgsRestrictionLocked() is called again,
+            // because APP1's proc state is in the foreground and mAllowStartForeground is set to
+            // true.
             waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGS_RESULT);
-            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            extras = LocalForegroundService.newCommand(
+                    LocalForegroundService.COMMAND_START_FOREGROUND);
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP1, 0, extras);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop app1's activity.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
                     LOCAL_SERVICE_PROCESS_CAPABILITY);
-            waiter.doWait(WAITFOR_MSEC);
 
             // Stop the FGS.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,

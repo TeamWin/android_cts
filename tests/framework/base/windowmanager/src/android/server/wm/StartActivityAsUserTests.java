@@ -39,6 +39,7 @@ import android.platform.test.annotations.Presubmit;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -63,19 +64,33 @@ public class StartActivityAsUserTests {
 
     @BeforeClass
     public static void createSecondUser() {
-        assumeTrue(SUPPORTS_MULTIPLE_USERS);
+        if (!SUPPORTS_MULTIPLE_USERS) {
+            return;
+        }
 
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final String output = runShellCommand("pm create-user --profileOf " + context.getUserId()
                 + " user2");
         sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
-        assertThat(sSecondUserId).isNotEqualTo(0);
+        if (sSecondUserId == 0) {
+            return;
+        }
         runShellCommand("pm install-existing --user " + sSecondUserId + " android.server.wm.cts");
     }
 
     @AfterClass
     public static void removeSecondUser() {
+        if (sSecondUserId == 0) {
+            return;
+        }
         runShellCommand("pm remove-user " + sSecondUserId);
+        sSecondUserId = 0;
+    }
+
+    @Before
+    public void checkMultipleUsersNotSupportedOrSecondUserCreated() {
+        assumeTrue(SUPPORTS_MULTIPLE_USERS);
+        assertThat(sSecondUserId).isNotEqualTo(0);
     }
 
     @Test

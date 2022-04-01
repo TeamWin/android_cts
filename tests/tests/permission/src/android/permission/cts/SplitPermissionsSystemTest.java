@@ -107,6 +107,8 @@ public class SplitPermissionsSystemTest {
                 case WRITE_EXTERNAL_STORAGE:
                     if (newPermissions.contains(READ_EXTERNAL_STORAGE)) {
                         assertSplit(split, NO_TARGET, READ_EXTERNAL_STORAGE);
+                    } else if (newPermissions.contains(ACCESS_MEDIA_LOCATION)) {
+                        assertSplit(split, Build.VERSION_CODES.Q, ACCESS_MEDIA_LOCATION);
                     } else if (newPermissions.contains(READ_MEDIA_AUDIO)) {
                         assertSplit(split, Build.VERSION_CODES.S_V2 + 1, READ_MEDIA_AUDIO);
                     } else if (newPermissions.contains(READ_MEDIA_VIDEO)) {
@@ -152,7 +154,7 @@ public class SplitPermissionsSystemTest {
             }
         }
 
-        assertEquals(20, seenSplits.size());
+        assertEquals(21, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, int targetSdk, String... permission) {

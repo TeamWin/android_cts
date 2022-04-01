@@ -113,14 +113,15 @@ public class WallpaperManagerTest {
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }
-        try {
-            ensureSetWallpaperDimAmountPermissionIsGranted();
-            mWallpaperManager.setWallpaperDimAmount(0f);
-            assertDimAmountEqualsTo(0f);
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
-            mAcquiredWallpaperDimmingPermission = false;
+        if (mAcquiredWallpaperDimmingPermission) {
+            try {
+                mWallpaperManager.setWallpaperDimAmount(0f);
+                assertDimAmountEqualsTo(0f);
+            } finally {
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .dropShellPermissionIdentity();
+                mAcquiredWallpaperDimmingPermission = false;
+            }
         }
     }
 
