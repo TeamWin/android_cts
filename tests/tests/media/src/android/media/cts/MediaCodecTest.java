@@ -32,6 +32,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.AudioCapabilities;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
+import android.media.MediaCodecInfo.EncoderCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaCrypto;
@@ -69,6 +70,7 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -2876,7 +2878,43 @@ public class MediaCodecTest extends AndroidTestCase {
                     int height = videoCaps.getSupportedHeightsFor(width).getLower();
                     format = MediaFormat.createVideoFormat(type, width, height);
                     if (info.isEncoder()) {
-                        format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+                        EncoderCapabilities encCaps = caps.getEncoderCapabilities();
+                        if (encCaps != null) {
+                            int bitrateMode = -1;
+                            List<Integer> candidates = Arrays.asList(
+                                    EncoderCapabilities.BITRATE_MODE_VBR,
+                                    EncoderCapabilities.BITRATE_MODE_CBR,
+                                    EncoderCapabilities.BITRATE_MODE_CQ,
+                                    EncoderCapabilities.BITRATE_MODE_CBR_FD);
+                            for (int candidate : candidates) {
+                                if (encCaps.isBitrateModeSupported(candidate)) {
+                                    bitrateMode = candidate;
+                                    break;
+                                }
+                            }
+                            if (VERBOSE) {
+                                Log.d(TAG, "video encoder: bitrate mode = " + bitrateMode);
+                            }
+                            format.setInteger(MediaFormat.KEY_BITRATE_MODE, bitrateMode);
+                            switch (bitrateMode) {
+                            case EncoderCapabilities.BITRATE_MODE_VBR:
+                            case EncoderCapabilities.BITRATE_MODE_CBR:
+                            case EncoderCapabilities.BITRATE_MODE_CBR_FD:
+                                format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+                                break;
+                            case EncoderCapabilities.BITRATE_MODE_CQ:
+                                format.setInteger(
+                                        MediaFormat.KEY_QUALITY,
+                                        encCaps.getQualityRange().getLower());
+                                if (VERBOSE) {
+                                    Log.d(TAG, "video encoder: quality = " +
+                                            encCaps.getQualityRange().getLower());
+                                }
+                                break;
+                            default:
+                                format.removeKey(MediaFormat.KEY_BITRATE_MODE);
+                            }
+                        }
                         format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
                         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
                         format.setInteger(
