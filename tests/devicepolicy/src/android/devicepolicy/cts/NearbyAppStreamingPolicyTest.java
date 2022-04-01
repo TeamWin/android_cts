@@ -25,7 +25,6 @@ import android.app.admin.RemoteDevicePolicyManager;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.NearbyAppStreamingPolicy;
@@ -50,14 +49,12 @@ public class NearbyAppStreamingPolicyTest {
     }
 
     @PolicyAppliesTest(policy = NearbyAppStreamingPolicy.class)
-    @Postsubmit(reason = "new test")
     public void getNearbyAppStreamingPolicy_defaultToSameManagedAccountOnly() {
         assertThat(mDevicePolicyManager.getNearbyAppStreamingPolicy())
                 .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_SAME_MANAGED_ACCOUNT_ONLY);
     }
 
     @PolicyAppliesTest(policy = NearbyAppStreamingPolicy.class)
-    @Postsubmit(reason = "new test")
     public void setNearbyAppStreamingPolicy_policyApplied_works() {
         int originalPolicy = mDevicePolicyManager.getNearbyAppStreamingPolicy();
 
@@ -73,7 +70,6 @@ public class NearbyAppStreamingPolicyTest {
     }
 
     @CannotSetPolicyTest(policy = NearbyAppStreamingPolicy.class)
-    @Postsubmit(reason = "new test")
     public void setNearbyAppStreamingPolicy_policyIsNotAllowedToBeSet_throwsException() {
         assertThrows(SecurityException.class, () ->
                 mDevicePolicyManager.setNearbyAppStreamingPolicy(
