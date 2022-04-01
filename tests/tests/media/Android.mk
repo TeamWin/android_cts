@@ -58,6 +58,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     truth-prebuilt \
     mockito-target-minus-junit4 \
     cts.media.heifwriter_heifwriter \
+    androidx.test.core \
     androidx.media2_media2 \
     CtsCameraUtils \
 
