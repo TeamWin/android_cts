@@ -46,6 +46,7 @@ import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.DeviceConfig;
 import android.support.test.uiautomator.By;
@@ -64,6 +65,8 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CtsDownstreamingTest;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
@@ -600,9 +603,11 @@ public class WindowInsetsBehaviorTests {
     /**
      * @throws Throwable when setting the property goes wrong.
      */
+    @CtsDownstreamingTest
     @Test
     public void systemGesture_excludeViewRects_withoutAnyCancel()
             throws Throwable {
+        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S_V2));
         assumeTrue(hasSystemGestureFeature());
 
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
@@ -635,8 +640,10 @@ public class WindowInsetsBehaviorTests {
         assertEquals(swipeCount[0], mActionDownPoints.size());
     }
 
+    @CtsDownstreamingTest
     @Test
     public void systemGesture_notExcludeViewRects_withoutAnyCancel() {
+        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S_V2));
         assumeTrue(hasSystemGestureFeature());
 
         mainThreadRun(() -> mActivity.setSystemGestureExclusion(null));
