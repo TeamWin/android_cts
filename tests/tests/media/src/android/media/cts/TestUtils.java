@@ -21,6 +21,7 @@ import static android.content.pm.PackageManager.MATCH_APEX;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -123,12 +124,29 @@ public final class TestUtils {
     private static long getModuleVersion(String module)
             throws PackageManager.NameNotFoundException {
         Context context = ApplicationProvider.getApplicationContext();
-        PackageInfo info;
-        info = context.getPackageManager().getPackageInfo(module,
+        PackageInfo info = context.getPackageManager().getPackageInfo(module,
                 MATCH_APEX);
         return info.getLongVersionCode();
     }
 
+
+    /**
+     * Reports whether {@code module} is the version shipped with the original system image
+     * or if it has been updated via a mainline update.
+     *
+     * @param module     the apex module name
+     * @return {@code true} if the apex module is the original version shipped with the device.
+     */
+    public static boolean isMainlineModuleFactoryVersion(String module)
+            throws PackageManager.NameNotFoundException {
+        Context context = ApplicationProvider.getApplicationContext();
+        PackageInfo info = context.getPackageManager().getPackageInfo(module,
+                MATCH_APEX);
+        if (info == null) {
+            return true;
+        }
+        return (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+    }
 
     private TestUtils() {
     }
