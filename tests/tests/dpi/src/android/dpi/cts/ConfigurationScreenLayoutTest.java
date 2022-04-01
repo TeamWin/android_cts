@@ -16,26 +16,17 @@
 
 package android.dpi.cts;
 
-import static android.view.Display.DEFAULT_DISPLAY;
-
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.server.wm.IgnoreOrientationRequestSession;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
-
-import com.android.compatibility.common.util.SystemUtil;
-
-import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ConfigurationScreenLayoutTest
         extends ActivityInstrumentationTestCase2<OrientationActivity> {
@@ -49,48 +40,6 @@ public class ConfigurationScreenLayoutTest
 
     public ConfigurationScreenLayoutTest() {
         super(OrientationActivity.class);
-    }
-
-    private static String executeShellCommand(String command) {
-        try {
-            return SystemUtil.runShellCommand(
-                    androidx.test.platform.app.InstrumentationRegistry.getInstrumentation(),
-                    command);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    // Mirrored from ActivityManagerTestBase.java
-    public static class IgnoreOrientationRequestSession implements AutoCloseable {
-        private static final String WM_SET_IGNORE_ORIENTATION_REQUEST =
-                "wm set-ignore-orientation-request ";
-        private static final String WM_GET_IGNORE_ORIENTATION_REQUEST =
-                "wm get-ignore-orientation-request";
-        private static final Pattern IGNORE_ORIENTATION_REQUEST_PATTERN =
-                Pattern.compile("ignoreOrientationRequest (true|false) for displayId=\\d+");
-
-        final int mDisplayId;
-        final boolean mInitialIgnoreOrientationRequest;
-
-        IgnoreOrientationRequestSession(int displayId, boolean enable) {
-            mDisplayId = displayId;
-            Matcher matcher = IGNORE_ORIENTATION_REQUEST_PATTERN.matcher(
-                    executeShellCommand(WM_GET_IGNORE_ORIENTATION_REQUEST + " -d " + mDisplayId));
-            assertTrue("get-ignore-orientation-request should match pattern",
-                    matcher.find());
-            mInitialIgnoreOrientationRequest = Boolean.parseBoolean(matcher.group(1));
-
-            executeShellCommand("wm set-ignore-orientation-request " + (enable ? "true" : "false")
-                    + " -d " + mDisplayId);
-        }
-
-        @Override
-        public void close() {
-            executeShellCommand(
-                    WM_SET_IGNORE_ORIENTATION_REQUEST + mInitialIgnoreOrientationRequest + " -d "
-                            + mDisplayId);
-        }
     }
 
     public void testScreenLayout() throws Exception {
@@ -110,7 +59,7 @@ public class ConfigurationScreenLayoutTest
         // Disable IgnoreOrientationRequest feature because when it's enabled, the device would only
         // follow physical rotations.
         try (IgnoreOrientationRequestSession session =
-                     new IgnoreOrientationRequestSession(DEFAULT_DISPLAY, false)) {
+                     new IgnoreOrientationRequestSession(false /* enable */)) {
             int expectedScreenLayout = computeScreenLayout();
             int expectedSize = expectedScreenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
             int expectedLong = expectedScreenLayout & Configuration.SCREENLAYOUT_LONG_MASK;
