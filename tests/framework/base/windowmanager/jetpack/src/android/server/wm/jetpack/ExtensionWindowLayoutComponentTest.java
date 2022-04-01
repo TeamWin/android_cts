@@ -39,7 +39,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
 
 import android.graphics.Rect;
-import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
@@ -61,6 +60,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -284,5 +285,97 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
         for (int i = 0; i < nFeatures; i++) {
             assertTrue(extensionDisplayFeatureMatched[i] && sidecarDisplayFeatureMatched[i]);
         }
+    }
+
+    /**
+     * Tests that the public API for {@link DisplayFeature} matches the API
+     * provided on device. The window-extensions artifact is provided by OEMs
+     * and may not match the API defined in the androidx repository.
+     */
+    @Test
+    public void testDisplayFeature_publicApi() throws NoSuchMethodException {
+        Class<DisplayFeature> displayFeatureClass = DisplayFeature.class;
+
+        /* DisplayFeature Method Validation */
+        validateClassInfo(displayFeatureClass,
+                "getBounds", new Class<?>[]{}, Rect.class);
+    }
+
+    /**
+     * Tests that the public API of {@link FoldingFeature} matches the implementation provided.
+     */
+    @Test
+    public void testFoldingFeature_publicApi() throws NoSuchMethodException {
+        Class<DisplayFeature> displayFeatureClass = DisplayFeature.class;
+        Class<FoldingFeature> foldingFeatureClass = FoldingFeature.class;
+        // Assert Instance Hierarchy. Reason: OEMs should not change the class hierarchy.
+        assertTrue(displayFeatureClass.isAssignableFrom(foldingFeatureClass));
+
+        // Validate the signature of public methods in FoldingFeature
+        validateClassInfo(foldingFeatureClass,
+                "toString", new Class<?>[]{}, String.class);
+        validateClassInfo(foldingFeatureClass,
+                "equals", new Class<?>[]{Object.class}, boolean.class);
+        validateClassInfo(foldingFeatureClass,
+                "hashCode", new Class<?>[]{}, int.class);
+
+        // Create a FoldingFeature instance with any constructor (just checking it works).
+        final int foldType = TYPE_FOLD;
+        final int foldState = STATE_FLAT;
+        final Rect foldBoundaries = new Rect(0, 1, 1, 0);
+        FoldingFeature foldingFeatureInstance =
+                new FoldingFeature(foldBoundaries, foldType, foldState);
+
+        /* FoldingFeature Instance Validation */
+        assertEquals(foldBoundaries, foldingFeatureInstance.getBounds());
+        assertEquals(foldType, foldingFeatureInstance.getType());
+        assertEquals(foldState, foldingFeatureInstance.getState());
+    }
+
+    /**
+     * Tests that the public API of {@link WindowLayoutInfo} matches the implementation provided.
+     */
+    @Test
+    public void testWindowLayoutInfo_publicApi() throws NoSuchMethodException {
+        // Create a FoldingFeature that will be added to WindowLayoutInfo as a DisplayFeature
+        final Rect foldBoundaries = new Rect(0, 1, 1, 0);
+        FoldingFeature foldingFeature = new FoldingFeature(foldBoundaries, TYPE_FOLD, STATE_FLAT);
+        // Add the FoldingFeature to a list of DisplayFeatures
+        List<DisplayFeature> displayFeatures = new ArrayList<>();
+        displayFeatures.add(foldingFeature);
+        // Create a WindowLayoutInfo that holds the DisplayFeatures
+        WindowLayoutInfo windowLayoutInfo = new WindowLayoutInfo(displayFeatures);
+
+        /* WindowLayoutInfo Instance Validation */
+        assertEquals(displayFeatures, windowLayoutInfo.getDisplayFeatures());
+
+        Class<WindowLayoutInfo> windowLayoutInfoClass = WindowLayoutInfo.class;
+        // Validate the signature of public methods in WindowLayoutInfo
+        validateClassInfo(windowLayoutInfoClass,
+                "toString", new Class<?>[]{}, String.class);
+        validateClassInfo(windowLayoutInfoClass,
+                "equals", new Class<?>[]{Object.class}, boolean.class);
+        validateClassInfo(windowLayoutInfoClass,
+                "hashCode", new Class<?>[]{}, int.class);
+    }
+
+    /**
+     * Verifies that the inputClass has the expected access modifiers, function name,
+     * input parameters, and return type. Fails if any are not what is expected.
+     * @param inputClass: The Class in Question; Type: Class.
+     * @param methodName: The Name of the Method to Check; Type: String.
+     * @param parameterList: A list of classes representing the input parameter's Data Types.
+     * @param returnType: The return type of the method; Type: Class.
+     * @throws NoSuchMethodException: If No Class found, throws a NoSuchMethodException error.
+     */
+    public void validateClassInfo(Class<?> inputClass, String methodName, Class<?>[] parameterList,
+            Class<?> returnType) throws NoSuchMethodException {
+        // Get the specified method from the class.
+        // Fails if it cannot find the methodName with the Correct input parameters.
+        Method classMethod = inputClass.getMethod(methodName, parameterList);
+
+        assertEquals(returnType, classMethod.getReturnType());
+        // This should not fail if getMethod did not fail.
+        assertTrue(Modifier.isPublic(classMethod.getModifiers()));
     }
 }

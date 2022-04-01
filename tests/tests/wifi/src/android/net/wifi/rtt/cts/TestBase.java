@@ -309,10 +309,10 @@ public class TestBase extends WifiJUnit4TestBase {
         }
 
         if (!ap5Ghz.isEmpty()) {
-            s11McScanResult = getHighestRssiScanResult(ap5Ghz.values());
+            s11McScanResult = getRandomScanResult(ap5Ghz.values());
             return;
         }
-        s11McScanResult = getHighestRssiScanResult(ap24Ghz.values());
+        s11McScanResult = getRandomScanResult(ap24Ghz.values());
     }
 
     static Context getContext() {

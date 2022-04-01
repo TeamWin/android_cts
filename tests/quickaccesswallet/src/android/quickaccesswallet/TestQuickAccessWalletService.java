@@ -132,14 +132,6 @@ public class TestQuickAccessWalletService extends QuickAccessWalletService {
         }
     }
 
-    public static boolean testGetUseTargetActivityForQuickAccess() {
-        TestQuickAccessWalletService service = sServiceRef.get();
-        if (service != null) {
-            return service.getUseTargetActivityForQuickAccess();
-        }
-        return false;
-    }
-
     public static List<SelectWalletCardRequest> getSelectRequests() {
         return new ArrayList<>(sSelectWalletCardRequests);
     }

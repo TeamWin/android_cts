@@ -187,8 +187,8 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)
 
     private fun enableTestMode() = runShellCommandOrThrow("dumpsys activity service" +
-        " com.android.bluetooth/.btservice.AdapterService set-test-mode enabled")
+        " com.android.bluetooth.btservice.AdapterService set-test-mode enabled")
 
     private fun disableTestMode() = runShellCommandOrThrow("dumpsys activity service" +
-        " com.android.bluetooth/.btservice.AdapterService set-test-mode disabled")
+        " com.android.bluetooth.btservice.AdapterService set-test-mode disabled")
 }

@@ -17,9 +17,13 @@
 package android.voiceinteraction.service;
 
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
+import static android.Manifest.permission.MANAGE_HOTWORD_DETECTION;
+import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
 import static android.Manifest.permission.RECORD_AUDIO;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static java.util.Objects.requireNonNull;
 
 import android.Manifest;
 import android.app.UiAutomation;
@@ -27,6 +31,9 @@ import android.content.Intent;
 import android.hardware.soundtrigger.SoundTrigger;
 import android.hardware.soundtrigger.SoundTrigger.KeyphraseRecognitionExtra;
 import android.media.AudioFormat;
+import android.media.soundtrigger.SoundTriggerManager;
+import android.media.voice.KeyphraseModelManager;
+import android.os.ConditionVariable;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.PersistableBundle;
@@ -34,6 +41,7 @@ import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetector;
+import android.service.voice.HotwordDetector.IllegalDetectorStateException;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.VoiceInteractionService;
 import android.system.ErrnoException;
@@ -49,6 +57,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Locale;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This service included a basic HotwordDetectionService for testing.
@@ -65,6 +75,9 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
 
     private boolean mReady = false;
     private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
+    private final ConditionVariable mAlwaysOnHotwordDetectorAvailabilityUpdated =
+            new ConditionVariable();
+    private final AtomicInteger mAlwaysOnHotwordDetectorAvailability = new AtomicInteger(0);
     private HotwordDetector mSoftwareHotwordDetector = null;
     private ParcelFileDescriptor[] mTempParcelFileDescriptor = null;
 
@@ -95,7 +108,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
             if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
                 runWithShellPermissionIdentity(() -> {
                     mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
-                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+                }, MANAGE_HOTWORD_DETECTION);
             } else if (testEvent == Utils.VIS_WITHOUT_MANAGE_HOTWORD_DETECTION_PERMISSION_TEST) {
                 runWithShellPermissionIdentity(() -> callCreateAlwaysOnHotwordDetector(),
                         Manifest.permission.BIND_HOTWORD_DETECTION_SERVICE);
@@ -142,7 +155,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_FROM_SOFTWARE_TRIGGER_TEST) {
                 runWithShellPermissionIdentity(() -> {
                     mSoftwareHotwordDetector = callCreateSoftwareHotwordDetector();
-                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+                }, MANAGE_HOTWORD_DETECTION);
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST) {
                 uiAutomation.adoptShellPermissionIdentity(RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD);
                 if (mSoftwareHotwordDetector != null) {
@@ -162,7 +175,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                                 persistableBundle,
                                 createFakeSharedMemoryData());
                     }
-                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+                }, MANAGE_HOTWORD_DETECTION);
             } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR) {
                 if (mAlwaysOnHotwordDetector != null) {
                     Log.i(TAG, "destroying AlwaysOnHotwordDetector");
@@ -179,12 +192,20 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                             Utils.HOTWORD_DETECTION_SERVICE_SOFTWARE_TRIGGER_RESULT_INTENT,
                             Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
                 }
-            } else if (testEvent
-                    == Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST) {
+            } else if (testEvent == Utils.DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL) {
                 runWithShellPermissionIdentity(() -> {
-                    mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
-                    mAlwaysOnHotwordDetector.overrideAvailability(
-                            AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+                    if (mAlwaysOnHotwordDetector != null) {
+                        if (requireNonNull(getSystemService(SoundTriggerManager.class))
+                                .getModuleProperties() != null) {
+                            enrollFakeKeyphraseModel();
+                        } else {
+                            mAlwaysOnHotwordDetector.overrideAvailability(
+                                    AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+                        }
+                    }
+                }, "android.permission.MANAGE_VOICE_KEYPHRASES", MANAGE_SOUND_TRIGGER);
+            } else if (testEvent == Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST) {
+                runWithShellPermissionIdentity(() -> {
                     // this test verifies that startRecognition does not throw an exception
                     try {
                         mAlwaysOnHotwordDetector.startRecognition(0,
@@ -205,13 +226,18 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                     } finally {
                         mAlwaysOnHotwordDetector.destroy();
                     }
-                }, Manifest.permission.MANAGE_HOTWORD_DETECTION);
+                }, MANAGE_HOTWORD_DETECTION);
             }
         } catch (IllegalStateException e) {
             Log.w(TAG, "performing testEvent: " + testEvent + ", exception: " + e);
             broadcastIntentWithResult(
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
+        } catch (IllegalDetectorStateException e) {
+            Log.w(TAG, "performing testEvent: " + testEvent + ", exception: " + e);
+            broadcastIntentWithResult(
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                    Utils.HOTWORD_DETECTION_SERVICE_DETECTOR_ILLEGAL_STATE_EXCEPTION);
         }
 
         return START_NOT_STICKY;
@@ -225,6 +251,20 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                 .dropShellPermissionIdentity();
     }
 
+    private void enrollFakeKeyphraseModel() {
+        Log.i(TAG, "enrollFakeKeyphraseModel()");
+        SoundTrigger.Keyphrase fakeKeyphrase =
+                new SoundTrigger.Keyphrase(1 /* id */,
+                        AlwaysOnHotwordDetector.RECOGNITION_MODE_VOICE_TRIGGER,
+                        Locale.forLanguageTag("en-US"), "Hello Android", new int[]{0});
+        SoundTrigger.KeyphraseSoundModel soundModel = new SoundTrigger.KeyphraseSoundModel(
+                UUID.randomUUID(), UUID.randomUUID(), null /* data */,
+                new SoundTrigger.Keyphrase[]{fakeKeyphrase},
+                1 /* version */);
+        KeyphraseModelManager keyphraseModelManager = createKeyphraseModelManager();
+        keyphraseModelManager.updateKeyphraseSoundModel(soundModel);
+    }
+
     private AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetector() {
         Log.i(TAG, "callCreateAlwaysOnHotwordDetector()");
         try {
@@ -236,6 +276,8 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         @Override
                         public void onAvailabilityChanged(int status) {
                             Log.i(TAG, "onAvailabilityChanged(" + status + ")");
+                            broadcastIntentWithResult(
+                                    Utils.DSP_DETECTOR_AVAILABILITY_RESULT_INTENT, status);
                         }
 
                         @Override

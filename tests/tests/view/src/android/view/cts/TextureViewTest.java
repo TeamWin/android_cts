@@ -24,37 +24,46 @@ import static android.opengl.GLES20.glEnable;
 import static android.opengl.GLES20.glScissor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.hardware.DataSpace;
 import android.media.Image;
 import android.media.ImageWriter;
 import android.util.Half;
 import android.view.PixelCopy;
 import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.cts.util.BitmapDumper;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -64,8 +73,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeoutException;
 
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+
 @MediumTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class TextureViewTest {
 
     static final int EGL_GL_COLORSPACE_SRGB_KHR = 0x3089;
@@ -76,9 +88,21 @@ public class TextureViewTest {
     static final int EGL_GL_COLORSPACE_SCRGB_EXT = 0x3351;
     static final int EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT = 0x3350;
 
+    private Instrumentation mInstrumentation;
+
+    @Before
+    public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        assertNotNull(mInstrumentation);
+    }
+
     @Rule
     public ActivityTestRule<TextureViewCtsActivity> mActivityRule =
             new ActivityTestRule<>(TextureViewCtsActivity.class, false, false);
+
+    @Rule
+    public ActivityTestRule<SDRTestActivity> mSDRActivityRule =
+            new ActivityTestRule<>(SDRTestActivity.class, false, false);
 
     @Rule
     public TestName mTestName = new TestName();
@@ -231,6 +255,137 @@ public class TextureViewTest {
                 screenshot.getPixel(texturePos.left + 10, texturePos.bottom - 10));
         assertEquals("Bottom right", Color.BLACK,
                 screenshot.getPixel(texturePos.right - 10, texturePos.bottom - 10));
+    }
+
+    private static Object[] testDataSpaces() {
+        return new Integer[] {
+            DataSpace.DATASPACE_SCRGB_LINEAR,
+            DataSpace.DATASPACE_SRGB,
+            DataSpace.DATASPACE_SCRGB,
+            DataSpace.DATASPACE_DISPLAY_P3,
+            DataSpace.DATASPACE_ADOBE_RGB,
+            DataSpace.DATASPACE_BT2020,
+            DataSpace.DATASPACE_BT709,
+            DataSpace.DATASPACE_DCI_P3,
+            DataSpace.DATASPACE_SRGB_LINEAR
+        };
+    }
+
+    @Test
+    @Parameters(method = "testDataSpaces")
+    public void testSDRFromSurfaceViewAndTextureView(int dataSpace) throws Throwable {
+        final int tiffanyBlue = 0xFF0ABAB5;
+        Color color = Color.valueOf(tiffanyBlue).convert(ColorSpace.getFromDataSpace(dataSpace));
+        long converted = color.pack();
+        assertNotEquals(Color.valueOf(tiffanyBlue).toArgb(), color);
+
+        final SDRTestActivity activity =
+                mSDRActivityRule.launchActivity(/*startIntent*/ null);
+
+        TextureView textureView = activity.getTextureView();
+        int width = textureView.getWidth();
+        int height = textureView.getHeight();
+
+        // through textureView, paint left part
+        SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
+        Surface surface = new Surface(surfaceTexture);
+        assertTrue(surface.isValid());
+
+        ImageWriter writer = new ImageWriter
+                .Builder(surface)
+                .setHardwareBufferFormat(PixelFormat.RGBA_8888)
+                .setDataSpace(dataSpace)
+                .build();
+        Image image = writer.dequeueInputImage();
+        assertEquals(dataSpace, image.getDataSpace());
+        Image.Plane plane = image.getPlanes()[0];
+        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        paint.setColor(converted);
+        canvas.drawRect(width / 2, 0f, width, height, paint);
+        bitmap.copyPixelsToBuffer(plane.getBuffer());
+        writer.queueInputImage(image);
+
+        final Rect textureViewPos = new Rect();
+        WidgetTestUtils.runOnMainAndDrawSync(mSDRActivityRule,
+                activity.findViewById(android.R.id.content), () -> {
+                int[] outLocation = new int[2];
+                textureView.getLocationInSurface(outLocation);
+                textureViewPos.left = outLocation[0] + width / 2;
+                textureViewPos.top = outLocation[1];
+                textureViewPos.right = textureViewPos.left + width / 2;
+                textureViewPos.bottom = textureViewPos.top + height;
+            });
+
+        Bitmap textureViewScreenshot = Bitmap.createBitmap(
+                textureViewPos.width(), textureViewPos.height(), Bitmap.Config.ARGB_8888);
+        int textureViewResult =
+                new SynchronousPixelCopy().request(surface, textureViewPos, textureViewScreenshot);
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, textureViewResult);
+
+        // through surfaceView, paint right part
+        SurfaceView surfaceView = activity.getSurfaceView();
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                ImageWriter writer = new ImageWriter
+                        .Builder(holder.getSurface())
+                        .setHardwareBufferFormat(PixelFormat.RGBA_8888)
+                        .setDataSpace(dataSpace)
+                        .build();
+                Image image = writer.dequeueInputImage();
+                assertEquals(dataSpace, image.getDataSpace());
+                Image.Plane plane = image.getPlanes()[0];
+                Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
+                        Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(bitmap);
+                Paint paint = new Paint();
+                paint.setAntiAlias(false);
+                paint.setColor(converted);
+                canvas.drawRect(0f, 0f, width / 2, height, paint);
+                bitmap.copyPixelsToBuffer(plane.getBuffer());
+                writer.queueInputImage(image);
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {}
+        });
+
+        // wait here to ensure SF has latched the buffer that has been queued in
+        // this is the easiest way to solve copy failure but sacrifice the performance.
+        Thread.sleep(100);
+        final Rect surfaceViewPos = new Rect();
+        WidgetTestUtils.runOnMainAndDrawSync(mSDRActivityRule, surfaceView, () -> {
+            ((ViewGroup) surfaceView.getParent()).removeView(surfaceView);
+            activity.setContentView(surfaceView);
+            int[] outLocation = new int[2];
+            surfaceView.getLocationInSurface(outLocation);
+            surfaceViewPos.left = outLocation[0];
+            surfaceViewPos.top = outLocation[1];
+            surfaceViewPos.right = surfaceViewPos.left + width / 2;
+            surfaceViewPos.bottom = surfaceViewPos.top + height;
+        });
+
+        Bitmap surfaceViewScreenshot = mInstrumentation
+                .getUiAutomation()
+                .takeScreenshot(activity.getWindow());
+        // resize screenshot to left part
+        surfaceViewScreenshot.setWidth(surfaceViewPos.width());
+        surfaceViewScreenshot.setHeight(surfaceViewPos.height());
+        assertEquals(ColorSpace.get(ColorSpace.Named.SRGB),
+                surfaceViewScreenshot.getColorSpace());
+
+        int surfaceViewResult = new SynchronousPixelCopy()
+                .request(surfaceView, surfaceViewPos, surfaceViewScreenshot);
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, surfaceViewResult);
+
+        assertTrue(textureViewScreenshot.sameAs(surfaceViewScreenshot));
     }
 
     @Test

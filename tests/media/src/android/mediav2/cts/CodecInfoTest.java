@@ -75,6 +75,10 @@ public class CodecInfoTest {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) {
                 continue;
             }
+            if (CodecTestBase.codecPrefix != null &&
+                    !codecInfo.getName().startsWith(CodecTestBase.codecPrefix)) {
+                continue;
+            }
             String[] types = codecInfo.getSupportedTypes();
             for (String type : types) {
                 argsList.add(new Object[]{type, codecInfo.getName(), codecInfo});

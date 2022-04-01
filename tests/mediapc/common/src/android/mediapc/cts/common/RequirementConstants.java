@@ -66,9 +66,9 @@ public class RequirementConstants {
     public static final String SUPPORTED_PERFORMANCE_POINTS = "supported_performance_points";
     public static final String FRAMES_DROPPED = "frame_drops_per_30sec";
     public static final String FRAME_RATE = "frame_rate";
-    public static final String LONG_RESOLUTION = "long_resolution";
-    public static final String SHORT_RESOLUTION = "short_resolution";
-    public static final String DISPLAY_DENSITY = "display_density";
+    public static final String LONG_RESOLUTION = "long_resolution_pixels";
+    public static final String SHORT_RESOLUTION = "short_resolution_pixels";
+    public static final String DISPLAY_DENSITY = "display_density_dpi";
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
 
     public enum Result {

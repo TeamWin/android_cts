@@ -129,11 +129,14 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
     allow_under_saturated = False
     # Check pixel means are increasing (with small tolerance)
     for ch, color in enumerate(COLORS):
-      e_msg = 'ISO=%d, %s, exp %3fms mean: %.2f, %s mean: %.2f, TOL=%.f%%' % (
-          sens, color, exps[i-1], mean[ch],
-          'black level' if i == 1 else 'exp_time %.3fms'%exps[i-2],
-          prev_mean[ch], IMG_DELTA_THRESH*100)
       if mean[ch] <= prev_mean[ch] * IMG_DELTA_THRESH:
+        e_msg = f'{color} not increasing with increased exp time! ISO: {sens}, '
+        if i == 1:
+          e_msg += f'black_level: {black_levels[ch]}, '
+        else:
+          e_msg += f'exp[i-1]: {exps[i-2]:.3f}ms, mean[i-1]: {prev_mean[ch]:.2f}, '
+        e_msg += (f'exp[i]: {exps[i-1]:.3f}ms, mean[i]: {mean[ch]}, '
+                  f'TOL: {IMG_DELTA_THRESH}')
         raise AssertionError(e_msg)
 
 

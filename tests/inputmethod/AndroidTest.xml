@@ -96,6 +96,7 @@
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <option name="install-arg" value="-t" />
         <option name="test-file-name" value="CtsInputMethodTestCases.apk" />
     </target_preparer>
     <!-- Enabling change id ALLOW_TEST_API_ACCESS allows that package to access @TestApi methods -->

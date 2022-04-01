@@ -78,6 +78,13 @@ public class UserReference implements AutoCloseable {
     private UserReference mParent;
     private @Nullable String mPassword;
 
+    /**
+     * Returns a {@link UserReference} equivalent to the passed {@code userHandle}.
+     */
+    public static UserReference of(UserHandle userHandle) {
+        return TestApis.users().find(userHandle.getIdentifier());
+    }
+
     UserReference(int id) {
         mId = id;
         mUserManager = TestApis.context().androidContextAsUser(this)

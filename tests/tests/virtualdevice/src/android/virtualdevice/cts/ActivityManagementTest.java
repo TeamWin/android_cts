@@ -71,6 +71,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntConsumer;
 
 /**
  * Tests for activity management, like launching and listening to activity change events, in the
@@ -100,7 +101,7 @@ public class ActivityManagementTest {
     @Mock
     private VirtualDisplay.Callback mVirtualDisplayCallback;
     @Mock
-    private VirtualDeviceManager.LaunchCallback mLaunchCallback;
+    private IntConsumer mLaunchCompleteListener;
     @Nullable private ServiceConnectionFuture<IStreamedTestApp> mServiceConnection;
     @Mock
     private OnReceiveResultListener mOnReceiveResultListener;
@@ -254,10 +255,11 @@ public class ActivityManagementTest {
                 mVirtualDisplayCallback);
 
         mVirtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
-                pendingIntent, Runnable::run, mLaunchCallback);
+                pendingIntent, Runnable::run, mLaunchCompleteListener);
 
         verify(mOnReceiveResultListener, timeout(5000)).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
+        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
     @Test
@@ -281,10 +283,11 @@ public class ActivityManagementTest {
         mVirtualDevice.launchPendingIntent(
                 virtualDisplay.getDisplay().getDisplayId(),
                 pendingIntent, Runnable::run,
-                mLaunchCallback);
+                mLaunchCompleteListener);
 
         verify(mOnReceiveResultListener, timeout(5000)).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
+        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
     @Test
@@ -309,10 +312,11 @@ public class ActivityManagementTest {
                 virtualDisplay.getDisplay().getDisplayId(),
                 pendingIntent,
                 Runnable::run,
-                mLaunchCallback);
+                mLaunchCompleteListener);
 
         verify(mOnReceiveResultListener, after(5000).never()).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
+        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
     }
 
     private IStreamedTestApp getTestAppService() throws Exception {

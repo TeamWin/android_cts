@@ -21,11 +21,17 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.BYPASS_ROLE_QUALIFICATION;
 import static com.android.bedstead.nene.permissions.CommonPermissions.FORCE_DEVICE_POLICY_MANAGER_LOGS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_ADMINS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
 
+import static org.junit.Assert.fail;
+
+import android.annotation.TargetApi;
 import android.app.admin.DevicePolicyManager;
+import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -42,12 +48,14 @@ import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
+import com.android.compatibility.common.util.BlockingCallback;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -379,6 +387,70 @@ public final class DevicePolicy {
             }
 
             forceNetworkLogs();
+        }
+    }
+
+    /**
+     * Sets the provided {@code packageName} as a device policy management role holder.
+     */
+    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    @Experimental
+    public void setDevicePolicyManagementRoleHolder(String packageName)
+            throws InterruptedException {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                MANAGE_ROLE_HOLDERS, BYPASS_ROLE_QUALIFICATION)) {
+            DefaultBlockingCallback blockingCallback = new DefaultBlockingCallback();
+            RoleManager roleManager = TestApis.context().instrumentedContext()
+                    .getSystemService(RoleManager.class);
+            roleManager.setBypassingRoleQualification(true);
+            roleManager.addRoleHolderAsUser(
+                    RoleManager.ROLE_DEVICE_POLICY_MANAGEMENT,
+                    packageName,
+                    /* flags= */ 0,
+                    TestApis.context().instrumentationContext().getUser(),
+                    TestApis.context().instrumentedContext().getMainExecutor(),
+                    blockingCallback::triggerCallback);
+
+            boolean success = blockingCallback.await();
+            if (!success) {
+                fail("Could not set role holder of "
+                        + RoleManager.ROLE_DEVICE_POLICY_MANAGEMENT + ".");
+            }
+        }
+    }
+
+    /**
+     * Unsets the provided {@code packageName} as a device policy management role holder.
+     */
+    @TargetApi(Build.VERSION_CODES.TIRAMISU)
+    @Experimental
+    public void unsetDevicePolicyManagementRoleHolder(String packageName)
+            throws InterruptedException {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                MANAGE_ROLE_HOLDERS, BYPASS_ROLE_QUALIFICATION)) {
+            DefaultBlockingCallback blockingCallback = new DefaultBlockingCallback();
+            RoleManager roleManager = TestApis.context().instrumentedContext()
+                    .getSystemService(RoleManager.class);
+            roleManager.removeRoleHolderAsUser(
+                    RoleManager.ROLE_DEVICE_POLICY_MANAGEMENT,
+                    packageName,
+                    /* flags= */ 0,
+                    TestApis.context().instrumentationContext().getUser(),
+                    TestApis.context().instrumentedContext().getMainExecutor(),
+                    blockingCallback::triggerCallback);
+            roleManager.setBypassingRoleQualification(false);
+
+            boolean success = blockingCallback.await();
+            if (!success) {
+                fail("Failed to clear the role holder of "
+                        + RoleManager.ROLE_DEVICE_POLICY_MANAGEMENT + ".");
+            }
+        }
+    }
+
+    private static class DefaultBlockingCallback extends BlockingCallback<Boolean> {
+        public void triggerCallback(Boolean success) {
+            callbackTriggered(success);
         }
     }
 }

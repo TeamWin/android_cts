@@ -158,7 +158,7 @@ public class TelephonyManagerTestOnMockModem {
         }
 
         // Wait the radio state update in Framework
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(2);
         int toggleRadioState =
                 radioState == TelephonyManager.RADIO_POWER_ON
                         ? TelephonyManager.RADIO_POWER_OFF
@@ -177,7 +177,7 @@ public class TelephonyManagerTestOnMockModem {
         }
 
         // Wait the radio state update in Framework
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(2);
         assertEquals(sTelephonyManager.getRadioPowerState(), radioState);
 
         Log.d(TAG, "Test Done ");

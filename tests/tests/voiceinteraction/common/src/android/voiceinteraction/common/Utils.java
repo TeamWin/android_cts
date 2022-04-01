@@ -95,12 +95,14 @@ public class Utils {
     public static final int HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR = 108;
     public static final int HOTWORD_DETECTION_SERVICE_SOFTWARE_DESTROY_DETECTOR = 109;
     public static final int DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST = 110;
+    public static final int DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL = 111;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION = 3;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY = 4;
     public static final int HOTWORD_DETECTION_SERVICE_GET_ERROR = 5;
+    public static final int HOTWORD_DETECTION_SERVICE_DETECTOR_ILLEGAL_STATE_EXCEPTION = 6;
 
     public static final int DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS = 1;
     public static final int DSP_DETECTOR_START_RECOGNITION_RESULT_ILLEGAL_STATE_EXCEPTION = 2;
@@ -193,6 +195,8 @@ public class Utils {
             "android.intent.action.HOTWORD_DETECTION_SERVICE_ONDETECT_RESULT";
     public static final String DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT =
             "android.intent.action.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT";
+    public static final String DSP_DETECTOR_AVAILABILITY_RESULT_INTENT =
+            "android.intent.action.DSP_DETECTOR_AVAILABILITY_RESULT_INTENT";
     public static final String KEY_SERVICE_TYPE = "serviceType";
     public static final String KEY_TEST_EVENT = "testEvent";
     public static final String KEY_TEST_RESULT = "testResult";

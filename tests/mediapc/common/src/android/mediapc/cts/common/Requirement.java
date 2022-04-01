@@ -16,39 +16,113 @@
 
 package android.mediapc.cts.common;
 
-import java.util.HashSet;
-import java.util.Set;
+import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.DeviceReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Performance Class Requirement maps and req id to a set of {@link RequiredMeasurement}.
  */
 public abstract class Requirement {
-    final Set<RequiredMeasurement<?>>
-            mRequiredMeasurements = new HashSet<>();
-    private final String id;
+    private static final String TAG = Requirement.class.getSimpleName();
 
-    Requirement(String id) {
+    protected final ImmutableMap<String, RequiredMeasurement<?>> mRequiredMeasurements;
+    protected final String id;
+    private int perfClass;
+
+    protected Requirement(String id, RequiredMeasurement<?>[] reqs) {
         this.id = id;
+
+        ImmutableMap.Builder<String, RequiredMeasurement<?>> reqBuilder =
+            ImmutableMap.<String, RequiredMeasurement<?>>builder();
+        for (RequiredMeasurement<?> r: reqs) {
+            reqBuilder.put(r.id(), r);
+        }
+        this.mRequiredMeasurements = reqBuilder.build();
     }
 
-    public String getId() {
-        return id;
+    public String id() {
+        return this.id;
     }
 
     /**
-     * Are all required values either NA or MET at this mediaPerformanceClass
+     * Finds the highest performance class where at least one RequiremdMeasurement has result
+     * RequirementConstants.Result.MET and none have RequirementConstants.Result.UNMET
      */
-    public boolean meetsPerformanceClass(int mediaPerformanceClass) {
-        for (RequiredMeasurement<?> rv : mRequiredMeasurements) {
-            if (rv.meetsPerformanceClass(mediaPerformanceClass)
-                    == Result.UNMET) {
-                return false;
+    public int computePerformanceClass() {
+        Map<Integer, RequirementConstants.Result> overallPerfClassResults = new HashMap<>();
+
+        for (RequiredMeasurement<?> rm: this.mRequiredMeasurements.values()) {
+            Map<Integer, RequirementConstants.Result> perfClassResults = rm.getPerformanceClass();
+
+            for (Integer pc: perfClassResults.keySet()) {
+                RequirementConstants.Result res = perfClassResults.get(pc);
+
+                // if one or more results are UNMET, mark the performance class as UNMET
+                // otherwise if at least 1 of the results is MET, mark the performance class as MET
+                if (res == RequirementConstants.Result.UNMET) {
+                    overallPerfClassResults.put(pc, RequirementConstants.Result.UNMET);
+                } else if (!overallPerfClassResults.containsKey(pc) &&
+                        res == RequirementConstants.Result.MET) {
+                    overallPerfClassResults.put(pc, RequirementConstants.Result.MET);
+                }
             }
         }
-        return true;
+
+        // report the highest performance class that has been MET
+        int perfClass = 0;
+        for (int pc: overallPerfClassResults.keySet()) {
+            if (overallPerfClassResults.get(pc) == RequirementConstants.Result.MET) {
+                perfClass = Math.max(perfClass, pc);
+            }
+        }
+        return perfClass;
     }
 
-    public enum Result {
-        NA, MET, UNMET
+    private boolean checkPerformanceClass(String testName) {
+        if (this.perfClass < Utils.getPerfClass()) {
+            Log.w(Requirement.TAG, "Test: " + testName + " reporting invalid performance class " +
+                this.perfClass + " for requirement " + this.id + " performance class should at " +
+                "least be: " + Utils.getPerfClass());
+            for (RequiredMeasurement<?> rm: this.mRequiredMeasurements.values()) {
+                Log.w(Requirement.TAG, rm.toString());
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    protected <T> void setMeasuredValue(String measurement, T measuredValue) {
+        RequiredMeasurement<T> rm =
+            (RequiredMeasurement<T>)this.mRequiredMeasurements.get(measurement);
+        rm.setMeasuredValue(measuredValue);
+    }
+
+    /**
+     * @return whether or not the requirement meets the device's specified performance class
+     */
+    public boolean writeLogAndCheck(String testName) {
+        this.perfClass = this.computePerformanceClass();
+
+        DeviceReportLog log = new DeviceReportLog(RequirementConstants.REPORT_LOG_NAME, this.id);
+        log.addValue(RequirementConstants.TN_FIELD_NAME, testName, ResultType.NEUTRAL,
+            ResultUnit.NONE);
+        for (RequiredMeasurement rm: this.mRequiredMeasurements.values()) {
+            rm.writeValue(log);
+        }
+        log.addValue(RequirementConstants.PC_FIELD_NAME, this.perfClass, ResultType.NEUTRAL,
+            ResultUnit.NONE);
+        log.submit(InstrumentationRegistry.getInstrumentation());
+
+        return this.checkPerformanceClass(testName);
     }
 }

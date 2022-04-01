@@ -61,7 +61,6 @@ import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
-import android.os.ConditionVariable;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
@@ -99,6 +98,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -1475,25 +1476,30 @@ public class PackageManagerShellCommandTest {
     static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
         private final String mTargetPackage;
         private final int mTargetUserId;
-        private final ConditionVariable mUserReceivedBroadcast;
+        private final CompletableFuture<Boolean> mUserReceivedBroadcast = new CompletableFuture<>();
         FullyRemovedBroadcastReceiver(String packageName, int targetUserId) {
             mTargetPackage = packageName;
             mTargetUserId = targetUserId;
-            mUserReceivedBroadcast = new ConditionVariable();
-            mUserReceivedBroadcast.close();
         }
         @Override
         public void onReceive(Context context, Intent intent) {
-            context.unregisterReceiver(this);
             final String packageName = intent.getData().getEncodedSchemeSpecificPart();
             final int userId = context.getUserId();
             if (intent.getAction().equals(Intent.ACTION_PACKAGE_FULLY_REMOVED)
                     && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
-                mUserReceivedBroadcast.open();
+                mUserReceivedBroadcast.complete(true);
+                context.unregisterReceiver(this);
             }
         }
-        public boolean isBroadcastReceived() {
-            return mUserReceivedBroadcast.block(2000);
+        public void assertBroadcastReceived() throws Exception {
+            assertTrue(mUserReceivedBroadcast.get(2, TimeUnit.SECONDS));
+        }
+        public void assertBroadcastNotReceived() throws Exception {
+            try {
+                assertFalse(mUserReceivedBroadcast.get(2, TimeUnit.SECONDS));
+            } catch (TimeoutException ignored) {
+                // expected
+            }
         }
     }
 

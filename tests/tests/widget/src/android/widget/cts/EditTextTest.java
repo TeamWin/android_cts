@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -27,6 +29,10 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
+import android.os.SystemClock;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -41,6 +47,7 @@ import android.util.SparseArray;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.KeyEvent;
+import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -55,6 +62,9 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
@@ -64,6 +74,7 @@ import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SmallTest
@@ -721,5 +732,32 @@ public class EditTextTest {
 
         assertEquals(InputType.TYPE_CLASS_TEXT
                 | InputType.TYPE_TEXT_FLAG_ENABLE_TEXT_CONVERSION_SUGGESTIONS, tv.getInputType());
+    }
+
+    @Test
+    public void testClickTwice_showIme() throws Throwable {
+        try (MockImeSession imeSession = MockImeSession.create(
+                mInstrumentation.getContext(),
+                mInstrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+
+            clickOnEditText1();
+            mInstrumentation.waitForIdleSync();
+
+            clickOnEditText1();
+            mInstrumentation.waitForIdleSync();
+
+            final ImeEventStream stream = imeSession.openEventStream();
+            expectEvent(stream,
+                    event -> "showSoftInput".equals(event.getEventName()),
+                    TimeUnit.SECONDS.toMillis(2));
+        }
+    }
+
+    private void clickOnEditText1() throws Exception {
+        final UiObject2 object = UiDevice.getInstance(mInstrumentation)
+                .findObject(By.res("android.widget.cts", "edittext_simple1"));
+        object.click();
+        SystemClock.sleep(ViewConfiguration.getDoubleTapTimeout() + 50);
     }
 }

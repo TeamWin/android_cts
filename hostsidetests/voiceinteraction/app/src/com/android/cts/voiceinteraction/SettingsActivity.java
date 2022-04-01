@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package android.mediapc.cts.common;
+package com.android.cts.voiceinteraction;
+
+import android.app.Activity;
+import android.os.Bundle;
 
 /**
- * A requirement that has only one {@link RequiredMeasurement}.
+ * Stub activity to test out settings selection for voice interactor.
  */
-public final class SingleRequirement<T> extends Requirement {
-    private final RequiredMeasurement<T> mRequiredMeasurement;
-
-    public SingleRequirement(String id,
-            RequiredMeasurement<T> requiredMeasurement) {
-        super(id);
-        mRequiredMeasurements.add(requiredMeasurement);
-        mRequiredMeasurement = requiredMeasurement;
-    }
-
-    public void setValue(T value) {
-        mRequiredMeasurement.setMeasuredValue(value);
+public class SettingsActivity extends Activity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 }

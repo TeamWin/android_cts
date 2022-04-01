@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package android.quickaccesswallet;
+package com.android.cts.voiceinteraction;
 
-/**
- * Extends {@link TestQuickAccessWalletService} to allow for a different manifest configuration.
- */
-public class DoNotUseTargetActivityForQuickAccessWalletService
-        extends TestQuickAccessWalletService {}
+import android.service.voice.HotwordDetectionService;
+
+public class MainHotwordDetectionService extends HotwordDetectionService {
+}

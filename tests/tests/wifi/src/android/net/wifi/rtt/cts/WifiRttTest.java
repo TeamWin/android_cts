@@ -83,7 +83,7 @@ public class WifiRttTest extends TestBase {
     private static final MacAddress MAC = MacAddress.fromString("00:01:02:03:04:05");
 
     // Interval between two ranging request.
-    private static final int intervalMs = 200;
+    private static final int INTERVAL_MS = 1000;
 
     /**
      * Test Wi-Fi RTT ranging operation using ScanResults in request:
@@ -304,7 +304,7 @@ public class WifiRttTest extends TestBase {
                 numFailures++;
             }
             // Sleep a while to avoid stress AP.
-            Thread.sleep(intervalMs);
+            Thread.sleep(INTERVAL_MS);
         }
 
         // Save results to log
@@ -651,6 +651,7 @@ public class WifiRttTest extends TestBase {
      */
     private void rangeNon11mcApRequest(RangingRequest request, ScanResult testAp,
             int variationLimit) throws InterruptedException {
+        Thread.sleep(5000);
         List<RangingResult> allResults = new ArrayList<>();
         int numFailures = 0;
         int distanceSum = 0;
@@ -724,7 +725,7 @@ public class WifiRttTest extends TestBase {
                 numFailures++;
             }
             // Sleep a while to avoid stress AP.
-            Thread.sleep(intervalMs);
+            Thread.sleep(INTERVAL_MS);
         }
         // Save results to log
         int numGoodResults = NUM_OF_RTT_ITERATIONS - numFailures;

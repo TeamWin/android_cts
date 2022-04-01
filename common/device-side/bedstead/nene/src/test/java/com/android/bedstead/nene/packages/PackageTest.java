@@ -114,6 +114,11 @@ public class PackageTest {
     }
 
     @Test
+    public void of_returnsPackageWithCorrectPackageName() {
+        assertThat(Package.of(PACKAGE_NAME).packageName()).isEqualTo(PACKAGE_NAME);
+    }
+
+    @Test
     @EnsureHasSecondaryUser
     @RequireRunNotOnSecondaryUser
     public void installExisting_alreadyInstalled_installsInUser() {

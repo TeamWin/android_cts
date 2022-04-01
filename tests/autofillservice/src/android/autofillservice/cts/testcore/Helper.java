@@ -65,6 +65,7 @@ import android.util.Size;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStructure.HtmlInfo;
+import android.view.WindowInsets;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillManager.AutofillCallback;
@@ -1632,6 +1633,16 @@ public final class Helper {
                 new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
                         AutofillManager.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED);
         deviceConfigStateManager.set("true");
+    }
+
+    /**
+     * Whether IME is showing
+     */
+    public static boolean isImeShowing(WindowInsets rootWindowInsets) {
+        if (rootWindowInsets != null && rootWindowInsets.isVisible(WindowInsets.Type.ime())) {
+            return true;
+        }
+        return false;
     }
 
     private Helper() {

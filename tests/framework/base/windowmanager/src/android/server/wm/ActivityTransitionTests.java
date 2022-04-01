@@ -228,6 +228,22 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Checks that the background color set in the animation definition is used as the animation's
+     * background color instead of the theme's background color.
+     *
+     * @see R.anim.alpha_0_with_red_backdrop for animation defintition.
+     */
+    @Test
+    public void testAnimationBackgroundColorIsUsedDuringActivityTransition() {
+        final int backgroundColor = Color.RED;
+        final ActivityOptions activityOptions = ActivityOptions.makeCustomAnimation(mContext,
+                R.anim.alpha_0_with_red_backdrop, R.anim.alpha_0_with_red_backdrop);
+        Bitmap screenshot = runAndScreenshotActivityTransition(activityOptions,
+                TransitionActivityWithWhiteBackground.class);
+        assertAppRegionOfScreenIsColor(screenshot, backgroundColor);
+    }
+
+    /**
      * Checks that we can override the default background color of the animation using the
      * CustomAnimation activityOptions.
      */
@@ -235,7 +251,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     public void testCustomTransitionCanOverrideBackgroundColor() {
         final int backgroundColor = Color.GREEN;
         final ActivityOptions activityOptions = ActivityOptions.makeCustomAnimation(mContext,
-                R.anim.alpha_0_with_background, R.anim.alpha_0_with_background, backgroundColor
+                R.anim.alpha_0_with_backdrop, R.anim.alpha_0_with_backdrop, backgroundColor
         );
         Bitmap screenshot = runAndScreenshotActivityTransition(activityOptions,
                 TransitionActivity.class);
@@ -251,8 +267,8 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         final int backgroundColor = Color.GREEN;
 
         final Bundle extras = new Bundle();
-        extras.putInt(ENTER_ANIM_KEY, R.anim.alpha_0_with_background);
-        extras.putInt(EXIT_ANIM_KEY, R.anim.alpha_0_with_background);
+        extras.putInt(ENTER_ANIM_KEY, R.anim.alpha_0_with_backdrop);
+        extras.putInt(EXIT_ANIM_KEY, R.anim.alpha_0_with_backdrop);
         extras.putInt(BACKGROUND_COLOR_KEY, backgroundColor);
 
         Bitmap screenshot = runAndScreenshotActivityTransition(

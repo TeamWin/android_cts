@@ -381,7 +381,7 @@ public final class HotwordDetectionServiceBasicTest
         // Can no longer use the detector because it is in an invalid state
         testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_MIC_ONDETECT_TEST,
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
+                Utils.HOTWORD_DETECTION_SERVICE_DETECTOR_ILLEGAL_STATE_EXCEPTION);
     }
 
     private void testHotwordDetection(int testType, String expectedIntent, int expectedResult) {

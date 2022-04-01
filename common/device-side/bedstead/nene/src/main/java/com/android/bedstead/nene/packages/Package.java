@@ -81,6 +81,13 @@ public final class Package {
 
     private final String mPackageName;
 
+    /**
+     * Constructs a new {@link Package} from the provided {@code packageName}.
+     */
+    public static Package of(String packageName) {
+        return new Package(packageName);
+    }
+
     Package(String packageName) {
         mPackageName = packageName;
     }

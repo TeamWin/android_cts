@@ -29,6 +29,7 @@ import com.android.bedstead.nene.location.Locations;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
+import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
 import com.android.bedstead.nene.users.Users;
@@ -116,6 +117,12 @@ public final class TestApis {
     @Experimental
     public static Instrumentation instrumentation() {
         return Instrumentation.sInstance;
+    }
+
+    /** Access Test APIs related to roles. */
+    @Experimental
+    public static Roles roles() {
+        return Roles.sInstance;
     }
 
     /** @deprecated Use statically */

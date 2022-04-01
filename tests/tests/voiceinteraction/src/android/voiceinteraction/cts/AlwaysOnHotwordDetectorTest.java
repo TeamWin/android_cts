@@ -21,6 +21,7 @@ import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
+import android.service.voice.AlwaysOnHotwordDetector;
 import android.voiceinteraction.common.Utils;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -43,6 +44,15 @@ public class AlwaysOnHotwordDetectorTest extends AbstractVoiceInteractionBasicTe
 
     @Test
     public void testAlwaysOnHotwordDetector_startRecognitionWithData() {
+        // creates detector
+        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+
+        testHotwordDetection(Utils.DSP_DETECTOR_ENROLL_FAKE_DSP_MODEL,
+                Utils.DSP_DETECTOR_AVAILABILITY_RESULT_INTENT,
+                AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+
         testHotwordDetection(Utils.DSP_DETECTOR_START_RECOGNITION_WITH_DATA_TEST,
                 Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_INTENT,
                 Utils.DSP_DETECTOR_START_RECOGNITION_RESULT_SUCCESS);

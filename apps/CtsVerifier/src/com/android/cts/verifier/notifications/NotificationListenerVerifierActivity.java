@@ -123,12 +123,14 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
+        /*
+        // TODO (b/200701618): re-enable tests if conditions in 3.8.3.1 change to MUST
         if (!isAutomotive) {
             tests.add(new SendUserToChangeFilter());
             tests.add(new AskIfFilterChanged());
             tests.add(new NotificationTypeFilterTest());
             tests.add(new ResetChangeFilter());
-        }
+        }*/
         tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
