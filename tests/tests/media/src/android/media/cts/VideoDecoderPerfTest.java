@@ -46,6 +46,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+import org.junit.Assume;
+
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
@@ -78,6 +80,7 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
 
     private Resources mResources;
     private boolean mSkipRateChecking = false;
+    private boolean mUpdatedSwCodec = false;
 
     @Override
     protected void setUp() throws Exception {
@@ -85,6 +88,9 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
         mResources = mContext.getResources();
         Bundle bundle = InstrumentationRegistry.getArguments();
         mSkipRateChecking = TextUtils.equals("true", bundle.getString("mts-media"));
+
+        mUpdatedSwCodec =
+                !TestUtils.isMainlineModuleFactoryVersion("com.google.android.media.swcodec");
     }
 
     @Override
@@ -149,8 +155,11 @@ public class VideoDecoderPerfTest extends MediaPlayerTestBase {
             // doDecode(name, video, width, height, null, i, maxTimeMs);
         }
 
-        String error =
-            MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height, measuredFps);
+        // allow improvements in mainline-updated google-supplied software codecs.
+        boolean fasterIsOk = mUpdatedSwCodec & name.startsWith("c2.android.");
+         String error =
+             MediaPerfUtils.verifyAchievableFrameRates(name, mime, width, height,
+                           fasterIsOk,  measuredFps);
         if ((frankenDevice() || mSkipRateChecking) && error != null) {
             // ensure there is data, but don't insist that it is correct
             assertFalse(error, error.startsWith("Failed to get "));

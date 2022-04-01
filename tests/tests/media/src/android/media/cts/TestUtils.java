@@ -16,14 +16,26 @@
 
 package android.media.cts;
 
+import static android.content.pm.PackageManager.MATCH_APEX;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.media.session.MediaSessionManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import org.junit.Assert;
+import org.junit.AssumptionViolatedException;
 
 import java.io.FileDescriptor;
 import java.util.ArrayList;
@@ -36,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  * Utilities for tests.
  */
 public final class TestUtils {
+    private static String TAG = "TestUtils";
     private static final int WAIT_TIME_MS = 1000;
     private static final int WAIT_SERVICE_TIME_MS = 5000;
 
@@ -64,6 +77,24 @@ public final class TestUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Reports whether {@code module} is the version shipped with the original system image
+     * or if it has been updated via a mainline update.
+     *
+     * @param module     the apex module name
+     * @return {@code true} if the apex module is the original version shipped with the device.
+     */
+    public static boolean isMainlineModuleFactoryVersion(String module)
+            throws PackageManager.NameNotFoundException {
+        Context context = ApplicationProvider.getApplicationContext();
+        PackageInfo info = context.getPackageManager().getPackageInfo(module,
+                MATCH_APEX);
+        if (info == null) {
+            return true;
+        }
+        return (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
     }
 
     public static class Monitor {
