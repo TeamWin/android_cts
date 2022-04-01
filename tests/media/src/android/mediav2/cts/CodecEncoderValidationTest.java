@@ -57,13 +57,33 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
         toleranceMap.put(MediaFormat.MIMETYPE_AUDIO_FLAC, 0);
     }
 
-    public CodecEncoderValidationTest(String encoder, String mediaType, int[] bitrates,
-            int[] encoderInfo1, int[] encoderInfo2, boolean useHBD) {
-        super(encoder, mediaType, bitrates, encoderInfo1, encoderInfo2);
+    public CodecEncoderValidationTest(String encoder, String mediaType, int bitrate,
+            int encoderInfo1, int encoderInfo2, boolean useHBD) {
+        super(encoder, mediaType, new int[]{bitrate}, new int[]{encoderInfo1},
+                new int[]{encoderInfo2});
         mUseHBD = useHBD;
     }
 
-    @Parameterized.Parameters(name = "{index}({0})")
+    private static List<Object[]> flattenParams(List<Object[]> params) {
+        List<Object[]> argsList = new ArrayList<>();
+        for (Object[] param : params) {
+            String mediaType = (String) param[0];
+            int[] bitRates = (int[]) param[1];
+            int[] infoList1 = (int[]) param[2];
+            int[] infoList2 = (int[]) param[3];
+            boolean useHBD = (boolean) param[4];
+            for (int bitrate : bitRates) {
+                for (int info1 : infoList1) {
+                    for (int info2 : infoList2) {
+                        argsList.add(new Object[]{mediaType, bitrate, info1, info2, useHBD});
+                    }
+                }
+            }
+        }
+        return argsList;
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{1}_{2}_{3}_{4}_{5})")
     public static Collection<Object[]> input() {
         final boolean isEncoder = true;
         final boolean needAudio = true;
@@ -117,7 +137,8 @@ public class CodecEncoderValidationTest extends CodecEncoderTestBase {
                             new int[]{240, 360}, true},
             }));
         }
-        return prepareParamList(defArgsList, isEncoder, needAudio, needVideo, false);
+        List<Object[]> argsList = flattenParams(defArgsList);
+        return prepareParamList(argsList, isEncoder, needAudio, needVideo, false);
     }
 
     void encodeAndValidate(String inputFile) throws IOException, InterruptedException {
