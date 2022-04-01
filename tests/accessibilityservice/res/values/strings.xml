@@ -190,6 +190,8 @@
 
     <string name="stub_focus_indicator_service_description">com.android.accessibilityservice.cts.StubFocusIndicatorService</string>
 
+    <string name="stub_simple_ime_accessibility_service_description">com.android.accessibilityservice.cts.StubSimpleImeAccessibilityService</string>
+
     <string name="stub_ime_accessibility_service_description">com.android.accessibilityservice.cts.StubImeAccessibilityService</string>
 
     <string name="stub_non_ime_accessibility_service_description">com.android.accessibilityservice.cts.StubNonImeAccessibilityService</string>

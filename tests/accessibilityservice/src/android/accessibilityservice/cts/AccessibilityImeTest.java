@@ -28,19 +28,26 @@ import static org.junit.Assert.assertTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.InputMethod;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.accessibilityservice.cts.utils.AsyncUtils;
+import android.accessibilityservice.cts.utils.RunOnMainUtils;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -107,6 +114,58 @@ public class AccessibilityImeTest {
         mEditText = mActivity.findViewById(R.id.edittext);
         // initial text
         mInitialText = mActivity.getString(R.string.text_input_blah);
+    }
+
+    /**
+     * Verifies that
+     * 1) {@link android.accessibilityservice.AccessibilityService#onCreateInputMethod()} will be
+     * called and 2) it will return the default implementation of
+     * {@link android.accessibilityservice.InputMethod}, which is still functional.
+     */
+    @Test
+    public void testDefaultImplementation() throws Exception {
+        InstrumentedAccessibilityService serviceToBeCleanedUp = null;
+        try {
+            final StubSimpleImeAccessibilityService service =
+                    enableService(StubSimpleImeAccessibilityService.class);
+            serviceToBeCleanedUp = service;
+            assertTrue("time out waiting for onCreateInputMethod() to get called.",
+                    service.awaitOnCreateInputMethod(AsyncUtils.DEFAULT_TIMEOUT_MS, MILLISECONDS));
+
+            final InputMethod inputMethod = service.getInputMethod();
+            assertNotNull(inputMethod);
+
+            // Set a unique value to "privateImeOptions".
+            final String markerValue = "Test-" + SystemClock.elapsedRealtimeNanos();
+            sInstrumentation.runOnMainSync(() -> mEditText.setPrivateImeOptions(markerValue));
+
+            requestFocusAndSetCursorToEnd();
+
+            // Wait until EditorInfo#privateImeOptions becomes the expected marker value.
+            PollingCheck.waitFor(AsyncUtils.DEFAULT_TIMEOUT_MS,
+                    () -> TextUtils.equals(
+                            markerValue,
+                            RunOnMainUtils.getOnMain(sInstrumentation, () -> {
+                                final EditorInfo editorInfo =
+                                        inputMethod.getCurrentInputEditorInfo();
+                                return editorInfo != null ? editorInfo.privateImeOptions : null;
+                            })));
+
+            final InputMethod.AccessibilityInputConnection connection =
+                    inputMethod.getCurrentInputConnection();
+            assertNotNull(connection);
+
+            connection.commitText("abc", 1, null);
+
+            final String expectedText = mInitialText + "abc";
+            PollingCheck.waitFor(AsyncUtils.DEFAULT_TIMEOUT_MS,
+                    () -> RunOnMainUtils.getOnMain(sInstrumentation,
+                            () -> TextUtils.equals(expectedText, mEditText.getText())));
+        } finally {
+            if (serviceToBeCleanedUp != null) {
+                serviceToBeCleanedUp.disableSelfAndRemove();
+            }
+        }
     }
 
     @Test
