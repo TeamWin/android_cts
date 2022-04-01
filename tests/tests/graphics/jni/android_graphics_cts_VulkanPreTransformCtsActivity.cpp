@@ -64,9 +64,23 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(renderer.init(env, jAssetManager) == VK_TEST_SUCCESS,
            "Failed to initialize Vulkan renderer");
 
+    bool isSwapChainRecreated = false;
     for (uint32_t i = 0; i < 120; ++i) {
         ret = renderer.drawFrame();
         if (setPreTransform || preTransformHint == 0x1 /*VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR*/) {
+            if (ret == VK_TEST_SUCCESS_SUBOPTIMAL && !isSwapChainRecreated) {
+                // b/223081112 Recreate the swap chain if encountered VK_TEST_SUCCESS_SUBOPTIMAL
+                // only recreate swap chain once, so that we don't end up with infinite recreations
+                // and timeout the test.
+                vkDeviceWaitIdle(deviceInfo.device());
+                vkDestroySwapchainKHR(deviceInfo.device(), swapchainInfo.swapchain(), nullptr);
+                ASSERT(swapchainInfo.init(setPreTransform, &preTransformHint) == VK_TEST_SUCCESS,
+                       "Failed to initialize Vulkan swapchain");
+                ASSERT(renderer.init(env, jAssetManager) == VK_TEST_SUCCESS,
+                       "Failed to initialize Vulkan renderer");
+                isSwapChainRecreated = true;
+                continue;
+            }
             ASSERT(ret == VK_TEST_SUCCESS, "Failed to draw frame(%u) ret(%d)", i, (int)ret);
         } else {
             ASSERT(ret == VK_TEST_SUCCESS_SUBOPTIMAL, "Failed to draw suboptimal frame(%u) ret(%d)",
