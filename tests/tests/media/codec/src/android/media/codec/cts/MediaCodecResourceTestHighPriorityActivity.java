@@ -16,11 +16,20 @@
 package android.media.codec.cts;
 
 import android.app.Activity;
-import android.os.Bundle;
+import android.content.Intent;
+import android.os.Process;
 
 public class MediaCodecResourceTestHighPriorityActivity extends Activity {
+    public static final String ACTION_HIGH_PRIORITY_ACTIVITY_READY =
+            "android.media.codec.cts.HIGH_PRIORITY_TEST_ACTIVITY_READY";
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onStart() {
+        super.onStart();
+        Intent intent = new Intent();
+        intent.setAction(ACTION_HIGH_PRIORITY_ACTIVITY_READY);
+        intent.putExtra("pid", Process.myPid());
+        intent.putExtra("uid", Process.myUid());
+        sendBroadcast(intent);
     }
 }
