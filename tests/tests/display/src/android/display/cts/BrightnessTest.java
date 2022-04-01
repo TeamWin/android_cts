@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -262,6 +263,9 @@ public class BrightnessTest {
 
     @Test
     public void testSetGetSimpleCurve() {
+        // Only run if we have a valid ambient light sensor.
+        assumeTrue(mPackageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_LIGHT));
+
         // Don't run as there is no app that has permission to push curves.
         assumeTrue(numberOfSystemAppsWithPermission(
                 Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) > 0);
@@ -269,6 +273,8 @@ public class BrightnessTest {
         grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
 
         BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // This might be null, meaning that the device doesn't support brightness configuration
+        assumeNotNull(defaultConfig);
 
         BrightnessConfiguration config =
                 new BrightnessConfiguration.Builder(
