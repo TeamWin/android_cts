@@ -25,6 +25,7 @@ import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
 import static android.view.View.SYSTEM_UI_FLAG_VISIBLE;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -113,6 +114,7 @@ public class WindowInsetsBehaviorTests {
     private String mGesturePreferenceTitle;
     private TouchHelper mTouchHelper;
     private boolean mConfiguredInSettings;
+    private boolean mIsLargeScreen;
 
     private static String getSettingsString(Resources res, String strResName) {
         int resIdString = res.getIdentifier(strResName, "string", SETTINGS_PACKAGE_NAME);
@@ -294,6 +296,11 @@ public class WindowInsetsBehaviorTests {
         mDensityPerCm = (int) ((float) metrics.densityDpi / 2.54);
         mDisplayWidth = metrics.widthPixels;
         mExclusionLimit = (int) (EXCLUSION_LIMIT_DP * mPixelsPerDp);
+
+        final Context windowContext = mTargetContext.createWindowContext(display,
+                TYPE_APPLICATION_OVERLAY, null /* options */);
+        mIsLargeScreen = windowContext.getResources()
+                .getConfiguration().smallestScreenWidthDp >= 600;
 
         // To setup the Edge to Edge environment by do the operation on Settings
         boolean isOperatedSettingsToExpectedOption = launchToSettingsSystemGesture();
@@ -604,6 +611,7 @@ public class WindowInsetsBehaviorTests {
     public void systemGesture_excludeViewRects_withoutAnyCancel()
             throws Throwable {
         assumeTrue(hasSystemGestureFeature());
+        assumeTrue(!mIsLargeScreen);
 
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
         mainThreadRun(() -> mActionBounds = mActivity.getActionBounds(
@@ -638,6 +646,7 @@ public class WindowInsetsBehaviorTests {
     @Test
     public void systemGesture_notExcludeViewRects_withoutAnyCancel() {
         assumeTrue(hasSystemGestureFeature());
+        assumeTrue(!mIsLargeScreen);
 
         mainThreadRun(() -> mActivity.setSystemGestureExclusion(null));
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
