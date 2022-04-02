@@ -34,6 +34,9 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import java.util.function.Consumer;
+import java.util.concurrent.Executor;
+
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
@@ -64,9 +67,13 @@ public class UsbPortApiTest {
     private UiAutomation mUiAutomation =
         InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
+    private Executor mExecutor;
+    private Consumer<Integer> mConsumer;
+
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getContext();
+        mExecutor = mContext.getMainExecutor();
         PackageManager pm = mContext.getPackageManager();
         MockitoAnnotations.initMocks(this);
 
@@ -85,26 +92,26 @@ public class UsbPortApiTest {
         mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
 
         mMockUsbPort = new UsbPort(mUsbManagerMock, "1", 0, 0, true, true);
-        int result = 0;
+        boolean result = true;
 
+        mConsumer = new Consumer<Integer>(){
+            public void accept(Integer status){
+                Log.d(TAG, "Consumer status:" + status);
+            };
+        };
         // Should pass with permission.
-        when(mMockUsbService.resetUsbPort(anyString(),anyInt(),
-                  any(IUsbOperationInternal.class))).thenReturn(true);
-        result = mMockUsbPort.resetUsbPort();
-        if (result == 0) {
-            Log.d(TAG, "resetUsbPort success");
-        } else {
-            Log.d(TAG, "resetUsbPort fail ,result = " + result);
-        }
+        mMockUsbService.resetUsbPort(anyString(), anyInt(),
+                  any(IUsbOperationInternal.class));
+        mMockUsbPort.resetUsbPort(mExecutor, mConsumer);
 
         // Drop MANAGE_USB permission.
         mUiAutomation.dropShellPermissionIdentity();
 
         try {
-            mUsbPort.resetUsbPort();
-            Assert.fail("Expected SecurityException on resetUsbPort.");
+            mUsbPort.resetUsbPort(mExecutor, mConsumer);
+            Assert.fail("SecurityException not thrown for resetUsbPort when MANAGE_USB is not acquired.");
         } catch (SecurityException secEx) {
-            Log.d(TAG, "Expected SecurityException on resetUsbPort.");
+            Log.d(TAG, "SecurityException expected on resetUsbPort  when MANAGE_USB is not acquired.");
         }
     }
 
