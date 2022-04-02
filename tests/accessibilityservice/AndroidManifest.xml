@@ -215,6 +215,18 @@
                 android:resource="@xml/stub_ime"/>
         </service>
 
+        <service android:name=".StubSimpleImeAccessibilityService"
+                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+                <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC"/>
+            </intent-filter>
+
+            <meta-data android:name="android.accessibilityservice"
+                       android:resource="@xml/stub_simple_ime_accessibility_service"/>
+        </service>
+
         <service android:name=".StubImeAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">

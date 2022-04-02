@@ -32,7 +32,8 @@ android_test {
     ],
 
     min_sdk_version: "30",
-    target_sdk_version: "Tiramisu",
+    //TODO(b/227617884): Change target_sdk_version to 33 after T SDK finalization is complete
+    target_sdk_version: "10000",
     certificate: "media",
     java_resources: [":CtsTranscodeTestAppSupportsHevc", ":CtsTranscodeTestAppSupportsSlowMotion"]
 }

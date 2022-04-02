@@ -55,6 +55,7 @@ android_test {
         ":CtsAccessMicrophoneApp",
         ":CtsAccessMicrophoneApp2",
         ":CtsAccessMicrophoneAppLocationProvider",
+        ":CtsAppLocationProviderWithSummary",
         ":CtsHelperAppOverlay",
         ":CtsCreateNotificationChannelsApp31",
         ":CtsCreateNotificationChannelsApp33",

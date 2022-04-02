@@ -29,13 +29,11 @@ public class BackNavigationLegacyActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        OnBackInvokedCallback onBackInvokedCallback = new OnBackInvokedCallback() {
-            @Override
-            public void onBackInvoked() {
-                TestJournalProvider.putExtras(BackNavigationLegacyActivity.this,
-                        Components.BACK_LEGACY,
-                        bundle -> bundle.putBoolean(Components.KEY_ON_BACK_INVOKED_CALLED, true));
-            }
+        OnBackInvokedCallback onBackInvokedCallback = () -> {
+            TestJournalProvider.putExtras(
+                    BackNavigationLegacyActivity.this,
+                    Components.BACK_LEGACY,
+                    bundle -> bundle.putBoolean(Components.KEY_ON_BACK_INVOKED_CALLED, true));
         };
         getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 OnBackInvokedDispatcher.PRIORITY_DEFAULT, onBackInvokedCallback

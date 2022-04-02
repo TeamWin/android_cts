@@ -16,12 +16,18 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import android.app.Dialog;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.window.OnBackInvokedCallback;
 import android.window.OnBackInvokedDispatcher;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.Lifecycle;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.MediumTest;
@@ -29,6 +35,8 @@ import androidx.test.filters.MediumTest;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.util.HashMap;
 
 /**
  * Test {@link OnBackInvokedDispatcher}.
@@ -58,6 +66,77 @@ public class OnBackInvokedDispatcherTest {
     }
 
     @Test
+    public void findDispatcherOnView() {
+        final OnBackInvokedDispatcher[] windowOnBackInvokedDispatcher = {null};
+        mActivityRule.getScenario().onActivity(activity -> {
+            mActivity = activity;
+            mDialog = mActivity.getDialog();
+            View view = new View(activity) {
+                @Override
+                protected void onAttachedToWindow() {
+                    super.onAttachedToWindow();
+                    windowOnBackInvokedDispatcher[0] = findOnBackInvokedDispatcher();
+                }
+            };
+            assertNull("View is not attached, it should not have an OnBackInvokedDispatcher",
+                    view.findOnBackInvokedDispatcher());
+            activity.setContentView(view);
+        });
+        assertNotNull("View is attached, it should have an OnBackInvokedDispatcher",
+                windowOnBackInvokedDispatcher[0]);
+    }
+
+    @Test
+    public void findDispatcherOnViewGroup() {
+        final HashMap<String, View> viewMap = new HashMap<>();
+        mActivityRule.getScenario().onActivity(activity -> {
+            mActivity = activity;
+            mDialog = mActivity.getDialog();
+            FrameLayout root = new FrameLayout(activity) {
+                @Nullable
+                @Override
+                public OnBackInvokedDispatcher findOnBackInvokedDispatcherForChild(
+                        @NonNull View child, @NonNull View requester) {
+                    viewMap.put("root_child", child);
+                    viewMap.put("root_requester", requester);
+                    return super.findOnBackInvokedDispatcherForChild(child, requester);
+                }
+            };
+            FrameLayout parent = new FrameLayout(activity) {
+                @Nullable
+                @Override
+                public OnBackInvokedDispatcher findOnBackInvokedDispatcherForChild(
+                        @NonNull View child, @NonNull View requester) {
+                    viewMap.put("parent_child", child);
+                    viewMap.put("parent_requester", requester);
+                    return super.findOnBackInvokedDispatcherForChild(child, requester);
+                }
+            };
+            View view = new View(activity);
+            viewMap.put("root", root);
+            viewMap.put("parent", parent);
+            viewMap.put("view", view);
+
+            root.addView(parent);
+            parent.addView(view);
+            activity.setContentView(root);
+        });
+
+        View view = viewMap.get("view");
+        View parent = viewMap.get("parent");
+        assertNotNull("View is attached, it should have an OnBackInvokedDispatcher",
+                view.findOnBackInvokedDispatcher());
+        assertEquals("Requester from root should be the leaf view",
+                view, viewMap.get("root_requester"));
+        assertEquals("Child from root should be the direct child",
+                parent, viewMap.get("root_child"));
+        assertEquals("Requester from direct parent should be the direct child",
+                view, viewMap.get("parent_requester"));
+        assertEquals("Child from parent should be the direct child",
+                view, viewMap.get("parent_child"));
+    }
+
+    @Test
     public void testRegisterAndUnregisterCallbacks() {
         OnBackInvokedDispatcher dispatcher = mActivity.getOnBackInvokedDispatcher();
         OnBackInvokedCallback callback1 = createBackCallback();
@@ -72,9 +151,6 @@ public class OnBackInvokedDispatcherTest {
     }
 
     private OnBackInvokedCallback createBackCallback() {
-        return new OnBackInvokedCallback() {
-            @Override
-            public void onBackInvoked() {}
-        };
+        return () -> {};
     }
 }

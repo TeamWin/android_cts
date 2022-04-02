@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (C) 2022 The Android Open Source Project
   ~
@@ -15,17 +14,9 @@
   ~ limitations under the License.
   -->
 
-<set xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shareInterpolator="false"
-    android:showBackground="true">
-
-    <alpha
-        android:fromAlpha="0"
-        android:toAlpha="0"
-        android:fillEnabled="true"
-        android:fillBefore="true"
-        android:fillAfter="true"
-        android:interpolator="@android:interpolator/linear"
-        android:startOffset="0"
-        android:duration="5000"/>
-</set>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+                       android:description="@string/stub_simple_ime_accessibility_service_description"
+                       android:accessibilityEventTypes="typeAllMask"
+                       android:accessibilityFeedbackType="feedbackGeneric"
+                       android:accessibilityFlags="flagInputMethodEditor"
+                       android:notificationTimeout="0" />

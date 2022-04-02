@@ -57,8 +57,8 @@ public class CustomTransitionEnterActivity extends Activity {
         super.onResume();
         switch (mTransitionType) {
             case BACKGROUND_COLOR:
-                overridePendingTransition(R.anim.show_background_hide_window_animation,
-                        R.anim.show_background_hide_window_animation, mBackgroundColor);
+                overridePendingTransition(R.anim.show_backdrop_hide_window_animation,
+                        R.anim.show_backdrop_hide_window_animation, mBackgroundColor);
                 break;
             case LEFT_EDGE_EXTENSION:
                 overridePendingTransition(R.anim.edge_extension_left_window_animation,
