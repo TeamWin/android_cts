@@ -472,4 +472,14 @@ public class IRadioModemImpl extends IRadioModem.Stub {
                 break;
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioModem.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioModem.VERSION;
+    }
 }
