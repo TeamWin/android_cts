@@ -225,7 +225,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
 
         //Init bands for Mic test
         mBandSpecsMic[0] = new AudioBandSpecs(
-                5, 100,          /* frequency start,stop */
+                30, 100,          /* frequency start,stop */
                 20.0, -20.0,     /* start top,bottom value */
                 20.0, -20.0      /* stop top,bottom value */);
 
@@ -241,7 +241,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
 
         //Init bands for Tone test
         mBandSpecsTone[0] = new AudioBandSpecs(
-                5, 900,          /* frequency start,stop */
+                30, 900,          /* frequency start,stop */
                 -10.0, -100.0,     /* start top,bottom value */
                 -10.0, -100.0      /* stop top,bottom value */);
 
@@ -257,7 +257,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
 
       //Init bands for Background test
         mBandSpecsBack[0] = new AudioBandSpecs(
-                5, 100,          /* frequency start,stop */
+                30, 100,          /* frequency start,stop */
                 10.0, -120.0,     /* start top,bottom value */
                 -10.0, -120.0      /* stop top,bottom value */);
 

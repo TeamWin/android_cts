@@ -48,7 +48,10 @@ public class SystemClockSntpTest {
                     + "d9ca9451938a3771"
                     + "d9ca945194bd3fff"
                     + "d9ca945194bd4001";
-    private static long MOCKED_NTP_TIMESTAMP = 1444943313585L; // 2015-10-15 21:08:33 UTC
+    // The midpoint between d9ca945194bd3fff and d9ca945194bd4001, d9ca9451.94bd4000 represents
+    // (decimal) 1444943313.581012726 seconds in the Unix epoch, which is
+    // ~2015-10-15 21:08:33.581 UTC.
+    private static long MOCKED_NTP_TIMESTAMP = 1444943313581L;
     private static long TEST_NTP_TIMEOUT_MILLIS = 300L;
 
     private SntpTestServer mServer;

@@ -73,6 +73,10 @@ class CompanionActivity : Activity() {
                 waitForResult(timeout = 1.seconds, interval = 100.milliseconds) { instance.result }
                     ?: error("onActivityResult() has not been invoked")
 
+        fun clearResult() {
+            instance.result = null
+        }
+
         fun finish() = instance.finish()
 
         fun safeFinish() = unsafeInstance?.finish()

@@ -256,6 +256,44 @@ class PackageManagerShellCommandMultiUserTest {
         broadcastReceiverForPrimaryUser.assertBroadcastReceived()
     }
 
+    @Test
+    fun testListPackageDefaultAllUsers(
+        @StringTestParameter(
+            "install",
+            "install-streaming",
+            "install-incremental"
+        ) installTypeString: String
+    ) {
+        installPackageAsUser(TEST_HW5, primaryUser, installTypeString)
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
+        assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
+        var out = SystemUtil.runShellCommand(
+                    "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
+                ).replace("\n", "")
+        assertTrue(out.split(":").last().split(",").size == 1)
+        out = SystemUtil.runShellCommand(
+                    "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
+                ).replace("\n", "")
+        assertEquals("", out)
+        out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
+                .replace("\n", "")
+        assertTrue(out.split(":").last().split(",").size == 1)
+        installExistingPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
+        assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
+        out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
+                .replace("\n", "")
+        assertTrue(out.split(":").last().split(",").size == 2)
+        out = SystemUtil.runShellCommand(
+                    "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
+                ).replace("\n", "")
+        assertTrue(out.split(":").last().split(",").size == 1)
+        out = SystemUtil.runShellCommand(
+                    "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
+                ).replace("\n", "")
+        assertTrue(out.split(":").last().split(",").size == 1)
+    }
+
     private fun getFirstInstallTimeAsUser(packageName: String, user: UserReference) =
         context.createContextAsUser(user.userHandle(), 0)
             .packageManager

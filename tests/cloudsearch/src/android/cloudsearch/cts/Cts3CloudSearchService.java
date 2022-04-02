@@ -49,12 +49,12 @@ public class Cts3CloudSearchService extends CloudSearchService {
         sWatcher.queried.countDown();
         if (request.getQuery().contains("Successful3")) {
             sWatcher.succeeded.countDown();
-            returnResults(request.getRequestId(),
+            super.returnResults(request.getRequestId(),
                     CloudSearchTestUtils.getSearchResponse(SearchResponse.SEARCH_STATUS_OK));
         }
         if (request.getQuery().contains("Unsuccessful3")) {
             sWatcher.failed.countDown();
-            returnResults(request.getRequestId(), CloudSearchTestUtils.getSearchResponse(
+            super.returnResults(request.getRequestId(), CloudSearchTestUtils.getSearchResponse(
                     SearchResponse.SEARCH_STATUS_NO_INTERNET));
         }
 

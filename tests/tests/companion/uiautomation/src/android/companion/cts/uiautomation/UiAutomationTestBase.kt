@@ -52,7 +52,7 @@ open class UiAutomationTestBase(
         context.getSystemService(RoleManager::class.java)!!
     }
 
-    private val uiDevice: UiDevice by lazy { UiDevice.getInstance(instrumentation) }
+    val uiDevice: UiDevice by lazy { UiDevice.getInstance(instrumentation) }
     protected val confirmationUi by lazy { CompanionDeviceManagerUi(uiDevice) }
     protected val callback by lazy { RecordingCallback() }
 

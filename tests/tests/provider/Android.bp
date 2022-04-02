@@ -47,7 +47,8 @@ android_test {
     // uncomment when b/140885436 is fixed
     // sdk_version: "test_current",
     min_sdk_version: "21",
-    target_sdk_version: "Tiramisu",
+    //TODO(b/227617884): Change target_sdk_version to 33 after T SDK finalization is complete
+    target_sdk_version: "10000",
 
     platform_apis: true,
 

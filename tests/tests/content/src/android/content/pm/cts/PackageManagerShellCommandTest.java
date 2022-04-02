@@ -69,6 +69,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 
 import com.android.internal.util.ConcurrentUtils;
 import com.android.internal.util.HexDump;
@@ -103,6 +104,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -1471,6 +1474,24 @@ public class PackageManagerShellCommandTest {
         final String[] names = pm.getNamesForUids(uids);
         assertEquals(1, names.length);
         assertEquals(pm.getSdkSandboxPackageName(), names[0]);
+    }
+
+    @LargeTest
+    @Test
+    public void testCreateUserCurAsType() throws Exception {
+        Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
+        String commandResult = executeShellCommand("pm create-user --profileOf cur "
+                + "--user-type android.os.usertype.profile.CLONE test");
+        Matcher matcher = pattern.matcher(commandResult);
+        assertTrue(matcher.find());
+        commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
+        assertEquals("Success: removed user\n", commandResult);
+        commandResult = executeShellCommand("pm create-user --profileOf current "
+                + "--user-type android.os.usertype.profile.CLONE test");
+        matcher = pattern.matcher(commandResult);
+        assertTrue(matcher.find());
+        commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
+        assertEquals("Success: removed user\n", commandResult);
     }
 
     static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {

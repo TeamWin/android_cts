@@ -62,6 +62,17 @@
                 <action android:name="android.service.voice.VoiceInteractionService" />
             </intent-filter>
         </service>
+        <service android:name="android.voiceinteraction.service.ProxyVoiceInteractionService"
+                 android:label="CTS test proxy voice interaction service with binder interface"
+                 android:permission="android.permission.BIND_VOICE_INTERACTION"
+                 android:exported="true"
+                 android:visibleToInstantApps="true">
+            <meta-data android:name="android.voice_interaction"
+                       android:resource="@xml/interaction_service_with_hotword" />
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+        </service>
         <service android:name="android.voiceinteraction.service.MainHotwordDetectionService"
                  android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE"
                  android:isolatedProcess="true"

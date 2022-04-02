@@ -48,6 +48,10 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
         Until.findObject(POSITIVE_BUTTON), "Positive button not found or not clickable")
             .click()
 
+    fun waitUntilSystemDataTransferConfirmationVisible() = ui.wait(
+            Until.hasObject(SYSTEM_DATA_TRANSFER_CONFIRMATION_UI),
+            "System data transfer dialog has not appeared.")
+
     fun clickPositiveButton() = click(POSITIVE_BUTTON, "Positive button")
 
     fun clickNegativeButton() = click(NEGATIVE_BUTTON, "Negative button")
@@ -79,6 +83,9 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
                 .res(PACKAGE_NAME, "list_item_device")
         private val DEVICE_LIST_WITH_ITEMS = By.copy(DEVICE_LIST)
                 .hasChild(DEVICE_LIST_ITEM)
+
+        private val SYSTEM_DATA_TRANSFER_CONFIRMATION_UI = By.pkg(PACKAGE_NAME)
+                .res(PACKAGE_NAME, "data_transfer_confirmation")
     }
 
     private fun UiDevice.wait(

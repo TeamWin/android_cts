@@ -221,6 +221,19 @@ public class Utils {
     public static final String VISIBLE_ACTIVITY_CMD_REGISTER_CALLBACK = "registerCallback";
     public static final String VISIBLE_ACTIVITY_CMD_UNREGISTER_CALLBACK = "unregisterCallback";
 
+    // For asking to bind to a test VoiceInteractionService if it supports it
+    public static final String ACTION_BIND_TEST_VOICE_INTERACTION =
+            "android.intent.action.ACTION_BIND_TEST_VOICE_INTERACTION";
+    public static final String TEST_VOICE_INTERACTION_SERVICE_PACKAGE_NAME =
+            "android.voiceinteraction.service";
+    public static final String PROXY_VOICE_INTERACTION_SERVICE_CLASS_NAME =
+            "android.voiceinteraction.service.ProxyVoiceInteractionService";
+    public static final String PROXY_VOICEINTERACTION_SERVICE_COMPONENT =
+            TEST_VOICE_INTERACTION_SERVICE_PACKAGE_NAME + "/"
+                    + PROXY_VOICE_INTERACTION_SERVICE_CLASS_NAME;
+    public static final String VOICE_INTERACTION_SERVICE_BINDING_HELPER_CLASS_NAME =
+            "android.voiceinteraction.service.VoiceInteractionServiceBindingHelper";
+
     public static final String toBundleString(Bundle bundle) {
         if (bundle == null) {
             return "null_bundle";
