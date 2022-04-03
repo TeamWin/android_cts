@@ -55,6 +55,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The test is focused on compatibility changes that have an effect on WM logic, and tests that
@@ -71,6 +76,7 @@ import org.junit.rules.TestRule;
  * atest CtsWindowManagerDeviceTestCases:CompatChangeTests
  */
 @Presubmit
+@RunWith(Parameterized.class)
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
             component(ResizeablePortraitActivity.class);
@@ -95,6 +101,14 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final float ACTIVITY_LARGE_MIN_ASPECT_RATIO = 3f;
 
     private static final float FLOAT_EQUALITY_DELTA = 0.01f;
+
+    @Parameterized.Parameters(name= "{0}")
+    public static List<Double> data() {
+        return Arrays.asList(0.5, 2.0);
+    }
+
+    @Parameterized.Parameter(0)
+    public double resizeRatio;
 
     @Rule
     public TestRule compatChangeRule = new PlatformCompatChangeRule();
@@ -490,10 +504,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         mWmState.computeState();
         WindowManagerState.DisplayContent originalDC = mWmState.getDisplay(DEFAULT_DISPLAY);
 
-        runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 0.5,
-                inSizeCompatModeAfterResize);
-        waitForRestoreDisplay(originalDC);
-        runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 2,
+        runSizeCompatTest(activity, windowingMode, resizeRatio,
                 inSizeCompatModeAfterResize);
     }
 
@@ -559,11 +570,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         mWmState.computeState();
         WindowManagerState.DisplayContent originalDC = mWmState.getDisplay(DEFAULT_DISPLAY);
 
-        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio= */ 0.5,
-                inSizeCompatModeAfterResize);
-        assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
-        waitForRestoreDisplay(originalDC);
-        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio=*/ 2,
+        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, resizeRatio,
                 inSizeCompatModeAfterResize);
         assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
     }

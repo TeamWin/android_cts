@@ -48,6 +48,10 @@
 
         <service android:name="android.security.cts.activity.SecureRandomService"
              android:process=":secureRandom"/>
+
+        <service android:name="android.security.cts.BitmapService"
+                 android:process=":bitmap_service" />
+
         <activity android:name="android.security.cts.MotionEventTestActivity"
              android:label="Test MotionEvent"
              android:exported="true">

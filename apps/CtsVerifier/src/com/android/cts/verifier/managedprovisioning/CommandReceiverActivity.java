@@ -126,6 +126,7 @@ public class CommandReceiverActivity extends Activity {
     public static final String COMMAND_ENABLE_USB_DATA_SIGNALING = "enable-usb-data-signaling";
     public static final String COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY =
             "set-required-password-complexity";
+    public static final String COMMAND_CHECK_NEW_USER_DISCLAIMER = "check-new-user-disclaimer";
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
@@ -435,14 +436,14 @@ public class CommandReceiverActivity extends Activity {
                             PackageManager.DONT_KILL_APP);
                 } break;
                 case COMMAND_SET_ALWAYS_ON_VPN: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.setAlwaysOnVpnPackage(mAdmin, getPackageName(),
                             false /* lockdownEnabled */);
                 } break;
                 case COMMAND_CLEAR_ALWAYS_ON_VPN: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.setAlwaysOnVpnPackage(mAdmin, null /* vpnPackage */,
@@ -462,13 +463,13 @@ public class CommandReceiverActivity extends Activity {
                     mDpm.setRecommendedGlobalProxy(mAdmin, null);
                 } break;
                 case COMMAND_INSTALL_CA_CERT: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.installCaCert(mAdmin, TEST_CA.getBytes());
                 } break;
                 case COMMAND_CLEAR_CA_CERT: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                    if (!isDeviceOwnerAppOrEquivalent(getPackageName())) {
                         return;
                     }
                     mDpm.uninstallCaCert(mAdmin, TEST_CA.getBytes());
@@ -560,6 +561,7 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_SET_REQUIRED_PASSWORD_COMPLEXITY: {
                     int complexity = intent.getIntExtra(EXTRA_VALUE,
                             DevicePolicyManager.PASSWORD_COMPLEXITY_NONE);
+                    Log.d(TAG, "calling setRequiredPasswordComplexity(" + complexity + ")");
                     mDpm.setRequiredPasswordComplexity(complexity);
                 }
             }
@@ -581,6 +583,15 @@ public class CommandReceiverActivity extends Activity {
         boolean isIt = dpm.isDeviceOwnerApp(getPackageName());
         Log.v(TAG, "is " + getPackageName() + " DO, using " + dpm + "? " + isIt);
         return isIt;
+    }
+
+    /**
+     * Checks if the {@code packageName} is a device owner app, or a profile owner app in the
+     * headless system user mode.
+      */
+    private boolean isDeviceOwnerAppOrEquivalent(String packageName) {
+        return mDpm.isDeviceOwnerApp(packageName)
+                || (UserManager.isHeadlessSystemUserMode() && mDpm.isProfileOwnerApp(packageName));
     }
 
     private void installHelperPackage() throws Exception {

@@ -363,6 +363,9 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testTranslucentAppOrientationRequests() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
+        // Disable fixed to user rotation by creating a rotation session
+        createManagedRotationSession();
+
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         final SizeInfo initialReportedSizes =
@@ -792,6 +795,9 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     @Test
     public void testTaskMoveToBackOrientation() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
+
+        // Disable fixed to user rotation by creating a rotation session
+        createManagedRotationSession();
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);

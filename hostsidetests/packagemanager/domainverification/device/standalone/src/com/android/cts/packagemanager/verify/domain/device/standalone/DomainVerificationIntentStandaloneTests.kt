@@ -17,6 +17,9 @@
 package com.android.cts.packagemanager.verify.domain.device.standalone
 
 import android.content.pm.verify.domain.DomainVerificationUserState
+import android.os.Build
+import com.android.compatibility.common.util.ApiLevelUtil
+import com.android.compatibility.common.util.CtsDownstreamingTest
 import com.android.compatibility.common.util.SystemUtil
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_1_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_2_COMPONENT
@@ -26,12 +29,22 @@ import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_P
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_2
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assume.assumeTrue
+import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
 class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase(DOMAIN_1) {
+
+    companion object {
+        @JvmStatic
+        @BeforeClass
+        fun assumeAtLeastS() {
+            assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S))
+        }
+    }
 
     @Test
     fun launchVerified() {
@@ -74,6 +87,7 @@ class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase
         assertResolvesTo(browsers)
     }
 
+    @CtsDownstreamingTest
     @Test
     fun launchSelectedPreservedOnUpdate() {
         setAppLinks(DECLARING_PKG_NAME_1, false, DOMAIN_1, DOMAIN_2)
@@ -162,6 +176,7 @@ class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase
         assertResolvesTo(browsers)
     }
 
+    @CtsDownstreamingTest
     @Test
     fun disableHandlingWhenVerifiedPreservedOnUpdate() {
         setAppLinks(DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
@@ -192,6 +207,7 @@ class DomainVerificationIntentStandaloneTests : DomainVerificationIntentTestBase
         assertResolvesTo(browsers)
     }
 
+    @CtsDownstreamingTest
     @Test
     fun disableHandlingWhenSelectedPreservedOnUpdate() {
         setAppLinksUserSelection(DECLARING_PKG_NAME_1, userId, true, DOMAIN_1, DOMAIN_2)

@@ -76,6 +76,7 @@ import javax.annotation.Nullable;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
@@ -83,7 +84,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     private static final String FEATURE_LEANBACK = "android.software.leanback";
     private static final String FEATURE_NFC = "android.hardware.nfc";
     private static final String FEATURE_NFC_BEAM = "android.software.nfc.beam";
-
     private static final String FEATURE_PRINT = "android.software.print";
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     private static final String FEATURE_SECURE_LOCK_SCREEN = "android.software.secure_lock_screen";
@@ -1260,9 +1260,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         allowTestApiAccess(deviceAdminPkg);
     }
 
-    protected void allowTestApiAccess(String deviceAdminPkg) throws Exception {
-        CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", deviceAdminPkg);
-        executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", deviceAdminPkg);
+    /**
+     * Grants access to APIs marked as {@code @TestApi}.
+     *
+     * <p><b>Note:</b> the {@code application} tag of the app's manifest must contain
+     * {@code android:debuggable="true"}, otherwise it won't work on {@code user} builds.
+     */
+    protected void allowTestApiAccess(String pgkName) throws Exception {
+        CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", pgkName);
+        executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", pgkName);
     }
 
     protected void grantPermission(String pkg, String permission, int userId, String reason)
@@ -1341,6 +1347,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return hasDeviceFeature(FEATURE_LEANBACK);
     }
 
+    boolean isAutomotive() throws DeviceNotAvailableException {
+        return hasDeviceFeature(FEATURE_AUTOMOTIVE);
+    }
+
     void pushUpdateFileToDevice(String fileName)
             throws IOException, DeviceNotAvailableException {
         File file = File.createTempFile(
@@ -1366,7 +1376,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     void sleep(int timeMs) throws InterruptedException {
-        CLog.d("Sleeping %d ms");
+        CLog.d("Sleeping %d ms", timeMs);
         Thread.sleep(timeMs);
     }
 
