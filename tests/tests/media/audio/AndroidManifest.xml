@@ -18,7 +18,6 @@
      package="android.media.audio.cts"
      android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>

@@ -838,4 +838,14 @@ public class IRadioSimImpl extends IRadioSim.Stub {
             Log.e(TAG, "null mRadioSimIndication");
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioSim.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioSim.VERSION;
+    }
 }

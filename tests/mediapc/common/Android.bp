@@ -29,3 +29,18 @@ java_library {
     ],
     plugins: ["auto_value_plugin"],
 }
+
+android_test {
+    name: "MediaPerformanceClassCommonTests",
+    compile_multilib: "both",
+    static_libs: [
+        "compatibility-device-util-axt",
+        "MediaPerformanceClassCommon"
+    ],
+    platform_apis: true,
+    srcs: ["tests/src/**/*.java"],
+    test_suites: [
+        "general-tests",
+    ],
+    min_sdk_version: "30",
+}

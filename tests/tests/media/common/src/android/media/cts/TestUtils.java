@@ -137,15 +137,18 @@ public final class TestUtils {
      * @param module     the apex module name
      * @return {@code true} if the apex module is the original version shipped with the device.
      */
-    public static boolean isMainlineModuleFactoryVersion(String module)
-            throws PackageManager.NameNotFoundException {
-        Context context = ApplicationProvider.getApplicationContext();
-        PackageInfo info = context.getPackageManager().getPackageInfo(module,
-                MATCH_APEX);
-        if (info == null) {
-            return true;
+    public static boolean isMainlineModuleFactoryVersion(String module) {
+        try {
+            Context context = ApplicationProvider.getApplicationContext();
+            PackageInfo info = context.getPackageManager().getPackageInfo(module,
+                    MATCH_APEX);
+            if (info != null) {
+                return (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // Ignore the exception on devices that do not have this module
         }
-        return (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+        return true;
     }
 
     private TestUtils() {

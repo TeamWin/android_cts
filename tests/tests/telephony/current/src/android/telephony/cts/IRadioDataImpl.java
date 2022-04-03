@@ -222,4 +222,14 @@ public class IRadioDataImpl extends IRadioData.Stub {
             Log.e(TAG, "Failed to stopKeepalive from AIDL. Exception" + ex);
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioData.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioData.VERSION;
+    }
 }
