@@ -151,6 +151,9 @@ public class AccessibilityImeTest {
                                 return editorInfo != null ? editorInfo.privateImeOptions : null;
                             })));
 
+            assertTrue(RunOnMainUtils.getOnMain(sInstrumentation,
+                    inputMethod::getCurrentInputStarted));
+
             final InputMethod.AccessibilityInputConnection connection =
                     inputMethod.getCurrentInputConnection();
             assertNotNull(connection);
