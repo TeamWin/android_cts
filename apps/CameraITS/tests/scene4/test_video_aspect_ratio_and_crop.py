@@ -187,12 +187,12 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
                              self.log_path])
           logging.debug('Recorded video is available at: %s',
                         self.log_path)
-          mp4_file_name = video_recording_obj['recordedOutputPath'].split('/')[-1]
-          logging.debug('mp4_file_name: %s', mp4_file_name)
+          video_file_name = video_recording_obj['recordedOutputPath'].split('/')[-1]
+          logging.debug('video_file_name: %s', video_file_name)
 
           key_frame_files = []
           key_frame_files = video_processing_utils.extract_key_frames_from_video(
-              self.log_path, mp4_file_name)
+              self.log_path, video_file_name)
           logging.debug('key_frame_files:%s', key_frame_files)
 
           # Get the key frame file to process.
