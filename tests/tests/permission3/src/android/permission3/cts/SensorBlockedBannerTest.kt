@@ -30,6 +30,7 @@ import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assume
 import org.junit.Before
@@ -43,6 +44,7 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
     companion object {
         const val LOCATION = -1
         const val WARNING_BANNER_ENABLED = "warning_banner_enabled"
+        const val DELAY_MILLIS = 3000L
     }
 
     val sensorPrivacyManager = context.getSystemService(SensorPrivacyManager::class.java)!!
@@ -129,7 +131,8 @@ class SensorBlockedBannerTest : BaseUsePermissionTest() {
                     android.os.Process.myUserHandle())
                 if (enable) {
                     try {
-                        waitFindObjectOrNull(By.text("CLOSE"))?.click()
+                        val closePattern = Pattern.compile("close", Pattern.CASE_INSENSITIVE)
+                        waitFindObjectOrNull(By.text(closePattern), DELAY_MILLIS)?.click()
                     } catch (e: Exception) {
                         // Do nothing, warning didn't show up so test can proceed
                     }
