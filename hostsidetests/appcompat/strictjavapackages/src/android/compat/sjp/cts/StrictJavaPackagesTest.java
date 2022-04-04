@@ -146,6 +146,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/gsi/IProgressCallback;",
                     "Landroid/gsi/MappedImage;",
                     "Landroid/gui/TouchOcclusionMode;",
+                    // TODO(b/227752875): contexthub V1 APIs can be removed
+                    // from T+ with the fix in aosp/2050305.
                     "Landroid/hardware/contexthub/V1_0/AsyncEventType;",
                     "Landroid/hardware/contexthub/V1_0/ContextHub;",
                     "Landroid/hardware/contexthub/V1_0/ContextHubMsg;",
