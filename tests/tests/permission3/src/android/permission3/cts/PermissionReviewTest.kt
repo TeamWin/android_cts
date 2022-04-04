@@ -87,15 +87,15 @@ class PermissionReviewTest : BaseUsePermissionTest() {
     fun testDenyGrantDenyCalendarDuringReview() {
         startAppActivityAndAssertResultCode(Activity.RESULT_OK) {
             // Deny
-            click(By.text("Calendar"))
+            clickPermissionControllerUi(By.text("Calendar"))
             // Confirm deny
             click(By.res("android:id/button1"))
 
             // Grant
-            click(By.text("Calendar"))
+            clickPermissionControllerUi(By.text("Calendar"))
 
             // Deny
-            click(By.text("Calendar"))
+            clickPermissionControllerUi(By.text("Calendar"))
 
             clickPermissionReviewContinue()
         }
