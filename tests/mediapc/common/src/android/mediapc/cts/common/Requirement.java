@@ -96,7 +96,19 @@ public abstract class Requirement {
                 reportPerfClass + " for requirement " + this.id + " performance class should at " +
                 "least be: " + expectedPerfClass);
             for (RequiredMeasurement<?> rm: this.mRequiredMeasurements.values()) {
-                Log.w(Requirement.TAG, rm.toString());
+                Map<Integer, RequirementConstants.Result> perfClasses = rm.getPerformanceClass();
+                int maxMetPerformanceClass = 0;
+                for (int pc: perfClasses.keySet()) {
+                    if (perfClasses.get(pc) == RequirementConstants.Result.MET) {
+                        maxMetPerformanceClass = Math.max(maxMetPerformanceClass, pc);
+                    }
+                }
+
+                if (maxMetPerformanceClass < expectedPerfClass) {
+                    Log.w(Requirement.TAG, rm.toString());
+                } else {
+                    Log.i(Requirement.TAG, rm.toString());
+                }
             }
             return false;
         } else {
