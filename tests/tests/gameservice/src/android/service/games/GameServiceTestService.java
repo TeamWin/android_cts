@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class GameServiceTestService extends Service {
 
-    private static final long SCREENSHOT_CALLBACK_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long SCREENSHOT_CALLBACK_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15);
 
     @Nullable
     private ActivityResult mLastActivityResult;
