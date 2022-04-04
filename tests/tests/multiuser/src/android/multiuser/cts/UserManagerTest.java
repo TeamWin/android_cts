@@ -208,21 +208,24 @@ public final class UserManagerTest {
     @Test
     @EnsureHasPermission({QUERY_USERS})
     public void testSystemUser() throws Exception {
-      final UserManager umOfSys = sContext
-        .createPackageContextAsUser("android", 0, UserHandle.SYSTEM)
-        .getSystemService(UserManager.class);
+        final UserManager umOfSys = sContext
+                .createPackageContextAsUser("android", 0, UserHandle.SYSTEM)
+                .getSystemService(UserManager.class);
 
-      assertThat(umOfSys.isSystemUser()).isTrue();
+        // TODO(b/222584163): Remove the if{} clause after v33 Sdk bump.
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S_V2) {
+            assertThat(umOfSys.isSystemUser()).isTrue();
+        }
 
-      // We cannot demand what type of user SYSTEM is, but we can say some things it isn't.
-      assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_CLONE)).isFalse();
-      assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isFalse();
-      assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_FULL_GUEST)).isFalse();
+        // We cannot demand what type of user SYSTEM is, but we can say some things it isn't.
+        assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_CLONE)).isFalse();
+        assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_PROFILE_MANAGED)).isFalse();
+        assertThat(umOfSys.isUserOfType(UserManager.USER_TYPE_FULL_GUEST)).isFalse();
 
-      assertThat(umOfSys.isProfile()).isFalse();
-      assertThat(umOfSys.isManagedProfile()).isFalse();
-      assertThat(umOfSys.isManagedProfile(UserHandle.USER_SYSTEM)).isFalse();
-      assertThat(umOfSys.isCloneProfile()).isFalse();
+        assertThat(umOfSys.isProfile()).isFalse();
+        assertThat(umOfSys.isManagedProfile()).isFalse();
+        assertThat(umOfSys.isManagedProfile(UserHandle.USER_SYSTEM)).isFalse();
+        assertThat(umOfSys.isCloneProfile()).isFalse();
     }
 
     @Test
