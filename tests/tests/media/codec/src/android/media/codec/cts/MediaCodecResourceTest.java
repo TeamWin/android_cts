@@ -16,17 +16,19 @@
 
 package android.media.codec.cts;
 
+import static android.media.codec.cts.MediaCodecResourceTestHighPriorityActivity.ACTION_HIGH_PRIORITY_ACTIVITY_READY;
+import static android.media.codec.cts.MediaCodecResourceTestLowPriorityService.ACTION_LOW_PRIORITY_SERVICE_READY;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
-import android.app.Instrumentation;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaCodec;
 import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
@@ -36,12 +38,12 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -68,76 +70,26 @@ public class MediaCodecResourceTest {
         public final MediaFormat mediaFormat;
     }
 
-    // Resources are reclaimed from lower priority processes by higher priority processes.
-    private static int sLowPriorityPid = -1;
-    private static int sLowPriorityUid = -1;
-    private static int sHighPriorityPid = -1;
-    private static int sHighPriorityUid = -1;
-
-    @BeforeClass
-    public static void setup() {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        Context context = instrumentation.getTargetContext();
-        //
-        // Start the low priority activity - set via the manifest to run in a different process.
-        //
-        {
-            Intent intent = new Intent(context, MediaCodecResourceTestLowPriorityActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
+    private static class ProcessInfo {
+        ProcessInfo(int pid, int uid) {
+            this.pid = pid;
+            this.uid = uid;
         }
-        //
-        // Start the high priority activity - set via the manifest to run in a different process.
-        //
-        {
-            Intent intent = new Intent(context, MediaCodecResourceTestHighPriorityActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-        }
-
-        // It takes a non-trivial amount of time to start processes and have them swap into
-        // the background. There is no signal for when a process has been backgrounded for which we
-        // can wait on.
-        try {
-            Thread.sleep(1000);
-        } catch (Exception ex) {
-            throw new IllegalStateException("Failed to sleep.");
-        }
-        //
-        // Scan all running processes to find the high and low processes (1 second grace period).
-        //
-        try {
-            // Permission needed to retrieve process information.
-            instrumentation.getUiAutomation()
-                    .adoptShellPermissionIdentity(Manifest.permission.REAL_GET_TASKS);
-            ActivityManager activityManager = context.getSystemService(ActivityManager.class);
-            for (RunningAppProcessInfo info : activityManager.getRunningAppProcesses()) {
-                if (info.processName.contains("MediaCodecResourceTestLowPriorityProcess")) {
-                    sLowPriorityPid = info.pid;
-                    sLowPriorityUid = info.uid;
-                }
-                if (info.processName.contains("MediaCodecResourceTestHighPriorityProcess")) {
-                    sHighPriorityPid = info.pid;
-                    sHighPriorityUid = info.uid;
-                }
-            }
-            if (sLowPriorityPid == -1 || sHighPriorityPid == -1) {
-                throw new IllegalStateException("No low and high priority processes found.");
-            }
-        } finally {
-            instrumentation.getUiAutomation().dropShellPermissionIdentity();
-        }
+        public final int pid;
+        public final int uid;
     }
 
     @Test
     public void testCreateCodecForAnotherProcessWithoutPermissionsThrows() throws Exception {
-        CodecInfo codecInfo = getFirstVideoHardwareCodec();
+        CodecInfo codecInfo = getFirstVideoHardwareDecoder();
         assumeTrue("No video hardware codec found.", codecInfo != null);
+        ProcessInfo processInfo = createLowPriorityProcess();
+        assertTrue("Unable to retrieve low priority process info.", processInfo != null);
 
         boolean wasSecurityExceptionThrown = false;
         try {
             MediaCodec mediaCodec = MediaCodec.createByCodecNameForClient(codecInfo.name,
-                    sLowPriorityPid, sLowPriorityUid);
+                    processInfo.pid, processInfo.uid);
             fail("No SecurityException thrown when creating a codec for another process");
         } catch (SecurityException ex) {
             // expected
@@ -148,10 +100,14 @@ public class MediaCodecResourceTest {
     // MediaCodec resources from a process with higher priority (e.g. foreground app).
     @Test
     public void testLowerPriorityProcessFailsToReclaimResources() throws Exception {
-        CodecInfo codecInfo = getFirstVideoHardwareCodec();
+        CodecInfo codecInfo = getFirstVideoHardwareDecoder();
         assumeTrue("No video hardware codec found.", codecInfo != null);
         assertTrue("Expected at least one max supported codec instance.",
                 codecInfo.maxSupportedInstances > 0);
+        ProcessInfo lowPriorityProcess = createLowPriorityProcess();
+        assertTrue("Unable to retrieve low priority process info.", lowPriorityProcess != null);
+        ProcessInfo highPriorityProcess = createHighPriorityProcess();
+        assertTrue("Unable to retrieve high priority process info.", highPriorityProcess != null);
 
         List<MediaCodec> mediaCodecList = new ArrayList<>();
         try {
@@ -159,21 +115,24 @@ public class MediaCodecResourceTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(Manifest.permission.MEDIA_RESOURCE_OVERRIDE_PID);
 
+            Log.i(TAG, "Creating MediaCodecs on behalf of pid " + highPriorityProcess.pid);
             // Create more codecs than are supported by the device on behalf of a high-priority
             // process.
             boolean wasInitialInsufficientResourcesExceptionThrown = false;
             for (int i = 0; i <= codecInfo.maxSupportedInstances; ++i) {
                 try {
                     MediaCodec mediaCodec = MediaCodec.createByCodecNameForClient(codecInfo.name,
-                            sHighPriorityPid, sHighPriorityUid);
+                            highPriorityProcess.pid, highPriorityProcess.uid);
                     mediaCodecList.add(mediaCodec);
                     mediaCodec.configure(codecInfo.mediaFormat, /* surface= */ null,
                             /* crypto= */ null, /* flags= */ 0);
                     mediaCodec.start();
                 } catch (MediaCodec.CodecException ex) {
                     if (ex.getErrorCode() == CodecException.ERROR_INSUFFICIENT_RESOURCE) {
+                        Log.i(TAG, "Exception received on MediaCodec #" +  i + ".");
                         wasInitialInsufficientResourcesExceptionThrown = true;
                     } else {
+                        Log.e(TAG, "Unexpected exception thrown", ex);
                         throw ex;
                     }
                 }
@@ -184,12 +143,13 @@ public class MediaCodecResourceTest {
                     + " same process", codecInfo.maxSupportedInstances, codecInfo.name),
                     wasInitialInsufficientResourcesExceptionThrown);
 
+            Log.i(TAG, "Creating MediaCodecs on behalf of pid " + lowPriorityProcess.pid);
             // Attempt to create the codec again, but this time, on behalf of a low priority
             // process.
             boolean wasLowPriorityInsufficientResourcesExceptionThrown = false;
             try {
                 MediaCodec mediaCodec = MediaCodec.createByCodecNameForClient(codecInfo.name,
-                        sLowPriorityPid, sLowPriorityUid);
+                        lowPriorityProcess.pid, lowPriorityProcess.uid);
                 mediaCodecList.add(mediaCodec);
                 mediaCodec.configure(codecInfo.mediaFormat, /* surface= */ null, /* crypto= */ null,
                         /* flags= */ 0);
@@ -198,6 +158,7 @@ public class MediaCodecResourceTest {
                 if (ex.getErrorCode() == CodecException.ERROR_INSUFFICIENT_RESOURCE) {
                     wasLowPriorityInsufficientResourcesExceptionThrown = true;
                 } else {
+                    Log.e(TAG, "Unexpected exception thrown", ex);
                     throw ex;
                 }
             }
@@ -206,6 +167,7 @@ public class MediaCodecResourceTest {
                     + " priority process", codecInfo.mime),
                     wasLowPriorityInsufficientResourcesExceptionThrown);
         } finally {
+            Log.i(TAG, "Cleaning up MediaCodecs");
             for (MediaCodec mediaCodec : mediaCodecList) {
                 mediaCodec.release();
             }
@@ -218,10 +180,14 @@ public class MediaCodecResourceTest {
     // MediaCodec resources from a process with lower priority (e.g. background app).
     @Test
     public void testHigherPriorityProcessReclaimsResources() throws Exception {
-        CodecInfo codecInfo = getFirstVideoHardwareCodec();
+        CodecInfo codecInfo = getFirstVideoHardwareDecoder();
         assumeTrue("No video hardware codec found.", codecInfo != null);
         assertTrue("Expected at least one max supported codec instance.",
                 codecInfo.maxSupportedInstances > 0);
+        ProcessInfo lowPriorityProcess = createLowPriorityProcess();
+        assertTrue("Unable to retrieve low priority process info.", lowPriorityProcess != null);
+        ProcessInfo highPriorityProcess = createHighPriorityProcess();
+        assertTrue("Unable to retrieve high priority process info.", highPriorityProcess != null);
 
         List<MediaCodec> mediaCodecList = new ArrayList<>();
         try {
@@ -229,21 +195,24 @@ public class MediaCodecResourceTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(Manifest.permission.MEDIA_RESOURCE_OVERRIDE_PID);
 
+            Log.i(TAG, "Creating MediaCodecs on behalf of pid " + lowPriorityProcess.pid);
             // Create more codecs than are supported by the device on behalf of a low-priority
             // process.
             boolean wasInitialInsufficientResourcesExceptionThrown = false;
             for (int i = 0; i <= codecInfo.maxSupportedInstances; ++i) {
                 try {
                     MediaCodec mediaCodec = MediaCodec.createByCodecNameForClient(codecInfo.name,
-                            sLowPriorityPid, sLowPriorityUid);
+                            lowPriorityProcess.pid, lowPriorityProcess.uid);
                     mediaCodecList.add(mediaCodec);
                     mediaCodec.configure(codecInfo.mediaFormat, /* surface= */ null,
                             /* crypto= */ null, /* flags= */ 0);
                     mediaCodec.start();
                 } catch (MediaCodec.CodecException ex) {
                     if (ex.getErrorCode() == CodecException.ERROR_INSUFFICIENT_RESOURCE) {
+                        Log.i(TAG, "Exception received on MediaCodec #" +  i + ".");
                         wasInitialInsufficientResourcesExceptionThrown = true;
                     } else {
+                        Log.e(TAG, "Unexpected exception thrown", ex);
                         throw ex;
                     }
                 }
@@ -254,12 +223,13 @@ public class MediaCodecResourceTest {
                     + " same process", codecInfo.maxSupportedInstances, codecInfo.mime),
                     wasInitialInsufficientResourcesExceptionThrown);
 
+            Log.i(TAG, "Creating final MediaCodec on behalf of pid " + highPriorityProcess.pid);
             // Attempt to create the codec again, but this time, on behalf of a high-priority
             // process.
             boolean wasHighPriorityInsufficientResourcesExceptionThrown = false;
             try {
                 MediaCodec mediaCodec = MediaCodec.createByCodecNameForClient(codecInfo.name,
-                        sHighPriorityPid, sHighPriorityUid);
+                        highPriorityProcess.pid, highPriorityProcess.uid);
                 mediaCodecList.add(mediaCodec);
                 mediaCodec.configure(codecInfo.mediaFormat, /* surface= */ null, /* crypto= */ null,
                         /* flags= */ 0);
@@ -268,6 +238,7 @@ public class MediaCodecResourceTest {
                 if (ex.getErrorCode() == CodecException.ERROR_INSUFFICIENT_RESOURCE) {
                     wasHighPriorityInsufficientResourcesExceptionThrown = true;
                 } else {
+                    Log.e(TAG, "Unexpected exception thrown", ex);
                     throw ex;
                 }
             }
@@ -276,6 +247,7 @@ public class MediaCodecResourceTest {
                     + " received an insufficient resource CodecException instead",
                     codecInfo.mime), wasHighPriorityInsufficientResourcesExceptionThrown);
         } finally {
+            Log.i(TAG, "Cleaning up MediaCodecs");
             for (MediaCodec mediaCodec : mediaCodecList) {
                 mediaCodec.release();
             }
@@ -286,7 +258,7 @@ public class MediaCodecResourceTest {
 
     // Find the first hardware video decoder and create a media format for it.
     @Nullable
-    private CodecInfo getFirstVideoHardwareCodec() {
+    private CodecInfo getFirstVideoHardwareDecoder() {
         MediaCodecList allMediaCodecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
         for (MediaCodecInfo mediaCodecInfo : allMediaCodecList.getCodecInfos()) {
             if (mediaCodecInfo.isSoftwareOnly()) {
@@ -299,8 +271,8 @@ public class MediaCodecResourceTest {
             CodecCapabilities codecCapabilities = mediaCodecInfo.getCapabilitiesForType(mime);
             VideoCapabilities videoCapabilities = codecCapabilities.getVideoCapabilities();
             if (videoCapabilities != null) {
-                int height = videoCapabilities.getSupportedHeights().getUpper();
-                int width = videoCapabilities.getSupportedWidthsFor(height).getUpper();
+                int height = videoCapabilities.getSupportedHeights().getLower();
+                int width = videoCapabilities.getSupportedWidthsFor(height).getLower();
                 MediaFormat mediaFormat = new MediaFormat();
                 mediaFormat.setString(MediaFormat.KEY_MIME, mime);
                 mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, height);
@@ -310,5 +282,58 @@ public class MediaCodecResourceTest {
             }
         }
         return null;
+    }
+
+    private ProcessInfo createLowPriorityProcess() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        ProcessInfoBroadcastReceiver processInfoBroadcastReceiver =
+                new ProcessInfoBroadcastReceiver();
+        context.registerReceiver(processInfoBroadcastReceiver,
+                new IntentFilter(ACTION_LOW_PRIORITY_SERVICE_READY));
+        Intent intent = new Intent(context, MediaCodecResourceTestLowPriorityService.class);
+        context.startForegroundService(intent);
+        // Starting the service and receiving the broadcast should take less than 1 second
+        return processInfoBroadcastReceiver.waitForProcessInfoMs(1000);
+    }
+
+    private ProcessInfo createHighPriorityProcess() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        ProcessInfoBroadcastReceiver processInfoBroadcastReceiver =
+                new ProcessInfoBroadcastReceiver();
+        context.registerReceiver(processInfoBroadcastReceiver,
+                new IntentFilter(ACTION_HIGH_PRIORITY_ACTIVITY_READY));
+        Intent intent = new Intent(context, MediaCodecResourceTestHighPriorityActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        // Starting the activity and receiving the broadcast should take less than 1 second
+        return processInfoBroadcastReceiver.waitForProcessInfoMs(1000);
+    }
+
+    private static class ProcessInfoBroadcastReceiver extends BroadcastReceiver {
+        private int mPid = -1;
+        private int mUid = -1;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            synchronized (this) {
+                mPid = intent.getIntExtra("pid", -1);
+                mUid = intent.getIntExtra("uid", -1);
+                this.notify();
+            }
+        }
+
+        public ProcessInfo waitForProcessInfoMs(int milliseconds) {
+            synchronized (this) {
+                try {
+                    this.wait(milliseconds);
+                } catch (InterruptedException ex) {
+                    return null;
+                }
+            }
+            if (mPid == -1 || mUid == -1) {
+                return null;
+            }
+            return new ProcessInfo(mPid, mUid);
+        }
     }
 }
