@@ -156,6 +156,7 @@ public final class HdmiCecConstants {
 
     // CEC Settings Values
     public static final String VOLUME_CONTROL_ENABLED = "1";
+    public static final String VOLUME_CONTROL_DISABLED = "0";
 
     // Power Control Modes for source devices
     public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";
@@ -208,4 +209,15 @@ public final class HdmiCecConstants {
     // CEC 2.0 Report Feature Bits
     public static final int FEATURES_SINK_SUPPORTS_ARC_TX_BIT = 0x4;
     public static final int FEATURES_SINK_SUPPORTS_ARC_RX_BIT = 0x2;
+
+    // Audio device types from AudioDeviceInfo
+    public static final int DEVICE_OUT_HDMI = 0x400;
+    public static final int DEVICE_OUT_HDMI_ARC = 0x40000;
+    public static final int DEVICE_OUT_HDMI_EARC = 0x40001;
+
+    // Volume behavior constants from AudioManager
+    public static final int DEVICE_VOLUME_BEHAVIOR_VARIABLE = 0;
+    public static final int DEVICE_VOLUME_BEHAVIOR_FULL = 1;
+    public static final int DEVICE_VOLUME_BEHAVIOR_FIXED = 2;
+    public static final int DEVICE_VOLUME_BEHAVIOR_ABSOLUTE = 3;
 }
