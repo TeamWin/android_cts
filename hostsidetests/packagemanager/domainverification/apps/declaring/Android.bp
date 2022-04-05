@@ -36,6 +36,7 @@ android_test_helper_app {
         "cts_defaults",
         "CtsDomainVerificationTestDeclaringAppDefaults",
     ],
+    min_sdk_version: "31",
     sdk_version: "test_current",
     aaptflags: ["--rename-manifest-package com.android.cts.packagemanager.verify.domain.declaringapp1"],
 }
@@ -47,6 +48,7 @@ android_test_helper_app {
         "cts_defaults",
         "CtsDomainVerificationTestDeclaringAppDefaults",
     ],
+    min_sdk_version: "31",
     sdk_version: "test_current",
     aaptflags: ["--rename-manifest-package com.android.cts.packagemanager.verify.domain.declaringapp2"],
 }
