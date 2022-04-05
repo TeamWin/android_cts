@@ -577,19 +577,25 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
             return;
         }
 
-        mContext.getPackageManager().setApplicationEnabledSetting(CARMODE_APP1_PACKAGE,
-                COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
-        mInCallCallbacks.resetLatch();
+        try {
+            mContext.getPackageManager().setApplicationEnabledSetting(CARMODE_APP1_PACKAGE,
+                    COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+            mInCallCallbacks.resetLatch();
 
-        // Place a call and verify it went to the default dialer
-        placeAndVerifyCall();
-        verifyConnectionForOutgoingCall();
+            // Place a call and verify it went to the default dialer
+            placeAndVerifyCall();
+            verifyConnectionForOutgoingCall();
 
-        // Now, request automotive projection; shouldn't unbind from default dialer.
-        requestAndVerifyAutomotiveProjection(mCarModeIncallServiceControlOne, true);
-        assertFalse(mInCallCallbacks.waitForUnbind());
+            // Now, request automotive projection; shouldn't unbind from default dialer.
+            requestAndVerifyAutomotiveProjection(mCarModeIncallServiceControlOne, true);
+            assertFalse(mInCallCallbacks.waitForUnbind());
 
-        releaseAutomotiveProjection(mCarModeIncallServiceControlOne);
+            releaseAutomotiveProjection(mCarModeIncallServiceControlOne);
+            mInCallCallbacks.getService().disconnectAllCalls();
+        } finally {
+            mContext.getPackageManager().setApplicationEnabledSetting(CARMODE_APP1_PACKAGE,
+                    COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+        }
     }
 
 
