@@ -22,8 +22,8 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildca
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNotSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFinishing;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ADJACENT;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
@@ -129,7 +129,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .preventSplitActivities().setFinishPrimaryWithSecondary(FINISH_NEVER).start();
         // Verify the paired finish behavior
         activityPair.second.finish();
-        assertTrue(waitForResumed(activityPair.first));
+        waitAndAssertResumed(activityPair.first);
     }
 
     /**
@@ -145,7 +145,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .preventSplitActivities().setFinishPrimaryWithSecondary(FINISH_ADJACENT).start();
         // Verify the paired finish behavior
         activityPair.second.finish();
-        assertTrue(waitForResumed(activityPair.first));
+        waitAndAssertResumed(activityPair.first);
     }
 
     /**
@@ -161,7 +161,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .preventSplitActivities().setFinishPrimaryWithSecondary(FINISH_ALWAYS).start();
         // Verify the paired finish behavior
         activityPair.second.finish();
-        assertTrue(waitForFinishing(activityPair.first));
+        waitAndAssertFinishing(activityPair.first);
     }
 
     /**
@@ -194,7 +194,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .setFinishPrimaryWithSecondary(FINISH_ADJACENT).start();
         // Verify the paired finish behavior
         activityPair.second.finish();
-        assertTrue(waitForFinishing(activityPair.first));
+        waitAndAssertFinishing(activityPair.first);
     }
 
     /**
@@ -209,7 +209,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .setFinishPrimaryWithSecondary(FINISH_ALWAYS).start();
         // Verify the paired finish behavior
         activityPair.second.finish();
-        assertTrue(waitForFinishing(activityPair.first));
+        waitAndAssertFinishing(activityPair.first);
     }
 
     /**
@@ -224,7 +224,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .preventSplitActivities().setFinishSecondaryWithPrimary(FINISH_NEVER).start();
         // Verify the paired finish behavior
         activityPair.first.finish();
-        assertTrue(waitForResumed(activityPair.second));
+        waitAndAssertResumed(activityPair.second);
     }
 
     /**
@@ -240,7 +240,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .preventSplitActivities().setFinishSecondaryWithPrimary(FINISH_ADJACENT).start();
         // Verify the paired finish behavior
         activityPair.first.finish();
-        assertTrue(waitForResumed(activityPair.second));
+        waitAndAssertResumed(activityPair.second);
     }
 
     /**
@@ -256,7 +256,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .preventSplitActivities().setFinishSecondaryWithPrimary(FINISH_ALWAYS).start();
         // Verify the paired finish behavior
         activityPair.first.finish();
-        assertTrue(waitForFinishing(activityPair.second));
+        waitAndAssertFinishing(activityPair.second);
     }
 
     /**
@@ -289,7 +289,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .setFinishSecondaryWithPrimary(FINISH_ADJACENT).start();
         // Verify the paired finish behavior
         activityPair.first.finish();
-        assertTrue(waitForFinishing(activityPair.second));
+        waitAndAssertFinishing(activityPair.second);
     }
 
     /**
@@ -304,7 +304,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
                 .setFinishSecondaryWithPrimary(FINISH_ALWAYS).start();
         // Verify the paired finish behavior
         activityPair.first.finish();
-        assertTrue(waitForFinishing(activityPair.second));
+        waitAndAssertFinishing(activityPair.second);
     }
 
     /**
