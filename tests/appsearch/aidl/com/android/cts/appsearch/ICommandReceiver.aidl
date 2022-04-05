@@ -24,6 +24,8 @@ interface ICommandReceiver {
     List<String> globalGet(in String packageName, in String databaseName, in String namespace,
         in String id);
 
+    List<String> globalGetSchema(String packageName, String databaseName);
+
     boolean indexGloballySearchableDocument(in String databaseName, in String namespace,
         in String id, in List<Bundle> permissionBundles);
 

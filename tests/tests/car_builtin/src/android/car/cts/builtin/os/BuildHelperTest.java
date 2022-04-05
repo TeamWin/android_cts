@@ -42,7 +42,6 @@ public final class BuildHelperTest {
                 assertTrue(BuildHelper.isUserBuild());
                 assertFalse(BuildHelper.isUserDebugBuild());
                 assertFalse(BuildHelper.isEngBuild());
-                assertFalse(BuildHelper.isDebuggableBuild());
                 break;
             case BUILD_TYPE_USER_DEBUG:
                 assertFalse(BuildHelper.isUserBuild());

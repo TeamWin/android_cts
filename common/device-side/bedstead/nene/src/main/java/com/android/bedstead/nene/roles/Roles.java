@@ -16,6 +16,9 @@
 
 package com.android.bedstead.nene.roles;
 
+import static com.android.bedstead.nene.permissions.CommonPermissions.BYPASS_ROLE_QUALIFICATION;
+import static com.android.bedstead.nene.utils.Versions.T;
+
 import android.annotation.TargetApi;
 import android.app.role.RoleManager;
 import android.content.Context;
@@ -23,6 +26,8 @@ import android.os.Build;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
+import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.utils.Versions;
 
 /** Test APIs related to roles. */
 @TargetApi(Build.VERSION_CODES.TIRAMISU)
@@ -38,7 +43,13 @@ public class Roles {
      */
     @Experimental
     public void setBypassingRoleQualification(boolean bypassingRoleQualification) {
-        sContext.getSystemService(RoleManager.class)
-                .setBypassingRoleQualification(bypassingRoleQualification);
+        if (!Versions.meetsMinimumSdkVersionRequirement(T)) {
+            return;
+        }
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                BYPASS_ROLE_QUALIFICATION)) {
+            sContext.getSystemService(RoleManager.class)
+                    .setBypassingRoleQualification(bypassingRoleQualification);
+        }
     }
 }

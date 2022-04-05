@@ -19,12 +19,17 @@ package com.android.bedstead.nene.users;
 import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.Intent.ACTION_MANAGED_PROFILE_AVAILABLE;
+import static android.content.Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE;
+import static android.os.Build.VERSION_CODES.P;
 import static android.os.Build.VERSION_CODES.R;
 import static android.os.Build.VERSION_CODES.S;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MODIFY_QUIET_MODE;
 import static com.android.bedstead.nene.users.Users.users;
 
+import android.annotation.TargetApi;
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
@@ -269,12 +274,15 @@ public class UserReference implements AutoCloseable {
                             .getSystemService(UserManager.class)
                             .getUserName();
                 }
-                if (mName.equals("")) {
+                if (mName == null || mName.equals("")) {
                     if (!exists()) {
                         mName = null;
                         throw new NeneException("User does not exist " + this);
                     }
                 }
+            }
+            if (mName == null) {
+                mName = "";
             }
         }
 
@@ -485,6 +493,38 @@ public class UserReference implements AutoCloseable {
      */
     public @Nullable String password() {
         return mPassword;
+    }
+
+    /**
+     * Sets quiet mode to {@code enabled}. This will only work for managed profiles with no
+     * credentials set.
+     *
+     * @return {@code false} if user's credential is needed in order to turn off quiet mode,
+     *         {@code true} otherwise.
+     */
+    @TargetApi(P)
+    @Experimental
+    public boolean setQuietMode(boolean enabled) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(P)) {
+            return false;
+        }
+        try (PermissionContext p = TestApis.permissions().withPermission(MODIFY_QUIET_MODE)) {
+            BlockingBroadcastReceiver r = BlockingBroadcastReceiver.create(
+                            TestApis.context().instrumentedContext(),
+                            enabled
+                                    ? ACTION_MANAGED_PROFILE_UNAVAILABLE
+                                    : ACTION_MANAGED_PROFILE_AVAILABLE)
+                    .register();
+            try {
+                if (mUserManager.requestQuietModeEnabled(enabled, userHandle())) {
+                    r.awaitForBroadcast();
+                    return true;
+                }
+                return false;
+            } finally {
+                r.unregisterQuietly();
+            }
+        }
     }
 
     @Override

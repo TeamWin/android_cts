@@ -36,6 +36,7 @@ import org.hamcrest.core.IsNot
 import org.junit.AfterClass
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -85,6 +86,14 @@ class OverrideConfigTest {
         @AfterClass
         fun resetRotation() {
             uiDevice.unfreezeRotation()
+        }
+    }
+
+    @Before
+    fun setOrientationPortrait() {
+        uiDevice.setOrientationNatural()
+        if (!isNaturalPortrait) {
+            uiDevice.setOrientationLeft()
         }
     }
 

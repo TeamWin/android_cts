@@ -21,9 +21,11 @@ import static android.app.appsearch.testutil.AppSearchTestUtils.convertSearchRes
 import android.app.Service;
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
+import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SearchResultsShim;
@@ -116,6 +118,24 @@ public class AppSearchTestService extends Service {
             } catch (Exception e) {
                 Log.e(TAG, "Error issuing global get.", e);
                 return Collections.emptyList();
+            }
+        }
+
+        public List<String> globalGetSchema(String packageName, String databaseName) {
+            try {
+                GetSchemaResponse response =
+                        mGlobalSearchSessionShim.getSchema(packageName, databaseName).get();
+                if (response == null || response.getSchemas().isEmpty()) {
+                    return null;
+                }
+                List<String> schemas = new ArrayList(response.getSchemas().size());
+                for (AppSearchSchema schema : response.getSchemas()) {
+                    schemas.add(schema.toString());
+                }
+                return schemas;
+            } catch (Exception e) {
+                Log.e(TAG, "Error retrieving global schema.", e);
+                return null;
             }
         }
 

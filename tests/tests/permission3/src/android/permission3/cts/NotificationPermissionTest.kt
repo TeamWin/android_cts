@@ -289,7 +289,9 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         launchApp()
         clickPermissionRequestDenyButton()
         waitForIdle()
-        assertNotificationReviewRequiredState(shouldBeSet = false)
+        SystemUtil.eventually {
+            assertNotificationReviewRequiredState(shouldBeSet = false)
+        }
     }
 
     @Test
