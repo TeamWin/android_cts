@@ -88,11 +88,10 @@ Java_android_cts_tagging_Utils_heapIsZeroInitialized(JNIEnv *) {
 
 extern "C" JNIEXPORT jboolean JNICALL Java_android_cts_tagging_Utils_allocatorIsScudo(JNIEnv *) {
   const size_t kMallocInfoBufSize = 8192;
-  std::string buf;
-  buf.reserve(kMallocInfoBufSize);
-  FILE *fp = fmemopen(buf.data(), kMallocInfoBufSize, "w+");
+  const char* kScudoPrefix = "<malloc version=\"scudo";
+  char buf[kMallocInfoBufSize];
+  FILE *fp = fmemopen(&buf, kMallocInfoBufSize, "w+");
   malloc_info(0, fp);
   fclose(fp);
-
-  return buf.find("<malloc version=\"scudo") != std::string::npos;
+  return strncmp(buf, kScudoPrefix, strlen(kScudoPrefix)) == 0;
 }
