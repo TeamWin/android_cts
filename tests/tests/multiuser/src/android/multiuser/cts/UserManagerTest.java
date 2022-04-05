@@ -179,7 +179,7 @@ public final class UserManagerTest {
     }
 
     @Test
-    @SystemUserOnly(reason = "Profiles are only supported on system user.")
+    @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission({CREATE_USERS, QUERY_USERS})
     public void testManagedProfile() throws Exception {
         UserHandle userHandle = null;
@@ -187,7 +187,9 @@ public final class UserManagerTest {
         try {
             userHandle = mUserManager.createProfile(
                     "Managed profile", UserManager.USER_TYPE_PROFILE_MANAGED, new HashSet<>());
-            assertThat(userHandle).isNotNull();
+
+            // Not all devices and user types support managed profiles; skip if this one doesn't.
+            assumeTrue("Couldn't create a managed profile", userHandle != null);
 
             final UserManager umOfProfile = sContext
                     .createPackageContextAsUser("android", 0, userHandle)
