@@ -139,9 +139,14 @@ public class CodecInfoTest {
                 IntStream.of(caps.colorFormats)
                         .noneMatch(x -> x == COLOR_FormatYUV420Flexible));
 
-        assertFalse(mCodecInfo.getName() + " does not support COLOR_FormatSurface",
-                IntStream.of(caps.colorFormats)
-                        .noneMatch(x -> x == COLOR_FormatSurface));
+        // COLOR_FormatSurface support is an existing requirement, but we did not
+        // test for it before T.  We can not retroactively apply the higher standard to
+        // devices that are already certified, so only test on T or later devices.
+        if (IS_AT_LEAST_T) {
+            assertFalse(mCodecInfo.getName() + " does not support COLOR_FormatSurface",
+                    IntStream.of(caps.colorFormats)
+                            .noneMatch(x -> x == COLOR_FormatSurface));
+        }
 
         // For devices launching with Android T, if a codec supports an HDR profile, it must
         // advertise P010 support
