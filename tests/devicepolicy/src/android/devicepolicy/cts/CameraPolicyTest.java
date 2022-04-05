@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.Manifest.permission.CAMERA;
+import static android.content.pm.PackageManager.FEATURE_CAMERA;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -35,6 +36,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -52,6 +54,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@RequireFeature(FEATURE_CAMERA)
 @RunWith(BedsteadJUnit4.class)
 public final class CameraPolicyTest {
     @ClassRule
