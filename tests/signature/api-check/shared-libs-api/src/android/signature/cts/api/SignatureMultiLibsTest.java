@@ -91,7 +91,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
      * Will check the entire API, and then report the complete list of failures
      */
     @Test
-    public void testSignature() {
+    public void testRuntimeCompatibilityWithCurrentApi() {
         runWithTestResultObserver(mResultObserver -> {
             ApiComplianceChecker complianceChecker =
                     new ApiComplianceChecker(mResultObserver, mClassProvider);
@@ -110,7 +110,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
      * Tests that the device's API matches the previous APIs defined in xml.
      */
     @Test
-    public void testPreviousSignatures() {
+    public void testRuntimeCompatibilityWithPreviousApis() {
         runWithTestResultObserver(mResultObserver -> {
             ApiComplianceChecker complianceChecker =
                     new ApiComplianceChecker(mResultObserver, mClassProvider);

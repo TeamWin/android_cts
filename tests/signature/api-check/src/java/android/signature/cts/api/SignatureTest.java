@@ -39,12 +39,16 @@ public class SignatureTest extends AbstractApiTest {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
+    private static final String EXPECTED_API_FILES_ARG = "expected-api-files";
+
+    private static final String UNEXPECTED_API_FILES_ARG = "unexpected-api-files";
+
     protected static final Supplier<String[]> EXPECTED_API_FILES =
-            getSupplierOfAnOptionalCommaSeparatedListArgument("expected-api-files");
+            getSupplierOfAnOptionalCommaSeparatedListArgument(EXPECTED_API_FILES_ARG);
     protected static final Supplier<String[]> BASE_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument("base-api-files");
     protected static final Supplier<String[]> UNEXPECTED_API_FILES =
-            getSupplierOfAnOptionalCommaSeparatedListArgument("unexpected-api-files");
+            getSupplierOfAnOptionalCommaSeparatedListArgument(UNEXPECTED_API_FILES_ARG);
     protected static final Supplier<String[]> PREVIOUS_API_FILES =
             getSupplierOfAnOptionalCommaSeparatedListArgument("previous-api-files");
 
@@ -52,24 +56,24 @@ public class SignatureTest extends AbstractApiTest {
             Suppliers.memoize(SignatureTest::loadUnexpectedClasses)::get;
 
     @Override
-    protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
+    protected void initializeFromArgs(Bundle instrumentationArgs) {
         String[] expectedApiFiles = EXPECTED_API_FILES.get();
         String[] unexpectedApiFiles = UNEXPECTED_API_FILES.get();
 
         if (expectedApiFiles.length + unexpectedApiFiles.length == 0) {
             throw new IllegalStateException(
-                    "Expected at least one file to be specified in"
-                            + " 'expected-api-files' or 'unexpected-api-files'");
+                    String.format("Expected at least one file to be specified in '%s' or '%s'",
+                            EXPECTED_API_FILES_ARG, UNEXPECTED_API_FILES_ARG));
         }
     }
 
     /**
-     * Tests that the device's API matches the expected set defined in xml.
-     * <p/>
-     * Will check the entire API, and then report the complete list of failures
+     * Make sure that this APK cannot access any unexpected classes.
+     *
+     * <p>The set of unexpected classes may be empty, in which case this test does nothing.</p>
      */
     @Test
-    public void testSignature() {
+    public void testCannotAccessUnexpectedClasses() {
         runWithTestResultObserver(mResultObserver -> {
             Set<JDiffClassDescription> unexpectedClasses = UNEXPECTED_CLASSES.get();
             for (JDiffClassDescription classDescription : unexpectedClasses) {
@@ -81,18 +85,52 @@ public class SignatureTest extends AbstractApiTest {
                             "Class should not be accessible to this APK");
                 }
             }
+        });
+    }
 
+    /**
+     * Tests that the device's API matches the expected set defined in xml.
+     *
+     * <p>Will check the entire API, and then report the complete list of failures</p>
+     */
+    @Test
+    public void testRuntimeCompatibilityWithCurrentApi() {
+        runWithTestResultObserver(mResultObserver -> {
             ApiComplianceChecker complianceChecker =
                     new ApiComplianceChecker(mResultObserver, mClassProvider);
 
             // Load classes from any API files that form the base which the expected APIs extend.
             loadBaseClasses(complianceChecker);
+
             // Load classes from system API files and check for signature compliance.
             String[] expectedApiFiles = EXPECTED_API_FILES.get();
+            Set<JDiffClassDescription> unexpectedClasses = UNEXPECTED_CLASSES.get();
             checkClassesSignatureCompliance(complianceChecker, expectedApiFiles, unexpectedClasses,
                     false /* isPreviousApi */);
+
+            // After done parsing all expected API files, perform any deferred checks.
+            complianceChecker.checkDeferred();
+        });
+    }
+
+    /**
+     * Tests that the device's API matches the last few previously released api files.
+     *
+     * <p>Will check all the recently released api files, and then report the complete list of
+     * failures.</p>
+     */
+    @Test
+    public void testRuntimeCompatibilityWithPreviousApis() {
+        runWithTestResultObserver(mResultObserver -> {
+            ApiComplianceChecker complianceChecker =
+                    new ApiComplianceChecker(mResultObserver, mClassProvider);
+
+            // Load classes from any API files that form the base which the expected APIs extend.
+            loadBaseClasses(complianceChecker);
+
             // Load classes from previous API files and check for signature compliance.
             String[] previousApiFiles = PREVIOUS_API_FILES.get();
+            Set<JDiffClassDescription> unexpectedClasses = UNEXPECTED_CLASSES.get();
             checkClassesSignatureCompliance(complianceChecker, previousApiFiles, unexpectedClasses,
                     true /* isPreviousApi */);
 
@@ -139,5 +177,4 @@ public class SignatureTest extends AbstractApiTest {
                 .map(clazz -> clazz.setPreviousApiFlag(isPreviousApi))
                 .forEach(complianceChecker::checkSignatureCompliance);
     }
-
 }
