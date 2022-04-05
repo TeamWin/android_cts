@@ -35,11 +35,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.SystemProperties;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import java.io.IOException;
 import java.util.List;
@@ -576,8 +579,19 @@ public class BluetoothAdapterTest extends AndroidTestCase {
                 BluetoothProfile.getProfileName(BluetoothProfile.LE_AUDIO));
         assertEquals("HAP_CLIENT",
                 BluetoothProfile.getProfileName(BluetoothProfile.HAP_CLIENT));
-        assertEquals("UNKNOWN_PROFILE",
-                BluetoothProfile.getProfileName(BluetoothProfile.HAP_CLIENT + 1));
+
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            return;
+        }
+
+        assertEquals("VOLUME_CONTROL",
+                BluetoothProfile.getProfileName(BluetoothProfile.VOLUME_CONTROL));
+        assertEquals("CSIP_SET_COORDINATOR",
+                BluetoothProfile.getProfileName(BluetoothProfile.CSIP_SET_COORDINATOR));
+        assertEquals("LE_AUDIO_BROADCAST",
+                BluetoothProfile.getProfileName(BluetoothProfile.LE_AUDIO_BROADCAST));
+        assertEquals("LE_AUDIO_BROADCAST_ASSISTANT",
+                BluetoothProfile.getProfileName(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT));
     }
 
     private static void sleep(long t) {
