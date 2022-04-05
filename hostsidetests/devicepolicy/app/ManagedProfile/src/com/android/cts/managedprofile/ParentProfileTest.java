@@ -102,10 +102,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("setDefaultSmsApplication")
             .add("getPermittedInputMethods")
             .add("setPermittedInputMethods")
-            .add("getDrawable")
-            .add("getDrawableForDensity")
             .add("getDevicePolicyManagementRoleHolderPackage")
-            .add("getDrawableAsIcon")
+            .add("getResources")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
