@@ -50,7 +50,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class SystemPaletteTest {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "SystemPaletteTest";
 
     @Test
@@ -87,7 +87,7 @@ public class SystemPaletteTest {
             });
 
             final int[] allColors = new int[65];
-            new PollingCheck(5_000L, "Invalid tonal palettes for " + color + " " + style) {
+            new PollingCheck(15_000L, "Invalid tonal palettes for " + color + " " + style) {
                 @Override
                 protected boolean check() {
 
@@ -98,8 +98,12 @@ public class SystemPaletteTest {
                     System.arraycopy(getAllNeutral2Colors(context), 0, allColors, 52, 13);
 
                     if (DEBUG) {
+                        final String setting = Settings.Secure
+                                .getString(context.getContentResolver(),
+                                        Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES);
                         Log.d(TAG, "Expected:\n" + Arrays.toString(expectedPalette)
-                                        + "\nActual:\n" + Arrays.toString(allColors));
+                                        + "\nActual:\n" + Arrays.toString(allColors)
+                                        + "\nSetting:\n" + setting);
                     }
 
                     return Arrays.equals(allColors, expectedPalette);
