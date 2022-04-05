@@ -50,6 +50,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
+import java.util.concurrent.CountDownLatch;
+
 public class SurfacePackageFlickerTest {
     private static final int DEFAULT_LAYOUT_WIDTH = 100;
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
@@ -86,6 +88,8 @@ public class SurfacePackageFlickerTest {
         private SurfaceView mSurfaceView;
         private SurfaceControlViewHost mSurfaceControlViewHost;
         private FrameLayout mParent;
+        private final CountDownLatch mFirstDrawLatch = new CountDownLatch(1);
+
 
         private final Runnable mRecreateSurfaceViewCallback = new Runnable() {
                 public void run() {
@@ -125,7 +129,16 @@ public class SurfacePackageFlickerTest {
 
             v.getViewTreeObserver().registerFrameCommitCallback(() -> {
                 parent.post(mRecreateSurfaceViewCallback);
+                mFirstDrawLatch.countDown();
             });
+        }
+
+        public void waitForReady() {
+            try {
+                mFirstDrawLatch.await();
+            } catch (Exception e) {
+                // Oh well
+            }
         }
 
         @Override
