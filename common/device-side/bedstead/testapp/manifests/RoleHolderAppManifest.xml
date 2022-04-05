@@ -48,5 +48,15 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+
+        <!-- Receiver for when a managed profile becomes available/unavailable/removed  -->
+        <receiver android:name=".ProfileStatusChangedReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MANAGED_PROFILE_UNAVAILABLE"/>
+                <action android:name="android.intent.action.MANAGED_PROFILE_AVAILABLE"/>
+                <action android:name="android.intent.action.MANAGED_PROFILE_REMOVED"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

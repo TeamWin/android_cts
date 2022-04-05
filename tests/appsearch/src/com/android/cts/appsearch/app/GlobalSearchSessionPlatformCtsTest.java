@@ -29,6 +29,7 @@ import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByDocumentIdRequest;
+import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
@@ -684,6 +685,147 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     @Test
+    public void testGlobalGetSchema_packageAccess_defaultAccess() throws Exception {
+        // 1. Create a schema in the test with default (no) access.
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .build())
+                .get();
+
+        // 2. Neither PKG_A nor PKG_B should be able to retrieve the schema.
+        List<String> schemaStrings = getSchemaAsPackage(PKG_A);
+        assertThat(schemaStrings).isNull();
+
+        schemaStrings = getSchemaAsPackage(PKG_B);
+        assertThat(schemaStrings).isNull();
+    }
+
+    @Test
+    public void testGlobalGetSchema_packageAccess_singleAccess() throws Exception {
+        // 1. Create a schema in the test with access granted to PKG_A, but not PKG_B.
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .setSchemaTypeVisibilityForPackage(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        /*visible=*/ true,
+                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                                .build())
+                .get();
+
+        // 2. Only PKG_A should be able to retrieve the schema.
+        List<String> schemaStrings = getSchemaAsPackage(PKG_A);
+        assertThat(schemaStrings).containsExactly(AppSearchEmail.SCHEMA.toString());
+
+        schemaStrings = getSchemaAsPackage(PKG_B);
+        assertThat(schemaStrings).isNull();
+    }
+
+    @Test
+    public void testGlobalGetSchema_packageAccess_multiAccess() throws Exception {
+        // 1. Create a schema in the test with access granted to PKG_A and PKG_B.
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .setSchemaTypeVisibilityForPackage(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        /*visible=*/ true,
+                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                                .setSchemaTypeVisibilityForPackage(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        /*visible=*/ true,
+                                        new PackageIdentifier(PKG_B, PKG_B_CERT_SHA256))
+                                .build())
+                .get();
+
+        // 2. Both packages should be able to retrieve the schema.
+        List<String> schemaStrings = getSchemaAsPackage(PKG_A);
+        assertThat(schemaStrings).containsExactly(AppSearchEmail.SCHEMA.toString());
+
+        schemaStrings = getSchemaAsPackage(PKG_B);
+        assertThat(schemaStrings).containsExactly(AppSearchEmail.SCHEMA.toString());
+    }
+
+    @Test
+    public void testGlobalGetSchema_packageAccess_revokeAccess() throws Exception {
+        // 1. Create a schema in the test with access granted to PKG_A.
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .setSchemaTypeVisibilityForPackage(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        /*visible=*/ true,
+                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                                .build())
+                .get();
+
+        // 2. Now revoke that access.
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .setSchemaTypeVisibilityForPackage(
+                                        AppSearchEmail.SCHEMA_TYPE,
+                                        /*visible=*/ false,
+                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                                .build())
+                .get();
+
+        // 3. PKG_A should NOT be able to retrieve the schema.
+        List<String> schemaStrings = getSchemaAsPackage(PKG_A);
+        assertThat(schemaStrings).isNull();
+    }
+
+    @Test
+    public void testGlobalGetSchema_globalAccess_singleAccess() throws Exception {
+        // 1. Index documents for PKG_A and PKG_B. This will set the schema for each with the
+        // corresponding access set.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+        indexNotGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(
+                                mContext).get();
+
+                    // 2. The schema for PKG_A should be retrievable, but PKG_B should not be.
+                    GetSchemaResponse response =
+                            mGlobalSearchSession.getSchema(PKG_A, DB_NAME).get();
+                    assertThat(response.getSchemas()).hasSize(1);
+
+                    response = mGlobalSearchSession.getSchema(PKG_B, DB_NAME).get();
+                    assertThat(response.getSchemas()).isEmpty();
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+    @Test
+    public void testGlobalGetSchema_globalAccess_multiAccess() throws Exception {
+        // 1. Index documents for PKG_A and PKG_B. This will set the schema for each with the
+        // corresponding access set.
+        indexGloballySearchableDocument(PKG_A, DB_NAME, NAMESPACE_NAME, "id1");
+        indexGloballySearchableDocument(PKG_B, DB_NAME, NAMESPACE_NAME, "id1");
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mGlobalSearchSession =
+                            GlobalSearchSessionShimImpl.createGlobalSearchSessionAsync(
+                                mContext).get();
+
+                    // 2. The schema for both PKG_A and PKG_B should be retrievable.
+                    GetSchemaResponse response =
+                            mGlobalSearchSession.getSchema(PKG_A, DB_NAME).get();
+                    assertThat(response.getSchemas()).hasSize(1);
+
+                    response = mGlobalSearchSession.getSchema(PKG_B, DB_NAME).get();
+                    assertThat(response.getSchemas()).hasSize(1);
+                },
+                READ_GLOBAL_APP_SEARCH_DATA);
+    }
+
+
+    @Test
     public void testReportSystemUsage() throws Exception {
         // Insert schema
         mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
@@ -880,6 +1022,17 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Make sure there have been no further notifications
         assertThat(observer.getDocumentChanges()).isEmpty();
+    }
+
+    private List<String> getSchemaAsPackage(String pkg) throws Exception {
+        GlobalSearchSessionPlatformCtsTest.TestServiceConnection serviceConnection =
+                bindToHelperService(pkg);
+        try {
+            ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
+            return commandReceiver.globalGetSchema(mContext.getPackageName(), DB_NAME);
+        } finally {
+            serviceConnection.unbind();
+        }
     }
 
     private void assertPackageCannotAccess(String pkg) throws Exception {
