@@ -38,8 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class AppOpsTests extends DeviceTestCase implements IBuildReceiver {
-    private static final int NUM_APP_OPS = AtomsProto.AttributedAppOps.getDefaultInstance().getOp().
-            getDescriptorForType().getValues().size() - 1;
+    private static final int NUM_APP_OPS = 116;
 
     /**
      * Some ops are only available to specific dynamic uids and are otherwise transformed to less
