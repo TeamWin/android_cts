@@ -23,6 +23,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.cts.InputSurface;
 import android.media.cts.OutputSurface;
+import android.media.cts.TestArgs;
 import android.opengl.GLES20;
 import android.util.Log;
 
@@ -126,15 +127,35 @@ public class DecodeEditEncodeTest {
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
-            String[] encoderNamesForMime = MediaUtils.getEncoderNamesForMime((String)arg[0]);
-            String[] decoderNamesForMime = MediaUtils.getDecoderNamesForMime((String)arg[0]);
-            Object[] testArgs = new Object[argLength + 2];
-            // Add encoder name and decoder name as first two arguments and then
-            // copy arguments passed
-            testArgs[0] = encoderNamesForMime[0];
-            testArgs[1] = decoderNamesForMime[0];
-            System.arraycopy(arg, 0, testArgs, 2, argLength);
-            argsList.add(testArgs);
+            String mediaType = (String)arg[0];
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
+            String[] encoderNames = MediaUtils.getEncoderNamesForMime(mediaType);
+            String[] decoderNames = MediaUtils.getDecoderNamesForMime(mediaType);
+            // First pair of decoder and encoder that supports given mediaType is chosen
+            outerLoop:
+            for (String decoder : decoderNames) {
+                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                    continue;
+                }
+                for (String encoder : encoderNames) {
+                    if (TestArgs.CODEC_PREFIX != null &&
+                            !encoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                        continue;
+                    }
+                    Object[] testArgs = new Object[argLength + 2];
+                    // Add encoder name and decoder name as first two arguments and then
+                    // copy arguments passed
+                    testArgs[0] = encoder;
+                    testArgs[1] = decoder;
+                    System.arraycopy(arg, 0, testArgs, 2, argLength);
+                    argsList.add(testArgs);
+                    // Only one combination of encoder and decoder is tested
+                    break outerLoop;
+                }
+            }
         }
         return argsList;
     }
