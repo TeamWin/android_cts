@@ -197,18 +197,14 @@ public final class DeviceState extends HarrierRule {
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
-    // We timeout 10 seconds before the infra would timeout
-    private static final Duration MAX_TEST_DURATION =
-            Duration.ofMillis(
-                    Long.parseLong(TestApis.instrumentation().arguments().getString(
-                            "timeout_msec", "600000")) - 10000);
+    // We are allowed 11 minutes before the entire test run fails
+    private static final Duration MAX_TEST_DURATION = Duration.ofMinutes(10);
     private final ExecutorService mTestExecutor = Executors.newSingleThreadExecutor();
     private Thread mTestThread;
 
     private final Logger mLogger = Logger.forInstance(this);
 
     public DeviceState() {
-
         mLogger.constructor(() -> {
             Future<Thread> testThreadFuture = mTestExecutor.submit(Thread::currentThread);
 
