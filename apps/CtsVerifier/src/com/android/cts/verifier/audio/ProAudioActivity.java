@@ -32,6 +32,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.CtsVerifierReportLog;
@@ -39,6 +40,7 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 
+@CddTest(requirement = "5.10/C-1-1,C-1-3,C-1-4")
 public class ProAudioActivity
         extends PassFailButtons.Activity
         implements View.OnClickListener {

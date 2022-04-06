@@ -20,11 +20,14 @@ import android.media.AudioDeviceInfo;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.audio.audiolib.AudioUtils;
 import com.android.cts.verifier.audio.peripheralprofile.ListsHelper;
 import com.android.cts.verifier.audio.peripheralprofile.PeripheralProfile;
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
+@CddTest(requirement = "7.7.2/H-1-1,H-4-4,H-4-5,H-4-6,H-4-7")
 public class USBAudioPeripheralAttributesActivity extends USBAudioPeripheralActivity {
     private static final String TAG = "USBAudioPeripheralAttributesActivity";
 

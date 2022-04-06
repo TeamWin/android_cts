@@ -21,8 +21,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.R;
 
+@CddTest(requirement = "7.8.2/C-1-1,C-1-2")
 public class USBAudioPeripheralPlayActivity extends USBAudioPeripheralPlayerActivity {
     private static final String TAG = "USBAudioPeripheralPlayActivity";
 
