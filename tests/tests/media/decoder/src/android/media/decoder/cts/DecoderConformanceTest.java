@@ -24,6 +24,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
+import android.media.cts.TestArgs;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -77,12 +78,10 @@ public class DecoderConformanceTest extends MediaTestBase {
     private static final String REPORT_LOG_NAME = "CtsMediaDecoderTestCases";
     private static final String TAG = "DecoderConformanceTest";
     private static final String CONFORMANCE_SUBDIR = "conformance_vectors/";
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
     private static final String mInpPrefix = WorkDir.getMediaDirString() + CONFORMANCE_SUBDIR;
     private static final Map<String, String> MIMETYPE_TO_TAG = new HashMap<String, String>() {{
         put(MediaFormat.MIMETYPE_VIDEO_VP9, "vp9");
     }};
-    private static String mCodecPrefix;
 
     private final String mDecoderName;
     private final String mMediaType;
@@ -93,21 +92,20 @@ public class DecoderConformanceTest extends MediaTestBase {
 
     private DeviceReportLog mReportLog;
 
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
-    }
-
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() throws Exception {
         final String[] mediaTypeList = new String[] {MediaFormat.MIMETYPE_VIDEO_VP9};
         final List<Object[]> argsList = new ArrayList<>();
         for (String mediaType : mediaTypeList) {
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
             String[] componentNames = MediaUtils.getDecoderNamesForMime(mediaType);
             List<String> testVectors = readCodecTestVectors(mediaType);
             for (String testVector : testVectors) {
                 for (String name : componentNames) {
-                    if (mCodecPrefix != null && !name.startsWith(mCodecPrefix)) {
+                    if (TestArgs.CODEC_PREFIX != null && !name.startsWith(TestArgs.CODEC_PREFIX)) {
                         continue;
                     }
                     argsList.add(new Object[] {name, mediaType, testVector});
