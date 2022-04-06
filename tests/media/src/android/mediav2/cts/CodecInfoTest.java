@@ -29,6 +29,7 @@ import androidx.test.filters.SmallTest;
 
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -92,6 +93,7 @@ public class CodecInfoTest {
      * it should be capable of displaying the same
      */
     @Test
+    @Ignore("TODO(b/228237404) Enable once display capabilities can be queried at codec2 level")
     public void testHDRDisplayCapabilities() {
         Assume.assumeTrue("Test needs Android 13", IS_AT_LEAST_T);
         Assume.assumeTrue("Test is applicable for video codecs", mMediaType.startsWith("video/"));
