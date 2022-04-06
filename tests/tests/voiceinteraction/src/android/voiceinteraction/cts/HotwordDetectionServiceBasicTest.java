@@ -219,26 +219,6 @@ public final class HotwordDetectionServiceBasicTest
     }
 
     @Test
-    public void testHotwordDetectionService_onDetectFromExternalSource_success()
-            throws Throwable {
-        Thread.sleep(CLEAR_CHIP_MS);
-        // Create AlwaysOnHotwordDetector and wait the HotwordDetectionService ready
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
-
-        verifyDetectedResult(
-                performAndGetDetectionResult(
-                        Utils.HOTWORD_DETECTION_SERVICE_EXTERNAL_SOURCE_ONDETECT_TEST),
-                MainHotwordDetectionService.DETECTED_RESULT);
-        verifyMicrophoneChip(true);
-
-        testHotwordDetection(Utils.HOTWORD_DETECTION_SERVICE_DSP_DESTROY_DETECTOR,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
-    }
-
-    @Test
     @RequiresDevice
     public void testHotwordDetectionService_onDetectFromMic_success()
             throws Throwable {

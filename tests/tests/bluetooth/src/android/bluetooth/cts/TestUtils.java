@@ -150,7 +150,7 @@ class TestUtils {
      * Adopt shell UID's permission via {@link android.app.UiAutomation}
      * @param permission permission to adopt
      */
-    static void adoptPermissionAsShellUid(@NonNull String permission) {
+    static void adoptPermissionAsShellUid(@Nullable String... permission) {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(permission);
     }

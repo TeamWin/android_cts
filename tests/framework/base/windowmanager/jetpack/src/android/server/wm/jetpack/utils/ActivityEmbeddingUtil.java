@@ -91,7 +91,7 @@ public class ActivityEmbeddingUtil {
         startActivityFromActivity(activityLaunchingFrom, TestActivityWithId.class,
                 secondActivityId);
         // Verify both activities are in the correct lifecycle state
-        waitForResumed(secondActivityId);
+        waitAndAssertResumed(secondActivityId);
         assertFalse(isActivityResumed(activityLaunchingFrom));
         TestActivity secondActivity = getResumedActivityById(secondActivityId);
         // Verify the second activity is not split with the first
@@ -101,16 +101,17 @@ public class ActivityEmbeddingUtil {
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity activityLaunchingFrom,
             @NonNull Activity expectedPrimaryActivity, @NonNull Class secondActivityClass,
-            @NonNull SplitPairRule splitPairRule, @NonNull String secondActivityId,
+            @NonNull SplitPairRule splitPairRule, @NonNull String secondaryActivityId,
             int expectedCallbackCount,
             @NonNull TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer) {
         // Set the expected callback count
         splitInfoConsumer.setCount(expectedCallbackCount);
 
         // Start second activity
-        startActivityFromActivity(activityLaunchingFrom, secondActivityClass, secondActivityId);
+        startActivityFromActivity(activityLaunchingFrom, secondActivityClass, secondaryActivityId);
 
-        // Get updated split info
+        // A split info callback should occur after the new activity is launched because the split
+        // states have changed.
         List<SplitInfo> activeSplitStates = null;
         try {
             activeSplitStates = splitInfoConsumer.waitAndGet();
@@ -118,15 +119,17 @@ public class ActivityEmbeddingUtil {
             fail("startActivityAndVerifySplit() InterruptedException");
         }
 
-        // Get second activity from split info
-        Activity secondActivity = getSecondActivity(activeSplitStates, expectedPrimaryActivity,
-                secondActivityId);
-        assertNotNull(secondActivity);
+        // Wait for secondary activity to be resumed and verify that the newly sent split info
+        // contains the secondary activity.
+        waitAndAssertResumed(secondaryActivityId);
+        final Activity secondaryActivity = getResumedActivityById(secondaryActivityId);
+        assertTrue(splitInfoTopSplitIsCorrect(activeSplitStates, expectedPrimaryActivity,
+                secondaryActivity));
 
-        assertValidSplit(expectedPrimaryActivity, secondActivity, splitPairRule);
+        assertValidSplit(expectedPrimaryActivity, secondaryActivity, splitPairRule);
 
         // Return second activity for easy access in calling method
-        return secondActivity;
+        return secondaryActivity;
     }
 
     public static Activity startActivityAndVerifySplit(@NonNull Activity primaryActivity,
@@ -234,7 +237,7 @@ public class ActivityEmbeddingUtil {
      */
     public static void assertValidSplit(@NonNull Activity primaryActivity,
             @Nullable Activity secondaryActivity, SplitRule splitRule) {
-        waitForResumed(secondaryActivity != null
+        waitAndAssertResumed(secondaryActivity != null
                 ? Arrays.asList(primaryActivity, secondaryActivity)
                 : Collections.singletonList(primaryActivity));
 
@@ -273,7 +276,7 @@ public class ActivityEmbeddingUtil {
                 .equals(getMaximumActivityBounds(activity)));
     }
 
-    public static boolean waitForResumed(
+    private static boolean waitForResumed(
             @NonNull List<Activity> activityList) {
         final long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
@@ -291,7 +294,7 @@ public class ActivityEmbeddingUtil {
         return false;
     }
 
-    public static boolean waitForResumed(@NonNull String activityId) {
+    private static boolean waitForResumed(@NonNull String activityId) {
         final long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
             if (getResumedActivityById(activityId) != null) {
@@ -301,7 +304,30 @@ public class ActivityEmbeddingUtil {
         return false;
     }
 
-    public static boolean waitForVisible(@NonNull Activity activity, boolean visible) {
+    private static boolean waitForResumed(@NonNull Activity activity) {
+        return waitForResumed(Arrays.asList(activity));
+    }
+
+    public static void waitAndAssertResumed(@NonNull String activityId) {
+        assertTrue("Activity with id=" + activityId + " should be resumed",
+                waitForResumed(activityId));
+    }
+
+    public static void waitAndAssertResumed(@NonNull Activity activity) {
+        assertTrue(activity + " should be resumed", waitForResumed(activity));
+    }
+
+    public static void waitAndAssertResumed(@NonNull List<Activity> activityList) {
+        assertTrue("All activities in this list should be resumed:" + activityList,
+                waitForResumed(activityList));
+    }
+
+    public static void waitAndAssertNotResumed(@NonNull String activityId) {
+        assertFalse("Activity with id=" + activityId + " should not be resumed",
+                waitForResumed(activityId));
+    }
+
+    private static boolean waitForVisible(@NonNull Activity activity, boolean visible) {
         final long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
             if (WindowManagerJetpackTestBase.isActivityVisible(activity) == visible) {
@@ -311,11 +337,12 @@ public class ActivityEmbeddingUtil {
         return false;
     }
 
-    public static boolean waitForResumed(@NonNull Activity activity) {
-        return waitForResumed(Arrays.asList(activity));
+    public static void waitAndAssertNotVisible(@NonNull Activity activity) {
+        assertTrue(activity + " should not be visible",
+                waitForVisible(activity, false /* visible */));
     }
 
-    public static boolean waitForFinishing(@NonNull Activity activity) {
+    private static boolean waitForFinishing(@NonNull Activity activity) {
         final long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < WAIT_FOR_LIFECYCLE_TIMEOUT_MS) {
             if (activity.isFinishing()) {
@@ -323,6 +350,10 @@ public class ActivityEmbeddingUtil {
             }
         }
         return activity.isFinishing();
+    }
+
+    public static void waitAndAssertFinishing(@NonNull Activity activity) {
+        assertTrue(activity + " should be finishing", waitForFinishing(activity));
     }
 
     @Nullable
@@ -377,5 +408,13 @@ public class ActivityEmbeddingUtil {
             outPrimaryActivityBounds.set(rightContainerBounds);
             outSecondaryActivityBounds.set(leftContainerBounds);
         }
+    }
+
+    private static boolean splitInfoTopSplitIsCorrect(@NonNull List<SplitInfo> splitInfoList,
+            @NonNull Activity primaryActivity, @NonNull Activity secondaryActivity) {
+        assertFalse("Split info callback should not be empty", splitInfoList.isEmpty());
+        final SplitInfo topSplit = splitInfoList.get(splitInfoList.size() - 1);
+        return primaryActivity.equals(getPrimaryStackTopActivity(topSplit))
+                && secondaryActivity.equals(getSecondaryStackTopActivity(topSplit));
     }
 }

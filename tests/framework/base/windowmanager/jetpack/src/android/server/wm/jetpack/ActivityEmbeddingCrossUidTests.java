@@ -24,7 +24,7 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLI
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit_expectFail;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -122,7 +122,7 @@ public class ActivityEmbeddingCrossUidTests extends ActivityEmbeddingTestBase {
         // Start an activity that will attempt to embed TestActivityKnownEmbeddingCerts
         startActivityNewTask(SIGNED_EMBEDDING_ACTIVITY);
 
-        assertTrue(waitForResumed(EMBEDDED_ACTIVITY_ID));
+        waitAndAssertResumed(EMBEDDED_ACTIVITY_ID);
         TestActivityWithId embeddedActivity = getResumedActivityById(EMBEDDED_ACTIVITY_ID);
         assertNotNull(embeddedActivity);
         assertTrue(mActivityEmbeddingComponent.isActivityEmbedded(embeddedActivity));

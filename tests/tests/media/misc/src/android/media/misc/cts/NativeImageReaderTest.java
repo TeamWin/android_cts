@@ -16,10 +16,13 @@
 
 package android.media.misc.cts;
 
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
+
+import androidx.annotation.RequiresApi;
 
 /**
  * Verification test for AImageReader.
@@ -52,7 +55,15 @@ public class NativeImageReaderTest extends AndroidTestCase {
         assertTrue("Surface created is invalid.", surface.isValid());
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    public void testSucceedsWithHardwareBufferFormatAndDataSpace() {
+        assertTrue(
+                "Native test failed, see log for details",
+                 testSucceedsWithHardwareBufferFormatAndDataSpaceNative());
+    }
+
     private static native boolean testSucceedsWithSupportedUsageFormatNative();
+    private static native boolean testSucceedsWithHardwareBufferFormatAndDataSpaceNative();
     private static native boolean testTakePicturesNative();
     private static native Surface testCreateSurfaceNative();
 }

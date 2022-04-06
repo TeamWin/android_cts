@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -503,6 +504,25 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 .isEqualTo(wakefulness);
     }
 
+    /**
+     * Checks a given condition once every {@link HdmiCecConstants.SLEEP_TIMESTEP_SECONDS} seconds
+     * until it is true, or {@link HdmiCecConstants.MAX_SLEEP_TIME_SECONDS} seconds have passed.
+     * Triggers an assertion failure if the condition remains false after the time limit.
+     * @param condition Callable that returns whether the condition is met
+     * @param errorMessage The message to print if the condition is false
+     */
+    public void waitForCondition(Callable<Boolean> condition, String errorMessage)
+            throws Exception {
+        int waitTimeSeconds = 0;
+        boolean conditionState;
+        do {
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.SLEEP_TIMESTEP_SECONDS);
+            waitTimeSeconds += HdmiCecConstants.SLEEP_TIMESTEP_SECONDS;
+            conditionState = condition.call();
+        } while (!conditionState && waitTimeSeconds <= HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
+        assertWithMessage(errorMessage).that(conditionState).isTrue();
+    }
+
     public void sendOtp() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("cmd hdmi_control onetouchplay");
@@ -551,6 +571,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             throws Exception {
         hdmiCecClient.clearClientOutput();
         device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_enabled 0");
+        waitForCondition(() -> !isCecAvailable(device), "Could not disable CEC");
         device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_enabled 1");
         // When a CEC device has just become available, the CEC adapter isn't able to send it
         // messages right away. Therefore we let the first <Give Power Status> message time-out, and
@@ -560,20 +581,36 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, source, CecOperand.REPORT_POWER_STATUS,
                 CecMessage.formatParams(HdmiCecConstants.CEC_POWER_STATUS_STANDBY));
-        checkIsCecAvailable(device);
+        waitForCondition(() -> isCecAvailable(device),
+                "Simulating that a sink is connected, failed.");
     }
 
-    private void checkIsCecAvailable(ITestDevice device) throws Exception {
-        boolean isCecAvailable;
-        int waitTimeSeconds = 0;
-        do {
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.SLEEP_TIMESTEP_SECONDS);
-            waitTimeSeconds += HdmiCecConstants.SLEEP_TIMESTEP_SECONDS;
-            isCecAvailable =
-                    device.executeShellCommand("dumpsys hdmi_control | grep mIsCecAvailable:")
-                            .replace("mIsCecAvailable:", "").trim().equals("true");
-        } while (!isCecAvailable && waitTimeSeconds <= HdmiCecConstants.MAX_SLEEP_TIME_SECONDS);
-        assertWithMessage("Simulating that a sink is connected, failed.")
-                .that(isCecAvailable).isTrue();
+    boolean isCecAvailable(ITestDevice device) throws Exception {
+        return device.executeShellCommand("dumpsys hdmi_control | grep mIsCecAvailable:")
+                .replace("mIsCecAvailable:", "").trim().equals("true");
+    }
+
+    /**
+     * Returns whether an audio output device is using full volume behavior by checking if it is in
+     * the "mFullVolumeDevices" line in audio dumpsys. Example: "mFullVolumeDevices=0x400,0x40001".
+     */
+    public boolean isFullVolumeDevice(int audioOutputDevice) throws Exception {
+        String[] splitLine = getDevice().executeShellCommand(
+                "dumpsys audio | grep mFullVolumeDevices").split("=");
+        if (splitLine.length < 2) {
+            // No full volume devices
+            return false;
+        }
+        String[] deviceStrings = splitLine[1].trim().split(",");
+        for (String deviceString : deviceStrings) {
+            try {
+                if (Integer.decode(deviceString) == audioOutputDevice) {
+                    return true;
+                }
+            } catch (NumberFormatException e) {
+                // Ignore this device and continue
+            }
+        }
+        return false;
     }
 }

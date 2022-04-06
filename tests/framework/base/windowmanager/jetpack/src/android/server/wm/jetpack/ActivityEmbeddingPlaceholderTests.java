@@ -19,12 +19,12 @@ package android.server.wm.jetpack;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.verifyFillsTask;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFinishing;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -83,7 +83,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
         // Finishing the primary activity and verify that the placeholder activity is also finishing
         primaryActivity.finish();
-        assertTrue(waitForFinishing(placeholderActivity));
+        waitAndAssertFinishing(placeholderActivity);
     }
 
     /**
@@ -104,7 +104,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         // the primary activity fills the task.
         Activity primaryActivity = startActivityNewTask(TestActivityWithId.class,
                 PRIMARY_ACTIVITY_ID);
-        assertFalse(waitForResumed(PLACEHOLDER_ACTIVITY_ID));
+        waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
         verifyFillsTask(primaryActivity);
     }
 
@@ -129,7 +129,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
         // Finish the placeholder activity and verify that the primary activity is also finishing
         placeholderActivity.finish();
-        assertTrue(waitForFinishing(primaryActivity));
+        waitAndAssertFinishing(primaryActivity);
     }
 
     /**
@@ -193,7 +193,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
         // Verify that the placeholder activity was finished and that the primary activity now
         // fills the task.
-        assertTrue(waitForFinishing(placeholderActivity));
+        waitAndAssertFinishing(placeholderActivity);
         assertTrue(primaryActivity.waitForBoundsChange());
         verifyFillsTask(primaryActivity);
     }
@@ -222,7 +222,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         Activity primaryActivity = startActivityNewTask(TestActivityWithId.class,
                 PRIMARY_ACTIVITY_ID);
         verifyFillsTask(primaryActivity);
-        assertFalse(waitForResumed(PLACEHOLDER_ACTIVITY_ID));
+        waitAndAssertNotResumed(PLACEHOLDER_ACTIVITY_ID);
 
         // Increase display width by 10% so that the primary and placeholder activities are stacked
         final Size currentSize = mReportedDisplayMetrics.getSize();
@@ -230,7 +230,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
                 currentSize.getHeight()));
 
         // Verify that the placeholder activity is launched into a split with the primary activity
-        assertTrue(waitForResumed(PLACEHOLDER_ACTIVITY_ID));
+        waitAndAssertResumed(PLACEHOLDER_ACTIVITY_ID);
         Activity placeholderActivity = getResumedActivityById(PLACEHOLDER_ACTIVITY_ID);
         assertValidSplit(primaryActivity, placeholderActivity, splitPlaceholderRule);
     }
@@ -268,7 +268,7 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         // Verify that the placeholder was not finished and fills the task
         assertTrue(placeholderActivity.waitForBoundsChange());
         verifyFillsTask(placeholderActivity);
-        assertTrue(waitForResumed(Arrays.asList(placeholderActivity)));
+        waitAndAssertResumed(Arrays.asList(placeholderActivity));
     }
 
     /**
@@ -350,10 +350,10 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
         // Launch the primary activity
         startActivityNewTask(TestActivityWithId.class, primaryActivityId);
         // Get primary activity
-        assertTrue(waitForResumed(primaryActivityId));
+        waitAndAssertResumed(primaryActivityId);
         Activity primaryActivity = getResumedActivityById(primaryActivityId);
         // Get placeholder activity
-        assertTrue(waitForResumed(placeholderActivityId));
+        waitAndAssertResumed(placeholderActivityId);
         Activity placeholderActivity = getResumedActivityById(placeholderActivityId);
         // Verify they are correctly split
         assertValidSplit(primaryActivity, placeholderActivity, splitPlaceholderRule);

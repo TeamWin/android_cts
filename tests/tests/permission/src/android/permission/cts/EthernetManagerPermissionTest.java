@@ -17,7 +17,6 @@
 package android.permission.cts;
 
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -80,22 +79,6 @@ public class EthernetManagerPermissionTest {
                 SecurityException.class,
                 () -> mEthernetManager.updateConfiguration(TEST_IFACE,
                         buildUpdateRequestWithoutCapabilities(), null, null));
-    }
-
-    /**
-     * Verify that calling {@link EthernetManager#updateConfiguration(
-     *String, EthernetNetworkUpdateRequest, Executor, BiConsumer)} requires automotive feature.
-     * <p>Tests Feature:
-     * {@link PackageManager#FEATURE_AUTOMOTIVE}.
-     */
-    @Test
-    public void testUpdateConfigurationWithCapabilitiesRequiresAutomotiveFeature() {
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_AUTOMOTIVE));
-        assertThrows("Should not be able to update NetworkCapabilities without automotive feature",
-                UnsupportedOperationException.class,
-                () -> mEthernetManager.updateConfiguration(TEST_IFACE,
-                        buildUpdateRequest(), null, null));
     }
 
     /**

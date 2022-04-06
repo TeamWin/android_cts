@@ -93,7 +93,9 @@ public class AttachedSurfaceControlTest {
 
     @After
     public void teardown() {
-        mOrientationSession.close();
+        if (mOrientationSession != null) {
+            mOrientationSession.close();
+        }
     }
 
     @Test

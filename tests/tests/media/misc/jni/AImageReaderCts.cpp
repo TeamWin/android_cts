@@ -32,14 +32,9 @@
 #include <camera/NdkCameraManager.h>
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraCaptureSession.h>
+#include <log/log_main.h>
 #include <media/NdkImage.h>
 #include <media/NdkImageReader.h>
-
-//#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
-//#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define ALOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
-#define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 namespace {
 
@@ -427,6 +422,15 @@ class ImageReaderTestCase {
                 return;
             }
         }
+
+        int32_t format = -1;
+        ret = AImage_getFormat(img.get(), &format);
+        if (ret != AMEDIA_OK || format != mFormat) {
+            ALOGE("Mismatched output buffer format, expected=%" PRId32 ", actual=%" PRId32,
+                  mFormat, format);
+            return;
+        }
+
         // Only increase mAcquiredImageCount if all checks pass.
         mAcquiredImageCount++;
     }
@@ -518,6 +522,30 @@ testSucceedsWithSupportedUsageFormatNative(JNIEnv* /*env*/, jclass /*clazz*/) {
         if (ret != AMEDIA_OK || outReader == nullptr) {
             ALOGE("AImageReader_newWithUsage failed with format: %" PRId64 ", usage: %" PRId64 ".",
                   combination.format, combination.usage);
+            return false;
+        }
+        AImageReader_delete(outReader);
+    }
+
+    return true;
+}
+
+extern "C" jboolean Java_android_media_misc_cts_NativeImageReaderTest_\
+testSucceedsWithHardwareBufferFormatAndDataSpaceNative(JNIEnv* /*env*/, jclass /*clazz*/) {
+    static constexpr uint64_t kTestImageUsage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN;
+    static constexpr int32_t kTestDataSpace = ADATASPACE_BT709;
+    static constexpr uint32_t kTestHardwareBufferFormat = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+    static constexpr int kTestImageCount = 8;
+
+    if (__builtin_available(android __ANDROID_API_T__, *)) {
+        AImageReader* outReader = nullptr;
+        media_status_t ret = AImageReader_newWithDataSpace(kTestImageWidth, kTestImageHeight,
+                kTestImageUsage, kTestImageCount, kTestHardwareBufferFormat, kTestDataSpace,
+                &outReader);
+
+        if (ret != AMEDIA_OK || outReader == nullptr) {
+            ALOGE("AImageReader_newWithUsage failed with format: %" PRId32 ", usage: %" PRId64 ".",
+                  kTestImageFormat, kTestImageUsage);
             return false;
         }
         AImageReader_delete(outReader);

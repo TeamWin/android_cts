@@ -16,4 +16,6 @@
   -->
 <configuration description="Excluded CTS developer tests from main CTS runs">
     <!-- Exclude the set of tests from the cts-developer plan here -->
+    <option name="compatibility:exclude-filter" value="CtsServiceKillTestCases" />
+
 </configuration>

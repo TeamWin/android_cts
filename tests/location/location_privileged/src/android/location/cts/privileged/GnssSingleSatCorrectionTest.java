@@ -61,6 +61,23 @@ public class GnssSingleSatCorrectionTest {
     }
 
     @Test
+    public void testWriteToParcelWithoutSomeOptionalFields() {
+        GnssSingleSatCorrection object = new GnssSingleSatCorrection.Builder()
+                .setConstellationType(GnssStatus.CONSTELLATION_GALILEO)
+                .setSatelliteId(12)
+                .setCarrierFrequencyHz(1575420000f)
+                .setProbabilityLineOfSight(0.1f)
+                .build();
+        Parcel parcel = Parcel.obtain();
+        object.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        GnssSingleSatCorrection fromParcel =
+                GnssSingleSatCorrection.CREATOR.createFromParcel(parcel);
+        assertEquals(object, fromParcel);
+        parcel.recycle();
+    }
+
+    @Test
     public void testClear() {
         GnssSingleSatCorrection.Builder builder = createTestSingleSatCorrectionBuilder();
         builder.clearProbabilityLineOfSight();

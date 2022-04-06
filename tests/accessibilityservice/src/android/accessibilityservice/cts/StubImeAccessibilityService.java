@@ -38,6 +38,17 @@ public class StubImeAccessibilityService extends InstrumentedAccessibilityServic
     private CountDownLatch mSelectionChangeLatch = null;
     private int mSelectionTarget = INVALID;
 
+    @FunctionalInterface
+    public interface OnStartInputCallback {
+        void onStartInput(EditorInfo editorInfo, boolean restarting);
+    }
+
+    private OnStartInputCallback mOnStartInputCallback;
+
+    public void setOnStartInputCallback(OnStartInputCallback callback) {
+        mOnStartInputCallback = callback;
+    }
+
     public void setStartInputCountDownLatch(CountDownLatch latch) {
         mStartInputLatch = latch;
     }
@@ -76,6 +87,9 @@ public class StubImeAccessibilityService extends InstrumentedAccessibilityServic
             if (mStartInputLatch != null) {
                 mStartInputLatch.countDown();
                 mStartInputLatch = null;
+            }
+            if (mOnStartInputCallback != null) {
+                mOnStartInputCallback.onStartInput(attribute, restarting);
             }
         }
     }

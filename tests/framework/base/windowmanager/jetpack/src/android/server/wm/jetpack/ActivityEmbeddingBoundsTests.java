@@ -20,8 +20,8 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLI
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.UNEVEN_CONTAINERS_DEFAULT_SPLIT_RATIO;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidSplit;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplit;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFillsTask;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForVisible;
 
 import static org.junit.Assert.assertTrue;
 
@@ -91,7 +91,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
             mReportedDisplayMetrics.setSize(new Size((int) (originalDisplaySize.getWidth() * 0.9),
                     originalDisplaySize.getHeight()));
             waitForFillsTask(secondaryActivity);
-            assertTrue(waitForVisible(primaryActivity, false));
+            waitAndAssertNotVisible(primaryActivity);
 
             // Return the display to its original size and verify that the activities are split
             secondaryActivity.resetBoundsChangeCounter();
