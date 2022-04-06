@@ -44,6 +44,7 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
+        "gts",
         "general-tests",
         "mts",
         "sts",

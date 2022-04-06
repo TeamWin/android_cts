@@ -49,6 +49,7 @@ android_test_helper_app {
     manifest: "latest/AndroidManifest.xml",
     test_suites: [
         "cts",
+        "gts",
         "general-tests",
     ],
 }
