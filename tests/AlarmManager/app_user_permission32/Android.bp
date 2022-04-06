@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package {
 }
 
 android_test_helper_app {
-    name: "AlarmTestApp",
+    name: "AlarmTestAppWithUserPermissionSdk32",
     defaults: ["cts_support_defaults"],
     sdk_version: "current",
     test_suites: [
@@ -25,10 +25,7 @@ android_test_helper_app {
         "general-tests",
         "mts",
     ],
-    srcs: [
-        "src/**/*.java",
-        ":CtsAlarmTestHelperCommon",
-    ],
+    srcs: [":CtsAlarmTestHelperCommon"],
     dex_preopt: {
         enabled: false,
     },
