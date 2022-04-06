@@ -21,6 +21,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.media.cts.Preconditions;
+import android.media.cts.TestArgs;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
@@ -84,9 +85,6 @@ public class EncoderTest {
     private static boolean sSaveResults = false;
     static final Map<String, String> mDefaultEncoders = new HashMap<>();
 
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
-    private static String mCodecPrefix;
-
     private final String mEncoderName;
     private final String mMime;
     private final int[] mProfiles;
@@ -111,9 +109,14 @@ public class EncoderTest {
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
-            String[] componentNames = MediaUtils.getEncoderNamesForMime((String)arg[0]);
+            String mediaType = (String)arg[0];
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
+            String[] componentNames = MediaUtils.getEncoderNamesForMime(mediaType);
             for (String name : componentNames) {
-                if (mCodecPrefix != null && !name.startsWith(mCodecPrefix)) {
+                if (TestArgs.CODEC_PREFIX != null && !name.startsWith(TestArgs.CODEC_PREFIX)) {
                     continue;
                 }
                 Object[] testArgs = new Object[argLength + 1];
@@ -123,11 +126,6 @@ public class EncoderTest {
             }
         }
         return argsList;
-    }
-
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
     }
 
     @Parameterized.Parameters(name = "{index}({0}_{1})")
