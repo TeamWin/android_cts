@@ -27,6 +27,7 @@ import android.graphics.Bitmap;
 import android.media.MediaFormat;
 import android.media.cts.MediaCodecTunneledPlayer;
 import android.media.cts.MediaHeavyPresubmitTest;
+import android.media.cts.TestArgs;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -69,7 +70,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     private static final int ALLOWED_GREATEST_PIXEL_DIFFERENCE = 90;
     private static final int OFFSET = 10;
     private static final long PER_TEST_TIMEOUT_MS = 60000;
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
     private static final String[] VIDEO_FILES = {
         // 144p
         "video_decode_accuracy_and_capability-h264_256x108_30fps.mp4",
@@ -150,7 +150,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private static final String INP_PREFIX = WorkDir.getMediaDirString() +
             "assets/decode_accuracy/";
-    private static String mCodecPrefix;
 
     private View videoView;
     private VideoViewFactory videoViewFactory;
@@ -159,11 +158,6 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
     private String decoderName;
     private String methodName;
     private SimplePlayer player;
-
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
-    }
 
     public DecodeAccuracyTest(String decoderName, String fileName, String testName) {
         this.testName = testName;
@@ -199,9 +193,14 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
             MediaFormat mediaFormat =
                     MediaUtils.getTrackFormatForResource(INP_PREFIX + file, "video");
             String mediaType = mediaFormat.getString(MediaFormat.KEY_MIME);
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
             String[] componentNames = MediaUtils.getDecoderNamesForMime(mediaType);
             for (String componentName : componentNames) {
-                if (mCodecPrefix != null && !componentName.startsWith(mCodecPrefix)) {
+                if (TestArgs.CODEC_PREFIX != null &&
+                        !componentName.startsWith(TestArgs.CODEC_PREFIX)) {
                     continue;
                 }
                 if (MediaUtils.supports(componentName, mediaFormat)) {

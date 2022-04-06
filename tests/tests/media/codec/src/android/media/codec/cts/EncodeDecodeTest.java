@@ -28,6 +28,7 @@ import android.media.cts.MediaCodecWrapper;
 import android.media.cts.NdkMediaCodec;
 import android.media.cts.OutputSurface;
 import android.media.cts.SdkMediaCodec;
+import android.media.cts.TestArgs;
 import android.opengl.GLES20;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
@@ -128,17 +129,41 @@ public class EncodeDecodeTest {
         int argLength = exhaustiveArgsList.get(0).length;
         MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         for (Object[] arg : exhaustiveArgsList) {
-            MediaFormat format = MediaFormat.createVideoFormat((String)arg[0], (Integer)arg[1],
+            String mediaType = (String)arg[0];
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
+
+            MediaFormat format = MediaFormat.createVideoFormat(mediaType, (Integer)arg[1],
                     (Integer)arg[2]);
 
-            String eName = mcl.findEncoderForFormat(format);
-            String dName = mcl.findDecoderForFormat(format);
-
-            Object[] testArgs = new Object[argLength + 2];
-            testArgs[0] = eName;
-            testArgs[1] = dName;
-            System.arraycopy(arg, 0, testArgs, 2, argLength);
-            argsList.add(testArgs);
+            String[] encoderNames = MediaUtils.getEncoderNamesForMime(mediaType);
+            String[] decoderNames = MediaUtils.getDecoderNamesForMime(mediaType);
+            // First pair of decoder and encoder that supports given format is chosen
+            outerLoop:
+            for (String decoder : decoderNames) {
+                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                    continue;
+                }
+                for (String encoder : encoderNames) {
+                    if (TestArgs.CODEC_PREFIX != null &&
+                            !encoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                        continue;
+                    }
+                    if (MediaUtils.supports(encoder, format) &&
+                            MediaUtils.supports(decoder, format)) {
+                        Object[] testArgs = new Object[argLength + 2];
+                        testArgs[0] = encoder;
+                        testArgs[1] = decoder;
+                        System.arraycopy(arg, 0, testArgs, 2, argLength);
+                        argsList.add(testArgs);
+                        // Test only the first codecs that support given format.
+                        // Remove the following break statement to test all codecs on the device.
+                        break outerLoop;
+                    }
+                }
+            }
         }
         return argsList;
     }
