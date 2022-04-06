@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 // This class verifies the resource management aspects of MediaCodecs.
-@Presubmit
 @SmallTest
 @RequiresDevice
 public class MediaCodecResourceTest {
