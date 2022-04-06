@@ -115,8 +115,11 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_BLUETOOTH);
-
             if (!mHasBluetooth) return;
+
+            mIsLeAudioSupported = TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO);
+            if (!mIsLeAudioSupported) return;
+
             TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
             BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
@@ -127,9 +130,6 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
             mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
             mIsProfileReady = false;
             mBluetoothLeAudio = null;
-
-            mIsLeAudioSupported =  TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO);
-            if (!mIsLeAudioSupported) return;
 
             mAdapter.getProfileProxy(getContext(), new BluetoothLeAudioServiceListener(),
                     BluetoothProfile.LE_AUDIO);
@@ -142,18 +142,19 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        if (mHasBluetooth) {
-            if (mBluetoothLeAudio != null) {
-                mBluetoothLeAudio.close();
-                mBluetoothLeAudio = null;
-                mIsProfileReady = false;
-            }
-            if (mAdapter != null) {
-                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-                mAdapter = null;
-            }
-            TestUtils.dropPermissionAsShellUid();
+        if (!(mHasBluetooth && mIsLeAudioSupported)) {
+            return;
         }
+        if (mBluetoothLeAudio != null) {
+            mBluetoothLeAudio.close();
+            mBluetoothLeAudio = null;
+            mIsProfileReady = false;
+        }
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
+        TestUtils.dropPermissionAsShellUid();
+        mAdapter = null;
     }
 
     public void testGetConnectedDevices() {
