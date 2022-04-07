@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.cts.tagging.sdk30memtag;
+package android.cts.tagging.sdk30;
 
 import android.content.pm.ApplicationInfo;
 
