@@ -88,14 +88,14 @@ class TestUtils {
             case BluetoothProfile.HID_HOST:
                 return BluetoothProperties.isProfileHidHostEnabled().orElse(false);
             case BluetoothProfile.LE_AUDIO:
-                return BluetoothProperties.isProfileBapUnicastServerEnabled().orElse(false);
+                return BluetoothProperties.isProfileBapUnicastClientEnabled().orElse(false);
             case BluetoothProfile.LE_AUDIO_BROADCAST:
                 return BluetoothProperties.isProfileBapBroadcastSourceEnabled().orElse(false);
             case BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT:
                 return BluetoothProperties.isProfileBapBroadcastAssistEnabled().orElse(false);
             // Hidden profile
             // case BluetoothProfile.LE_CALL_CONTROL:
-            //     return BluetoothProperties.isProfileTbsServerEnabled().orElse(false);
+            //     return BluetoothProperties.isProfileCcpServerEnabled().orElse(false);
             case BluetoothProfile.MAP:
                 return BluetoothProperties.isProfileMapServerEnabled().orElse(false);
             case BluetoothProfile.MAP_CLIENT:
@@ -115,7 +115,7 @@ class TestUtils {
             case BluetoothProfile.SAP:
                 return BluetoothProperties.isProfileSapServerEnabled().orElse(false);
             case BluetoothProfile.VOLUME_CONTROL:
-                return BluetoothProperties.isProfileVcServerEnabled().orElse(false);
+                return BluetoothProperties.isProfileVcpControllerEnabled().orElse(false);
             default:
                 return false;
         }
