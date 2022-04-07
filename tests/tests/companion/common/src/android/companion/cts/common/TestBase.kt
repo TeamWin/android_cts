@@ -115,8 +115,11 @@ abstract class TestBase {
         }
     }
 
-    protected fun createSelfManagedAssociation(displayName: String): Int {
-        val callback = RecordingCallback()
+    protected fun createSelfManagedAssociation(
+        displayName: String,
+        onAssociationCreatedAction: ((AssociationInfo) -> Unit)? = null
+    ): Int {
+        val callback = RecordingCallback(onAssociationCreatedAction = onAssociationCreatedAction)
         val request: AssociationRequest = AssociationRequest.Builder()
                 .setSelfManaged(true)
                 .setDisplayName(displayName)
