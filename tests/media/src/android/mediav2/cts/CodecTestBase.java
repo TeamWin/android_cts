@@ -1661,6 +1661,9 @@ class CodecEncoderTestBase extends CodecTestBase {
     // files are in WorkDir.getMediaDirString();
     private static final String INPUT_AUDIO_FILE = "bbb_2ch_44kHz_s16le.raw";
     private static final String INPUT_VIDEO_FILE = "bbb_cif_yuv420p_30fps.yuv";
+    protected static final String INPUT_AUDIO_FILE_HBD = "audio/sd_2ch_48kHz_f32le.raw";
+    protected static final String INPUT_VIDEO_FILE_HBD = "cosmat_cif_24fps_yuv420p16le.yuv";
+
     private final int INP_FRM_WIDTH = 352;
     private final int INP_FRM_HEIGHT = 288;
 
