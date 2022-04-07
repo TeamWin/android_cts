@@ -23,10 +23,12 @@ import android.signature.cts.ClassProvider;
 import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ReflectionHelper;
+import com.google.common.base.Suppliers;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.junit.Test;
 
@@ -37,17 +39,22 @@ public class SignatureTest extends AbstractApiTest {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
 
-    protected String[] expectedApiFiles;
-    protected String[] previousApiFiles;
-    protected String[] baseApiFiles;
-    private String[] unexpectedApiFiles;
+    protected static final Supplier<String[]> EXPECTED_API_FILES =
+            getSupplierOfAnOptionalCommaSeparatedListArgument("expected-api-files");
+    protected static final Supplier<String[]> BASE_API_FILES =
+            getSupplierOfAnOptionalCommaSeparatedListArgument("base-api-files");
+    protected static final Supplier<String[]> UNEXPECTED_API_FILES =
+            getSupplierOfAnOptionalCommaSeparatedListArgument("unexpected-api-files");
+    protected static final Supplier<String[]> PREVIOUS_API_FILES =
+            getSupplierOfAnOptionalCommaSeparatedListArgument("previous-api-files");
+
+    protected static final Supplier<Set<JDiffClassDescription>> UNEXPECTED_CLASSES =
+            Suppliers.memoize(SignatureTest::loadUnexpectedClasses)::get;
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
-        expectedApiFiles = getCommaSeparatedListOptional(instrumentationArgs, "expected-api-files");
-        baseApiFiles = getCommaSeparatedListOptional(instrumentationArgs, "base-api-files");
-        unexpectedApiFiles = getCommaSeparatedListOptional(instrumentationArgs, "unexpected-api-files");
-        previousApiFiles = getCommaSeparatedListOptional(instrumentationArgs, "previous-api-files");
+        String[] expectedApiFiles = EXPECTED_API_FILES.get();
+        String[] unexpectedApiFiles = UNEXPECTED_API_FILES.get();
 
         if (expectedApiFiles.length + unexpectedApiFiles.length == 0) {
             throw new IllegalStateException(
@@ -64,7 +71,7 @@ public class SignatureTest extends AbstractApiTest {
     @Test
     public void testSignature() {
         runWithTestResultObserver(mResultObserver -> {
-            Set<JDiffClassDescription> unexpectedClasses = loadUnexpectedClasses();
+            Set<JDiffClassDescription> unexpectedClasses = UNEXPECTED_CLASSES.get();
             for (JDiffClassDescription classDescription : unexpectedClasses) {
                 Class<?> unexpectedClass = findUnexpectedClass(classDescription, mClassProvider);
                 if (unexpectedClass != null) {
@@ -81,9 +88,11 @@ public class SignatureTest extends AbstractApiTest {
             // Load classes from any API files that form the base which the expected APIs extend.
             loadBaseClasses(complianceChecker);
             // Load classes from system API files and check for signature compliance.
+            String[] expectedApiFiles = EXPECTED_API_FILES.get();
             checkClassesSignatureCompliance(complianceChecker, expectedApiFiles, unexpectedClasses,
                     false /* isPreviousApi */);
             // Load classes from previous API files and check for signature compliance.
+            String[] previousApiFiles = PREVIOUS_API_FILES.get();
             checkClassesSignatureCompliance(complianceChecker, previousApiFiles, unexpectedClasses,
                     true /* isPreviousApi */);
 
@@ -105,9 +114,10 @@ public class SignatureTest extends AbstractApiTest {
         }
     }
 
-    private Set<JDiffClassDescription> loadUnexpectedClasses() {
+    private static Set<JDiffClassDescription> loadUnexpectedClasses() {
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
-        return parseApiResourcesAsStream(apiDocumentParser, unexpectedApiFiles)
+        return retrieveApiResourcesAsStream(SignatureTest.class.getClassLoader(), UNEXPECTED_API_FILES.get())
+                .flatMap(apiDocumentParser::parseAsStream)
                 .collect(Collectors.toCollection(SignatureTest::newSetOfClassDescriptions));
     }
 
@@ -117,7 +127,7 @@ public class SignatureTest extends AbstractApiTest {
 
     private void loadBaseClasses(ApiComplianceChecker complianceChecker) {
         ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
-        parseApiResourcesAsStream(apiDocumentParser, baseApiFiles)
+        parseApiResourcesAsStream(apiDocumentParser, BASE_API_FILES.get())
                 .forEach(complianceChecker::addBaseClass);
     }
 

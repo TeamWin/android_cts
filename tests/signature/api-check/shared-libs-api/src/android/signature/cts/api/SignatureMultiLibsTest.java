@@ -22,12 +22,13 @@ import android.signature.cts.ApiDocumentParser;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.VirtualPath;
 import androidx.test.platform.app.InstrumentationRegistry;
+import com.google.common.base.Suppliers;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
@@ -44,19 +45,29 @@ public class SignatureMultiLibsTest extends SignatureTest {
 
     private static final String TAG = SignatureMultiLibsTest.class.getSimpleName();
 
-    private static Set<String> libraries;
+    /**
+     * A memoized supplier of the list of shared libraries on the device.
+     */
+    protected static final Supplier<Set<String>> AVAILABLE_SHARED_LIBRARIES =
+            Suppliers.memoize(SignatureMultiLibsTest::retrieveActiveSharedLibraries)::get;
 
     /**
-     * Obtain a list of shared libraries from the device.
+     * Retrieve the names of the shared libraries that are active on the device.
+     *
+     * @return The set of shared library names.
      */
-    @BeforeClass
-    public static void retrieveListOfSharedLibrariesOnDevice() throws Exception {
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        String result = runShellCommand(instrumentation, "cmd package list libraries");
-        libraries = Arrays.stream(result.split("\n")).map(line -> line.split(":")[1])
-                .peek(library -> System.out.printf("%s: Found library: %s%n",
-                        SignatureMultiLibsTest.class.getSimpleName(), library))
-                .collect(Collectors.toCollection(TreeSet::new));
+    private static Set<String> retrieveActiveSharedLibraries() {
+        try {
+            Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            String result = runShellCommand(instrumentation, "cmd package list libraries");
+            return Arrays.stream(result.split("\n")).map(line -> line.split(":")[1])
+                    .peek(library -> System.out.printf("%s: Found library: %s%n",
+                            SignatureMultiLibsTest.class.getSimpleName(), library))
+                    .collect(Collectors.toCollection(TreeSet::new));
+        } catch (Exception e) {
+            throw new IllegalStateException(
+                    "could not retrieve the list of shared libraries", e);
+        }
     }
 
     /**
@@ -87,7 +98,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            parseActiveSharedLibraryApis(apiDocumentParser, expectedApiFiles)
+            parseActiveSharedLibraryApis(apiDocumentParser, EXPECTED_API_FILES.get())
                     .forEach(complianceChecker::checkSignatureCompliance);
 
             // After done parsing all expected API files, perform any deferred checks.
@@ -106,7 +117,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-            parseActiveSharedLibraryApis(apiDocumentParser, previousApiFiles)
+            parseActiveSharedLibraryApis(apiDocumentParser, PREVIOUS_API_FILES.get())
                     .map(clazz -> clazz.setPreviousApiFlag(true))
                     .forEach(complianceChecker::checkSignatureCompliance);
 
@@ -125,7 +136,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
     private boolean checkLibrary (VirtualPath path) {
         String name = path.toString();
         String libraryName = name.substring(name.lastIndexOf('/') + 1).split("-")[0];
-        boolean matched = libraries.contains(libraryName);
+        boolean matched = AVAILABLE_SHARED_LIBRARIES.get().contains(libraryName);
         if (matched) {
             System.out.printf("%s: Processing API file %s, from library %s as it does match a"
                             + " shared library on this device%n",

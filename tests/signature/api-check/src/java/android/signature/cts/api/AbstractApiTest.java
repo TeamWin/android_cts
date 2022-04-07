@@ -35,13 +35,14 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 
+import com.google.common.base.Suppliers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import org.junit.Before;
@@ -174,6 +175,13 @@ public abstract class AbstractApiTest {
                     e);
         }
         mResultObserver.onTestComplete(); // Will throw is there are failures
+    }
+
+    static Supplier<String[]> getSupplierOfAnOptionalCommaSeparatedListArgument(String key) {
+        return Suppliers.memoize(() -> {
+            Bundle arguments = InstrumentationRegistry.getArguments();
+            return getCommaSeparatedListOptional(arguments, key);
+        })::get;
     }
 
     static String[] getCommaSeparatedListOptional(Bundle instrumentationArgs, String key) {
