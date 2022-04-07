@@ -452,7 +452,8 @@ class ItsSession(object):
     self.sock.settimeout(self.SOCK_TIMEOUT)
     return data['objValue']
 
-  def do_basic_recording(self, profile_id, quality, duration):
+  def do_basic_recording(self, profile_id, quality, duration,
+                         video_stabilization_mode=0):
     """Issue a recording request and read back the video recording object.
 
     The recording will be done with the format specified in quality. These
@@ -465,6 +466,10 @@ class ItsSession(object):
       profile_id: int; profile id corresponding to the quality level.
       quality: Video recording quality such as High, Low, VGA.
       duration: The time in seconds for which the video will be recorded.
+      video_stabilization_mode: Video stabilization mode ON/OFF. Value can be
+      0: 'OFF'
+      1: 'ON'
+      2: 'PREVIEW'
     Returns:
       video_recorded_object: The recorded object returned from ItsService which
       contains path at which the recording is saved on the device, quality of the
@@ -482,7 +487,8 @@ class ItsSession(object):
       }
     """
     cmd = {'cmdName': 'doBasicRecording', 'cameraId': self._camera_id,
-        'profileId': profile_id, 'quality': quality, 'recordingDuration': duration}
+        'profileId': profile_id, 'quality': quality, 'recordingDuration': duration,
+        'videoStabilizationMode': video_stabilization_mode}
     self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
     timeout = self.SOCK_TIMEOUT + self.EXTRA_SOCK_TIMEOUT
     self.sock.settimeout(timeout)
