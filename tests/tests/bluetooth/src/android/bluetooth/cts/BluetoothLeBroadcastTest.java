@@ -55,7 +55,6 @@ public class BluetoothLeBroadcastTest {
     private static final String TAG = BluetoothLeBroadcastTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final String PROFILE_SUPPORTED_LE_BROADCAST = "profile_supported_le_broadcast";
 
     private Context mContext;
     private boolean mHasBluetooth;
@@ -90,7 +89,7 @@ public class BluetoothLeBroadcastTest {
                 mAdapter.isLeAudioBroadcastSourceSupported() == FEATURE_SUPPORTED;
         if (mIsLeBroadcastSupported) {
             boolean isBroadcastSourceEnabledInConfig =
-                    TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO_BROADCAST);
+                    TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO_BROADCAST);
             assertTrue("Config must be true when profile is supported",
                     isBroadcastSourceEnabledInConfig);
         }
@@ -111,7 +110,9 @@ public class BluetoothLeBroadcastTest {
                 mBluetoothLeBroadcast = null;
                 mIsProfileReady = false;
             }
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+            if (mAdapter != null) {
+                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+            }
             mAdapter = null;
             TestUtils.dropPermissionAsShellUid();
         }

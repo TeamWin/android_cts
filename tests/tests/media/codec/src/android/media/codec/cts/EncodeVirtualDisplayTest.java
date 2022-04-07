@@ -30,6 +30,7 @@ import android.media.cts.CompositionTextureView;
 import android.media.cts.InputSurface;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.OutputSurface;
+import android.media.cts.TestArgs;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.Bundle;
@@ -95,8 +96,6 @@ public class EncodeVirtualDisplayTest {
     private static final boolean VERBOSE = false;           // lots of logging
     private static final boolean DEBUG_SAVE_FILE = false;   // save copy of encoded movie
     private static final String DEBUG_FILE_NAME_BASE = "/sdcard/test.";
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
-    private static String mCodecPrefix;
 
     // Virtual display characteristics.  Scaled down from full display size because not all
     // devices can encode at the resolution of their own display.
@@ -161,9 +160,14 @@ public class EncodeVirtualDisplayTest {
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
-            String[] componentNames = MediaUtils.getEncoderNamesForMime((String)arg[0]);
+            String mediaType = (String)arg[0];
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
+            String[] componentNames = MediaUtils.getEncoderNamesForMime(mediaType);
             for (String name : componentNames) {
-                if (mCodecPrefix != null && !name.startsWith(mCodecPrefix)) {
+                if (TestArgs.CODEC_PREFIX != null && !name.startsWith(TestArgs.CODEC_PREFIX)) {
                     continue;
                 }
                 Object[] testArgs = new Object[argLength + 1];
@@ -174,11 +178,6 @@ public class EncodeVirtualDisplayTest {
             }
         }
         return argsList;
-    }
-
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
     }
 
     @Parameterized.Parameters(name = "{index}({0}:{6})")

@@ -42,6 +42,7 @@ import android.media.cts.MediaTestBase;
 import android.media.cts.NonMediaMainlineTest;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
+import android.media.cts.TestArgs;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -100,9 +101,6 @@ public class VideoEncoderTest extends MediaTestBase {
     private static final String SOURCE_URL =
             mInpPrefix + "video_480x360_mp4_h264_871kbps_30fps.mp4";
 
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
-    private static final String mCodecPrefix;
-
     private final Encoder mEncHandle;
 
     private final boolean DEBUG = false;
@@ -119,10 +117,6 @@ public class VideoEncoderTest extends MediaTestBase {
         super.tearDown();
     }
 
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
-    }
 
     class VideoStorage {
         private LinkedList<Pair<ByteBuffer, BufferInfo>> mStream;
@@ -1271,9 +1265,14 @@ public class VideoEncoderTest extends MediaTestBase {
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
-            String[] encodersForMime = MediaUtils.getEncoderNamesForMime((String) arg[0]);
+            String mediaType = (String)arg[0];
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
+            String[] encodersForMime = MediaUtils.getEncoderNamesForMime(mediaType);
             for (String encoder : encodersForMime) {
-                if (mCodecPrefix != null && !encoder.startsWith(mCodecPrefix)) {
+                if (TestArgs.CODEC_PREFIX != null && !encoder.startsWith(TestArgs.CODEC_PREFIX)) {
                     continue;
                 }
                 Object[] testArgs = new Object[argLength + 1];

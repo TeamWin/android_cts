@@ -20,6 +20,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.cts.NonMediaMainlineTest;
+import android.media.cts.TestArgs;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 import android.util.Size;
@@ -73,14 +74,24 @@ public class VideoDecoderRotationTest {
             if (info.isAlias() || info.isEncoder()) {
                 continue;
             }
+            String name = info.getName();
+            if (TestArgs.CODEC_PREFIX != null && !name.startsWith(TestArgs.CODEC_PREFIX)) {
+                continue;
+            }
+
             for (String type : info.getSupportedTypes()) {
                 if (!SUPPORTED_TYPES.contains(type)) {
                     continue;
                 }
-                testParams.add(new Object[] { info.getName(), type, Integer.valueOf(90) });
-                testParams.add(new Object[] { info.getName(), type, Integer.valueOf(180) });
-                testParams.add(new Object[] { info.getName(), type, Integer.valueOf(270) });
-                testParams.add(new Object[] { info.getName(), type, Integer.valueOf(360) });
+                if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                        !type.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                    continue;
+                }
+
+                testParams.add(new Object[] { name, type, Integer.valueOf(90) });
+                testParams.add(new Object[] { name, type, Integer.valueOf(180) });
+                testParams.add(new Object[] { name, type, Integer.valueOf(270) });
+                testParams.add(new Object[] { name, type, Integer.valueOf(360) });
             }
         }
         return testParams;

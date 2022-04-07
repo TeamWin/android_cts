@@ -28,6 +28,7 @@ import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.Preconditions;
+import android.media.cts.TestArgs;
 import android.media.cts.TestUtils;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -85,9 +86,6 @@ public class VideoDecoderPerfTest extends MediaTestBase {
 
     private static final int MAX_SIZE_SAMPLES_IN_MEMORY_BYTES = 12 << 20;  // 12MB
 
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
-    private static final String mCodecPrefix;
-
     private final String mDecoderName;
     private final String mMediaType;
     private final String[] mResources;
@@ -106,9 +104,14 @@ public class VideoDecoderPerfTest extends MediaTestBase {
         final List<Object[]> argsList = new ArrayList<>();
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
-            String[] decoders = MediaUtils.getDecoderNamesForMime((String) arg[0]);
+            String mediaType = (String)arg[0];
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
+            String[] decoders = MediaUtils.getDecoderNamesForMime(mediaType);
             for (String decoder : decoders) {
-                if (mCodecPrefix != null && !decoder.startsWith(mCodecPrefix)) {
+                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
                     continue;
                 }
                 Object[] testArgs = new Object[argLength + 1];
@@ -119,11 +122,6 @@ public class VideoDecoderPerfTest extends MediaTestBase {
             }
         }
         return argsList;
-    }
-
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
     }
 
     @Parameterized.Parameters(name = "{index}({0}:{3})")

@@ -32,6 +32,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.CodecUtils;
 import android.media.cts.Preconditions;
+import android.media.cts.TestArgs;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
@@ -129,8 +130,15 @@ public class ImageReaderDecoderTest {
         final List<Object[]> argsList = new ArrayList<>();
         for (MediaAssets assets : ASSETS) {
             String mime = assets.getMime();
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mime.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                continue;
+            }
             String[] decoders = MediaUtils.getDecoderNamesForMime(mime);
             for (String decoder: decoders) {
+                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                    continue;
+                }
                 for (MediaAsset asset : assets.getAssets()) {
                     String id = asset.getWidth() + "x" + asset.getHeight();
                     id += "_" + asset.getBitDepth() + "bit";

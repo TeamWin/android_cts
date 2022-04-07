@@ -54,7 +54,6 @@ public class BluetoothHapClientTest {
     private static final String TAG = BluetoothHapClientTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final String PROFILE_SUPPORTED_HAP_CLIENT = "profile_supported_hap_client";
 
     private Context mContext;
     private boolean mHasBluetooth;
@@ -76,20 +75,20 @@ public class BluetoothHapClientTest {
         if (!mHasBluetooth) {
             return;
         }
+
+        mIsHapClientSupported = TestUtils.isProfileEnabled(BluetoothProfile.HAP_CLIENT);
+        if (!mIsHapClientSupported) {
+            return;
+        }
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-
 
         mProfileConnectedlock = new ReentrantLock();
         mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
         mIsProfileReady = false;
         mBluetoothHapClient = null;
-
-        mIsHapClientSupported = TestUtils.getProfileConfigValueOrDie(BluetoothProfile.HAP_CLIENT);
-        if (!mIsHapClientSupported) {
-            return;
-        }
 
         mAdapter.getProfileProxy(mContext, new BluetoothHapClientServiceListener(),
                 BluetoothProfile.HAP_CLIENT);
@@ -97,16 +96,19 @@ public class BluetoothHapClientTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mHasBluetooth) {
-            if (mAdapter != null && mBluetoothHapClient != null) {
-                mBluetoothHapClient.close();
-                mBluetoothHapClient = null;
-                mIsProfileReady = false;
-            }
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
+        if (!(mHasBluetooth && mIsHapClientSupported)) {
+            return;
         }
+        if (mAdapter != null && mBluetoothHapClient != null) {
+            mBluetoothHapClient.close();
+            mBluetoothHapClient = null;
+            mIsProfileReady = false;
+        }
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
+        mAdapter = null;
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test

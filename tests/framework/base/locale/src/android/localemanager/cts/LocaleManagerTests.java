@@ -26,6 +26,7 @@ import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_BROAD
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_CREATION_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_APP_MAIN_ACTIVITY;
 import static android.localemanager.cts.util.LocaleConstants.INSTALLER_PACKAGE;
+import static android.localemanager.cts.util.LocaleConstants.NON_EXISTENT_PACKAGE;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_BROADCAST_INFO_PROVIDER_ACTION;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_BROADCAST_RECEIVER;
 import static android.localemanager.cts.util.LocaleConstants.TEST_APP_CONFIG_CHANGED_INFO_PROVIDER_ACTION;
@@ -470,6 +471,36 @@ public class LocaleManagerTests extends ActivityManagerTestBase {
         // When app-specific locales aren't set, we expect get api to return empty list
         // and not throw any error.
         assertEquals(LocaleList.getEmptyLocaleList(), sLocaleManager.getApplicationLocales());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGetApplicationLocales_nullPackageName_throwsNPE() {
+        sLocaleManager.getApplicationLocales(/* appPackageName= */ null);
+        fail("Expected NullPointerException due to null package name argument.");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetApplicationLocales_invalidPackageName_throwsIllegalArgumentException() {
+        sLocaleManager.getApplicationLocales(NON_EXISTENT_PACKAGE);
+        fail("Expected IllegalArgumentException due to invalid package.");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetApplicationLocales_nullPackageName_throwsNPE() {
+        sLocaleManager.setApplicationLocales(/* appPackageName= */ null, DEFAULT_APP_LOCALES);
+        fail("Expected NullPointerException due to null package name argument.");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetApplicationLocales_nullLocales_throwsNPE() {
+        sLocaleManager.setApplicationLocales(TEST_APP_PACKAGE, /* locales= */ null);
+        fail("Expected NullPointerException due to null locales argument.");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetApplicationLocales_invalidPackageName_throwsIllegalArgumentException() {
+        sLocaleManager.setApplicationLocales(NON_EXISTENT_PACKAGE, DEFAULT_APP_LOCALES);
+        fail("Expected IllegalArgumentException due to invalid package.");
     }
 
     /**

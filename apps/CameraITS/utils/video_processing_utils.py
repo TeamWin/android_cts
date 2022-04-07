@@ -36,13 +36,13 @@ ITS_SUPPORTED_QUALITIES = (
 )
 
 
-def extract_key_frames_from_video(log_path, mp4_file_name):
+def extract_key_frames_from_video(log_path, video_file_name):
   """
   Returns a list of extracted key frames.
 
   Ffmpeg tool is used to extract key frames from the video at path
-  os.path.join(log_path, mp4_file_name).
-  The extracted key frames will have the name mp4_file_name with "_key_frame"
+  os.path.join(log_path, video_file_name).
+  The extracted key frames will have the name video_file_name with "_key_frame"
   suffix to identify the frames for video of each quality.Since there can be
   multiple key frames, each key frame image will be differentiated with it's
   frame index.All the extracted key frames will be available in  jpeg format
@@ -50,26 +50,26 @@ def extract_key_frames_from_video(log_path, mp4_file_name):
 
   Args:
     log_path: path for video file directory
-    mp4_file_name: name of the file in mp4 format.
+    video_file_name: name of the video file.
     Ex: VID_20220325_050918_0_CIF_352x288.mp4
   Returns:
     key_frame_files: A list of paths for each key frame extracted from the
     video.
   """
-  ffmpeg_image_name = f"{mp4_file_name.split('.')[0]}_key_frame"
+  ffmpeg_image_name = f"{video_file_name.split('.')[0]}_key_frame"
   ffmpeg_image_file_path = os.path.join(log_path, ffmpeg_image_name + '_%02d.png')
   cmd = ['ffmpeg',
     '-skip_frame',
     'nokey',
     '-i',
-    os.path.join(log_path, mp4_file_name),
+    os.path.join(log_path, video_file_name),
     '-vsync',
     'vfr',
     '-frame_pts',
     'true' ,
     ffmpeg_image_file_path,
   ]
-  logging.debug('Extracting key frames for: %s' % mp4_file_name)
+  logging.debug('Extracting key frames from: %s' % video_file_name)
   output = subprocess.call(cmd)
   arr = os.listdir(os.path.join(log_path))
   key_frame_files = []

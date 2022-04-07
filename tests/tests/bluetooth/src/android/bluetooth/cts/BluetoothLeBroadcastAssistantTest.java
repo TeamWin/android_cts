@@ -95,8 +95,7 @@ public class BluetoothLeBroadcastAssistantTest {
                 mAdapter.isLeAudioBroadcastAssistantSupported() == FEATURE_SUPPORTED;
         if (mIsBroadcastAssistantSupported) {
             boolean isBroadcastAssistantEnabledInConfig =
-                    TestUtils.getProfileConfigValueOrDie(
-                            BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT);
+                    TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT);
             assertTrue("Config must be true when profile is supported",
                     isBroadcastAssistantEnabledInConfig);
         }
@@ -114,7 +113,9 @@ public class BluetoothLeBroadcastAssistantTest {
                 mBluetoothLeBroadcastAssistant = null;
                 mIsProfileReady = false;
             }
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+            if (mAdapter != null) {
+                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+            }
             mAdapter = null;
             TestUtils.dropPermissionAsShellUid();
         }

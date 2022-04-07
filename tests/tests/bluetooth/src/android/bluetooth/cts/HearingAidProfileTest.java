@@ -83,6 +83,9 @@ public class HearingAidProfileTest extends AndroidTestCase {
         if (!isBleSupported()) return;
         mIsBleSupported = true;
 
+        mIsHearingAidSupported = TestUtils.isProfileEnabled(BluetoothProfile.HEARING_AID);
+        if (!mIsHearingAidSupported) return;
+
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
@@ -95,17 +98,18 @@ public class HearingAidProfileTest extends AndroidTestCase {
         mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
         mIsProfileReady = false;
         mService = null;
-        mIsHearingAidSupported = mBluetoothAdapter.getProfileProxy(getContext(),
-                                                  new HearingAidsServiceListener(),
-                                                  BluetoothProfile.HEARING_AID);
-        if (!mIsHearingAidSupported) return;
+        mBluetoothAdapter.getProfileProxy(getContext(), new HearingAidsServiceListener(),
+                BluetoothProfile.HEARING_AID);
     }
 
     @Override
     public void tearDown() {
-        if (!mIsBleSupported) return;
-
-        assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
+        if (!(mIsBleSupported && mIsHearingAidSupported)) {
+            return;
+        }
+        if (mBluetoothAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
+        }
         mUiAutomation.dropShellPermissionIdentity();
     }
 

@@ -61,20 +61,27 @@ public class BluetoothHapPresetInfoTest {
         if (!mHasBluetooth) {
             return;
         }
+
+        mIsHapSupported = TestUtils.isProfileEnabled(BluetoothProfile.HAP_CLIENT);
+        if (!mIsHapSupported) {
+            return;
+        }
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-
-        mIsHapSupported = TestUtils.getProfileConfigValueOrDie(BluetoothProfile.HAP_CLIENT);
     }
 
     @After
     public void tearDown() {
-        if (mHasBluetooth) {
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            mAdapter = null;
-            TestUtils.dropPermissionAsShellUid();
+        if (!(mHasBluetooth && mIsHapSupported)) {
+            return;
         }
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
+        mAdapter = null;
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test

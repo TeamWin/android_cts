@@ -62,6 +62,7 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
+        "Nene",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "core-tests-support",

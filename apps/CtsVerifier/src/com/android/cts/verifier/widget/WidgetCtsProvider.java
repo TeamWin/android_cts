@@ -139,7 +139,8 @@ public class WidgetCtsProvider extends AppWidgetProvider {
                 && sSDKLevel < android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return false;
         }
-        return true;
+        // TODO: revert when b/228227212 is fixed (underlying cause of b/204831731)
+        return false;
     }
 
     @Override

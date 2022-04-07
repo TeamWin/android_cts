@@ -64,6 +64,7 @@ import static org.junit.Assert.fail;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.keystore.cts.Attestation;
 import android.keystore.cts.util.TestUtils;
 import android.os.Build;
 import android.os.SystemProperties;
@@ -80,6 +81,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.compatibility.common.util.CddTest;
 
 import com.google.common.collect.ImmutableSet;
@@ -486,6 +489,54 @@ public class KeyAttestationTest {
         } finally {
             KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
             keyStore.load(null);
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
+    @Test
+    public void testEcAttestation_UniqueIdWorksWithCorrectPermission() throws Exception {
+        String keystoreAlias = "test_key";
+        KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                .setDigests(DIGEST_NONE, DIGEST_SHA256, DIGEST_SHA512)
+                .setAttestationChallenge(new byte[128])
+                .setUniqueIdIncluded(true)
+                .build();
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        try (PermissionContext c = TestApis.permissions().withPermission(
+                  "android.permission.REQUEST_UNIQUE_ID_ATTESTATION")) {
+            generateKeyPair(KEY_ALGORITHM_EC, spec);
+            Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
+            Attestation attestation = Attestation.loadFromCertificate((X509Certificate) certificates[0]);
+            byte[] firstUniqueId = attestation.getUniqueId();
+            assertTrue("UniqueId must not be empty", firstUniqueId.length > 0);
+
+            // The unique id rotates (30 days in the default implementation), and it's possible to
+            // get a spurious failure if the test runs exactly when the rotation occurs. Allow a
+            // single retry, just in case.
+            byte[] secondUniqueId = null;
+            for (int i = 0; i < 2; ++i) {
+                keyStore.deleteEntry(keystoreAlias);
+
+                generateKeyPair(KEY_ALGORITHM_EC, spec);
+                certificates = keyStore.getCertificateChain(keystoreAlias);
+                attestation = Attestation.loadFromCertificate((X509Certificate) certificates[0]);
+                secondUniqueId = attestation.getUniqueId();
+
+                if (Arrays.equals(firstUniqueId, secondUniqueId)) {
+                    break;
+                } else {
+                    firstUniqueId = secondUniqueId;
+                    secondUniqueId = null;
+                }
+            }
+            assertTrue("UniqueIds must be consistent",
+                    Arrays.equals(firstUniqueId, secondUniqueId));
+
+        } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
     }

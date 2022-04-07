@@ -28,8 +28,6 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PRO
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.ManagedProfileProvisioningParams;
 import android.app.admin.ProvisioningException;
@@ -50,6 +48,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -116,8 +115,11 @@ public class DevicePolicyManagementRoleHolderTest {
             profile = sDevicePolicyManager.createAndProvisionManagedProfile(
                     MANAGED_PROFILE_PROVISIONING_PARAMS);
 
-            assertThat(TestApis.packages().installedForUser(UserReference.of(profile)))
-                    .contains(Package.of(roleHolderApp.packageName()));
+            UserReference userReference = UserReference.of(profile);
+            Poll.forValue(() -> TestApis.packages().installedForUser(userReference))
+                    .toMeet(packages -> packages.contains(Package.of(roleHolderApp.packageName())))
+                    .errorOnFail("Role holder package not installed on the managed profile.")
+                    .await();
         } finally {
             if (profile != null) {
                 TestApis.users().find(profile).remove();
@@ -149,8 +151,11 @@ public class DevicePolicyManagementRoleHolderTest {
                     /* adminExtras= */ null,
                     /* flags= */ 0);
 
-            assertThat(TestApis.packages().installedForUser(UserReference.of(managedUser)))
-                    .contains(Package.of(roleHolderApp.packageName()));
+            UserReference userReference = UserReference.of(managedUser);
+            Poll.forValue(() -> TestApis.packages().installedForUser(userReference))
+                    .toMeet(packages -> packages.contains(Package.of(roleHolderApp.packageName())))
+                    .errorOnFail("Role holder package not installed on the managed user.")
+                    .await();
         } finally {
             if (managedUser != null) {
                 TestApis.users().find(managedUser).remove();
