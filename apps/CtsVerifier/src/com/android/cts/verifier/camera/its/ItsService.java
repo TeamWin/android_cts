@@ -250,13 +250,15 @@ public class ItsService extends Service implements SensorEventListener {
         public String quality;
         public Size videoSize;
         public int videoFrameRate;
+        public int fileFormat;
 
         public VideoRecordingObject(String recordedOutputPath,
-                String quality, Size videoSize, int videoFrameRate) {
+                String quality, Size videoSize, int videoFrameRate, int fileFormat) {
             this.recordedOutputPath = recordedOutputPath;
             this.quality = quality;
             this.videoSize = videoSize;
             this.videoFrameRate = videoFrameRate;
+            this.fileFormat = fileFormat;
         }
     }
 
@@ -1735,7 +1737,8 @@ public class ItsService extends Service implements SensorEventListener {
         assert(camcorderProfile != null);
         Size videoSize = new Size(camcorderProfile.videoFrameWidth,
                 camcorderProfile.videoFrameHeight);
-        String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize, quality);
+        int fileFormat = camcorderProfile.fileFormat;
+        String outputFilePath = getOutputMediaFile(cameraDeviceId, videoSize, quality, fileFormat);
         assert(outputFilePath != null);
         Log.i(TAG, "Video recording outputFilePath:"+ outputFilePath);
         setupMediaRecorderWithProfile(cameraDeviceId, camcorderProfile, outputFilePath);
@@ -1779,7 +1782,7 @@ public class ItsService extends Service implements SensorEventListener {
 
         // Send VideoRecordingObject for further processing.
         VideoRecordingObject obj = new VideoRecordingObject(outputFilePath,
-                quality, videoSize, camcorderProfile.videoFrameRate);
+                quality, videoSize, camcorderProfile.videoFrameRate, fileFormat);
         mSocketRunnableObj.sendVideoRecordingObject(obj);
     }
 
@@ -1830,7 +1833,18 @@ public class ItsService extends Service implements SensorEventListener {
         mMediaRecorder.setOutputFile(outputFilePath);
     }
 
-    private String getOutputMediaFile(int cameraId, Size videoSize, String quality ) {
+    private String getOutputMediaFile(int cameraId, Size videoSize, String quality,
+            int fileFormat) {
+        // If any quality has file format other than 3gp and webm then the
+        // recording file will have mp4 as default extension.
+        String fileExtension = "";
+        if (fileFormat == MediaRecorder.OutputFormat.THREE_GPP) {
+            fileExtension = ".3gp";
+        } else if (fileFormat == MediaRecorder.OutputFormat.WEBM) {
+            fileExtension = ".webm";
+        } else {
+            fileExtension = ".mp4";
+        }
         // All the video recordings will be available in VideoITS directory on device.
         File mediaStorageDir = new File(getExternalFilesDir(null), "VideoITS");
         if (mediaStorageDir == null) {
@@ -1846,7 +1860,7 @@ public class ItsService extends Service implements SensorEventListener {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         File mediaFile = new File(mediaStorageDir.getPath() + File.separator +
             "VID_" + timestamp + '_' + cameraId + '_' + quality + '_' + videoSize);
-        return mediaFile + ".mp4";
+        return mediaFile + fileExtension;
     }
 
     private void doCapture(JSONObject params) throws ItsException {

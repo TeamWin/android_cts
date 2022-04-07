@@ -17,6 +17,7 @@
 package android.settings.cts;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,6 +29,7 @@ import android.provider.Settings;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,6 +39,13 @@ import org.junit.runner.RunWith;
  */
 @RunWith(AndroidJUnit4.class)
 public class TetherProvisioningCarrierDialogActivityTest {
+    @Before
+    public void setUp() throws Exception {
+        final PackageManager pm =
+                InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+    }
+
     @Test
     public void testTetheringProvisioningCarrierUiExisted() throws RemoteException {
         final Intent intent = new Intent(Settings.ACTION_TETHER_UNSUPPORTED_CARRIER_UI);

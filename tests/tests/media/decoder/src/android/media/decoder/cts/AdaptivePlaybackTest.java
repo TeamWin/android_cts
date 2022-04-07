@@ -30,6 +30,7 @@ import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
 import android.media.cts.OutputSurface;
 import android.media.cts.Preconditions;
+import android.media.cts.TestArgs;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -90,19 +91,11 @@ public class AdaptivePlaybackTest extends MediaTestBase {
         super.tearDown();
     }
 
-    private static final String CODEC_PREFIX_KEY = "codec-prefix";
-    private static final String mCodecPrefix;
-
     @Parameterized.Parameter(0)
     public String mCodecName;
 
     @Parameterized.Parameter(1)
     public CodecList mCodecs;
-
-    static {
-        android.os.Bundle args = InstrumentationRegistry.getArguments();
-        mCodecPrefix = args.getString(CODEC_PREFIX_KEY);
-    }
 
     public static Iterable<Codec> H264(CodecFactory factory) {
         return factory.createCodecList(
@@ -277,7 +270,8 @@ public class AdaptivePlaybackTest extends MediaTestBase {
             if (arg instanceof CodecList) {
                 CodecList codecList = (CodecList)arg;
                 for (Codec codec : codecList) {
-                    if (mCodecPrefix != null && !codec.name.startsWith(mCodecPrefix)) {
+                    if (TestArgs.CODEC_PREFIX != null &&
+                            !codec.name.startsWith(TestArgs.CODEC_PREFIX)) {
                         continue;
                     }
                     Object[] testArgs = new Object[2];
@@ -1542,6 +1536,11 @@ class CodecFamily extends CodecList {
 
     public CodecFamily(String mime, final String ... resources) {
         try {
+            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                    !mime.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                return;
+            }
+
             /* read all media */
             Media[] mediaList = new Media[resources.length];
             for (int i = 0; i < resources.length; i++) {

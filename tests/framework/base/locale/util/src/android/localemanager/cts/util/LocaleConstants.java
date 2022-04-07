@@ -38,6 +38,8 @@ public final class LocaleConstants {
 
     public static final String INSTALLER_PACKAGE = "android.localemanager.cts.installer";
 
+    public static final String NON_EXISTENT_PACKAGE = "android.localemanager.nonexistentapp";
+
     public static final ComponentName TEST_APP_MAIN_ACTIVITY = new ComponentName(TEST_APP_PACKAGE,
             TEST_APP_PACKAGE + ".MainActivity");
 
