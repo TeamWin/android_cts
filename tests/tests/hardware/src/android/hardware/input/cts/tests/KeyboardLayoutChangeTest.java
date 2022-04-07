@@ -43,7 +43,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class KeyboardLayoutChangeTest extends InputHidTestCase {
@@ -171,13 +170,15 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
      * @return The first matching keyboard layout descriptor or an empty string if none was found.
      */
     private String getKeyboardLayoutId(InputDevice device, String language) {
-        for (String kl : mInputManager.getKeyboardLayoutDescriptorsForInputDevice(device)) {
-            if (kl.endsWith(language)) {
-                return kl;
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            for (String kl : mInputManager.getKeyboardLayoutDescriptorsForInputDevice(device)) {
+                if (kl.endsWith(language)) {
+                    return kl;
+                }
             }
-        }
-        fail("Failed to get keyboard layout for language " + language);
-        return "";
+            fail("Failed to get keyboard layout for language " + language);
+            return "";
+        }, Manifest.permission.INTERACT_ACROSS_USERS);
     }
 
     /**
