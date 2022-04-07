@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 The Android Open Source Project
+<!-- Copyright (C) 2022 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.alarmmanager.alarmtestapp.cts">
+        package="android.alarmmanager.alarmtestapp.cts.user_permission_32">
 
+    <uses-sdk android:targetSdkVersion="32" />
+
+    <!-- This permission will be allowed by default -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application>
-        <receiver android:name=".TestAlarmScheduler"
+        <receiver android:name="android.alarmmanager.alarmtestapp.cts.common.RequestReceiver"
                   android:exported="true" />
-        <receiver android:name=".TestAlarmReceiver" />
         <receiver android:name="android.alarmmanager.alarmtestapp.cts.common.PermissionStateChangedReceiver"
                   android:exported="true"
                   android:enabled="false" >
@@ -35,7 +37,7 @@
             </intent-filter>
         </receiver>
         <service android:name="android.alarmmanager.alarmtestapp.cts.common.TestService"
-            android:exported="false" />
+                 android:exported="false" />
     </application>
 
 </manifest>

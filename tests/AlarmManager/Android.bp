@@ -28,9 +28,8 @@ android_test {
         "src/**/*.java",
         "app/src/**/*.java",
         "app30/src/**/*.java",
-        "app_policy_permission/src/**/*.java",
-        "app_policy_permission32/src/**/*.java",
         ":CtsAlarmUtils",
+        ":CtsAlarmTestHelperCommon",
     ],
     test_suites: [
         "cts",

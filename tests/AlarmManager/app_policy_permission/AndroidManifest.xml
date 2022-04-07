@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 
     <application>
-        <receiver android:name=".RequestReceiver"
+        <receiver android:name="android.alarmmanager.alarmtestapp.cts.common.RequestReceiver"
                   android:exported="true" />
     </application>
 
