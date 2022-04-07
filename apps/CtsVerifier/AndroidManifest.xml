@@ -5512,6 +5512,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.telephony.TelephonyManager#ACTION_SHOW_VOICEMAIL_NOTIFICATION"/>
         </activity>
 
         <receiver android:name=".voicemail.VoicemailBroadcastReceiver"
@@ -5541,6 +5543,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.telephony.TelephonyManager#ACTION_SHOW_VOICEMAIL_NOTIFICATION"/>
         </activity>
 
         <activity
@@ -5616,6 +5620,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.telephony.TelephonyManager#METADATA_HIDE_VOICEMAIL_SETTINGS_MENU"/>
         </activity>
 
         <activity
@@ -5638,6 +5644,8 @@
                 android:value="config_voice_capable"/>
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.telephony.TelephonyManager#EXTRA_HIDE_PUBLIC_SETTINGS"/>
         </activity>
 
         <activity
@@ -5671,6 +5679,8 @@
             <intent-filter>
                 <action android:name="android.telephony.VisualVoicemailService"/>
             </intent-filter>
+            <meta-data android:name="ApiTest"
+                android:value="android.telephony.VisualVoicemailService#onCellServiceConnected|android.telephony.VisualVoicemailService#onSimRemoved"/>
         </service>
 
         <activity
