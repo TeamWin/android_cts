@@ -33,6 +33,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
@@ -782,6 +784,12 @@ public class WindowUntrustedTouchTest {
         addToastOverlay(APP_SELF, /* custom */ false);
         Rect toast = mWmState.waitForResult("toast bounds",
                 state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getFrame());
+        int[] viewXY = new int[2];
+        mContainer.getLocationOnScreen(viewXY);
+        Rect containerRect = new Rect(viewXY[0], viewXY[1], viewXY[0] + mContainer.getWidth(),
+                viewXY[1] + mContainer.getHeight());
+        assumeTrue("Toast displayed outside of activity bounds.",
+                containerRect.contains(toast.centerX(), toast.centerY()));
 
         mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
 
@@ -1053,7 +1061,9 @@ public class WindowUntrustedTouchTest {
     private void addSawOverlay(String packageName, String windowSuffix, float opacity)
             throws Throwable {
         String name = getWindowName(packageName, windowSuffix);
-        getService(packageName).showSystemAlertWindow(name, opacity);
+        int[] viewXY = new int[2];
+        mContainer.getLocationOnScreen(viewXY);
+        getService(packageName).showSystemAlertWindow(name, opacity, viewXY[0], viewXY[1]);
         mSawWindowsAdded.add(name);
         if (!mWmState.waitFor("saw window " + name,
                 state -> state.isWindowVisible(name) && state.isWindowSurfaceShown(name))) {
