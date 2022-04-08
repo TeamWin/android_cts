@@ -17,13 +17,8 @@
 package android.cts.tagging.sdk30memtag;
 
 import android.content.pm.ApplicationInfo;
-import android.util.Log;
 
 public class ZygotePreload implements android.app.ZygotePreload {
-    static final String TAG = "ZygotePreload";
-
     @Override
-    public void doPreload(ApplicationInfo appInfo) {
-      Log.i(TAG, "preload called");
-    }
+    public void doPreload(ApplicationInfo appInfo) {}
 }

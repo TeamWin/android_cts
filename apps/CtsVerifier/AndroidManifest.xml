@@ -5891,7 +5891,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_display_cutout" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
-        </activity>
+            <meta-data android:name="CddTest" android:value="7.2.4/H-0-1" />
+          </activity>
         <activity android:name=".speech.tts.TtsTestActivity"
                   android:exported="true"
                   android:label="@string/tts_test">

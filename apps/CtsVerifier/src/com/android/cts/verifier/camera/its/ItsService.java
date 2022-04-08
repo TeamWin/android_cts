@@ -34,8 +34,10 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.DngCreator;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.PerformanceTest;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.MeteringRectangle;
@@ -781,7 +783,9 @@ public class ItsService extends Service implements SensorEventListener {
                     int profileId = cmdObj.getInt("profileId");
                     String quality = cmdObj.getString("quality");
                     int recordingDuration = cmdObj.getInt("recordingDuration");
-                    doBasicRecording(cameraId, profileId, quality, recordingDuration);
+                    int videoStabilizationMode = cmdObj.getInt("videoStabilizationMode");
+                    doBasicRecording(cameraId, profileId, quality, recordingDuration,
+                            videoStabilizationMode);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -1729,12 +1733,28 @@ public class ItsService extends Service implements SensorEventListener {
         }
     }
 
+    private boolean isVideoStabilizationModeSupported(int mode) {
+        int[] videoStabilizationModes = mCameraCharacteristics.get(
+                CameraCharacteristics.CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES);
+        List<Integer> arrList = Arrays.asList(CameraTestUtils.toObject(videoStabilizationModes));
+        assert(videoStabilizationModes != null);
+        assert(arrList.contains(CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF));
+        Log.i(TAG, "videoStabilizationModes:" + Arrays.toString(videoStabilizationModes));
+        return arrList.contains(mode);
+    }
+
     private void doBasicRecording(String cameraId, int profileId, String quality,
-            int recordingDuration) throws ItsException {
+            int recordingDuration, int videoStabilizationMode) throws ItsException {
         int cameraDeviceId = Integer.parseInt(cameraId);
         mMediaRecorder = new MediaRecorder();
         CamcorderProfile camcorderProfile = getCamcorderProfile(cameraDeviceId, profileId);
         assert(camcorderProfile != null);
+        boolean supportsVideoStabilizationMode = isVideoStabilizationModeSupported(
+                videoStabilizationMode);
+        if (!supportsVideoStabilizationMode) {
+            throw new ItsException("Device does not support video stabilization mode: " +
+                    videoStabilizationMode);
+        }
         Size videoSize = new Size(camcorderProfile.videoFrameWidth,
                 camcorderProfile.videoFrameHeight);
         int fileFormat = camcorderProfile.fileFormat;
@@ -1752,7 +1772,7 @@ public class ItsService extends Service implements SensorEventListener {
         mRecordSurface = mMediaRecorder.getSurface();
         // Configure and create capture session.
         try {
-            configureAndCreateCaptureSession(mRecordSurface);
+            configureAndCreateCaptureSession(mRecordSurface, videoStabilizationMode);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
         }
@@ -1786,11 +1806,16 @@ public class ItsService extends Service implements SensorEventListener {
         mSocketRunnableObj.sendVideoRecordingObject(obj);
     }
 
-    private void configureAndCreateCaptureSession(Surface recordSurface)
+    private void configureAndCreateCaptureSession(Surface recordSurface, int videoStabilizationMode)
             throws CameraAccessException{
         assert(recordSurface != null);
         // Create capture request builder
         mCaptureRequestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+        if (videoStabilizationMode == CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON) {
+            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_ON);
+            Log.i(TAG, "Turned ON video stabilization.");
+        }
         mCaptureRequestBuilder.addTarget(recordSurface);
         // Create capture session
         mCamera.createCaptureSession(Arrays.asList(recordSurface),

@@ -19,10 +19,11 @@
 
     <uses-sdk android:targetSdkVersion="32" />
 
+    <!-- This permission is ineffective due to low target sdk -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 
     <application>
-        <receiver android:name=".RequestReceiverSdk32"
+        <receiver android:name="android.alarmmanager.alarmtestapp.cts.common.RequestReceiver"
                   android:exported="true" />
     </application>
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.alarmmanager.alarmtestapp.cts.policy_permission_32;
+package android.alarmmanager.alarmtestapp.cts.common;
 
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -24,12 +24,11 @@ import android.content.Intent;
 import android.util.Log;
 
 /**
- * This receiver is to be used to communicate with tests in {@link android.alarmmanager.cts}
+ * This receiver is to be used to communicate with tests in {@link android.alarmmanager.cts}.
  */
-public class RequestReceiverSdk32 extends BroadcastReceiver {
-    private static final String TAG = RequestReceiverSdk32.class.getSimpleName();
-    public static final String PACKAGE_NAME =
-            "android.alarmmanager.alarmtestapp.cts.policy_permission_32";
+public class RequestReceiver extends BroadcastReceiver {
+    private static final String TAG = RequestReceiver.class.getSimpleName();
+    public static final String PACKAGE_NAME = "android.alarmmanager.alarmtestapp.cts.common";
 
     public static final String ACTION_GET_CAN_SCHEDULE_EXACT_ALARM =
             PACKAGE_NAME + ".action.GET_CAN_SCHEDULE_EXACT_ALARM";
