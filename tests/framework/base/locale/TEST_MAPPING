@@ -1,6 +1,5 @@
 {
-  // TODO(b/225192026): Move back to presubmit after b/225192026 is fixed
-  "postsubmit": [
+  "presubmit": [
     {
       "name": "CtsLocaleManagerTestCases"
     }
