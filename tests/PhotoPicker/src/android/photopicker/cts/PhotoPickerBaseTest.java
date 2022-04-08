@@ -16,16 +16,12 @@
 
 package android.photopicker.cts;
 
-import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
-import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
-
-import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
 
@@ -46,7 +42,7 @@ public class PhotoPickerBaseTest {
         mDevice = UiDevice.getInstance(inst);
 
         final String setSyncDelayCommand =
-                "setprop  persist.sys.photopicker.pickerdb.default_sync_delay_ms 0";
+                "setprop persist.sys.photopicker.pickerdb.default_sync_delay_ms 0";
         mDevice.executeShellCommand(setSyncDelayCommand);
 
         mContext = inst.getContext();
