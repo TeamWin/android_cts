@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.alarmmanager.alarmtestapp.cts;
+package android.alarmmanager.alarmtestapp.cts.common;
 
 import android.app.AlarmManager;
 import android.app.ForegroundServiceStartNotAllowedException;
@@ -29,7 +29,7 @@ import android.util.Log;
  */
 public class PermissionStateChangedReceiver extends BroadcastReceiver {
     private static final String TAG = PermissionStateChangedReceiver.class.getSimpleName();
-    private static final String PACKAGE_NAME = "android.alarmmanager.alarmtestapp.cts";
+    private static final String PACKAGE_NAME = "android.alarmmanager.alarmtestapp.cts.common";
 
     private static final String MAIN_CTS_PACKAGE = "android.alarmmanager.cts";
 

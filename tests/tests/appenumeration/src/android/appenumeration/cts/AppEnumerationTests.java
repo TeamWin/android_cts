@@ -61,6 +61,7 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_TAKE_PERSISTABLE_URI_PERMISSION;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
+import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_NOT_EXPORTED;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_INVALID;
 import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_SUSPENDED;
@@ -165,6 +166,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetProviderInfo;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -321,6 +323,24 @@ public class AppEnumerationTests {
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
         startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
         startExplicitIntentViaPackageName(QUERIES_NOTHING, TARGET_FILTERS);
+    }
+
+    @Test
+    public void startExplicitly_cannotStartNonVisibleNonExported() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
+        Assert.assertThrows("Start of non-exported activity should act as if app not installed",
+                ActivityNotFoundException.class,
+                () -> startExplicitIntentNotExportedViaComponent(
+                        QUERIES_NOTHING, TARGET_FILTERS));
+    }
+
+    @Test
+    public void startExplicitly_cannotStartVisibleNonExported() throws Exception {
+        assertVisible(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
+        Assert.assertThrows("Start of non-exported activity should fail with SecurityException",
+                SecurityException.class,
+                () -> startExplicitIntentNotExportedViaComponent(
+                        QUERIES_ACTIVITY_ACTION, TARGET_FILTERS));
     }
 
     @Test
@@ -2313,6 +2333,13 @@ public class AppEnumerationTests {
         sendCommandBlocking(sourcePackage, targetPackage,
                 new Intent().setComponent(new ComponentName(targetPackage,
                         ACTIVITY_CLASS_DUMMY_ACTIVITY)),
+                ACTION_START_DIRECTLY);
+    }
+    private void startExplicitIntentNotExportedViaComponent(
+            String sourcePackage, String targetPackage) throws Exception {
+        sendCommandBlocking(sourcePackage, targetPackage,
+                new Intent().setComponent(new ComponentName(targetPackage,
+                        ACTIVITY_CLASS_NOT_EXPORTED)),
                 ACTION_START_DIRECTLY);
     }
     private void startExplicitIntentViaPackageName(String sourcePackage, String targetPackage)

@@ -164,6 +164,8 @@ public class Constants {
 
     public static final String ACTIVITY_CLASS_TEST = PKG_BASE + "cts.TestActivity";
     public static final String ACTIVITY_CLASS_DUMMY_ACTIVITY = PKG_BASE + "testapp.DummyActivity";
+    public static final String ACTIVITY_CLASS_NOT_EXPORTED =
+            PKG_BASE + "testapp.DummyActivityNotExported";
 
     public static final String ACTION_MANIFEST_ACTIVITY = PKG_BASE + "action.ACTIVITY";
     public static final String ACTION_MANIFEST_SERVICE = PKG_BASE + "action.SERVICE";

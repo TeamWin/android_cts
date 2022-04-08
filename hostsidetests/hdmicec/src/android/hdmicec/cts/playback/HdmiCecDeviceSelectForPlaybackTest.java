@@ -118,6 +118,12 @@ public class HdmiCecDeviceSelectForPlaybackTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cectDeviceSelectSameSource() throws Exception {
+        // If the DUT has a OneTouchPlayAction waiting for <Report Power Status>, finish it.
+        // This test triggers its own OneTouchPlayAction, which fails if one is already in progress.
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.PLAYBACK_1,
+                CecOperand.REPORT_POWER_STATUS,
+                CecMessage.formatParams(HdmiCecConstants.CEC_POWER_STATUS_ON));
+
         int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
         int playback2PhysicalAddress = getUnusedPhysicalAddress(
                 HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS, dumpsysPhysicalAddress);

@@ -16,6 +16,9 @@
 
 package com.android.queryable.queries;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.android.queryable.Queryable;
 import com.android.queryable.info.DelegatedAdminReceiverInfo;
 
@@ -23,7 +26,7 @@ import com.android.queryable.info.DelegatedAdminReceiverInfo;
 public final class DelegatedAdminReceiverQueryHelper<E extends Queryable>
         implements DelegatedAdminReceiverQuery<E> {
 
-    private final E mQuery;
+    private final transient E mQuery;
     private final BroadcastReceiverQueryHelper<E> mBroadcastReceiverQueryHelper;
 
     DelegatedAdminReceiverQueryHelper() {
@@ -34,6 +37,12 @@ public final class DelegatedAdminReceiverQueryHelper<E extends Queryable>
     public DelegatedAdminReceiverQueryHelper(E query) {
         mQuery = query;
         mBroadcastReceiverQueryHelper = new BroadcastReceiverQueryHelper<>(query);
+    }
+
+    private DelegatedAdminReceiverQueryHelper(Parcel in) {
+        mQuery = null;
+        mBroadcastReceiverQueryHelper = in.readParcelable(
+                DelegatedAdminReceiverQueryHelper.class.getClassLoader());
     }
 
     @Override
@@ -53,4 +62,25 @@ public final class DelegatedAdminReceiverQueryHelper<E extends Queryable>
                 mBroadcastReceiverQueryHelper.describeQuery(fieldName + ".broadcastReceiver")
         );
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeParcelable(mBroadcastReceiverQueryHelper, flags);
+    }
+
+    public static final Parcelable.Creator<DelegatedAdminReceiverQueryHelper> CREATOR =
+            new Parcelable.Creator<DelegatedAdminReceiverQueryHelper>() {
+                public DelegatedAdminReceiverQueryHelper createFromParcel(Parcel in) {
+                    return new DelegatedAdminReceiverQueryHelper(in);
+                }
+
+                public DelegatedAdminReceiverQueryHelper[] newArray(int size) {
+                    return new DelegatedAdminReceiverQueryHelper[size];
+                }
+    };
 }

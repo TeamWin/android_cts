@@ -529,10 +529,9 @@ def main():
           # socket FAILs.
           with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'r') as file:
             test_code = output.returncode
-            test_failed = False
             test_skipped = False
             test_not_yet_mandated = False
-            test_mpc_req = ""
+            test_mpc_req = ''
             content = file.read()
 
             # Find media performance class logging
@@ -542,7 +541,8 @@ def main():
               # MPC12_CAMERA_LAUNCH_PATTERN or MPC12_JPEG_CAPTURE_PATTERN in
               # ItsTestActivity.java.
               mpc_string_match = re.search(
-                  '^(1080p_jpeg_capture_time_ms:|camera_launch_time_ms:)', one_line)
+                  '^(1080p_jpeg_capture_time_ms:|camera_launch_time_ms:)',
+                  one_line)
               if mpc_string_match:
                 test_mpc_req = one_line
                 break
@@ -570,7 +570,6 @@ def main():
                 logging.info('Retry %s/%s', s, test)
               else:
                 num_fail += 1
-                test_failed = True
                 break
             os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
         logging.info('%s %s/%s', return_string, s, test)

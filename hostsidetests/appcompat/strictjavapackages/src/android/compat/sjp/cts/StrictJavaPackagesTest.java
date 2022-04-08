@@ -709,6 +709,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
         new ImmutableMap.Builder<String, ImmutableSet<String>>()
             .put("/apex/com.android.bluetooth/app/Bluetooth/Bluetooth.apk",
                 BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
+            .put("/apex/com.android.bluetooth/app/BluetoothGoogle/BluetoothGoogle.apk",
+                BLUETOOTH_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/PermissionController/PermissionController.apk",
                 PERMISSION_CONTROLLER_APK_IN_APEX_BURNDOWN_LIST)
             .put("/apex/com.android.permission/priv-app/GooglePermissionController/GooglePermissionController.apk",

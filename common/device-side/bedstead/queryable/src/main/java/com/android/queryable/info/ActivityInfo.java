@@ -16,10 +16,18 @@
 
 package com.android.queryable.info;
 
+import static com.android.queryable.util.ParcelableUtils.readBoolean;
+import static com.android.queryable.util.ParcelableUtils.writeBoolean;
+
 import android.app.Activity;
 import android.content.IntentFilter;
+import android.os.Parcel;
+import android.os.Parcelable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -52,6 +60,14 @@ public final class ActivityInfo extends ClassInfo {
         } else {
             mIntentFilters = intentFilters;
         }
+    }
+
+    private ActivityInfo(Parcel parcel) {
+        super((Parcel) parcel);
+        mExported = readBoolean(parcel);
+        List<IntentFilter> intentList = new ArrayList<>();
+        parcel.readList(intentList, IntentFilter.class.getClassLoader());
+        mIntentFilters = new HashSet<>(intentList);
     }
 
     public boolean exported() {
@@ -108,5 +124,42 @@ public final class ActivityInfo extends ClassInfo {
                     mIntentFilters
             );
         }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        super.writeToParcel(out, flags);
+        writeBoolean(out, mExported);
+        out.writeList(new ArrayList<>(mIntentFilters));
+    }
+
+    public static final Parcelable.Creator<ActivityInfo> CREATOR =
+            new Parcelable.Creator<ActivityInfo>() {
+                public ActivityInfo createFromParcel(Parcel in) {
+                    return new ActivityInfo(in);
+                }
+
+                public ActivityInfo[] newArray(int size) {
+                    return new ActivityInfo[size];
+                }
+    };
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ActivityInfo)) return false;
+        if (!super.equals(o)) return false;
+        ActivityInfo that = (ActivityInfo) o;
+        return mExported == that.mExported && mIntentFilters.equals(that.mIntentFilters);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), mExported, mIntentFilters);
     }
 }

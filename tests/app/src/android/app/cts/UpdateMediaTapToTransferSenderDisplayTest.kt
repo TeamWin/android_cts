@@ -33,6 +33,7 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -132,6 +133,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun almostCloseToStartCast_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_START_CAST,
@@ -147,6 +149,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun almostCloseToEndCast_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_ALMOST_CLOSE_TO_END_CAST,
@@ -162,6 +165,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToReceiverTriggered_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_TRIGGERED,
@@ -177,6 +181,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToThisDeviceTriggered_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_TRIGGERED,
@@ -192,6 +197,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToReceiverSucceeded_nullCallback_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_SUCCEEDED,
@@ -207,6 +213,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToReceiverSucceeded_withCallbackAndExecutor_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_SUCCEEDED,
@@ -222,6 +229,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToThisDeviceSucceeded_nullCallback_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_SUCCEEDED,
@@ -237,6 +245,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToThisDeviceSucceeded_withCallbackAndExecutor_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_SUCCEEDED,
@@ -252,6 +261,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToReceiverFailed_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_RECEIVER_FAILED,
@@ -267,6 +277,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun transferToThisDeviceFailed_displaysChip() {
         statusBarManager.updateMediaTapToTransferSenderDisplay(
             StatusBarManager.MEDIA_TRANSFER_SENDER_STATE_TRANSFER_TO_THIS_DEVICE_FAILED,
@@ -282,6 +293,7 @@ class UpdateMediaTapToTransferSenderDisplayTest {
     }
 
     @Test
+    @Ignore("b/228329159")
     fun farFromReceiver_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferSenderDisplay(
