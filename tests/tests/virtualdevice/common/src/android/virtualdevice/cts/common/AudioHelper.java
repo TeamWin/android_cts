@@ -212,6 +212,9 @@ public final class AudioHelper {
     public static double getCapturedPowerSpectrum(
             int samplingFreq, int channelCount, ByteBuffer capturedData,
             int expectedSignalFreq) {
+        if (capturedData == null) {
+            return 0;
+        }
         double power = 0;
         int length = capturedData.remaining() / 2;  // PCM16, so 2 bytes for each
         for (int i = 0; i < channelCount; i++) {
