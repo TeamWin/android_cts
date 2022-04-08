@@ -660,6 +660,23 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertActivityNotResumed();
     }
 
+
+    // Test manage space pending intent created by system cannot bypass BAL check.
+    @Test
+    public void testManageSpacePendingIntentNoBalAllowed() throws Exception {
+        setupPendingIntentService();
+        runWithShellPermissionIdentity(() -> {
+            runShellCommand("cmd appops set " + TEST_PACKAGE_APP_A
+                    + " android:manage_external_storage allow");
+        });
+        // Make sure AppA paused at least 10s so it can't start activity because of grace period.
+        Thread.sleep(1000 * 10);
+        mBackgroundActivityTestService.getAndStartManageSpaceActivity();
+        boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+        assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
+    }
+
     private void pressHomeAndWaitHomeResumed() {
         pressHomeButton();
         mWmState.waitForHomeActivityVisible();
