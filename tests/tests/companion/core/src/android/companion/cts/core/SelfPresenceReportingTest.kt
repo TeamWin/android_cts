@@ -23,12 +23,15 @@ import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.MissingIntentFilterActionCompanionService
 import android.companion.cts.common.MissingPermissionCompanionService
 import android.companion.cts.common.PrimaryCompanionService
+import android.companion.cts.common.Repeat
+import android.companion.cts.common.RepeatRule
 import android.companion.cts.common.SecondaryCompanionService
 import android.companion.cts.common.assertEmpty
 import android.companion.cts.common.waitFor
 import android.os.SystemClock.sleep
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertContentEquals
@@ -52,6 +55,8 @@ import kotlin.time.Duration.Companion.seconds
 @AppModeFull(reason = "CompanionDeviceManager APIs are not available to the instant apps.")
 @RunWith(AndroidJUnit4::class)
 class SelfPresenceReportingTest : CoreTestBase() {
+    @get:Rule
+    val repeatRule = RepeatRule()
 
     @Test
     fun test_selfReporting_singleDevice_multipleServices() =
@@ -202,6 +207,34 @@ class SelfPresenceReportingTest : CoreTestBase() {
         // notifyDeviceAppeared can only be called for self-managed associations.
         assertFailsWith(IllegalArgumentException::class) {
             cdm.notifyDeviceAppeared(id)
+        }
+    }
+
+    @Test
+    @Repeat(10)
+    fun test_notifyAppears_from_onAssociationCreated() {
+        // Create a self-managed association and call notifyDeviceAppeared() right from the
+        // Callback.onAssociationCreated()
+        val associationId = createSelfManagedAssociation(DEVICE_DISPLAY_NAME_A) {
+            cdm.notifyDeviceAppeared(it.id)
+        }
+
+        // Make sure CDM binds both CompanionDeviceServices.
+        assertTrue("Both valid CompanionDeviceServices - Primary and Secondary - should be bound " +
+                "now") {
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+                PrimaryCompanionService.isBound && SecondaryCompanionService.isBound
+            }
+        }
+
+        // Notify CDM that devices has disconnected.
+        cdm.notifyDeviceDisappeared(associationId)
+
+        // Make sure CDM unbinds both CompanionDeviceServices.
+        assertTrue("Both Services - Primary and Secondary - should be unbound now") {
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+                !PrimaryCompanionService.isBound && !SecondaryCompanionService.isBound
+            }
         }
     }
 }
