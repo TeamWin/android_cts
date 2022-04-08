@@ -27,14 +27,16 @@ import android.support.test.uiautomator.By
 import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.CtsDownstreamingTest
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
+@CtsDownstreamingTest
 class PermissionAllServicesTest : BasePermissionTest() {
 
     // "All services" screen is not supported on Auto in T
@@ -154,7 +156,7 @@ class PermissionAllServicesTest : BasePermissionTest() {
     companion object {
         const val LOCATION_PROVIDER_APP_APK_PATH_1 =
             "$APK_DIRECTORY/CtsAccessMicrophoneAppLocationProvider.apk"
-        const val NON_LOCATION_APP_APK_PATH = "$APK_DIRECTORY/CtsUsePermissionApp22.apk"
+        const val NON_LOCATION_APP_APK_PATH = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
         const val LOCATION_PROVIDER_APP_APK_PATH_2 =
             "$APK_DIRECTORY/CtsAppLocationProviderWithSummary.apk"
         const val NON_LOCATION_APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
