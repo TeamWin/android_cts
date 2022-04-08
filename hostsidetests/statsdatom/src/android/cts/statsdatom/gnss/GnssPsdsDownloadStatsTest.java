@@ -41,6 +41,7 @@ public class GnssPsdsDownloadStatsTest extends DeviceTestCase implements IBuildR
     private static final String FORCE_PSDS_DOWNLOAD_COMMAND =
             "cmd location providers send-extra-command gps force_psds_injection";
     private static final String PSDS_SUPPORTED = "mSupportsPsds=true";
+    private static final String PSDS_SERVER_CONFIGURED = "PsdsServerConfigured=true";
     private static final long PSDS_DOWNLOAD_TIMEOUT_MILLIS = 5000;
     private IBuildInfo mCtsBuild;
 
@@ -69,8 +70,9 @@ public class GnssPsdsDownloadStatsTest extends DeviceTestCase implements IBuildR
 
     public void testGnssPsdsDownload() throws Exception {
         String dumpsysOut = getDevice().executeShellCommand(LOCATION_DUMPSYS_COMMAND);
-        if (!dumpsysOut.contains(PSDS_SUPPORTED)) {
-            CLog.i("Skipping the test since GNSS PSDS is not supported.");
+        if (!dumpsysOut.contains(PSDS_SUPPORTED) || !dumpsysOut.contains(PSDS_SERVER_CONFIGURED)) {
+            CLog.i("Skipping the test since GNSS PSDS is not supported or PSDS server is not "
+                    + "configured.");
             return;
         }
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
