@@ -2734,6 +2734,24 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if preview stabilization is supported.
+     */
+    public boolean isPreviewStabilizationSupported() {
+        int[] videoStabilizationModes = getAvailableVideoStabilizationModesChecked();
+        return CameraTestUtils.contains(videoStabilizationModes,
+                CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION);
+    }
+
+    /**
+     * Check if stream use case is supported
+     */
+    public boolean isStreamUseCaseSupported() {
+        List<Integer> availableCapabilities = getAvailableCapabilitiesChecked();
+        return (availableCapabilities.contains(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE));
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return
