@@ -197,8 +197,11 @@ public final class DeviceState extends HarrierRule {
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
-    // We are allowed 11 minutes before the entire test run fails
-    private static final Duration MAX_TEST_DURATION = Duration.ofMinutes(10);
+    // We timeout 10 seconds before the infra would timeout
+    private static final Duration MAX_TEST_DURATION =
+            Duration.ofMillis(
+                    Long.parseLong(TestApis.instrumentation().arguments().getString(
+                            "timeout_msec", "600000")) - 2000);
     private final ExecutorService mTestExecutor = Executors.newSingleThreadExecutor();
     private Thread mTestThread;
 
@@ -286,7 +289,8 @@ public final class DeviceState extends HarrierRule {
                         future.cancel(true);
 
                         AssertionError assertionError = new AssertionError(
-                                "Timed out executing test " + description.getDisplayName());
+                                "Timed out executing test " + description.getDisplayName()
+                                        + " after " + MAX_TEST_DURATION);
                         assertionError.setStackTrace(stack);
                         throw assertionError;
                     }

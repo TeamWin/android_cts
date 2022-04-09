@@ -22,7 +22,10 @@ import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_A
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
+import android.os.RemoteException;
+import android.os.storage.StorageManager;
 
 public class BackgroundActivityTestService extends Service {
     private final IBackgroundActivityTestService mBinder = new MyBinder();
@@ -49,6 +52,21 @@ public class BackgroundActivityTestService extends Service {
                 newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 return PendingIntent.getActivity(BackgroundActivityTestService.this, 0, newIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            }
+        }
+
+        @Override
+        public void getAndStartManageSpaceActivity() {
+            final long token = Binder.clearCallingIdentity();
+            try {
+                StorageManager stm = getSystemService(StorageManager.class);
+                PendingIntent pi = stm.getManageSpaceActivityIntent(getPackageName(), 0);
+                pi.send();
+            } catch (PendingIntent.CanceledException e) {
+                e.printStackTrace();
+                throw new IllegalStateException("Unable to send PendingIntent");
+            } finally {
+                Binder.restoreCallingIdentity(token);
             }
         }
     }

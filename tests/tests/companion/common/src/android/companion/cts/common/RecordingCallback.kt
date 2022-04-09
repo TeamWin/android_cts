@@ -22,22 +22,45 @@ import android.content.IntentSender
 import android.util.Log
 
 class RecordingCallback
-private constructor(container: InvocationContainer<CallbackInvocation>) :
-    CompanionDeviceManager.Callback(),
+private constructor(
+    container: InvocationContainer<CallbackInvocation>,
+    private val onDeviceFoundAction: ((IntentSender) -> Unit)?,
+    private val onAssociationPendingAction: ((IntentSender) -> Unit)?,
+    private val onAssociationCreatedAction: ((AssociationInfo) -> Unit)?,
+    private val onFailureAction: ((CharSequence?) -> Unit)?
+) : CompanionDeviceManager.Callback(),
     InvocationTracker<RecordingCallback.CallbackInvocation> by container {
 
-    constructor() : this(InvocationContainer())
+    constructor(
+        onDeviceFoundAction: ((IntentSender) -> Unit)? = null,
+        onAssociationPendingAction: ((IntentSender) -> Unit)? = null,
+        onAssociationCreatedAction: ((AssociationInfo) -> Unit)? = null,
+        onFailureAction: ((CharSequence?) -> Unit)? = null
+    ) : this(InvocationContainer(),
+            onDeviceFoundAction,
+            onAssociationPendingAction,
+            onAssociationCreatedAction,
+            onFailureAction)
 
-    override fun onDeviceFound(intentSender: IntentSender) =
+    override fun onDeviceFound(intentSender: IntentSender) {
         logAndRecordInvocation(OnDeviceFound(intentSender))
+        onDeviceFoundAction?.invoke(intentSender)
+    }
 
-    override fun onAssociationPending(intentSender: IntentSender) =
+    override fun onAssociationPending(intentSender: IntentSender) {
         logAndRecordInvocation(OnAssociationPending(intentSender))
+        onAssociationPendingAction?.invoke(intentSender)
+    }
 
-    override fun onAssociationCreated(associationInfo: AssociationInfo) =
+    override fun onAssociationCreated(associationInfo: AssociationInfo) {
         logAndRecordInvocation(OnAssociationCreated(associationInfo))
+        onAssociationCreatedAction?.invoke(associationInfo)
+    }
 
-    override fun onFailure(error: CharSequence?) = logAndRecordInvocation(OnFailure(error))
+    override fun onFailure(error: CharSequence?) {
+        logAndRecordInvocation(OnFailure(error))
+        onFailureAction?.invoke(error)
+    }
 
     private fun logAndRecordInvocation(invocation: CallbackInvocation) {
         Log.d(TAG, "Callback: $invocation")
