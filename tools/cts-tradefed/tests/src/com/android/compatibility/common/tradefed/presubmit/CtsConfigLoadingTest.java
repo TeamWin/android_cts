@@ -29,6 +29,7 @@ import com.android.tradefed.config.ConfigurationFactory;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.IDeviceConfiguration;
 import com.android.tradefed.invoker.ExecutionFiles.FilesKey;
+import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.invoker.shard.token.TokenProperty;
 import com.android.tradefed.targetprep.DeviceSetup;
@@ -204,7 +205,8 @@ public class CtsConfigLoadingTest {
         stubFolder.setRootDir(new File(ctsRoot));
         stubFolder.addBuildAttribute(CompatibilityBuildHelper.SUITE_NAME, "CTS");
         stubFolder.addBuildAttribute("ROOT_DIR", ctsRoot);
-        TestInformation stubTestInfo = TestInformation.newBuilder().build();
+        TestInformation stubTestInfo = TestInformation.newBuilder()
+                .setInvocationContext(new InvocationContext()).build();
         stubTestInfo.executionFiles().put(FilesKey.TESTS_DIRECTORY, new File(ctsRoot));
 
         List<String> missingMandatoryParameters = new ArrayList<>();
