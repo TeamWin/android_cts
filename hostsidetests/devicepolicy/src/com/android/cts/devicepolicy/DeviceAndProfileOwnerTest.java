@@ -21,6 +21,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.FlakyTest;
@@ -672,6 +673,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testSetMeteredDataDisabledPackages() throws Exception {
         assumeHasWifiFeature();
+        assumeFalse("is watch", hasDeviceFeature("android.hardware.type.watch"));
 
         installAppAsUser(METERED_DATA_APP_APK, mUserId);
 
