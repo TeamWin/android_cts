@@ -1645,6 +1645,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasSecondaryUser
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    @Ignore("b/228596883")
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withUsers_returnsFalse() {
         // TODO(b/222669811): replace with annotation
         assumeFalse(Build.isDebuggable());
@@ -1659,6 +1660,7 @@ public final class DevicePolicyManagerTest {
     @Test
     @EnsureHasWorkProfile
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    @Ignore("b/228596883")
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withProfile_returnsFalse() {
         // TODO(b/222669811): replace with annotation
         assumeFalse(Build.isDebuggable());
@@ -1673,6 +1675,7 @@ public final class DevicePolicyManagerTest {
     @EnsureHasNoSecondaryUser
     @EnsureHasNoWorkProfile
     @EnsureHasPermission(MANAGE_ROLE_HOLDERS)
+    @Ignore("b/228596883")
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withAccounts_returnsFalse() {
         // TODO(b/222669811): replace with annotation
         assumeFalse(Build.isDebuggable());

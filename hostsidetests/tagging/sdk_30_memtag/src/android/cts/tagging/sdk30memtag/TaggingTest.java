@@ -26,19 +26,80 @@ import org.junit.runner.RunWith;
 import org.junit.Rule;
 import org.junit.Test;
 
+import android.content.ComponentName;
+import android.cts.tagging.TestingService;
+import android.cts.tagging.ServiceRunnerActivity;
+import static android.cts.tagging.Constants.*;
+
 import com.android.compatibility.common.util.DropBoxReceiver;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class TaggingTest {
     @Rule
-    public ActivityTestRule<ServiceRunnerActivity> mTestActivityRule = new ActivityTestRule<>(
-        ServiceRunnerActivity.class, false /*initialTouchMode*/, true /*launchActivity*/);
+    public ActivityTestRule<ServiceRunnerActivity> mServiceRunnerActivityRule = new ActivityTestRule<>(
+        ServiceRunnerActivity.class, false /*initialTouchMode*/, false /*launchActivity*/);
 
     @Test
-    public void testAppZygoteMemtagSyncService() throws Exception {
-      ServiceRunnerActivity activity = mTestActivityRule.getActivity();
-      activity.runService(CrashAppZygoteService.class);
-      assertEquals(ServiceRunnerActivity.RESULT_TEST_CRASHED, activity.getResult());
+    public void testMemtagOffService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runService(MemtagOffService.class);
+      assertEquals(TAGGING_MODE_OFF, activity.getResult());
+    }
+
+    @Test
+    public void testMemtagOffIsolatedService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runService(MemtagOffIsolatedService.class);
+      assertEquals(TAGGING_MODE_OFF, activity.getResult());
+    }
+
+    @Test
+    public void testMemtagOffAppZygoteService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runService(MemtagOffAppZygoteService.class);
+      assertEquals(TAGGING_MODE_OFF, activity.getResult());
+    }
+
+    @Test
+    public void testExportedMemtagSyncService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runExternalService(new ComponentName(
+          "android.cts.tagging.sdk30", "android.cts.tagging.sdk30.ExportedMemtagSyncService"));
+      assertEquals(TAGGING_MODE_SYNC, activity.getResult());
+    }
+
+    @Test
+    public void testExportedMemtagOffService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runExternalService(new ComponentName(
+          "android.cts.tagging.sdk30", "android.cts.tagging.sdk30.ExportedMemtagOffService"));
+      assertEquals(TAGGING_MODE_OFF, activity.getResult());
+    }
+
+    // Call MemtagOffService but expect it to run in Sync mode. Used to test compat feature
+    // override in the hostside test.
+    @Test
+    public void testExportedMemtagOffService_expectSync() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runExternalService(new ComponentName(
+          "android.cts.tagging.sdk30", "android.cts.tagging.sdk30.ExportedMemtagOffService"));
+      assertEquals(TAGGING_MODE_SYNC, activity.getResult());
+    }
+
+    @Test
+    public void testExportedMemtagSyncAppZygoteService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runExternalService(new ComponentName(
+          "android.cts.tagging.sdk30", "android.cts.tagging.sdk30.ExportedMemtagSyncAppZygoteService"));
+      assertEquals(TAGGING_MODE_SYNC, activity.getResult());
+    }
+
+    @Test
+    public void testExportedMemtagOffAppZygoteService() throws Exception {
+      ServiceRunnerActivity activity = mServiceRunnerActivityRule.launchActivity(null);
+      activity.runExternalService(new ComponentName(
+          "android.cts.tagging.sdk30", "android.cts.tagging.sdk30.ExportedMemtagOffAppZygoteService"));
+      assertEquals(TAGGING_MODE_OFF, activity.getResult());
     }
 }

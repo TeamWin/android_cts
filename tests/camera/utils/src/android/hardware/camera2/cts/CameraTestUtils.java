@@ -3818,7 +3818,8 @@ public class CameraTestUtils extends Assert {
     public static final int PERFORMANCE_CLASS_NOT_MET = 0;
     public static final int PERFORMANCE_CLASS_R = Build.VERSION_CODES.R;
     public static final int PERFORMANCE_CLASS_S = Build.VERSION_CODES.R + 1;
-    public static final int PERFORMANCE_CLASS_CURRENT = PERFORMANCE_CLASS_S;
+    public static final int PERFORMANCE_CLASS_T = Build.VERSION_CODES.S + 2;
+    public static final int PERFORMANCE_CLASS_CURRENT = PERFORMANCE_CLASS_T;
 
     /**
      * Check whether this mobile device is R performance class as defined in CDD
@@ -3832,6 +3833,13 @@ public class CameraTestUtils extends Assert {
      */
     public static boolean isSPerfClass() {
         return Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_S;
+    }
+
+    /**
+     * Check whether this mobile device is T performance class as defined in CDD
+     */
+    public static boolean isTPerfClass() {
+        return Build.VERSION.MEDIA_PERFORMANCE_CLASS == PERFORMANCE_CLASS_T;
     }
 
     /**

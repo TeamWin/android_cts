@@ -73,11 +73,12 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Ensure moving windows and tapping is done synchronously.
@@ -727,10 +728,9 @@ public class WindowInputTests {
         eventHover.setSource(InputDevice.SOURCE_MOUSE);
         try {
             mInstrumentation.sendPointerSync(eventHover);
-            fail("Not allowed to inject to windows owned by another uid from Instrumentation.");
-        } catch (RuntimeException e) {
-            // Should not be allowed to inject event to a window owned by another uid from the
-            // Instrumentation class.
+            fail("Not allowed to inject event to the window from another process.");
+        } catch (SecurityException e) {
+            // Should not be allowed to inject event to the window from another process.
         }
     }
 

@@ -53,7 +53,6 @@ import android.app.Instrumentation;
 import android.app.compat.CompatChanges;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Insets;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -95,14 +94,12 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
-import com.android.compatibility.common.util.FeatureUtil;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeLayoutInfo;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -652,16 +649,12 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     @AppModeFull
     @Test
     public void testImeVisibilityWhenImeTransitionBetweenActivities_Full() throws Exception {
-        // TODO(b/210041952): Temporary disable testing on TV platform until realize how to address.
-        Assume.assumeFalse(FeatureUtil.isTV());
         runImeVisibilityWhenImeTransitionBetweenActivities(false /* instant */);
     }
 
     @AppModeInstant
     @Test
     public void testImeVisibilityWhenImeTransitionBetweenActivities_Instant() throws Exception {
-        // TODO(b/210041952): Temporary disable testing on TV platform until realize how to address.
-        Assume.assumeFalse(FeatureUtil.isTV());
         runImeVisibilityWhenImeTransitionBetweenActivities(true /* instant */);
     }
 
@@ -892,7 +885,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             TestUtils.runOnMainSync(
                     () -> testActivity.getWindow().getDecorView().setOnApplyWindowInsetsListener(
                             (v, insets) -> {
-                                if (insets.getInsets(WindowInsets.Type.ime()) != Insets.NONE) {
+                                if (insets.hasInsets()) {
                                     imeInsetsVisible.set(insets.isVisible(WindowInsets.Type.ime()));
                                     imeVisibilityUpdateLatch.countDown();
                                 }
@@ -904,6 +897,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                             && testActivity.getWindow().getDecorView().hasWindowFocus(), TIMEOUT);
             assertTrue("Waiting for onApplyWindowInsets timed out",
                     imeVisibilityUpdateLatch.await(5, TimeUnit.SECONDS));
+            // Wait for layout being stable in case insets visibility might not align with the
+            // input view visibility.
+            waitForInputViewLayoutStable(stream, LAYOUT_STABLE_THRESHOLD);
 
             if (imeInsetsVisible.get()) {
                 expectImeVisible(TIMEOUT);

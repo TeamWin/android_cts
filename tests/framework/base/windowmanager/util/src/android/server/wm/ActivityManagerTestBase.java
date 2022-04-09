@@ -28,6 +28,7 @@ import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
@@ -334,6 +335,16 @@ public abstract class ActivityManagerTestBase {
     protected static String getAmStartCmdWithDismissKeyguardIfInsecure(
             final ComponentName activityName) {
         return "am start --dismiss-keyguard-if-insecure -n " + getActivityName(activityName);
+    }
+
+    protected static String getAmStartCmdWithNoUserAction(final ComponentName activityName,
+            final CliIntentExtra... extras) {
+        return appendKeyValuePairs(
+                new StringBuilder("am start -n ")
+                        .append(getActivityName(activityName))
+                        .append(" -f 0x")
+                        .append(toHexString(FLAG_ACTIVITY_NO_USER_ACTION)),
+                extras);
     }
 
     protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
@@ -802,6 +813,12 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivityWithDismissKeyguardIfInsecure(final ComponentName activityName) {
         executeShellCommand(getAmStartCmdWithDismissKeyguardIfInsecure(activityName));
+        mWmState.waitForValidState(activityName);
+    }
+
+    protected void launchActivityWithNoUserAction(final ComponentName activityName,
+            final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmdWithNoUserAction(activityName, extras));
         mWmState.waitForValidState(activityName);
     }
 

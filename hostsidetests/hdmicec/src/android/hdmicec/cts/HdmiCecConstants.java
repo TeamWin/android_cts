@@ -162,6 +162,7 @@ public final class HdmiCecConstants {
     public static final String POWER_CONTROL_MODE_BROADCAST = "broadcast";
     public static final String POWER_CONTROL_MODE_NONE = "none";
     public static final String POWER_CONTROL_MODE_TV = "to_tv";
+    public static final String POWER_CONTROL_MODE_TV_AND_AUDIO_SYSTEM = "to_tv_and_audio_system";
 
     // Power State Change on Active Source Lost Settings values
     public static final String POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST_NONE = "none";

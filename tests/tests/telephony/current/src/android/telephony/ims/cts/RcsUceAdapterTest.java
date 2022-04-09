@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
@@ -125,9 +126,11 @@ public class RcsUceAdapterTest {
     private static String sTestPhoneNumber;
     private static String sTestContact2;
     private static String sTestContact3;
+    private static String sTestContact4;
     private static Uri sTestNumberUri;
     private static Uri sTestContact2Uri;
     private static Uri sTestContact3Uri;
+    private static Uri sTestContact4Uri;
 
     private ContentObserver mUceObserver;
 
@@ -966,16 +969,19 @@ public class RcsUceAdapterTest {
         final Uri contact1 = sTestNumberUri;
         final Uri contact2 = sTestContact2Uri;
         final Uri contact3 = sTestContact3Uri;
+        final Uri contact4 = sTestContact4Uri;
 
-        Collection<Uri> contacts = new ArrayList<>(3);
+        Collection<Uri> contacts = new ArrayList<>(4);
         contacts.add(contact1);
         contacts.add(contact2);
         contacts.add(contact3);
+        contacts.add(contact4);
 
-        ArrayList<String> pidfXmlList = new ArrayList<>(3);
+        ArrayList<String> pidfXmlList = new ArrayList<>(4);
         pidfXmlList.add(getPidfXmlData(contact1, true, true));
         pidfXmlList.add(getPidfXmlData(contact2, true, false));
         pidfXmlList.add(getPidfXmlData(contact3, false, false));
+        pidfXmlList.add(getMalformedPidfXmlData(contact4, false, false));
 
         // Setup the network response is 200 OK and notify capabilities update
         int networkRespCode = 200;
@@ -989,8 +995,12 @@ public class RcsUceAdapterTest {
         requestCapabilities(uceAdapter, contacts, callback);
         List<RcsContactUceCapability> resultCapList = new ArrayList<>();
 
-        // Verify that all the three contact's capabilities are received
+        // Verify that all the four contact's capabilities are received
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact", capability);
+        resultCapList.add(capability);
+
+        capability = waitForResult(capabilityQueue);
         assertNotNull("Capabilities were not received for contact", capability);
         resultCapList.add(capability);
 
@@ -1014,12 +1024,17 @@ public class RcsUceAdapterTest {
         verifyCapabilityResult(resultCapability, contact2, SOURCE_TYPE_NETWORK,
                 REQUEST_RESULT_FOUND, true, false);
 
-        // Verify the second contact capabilities from the received capabilities list
+        // Verify the third contact capabilities from the received capabilities list
         resultCapability = getContactCapability(resultCapList, contact3);
         assertNotNull("Cannot find the contact", resultCapability);
         verifyCapabilityResult(resultCapability, contact3, SOURCE_TYPE_NETWORK,
                 REQUEST_RESULT_FOUND, false, false);
 
+        // Verify the fourth contact capabilities from the received capabilities list
+        resultCapability = getContactCapability(resultCapList, contact4);
+        assertNotNull("Cannot find the contact", resultCapability);
+        verifyMalformedCapabilityResult(resultCapability, contact4, SOURCE_TYPE_NETWORK,
+                REQUEST_RESULT_FOUND, false, false);
         // Verify the onCompleted is called
         waitForResult(completeQueue);
 
@@ -1050,6 +1065,10 @@ public class RcsUceAdapterTest {
         assertNotNull("Capabilities were not received", capability);
         resultCapList.add(capability);
 
+        capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received", capability);
+        resultCapList.add(capability);
+
         // Verify the first contact capabilities from the received capabilities list
         resultCapability = getContactCapability(resultCapList, contact1);
         assertNotNull("Cannot find the contact", resultCapability);
@@ -1062,12 +1081,17 @@ public class RcsUceAdapterTest {
         verifyCapabilityResult(resultCapability, contact2, SOURCE_TYPE_NETWORK,
                 REQUEST_RESULT_NOT_FOUND, false, false);
 
-        // Verify the second contact capabilities from the received capabilities list
+        // Verify the third contact capabilities from the received capabilities list
         resultCapability = getContactCapability(resultCapList, contact3);
         assertNotNull("Cannot find the contact", resultCapability);
         verifyCapabilityResult(resultCapability, contact3, SOURCE_TYPE_NETWORK,
                 REQUEST_RESULT_NOT_FOUND, false, false);
 
+        // Verify the four contact capabilities from the received capabilities list
+        resultCapability = getContactCapability(resultCapList, contact4);
+        assertNotNull("Cannot find the contact", resultCapability);
+        verifyCapabilityResult(resultCapability, contact4, SOURCE_TYPE_NETWORK,
+                REQUEST_RESULT_NOT_FOUND, false, false);
         // Verify the onCompleted is called
         waitForResult(completeQueue);
 
@@ -1111,6 +1135,10 @@ public class RcsUceAdapterTest {
         assertNotNull("Capabilities were not received", capability);
         resultCapList.add(capability);
 
+        capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received", capability);
+        resultCapList.add(capability);
+
         // Verify the first contact capabilities from the received capabilities list
         resultCapability = getContactCapability(resultCapList, contact1);
         assertNotNull("Cannot find the contact", resultCapability);
@@ -1123,12 +1151,17 @@ public class RcsUceAdapterTest {
         verifyCapabilityResult(resultCapability, contact2, SOURCE_TYPE_NETWORK,
                 REQUEST_RESULT_NOT_FOUND, false, false);
 
-        // Verify the second contact capabilities from the received capabilities list
+        // Verify the third contact capabilities from the received capabilities list
         resultCapability = getContactCapability(resultCapList, contact3);
         assertNotNull("Cannot find the contact", resultCapability);
         verifyCapabilityResult(resultCapability, contact3, SOURCE_TYPE_NETWORK,
                 REQUEST_RESULT_NOT_FOUND, false, false);
 
+        // Verify the fourth contact capabilities from the received capabilities list
+        resultCapability = getContactCapability(resultCapList, contact4);
+        assertNotNull("Cannot find the contact", resultCapability);
+        verifyMalformedCapabilityResult(resultCapability, contact4, SOURCE_TYPE_NETWORK,
+                REQUEST_RESULT_NOT_FOUND, false, false);
         // Verify the onCompleted is called
         waitForResult(completeQueue);
 
@@ -3387,6 +3420,37 @@ public class RcsUceAdapterTest {
         return pidfBuilder.toString();
     }
 
+    private String getMalformedPidfXmlData(Uri contact, boolean audioSupported,
+            boolean videoSupported) {
+        StringBuilder pidfBuilder = new StringBuilder();
+        pidfBuilder.append("<?xml version='1.0' encoding='utf-8' standalone='yes' ?>")
+                .append("<presence entity=\"").append(contact).append("\"")
+                .append(" xmlns=\"urn:ietf:params:xml:ns:pidf\"")
+                .append(" xmlns:op=\"urn:oma:xml:prs:pidf:oma-pres\"")
+                .append(" xmlns:caps=\"urn:ietf:params:xml:ns:pidf:caps\">")
+                .append("<tuple id=\"tid0\"><status><basic>open</basic></status>")
+                .append("<op:service-description>")
+                .append("<op:service-id>service_id_01</op:service-id>")
+                .append("<op:version>1.0</op:version>")
+                .append("<op:description>description_test1</op:description>")
+                .append("</op:service-description>")
+                .append("<caps:servcaps>")
+                .append("<caps:audio>").append(audioSupported).append("</caps:audio>")
+                .append("<caps:video>").append(videoSupported).append("</caps:video>")
+                .append("</caps:servcaps>")
+                .append("<contact>").append(contact).append("</contact>")
+                .append("</tuple>")
+                .append("<tuple id=\"tid1\"><status><basic>open</basic></status>")
+                .append("<op:service-description>")
+                .append("<op:service-id>service_id_02</op:service-id>")
+                .append("<op:version>1.0</op:version>")
+                .append("<op:ddescription>description_test2</op:description>")
+                .append("</op:service-description>")
+                .append("<contact>").append(contact).append("</contact>")
+                .append("</tuple></presence>");
+        return pidfBuilder.toString();
+    }
+
     private RcsContactUceCapability getContactCapability(
             List<RcsContactUceCapability> resultCapList, Uri targetUri) {
         if (resultCapList == null) {
@@ -3426,6 +3490,47 @@ public class RcsUceAdapterTest {
         assertNotNull("Contact Presence tuple should not be null!", presenceTuple);
 
         ServiceCapabilities capabilities = presenceTuple.getServiceCapabilities();
+        assertNotNull("Service capabilities should not be null!", capabilities);
+
+        // Verify if the audio is supported
+        assertEquals(expectedAudioSupported, capabilities.isAudioCapable());
+
+        // Verify if the video is supported
+        assertEquals(expectedVideoSupported, capabilities.isVideoCapable());
+    }
+
+    private void verifyMalformedCapabilityResult(RcsContactUceCapability resultCapability,
+            Uri expectedUri, int expectedSourceType, int expectedResult,
+            boolean expectedAudioSupported, boolean expectedVideoSupported) {
+        // Verify the contact URI
+        assertEquals(expectedUri, resultCapability.getContactUri());
+
+        // Verify the source type is the network type.
+        assertEquals(expectedSourceType, resultCapability.getSourceType());
+
+        // Verify the request result is expected.
+        final int requestResult = resultCapability.getRequestResult();
+        assertEquals(expectedResult, requestResult);
+
+        // Return directly if the result is not found.
+        if (requestResult == REQUEST_RESULT_NOT_FOUND) {
+            return;
+        }
+
+        // Verify the mechanism is presence
+        assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_PRESENCE,
+                resultCapability.getCapabilityMechanism());
+
+        // First tuple is malformed. Verify that no malformed tuple is stored.
+        RcsContactPresenceTuple presenceTuple =
+                resultCapability.getCapabilityTuple("service_id_02");
+        assertNull("Contact Presence tuple should be null!", presenceTuple);
+
+        presenceTuple = resultCapability.getCapabilityTuple("service_id_01");
+        assertNotNull("Contact Presence tuple should not be null!", presenceTuple);
+
+        RcsContactPresenceTuple.ServiceCapabilities capabilities =
+                presenceTuple.getServiceCapabilities();
         assertNotNull("Service capabilities should not be null!", capabilities);
 
         // Verify if the audio is supported
@@ -3528,6 +3633,9 @@ public class RcsUceAdapterTest {
 
         sTestContact3 = generateRandomContact(6);
         sTestContact3Uri = Uri.fromParts(PhoneAccount.SCHEME_SIP, sTestContact3, null);
+
+        sTestContact4 = generateRandomContact(7);
+        sTestContact4Uri = Uri.fromParts(PhoneAccount.SCHEME_SIP, sTestContact4, null);
     }
 
     private static String generateRandomPhoneNumber() {
@@ -3563,7 +3671,8 @@ public class RcsUceAdapterTest {
             StringBuilder builder = new StringBuilder();
             builder.append(sTestPhoneNumber)
                     .append(",").append(sTestContact2)
-                    .append(",").append(sTestContact3);
+                    .append(",").append(sTestContact3)
+                    .append(",").append(sTestContact4);
             sServiceConnector.removeEabContacts(sTestSlot, builder.toString());
         } catch (Exception e) {
             Log.w("RcsUceAdapterTest", "Cannot remove test contacts from eab database: " + e);

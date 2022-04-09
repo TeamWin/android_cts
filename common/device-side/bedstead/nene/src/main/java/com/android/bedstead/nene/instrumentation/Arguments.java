@@ -20,6 +20,8 @@ import android.os.Bundle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.util.Set;
+
 /** Access to Instrumentation Arguments. */
 public final class Arguments {
 
@@ -58,6 +60,11 @@ public final class Arguments {
     /** Gets string instrumentation arg. */
     public String getString(String key, String defaultValue) {
         return mArguments.getString(key, defaultValue);
+    }
+
+    /** Gets the keys of passed arguments. */
+    public Set<String> keys() {
+        return mArguments.keySet();
     }
 
 }

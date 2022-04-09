@@ -20,4 +20,5 @@ import android.app.PendingIntent;
 
 interface IBackgroundActivityTestService {
     PendingIntent generatePendingIntent(boolean isBroadcast);
+    void getAndStartManageSpaceActivity();
 }

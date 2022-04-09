@@ -43,6 +43,7 @@ public final class Device {
         try {
             ShellCommand.builder("input keyevent")
                     .addOperand("KEYCODE_WAKEUP")
+                    .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();
         } catch (AdbException e) {
