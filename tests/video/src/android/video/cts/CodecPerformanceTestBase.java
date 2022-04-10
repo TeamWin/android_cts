@@ -21,6 +21,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.cts.TestArgs;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.util.Range;
@@ -166,10 +167,19 @@ class CodecPerformanceTestBase {
 
     static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
             String[] features, boolean isEncoder, int selectCodecOption) {
+        ArrayList<String> listOfCodecs = new ArrayList<>();
+        if (TestArgs.MEDIA_TYPE_PREFIX != null &&
+                !mime.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            return listOfCodecs;
+        }
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-        ArrayList<String> listOfCodecs = new ArrayList<>();
+
         for (MediaCodecInfo codecInfo : codecInfos) {
+            if (TestArgs.CODEC_PREFIX != null &&
+                    !codecInfo.getName().startsWith(TestArgs.CODEC_PREFIX)) {
+                continue;
+            }
             if (codecInfo.isEncoder() != isEncoder) continue;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
             if (selectCodecOption == SELECT_HARDWARE && !codecInfo.isHardwareAccelerated())

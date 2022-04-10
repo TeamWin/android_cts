@@ -31,10 +31,13 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.DateTimeException;
+import java.time.Duration;
+import java.time.Instant;
 
 @RunWith(AndroidJUnit4.class)
 public class SystemClockSntpTest {
@@ -55,11 +58,44 @@ public class SystemClockSntpTest {
     private static long TEST_NTP_TIMEOUT_MILLIS = 300L;
 
     private SntpTestServer mServer;
+    private Instant mSetupInstant;
+    private long mSetupElapsedRealtimeMillis;
+
+    @Before
+    public void setUp() {
+        mSetupInstant = Instant.now();
+        mSetupElapsedRealtimeMillis = SystemClock.elapsedRealtime();
+    }
 
     @After
     public void tearDown() {
-        // Restore NTP server configurations.
+        // Restore NTP server configuration.
         executeShellCommand("cmd network_time_update_service set_server_config");
+        // Clear any stored fake NTP time that may have been introduced by tests.
+        executeShellCommand("cmd network_time_update_service clear_time");
+        // Try to refresh the NTP time from a real server (this may fail to have any effect if the
+        // real server is unreachable).
+        executeShellCommand("cmd network_time_update_service force_refresh");
+
+        // If the system clock has been set to a time before or significantly after mSetupInstant as
+        // a result of running tests, make best efforts to restore it to close to what it was to
+        // avoid interfering with later tests, e.g. the refresh above might have failed, and tests
+        // might be leaving the system clock set to a time in history / in the future that could
+        // cause root cert validity checks to fail. The system clock will have been left unchanged
+        // by tests if NTP isn't being used as the primary time zone detection mechanism or if the
+        // times used in tests were obviously invalid and rejected by the time detector.
+        Instant currentSystemClockTime = Instant.now();
+        if (currentSystemClockTime.isBefore(mSetupInstant)
+                || currentSystemClockTime.isAfter(mSetupInstant.plus(Duration.ofHours(1)))) {
+            // Adjust mSetupInstant for (approximately) time elapsed.
+            Duration timeElapsed = Duration.ofMillis(
+                    SystemClock.elapsedRealtime() - mSetupElapsedRealtimeMillis);
+            Instant newNow = mSetupInstant.plus(timeElapsed);
+
+            // Set the system clock directly as there is currently no way easy way to inject time
+            // suggestions into the time_detector service from the commandline.
+            executeShellCommand("cmd alarm set-time " + newNow.toEpochMilli());
+        }
     }
 
     @Test

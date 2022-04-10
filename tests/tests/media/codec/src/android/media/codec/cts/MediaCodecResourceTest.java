@@ -36,11 +36,12 @@ import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.platform.test.annotations.Presubmit;
+import android.os.Build;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -52,6 +53,7 @@ import java.util.List;
 // This class verifies the resource management aspects of MediaCodecs.
 @SmallTest
 @RequiresDevice
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class MediaCodecResourceTest {
     private static final String TAG = "MediaCodecResourceTest";
 
