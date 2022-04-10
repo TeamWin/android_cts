@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.mockmodem;
 
 import android.hardware.radio.RadioError;
+import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.network.IRadioNetwork;
 import android.hardware.radio.network.IRadioNetworkIndication;
 import android.hardware.radio.network.IRadioNetworkResponse;
 import android.hardware.radio.network.NetworkScanRequest;
 import android.hardware.radio.network.RadioAccessSpecifier;
+import android.hardware.radio.network.RegState;
 import android.hardware.radio.network.SignalThresholdInfo;
+import android.hardware.radio.sim.CardStatus;
+import android.os.AsyncResult;
+import android.os.Handler;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -33,20 +39,181 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private final MockModemService mService;
     private IRadioNetworkResponse mRadioNetworkResponse;
     private IRadioNetworkIndication mRadioNetworkIndication;
+    private static MockModemConfigInterface[] sMockModemConfigInterfaces;
+    private Object mCacheUpdateMutex;
+    private final Handler mHandler;
+    private int mSubId;
 
-    public IRadioNetworkImpl(MockModemService service) {
+    // ***** Events
+    static final int EVENT_RADIO_STATE_CHANGED = 1;
+    static final int EVENT_SIM_STATUS_CHANGED = 2;
+    static final int EVENT_PREFERRED_MODE_CHANGED = 3;
+
+    // ***** Cache of modem attributes/status
+    private int mNetworkTypeBitmap;
+    private int mReasonForDenial;
+    private boolean mNetworkSelectionMode;
+
+    private int mRadioState;
+    private boolean mSimReady;
+
+    private MockNetworkService mServiceState;
+
+    public IRadioNetworkImpl(
+            MockModemService service, MockModemConfigInterface[] interfaces, int instanceId) {
         Log.d(TAG, "Instantiated");
 
         this.mService = service;
+        sMockModemConfigInterfaces = interfaces;
+        mCacheUpdateMutex = new Object();
+        mHandler = new IRadioNetworkHandler();
+        mSubId = instanceId;
+        mServiceState = new MockNetworkService();
+
+        // Default network type GPRS|EDGE|UMTS|HSDPA|HSUPA|HSPA|LTE|HSPA+|GSM|LTE_CA|NR
+        mNetworkTypeBitmap =
+                MockNetworkService.GSM
+                        | MockNetworkService.WCDMA
+                        | MockNetworkService.LTE
+                        | MockNetworkService.NR;
+        mServiceState.updateHighestRegisteredRat(mNetworkTypeBitmap);
+
+        sMockModemConfigInterfaces[mSubId].registerForRadioStateChanged(
+                mHandler, EVENT_RADIO_STATE_CHANGED, null);
+        sMockModemConfigInterfaces[mSubId].registerForCardStatusChanged(
+                mHandler, EVENT_SIM_STATUS_CHANGED, null);
+    }
+
+    /** Handler class to handle callbacks */
+    private final class IRadioNetworkHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            AsyncResult ar;
+            synchronized (mCacheUpdateMutex) {
+                switch (msg.what) {
+                    case EVENT_SIM_STATUS_CHANGED:
+                        Log.d(TAG, "Received EVENT_SIM_STATUS_CHANGED");
+                        boolean oldSimReady = mSimReady;
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mSimReady = updateSimReady(ar);
+                            if (oldSimReady != mSimReady) {
+                                updateNetworkStatus();
+                            }
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+
+                    case EVENT_RADIO_STATE_CHANGED:
+                        Log.d(TAG, "Received EVENT_RADIO_STATE_CHANGED");
+                        int oldRadioState = mRadioState;
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            mRadioState = (int) ar.result;
+                            Log.i(TAG, "Radio state: " + mRadioState);
+                            if (oldRadioState != mRadioState) {
+                                updateNetworkStatus();
+                            }
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+
+                    case EVENT_PREFERRED_MODE_CHANGED:
+                        Log.d(TAG, "Received EVENT_PREFERRED_MODE_CHANGED");
+                        mServiceState.updateNetworkStatus(
+                                MockNetworkService.NETWORK_UPDATE_PREFERRED_MODE_CHANGE);
+                        updateNetworkStatus();
+                        break;
+                }
+            }
+        }
+    }
+
+    // Implementation of IRadioNetwork utility functions
+
+    private void notifyServiceStateChange() {
+        Log.d(TAG, "notifyServiceStateChange");
+
+        Handler handler = sMockModemConfigInterfaces[mSubId].getMockModemConfigHandler();
+        Message msg =
+                handler.obtainMessage(
+                        MockModemConfigBase.EVENT_SERVICE_STATE_CHANGE, mServiceState);
+        handler.sendMessage(msg);
+    }
+
+    private void updateNetworkStatus() {
+
+        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
+            // Update to OOS state
+            mServiceState.updateServiceState(RegState.NOT_REG_MT_NOT_SEARCHING_OP);
+        } else if (!mSimReady) {
+            // Update to Searching state
+            mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP);
+        } else if (mServiceState.isHomeCellExisted() && mServiceState.getIsHomeCamping()) {
+            // Update to Home state
+            mServiceState.updateServiceState(RegState.REG_HOME);
+        } else if (mServiceState.isRoamingCellExisted() && mServiceState.getIsRoamingCamping()) {
+            // Update to Roaming state
+            mServiceState.updateServiceState(RegState.REG_ROAMING);
+        } else {
+            // Update to Searching state
+            mServiceState.updateServiceState(RegState.NOT_REG_MT_SEARCHING_OP);
+        }
+
+        unsolNetworkStateChanged();
+        unsolCurrentSignalStrength();
+        unsolCellInfoList();
+    }
+
+    private boolean updateSimReady(AsyncResult ar) {
+        String simPlmn = "";
+        CardStatus cardStatus = new CardStatus();
+        cardStatus = (CardStatus) ar.result;
+
+        if (cardStatus.cardState != CardStatus.STATE_PRESENT) {
+            return false;
+        }
+
+        int numApplications = cardStatus.applications.length;
+        if (numApplications < 1) {
+            return false;
+        }
+
+        for (int i = 0; i < numApplications; i++) {
+            android.hardware.radio.sim.AppStatus rilAppStatus = cardStatus.applications[i];
+            if (rilAppStatus.appState == android.hardware.radio.sim.AppStatus.APP_STATE_READY) {
+                Log.i(TAG, "SIM is ready");
+                simPlmn = "46692"; // TODO: Get SIM PLMN, maybe decode from IMSI
+                mServiceState.updateSimPlmn(simPlmn);
+                return true;
+            }
+        }
+
+        mServiceState.updateSimPlmn(simPlmn);
+        return false;
+    }
+
+    public boolean changeNetworkService(int carrierId, boolean registration) {
+        Log.d(TAG, "changeNetworkService: carrier id(" + carrierId + "): " + registration);
+
+        synchronized (mCacheUpdateMutex) {
+            // TODO: compare carrierId and sim to decide home or roming
+            mServiceState.setServiceStatus(false, registration);
+            updateNetworkStatus();
+        }
+
+        return true;
     }
 
     // Implementation of IRadioNetwork functions
     @Override
     public void getAllowedNetworkTypesBitmap(int serial) {
         Log.d(TAG, "getAllowedNetworkTypesBitmap");
-        int networkTypeBitmap = 0;
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        int networkTypeBitmap = mNetworkTypeBitmap;
 
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getAllowedNetworkTypesBitmapResponse(rsp, networkTypeBitmap);
         } catch (RemoteException ex) {
@@ -112,12 +279,15 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     @Override
     public void getCellInfoList(int serial) {
         Log.d(TAG, "getCellInfoList");
+        android.hardware.radio.network.CellInfo[] cells;
 
-        android.hardware.radio.network.CellInfo[] cellInfo =
-                new android.hardware.radio.network.CellInfo[0];
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        synchronized (mCacheUpdateMutex) {
+            cells = mServiceState.getCells();
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioNetworkResponse.getCellInfoListResponse(rsp, cellInfo);
+            mRadioNetworkResponse.getCellInfoListResponse(rsp, cells);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getCellInfoList from AIDL. Exception" + ex);
         }
@@ -129,9 +299,25 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
         android.hardware.radio.network.RegStateResult dataRegResponse =
                 new android.hardware.radio.network.RegStateResult();
+
+        dataRegResponse.cellIdentity = new android.hardware.radio.network.CellIdentity();
+        dataRegResponse.reasonForDenial = mReasonForDenial;
+
+        synchronized (mCacheUpdateMutex) {
+            dataRegResponse.regState =
+                    mServiceState.getRegistration(android.hardware.radio.network.Domain.PS);
+            dataRegResponse.rat = mServiceState.getRegistrationRat();
+            if (mServiceState.isInService()) {
+                dataRegResponse.registeredPlmn =
+                        mServiceState.getPrimaryCellOperatorInfo().operatorNumeric;
+            }
+
+            dataRegResponse.cellIdentity = mServiceState.getPrimaryCellIdentity();
+        }
+
+        // TODO: support accessTechnologySpecificInfo
         dataRegResponse.accessTechnologySpecificInfo =
                 android.hardware.radio.network.AccessTechnologySpecificInfo.noinit(true);
-        dataRegResponse.cellIdentity = android.hardware.radio.network.CellIdentity.noinit(true);
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -157,10 +343,10 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     @Override
     public void getNetworkSelectionMode(int serial) {
         Log.d(TAG, "getNetworkSelectionMode");
-        boolean manual = false;
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
-            mRadioNetworkResponse.getNetworkSelectionModeResponse(rsp, manual);
+            mRadioNetworkResponse.getNetworkSelectionModeResponse(rsp, mNetworkSelectionMode);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to getNetworkSelectionMode from AIDL. Exception" + ex);
         }
@@ -173,7 +359,17 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
         String longName = "";
         String shortName = "";
         String numeric = "";
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+
+        synchronized (mCacheUpdateMutex) {
+            if (mServiceState.isInService()) {
+                android.hardware.radio.network.OperatorInfo operatorInfo =
+                        mServiceState.getPrimaryCellOperatorInfo();
+                longName = operatorInfo.alphaLong;
+                shortName = operatorInfo.alphaShort;
+                numeric = operatorInfo.operatorNumeric;
+            }
+        }
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getOperatorResponse(rsp, longName, shortName, numeric);
         } catch (RemoteException ex) {
@@ -187,7 +383,15 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
         android.hardware.radio.network.SignalStrength signalStrength =
                 new android.hardware.radio.network.SignalStrength();
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+
+        synchronized (mCacheUpdateMutex) {
+            if (mServiceState.getIsHomeCamping()
+                    && mRadioState == MockModemConfigInterface.RADIO_STATE_ON) {
+                signalStrength = mServiceState.getSignalStrength();
+            }
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getSignalStrengthResponse(rsp, signalStrength);
         } catch (RemoteException ex) {
@@ -212,8 +416,13 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     @Override
     public void getVoiceRadioTechnology(int serial) {
         Log.d(TAG, "getVoiceRadioTechnology");
-        int rat = 0;
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        int rat;
+
+        synchronized (mCacheUpdateMutex) {
+            rat = mServiceState.getRegistrationRat();
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.getVoiceRadioTechnologyResponse(rsp, rat);
         } catch (RemoteException ex) {
@@ -227,9 +436,25 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
         android.hardware.radio.network.RegStateResult voiceRegResponse =
                 new android.hardware.radio.network.RegStateResult();
+
+        voiceRegResponse.cellIdentity = new android.hardware.radio.network.CellIdentity();
+        voiceRegResponse.reasonForDenial = mReasonForDenial;
+
+        synchronized (mCacheUpdateMutex) {
+            voiceRegResponse.regState =
+                    mServiceState.getRegistration(android.hardware.radio.network.Domain.CS);
+            voiceRegResponse.rat = mServiceState.getRegistrationRat();
+            if (mServiceState.isInService()) {
+                voiceRegResponse.registeredPlmn =
+                        mServiceState.getPrimaryCellOperatorInfo().operatorNumeric;
+            }
+
+            voiceRegResponse.cellIdentity = mServiceState.getPrimaryCellIdentity();
+        }
+
+        // TODO: support accessTechnologySpecificInfo
         voiceRegResponse.accessTechnologySpecificInfo =
                 android.hardware.radio.network.AccessTechnologySpecificInfo.noinit(true);
-        voiceRegResponse.cellIdentity = android.hardware.radio.network.CellIdentity.noinit(true);
 
         RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
@@ -259,8 +484,19 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     @Override
     public void setAllowedNetworkTypesBitmap(int serial, int networkTypeBitmap) {
         Log.d(TAG, "setAllowedNetworkTypesBitmap");
+        boolean isModeChange = false;
 
-        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.REQUEST_NOT_SUPPORTED);
+        if (mNetworkTypeBitmap != networkTypeBitmap) {
+            mNetworkTypeBitmap = networkTypeBitmap;
+            synchronized (mCacheUpdateMutex) {
+                isModeChange = mServiceState.updateHighestRegisteredRat(mNetworkTypeBitmap);
+            }
+            if (isModeChange) {
+                mHandler.obtainMessage(EVENT_PREFERRED_MODE_CHANGED).sendToTarget();
+            }
+        }
+
+        RadioResponseInfo rsp = mService.makeSolRsp(serial);
         try {
             mRadioNetworkResponse.setAllowedNetworkTypesBitmapResponse(rsp);
         } catch (RemoteException ex) {
@@ -514,5 +750,72 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     @Override
     public int getInterfaceVersion() {
         return IRadioNetwork.VERSION;
+    }
+
+    public void unsolNetworkStateChanged() {
+        Log.d(TAG, "unsolNetworkStateChanged");
+
+        // Notify other module
+        notifyServiceStateChange();
+
+        if (mRadioNetworkIndication != null) {
+            try {
+                mRadioNetworkIndication.networkStateChanged(RadioIndicationType.UNSOLICITED);
+            } catch (RemoteException ex) {
+                Log.e(TAG, "Failed to invoke networkStateChanged from AIDL. Exception" + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioNetworkIndication");
+        }
+    }
+
+    public void unsolCurrentSignalStrength() {
+        Log.d(TAG, "unsolCurrentSignalStrength");
+        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
+            return;
+        }
+
+        if (mRadioNetworkIndication != null) {
+            android.hardware.radio.network.SignalStrength signalStrength =
+                    new android.hardware.radio.network.SignalStrength();
+
+            synchronized (mCacheUpdateMutex) {
+                signalStrength = mServiceState.getSignalStrength();
+            }
+
+            try {
+                mRadioNetworkIndication.currentSignalStrength(
+                        RadioIndicationType.UNSOLICITED, signalStrength);
+            } catch (RemoteException ex) {
+                Log.e(
+                        TAG,
+                        "Failed to invoke currentSignalStrength change from AIDL. Exception" + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioNetworkIndication");
+        }
+    }
+
+    public void unsolCellInfoList() {
+        Log.d(TAG, "unsolCellInfoList");
+
+        if (mRadioState != MockModemConfigInterface.RADIO_STATE_ON) {
+            return;
+        }
+
+        if (mRadioNetworkIndication != null) {
+            android.hardware.radio.network.CellInfo[] cells;
+
+            synchronized (mCacheUpdateMutex) {
+                cells = mServiceState.getCells();
+            }
+            try {
+                mRadioNetworkIndication.cellInfoList(RadioIndicationType.UNSOLICITED, cells);
+            } catch (RemoteException ex) {
+                Log.e(TAG, "Failed to invoke cellInfoList change from AIDL. Exception" + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioNetworkIndication");
+        }
     }
 }

@@ -15,6 +15,8 @@
  */
 package android.telephony.cts;
 
+import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
+
 import static com.android.internal.telephony.RILConstants.INTERNAL_ERR;
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
@@ -28,7 +30,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.SystemProperties;
+import android.telephony.AccessNetworkConstants;
+import android.telephony.NetworkRegistrationInfo;
+import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
+import android.telephony.mockmodem.MockModemManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -110,6 +116,26 @@ public class TelephonyManagerTestOnMockModem {
         }
     }
 
+    private int getRegState(int domain) {
+        int reg;
+
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
+
+        ServiceState ss = sTelephonyManager.getServiceState();
+        assertNotNull(ss);
+
+        NetworkRegistrationInfo nri =
+                ss.getNetworkRegistrationInfo(domain, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+        assertNotNull(nri);
+
+        reg = nri.getRegistrationState();
+        Log.d(TAG, "SS: " + nri.registrationStateToString(reg));
+
+        return reg;
+    }
+
     @Test
     public void testSimStateChange() throws Throwable {
         Log.d(TAG, "TelephonyManagerTestOnMockModem#testSimStateChange");
@@ -123,9 +149,7 @@ public class TelephonyManagerTestOnMockModem {
                         .contains(simCardState));
 
         // Insert a SIM
-        assertTrue(
-                sMockModemManager.insertSimCard(
-                        slotId, MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT));
+        assertTrue(sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT));
         simCardState = sTelephonyManager.getSimCardState();
         assertEquals(TelephonyManager.SIM_STATE_PRESENT, simCardState);
 
@@ -235,5 +259,44 @@ public class TelephonyManagerTestOnMockModem {
         TimeUnit.SECONDS.sleep(1);
         assertTrue(result);
         assertEquals(sTelephonyManager.getRadioPowerState(), radioState);
+    }
+
+    @Test
+    public void testServiceStateChange() throws Throwable {
+        Log.d(TAG, "TelephonyManagerTestOnMockModem#testServiceStateChange");
+
+        int slotId = 0;
+
+        // Insert a SIM
+        sMockModemManager.insertSimCard(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT);
+
+        // Expect: Seaching State
+        TimeUnit.SECONDS.sleep(2);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        // Enter Service
+        Log.d(TAG, "testServiceStateChange: Enter Service");
+        sMockModemManager.changeNetworkService(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, true);
+
+        // Expect: Home State
+        TimeUnit.SECONDS.sleep(2);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS),
+                NetworkRegistrationInfo.REGISTRATION_STATE_HOME);
+
+        // Leave Service
+        Log.d(TAG, "testServiceStateChange: Leave Service");
+        sMockModemManager.changeNetworkService(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, false);
+
+        // Expect: Seaching State
+        TimeUnit.SECONDS.sleep(2);
+        assertEquals(
+                getRegState(NetworkRegistrationInfo.DOMAIN_CS),
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
+
+        // Remove the SIM
+        sMockModemManager.removeSimCard(slotId);
     }
 }
