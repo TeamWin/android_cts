@@ -28,6 +28,7 @@ import android.bluetooth.BluetoothLeAudioCodecStatus;
 import android.bluetooth.BluetoothLeAudioCodecConfig;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothStatusCodes;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
@@ -132,7 +133,8 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
             mIsProfileReady = false;
             mBluetoothLeAudio = null;
 
-            mIsLeAudioSupported =  TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO);
+            mIsLeAudioSupported = (mAdapter.isLeAudioSupported()
+                    == BluetoothStatusCodes.FEATURE_SUPPORTED);
             if (!mIsLeAudioSupported) return;
 
             mAdapter.getProfileProxy(getContext(), new BluetoothLeAudioServiceListener(),
