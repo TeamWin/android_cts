@@ -40,6 +40,7 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import org.junit.Assume.assumeFalse
 import java.util.concurrent.CountDownLatch
 
 const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
@@ -62,6 +63,10 @@ const val EXPECTED_TIMEOUT_MS = 2000L
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 class NotificationPermissionTest : BaseUsePermissionTest() {
+
+    // b/220968160: Notification permission is not enabled on TV devices.
+    @Before
+    fun assumeNotTv() = assumeFalse(isTv)
 
     private val cr = callWithShellPermissionIdentity {
         context.createContextAsUser(UserHandle.SYSTEM, 0).contentResolver
