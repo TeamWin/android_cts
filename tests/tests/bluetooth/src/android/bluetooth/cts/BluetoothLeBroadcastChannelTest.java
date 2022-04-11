@@ -112,6 +112,24 @@ public class BluetoothLeBroadcastChannelTest {
         assertNull(channel.getCodecMetadata());
     }
 
+    @Test
+    public void testCreateBroadcastChannelFromCopy() {
+        if (shouldSkipTest()) {
+            return;
+        }
+        BluetoothLeBroadcastChannel channel =
+                new BluetoothLeBroadcastChannel.Builder()
+                        .setSelected(true)
+                        .setChannelIndex(TEST_CHANNEL_INDEX)
+                        .setCodecMetadata(null)
+                        .build();
+        BluetoothLeBroadcastChannel channelCopy =
+                new BluetoothLeBroadcastChannel.Builder(channel).build();
+        assertTrue(channelCopy.isSelected());
+        assertEquals(TEST_CHANNEL_INDEX, channelCopy.getChannelIndex());
+        assertNull(channelCopy.getCodecMetadata());
+    }
+
     private boolean shouldSkipTest() {
         return !mHasBluetooth || (!mIsBroadcastSourceSupported && !mIsBroadcastAssistantSupported);
     }
