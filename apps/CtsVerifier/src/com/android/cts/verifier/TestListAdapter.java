@@ -36,7 +36,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.TestScreenshotsMetadata;
 import com.android.cts.verifier.TestListActivity.DisplayMode;
 
 import java.io.ByteArrayInputStream;
@@ -85,9 +84,6 @@ public abstract class TestListAdapter extends BaseAdapter {
 
     /** Map from test name to {@link TestResultHistoryCollection}. */
     private final Map<String, TestResultHistoryCollection> mHistories = new HashMap<>();
-
-    /** Map from test name to {@link TestScreenshotsMetadata}. */
-    private final Map<String, TestScreenshotsMetadata> mScreenshotsMetadata = new HashMap<>();
 
     /** Flag to identify whether the mHistories has been loaded. */
     private final AtomicBoolean mHasLoadedResultHistory = new AtomicBoolean(false);
@@ -253,8 +249,7 @@ public abstract class TestListAdapter extends BaseAdapter {
         histories.merge(null, mHistories.get(name));
 
         new SetTestResultTask(name, testResult.getResult(),
-                testResult.getDetails(), testResult.getReportLog(), histories,
-                mScreenshotsMetadata.get(name)).execute();
+                testResult.getDetails(), testResult.getReportLog(), histories).execute();
     }
 
     class RefreshTestResultsTask extends AsyncTask<Void, Void, RefreshResult> {
@@ -294,8 +289,6 @@ public abstract class TestListAdapter extends BaseAdapter {
             mReportLogs.putAll(result.mReportLogs);
             mHistories.clear();
             mHistories.putAll(result.mHistories);
-            mScreenshotsMetadata.clear();
-            mScreenshotsMetadata.putAll(result.mScreenshotsMetadata);
             mHasLoadedResultHistory.set(true);
             notifyDataSetChanged();
         }
@@ -307,21 +300,18 @@ public abstract class TestListAdapter extends BaseAdapter {
         Map<String, String> mDetails;
         Map<String, ReportLog> mReportLogs;
         Map<String, TestResultHistoryCollection> mHistories;
-        Map<String, TestScreenshotsMetadata> mScreenshotsMetadata;
 
         RefreshResult(
                 List<TestListItem> items,
                 Map<String, Integer> results,
                 Map<String, String> details,
                 Map<String, ReportLog> reportLogs,
-                Map<String, TestResultHistoryCollection> histories,
-                Map<String, TestScreenshotsMetadata> screenshotsMetadata) {
+                Map<String, TestResultHistoryCollection> histories) {
             mItems = items;
             mResults = results;
             mDetails = details;
             mReportLogs = reportLogs;
             mHistories = histories;
-            mScreenshotsMetadata = screenshotsMetadata;
         }
     }
 
@@ -334,7 +324,6 @@ public abstract class TestListAdapter extends BaseAdapter {
         TestResultsProvider.COLUMN_TEST_DETAILS,
         TestResultsProvider.COLUMN_TEST_METRICS,
         TestResultsProvider.COLUMN_TEST_RESULT_HISTORY,
-        TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
     };
 
     RefreshResult getRefreshResults(List<TestListItem> items) {
@@ -342,7 +331,6 @@ public abstract class TestListAdapter extends BaseAdapter {
         Map<String, String> details = new HashMap<String, String>();
         Map<String, ReportLog> reportLogs = new HashMap<String, ReportLog>();
         Map<String, TestResultHistoryCollection> histories = new HashMap<>();
-        Map<String, TestScreenshotsMetadata> screenshotsMetadata = new HashMap<>();
         ContentResolver resolver = mContext.getContentResolver();
         Cursor cursor = null;
         try {
@@ -356,13 +344,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     ReportLog reportLog = (ReportLog) deserialize(cursor.getBlob(4));
                     TestResultHistoryCollection historyCollection =
                         (TestResultHistoryCollection) deserialize(cursor.getBlob(5));
-                    TestScreenshotsMetadata screenshots =
-                            (TestScreenshotsMetadata) deserialize(cursor.getBlob(6));
                     results.put(testName, testResult);
                     details.put(testName, testDetails);
                     reportLogs.put(testName, reportLog);
                     histories.put(testName, historyCollection);
-                    screenshotsMetadata.put(testName, screenshots);
                 } while (cursor.moveToNext());
             }
         } finally {
@@ -370,8 +355,7 @@ public abstract class TestListAdapter extends BaseAdapter {
                 cursor.close();
             }
         }
-        return new RefreshResult(
-                items, results, details, reportLogs, histories, screenshotsMetadata);
+        return new RefreshResult(items, results, details, reportLogs, histories);
     }
 
     class ClearTestResultsTask extends AsyncTask<Void, Void, Void> {
@@ -408,21 +392,18 @@ public abstract class TestListAdapter extends BaseAdapter {
         private final String mDetails;
         private final ReportLog mReportLog;
         private final TestResultHistoryCollection mHistoryCollection;
-        private final TestScreenshotsMetadata mScreenshotsMetadata;
 
         SetTestResultTask(
                 String testName,
                 int result,
                 String details,
                 ReportLog reportLog,
-                TestResultHistoryCollection historyCollection,
-                TestScreenshotsMetadata screenshotsMetadata) {
+                TestResultHistoryCollection historyCollection) {
             mTestName = testName;
             mResult = result;
             mDetails = details;
             mReportLog = reportLog;
             mHistoryCollection = historyCollection;
-            mScreenshotsMetadata = screenshotsMetadata;
         }
 
         @Override
@@ -449,8 +430,7 @@ public abstract class TestListAdapter extends BaseAdapter {
                 }
             }
             TestResultsProvider.setTestResult(
-                    mContext, mTestName, mResult, mDetails, mReportLog, mHistoryCollection,
-                    mScreenshotsMetadata);
+                    mContext, mTestName, mResult, mDetails, mReportLog, mHistoryCollection);
             return null;
         }
     }
@@ -536,19 +516,6 @@ public abstract class TestListAdapter extends BaseAdapter {
         return mHistories.containsKey(item.testName)
             ? mHistories.get(item.testName)
             : null;
-    }
-
-    /**
-     * Get test screenshots metadata
-     *
-     * @param position The position of test
-     * @return A {@link TestScreenshotsMetadata} object containing test screenshots metadata.
-     */
-    public TestScreenshotsMetadata getScreenshotsMetadata(String mode, int position) {
-        TestListItem item = getItem(mode, position);
-        return mScreenshotsMetadata.containsKey(item.testName)
-                ? mScreenshotsMetadata.get(item.testName)
-                : null;
     }
 
     /**
