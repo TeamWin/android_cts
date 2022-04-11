@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.telephony.cts;
+package android.telephony.mockmodem;
 
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
