@@ -36,7 +36,6 @@ import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.ReportLog;
-import com.android.compatibility.common.util.TestScreenshotsMetadata;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -65,8 +64,6 @@ public class TestResultsProvider extends ContentProvider {
     static final String COLUMN_TEST_METRICS = "testmetrics";
     /** TestResultHistory containing the test run histories. */
     static final String COLUMN_TEST_RESULT_HISTORY = "testresulthistory";
-    /** TestScreenshotsMetadata containing the test screenshot metadata. */
-    static final String COLUMN_TEST_SCREENSHOTS_METADATA = "testscreenshotsmetadata";
 
     /**
      * Report saved location
@@ -121,17 +118,13 @@ public class TestResultsProvider extends ContentProvider {
     }
 
     static void setTestResult(Context context, String testName, int testResult,
-            String testDetails, ReportLog reportLog, TestResultHistoryCollection historyCollection,
-            TestScreenshotsMetadata screenshotsMetadata) {
+        String testDetails, ReportLog reportLog, TestResultHistoryCollection historyCollection) {
         ContentValues values = new ContentValues(2);
         values.put(TestResultsProvider.COLUMN_TEST_RESULT, testResult);
         values.put(TestResultsProvider.COLUMN_TEST_NAME, testName);
         values.put(TestResultsProvider.COLUMN_TEST_DETAILS, testDetails);
         values.put(TestResultsProvider.COLUMN_TEST_METRICS, serialize(reportLog));
         values.put(TestResultsProvider.COLUMN_TEST_RESULT_HISTORY, serialize(historyCollection));
-        values.put(
-                TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
-                serialize(screenshotsMetadata));
 
         final Uri uri = getResultContentUri(context);
         ContentResolver resolver = context.getContentResolver();
@@ -142,32 +135,6 @@ public class TestResultsProvider extends ContentProvider {
         if (numUpdated == 0) {
             resolver.insert(uri, values);
         }
-    }
-
-    /**
-     * Called by screenshot consumers to provide extra metadata that allows to understand
-     * screenshots better.
-     *
-     * @param context application context
-     * @param testName corresponding test name
-     * @param screenshotsMetadata A {@link TestScreenshotsMetadata} set that contains metadata
-     */
-    public static void updateColumnTestScreenshotsMetadata(
-            Context context, String testName, TestScreenshotsMetadata screenshotsMetadata) {
-        ContentValues values = new ContentValues(2);
-        values.put(TestResultsProvider.COLUMN_TEST_NAME, testName);
-        values.put(
-                TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
-                serialize(screenshotsMetadata));
-        final Uri uri = getResultContentUri(context);
-        ContentResolver resolver = context.getContentResolver();
-        int numUpdated = resolver.update(
-                uri, values, TestResultsProvider.COLUMN_TEST_NAME + " = ?",
-                new String[]{ testName });
-        if (numUpdated == 0) {
-            resolver.insert(uri, values);
-        }
-
     }
 
     private static byte[] serialize(Object o) {
@@ -451,8 +418,7 @@ public class TestResultsProvider extends ContentProvider {
                     + COLUMN_TEST_INFO_SEEN + " INTEGER DEFAULT 0,"
                     + COLUMN_TEST_DETAILS + " TEXT,"
                     + COLUMN_TEST_METRICS + " BLOB,"
-                    + COLUMN_TEST_RESULT_HISTORY + " BLOB,"
-                    + COLUMN_TEST_SCREENSHOTS_METADATA + " BLOB);");
+                    + COLUMN_TEST_RESULT_HISTORY + " BLOB);");
         }
 
         @Override
