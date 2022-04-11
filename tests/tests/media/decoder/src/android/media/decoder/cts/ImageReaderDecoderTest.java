@@ -132,13 +132,12 @@ public class ImageReaderDecoderTest {
         final List<Object[]> argsList = new ArrayList<>();
         for (MediaAssets assets : ASSETS) {
             String mime = assets.getMime();
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mime.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mime)) {
                 continue;
             }
             String[] decoders = MediaUtils.getDecoderNamesForMime(mime);
             for (String decoder: decoders) {
-                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                if (TestArgs.shouldSkipCodec(decoder)) {
                     continue;
                 }
                 for (MediaAsset asset : assets.getAssets()) {
