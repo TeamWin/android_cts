@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.junit.Test;
 import static org.junit.Assume.*;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2021_6685 extends SecurityTestCase {
+public class CVE_2021_0650 extends SecurityTestCase {
 
     /**
      * b/190286685
@@ -32,8 +32,8 @@ public class CVE_2021_6685 extends SecurityTestCase {
      */
     @AsbSecurityTest(cveBugId = 190286685)
     @Test
-    public void testPocCVE_2021_6685() throws Exception {
+    public void testPocCVE_2021_0650() throws Exception {
       assumeFalse(moduleIsPlayManaged("com.google.android.media"));
-      AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-6685", null, getDevice());
+      AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2021-0650", null, getDevice());
     }
 }
