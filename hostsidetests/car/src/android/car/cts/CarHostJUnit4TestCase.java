@@ -397,8 +397,12 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     /**
      * Removes a user by user ID and update the list of users to be removed.
      */
-    protected void removeUser(int userId) throws Exception {
-        executeCommand("cmd car_service remove-user %d", userId);
+    protected boolean removeUser(int userId) throws Exception {
+        String result = executeCommand("cmd car_service remove-user %d", userId);
+        if (result.contains("STATUS_SUCCESSFUL")) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -451,11 +455,23 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * {@link ITestDevice#reboot()} would reset them.
      */
     protected void restartSystemServer() throws Exception {
-        final ITestDevice device = getDevice();
-        device.executeShellCommand("stop");
-        device.executeShellCommand("start");
-        device.waitForDeviceAvailable();
-        waitForCarServiceReady();
+        // Root should be enabled to restart systemServer
+        boolean isRoot = getDevice().isAdbRoot();
+
+        try {
+            if (!isRoot) {
+                getDevice().enableAdbRoot();
+            }
+            final ITestDevice device = getDevice();
+            device.executeShellCommand("stop");
+            device.executeShellCommand("start");
+            device.waitForDeviceAvailable();
+            waitForCarServiceReady();
+        } finally {
+            if (!isRoot) {
+                getDevice().disableAdbRoot();
+            }
+        }
     }
 
     /**
