@@ -269,4 +269,11 @@
   <!-- b/182630972, b/214019488 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.PinnedStackTests#testEnterPipWithMinimalSize" />
 
+    <!-- b/224400993 -->
+    <option name="compatibility:exclude-filter"
+        value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedDeviceOwnerTest#testSuspendPackage" />
+    <option name="compatibility:exclude-filter"
+        value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedManagedProfileOwnerTest#testSuspendPackage" />
+    <option name="compatibility:exclude-filter"
+        value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.MixedProfileOwnerTest#testSuspendPackage" />
 </configuration>
