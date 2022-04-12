@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.CtsVerifierReportLog;
@@ -47,6 +48,7 @@ import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 /**
  * CtsVerifier test to measure tap-to-tone latency.
  */
+@CddTest(requirement = "5.6")
 public class AudioTap2ToneActivity
         extends PassFailButtons.Activity
         implements View.OnClickListener, AppCallback {
