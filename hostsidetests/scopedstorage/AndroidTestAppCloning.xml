@@ -16,7 +16,7 @@
 <configuration description="Test for App cloning support with clone user profiles">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
-    <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <!-- TODO(b/169101565): change to secondary_user when fixed -->
     <!-- Clone user profile is meant to exist only alongside a real system user.
