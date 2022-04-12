@@ -604,15 +604,6 @@ public class ImageReaderDecoderTest {
             { 111, 96, 204 }, { 178, 27, 174 }, { 100, 192, 92 }, { 106, 117, 62 }
         };
 
-        // For P010 multiply expected colors by 4 to account for bit-depth 10
-        if (image.getFormat() == ImageFormat.YCBCR_P010) {
-            for (int i = 0; i < colors.length; i++) {
-                for (int j = 0; j < colors[0].length; j++) {
-                    colors[i][j] = colors[i][j] << 2;
-                }
-            }
-        }
-
         // successively accumulate statistics for each layer of the swirl
         // by using overlapping rectangles, and the observation that
         // layer_i = rectangle_i - rectangle_(i+1)
