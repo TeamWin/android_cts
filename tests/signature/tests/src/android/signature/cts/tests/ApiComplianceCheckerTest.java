@@ -785,17 +785,20 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
 
     @Test
     public void testExtendedNormalInterface() {
-        NoFailures observer = new NoFailures();
-        runWithApiChecker(observer, checker -> {
-            JDiffClassDescription iface = createInterface(NormalInterface.class.getSimpleName());
-            iface.addMethod(method("doSomething", Modifier.PUBLIC, "void"));
-            checker.addBaseClass(iface);
+        try (NoFailures observer = new NoFailures()) {
+            runWithApiChecker(observer, checker -> {
+                JDiffClassDescription iface = createInterface(
+                        NormalInterface.class.getSimpleName());
+                iface.addMethod(method("doSomething", Modifier.PUBLIC, "void"));
+                checker.addBaseClass(iface);
 
-            JDiffClassDescription clz =
-                    createInterface(ExtendedNormalInterface.class.getSimpleName());
-            clz.addMethod(method("doSomethingElse", Modifier.PUBLIC | Modifier.ABSTRACT, "void"));
-            clz.addImplInterface(iface.getAbsoluteClassName());
-            checker.checkSignatureCompliance(clz);
-        });
+                JDiffClassDescription clz =
+                        createInterface(ExtendedNormalInterface.class.getSimpleName());
+                clz.addMethod(
+                        method("doSomethingElse", Modifier.PUBLIC | Modifier.ABSTRACT, "void"));
+                clz.addImplInterface(iface.getAbsoluteClassName());
+                checker.checkSignatureCompliance(clz);
+            });
+        }
     }
 }
