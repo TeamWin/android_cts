@@ -20,7 +20,6 @@ import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -98,6 +97,12 @@ public class BluetoothHapClientTest {
         if (!mHasBluetooth) {
             return;
         }
+
+        mIsHapClientSupported = TestUtils.getProfileConfigValueOrDie(BluetoothProfile.HAP_CLIENT);
+        if (!mIsHapClientSupported) {
+            return;
+        }
+
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
         mAdapter = TestUtils.getBluetoothAdapterOrDie();
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -107,29 +112,25 @@ public class BluetoothHapClientTest {
         mIsProfileReady = false;
         mBluetoothHapClient = null;
 
-        mIsHapClientSupported = TestUtils.getProfileConfigValueOrDie(BluetoothProfile.HAP_CLIENT);
-        if (!mIsHapClientSupported) {
-            return;
-        }
-
         mAdapter.getProfileProxy(mContext, new BluetoothHapClientServiceListener(),
                 BluetoothProfile.HAP_CLIENT);
     }
 
     @After
     public void tearDown() throws Exception {
-        if (mHasBluetooth) {
-            if (mBluetoothHapClient != null) {
-                mBluetoothHapClient.close();
-                mBluetoothHapClient = null;
-                mIsProfileReady = false;
-            }
-            if (mAdapter != null) {
-                assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-                mAdapter = null;
-            }
-            TestUtils.dropPermissionAsShellUid();
+        if (!(mHasBluetooth && mIsHapClientSupported)) {
+            return;
         }
+        if (mBluetoothHapClient != null) {
+            mBluetoothHapClient.close();
+            mBluetoothHapClient = null;
+            mIsProfileReady = false;
+        }
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+            mAdapter = null;
+        }
+        TestUtils.dropPermissionAsShellUid();
     }
 
     @Test
@@ -274,10 +275,6 @@ public class BluetoothHapClientTest {
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         mBluetoothHapClient.setPresetNameForGroup(1, 1 , "New Name");
-    }
-
-    private boolean shouldSkipTest() {
-        return !(mHasBluetooth && mIsHapClientSupported);
     }
 
     @Test
@@ -462,6 +459,10 @@ public class BluetoothHapClientTest {
         } catch (InterruptedException e) {
             fail("Failed to register callback call: " + e.toString());
         }
+    }
+
+    private boolean shouldSkipTest() {
+        return !(mHasBluetooth && mIsHapClientSupported);
     }
 
     private boolean waitForProfileConnect() {
