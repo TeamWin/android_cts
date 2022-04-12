@@ -6422,4 +6422,30 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_descriptor_hdmi_message">
         Please connect an HDMI peripheral to validate AudioDescriptor.
     </string>
+    <string name="uwb">Uwb</string>
+    <string name="presence_test">Presence Test</string>
+    <string name="presence_test_info">
+        The Presence tests check whether or not a device is properly calibrated for BLE, NAN and UWB based on Presence requirements.
+        \nAll tests are required to pass on every device, if the radio technology is supported
+    </string>
+    <string name="uwb_precision">Uwb Precision Test</string>
+    <string name="uwb_short_range">Uwb Short Range Test</string>
+    <string name="uwb_precision_instruction">
+        1. Take 1000 measurements with DUT at any distance from the reference device. We recommend 1m.
+        \n2. Sort the 1000 measurements.
+        \n3. Compute the range as range = 975th measurement - 25th measurement.
+        \n4. Report the range below - Must be less than 10cm for distance measurements and 5 degrees for angle of arrival measurements (if supported) for tests to pass.
+        \n5. Distance range is a compulsory input for this test to pass. Angle of arrival (Aoa) is optional.
+    </string>
+    <string name="report_distance_range_cm">Report Range (cm)</string>
+    <string name="report_aoa_range_degrees">Report Range (degrees)</string>
+    <string name="uwb_short_range_instruction">
+        1. Take 1000 measurements with DUT being 10cm apart from the reference device.
+        \n2. Sort the values.
+        \n3. Report the median (500th value) in CTS-V (must be within 8cm - 12cm to pass).
+        \n4. Report the reference device used.
+    </string>
+    <string name="report_distance_median_cm">Report Median (cm)</string>
+    <string name="report_reference_device">Report Reference Device</string>
+    <string name="uwb_not_supported">Uwb is not supported on device. Finishing activity. </string>
 </resources>
