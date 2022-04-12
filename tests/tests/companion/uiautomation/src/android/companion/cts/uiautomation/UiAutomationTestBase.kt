@@ -31,6 +31,7 @@ import android.companion.cts.common.setSystemProp
 import android.content.Intent
 import android.net.MacAddress
 import android.os.Parcelable
+import android.os.SystemClock.sleep
 import androidx.test.uiautomator.UiDevice
 import org.junit.Assume
 import org.junit.Assume.assumeFalse
@@ -100,7 +101,7 @@ open class UiAutomationTestBase(
             } else {
                 confirmationUi.clickNegativeButtonMultipleDevices()
             }
-        }
+    }
 
     protected fun test_userDismissed(
         singleDevice: Boolean = false,
@@ -118,7 +119,23 @@ open class UiAutomationTestBase(
         displayName: String?,
         cancelAction: () -> Unit
     ) {
+        // Give the discovery service extra time to find the first match device before
+        // pressing the negative button for singleDevice && userRejected.
+        if (singleDevice) {
+            setDiscoveryTimeout(2.seconds)
+        }
+
         sendRequestAndLaunchConfirmation(singleDevice, selfManaged, displayName)
+
+        if (singleDevice) {
+            // The discovery timeout is 2 sec, but let's wait for 3. So that we have enough
+            // time to wait until the dialog appeared.
+            sleep(3.seconds.inWholeMilliseconds)
+        }
+        // Test can stop here since there's no device found after discovery timeout.
+        assumeFalse(callback.invocations.contains(OnFailure(REASON_DISCOVERY_TIMEOUT)))
+        // Check callback invocations: There should be 0 invocation before any actions are made.
+        assertEmpty(callback.invocations)
 
         callback.assertInvokedByActions {
             cancelAction()
