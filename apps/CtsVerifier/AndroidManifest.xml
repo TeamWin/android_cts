@@ -4092,6 +4092,33 @@
                 android:value="7.4.3/C-7-4" />
         </activity>
 
+        <!-- CTS Verifier Nan Precision and Bias Test Screen
+                 test category : wifi_nan
+                 test parent : PresenceTestActivity
+        -->
+        <activity
+            android:name=".presence.NanPrecisionAndBiasTestActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/nan_precision_and_bias" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/wifi_nan" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="7.4.2.5/H-1-1,7.4.2.5/H-1-2" />
+        </activity>
+
         <activity-alias
             android:name=".CtsVerifierActivity"
             android:label="@string/app_name"

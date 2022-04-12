@@ -6459,13 +6459,12 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="uwb_short_range_instruction">
         1. Take 1000 measurements with DUT being 10cm apart from the reference device
         \n2. Sort the values.
-        \n3. Report the median (500th value) in CTS-V (must be within 8cm - 12cm to pass)
+        \n3. Report the median (500th value) (must be within 8cm - 12cm to pass).
         \n4. Report the reference device used.
     </string>
     <string name="report_distance_median_cm">Report Median (cm)</string>
     <string name="report_reference_device">Report Reference Device</string>
     <string name="uwb_not_supported">Uwb is not supported on device. Finishing activity. </string>
-
     <string name="ble">BLE</string>
 
     <!-- Strings for BLE RSSI Precision Test -->
@@ -6506,4 +6505,21 @@ Follow the instructions on the screen to measure the frequency response for the 
         \n3. Report the median (500th value); must be within [-57, -63] dBm to pass
         \n4. Report the reference device used
     </string>
+    <string name="nan_precision_and_bias_instruction">
+        1. Take 1000 ranging measurements at each of the ground truth points of 1m, 3m, and 5m. The Wifinanscan in Play Store is recommended for data collection.
+        \n2. For each point:
+        \n\t\ta. Compute and report the range (Range = 975th measurement - 25th measurement).
+        \n\t\tb. Range must be less than 2m for test to pass.
+        \n3. Using the same measurements collected in step 1, compute a least squares regression line.
+        \n4. Report the bias and slope.
+        \n5. Bias must be 0+/- 0.25m and slope must be 1+/- 0.05m for tests to pass.
+        \n6. Report reference device used. All fields must be filled before test can be passed.
+    </string>
+    <string name="report_distance_range_1m_gt">Report Measurement Range at 1m</string>
+    <string name="report_distance_range_3m_gt">Report Measurement Range at 3m</string>
+    <string name="report_distance_range_5m_gt">Report Measurement Range at 5m</string>
+    <string name="report_bias_meters">Report Bias (meters)</string>
+    <string name="report_slope">Report Slope</string>
+    <string name="nan_precision_and_bias">Nan Precision and Bias Test</string>
+    <string name="wifi_nan">WiFi NAN</string>
 </resources>

@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 package com.android.cts.verifier.presence;
+
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
 import android.widget.EditText;
+
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+
 /**
  * Activity for testing that UWB distance and angle of arrival measurements are within the right
  * range.
@@ -36,17 +39,21 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
     // Thresholds
     private static final int MAX_DISTANCE_RANGE_CM = 10;
     private static final int MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES = 5;
+
     private EditText mDistanceRangeInput;
     private EditText mAoaRangeInput;
     private EditText mReferenceDeviceInput;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.uwb_precision);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_UWB);
+
         mDistanceRangeInput = (EditText) findViewById(R.id.distance_range_cm);
         mAoaRangeInput = (EditText) findViewById(R.id.aoa_range_degrees);
         mReferenceDeviceInput = (EditText) findViewById(R.id.reference_device);
@@ -57,33 +64,38 @@ public class UwbPrecisionActivity extends PassFailButtons.Activity {
         mReferenceDeviceInput.addTextChangedListener(
                 InputTextHandler.getOnTextChangedHandler((Editable s) -> checkTestInputs()));
     }
+
     private void checkTestInputs() {
         getPassButton().setEnabled(
                 checkDistanceRangeInput() && checkAoaRangeInput() && checkReferenceDeviceInput());
     }
+
     private boolean checkDistanceRangeInput() {
         String distanceRangeInput = mDistanceRangeInput.getText().toString();
         if (!distanceRangeInput.isEmpty()) {
             int distanceRange = Integer.parseInt(distanceRangeInput);
             // Distance range must be inputted and within acceptable range before test can be
             // passed.
-            return distanceRange < MAX_DISTANCE_RANGE_CM;
+            return distanceRange <= MAX_DISTANCE_RANGE_CM;
         }
         return false;
     }
+
     private boolean checkAoaRangeInput() {
         String aoaRangeInput = mAoaRangeInput.getText().toString();
         if (!aoaRangeInput.isEmpty()) {
             int aoaRange = Integer.parseInt(aoaRangeInput);
             // Aoa range must be within acceptable range before test can be passed.
-            return aoaRange < MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES;
+            return aoaRange <= MAX_ANGLE_OF_ARRIVAL_RANGE_DEGREES;
         }
         return true;
     }
+
     private boolean checkReferenceDeviceInput() {
         // Reference device must be inputted before test can be passed.
         return !mReferenceDeviceInput.getText().toString().isEmpty();
     }
+
     @Override
     public void recordTestResults() {
         String distanceRange = mDistanceRangeInput.getText().toString();
