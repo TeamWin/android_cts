@@ -28,6 +28,7 @@ import android.bluetooth.BluetoothLeAudioCodecConfig;
 import android.bluetooth.BluetoothLeAudioCodecStatus;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothStatusCodes;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.test.AndroidTestCase;
@@ -117,9 +118,6 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
                     PackageManager.FEATURE_BLUETOOTH);
             if (!mHasBluetooth) return;
 
-            mIsLeAudioSupported = TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO);
-            if (!mIsLeAudioSupported) return;
-
             TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
 
             BluetoothManager manager = getContext().getSystemService(BluetoothManager.class);
@@ -130,6 +128,10 @@ public class BluetoothLeAudioTest extends AndroidTestCase {
             mConditionProfileIsConnected  = mProfileConnectedlock.newCondition();
             mIsProfileReady = false;
             mBluetoothLeAudio = null;
+
+            mIsLeAudioSupported = (mAdapter.isLeAudioSupported()
+                    == BluetoothStatusCodes.FEATURE_SUPPORTED);
+            if (!mIsLeAudioSupported) return;
 
             mAdapter.getProfileProxy(getContext(), new BluetoothLeAudioServiceListener(),
                     BluetoothProfile.LE_AUDIO);

@@ -1738,6 +1738,24 @@ public class PackageManagerTest {
     }
 
     /**
+     * Test that we con't have conflicting package names between APK and APEX.
+     */
+    @Test
+    public void testGetInstalledPackages_WithApexFlag_ContainsNoDuplicates() {
+        List<PackageInfo> packageInfos = mPackageManager.getInstalledPackages(
+                PackageManager.PackageInfoFlags.of(MATCH_APEX));
+        final Set<String> apexPackageNames = packageInfos.stream()
+                .filter(pi -> pi.isApex).map(pi -> pi.packageName).collect(Collectors.toSet());
+        final Set<String> apkPackageNames = packageInfos.stream()
+                .filter(pi -> !pi.isApex).map(pi -> pi.packageName).collect(Collectors.toSet());
+        for (String packageName : apkPackageNames) {
+            if (apexPackageNames.contains(packageName)) {
+                expect.withMessage("Conflicting APK package " + packageName + " detected").fail();
+            }
+        }
+    }
+
+    /**
      * Test that the MATCH_FACTORY_ONLY flag doesn't add the same package multiple times since there
      * may be multiple versions of a system package on the device.
      */

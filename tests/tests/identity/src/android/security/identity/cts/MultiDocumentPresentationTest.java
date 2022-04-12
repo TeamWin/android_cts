@@ -154,6 +154,10 @@ public class MultiDocumentPresentationTest {
             new CredentialDataRequest.Builder()
             .setDeviceSignedEntriesToRequest(dsEntriesToRequest)
             .setRequestMessage(Util.createItemsRequest(dsEntriesToRequest, null))
+            .setAllowUsingExhaustedKeys(true)
+            .setReaderSignature(null)
+            .setIncrementUseCount(true)
+            .setAllowUsingExpiredKeys(false)
             .build());
         byte[] resultCbor = rd.getDeviceNameSpaces();
         try {

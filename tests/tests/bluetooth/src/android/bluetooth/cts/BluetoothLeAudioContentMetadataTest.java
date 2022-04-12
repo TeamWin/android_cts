@@ -108,7 +108,7 @@ public class BluetoothLeAudioContentMetadataTest {
     }
 
     @Test
-    public void testCreateCodecConfigMetadataFromBuilder() {
+    public void testCreateContentMetadataFromBuilder() {
         if (shouldSkipTest()) {
             return;
         }
@@ -121,7 +121,7 @@ public class BluetoothLeAudioContentMetadataTest {
     }
 
     @Test
-    public void testCreateCodecConfigMetadataFromCopy() {
+    public void testCreateContentMetadataFromCopy() {
         if (shouldSkipTest()) {
             return;
         }
@@ -136,7 +136,7 @@ public class BluetoothLeAudioContentMetadataTest {
     }
 
     @Test
-    public void testCreateCodecConfigMetadataFromBytes() {
+    public void testCreateContentMetadataFromBytes() {
         if (shouldSkipTest()) {
             return;
         }
