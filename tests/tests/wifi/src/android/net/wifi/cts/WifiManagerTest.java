@@ -165,6 +165,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final int SCAN_TEST_WAIT_DURATION_MS = 15_000;
     private static final int TEST_WAIT_DURATION_MS = 10_000;
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
+    private static final int WIFI_PNO_CONNECT_TIMEOUT_MILLIS = 90_000;
     private static final int WAIT_MSEC = 60;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
@@ -437,6 +438,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mMySync.wait(WAIT_MSEC);
             assertEquals(state, mNetworkInfo.getState());
         }
+    }
+
+    private void waitForConnection(int timeoutMillis) throws Exception {
+        waitForNetworkInfoState(NetworkInfo.State.CONNECTED, timeoutMillis);
     }
 
     private void waitForConnection() throws Exception {
@@ -2867,7 +2872,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         // make sure we're connected
-        waitForConnection();
+        waitForConnection(WIFI_PNO_CONNECT_TIMEOUT_MILLIS);
 
         WifiInfo currentNetwork = ShellIdentityUtils.invokeWithShellPermissions(
                 mWifiManager::getConnectionInfo);
