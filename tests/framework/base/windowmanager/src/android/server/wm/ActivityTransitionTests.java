@@ -70,14 +70,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Presubmit
 public class ActivityTransitionTests extends ActivityManagerTestBase {
-    // Duration of the default wallpaper close animation
-    static final long DEFAULT_ANIMATION_DURATION = 275L;
-    // Duration of the R.anim.alpha animation
-    static final long CUSTOM_ANIMATION_DURATION = 2000L;
+    // Duration of the R.anim.alpha animation.
+    private static final long CUSTOM_ANIMATION_DURATION = 2000L;
 
-    // Allowable error for the measured animation duration.
-    static final long EXPECTED_DURATION_TOLERANCE_START = 200;
-    static final long EXPECTED_DURATION_TOLERANCE_FINISH = 1000;
+    // Allowable range with error error for the R.anim.alpha animation duration.
+    private static final Range<Long> CUSTOM_ANIMATION_DURATION_RANGE = new Range<>(
+            CUSTOM_ANIMATION_DURATION - 200L, CUSTOM_ANIMATION_DURATION + 1000L);
 
     private boolean mAnimationScaleResetRequired = false;
     private String mInitialWindowAnimationScale;
@@ -99,11 +97,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testActivityTransitionDurationNoShortenAsExpected() throws Exception {
-        final long minDurationMs = CUSTOM_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
-        final long maxDurationMs = CUSTOM_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
-        final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
-
+    public void testActivityTransitionOverride() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         AtomicLong transitionStartTime = new AtomicLong();
         AtomicLong transitionEndTime = new AtomicLong();
@@ -131,19 +125,16 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         waitAndAssertTopResumedActivity(new ComponentName(mContext, TransitionActivity.class),
                 DEFAULT_DISPLAY, "Activity must be launched");
 
-        latch.await(2, TimeUnit.SECONDS);
+        latch.await(3, TimeUnit.SECONDS);
         final long totalTime = transitionEndTime.get() - transitionStartTime.get();
         assertTrue("Actual transition duration should be in the range "
-                + "<" + minDurationMs + ", " + maxDurationMs + "> ms, "
-                + "actual=" + totalTime, durationRange.contains(totalTime));
+                + "<" + CUSTOM_ANIMATION_DURATION_RANGE.getLower() + ", "
+                + CUSTOM_ANIMATION_DURATION_RANGE.getUpper() + "> ms, "
+                + "actual=" + totalTime, CUSTOM_ANIMATION_DURATION_RANGE.contains(totalTime));
     }
 
     @Test
     public void testTaskTransitionOverrideDisabled() throws Exception {
-        final long minDurationMs = DEFAULT_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
-        final long maxDurationMs = DEFAULT_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
-        final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
-
         final CountDownLatch latch = new CountDownLatch(1);
         AtomicLong transitionStartTime = new AtomicLong();
         AtomicLong transitionEndTime = new AtomicLong();
@@ -169,19 +160,16 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity must be launched");
 
-        latch.await(2, TimeUnit.SECONDS);
+        latch.await(5, TimeUnit.SECONDS);
         final long totalTime = transitionEndTime.get() - transitionStartTime.get();
-        assertTrue("Actual transition duration should be in the range "
-                + "<" + minDurationMs + ", " + maxDurationMs + "> ms, "
-                + "actual=" + totalTime, durationRange.contains(totalTime));
+        assertTrue("Actual transition duration should be out of the range "
+                + "<" + CUSTOM_ANIMATION_DURATION_RANGE.getLower() + ", "
+                + CUSTOM_ANIMATION_DURATION_RANGE.getUpper() + "> ms, "
+                + "actual=" + totalTime, !CUSTOM_ANIMATION_DURATION_RANGE.contains(totalTime));
     }
 
     @Test
     public void testTaskTransitionOverride() {
-        final long minDurationMs = CUSTOM_ANIMATION_DURATION - EXPECTED_DURATION_TOLERANCE_START;
-        final long maxDurationMs = CUSTOM_ANIMATION_DURATION + EXPECTED_DURATION_TOLERANCE_FINISH;
-        final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
-
         final CountDownLatch latch = new CountDownLatch(1);
         AtomicLong transitionStartTime = new AtomicLong();
         AtomicLong transitionEndTime = new AtomicLong();
@@ -207,11 +195,12 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                     "Activity must be launched");
 
-            latch.await(2, TimeUnit.SECONDS);
+            latch.await(5, TimeUnit.SECONDS);
             final long totalTime = transitionEndTime.get() - transitionStartTime.get();
             assertTrue("Actual transition duration should be in the range "
-                    + "<" + minDurationMs + ", " + maxDurationMs + "> ms, "
-                    + "actual=" + totalTime, durationRange.contains(totalTime));
+                    + "<" + CUSTOM_ANIMATION_DURATION_RANGE.getLower() + ", "
+                    + CUSTOM_ANIMATION_DURATION_RANGE.getUpper() + "> ms, "
+                    + "actual=" + totalTime, CUSTOM_ANIMATION_DURATION_RANGE.contains(totalTime));
         });
     }
 
