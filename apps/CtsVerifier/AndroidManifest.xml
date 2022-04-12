@@ -1861,6 +1861,8 @@
                        android:value="android.software.secure_lock_screen" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="9.11.3/C-0-2" />
         </activity>
 
         <activity android:name=".security.IdentityCredentialAuthenticationMultiDocument"
@@ -1878,6 +1880,8 @@
                        android:value="android.software.secure_lock_screen" />
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
+            <meta-data android:name="CddTest"
+                       android:value="9.11.3/C-0-2" />
         </activity>
 
         <activity android:name=".security.FingerprintBoundKeysTest"
