@@ -949,6 +949,13 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             assertFalse(waitUntilTrue(defaultWaitForKillTimeout, () -> isProcessGone(
                     proc.pid, SIMPLE_PACKAGE_NAME)));
 
+            if (isAtvDevice()) {
+                // On operator tier devices of AndroidTv, Activity is put behind TvLauncher
+                // after turnScreenOff by android.intent.category.HOME intent from
+                // TvRecommendation.
+                return;
+            }
+
             // force device idle
             toggleScreenOn(false);
             triggerIdle(true);
@@ -1841,5 +1848,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             return new ComponentName(resolveInfo.activityInfo.packageName,
                     resolveInfo.activityInfo.name);
         }
+    }
+
+    private boolean isAtvDevice() {
+        final Context context = mInstrumentation.getTargetContext();
+        return context.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEVISION);
     }
 }
