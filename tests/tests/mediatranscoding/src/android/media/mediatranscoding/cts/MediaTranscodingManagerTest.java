@@ -144,7 +144,6 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
     private static MediaFormat createMediaFormat(String mime, int width, int height, int frameRate,
             int bitrate) {
         MediaFormat format = new MediaFormat();
-        // Set mime if it not null.
         if (mime != null) {
             format.setString(MediaFormat.KEY_MIME, mime);
         }
@@ -785,41 +784,6 @@ public class MediaTranscodingManagerTest extends AndroidTestCase {
         assertEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
         assertTrue("Fails to cancel transcoding", finishedOnTime);
     }
-
-    // Transcoding video on behalf of init dameon and expect UnsupportedOperationException due to
-    // CTS test is not a privilege caller.
-    // Disable this test as Android S will only allow MediaProvider to access the API.
-    /*public void testPidAndUidForwarding() throws Exception {
-        if (shouldSkip()) {
-            return;
-        }
-        assertThrows(UnsupportedOperationException.class, () -> {
-            Semaphore transcodeCompleteSemaphore = new Semaphore(0);
-
-            // Use init dameon's pid and uid.
-            int pid = 1;
-            int uid = 0;
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(mSourceHEVCVideoUri)
-                            .setDestinationUri(mDestinationUri)
-                            .setType(MediaTranscodingManager.TRANSCODING_TYPE_VIDEO)
-                            .setClientPid(pid)
-                            .setClientUid(uid)
-                            .setPriority(MediaTranscodingManager.PRIORITY_REALTIME)
-                            .setVideoTrackFormat(createDefaultMediaFormat())
-                            .build();
-            Executor listenerExecutor = Executors.newSingleThreadExecutor();
-
-            TranscodingSession session =
-                    mMediaTranscodingManager.enqueueRequest(
-                            request,
-                            listenerExecutor,
-                            transcodingSession -> {
-                                transcodeCompleteSemaphore.release();
-                            });
-        });
-    }*/
 
     public void testTranscodingProgressUpdate() throws Exception {
         if (shouldSkip()) {
