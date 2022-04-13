@@ -24,6 +24,8 @@ import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +50,7 @@ import javax.security.cert.CertificateException;
 
 // Taken reference from
 // libcore/support/src/test/java/org/apache/harmony/xnet/tests/support/mySSLSession.java
+
 class CVE_2021_0341_SSLSession implements SSLSession {
 
     private byte[] idData;
@@ -180,7 +183,7 @@ class CVE_2021_0341_SSLSession implements SSLSession {
 
 
 @RunWith(AndroidJUnit4.class)
-public class CVE_2021_0341 {
+public class CVE_2021_0341 extends StsExtraBusinessLogicTestCase  {
 
     public final static byte[] X509_TEST_CERTIFICATE = ("-----BEGIN CERTIFICATE-----\n"
             + "MIIC3DCCAcSgAwIBAgIURJspNgSx6GVbOLijqravWoGlm+0wDQYJKoZIhvcNAQEL\n"
