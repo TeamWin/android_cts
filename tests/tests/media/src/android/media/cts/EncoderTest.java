@@ -176,25 +176,28 @@ public class EncoderTest extends AndroidTestCase {
     private void testEncoderWithFormatsParallel(String mime, List<MediaFormat> formats,
             List<String> componentNames, int ThreadCount) {
         int testsStarted = 0;
-        int allowPerTest = 30;
-
+        int totalDurationSeconds = 0;
         ExecutorService pool = Executors.newFixedThreadPool(ThreadCount);
 
         for (String componentName : componentNames) {
             for (MediaFormat format : formats) {
                 assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
                 pool.execute(new EncoderRun(componentName, format));
+                int sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+                int channelCount = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+                int bytesQueuedPerSecond = 2 * channelCount * sampleRate;
+                int durationSeconds =
+                        (kNumInputBytes + bytesQueuedPerSecond - 1) / bytesQueuedPerSecond;
+                totalDurationSeconds += durationSeconds * kNumEncoderTestsPerRun;
                 testsStarted++;
             }
         }
         try {
             pool.shutdown();
-            int waitingSeconds = ((testsStarted + ThreadCount - 1) / ThreadCount) * allowPerTest;
-            waitingSeconds += 300;
-            Log.i(TAG, "waiting up to " + waitingSeconds + " seconds for "
+            Log.i(TAG, "waiting up to " + totalDurationSeconds + " seconds for "
                             + testsStarted + " sub-tests to finish");
             assertTrue("timed out waiting for encoder threads",
-                    pool.awaitTermination(waitingSeconds, TimeUnit.SECONDS));
+                    pool.awaitTermination(totalDurationSeconds, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             fail("interrupted while waiting for encoder threads");
         }
@@ -237,7 +240,7 @@ public class EncoderTest extends AndroidTestCase {
     }
 
     // See bug 25843966
-    private long[] mBadSeeds = {
+    private static long[] mBadSeeds = {
             101833462733980l, // fail @ 23680 in all-random mode
             273262699095706l, // fail @ 58880 in all-random mode
             137295510492957l, // fail @ 35840 in zero-lead mode
@@ -323,6 +326,8 @@ public class EncoderTest extends AndroidTestCase {
         }
     }
 
+    // Number of tests called in testEncoder(String componentName, MediaFormat format)
+    private static int kNumEncoderTestsPerRun = 5 + mBadSeeds.length * 2;
     private void testEncoder(String componentName, MediaFormat format)
             throws FileNotFoundException {
         Log.i(TAG, "testEncoder " + componentName + "/" + format);
