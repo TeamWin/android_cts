@@ -163,7 +163,7 @@ public class WindowUntrustedTouchTest {
 
     @Rule
     public ActivityScenarioRule<TestActivity> activityRule =
-            new ActivityScenarioRule<>(TestActivity.class);
+            new ActivityScenarioRule<>(TestActivity.class, createLaunchActivityOptionsBundle());
 
     @BeforeClass
     public static void setUpClass() {
@@ -182,13 +182,7 @@ public class WindowUntrustedTouchTest {
 
     @Before
     public void setUp() throws Exception {
-        ActivityOptions options = ActivityOptions.makeBasic();
-        // Launch test in the fullscreen mode with navigation bar hidden,
-        // in order to ensure text toast is tappable and overlays above the test app
-        // on ARC++ and cf_pc devices. b/191075641.
-        options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
-        activityRule.getScenario().launch(TestActivity.class, options.toBundle())
-                .onActivity(activity -> {
+        activityRule.getScenario().onActivity(activity -> {
             mActivity = activity;
             mContainer = mActivity.view;
             // On ARC++, text toast is fixed on the screen. Its position may overlays the navigation
@@ -1117,6 +1111,15 @@ public class WindowUntrustedTouchTest {
 
     private static ComponentName repackage(String packageName, ComponentName baseComponent) {
         return new ComponentName(packageName, baseComponent.getClassName());
+    }
+
+    private static Bundle createLaunchActivityOptionsBundle() {
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        // Launch test in the fullscreen mode with navigation bar hidden,
+        // in order to ensure text toast is tappable and overlays above the test app
+        // on freeform first devices. b/191075641.
+        options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
+        return options.toBundle();
     }
 
     public static class TestActivity extends Activity {
