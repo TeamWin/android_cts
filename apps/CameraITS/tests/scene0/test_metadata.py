@@ -132,8 +132,8 @@ class MetadataTest(its_base_test.ItsBaseTest):
         pixel_pitch_w = (sensor_size['width'] / fmts[0]['width'] * 1E3)
         logging.debug('Assert pixel_pitch WxH: %.2f um, %.2f um', pixel_pitch_w,
                       pixel_pitch_h)
-        assert 0.7 <= pixel_pitch_w <= 10
-        assert 0.7 <= pixel_pitch_h <= 10
+        assert 0.5 <= pixel_pitch_w <= 10
+        assert 0.5 <= pixel_pitch_h <= 10
         assert 0.333 <= pixel_pitch_w/pixel_pitch_h <= 3.0
 
         diag = math.sqrt(sensor_size['height']**2 + sensor_size['width']**2)
