@@ -128,8 +128,7 @@ public class DecodeEditEncodeTest {
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
             String mediaType = (String)arg[0];
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mediaType)) {
                 continue;
             }
             String[] encoderNames = MediaUtils.getEncoderNamesForMime(mediaType);
@@ -137,12 +136,12 @@ public class DecodeEditEncodeTest {
             // First pair of decoder and encoder that supports given mediaType is chosen
             outerLoop:
             for (String decoder : decoderNames) {
-                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                if (TestArgs.shouldSkipCodec(decoder)) {
                     continue;
                 }
+
                 for (String encoder : encoderNames) {
-                    if (TestArgs.CODEC_PREFIX != null &&
-                            !encoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                    if (TestArgs.shouldSkipCodec(encoder)) {
                         continue;
                     }
                     Object[] testArgs = new Object[argLength + 2];
