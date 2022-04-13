@@ -16,18 +16,25 @@
 
 package android.devicepolicy.cts;
 
+import static android.Manifest.permission.READ_NEARBY_STREAMING_POLICY;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
+import android.content.Context;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.NearbyNotificationStreamingPolicy;
+import com.android.bedstead.nene.TestApis;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -40,6 +47,10 @@ public class NearbyNotificationStreamingPolicyTest {
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final Context sContext = TestApis.context().instrumentedContext();
+    private static final DevicePolicyManager sLocalDevicePolicyManager =
+            sContext.getSystemService(DevicePolicyManager.class);
 
     private RemoteDevicePolicyManager mDevicePolicyManager;
 
@@ -70,9 +81,27 @@ public class NearbyNotificationStreamingPolicyTest {
     }
 
     @CannotSetPolicyTest(policy = NearbyNotificationStreamingPolicy.class)
-    public void setNearbyAppStreamingPolicy_policyIsNotAllowedToBeSet_throwsException() {
+    public void setNearbyNotificationStreamingPolicy_policyIsNotAllowedToBeSet_throwsException() {
         assertThrows(SecurityException.class, () ->
                 mDevicePolicyManager.setNearbyNotificationStreamingPolicy(
                         DevicePolicyManager.NEARBY_STREAMING_DISABLED));
+    }
+
+    @Postsubmit(reason = "new test")
+    @PolicyDoesNotApplyTest(policy = NearbyNotificationStreamingPolicy.class)
+    @EnsureHasPermission(READ_NEARBY_STREAMING_POLICY)
+    public void setNearbyNotificationStreamingPolicy_setEnabled_doesNotApply() {
+        int originalPolicy = mDevicePolicyManager.getNearbyNotificationStreamingPolicy();
+
+        mDevicePolicyManager
+                .setNearbyNotificationStreamingPolicy(DevicePolicyManager.NEARBY_STREAMING_ENABLED);
+
+        try {
+            assertThat(
+                    sLocalDevicePolicyManager.getNearbyNotificationStreamingPolicy()).isNotEqualTo(
+                    DevicePolicyManager.NEARBY_STREAMING_ENABLED);
+        } finally {
+            mDevicePolicyManager.setNearbyAppStreamingPolicy(originalPolicy);
+        }
     }
 }
