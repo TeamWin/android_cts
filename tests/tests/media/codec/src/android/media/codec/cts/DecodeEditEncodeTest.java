@@ -289,6 +289,9 @@ public class DecodeEditEncodeTest {
             format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+            format.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
+            format.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT601_PAL);
+            format.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
             if (VERBOSE) Log.d(TAG, "format: " + format);
             output.setMediaFormat(format);
 
@@ -475,6 +478,11 @@ public class DecodeEditEncodeTest {
                     inputFormat.getInteger(MediaFormat.KEY_FRAME_RATE));
             outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL,
                     inputFormat.getInteger(MediaFormat.KEY_I_FRAME_INTERVAL));
+            outputFormat.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
+            outputFormat.setInteger(MediaFormat.KEY_COLOR_STANDARD,
+                    MediaFormat.COLOR_STANDARD_BT601_PAL);
+            outputFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER,
+                    MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
 
             outputData.setMediaFormat(outputFormat);
 
