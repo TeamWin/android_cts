@@ -16,9 +16,11 @@
 
 package android.mediav2.cts;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -29,6 +31,7 @@ import android.os.Build;
 import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Display;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
@@ -60,6 +63,7 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -527,8 +531,8 @@ abstract class CodecTestBase {
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
     static final String INVALID_CODEC = "unknown.codec_";
     static final String mInpPrefix = WorkDir.getMediaDirString();
-    static final PackageManager pm =
-            InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+    static final Context mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    static final PackageManager pm = mContext.getPackageManager();
     static String mimeSelKeys;
     static String codecPrefix;
 
@@ -630,6 +634,47 @@ abstract class CodecTestBase {
         boolean isSupported = codecCapabilities.isFeatureSupported(feature);
         codec.release();
         return isSupported;
+    }
+
+    static boolean doesAnyFormatHaveHDRProfile(String mime, ArrayList<MediaFormat> formats) {
+        boolean isHDR = false;
+        for (MediaFormat format : formats) {
+            assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
+            if (mime.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+                int profile = format.getInteger(MediaFormat.KEY_PROFILE);
+                if (profile == AVCProfileHigh10 || profile == AVCProfileHigh422 ||
+                        profile == AVCProfileHigh444) {
+                    isHDR = true;
+                    break;
+                }
+            } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                int profile = format.getInteger(MediaFormat.KEY_PROFILE, VP9Profile0);
+                if (profile == VP9Profile2HDR || profile == VP9Profile3HDR ||
+                        profile == VP9Profile2HDR10Plus || profile == VP9Profile3HDR10Plus) {
+                    isHDR = true;
+                    break;
+                }
+            } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+                int profile = format.getInteger(MediaFormat.KEY_PROFILE, HEVCProfileMain);
+                if (profile == HEVCProfileMain10HDR10 || profile == HEVCProfileMain10HDR10Plus) {
+                    isHDR = true;
+                    break;
+                }
+            } else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_AV1)) {
+                int profile = format.getInteger(MediaFormat.KEY_PROFILE, AV1ProfileMain8);
+                if (profile == AV1ProfileMain10HDR10 || profile == AV1ProfileMain10HDR10Plus) {
+                    isHDR = true;
+                    break;
+                }
+            }
+        }
+        return isHDR;
+    }
+
+    static boolean canDisplaySupportHDRContent() {
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        return displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
+                .getSupportedHdrTypes().length != 0;
     }
 
     static boolean areFormatsSupported(String name, String mime, ArrayList<MediaFormat> formats)
