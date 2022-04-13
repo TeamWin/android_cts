@@ -53,7 +53,6 @@ public class DreamOverlayService extends android.service.dreams.DreamOverlayServ
                 intent.setPackage(TEST_PACKAGE);
                 intent.setAction(ACTION_DREAM_OVERLAY_SHOWN);
                 sendBroadcast(intent);
-                requestExit();
             }
         });
 
