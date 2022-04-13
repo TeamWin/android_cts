@@ -75,7 +75,7 @@ public class VideoDecoderRotationTest {
                 continue;
             }
             String name = info.getName();
-            if (TestArgs.CODEC_PREFIX != null && !name.startsWith(TestArgs.CODEC_PREFIX)) {
+            if (TestArgs.shouldSkipCodec(name)) {
                 continue;
             }
 
@@ -83,8 +83,7 @@ public class VideoDecoderRotationTest {
                 if (!SUPPORTED_TYPES.contains(type)) {
                     continue;
                 }
-                if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                        !type.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+                if (TestArgs.shouldSkipMediaType(type)) {
                     continue;
                 }
 

@@ -168,16 +168,14 @@ class CodecPerformanceTestBase {
     static ArrayList<String> selectCodecs(String mime, ArrayList<MediaFormat> formats,
             String[] features, boolean isEncoder, int selectCodecOption) {
         ArrayList<String> listOfCodecs = new ArrayList<>();
-        if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                !mime.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+        if (TestArgs.shouldSkipMediaType(mime)) {
             return listOfCodecs;
         }
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
 
         for (MediaCodecInfo codecInfo : codecInfos) {
-            if (TestArgs.CODEC_PREFIX != null &&
-                    !codecInfo.getName().startsWith(TestArgs.CODEC_PREFIX)) {
+            if (TestArgs.shouldSkipCodec(codecInfo.getName())) {
                 continue;
             }
             if (codecInfo.isEncoder() != isEncoder) continue;
