@@ -326,8 +326,10 @@ public class AccessibilityNodeInfoTest {
         info.setRangeInfo(RangeInfo.obtain(RangeInfo.RANGE_TYPE_FLOAT, 0.05f, 1.0f, 0.01f));
         info.setCollectionInfo(
                 CollectionInfo.obtain(2, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE));
-        info.setCollectionItemInfo(CollectionItemInfo.obtain("RowTitle", 1, 2, "ColumnTitle",
-                3, 4, true, true));
+        info.setCollectionItemInfo(new CollectionItemInfo.Builder().setRowTitle(
+                        "RowTitle").setRowIndex(1)
+                .setRowSpan(2).setColumnTitle("ColumnTitle").setColumnIndex(3).setColumnSpan(4)
+                .setHeading(true).setSelected(true).build());
         info.setParent(new View(getContext()));
         info.setSource(new View(getContext())); // Populates 2 fields: source and window id
         info.setLeashedParent(new MockBinder(), 1); // Populates 2 fields

@@ -33,6 +33,7 @@ android_test {
         "compatibility-device-util-axt",
         "cts-wm-util",
         "cts-inputmethod-util",
+        "cts-mock-a11y-ime-client",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
         "CtsMockSpellCheckerLib",

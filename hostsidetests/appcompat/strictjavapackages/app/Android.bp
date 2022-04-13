@@ -25,6 +25,7 @@ android_test_helper_app {
         "androidx.test.core",
     ],
     sdk_version: "test_current",
+    min_sdk_version: "29",
     test_suites: [
         "ats",
         "cts",

@@ -33,23 +33,23 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
-import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Binder;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.scvh.Components;
+import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.ArrayMap;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -65,22 +65,21 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 
-import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
-
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
-
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -159,14 +158,23 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     }
 
     private void addSurfaceView(int width, int height, boolean onTop) throws Throwable {
+        addSurfaceView(width, height, onTop, 0 /* leftMargin */, 0 /* topMargin */);
+    }
+
+    private void addSurfaceView(int width, int height, boolean onTop, int leftMargin, int topMargin)
+            throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             final FrameLayout content = new FrameLayout(mActivity);
             mSurfaceView = new SurfaceView(mActivity);
             mSurfaceView.setZOrderOnTop(onTop);
-            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
-                width, height, Gravity.LEFT | Gravity.TOP));
+            final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                    width, height, Gravity.LEFT | Gravity.TOP);
+            lp.leftMargin = leftMargin;
+            lp.topMargin = topMargin;
+            content.addView(mSurfaceView, lp);
             mViewParent = content;
-            mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
+            mActivity.setContentView(content,
+                    new ViewGroup.LayoutParams(width + leftMargin, height + topMargin));
             mSurfaceView.getHolder().addCallback(this);
         });
     }
@@ -275,6 +283,52 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
+    }
+
+    @Test
+    public void testEmbeddedViewReceivesRawInputCoordinatesInDisplaySpace() throws Throwable {
+        final UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
+        final int viewX = DEFAULT_SURFACE_VIEW_WIDTH / 2;
+        final int viewY = DEFAULT_SURFACE_VIEW_HEIGHT / 2;
+
+        // Verify the input coordinates received by the embedded view in three different locations.
+        for (int i = 0; i < 3; i++) {
+            final List<MotionEvent> events = new ArrayList<>();
+            mEmbeddedView = new View(mActivity);
+            mEmbeddedView.setOnTouchListener((v, e) -> events.add(e));
+
+            // Add a margin to the SurfaceView to offset the embedded view's location on the screen.
+            final int leftMargin = i * 20;
+            final int topMargin = i * 10;
+            addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, true /*onTop*/,
+                    leftMargin, topMargin);
+            mInstrumentation.waitForIdleSync();
+            waitUntilEmbeddedViewDrawn();
+
+            final int[] surfaceLocation = new int[2];
+            mSurfaceView.getLocationOnScreen(surfaceLocation);
+
+            final int displayX = surfaceLocation[0] + viewX;
+            final int displayY = surfaceLocation[1] + viewY;
+            final long downTime = SystemClock.uptimeMillis();
+            CtsTouchUtils.injectDownEvent(uiAutomation, downTime, displayX, displayY,
+                    null /*eventInjectionListener*/);
+            CtsTouchUtils.injectUpEvent(uiAutomation, downTime, true /*useCurrentEventTime*/,
+                    displayX, displayY, null /*eventInjectionListener*/);
+
+            assertEquals("Expected to capture all injected events.", 2, events.size());
+            final float epsilon = 0.001f;
+            events.forEach(e -> {
+                assertEquals("Expected to get the x coordinate in View space.",
+                        viewX, e.getX(), epsilon);
+                assertEquals("Expected to get the y coordinate in View space.",
+                        viewY, e.getY(), epsilon);
+                assertEquals("Expected to get raw x coordinate in Display space.",
+                        displayX, e.getRawX(), epsilon);
+                assertEquals("Expected to get raw y coordinate in Display space.",
+                        displayY, e.getRawY(), epsilon);
+            });
+        }
     }
 
     private static int getGlEsVersion(Context context) {

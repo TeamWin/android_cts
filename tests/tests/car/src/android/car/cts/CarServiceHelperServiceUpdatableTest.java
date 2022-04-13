@@ -35,6 +35,7 @@ import android.os.SystemClock;
 import android.os.UserManager;
 import android.util.Log;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -99,6 +100,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
                 .contains("dumpServiceStacks ANR file path=/data/anr/anr_");
     }
 
+    @FlakyTest(bugId = 222167696)
     @Test
     public void testSendUserLifecycleEventAndOnUserRemoved() throws Exception {
         // Add listener to check if user started
@@ -131,7 +133,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         } finally {
             if (!userRemoved && response != null && response.isSuccessful()) {
                 userManager.removeUser(response.getUser());
-                Log.d(TAG, "User removed: " + response.getUser());
             }
             carUserManager.removeListener(listener);
             InstrumentationRegistry.getInstrumentation().getUiAutomation()

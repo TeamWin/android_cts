@@ -376,6 +376,7 @@ public final class GameServiceTest {
     public void restartGame_gameAppIsRestarted() throws Exception {
         assumeGameServiceFeaturePresent();
 
+        clearCache(RESTART_GAME_VERIFIER_PACKAGE_NAME);
         launchAndWaitForPackage(RESTART_GAME_VERIFIER_PACKAGE_NAME);
 
         UiAutomatorUtils.waitFindObject(
@@ -575,7 +576,7 @@ public final class GameServiceTest {
     }
 
     private void waitForGameServiceConnected() {
-        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(5), () -> isGameServiceConnected(),
+        PollingCheck.waitFor(TimeUnit.SECONDS.toMillis(20), () -> isGameServiceConnected(),
                 "Timed out waiting for game service to connect");
     }
 
@@ -626,6 +627,10 @@ public final class GameServiceTest {
         ShellUtils.runShellCommand("am force-stop %s", packageName);
         UiAutomatorUtils.getUiDevice().wait(Until.gone(By.pkg(packageName).depth(0)),
                 TimeUnit.SECONDS.toMillis(20));
+    }
+
+    private static void clearCache(String packageName) {
+        ShellUtils.runShellCommand("pm clear %s", packageName);
     }
 
     private static int getActivityTaskId(String packageName, String componentName) {

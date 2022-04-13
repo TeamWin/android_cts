@@ -50,7 +50,7 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
 
         removeAllUsersExceptSystem();
 
-        reboot();
+        restartSystemServer();
 
         assertFullUserCreated();
     }
@@ -79,7 +79,7 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
             if (userId == SYSTEM_USER_ID) {
                 continue;
             }
-            removeUser(userId);
+            assertThat(removeUser(userId)).isTrue();
         }
 
         users = getAllUsers();
@@ -88,7 +88,8 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
 
     private List<Integer> getAllUsers() throws Exception {
         return onAllUsers((allUsers) -> allUsers.stream()
-                .filter((u) -> !u.flags.contains("DISABLED") && !u.flags.contains("EPHEMERAL"))
+                .filter((u) -> !u.flags.contains("DISABLED") && !u.flags.contains("EPHEMERAL")
+                        && !u.otherState.contains("pre-created"))
                 .map((u) -> u.id).collect(Collectors.toList()));
     }
 }
