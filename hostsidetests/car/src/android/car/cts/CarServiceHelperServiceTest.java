@@ -88,7 +88,8 @@ public final class CarServiceHelperServiceTest extends CarHostJUnit4TestCase {
 
     private List<Integer> getAllUsers() throws Exception {
         return onAllUsers((allUsers) -> allUsers.stream()
-                .filter((u) -> !u.flags.contains("DISABLED") && !u.flags.contains("EPHEMERAL"))
+                .filter((u) -> !u.flags.contains("DISABLED") && !u.flags.contains("EPHEMERAL")
+                        && !u.otherState.contains("pre-created"))
                 .map((u) -> u.id).collect(Collectors.toList()));
     }
 }

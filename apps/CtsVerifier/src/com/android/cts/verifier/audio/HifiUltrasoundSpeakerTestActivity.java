@@ -46,7 +46,7 @@ import com.androidplot.xy.XYStepMode;
 
 import com.android.compatibility.common.util.CddTest;
 
-@CddTest(requirement="7.8.3")
+@CddTest(requirement = "7.8.3/C-1-1,C-1-2,C-2-1")
 public class HifiUltrasoundSpeakerTestActivity extends PassFailButtons.Activity {
 
   public enum Status {

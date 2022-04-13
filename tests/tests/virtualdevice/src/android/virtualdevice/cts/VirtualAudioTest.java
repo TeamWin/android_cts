@@ -239,7 +239,7 @@ public class VirtualAudioTest {
         mVirtualAudioDevice = mVirtualDevice.createVirtualAudioDevice(
                 mVirtualDisplay, /* executor= */ null, mAudioConfigurationChangeCallback);
         AudioFormat audioFormat = createInjectionFormat(ENCODING_PCM_16BIT);
-        mVirtualAudioDevice.startAudioInjection(audioFormat);
+        AudioInjection audioInjection = mVirtualAudioDevice.startAudioInjection(audioFormat);
 
         ActivityResultReceiver activityResultReceiver = new ActivityResultReceiver(
                 getApplicationContext());
@@ -247,6 +247,14 @@ public class VirtualAudioTest {
         InstrumentationRegistry.getInstrumentation().getTargetContext().startActivity(
                 createAudioRecordIntent(BYTE_BUFFER),
                 createActivityOptions(mVirtualDisplay));
+
+        ByteBuffer byteBuffer = AudioHelper.createAudioData(
+                SAMPLE_RATE, NUMBER_OF_SAMPLES, CHANNEL_COUNT, FREQUENCY, AMPLITUDE);
+        int remaining = byteBuffer.remaining();
+        while (remaining > 0) {
+            remaining -= audioInjection.write(byteBuffer, byteBuffer.remaining(), WRITE_BLOCKING);
+        }
+
         verify(mAudioConfigurationChangeCallback, timeout(5000).atLeastOnce())
                 .onRecordingConfigChanged(any());
         verify(mActivityResultCallback, timeout(5000)).onActivityResult(

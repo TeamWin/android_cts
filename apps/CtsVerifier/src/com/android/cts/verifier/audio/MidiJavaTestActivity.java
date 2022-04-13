@@ -27,6 +27,8 @@ import android.media.midi.MidiReceiver;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.R;
 
 import com.android.cts.verifier.audio.midilib.MidiIODevice;
@@ -55,6 +57,7 @@ import com.android.cts.verifier.audio.midilib.MidiIODevice;
 /**
  * CTS Verifier Activity for MIDI test
  */
+@CddTest(requirement = "5.9/C-1-4,C-1-2")
 public class MidiJavaTestActivity extends MidiTestActivityBase {
     private static final String TAG = "MidiJavaTestActivity";
     private static final boolean DEBUG = false;

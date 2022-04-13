@@ -36,6 +36,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.PassFailButtons;
@@ -46,6 +47,7 @@ import org.hyphonate.megaaudio.player.JavaPlayer;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
 import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 
+@CddTest(requirement = "7.8.2.1/C-1-1,C-1-2,C-1-3,C-1-4,C-2-1")
 public class AnalogHeadsetAudioActivity
         extends PassFailButtons.Activity
         implements View.OnClickListener {

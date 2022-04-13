@@ -34,6 +34,7 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.CtsVerifierReportLog;
@@ -46,6 +47,7 @@ import com.android.cts.verifier.audio.audiolib.StatUtils;
 /**
  * CtsVerifier Audio Loopback Latency Test
  */
+@CddTest(requirement = "5.10/C-1-2,C-1-5")
 public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     private static final String TAG = "AudioLoopbackLatencyActivity";
 
