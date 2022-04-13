@@ -58,7 +58,7 @@ class CodecEncoderSurfaceTest {
     OutputManager mTestBuff;
     bool mSaveToMem;
 
-    bool setUpExtractor(const char* srcPath);
+    bool setUpExtractor(const char* srcPath, int colorFormat);
     void deleteExtractor();
     bool configureCodec(bool isAsync, bool signalEOSWithLastFrame);
     void resetContext(bool isAsync, bool signalEOSWithLastFrame);
@@ -78,7 +78,7 @@ class CodecEncoderSurfaceTest {
     ~CodecEncoderSurfaceTest();
 
     bool testSimpleEncode(const char* encoder, const char* decoder, const char* srcPath,
-                          const char* muxOutPath);
+                          const char* muxOutPath, int colorFormat);
 };
 
 CodecEncoderSurfaceTest::CodecEncoderSurfaceTest(const char* mime, int bitrate, int framerate)
@@ -121,7 +121,7 @@ CodecEncoderSurfaceTest::~CodecEncoderSurfaceTest() {
     }
 }
 
-bool CodecEncoderSurfaceTest::setUpExtractor(const char* srcFile) {
+bool CodecEncoderSurfaceTest::setUpExtractor(const char* srcFile, int colorFormat) {
     FILE* fp = fopen(srcFile, "rbe");
     struct stat buf {};
     if (fp && !fstat(fileno(fp), &buf)) {
@@ -140,7 +140,7 @@ bool CodecEncoderSurfaceTest::setUpExtractor(const char* srcFile) {
                 if (mime && strncmp(mime, "video/", strlen("video/")) == 0) {
                     AMediaExtractor_selectTrack(mExtractor, trackID);
                     AMediaFormat_setInt32(currFormat, AMEDIAFORMAT_KEY_COLOR_FORMAT,
-                                          COLOR_FormatYUV420Flexible);
+                                          colorFormat);
                     mDecFormat = currFormat;
                     break;
                 }
@@ -497,9 +497,10 @@ bool CodecEncoderSurfaceTest::doWork(int frameLimit) {
 }
 
 bool CodecEncoderSurfaceTest::testSimpleEncode(const char* encoder, const char* decoder,
-                                               const char* srcPath, const char* muxOutPath) {
+                                               const char* srcPath, const char* muxOutPath,
+                                               int colorFormat) {
     bool isPass = true;
-    if (!setUpExtractor(srcPath)) {
+    if (!setUpExtractor(srcPath, colorFormat)) {
         ALOGE("setUpExtractor failed");
         return false;
     }
@@ -598,7 +599,7 @@ bool CodecEncoderSurfaceTest::testSimpleEncode(const char* encoder, const char* 
 
 static jboolean nativeTestSimpleEncode(JNIEnv* env, jobject, jstring jEncoder, jstring jDecoder,
                                        jstring jMime, jstring jtestFile, jstring jmuxFile,
-                                       jint jBitrate, jint jFramerate) {
+                                       jint jBitrate, jint jFramerate, jint jColorFormat) {
     const char* cEncoder = env->GetStringUTFChars(jEncoder, nullptr);
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
     const char* cMime = env->GetStringUTFChars(jMime, nullptr);
@@ -607,7 +608,8 @@ static jboolean nativeTestSimpleEncode(JNIEnv* env, jobject, jstring jEncoder, j
     auto codecEncoderSurfaceTest =
             new CodecEncoderSurfaceTest(cMime, (int)jBitrate, (int)jFramerate);
     bool isPass =
-            codecEncoderSurfaceTest->testSimpleEncode(cEncoder, cDecoder, cTestFile, cMuxFile);
+            codecEncoderSurfaceTest->testSimpleEncode(cEncoder, cDecoder, cTestFile, cMuxFile,
+                                                      jColorFormat);
     delete codecEncoderSurfaceTest;
     env->ReleaseStringUTFChars(jEncoder, cEncoder);
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
@@ -621,7 +623,7 @@ int registerAndroidMediaV2CtsEncoderSurfaceTest(JNIEnv* env) {
     const JNINativeMethod methodTable[] = {
             {"nativeTestSimpleEncode",
              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/"
-             "String;II)Z",
+             "String;III)Z",
              (void*)nativeTestSimpleEncode},
     };
     jclass c = env->FindClass("android/mediav2/cts/CodecEncoderSurfaceTest");
