@@ -193,14 +193,12 @@ public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
             MediaFormat mediaFormat =
                     MediaUtils.getTrackFormatForResource(INP_PREFIX + file, "video");
             String mediaType = mediaFormat.getString(MediaFormat.KEY_MIME);
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mediaType)) {
                 continue;
             }
             String[] componentNames = MediaUtils.getDecoderNamesForMime(mediaType);
             for (String componentName : componentNames) {
-                if (TestArgs.CODEC_PREFIX != null &&
-                        !componentName.startsWith(TestArgs.CODEC_PREFIX)) {
+                if (TestArgs.shouldSkipCodec(componentName)) {
                     continue;
                 }
                 if (MediaUtils.supports(componentName, mediaFormat)) {
