@@ -4069,23 +4069,15 @@ public class AccessibilityTextTraversalTest {
             arguments.putBoolean(
                     AccessibilityNodeInfo.ACTION_ARGUMENT_EXTEND_SELECTION_BOOLEAN, true);
         }
-        Runnable performActionRunnable = new Runnable() {
-            @Override
-            public void run() {
-                target.performAction(action.getId(), arguments);
-            }
-        };
-        UiAutomation.AccessibilityEventFilter filter = new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                boolean isMovementEvent = event.getEventType()
-                        == AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY;
-                boolean actionMatches = event.getAction() == action.getId();
-                boolean packageMatches =
-                        event.getPackageName().equals(mActivity.getPackageName());
-                boolean granularityMatches = event.getMovementGranularity() == granularity;
-                return isMovementEvent && actionMatches && packageMatches && granularityMatches;
-            }
+        Runnable performActionRunnable = () -> target.performAction(action.getId(), arguments);
+        UiAutomation.AccessibilityEventFilter filter = event -> {
+            boolean isMovementEvent = event.getEventType()
+                    == AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY;
+            boolean actionMatches = event.getAction() == action.getId();
+            boolean packageMatches = TextUtils.equals(event.getPackageName(),
+                    mActivity.getPackageName());
+            boolean granularityMatches = event.getMovementGranularity() == granularity;
+            return isMovementEvent && actionMatches && packageMatches && granularityMatches;
         };
         return sUiAutomation
                 .executeAndWaitForEvent(performActionRunnable, filter, DEFAULT_TIMEOUT_MS);
