@@ -18,11 +18,13 @@ package android.systemui.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -68,8 +70,10 @@ public class MediaOutputDialogTest {
 
         Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
         launcherIntent.addCategory(Intent.CATEGORY_HOME);
-        mLauncherPackage = packageManager.resolveActivity(launcherIntent,
-                PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+        ResolveInfo resolveInfo = packageManager.resolveActivity(launcherIntent,
+                PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY));
+        assumeFalse("Skipping test: can't get resolve info", resolveInfo == null);
+        mLauncherPackage = resolveInfo.activityInfo.packageName;
     }
 
     @Test
