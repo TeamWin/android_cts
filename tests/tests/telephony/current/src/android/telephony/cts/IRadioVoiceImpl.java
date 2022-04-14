@@ -749,4 +749,14 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
             Log.e(TAG, "null mRadioVoiceIndication");
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioVoice.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioVoice.VERSION;
+    }
 }
