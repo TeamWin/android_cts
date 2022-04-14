@@ -946,15 +946,20 @@ public class AccessibilityMagnificationTest {
                 * ((2.0f * scale) - 1.0f));
         final float centerY = magnifyBounds.top + (((float) magnifyBounds.height() / (2.0f * scale))
                 * ((2.0f * scale) - 1.0f));
+        final Rect boundsBeforeMagnify = new Rect();
+        buttonNode.getBoundsInScreen(boundsBeforeMagnify);
+        final Rect boundsAfterMagnify = new Rect();
         try {
             waitOnMagnificationChanged(controller, scale, centerX, centerY);
-            // Waiting for UI refresh
-            mInstrumentation.waitForIdleSync();
-            buttonNode.refresh();
 
-            final Rect boundsInScreen = new Rect();
+            TestUtils.waitUntil("node bounds is not changed:", /* timeoutSecond= */ 5 ,
+                    () -> {
+                        buttonNode.refresh();
+                        buttonNode.getBoundsInScreen(boundsAfterMagnify);
+                        return !boundsBeforeMagnify.equals(boundsAfterMagnify);
+                    });
+
             final DisplayMetrics displayMetrics = new DisplayMetrics();
-            buttonNode.getBoundsInScreen(boundsInScreen);
             activity.getDisplay().getMetrics(displayMetrics);
             final Rect displayRect = new Rect(0, 0,
                     displayMetrics.widthPixels, displayMetrics.heightPixels);
@@ -962,8 +967,8 @@ public class AccessibilityMagnificationTest {
             // for example, Rect(-xxx, -xxx, -xxx, -xxx). Intersection of button and screen
             // should be empty.
             assertFalse("Button shouldn't be on the screen, screen is " + displayRect
-                            + ", button bounds is " + boundsInScreen,
-                    Rect.intersects(displayRect, boundsInScreen));
+                            + ", button bounds is " + boundsAfterMagnify,
+                    Rect.intersects(displayRect, boundsAfterMagnify));
             assertTrue("Button should be visible", buttonNode.isVisibleToUser());
         } finally {
             mService.runOnServiceSync(() -> controller.reset(false));
