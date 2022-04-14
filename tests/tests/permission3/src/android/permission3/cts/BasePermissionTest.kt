@@ -154,6 +154,10 @@ abstract class BasePermissionTest {
         waitForIdle()
     }
 
+    protected fun clickPermissionControllerUi(selector: BySelector, timeoutMillis: Long = 20_000) {
+        click(selector.pkg(context.packageManager.permissionControllerPackageName), timeoutMillis)
+    }
+
     protected fun pressBack() {
         uiDevice.pressBack()
         waitForIdle()
