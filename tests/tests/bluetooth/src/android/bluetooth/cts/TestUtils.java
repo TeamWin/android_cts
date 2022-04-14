@@ -43,11 +43,6 @@ import java.util.Arrays;
  */
 class TestUtils {
     /**
-     * Bluetooth package name
-     */
-    static final String BLUETOOTH_PACKAGE_NAME = "com.android.bluetooth.services";
-
-    /**
      * Checks whether this device has Bluetooth feature
      * @return true if this device has Bluetooth feature
      */

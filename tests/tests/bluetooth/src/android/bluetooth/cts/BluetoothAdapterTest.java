@@ -33,6 +33,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Build;
@@ -330,13 +331,25 @@ public class BluetoothAdapterTest extends AndroidTestCase {
             return;
         }
 
+        String bluetoothPackageName = "";
+        List<PackageInfo> installedPackageInfos = mContext.getPackageManager()
+                .getInstalledPackages(PackageManager.PackageInfoFlags
+                        .of(PackageManager.MATCH_SYSTEM_ONLY));
+        for (PackageInfo pkgInfo : installedPackageInfos) {
+            if (pkgInfo.packageName.equals("com.android.bluetooth.services")
+                    || pkgInfo.packageName.equals("com.google.android.bluetooth.services")) {
+                bluetoothPackageName = pkgInfo.packageName;
+                break;
+            }
+        }
+
         int maxConnectedAudioDevicesConfig = 0;
         try {
             Resources bluetoothRes = mContext.getPackageManager()
-                    .getResourcesForApplication("com.android.bluetooth.services");
+                    .getResourcesForApplication(bluetoothPackageName);
             maxConnectedAudioDevicesConfig = bluetoothRes.getInteger(
                     bluetoothRes.getIdentifier("config_bluetooth_max_connected_audio_devices",
-                    "integer", "com.android.bluetooth.services"));
+                    "integer", bluetoothPackageName));
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
