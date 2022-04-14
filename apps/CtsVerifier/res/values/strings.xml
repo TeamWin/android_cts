@@ -890,7 +890,7 @@
         including showing the dialog to the user to verify a device, as well as updating an internal
         record once the user made the choice and then removing it.\n\n
         Before proceeding, make sure you have a bluetooth device nearby and discoverable.
-        Also, make sure that bluetooth is turned on on this device.
+        Also, make sure that bluetooth is turned on for this device.
         Once you press the button, wait for a dialog to pop up and select your device from the list.
     </string>
 
@@ -901,23 +901,22 @@
         Before proceeding, make sure you have a Bluetooth LE device nearby and
         discoverable. Also, make sure that bluetooth is turned on. Note that, the nearby device can
         not be a phone since it considers advertising as classic device scan.
-        First, you press the go button, wait for a dialog to pop up and select your device from the
-        list. Second, make sure your bluetooth device is unreachable(you can power off/reboot your
-        Bluetooth device or put it into a Faraday bag) and press the Device Gone button.
-        Lastly, make your bluetooth device reachable by waiting for the device to power on or
-        removing it from the Faraday bag and press the Device Present button.
+        First, press the go button, wait for a dialog to pop up and select your device from the
+        list. Second, make your Bluetooth device reachable then press the Device Present button.
+        Lastly, make sure your bluetooth device is unreachable(you can power off your
+        Bluetooth device or put it into a Faraday bag) and wait up to 2 minutes then press the
+        Device Gone button.
+    </string>
+
+    <string name="companion_service_test_present_text">
+        Now, please make your Bluetooth device is reachable and wait up to 10 to 20 seconds, then
+        press the Device Present button.
     </string>
 
     <string name="companion_service_test_gone_text">
         Now, please make your Bluetooth device unreachable.
-        Put your bluetooth device into a RF Bag or power off/reboot your device,
-        then press the Device Gone button.
-    </string>
-
-    <string name="companion_service_test_present_text">
-        Now, please make your Bluetooth device reachable.
-        Remove your Bluetooth device from a RF Bag or power on your device,
-        then press the Device Present button.
+        Put your nearby bluetooth device into an RF Bag or power off your device and wait up to
+        2 minutes, then press the Device Gone button.
     </string>
 
     <!-- Strings for FeatureSummaryActivity -->
