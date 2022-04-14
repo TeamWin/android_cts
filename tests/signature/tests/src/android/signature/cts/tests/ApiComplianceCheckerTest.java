@@ -801,4 +801,29 @@ public class ApiComplianceCheckerTest extends ApiPresenceCheckerTest<ApiComplian
             });
         }
     }
+
+    @Test
+    public void testAddingRuntimeMethodToInterface() {
+        try (ExpectFailure observer = new ExpectFailure(FailureType.MISMATCH_INTERFACE_METHOD)) {
+            runWithApiChecker(observer, checker -> {
+                JDiffClassDescription iface = createInterface(
+                        ExtendedNormalInterface.class.getSimpleName());
+                iface.addMethod(method("doSomething", Modifier.PUBLIC | Modifier.ABSTRACT, "void"));
+                checker.checkSignatureCompliance(iface);
+            });
+        }
+    }
+
+    @Test
+    public void testAddingRuntimeMethodToInterface_PreviousApi() {
+        try (NoFailures observer = new NoFailures()) {
+            runWithApiChecker(observer, checker -> {
+                JDiffClassDescription iface = createInterface(
+                        ExtendedNormalInterface.class.getSimpleName());
+                iface.addMethod(method("doSomething", Modifier.PUBLIC | Modifier.ABSTRACT, "void"));
+                iface.setPreviousApiFlag(true);
+                checker.checkSignatureCompliance(iface);
+            });
+        }
+    }
 }
