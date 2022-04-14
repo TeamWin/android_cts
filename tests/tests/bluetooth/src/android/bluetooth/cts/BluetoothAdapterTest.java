@@ -33,11 +33,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.os.Build;
-import android.os.SystemProperties;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -331,35 +328,14 @@ public class BluetoothAdapterTest extends AndroidTestCase {
             return;
         }
 
-        String bluetoothPackageName = "";
-        List<PackageInfo> installedPackageInfos = mContext.getPackageManager()
-                .getInstalledPackages(PackageManager.PackageInfoFlags
-                        .of(PackageManager.MATCH_SYSTEM_ONLY));
-        for (PackageInfo pkgInfo : installedPackageInfos) {
-            if (pkgInfo.packageName.equals("com.android.bluetooth.services")
-                    || pkgInfo.packageName.equals("com.google.android.bluetooth.services")) {
-                bluetoothPackageName = pkgInfo.packageName;
-                break;
-            }
-        }
-
-        int maxConnectedAudioDevicesConfig = 0;
-        try {
-            Resources bluetoothRes = mContext.getPackageManager()
-                    .getResourcesForApplication(bluetoothPackageName);
-            maxConnectedAudioDevicesConfig = bluetoothRes.getInteger(
-                    bluetoothRes.getIdentifier("config_bluetooth_max_connected_audio_devices",
-                    "integer", bluetoothPackageName));
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        maxConnectedAudioDevicesConfig =
-                SystemProperties.getInt("persist.bluetooth.maxconnectedaudiodevices",
-                        maxConnectedAudioDevicesConfig);
+        // Defined in com.android.bluetooth.btservice.AdapterProperties
+        int maxConnectedAudioDevicesLowerBound = 1;
+        // Defined in com.android.bluetooth.btservice.AdapterProperties
+        int maxConnectedAudioDevicesUpperBound = 5;
 
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
-        assertEquals(maxConnectedAudioDevicesConfig, mAdapter.getMaxConnectedAudioDevices());
+        assertTrue(mAdapter.getMaxConnectedAudioDevices() >= maxConnectedAudioDevicesLowerBound);
+        assertTrue(mAdapter.getMaxConnectedAudioDevices() <= maxConnectedAudioDevicesUpperBound);
 
         mUiAutomation.dropShellPermissionIdentity();
         assertThrows(SecurityException.class, () -> mAdapter.getMaxConnectedAudioDevices());
