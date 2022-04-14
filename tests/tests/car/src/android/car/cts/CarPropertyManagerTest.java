@@ -841,6 +841,39 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEvChargePercentLimitIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_PERCENT_LIMIT,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Float.class).setConfigArrayVerifier(configArray -> {
+            for (int i = 0; i < configArray.size(); i++) {
+                assertWithMessage("EV_CHARGE_PERCENT_LIMIT configArray[" + i
+                        + "] valid charge percent limit must be greater than 0").that(
+                        configArray.get(i)).isGreaterThan(0);
+                assertWithMessage("EV_CHARGE_PERCENT_LIMIT configArray[" + i
+                        + "] valid charge percent limit must be at most 100").that(
+                        configArray.get(i)).isAtMost(100);
+            }
+        }).setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+            List<Integer> evChargePercentLimitConfigArray = carPropertyConfig.getConfigArray();
+            Float evChargePercentLimit = (Float) carPropertyValue.getValue();
+
+            if (evChargePercentLimitConfigArray.isEmpty()) {
+                assertWithMessage("EV_CHARGE_PERCENT_LIMIT value must be greater than 0").that(
+                        evChargePercentLimit).isGreaterThan(0);
+                assertWithMessage("EV_CHARGE_PERCENT_LIMIT value must be at most 100").that(
+                        evChargePercentLimit).isAtMost(100);
+            } else {
+                assertWithMessage(
+                        "EV_CHARGE_PERCENT_LIMIT value must be in the configArray valid charge "
+                                + "percent limit list").that(evChargePercentLimit.intValue()).isIn(
+                        evChargePercentLimitConfigArray);
+            }
+        }).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
