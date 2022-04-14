@@ -415,4 +415,14 @@ public class IRadioMessagingImpl extends IRadioMessaging.Stub {
             Log.e(TAG, "null mRadioMessagingIndication");
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioMessaging.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioMessaging.VERSION;
+    }
 }
