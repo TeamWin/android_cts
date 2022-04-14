@@ -38,6 +38,9 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
     private static final String TAG = "USBAudioPeripheralActivity";
     private static final boolean DEBUG = false;
 
+    // Host Mode Support
+    protected boolean mHasHostMode;
+
     // Profile
     protected ProfileManager mProfileManager = new ProfileManager();
     protected PeripheralProfile mSelectedProfile;
@@ -75,8 +78,8 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
 
     private void showUAPInfoDialog() {
         new AlertDialog.Builder(this)
-                .setTitle(R.string.uap_mic_dlg_caption)
-                .setMessage(R.string.uap_mic_dlg_text)
+                .setTitle(R.string.uap_test_hostmode_info_caption)
+                .setMessage(R.string.uap_test_hostmode_info_text)
                 .setPositiveButton(R.string.audio_general_ok, null)
                 .show();
     }
@@ -86,17 +89,13 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.uap_tests_yes_btn:
-                    recordUSBAudioStatus(true);
-                    enableTestUI(true);
-                    // disable test button so that they will now run the test(s)
-                    getPassButton().setEnabled(false);
+                    mHasHostMode = true;
+                    setUsbAudioStatus(mHasHostMode);
                     break;
 
                 case R.id.uap_tests_no_btn:
-                    recordUSBAudioStatus(false);
-                    enableTestUI(false);
-                    // Allow the user to "pass" the test.
-                    getPassButton().setEnabled(true);
+                    mHasHostMode = false;
+                    setUsbAudioStatus(mHasHostMode);
                     break;
 
                 case R.id.uap_test_info_btn:
@@ -114,11 +113,14 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
                 ResultUnit.NONE);
     }
 
-    //
-    // Overrides
-    //
-    void enableTestUI(boolean enable) {
+    protected void setUsbAudioStatus(boolean has) {
+        // ReportLog
+        recordUSBAudioStatus(has);
 
+        // UI & Pass/Fail status
+        getPassButton().setEnabled(!mHasHostMode);
+        findViewById(R.id.uap_tests_yes_btn).setEnabled(mHasHostMode);
+        findViewById(R.id.uap_tests_no_btn).setEnabled(!mHasHostMode);
     }
 
     public USBAudioPeripheralActivity(boolean mandatedRequired) {
@@ -213,7 +215,6 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
         } else {
             mSelectedProfile = null;
         }
-
     }
 
     private class ConnectListener extends AudioDeviceCallback {
