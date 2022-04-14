@@ -18,22 +18,29 @@ package android.permission3.cts
 
 import android.app.Activity
 import android.app.AppOpsManager
-import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import android.content.ComponentName
 import android.content.Intent
 import android.location.LocationManager
 import android.net.Uri
 import android.provider.Settings
+import android.support.test.uiautomator.By
+import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
-import org.junit.Test
-import java.util.concurrent.TimeUnit
+import com.android.compatibility.common.util.SystemUtil.eventually
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
-import android.support.test.uiautomator.By
-import com.android.compatibility.common.util.SystemUtil.eventually
+import org.junit.Assume.assumeFalse
+import org.junit.Before
+import org.junit.Test
+import java.util.concurrent.TimeUnit
 
 class PermissionAllServicesTest : BasePermissionTest() {
+
+    // "All services" screen is not supported on Auto in T
+    @Before
+    fun assumeNotAuto() = assumeFalse(isAutomotive)
+
     val locationManager = context.getSystemService(LocationManager::class.java)!!
 
     @Test
