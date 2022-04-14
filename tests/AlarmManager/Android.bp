@@ -27,7 +27,6 @@ android_test {
     srcs: [
         "src/**/*.java",
         "app/src/**/*.java",
-        "app30/src/**/*.java",
         ":CtsAlarmUtils",
         ":CtsAlarmTestHelperCommon",
     ],
