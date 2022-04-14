@@ -26,6 +26,9 @@
         <option name="test-file-name" value="CtsDreamsTestCases.apk" />
         <option name="test-file-name" value="CtsDreamOverlayTestApp.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.app.dream.cts.app" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.dreams.cts" />
         <option name="runtime-hint" value="10m" />

@@ -14,12 +14,10 @@
 """Verify jpeg capture latency for both front and back primary cameras.
 """
 
-import logging
-
 from mobly import test_runner
 
-import camera_properties_utils
 import its_base_test
+import camera_properties_utils
 import its_session_utils
 
 # This must match MPC12_JPEG_CAPTURE_THRESHOLD in ItsTestActivity.java

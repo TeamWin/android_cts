@@ -399,8 +399,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         eventually {
             // UiObject2 doesn't expose CharSequence.
             val node = if (isAutomotive) {
+                // Should match "Allow in settings." (location) and "go to settings." (body sensors)
                 uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByText(
-                        "Allow in settings."
+                        " settings."
                 )[0]
             } else {
                 uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(

@@ -25,6 +25,8 @@ import android.media.AudioFormat;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -790,6 +792,30 @@ abstract class CodecTestBase {
                 assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
                 int profile = format.getInteger(MediaFormat.KEY_PROFILE, -1);
                 if (IntStream.of(profileArray).anyMatch(x -> x == profile)) return true;
+            }
+        }
+        return false;
+    }
+
+    static boolean doesCodecSupportHDRProfile(String codecName, String mediaType)
+            throws IOException {
+        int[] hdrProfiles = mProfileHdrMap.get(mediaType);
+        if (hdrProfiles == null) {
+            return false;
+        }
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo codecInfo : mcl.getCodecInfos()) {
+            if (!codecName.equals(codecInfo.getName())) {
+                continue;
+            }
+            CodecCapabilities caps = codecInfo.getCapabilitiesForType(mediaType);
+            if (caps == null) {
+                return false;
+            }
+            for (CodecProfileLevel pl : caps.profileLevels) {
+                if (IntStream.of(hdrProfiles).anyMatch(x -> x == pl.profile)) {
+                    return true;
+                }
             }
         }
         return false;

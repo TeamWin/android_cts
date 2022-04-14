@@ -97,15 +97,14 @@ public class DecoderConformanceTest extends MediaTestBase {
         final String[] mediaTypeList = new String[] {MediaFormat.MIMETYPE_VIDEO_VP9};
         final List<Object[]> argsList = new ArrayList<>();
         for (String mediaType : mediaTypeList) {
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mediaType)) {
                 continue;
             }
             String[] componentNames = MediaUtils.getDecoderNamesForMime(mediaType);
             List<String> testVectors = readCodecTestVectors(mediaType);
             for (String testVector : testVectors) {
                 for (String name : componentNames) {
-                    if (TestArgs.CODEC_PREFIX != null && !name.startsWith(TestArgs.CODEC_PREFIX)) {
+                    if (TestArgs.shouldSkipCodec(name)) {
                         continue;
                     }
                     argsList.add(new Object[] {name, mediaType, testVector});
