@@ -24,16 +24,16 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.media.audio.cts.R;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.SystemClock;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
-import javax.annotation.concurrent.GuardedBy;
 import java.io.InputStream;
 import java.util.concurrent.Executor;
+
+import javax.annotation.concurrent.GuardedBy;
 
 @NonMediaMainlineTest
 public class AudioTrackOffloadTest extends CtsAndroidTestCase {
@@ -115,8 +115,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
     }
 
-    private @Nullable AudioTrack getOffloadAudioTrack(@RawRes int audioRes, int bitRateInkbps,
-                                            AudioFormat audioFormat) {
+    private @Nullable AudioTrack getOffloadAudioTrack(int bitRateInkbps, AudioFormat audioFormat) {
         if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
             Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
                     + audioFormat.getEncoding() + " is not supported");
@@ -151,7 +150,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 .openRawResourceFd(audioRes);
              InputStream audioInputStream = audioToOffload.createInputStream()) {
 
-            track = getOffloadAudioTrack(audioRes, bitRateInkbps, audioFormat);
+            track = getOffloadAudioTrack(bitRateInkbps, audioFormat);
             if (track == null) {
                 return;
             }
@@ -170,16 +169,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                     bufferSizeInBytes3sec, read);
 
             track.play();
-            int written = 0;
-            while (written < read) {
-                int wrote = track.write(data, written, read - written,
-                        AudioTrack.WRITE_BLOCKING);
-                Log.i(TAG, String.format("wrote %d bytes (%d out of %d)", wrote, written, read));
-                if (wrote < 0) {
-                    fail("Unable to write all read data, wrote " + written + " bytes");
-                }
-                written += wrote;
-            }
+            writeAllBlocking(track, data);
 
             try {
                 final long elapsed = checkDataRequest(DATA_REQUEST_TIMEOUT_MS);
@@ -207,6 +197,19 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 track.release();
             }
         };
+    }
+
+    private void writeAllBlocking(AudioTrack track, byte[] data) {
+        int written = 0;
+        while (written < data.length) {
+            int wrote = track.write(data, written, data.length - written,
+                    AudioTrack.WRITE_BLOCKING);
+            if (wrote < 0) {
+                fail("Unable to write all read data, wrote " + written + " bytes");
+            }
+            written += wrote;
+            Log.i(TAG, String.format("wrote %d bytes (%d out of %d)", wrote, written, data.length));
+        }
     }
 
     private long checkDataRequest(long timeout) throws Exception {
@@ -241,9 +244,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final int TEST_PADDING = 100;
     public void testOffloadPadding() {
         AudioTrack track =
-                getOffloadAudioTrack(R.raw.sine1khzs40dblong,
-                /* bitRateInkbps= */ 192,
-                getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+                getOffloadAudioTrack(/* bitRateInkbps= */ 192,
+                                     getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
         if (track == null) {
             return;
         }
@@ -275,9 +277,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
         // offloaded case
         AudioTrack offloadTrack =
-                getOffloadAudioTrack(R.raw.sine1khzs40dblong,
-                        /* bitRateInkbps= */ 192,
-                        getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+                getOffloadAudioTrack(/* bitRateInkbps= */ 192,
+                                     getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
         if (offloadTrack == null) {
             return;
         }

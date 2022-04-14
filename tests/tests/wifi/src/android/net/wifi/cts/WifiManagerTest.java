@@ -2253,15 +2253,24 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (ri != null) {
             validPkg = ri.activityInfo.packageName;
         }
+        String dpmHolderName = null;
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU)
+                || ApiLevelUtil.codenameStartsWith("T")) {
+            DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
+            if (dpm != null) {
+                dpmHolderName = dpm.getDevicePolicyManagementRoleHolderPackage();
+            }
+        }
 
         final List<PackageInfo> holding = pm.getPackagesHoldingPermissions(new String[] {
                 android.Manifest.permission.NETWORK_MANAGED_PROVISIONING
         }, PackageManager.MATCH_UNINSTALLED_PACKAGES);
         for (PackageInfo pi : holding) {
-            if (!Objects.equals(pi.packageName, validPkg)) {
+            if (!Objects.equals(pi.packageName, validPkg)
+                    && !Objects.equals(pi.packageName, dpmHolderName)) {
                 fail("The NETWORK_MANAGED_PROVISIONING permission must not be held by "
                         + pi.packageName + " and must be revoked for security reasons ["
-                        + validPkg +"]");
+                        + validPkg + ", " + dpmHolderName + "]");
             }
         }
     }

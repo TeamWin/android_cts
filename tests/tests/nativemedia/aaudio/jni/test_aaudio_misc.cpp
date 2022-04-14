@@ -21,12 +21,8 @@
 #include <android/log.h>
 #include <gtest/gtest.h>
 
-#include "utils.h"
-
-class AAudioTestMisc : public AAudioCtsBase {};
-
 // Make sure enums do not change value.
-TEST_F(AAudioTestMisc, aaudio_freeze_enums) {
+TEST(test_aaudio_misc, aaudio_freeze_enums) {
 
 #define ENUM_CANNOT_CHANGE "enum in API cannot change"
 

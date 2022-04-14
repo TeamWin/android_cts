@@ -52,11 +52,10 @@ import org.junit.runner.RunWith;
 import java.util.Set;
 import java.util.function.Supplier;
 
-// TODO(b/208084779): Add more cts tests to cover setting different styles and sources, also
-//  add more tests to cover calling from other packages after adding support for the new APIs in
-//  the test sdk.
+// TODO(b/208084779): Add more tests to cover calling from other packages after adding support for
+//  the new APIs in the test sdk.
 @RunWith(BedsteadJUnit4.class)
-public class EnterpriseResourcesTests {
+public class DevicePolicyResourcesTests {
     private static final String TAG = "EnterpriseResourcesTests";
 
     private static final Context sContext = TestApis.context().instrumentedContext();
@@ -66,7 +65,9 @@ public class EnterpriseResourcesTests {
     private static final String UPDATABLE_DRAWABLE_ID_1 = "UPDATABLE_DRAWABLE_ID_1";
     private static final String UPDATABLE_DRAWABLE_ID_2 = "UPDATABLE_DRAWABLE_ID_2";
     private static final String DRAWABLE_STYLE_1 = "DRAWABLE_STYLE_1";
+    private static final String DRAWABLE_STYLE_2 = "DRAWABLE_STYLE_2";
     private static final String DRAWABLE_SOURCE_1 = "DRAWABLE_SOURCE_1";
+    private static final String DRAWABLE_SOURCE_2 = "DRAWABLE_SOURCE_2";
 
     private static final String UPDATABLE_STRING_ID_1 = "UPDATABLE_STRING_ID_1";
     private static final String UPDATABLE_STRING_ID_2 = "UPDATABLE_STRING_ID_2";
@@ -157,6 +158,92 @@ public class EnterpriseResourcesTests {
         Drawable drawable = sDpm.getResources().getDrawable(
                 UPDATABLE_DRAWABLE_ID_2, DRAWABLE_STYLE_1, /* default= */ () -> defaultDrawable);
         assertThat(drawable).isEqualTo(defaultDrawable);
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void setDrawables_updateForSource_updatesCorrectly() {
+        sDpm.getResources().setDrawables(createDrawable(
+                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
+
+        sDpm.getResources().setDrawables(createDrawableForSource(
+                DRAWABLE_SOURCE_1, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1,
+                R.drawable.test_drawable_2));
+
+        Drawable drawable = sDpm.getResources().getDrawable(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                DRAWABLE_SOURCE_1,
+                /* default= */ () -> null);
+        assertThat(areSameDrawables(drawable, sContext.getDrawable(R.drawable.test_drawable_2)))
+                .isTrue();
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void setDrawables_updateForMultipleSources_updatesCorrectly() {
+        sDpm.getResources().setDrawables(createDrawableForSource(
+                DRAWABLE_SOURCE_1, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1,
+                R.drawable.test_drawable_1));
+        sDpm.getResources().setDrawables(createDrawableForSource(
+                DRAWABLE_SOURCE_2, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1,
+                R.drawable.test_drawable_2));
+
+        Drawable drawable1 = sDpm.getResources().getDrawable(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                DRAWABLE_SOURCE_1,
+                /* default= */ () -> null);
+        assertThat(areSameDrawables(drawable1, sContext.getDrawable(R.drawable.test_drawable_1)))
+                .isTrue();
+        Drawable drawable2 = sDpm.getResources().getDrawable(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                DRAWABLE_SOURCE_2,
+                /* default= */ () -> null);
+        assertThat(areSameDrawables(drawable2, sContext.getDrawable(R.drawable.test_drawable_2)))
+                .isTrue();
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void setDrawables_updateForSource_returnsGenericForUndefinedSource() {
+        sDpm.getResources().setDrawables(createDrawable(
+                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
+
+        sDpm.getResources().setDrawables(createDrawableForSource(
+                DRAWABLE_SOURCE_1, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1,
+                R.drawable.test_drawable_2));
+
+        Drawable drawable = sDpm.getResources().getDrawable(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                /* default= */ () -> null);
+        assertThat(areSameDrawables(drawable, sContext.getDrawable(R.drawable.test_drawable_1)))
+                .isTrue();
+    }
+
+    @Test
+    @Postsubmit(reason = "New test")
+    @EnsureHasPermission(UPDATE_DEVICE_MANAGEMENT_RESOURCES)
+    public void setDrawables_updateForSource_returnsGenericForUndefinedStyle() {
+        sDpm.getResources().setDrawables(createDrawable(
+                UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_1, R.drawable.test_drawable_1));
+
+        sDpm.getResources().setDrawables(createDrawableForSource(
+                DRAWABLE_SOURCE_1, UPDATABLE_DRAWABLE_ID_1, DRAWABLE_STYLE_2,
+                R.drawable.test_drawable_2));
+
+        Drawable drawable = sDpm.getResources().getDrawable(
+                UPDATABLE_DRAWABLE_ID_1,
+                DRAWABLE_STYLE_1,
+                DRAWABLE_SOURCE_1,
+                /* default= */ () -> null);
+        assertThat(areSameDrawables(drawable, sContext.getDrawable(R.drawable.test_drawable_1)))
+                .isTrue();
     }
 
     @Test
@@ -485,6 +572,12 @@ public class EnterpriseResourcesTests {
             String updatableDrawableId, String style, int resourceId) {
         return Set.of(new DevicePolicyDrawableResource(
                 sContext, updatableDrawableId, style, resourceId));
+    }
+
+    private Set<DevicePolicyDrawableResource> createDrawableForSource(
+            String source, String updatableDrawableId, String style, int resourceId) {
+        return Set.of(new DevicePolicyDrawableResource(
+                sContext, updatableDrawableId, style, source, resourceId));
     }
 
     @Test

@@ -270,8 +270,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
             if (arg instanceof CodecList) {
                 CodecList codecList = (CodecList)arg;
                 for (Codec codec : codecList) {
-                    if (TestArgs.CODEC_PREFIX != null &&
-                            !codec.name.startsWith(TestArgs.CODEC_PREFIX)) {
+                    if (TestArgs.shouldSkipCodec(codec.name)) {
                         continue;
                     }
                     Object[] testArgs = new Object[2];
@@ -1536,8 +1535,7 @@ class CodecFamily extends CodecList {
 
     public CodecFamily(String mime, final String ... resources) {
         try {
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mime.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mime)) {
                 return;
             }
 

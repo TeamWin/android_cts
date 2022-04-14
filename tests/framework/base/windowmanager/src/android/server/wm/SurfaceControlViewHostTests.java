@@ -245,6 +245,34 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     }
 
+    private String getTouchableRegionFromDump() {
+        final String output = runCommandAndPrintOutput("dumpsys window windows");
+        boolean foundWindow = false;
+        for (String line : output.split("\\n")) {
+            if (line.contains("ConfigChangeHandlingActivity")) {
+                foundWindow = true;
+            }
+            if (foundWindow && line.contains("touchable region")) {
+                return line;
+            }
+        }
+        return null;
+    }
+
+    private boolean waitForTouchableRegionChanged(String originalTouchableRegion) {
+        int retries = 0;
+        while (retries < 50) {
+            if (getTouchableRegionFromDump() != originalTouchableRegion) {
+                return true;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (Exception e) {
+            }
+        }
+        return false;
+    }
+
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         if (mTestService == null) {
@@ -905,10 +933,21 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mInstrumentation.waitForIdleSync();
         assertFalse(mClicked);
 
+        String originalRegion = getTouchableRegionFromDump();
+
         mActivityRule.runOnUiThread(() -> {
             mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region(0,0,1,1));
         });
         mInstrumentation.waitForIdleSync();
+        // ViewRootImpl sends the touchable region to the WM via a one-way call, which is great
+        // for performance...however not so good for testability, we have no way
+        // to verify it has arrived! It doesn't make so much sense to bloat
+        // the system image size with a completion callback for just this one test
+        // so we settle for some inelegant spin-polling on the WM dump.
+        // In the future when we revisit WM/Client interface and transactionalize
+        // everything, we should have a standard way to wait on the completion of async
+        // operations
+        waitForTouchableRegionChanged(originalRegion);
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
@@ -1009,4 +1048,3 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertTrue(mClicked);
     }
 }
-

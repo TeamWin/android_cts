@@ -258,30 +258,7 @@ bool AAudioExtensions::loadLibrary() {
         //LOGI("%s() could not find " FUNCTION_GET_MMAP_POLICY, __func__);
         return false;
     }
-
-    mAAudio_getAudioServerDeathCount = (int (*)())
-            dlsym(mLibHandle, FUNCTION_GET_AUDIO_SERVER_DEATH_COUNT);
-    if (mAAudio_getAudioServerDeathCount == nullptr) {
-        //LOGI("%s() could not find " FUNCTION_GET_AUDIO_SERVER_DEATH_COUNT, __func__);
-        return false;
-    }
     mFunctionsLoaded = true;
     return mFunctionsLoaded;
-}
-
-static int32_t sLastAudioServerCrashCount = -1;
-
-void AAudioCtsBase::SetUp() {
-    const int32_t previousCrashCount = sLastAudioServerCrashCount;
-    sLastAudioServerCrashCount = AAudioExtensions::getInstance().getAudioServerCrashCount();
-    if (previousCrashCount != -1) {
-        ASSERT_EQ(previousCrashCount, sLastAudioServerCrashCount);
-    }
-}
-
-void AAudioCtsBase::TearDown() {
-    const int32_t previousCrashCount = sLastAudioServerCrashCount;
-    sLastAudioServerCrashCount = AAudioExtensions::getInstance().getAudioServerCrashCount();
-    ASSERT_EQ(previousCrashCount, sLastAudioServerCrashCount);
 }
 

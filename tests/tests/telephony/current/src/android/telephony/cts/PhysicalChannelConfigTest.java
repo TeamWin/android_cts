@@ -18,6 +18,7 @@ package android.telephony.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import android.telephony.AccessNetworkConstants;
 import android.telephony.PhysicalChannelConfig;
@@ -26,7 +27,6 @@ import android.telephony.TelephonyManager;
 
 import org.junit.Before;
 import org.junit.Test;
-
 
 public class PhysicalChannelConfigTest {
 
@@ -66,20 +66,21 @@ public class PhysicalChannelConfigTest {
 
     @Test
     public void testInvalidPhysicalChannelConfig() {
-        mPhysicalChannelConfig = new PhysicalChannelConfig.Builder()
-                .setNetworkType(NETWORK_TYPE_LTE)
-                .setPhysicalCellId(PHYSICAL_INVALID_CELL_ID)
-                .setCellConnectionStatus(CONNECTION_STATUS)
-                .setCellBandwidthDownlinkKhz(CELL_BANDWIDTH)
-                .setCellBandwidthUplinkKhz(CELL_BANDWIDTH)
-                .setContextIds(CONTEXT_IDS)
-                .setFrequencyRange(FREQUENCY_RANGE)
-                .setDownlinkChannelNumber(CHANNEL_NUMBER)
-                .setUplinkChannelNumber(CHANNEL_NUMBER)
-                .setBand(BAND)
-                .build();
-        assertThat(PHYSICAL_INVALID_CELL_ID)
-                .isNotEqualTo(mPhysicalChannelConfig.getPhysicalCellId());
+        try {
+            mPhysicalChannelConfig = new PhysicalChannelConfig.Builder()
+                    .setNetworkType(NETWORK_TYPE_LTE)
+                    .setPhysicalCellId(PHYSICAL_INVALID_CELL_ID)
+                    .setCellConnectionStatus(CONNECTION_STATUS)
+                    .setCellBandwidthDownlinkKhz(CELL_BANDWIDTH)
+                    .setCellBandwidthUplinkKhz(CELL_BANDWIDTH)
+                    .setContextIds(CONTEXT_IDS)
+                    .setFrequencyRange(FREQUENCY_RANGE)
+                    .setDownlinkChannelNumber(CHANNEL_NUMBER)
+                    .setUplinkChannelNumber(CHANNEL_NUMBER)
+                    .setBand(BAND)
+                    .build();
+            fail("Physical cell Id: 1008 is over limit");
+        } catch (IllegalArgumentException expected) { }
     }
 
     @Test

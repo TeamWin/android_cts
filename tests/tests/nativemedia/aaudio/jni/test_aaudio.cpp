@@ -45,8 +45,7 @@ static std::string getTestName(const ::testing::TestParamInfo<StreamTestParams>&
 }
 
 template<typename T>
-class AAudioStreamTest : public AAudioCtsBase,
-                         public ::testing::WithParamInterface<StreamTestParams> {
+class AAudioStreamTest : public ::testing::TestWithParam<StreamTestParams> {
   protected:
     AAudioStreamBuilder* builder() const { return mHelper->builder(); }
     AAudioStream* stream() const { return mHelper->stream(); }
@@ -207,8 +206,6 @@ protected:
 };
 
 void AAudioInputStreamTest::SetUp() {
-    AAudioCtsBase::SetUp();
-
     mSetupSuccessful = false;
     if (!deviceSupportsFeature(FEATURE_RECORDING)) return;
     mHelper.reset(new InputStreamBuilderHelper(
@@ -356,8 +353,6 @@ class AAudioOutputStreamTest : public AAudioStreamTest<OutputStreamBuilderHelper
 };
 
 void AAudioOutputStreamTest::SetUp() {
-    AAudioCtsBase::SetUp();
-
     mSetupSuccessful = false;
     if (!deviceSupportsFeature(FEATURE_PLAYBACK)) return;
     mHelper.reset(new OutputStreamBuilderHelper(

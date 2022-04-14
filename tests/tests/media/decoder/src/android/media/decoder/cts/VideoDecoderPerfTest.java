@@ -105,13 +105,12 @@ public class VideoDecoderPerfTest extends MediaTestBase {
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
             String mediaType = (String)arg[0];
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mediaType)) {
                 continue;
             }
             String[] decoders = MediaUtils.getDecoderNamesForMime(mediaType);
             for (String decoder : decoders) {
-                if (TestArgs.CODEC_PREFIX != null && !decoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                if (TestArgs.shouldSkipCodec(decoder)) {
                     continue;
                 }
                 Object[] testArgs = new Object[argLength + 1];

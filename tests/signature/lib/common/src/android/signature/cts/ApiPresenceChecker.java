@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  */
 public class ApiPresenceChecker {
 
-    final ResultObserver resultObserver;
+    protected final ResultObserver resultObserver;
 
     final ClassProvider classProvider;
 

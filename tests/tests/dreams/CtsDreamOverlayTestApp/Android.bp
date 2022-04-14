@@ -18,8 +18,7 @@ package {
 
 android_test_helper_app {
     name: "CtsDreamOverlayTestApp",
-    defaults: ["mts-target-sdk-version-current"],
-    min_sdk_version: "current",
+    defaults: ["cts_support_defaults"],
     srcs: [
         "src/**/*.java",
     ],

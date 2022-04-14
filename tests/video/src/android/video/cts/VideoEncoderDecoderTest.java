@@ -675,8 +675,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
 
     private void doTest(String mimeType, int w, int h, boolean isPerf, boolean isGoog, int ix)
             throws Exception {
-        if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                !mimeType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+        if (TestArgs.shouldSkipMediaType(mimeType)) {
             return;
         }
         MediaFormat format = MediaFormat.createVideoFormat(mimeType, w, h);
@@ -695,7 +694,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
         }
 
         String encoderName = encoderNames[ix];
-        if (TestArgs.CODEC_PREFIX != null && !encoderName.startsWith(TestArgs.CODEC_PREFIX)) {
+        if (TestArgs.shouldSkipCodec(encoderName)) {
             return;
         }
         CodecInfo infoEnc = CodecInfo.getSupportedFormatInfo(encoderName, mimeType, w, h, MAX_FPS);
@@ -774,8 +773,7 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
 
             if (decoderNames != null && decoderNames.length > 0) {
                 for (String decoderName : decoderNames) {
-                    if (TestArgs.CODEC_PREFIX != null &&
-                            !decoderName.startsWith(TestArgs.CODEC_PREFIX)) {
+                    if (TestArgs.shouldSkipCodec(decoderName)) {
                         continue;
                     }
                     CodecInfo infoDec =

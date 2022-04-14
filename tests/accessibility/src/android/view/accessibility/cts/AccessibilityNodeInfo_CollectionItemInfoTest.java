@@ -57,10 +57,6 @@ public class AccessibilityNodeInfo_CollectionItemInfoTest {
         c = CollectionItemInfo.obtain(4, 5, 6, 7, true, true);
         assertNotNull(c);
         verifyCollectionItemInfo(c, null, 4, 5, null, 6, 7, true, true);
-
-        c = CollectionItemInfo.obtain("RowTitle", 8, 9, "ColumnTitle", 10, 11, true, true);
-        assertNotNull(c);
-        verifyCollectionItemInfo(c, "RowTitle", 8, 9, "ColumnTitle", 10, 11, true, true);
     }
 
     @SmallTest

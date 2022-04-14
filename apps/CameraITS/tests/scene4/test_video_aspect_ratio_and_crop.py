@@ -131,24 +131,22 @@ class VideoAspectRatioAndCropTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       fls_physical = props['android.lens.info.availableFocalLengths']
       logging.debug('physical available focal lengths: %s', str(fls_physical))
+
       # Check SKIP conditions.
       first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
       camera_properties_utils.skip_unless(
           first_api_level >= _ANDROID13_API_LEVEL)
+
+      # Load scene.
       its_session_utils.load_scene(cam, props, self.scene,
                                    self.tablet, chart_distance=0)
+
+      # Determine camera capabilities.
       supported_video_qualities = cam.get_supported_video_qualities(
           self.camera_id)
       logging.debug('Supported video qualities: %s', supported_video_qualities)
-
-      # Determine camera capabilities.
       full_or_better = camera_properties_utils.full_or_better(props)
       raw_avlb = camera_properties_utils.raw16(props)
-      fls_logical = props['android.lens.info.availableFocalLengths']
-      logging.debug('logical available focal lengths: %s', str(fls_logical))
-      fls_physical = props['android.lens.info.availableFocalLengths']
-      logging.debug('physical available focal lengths: %s',
-                    str(fls_physical))
 
       req = capture_request_utils.auto_capture_request()
       ref_img_name_stem = f'{os.path.join(self.log_path, _NAME)}'

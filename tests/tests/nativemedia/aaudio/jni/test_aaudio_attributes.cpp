@@ -315,10 +315,7 @@ static void checkAttributesPrivacySensitive(aaudio_performance_mode_t perfMode) 
     }
 }
 
-class AAudioTestAttributes : public AAudioCtsBase {
-};
-
-TEST_F(AAudioTestAttributes, package_name) {
+TEST(test_attributes, package_name) {
     for (const char *packageName : sPackageNames) {
         checkAttributes(AAUDIO_PERFORMANCE_MODE_NONE,
                         DONT_SET,
@@ -333,7 +330,7 @@ TEST_F(AAudioTestAttributes, package_name) {
     }
 }
 
-TEST_F(AAudioTestAttributes, low_latency_package_name) {
+TEST(test_attributes_low_latency, package_name) {
     for (const char *packageName : sPackageNames) {
         checkAttributes(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
                         DONT_SET,
@@ -348,7 +345,7 @@ TEST_F(AAudioTestAttributes, low_latency_package_name) {
     }
 }
 
-TEST_F(AAudioTestAttributes, attribution_tag) {
+TEST(test_attributes, attribution_tag) {
     for (const char *attributionTag : sAttributionTags) {
         checkAttributes(AAUDIO_PERFORMANCE_MODE_NONE,
                         DONT_SET,
@@ -364,47 +361,47 @@ TEST_F(AAudioTestAttributes, attribution_tag) {
     }
 }
 
-TEST_F(AAudioTestAttributes, aaudio_usage_perfnone) {
+TEST(test_attributes, aaudio_usage_perfnone) {
     checkAttributesUsage(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_content_type_perfnone) {
+TEST(test_attributes, aaudio_content_type_perfnone) {
     checkAttributesContentType(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_spatialization_behavior_perfnone) {
+TEST(test_attributes, aaudio_spatialization_behavior_perfnone) {
     checkAttributesSpatializationBehavior(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_is_content_spatialized_perfnone) {
+TEST(test_attributes, aaudio_is_content_spatialized_perfnone) {
     checkAttributesIsContentSpatialized(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_input_preset_perfnone) {
+TEST(test_attributes, aaudio_input_preset_perfnone) {
     checkAttributesInputPreset(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_allowed_capture_policy_perfnone) {
+TEST(test_attributes, aaudio_allowed_capture_policy_perfnone) {
     checkAttributesAllowedCapturePolicy(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_usage_lowlat) {
+TEST(test_attributes, aaudio_usage_lowlat) {
     checkAttributesUsage(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_content_type_lowlat) {
+TEST(test_attributes, aaudio_content_type_lowlat) {
     checkAttributesContentType(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_input_preset_lowlat) {
+TEST(test_attributes, aaudio_input_preset_lowlat) {
     checkAttributesInputPreset(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_allowed_capture_policy_lowlat) {
+TEST(test_attributes, aaudio_allowed_capture_policy_lowlat) {
     checkAttributesAllowedCapturePolicy(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 }
 
-TEST_F(AAudioTestAttributes, aaudio_system_usages_rejected) {
+TEST(test_attributes, aaudio_system_usages_rejected) {
     for (aaudio_usage_t systemUsage : sSystemUsages) {
         AAudioStreamBuilder *aaudioBuilder = nullptr;
         AAudioStream *aaudioStream = nullptr;
@@ -426,6 +423,6 @@ TEST_F(AAudioTestAttributes, aaudio_system_usages_rejected) {
     }
 }
 
-TEST_F(AAudioTestAttributes, aaudio_allowed_privacy_sensitive_lowlat) {
+TEST(test_attributes, aaudio_allowed_privacy_sensitive_lowlat) {
     checkAttributesPrivacySensitive(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 }

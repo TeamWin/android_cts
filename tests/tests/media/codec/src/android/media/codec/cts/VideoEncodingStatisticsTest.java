@@ -84,13 +84,12 @@ public class VideoEncodingStatisticsTest extends VideoCodecTestBase {
         int argLength = exhaustiveArgsList.get(0).length;
         for (Object[] arg : exhaustiveArgsList) {
             String mediaType = (String)arg[0];
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mediaType)) {
                 continue;
             }
             String[] encodersForMime = MediaUtils.getEncoderNamesForMime(mediaType);
             for (String encoder : encodersForMime) {
-                if (TestArgs.CODEC_PREFIX != null && !encoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                if (TestArgs.shouldSkipCodec(encoder)) {
                     continue;
                 }
                 Object[] testArgs = new Object[argLength + 1];

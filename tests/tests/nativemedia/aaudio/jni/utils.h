@@ -18,7 +18,6 @@
 
 #include <dlfcn.h>
 #include <map>
-#include <gtest/gtest.h>
 #include <sys/system_properties.h>
 
 #include <aaudio/AAudio.h>
@@ -126,7 +125,6 @@ class OutputStreamBuilderHelper : public StreamBuilderHelper {
 #define FUNCTION_IS_MMAP         "AAudioStream_isMMapUsed"
 #define FUNCTION_SET_MMAP_POLICY "AAudio_setMMapPolicy"
 #define FUNCTION_GET_MMAP_POLICY "AAudio_getMMapPolicy"
-#define FUNCTION_GET_AUDIO_SERVER_DEATH_COUNT "AAudio_getAudioServerDeathCount"
 
 enum {
     AAUDIO_POLICY_UNSPECIFIED = 0,
@@ -188,11 +186,6 @@ public:
         return mMMapExclusiveSupported;
     }
 
-    int getAudioServerCrashCount() {
-        if (!mFunctionsLoaded) return -1;
-        return mAAudio_getAudioServerDeathCount();
-    }
-
 private:
 
     static int getIntegerProperty(const char *name, int defaultValue);
@@ -209,16 +202,9 @@ private:
     bool    (*mAAudioStream_isMMap)(AAudioStream *stream) = nullptr;
     int32_t (*mAAudio_setMMapPolicy)(aaudio_policy_t policy) = nullptr;
     aaudio_policy_t (*mAAudio_getMMapPolicy)() = nullptr;
-    int (*mAAudio_getAudioServerDeathCount)() = nullptr;
 
     const bool   mMMapSupported;
     const bool   mMMapExclusiveSupported;
-};
-
-class AAudioCtsBase : public ::testing::Test {
-protected:
-    void SetUp() override;
-    void TearDown() override;
 };
 
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H

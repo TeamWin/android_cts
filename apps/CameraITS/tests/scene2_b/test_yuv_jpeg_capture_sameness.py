@@ -23,12 +23,12 @@ import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
 import its_session_utils
-import target_exposure_utils
 
 _MAX_IMG_SIZE = (1920, 1440)
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _THRESHOLD_MAX_RMS_DIFF = 0.01
 _USE_CASE_STILL_CAPTURE = 2
+
 
 class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
   """Test capturing a single frame as both YUV and JPEG outputs."""
@@ -60,8 +60,10 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
       else:
         w, h = capture_request_utils.get_available_output_sizes(
             'yuv', props, max_size=_MAX_IMG_SIZE)[0]
-      fmt_yuv = {'format': 'yuv', 'width': w, 'height': h, 'useCase': _USE_CASE_STILL_CAPTURE}
-      fmt_jpg = {'format': 'jpeg', 'width': w, 'height': h, 'useCase': _USE_CASE_STILL_CAPTURE}
+      fmt_yuv = {'format': 'yuv', 'width': w, 'height': h,
+                 'useCase': _USE_CASE_STILL_CAPTURE}
+      fmt_jpg = {'format': 'jpeg', 'width': w, 'height': h,
+                 'useCase': _USE_CASE_STILL_CAPTURE}
       logging.debug('YUV & JPEG stream width: %d, height: %d', w, h)
 
       cam.do_3a()
@@ -69,12 +71,13 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
       req['android.jpeg.quality'] = 100
 
       cap_yuv, cap_jpg = cam.do_capture(req, [fmt_yuv, fmt_jpg])
-      rgb_yuv = image_processing_utils.convert_capture_to_rgb_image(cap_yuv, True)
-      image_processing_utils.write_image(rgb_yuv,
-          '%s_%s.jpg' % (os.path.join(log_path, _NAME), 'yuv'))
-      rgb_jpg = image_processing_utils.convert_capture_to_rgb_image(cap_jpg, True)
-      image_processing_utils.write_image(rgb_jpg,
-          '%s_%s.jpg' % (os.path.join(log_path, _NAME), 'jpg'))
+      rgb_yuv = image_processing_utils.convert_capture_to_rgb_image(
+          cap_yuv, True)
+      file_stem = os.path.join(log_path, _NAME)
+      image_processing_utils.write_image(rgb_yuv, f'{file_stem}_yuv.jpg')
+      rgb_jpg = image_processing_utils.convert_capture_to_rgb_image(
+          cap_jpg, True)
+      image_processing_utils.write_image(rgb_jpg, f'{file_stem}_jpg.jpg')
 
       rms_diff = image_processing_utils.compute_image_rms_difference_3d(
           rgb_yuv, rgb_jpg)

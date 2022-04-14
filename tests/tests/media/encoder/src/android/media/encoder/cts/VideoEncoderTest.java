@@ -1277,13 +1277,12 @@ public class VideoEncoderTest extends MediaTestBase {
         };
         final List<Object[]> argsList = new ArrayList<>();
         for (String mediaType : mediaTypesList) {
-            if (TestArgs.MEDIA_TYPE_PREFIX != null &&
-                    !mediaType.startsWith(TestArgs.MEDIA_TYPE_PREFIX)) {
+            if (TestArgs.shouldSkipMediaType(mediaType)) {
                 continue;
             }
             String[] encoders = MediaUtils.getEncoderNamesForMime(mediaType);
             for (String encoder : encoders) {
-                if (TestArgs.CODEC_PREFIX != null && !encoder.startsWith(TestArgs.CODEC_PREFIX)) {
+                if (TestArgs.shouldSkipCodec(encoder)) {
                     continue;
                 }
                 CodecCapabilities caps = getCodecCapabities(encoder, mediaType, true);

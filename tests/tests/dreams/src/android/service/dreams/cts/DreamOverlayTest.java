@@ -16,24 +16,23 @@
 
 package android.service.dreams.cts;
 
-import android.Manifest;
 import android.app.DreamManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.ServiceManager;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.DreamCoordinator;
+import android.view.Display;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class DreamOverlayTest  {
+public class DreamOverlayTest extends ActivityManagerTestBase {
     private static final String DREAM_OVERLAY_SERVICE_COMPONENT =
             "android.app.dream.cts.app/.DreamOverlayService";
     private static final String DREAM_SERVICE_COMPONENT =
@@ -56,6 +55,9 @@ public class DreamOverlayTest  {
             DREAM_SERVICE_COMPONENT);
 
     private DreamManager mDreamManager;
+
+    private DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
+
     /**
      * A simple {@link BroadcastReceiver} implementation that counts down a
      * {@link CountDownLatch} when a matching message is received
@@ -73,41 +75,36 @@ public class DreamOverlayTest  {
         }
     }
 
-    @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            Manifest.permission.INTERACT_ACROSS_USERS,  Manifest.permission.WRITE_DREAM_STATE);
-
     @Before
-    public void setup() throws ServiceManager.ServiceNotFoundException {
-        mDreamManager = new DreamManager(InstrumentationRegistry.getTargetContext());
-
-        mDreamManager.setActiveDream(DREAM_COMPONENT_NAME);
-
-        // Register the overlay service.
-        mDreamManager.setDreamOverlay(ComponentName.unflattenFromString(
-                DREAM_OVERLAY_SERVICE_COMPONENT));
+    public void setup() {
+        mDreamCoordinator.setup();
     }
 
     @After
-    public void teardown() {
-        mDreamManager.setActiveDream(null);
-
-        // Unregister overlay service.
-        mDreamManager.setDreamOverlay(null);
+    public void reset()  {
+        mDreamCoordinator.restoreDefaults();
     }
 
     @Test
-    public void testDreamOverlayAppearance() throws Exception {
+    public void testDreamOverlayAppearance() throws InterruptedException {
         // Listen for the overlay to be shown
         final CountDownLatch countDownLatch = new CountDownLatch(1);
-        InstrumentationRegistry.getTargetContext().registerReceiver(
+        mContext.registerReceiver(
                 new OverlayVisibilityReceiver(countDownLatch),
                 new IntentFilter(ACTION_DREAM_OVERLAY_SHOWN));
 
-        mDreamManager.startDream(DREAM_COMPONENT_NAME);
+        final ComponentName dreamService =
+                ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);
+        final ComponentName dreamActivity = mDreamCoordinator.setActiveDream(dreamService);
+        mDreamCoordinator.setDreamOverlay(ComponentName.unflattenFromString(
+                DREAM_OVERLAY_SERVICE_COMPONENT));
 
+        mDreamCoordinator.startDream(dreamService);
+        waitAndAssertTopResumedActivity(dreamActivity, Display.DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
         // Wait on count down latch.
-        assert (countDownLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+        assertThat(countDownLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue();
+        mDreamCoordinator.stopDream();
+
     }
 }

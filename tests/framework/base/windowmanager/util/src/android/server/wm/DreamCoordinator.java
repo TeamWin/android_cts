@@ -89,6 +89,10 @@ public class DreamCoordinator {
         return getDreamActivityName(dream);
     }
 
+    public void setDreamOverlay(ComponentName overlay) {
+        SystemUtil.runWithShellPermissionIdentity(() -> mDreamManager.setDreamOverlay(overlay));
+    }
+
     public boolean isDreaming() {
         return SystemUtil.runWithShellPermissionIdentity(() -> mDreamManager.isDreaming());
     }

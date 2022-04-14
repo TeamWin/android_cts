@@ -63,13 +63,11 @@ static void checkSessionIdNone(aaudio_performance_mode_t perfMode) {
     AAudioStreamBuilder_delete(aaudioBuilder);
 }
 
-class AAudioTestSessionId : public AAudioCtsBase {};
-
-TEST_F(AAudioTestSessionId, aaudio_session_id_none_perfnone) {
+TEST(test_session_id, aaudio_session_id_none_perfnone) {
     checkSessionIdNone(AAUDIO_PERFORMANCE_MODE_NONE);
 }
 
-TEST_F(AAudioTestSessionId, aaudio_session_id_none_lowlat) {
+TEST(test_session_id, aaudio_session_id_none_lowlat) {
     checkSessionIdNone(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
 }
 
@@ -160,16 +158,16 @@ static void checkSessionIdAllocate(aaudio_performance_mode_t perfMode,
     AAudioStreamBuilder_delete(aaudioBuilder);
 }
 
-TEST_F(AAudioTestSessionId, aaudio_session_id_alloc_perfnone_in) {
+TEST(test_session_id, aaudio_session_id_alloc_perfnone_in) {
     checkSessionIdAllocate(AAUDIO_PERFORMANCE_MODE_NONE, AAUDIO_DIRECTION_INPUT);
 }
-TEST_F(AAudioTestSessionId, aaudio_session_id_alloc_perfnone_out) {
+TEST(test_session_id, aaudio_session_id_alloc_perfnone_out) {
     checkSessionIdAllocate(AAUDIO_PERFORMANCE_MODE_NONE, AAUDIO_DIRECTION_OUTPUT);
 }
 
-TEST_F(AAudioTestSessionId, aaudio_session_id_alloc_lowlat_in) {
+TEST(test_session_id, aaudio_session_id_alloc_lowlat_in) {
     checkSessionIdAllocate(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, AAUDIO_DIRECTION_INPUT);
 }
-TEST_F(AAudioTestSessionId, aaudio_session_id_alloc_lowlat_out) {
+TEST(test_session_id, aaudio_session_id_alloc_lowlat_out) {
     checkSessionIdAllocate(AAUDIO_PERFORMANCE_MODE_LOW_LATENCY, AAUDIO_DIRECTION_OUTPUT);
 }

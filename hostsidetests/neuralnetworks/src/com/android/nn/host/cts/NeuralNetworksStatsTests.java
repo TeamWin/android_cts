@@ -38,8 +38,9 @@ import java.util.List;
 public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildReceiver {
     private static final String APP_APK_NAME = "CtsNnapiStatsdAtomApp.apk";
     private static final String APP_PKG_NAME = "com.android.nn.stats.app";
-    private static final String PROPERTY_NNAPI_TELEMETRY_ENABLE =
-            "persist.device_config.nnapi_native.telemetry_enable";
+    private static final String APP_CLASS_NAME = "NnapiDeviceActivity";
+    private static final String NNAPI_TELEMETRY_FEATURE_NAMESPACE = "nnapi_native";
+    private static final String NNAPI_TELEMETRY_FEATURE_KEY = "telemetry_enable";
 
     private IBuildInfo mCtsBuild;
 
@@ -67,7 +68,8 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
     }
 
     private boolean isNnapiLoggingEnabled() throws Exception {
-        String prop = DeviceUtils.getProperty(getDevice(), PROPERTY_NNAPI_TELEMETRY_ENABLE);
+        String prop = DeviceUtils.getDeviceConfigFeature(getDevice(),
+                NNAPI_TELEMETRY_FEATURE_NAMESPACE, NNAPI_TELEMETRY_FEATURE_KEY);
         if (prop == null) return false;
 
         // Possible "true" values from android-base/parsebool.h.
@@ -82,8 +84,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), APP_PKG_NAME,
                 atomTag,  /*uidInAttributionChain=*/false);
 
-        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME,
-                "NnapiDeviceActivity", "action", "action.trigger_libneuralnetworks_atoms",
+        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME, APP_CLASS_NAME, null, null,
                 /* waitTimeMs= */ 5000L);
 
         // Sorted list of events in order in which they occurred.
@@ -131,8 +132,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), APP_PKG_NAME,
                 atomTag,  /*uidInAttributionChain=*/false);
 
-        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME,
-                "NnapiDeviceActivity", "action", "action.trigger_libneuralnetworks_atoms",
+        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME, APP_CLASS_NAME, null, null,
                 /* waitTimeMs= */ 5000L);
 
         // Sorted list of events in order in which they occurred.
@@ -175,8 +175,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), APP_PKG_NAME,
                 atomTag,  /*uidInAttributionChain=*/false);
 
-        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME,
-                "NnapiDeviceActivity", "action", "action.trigger_libneuralnetworks_atoms",
+        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME, APP_CLASS_NAME, null, null,
                 /* waitTimeMs= */ 5000L);
 
         // Sorted list of events in order in which they occurred.
@@ -234,8 +233,7 @@ public class NeuralNetworksStatsTests extends DeviceTestCase implements IBuildRe
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), APP_PKG_NAME,
                 atomTag,  /*uidInAttributionChain=*/false);
 
-        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME,
-                "NnapiDeviceActivity", "action", "action.trigger_libneuralnetworks_atoms",
+        DeviceUtils.runActivity(getDevice(), APP_PKG_NAME, APP_CLASS_NAME, null, null,
                 /* waitTimeMs= */ 5000L);
 
         // Sorted list of events in order in which they occurred.
