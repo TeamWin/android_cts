@@ -616,6 +616,7 @@ public class TvInputServiceTest {
         final long now = SystemClock.uptimeMillis();
         final MotionEvent event = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, 1.0f, 1.0f,
                 1.0f, 1.0f, 0, 1.0f, 1.0f, 0, 0);
+        event.setSource(InputDevice.SOURCE_UNKNOWN);
         onTvView(tvView -> tvView.dispatchGenericMotionEvent(event));
         mInstrumentation.waitForIdleSync();
         PollingCheck.waitFor(TIME_OUT, () -> session.mGenricMotionEventCount > 0);
