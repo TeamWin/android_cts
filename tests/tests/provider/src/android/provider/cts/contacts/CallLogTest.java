@@ -41,6 +41,7 @@ import com.android.compatibility.common.util.ShellUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -50,6 +51,60 @@ public class CallLogTest extends InstrumentationTestCase {
 
     private static final String TEST_NUMBER = "5625698388";
     private static final long CONTENT_RESOLVER_TIMEOUT_MS = 5000;
+    private static final Uri INVALID_CALL_LOG_URI = Uri.parse(
+            "content://call_log/call_composer/%2fdata%2fdata%2fcom.android.providers"
+                    + ".contacts%2fshared_prefs%2fContactsUpgradeReceiver.xml");
+
+    private static final String TEST_FAIL_DID_NOT_TRHOW_SE =
+            "fail test because Security Exception was not throw";
+
+    /**
+     * Tests scenario where an app gives {@link ContentResolver} a file to open that is not in the
+     * Call Log directory.
+     */
+    public void testOpenFileOutsideOfScopeThrowsException() throws FileNotFoundException {
+        try {
+            Context context = getInstrumentation().getContext();
+            ContentResolver resolver = context.getContentResolver();
+            resolver.openFile(INVALID_CALL_LOG_URI, "w", null);
+            // previous line should throw exception
+            fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+        } catch (SecurityException e) {
+            assertNotNull(e.toString());
+        }
+    }
+
+    /**
+     * Tests scenario where an app gives {@link ContentResolver} a file to delete that is not in the
+     * Call Log directory.
+     */
+    public void testDeleteFileOutsideOfScopeThrowsException() {
+        try {
+            Context context = getInstrumentation().getContext();
+            ContentResolver resolver = context.getContentResolver();
+            resolver.delete(INVALID_CALL_LOG_URI, "w", null);
+            // previous line should throw exception
+            fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+        } catch (SecurityException e) {
+            assertNotNull(e.toString());
+        }
+    }
+
+    /**
+     * Tests scenario where an app gives {@link ContentResolver} a file to insert outside the
+     * Call Log directory.
+     */
+    public void testInsertFileOutsideOfScopeThrowsException() {
+        try {
+            Context context = getInstrumentation().getContext();
+            ContentResolver resolver = context.getContentResolver();
+            resolver.insert(INVALID_CALL_LOG_URI, new ContentValues());
+            // previous line should throw exception
+            fail(TEST_FAIL_DID_NOT_TRHOW_SE);
+        } catch (SecurityException e) {
+            assertNotNull(e.toString());
+        }
+    }
 
     public void testGetLastOutgoingCall() {
         // Clear call log and ensure there are no outgoing calls
