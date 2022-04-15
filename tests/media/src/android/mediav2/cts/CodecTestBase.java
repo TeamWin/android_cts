@@ -768,9 +768,11 @@ abstract class CodecTestBase {
                     break;
                 case CODEC_OPTIONAL:
                 default:
-                    Assume.assumeTrue("format(s) not supported by codec: " + codecName +
-                            " for mime : " + mime, false);
+                    // the later assumeTrue() ensures we skip the test for unsupported codecs
+                    break;
             }
+            Assume.assumeTrue("format(s) not supported by codec: " + codecName + " for mime : " +
+                    mime, false);
         }
     }
 
