@@ -2472,7 +2472,7 @@ public class MediaCodecTest extends AndroidTestCase {
                         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
                         format.setInteger(
                                 MediaFormat.KEY_COLOR_FORMAT,
-                                CodecCapabilities.COLOR_FormatYUV420Flexible);
+                                CodecCapabilities.COLOR_FormatSurface);
                     }
                 } else {
                     Log.i(TAG, info.getName() + " is in neither audio nor video domain; skipped");
@@ -2482,6 +2482,10 @@ public class MediaCodecTest extends AndroidTestCase {
                 codec.configure(
                         format, null, null,
                         info.isEncoder() ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+                Surface inputSurface = null;
+                if (videoCaps != null && info.isEncoder()) {
+                    inputSurface = codec.createInputSurface();
+                }
                 codec.start();
                 codec.unsubscribeFromVendorParameters(vendorParams);
                 codec.stop();
