@@ -83,7 +83,9 @@ public class NoAttestKeyTest {
                             .setAttestationChallenge("challenge".getBytes())
                             .setAttestKeyAlias(attestKeyAlias)
                             .build());
-            fail("Expected exception.");
+            fail("Expected that use of PURPOSE_ATTEST_KEY should fail, as the "
+                    + PackageManager.FEATURE_KEYSTORE_APP_ATTEST_KEY
+                    + " feature is not advertized by the device");
         } catch (InvalidAlgorithmParameterException e) {
             // ATTEST_KEY generation/use has failed as expected
         }
