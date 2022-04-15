@@ -94,6 +94,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         // External approver
         public boolean isAttached;
         public boolean isDetached;
+        public int detachReason;
+        public MacAddress targetPeer;
 
         public void reset() {
             valid = false;
@@ -106,6 +108,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
             isAttached = false;
             isDetached = false;
+            targetPeer = null;
         }
     }
 
@@ -1014,7 +1017,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     @Override
                     public void onAttached(MacAddress deviceAddress) {
                         synchronized (mMyResponse) {
-                            assertEquals(peer, deviceAddress);
+                            mMyResponse.targetPeer = deviceAddress;
                             mMyResponse.valid = true;
                             mMyResponse.isAttached = true;
                             mMyResponse.notify();
@@ -1023,10 +1026,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     @Override
                     public void onDetached(MacAddress deviceAddress, int reason) {
                         synchronized (mMyResponse) {
-                            assertEquals(peer, deviceAddress);
-                            assertEquals(
-                                    ExternalApproverRequestListener.APPROVER_DETACH_REASON_REMOVE,
-                                    reason);
+                            mMyResponse.targetPeer = deviceAddress;
+                            mMyResponse.detachReason = reason;
                             mMyResponse.valid = true;
                             mMyResponse.isDetached = true;
                             mMyResponse.notify();
@@ -1050,6 +1051,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             assertTrue(waitForServiceResponse(mMyResponse));
             assertTrue(mMyResponse.isAttached);
             assertFalse(mMyResponse.isDetached);
+            assertEquals(peer, mMyResponse.targetPeer);
 
             // Just ignore the result as there is no real incoming request.
             mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
@@ -1062,6 +1064,9 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             assertTrue(waitForServiceResponse(mMyResponse));
             assertTrue(mMyResponse.isDetached);
             assertFalse(mMyResponse.isAttached);
+            assertEquals(peer, mMyResponse.targetPeer);
+            assertEquals(ExternalApproverRequestListener.APPROVER_DETACH_REASON_REMOVE,
+                    mMyResponse.detachReason);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
