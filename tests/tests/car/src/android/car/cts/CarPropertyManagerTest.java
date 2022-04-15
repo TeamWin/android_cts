@@ -874,6 +874,23 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         }).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEvChargeStateIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_STATE,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Integer.class).setCarPropertyValueVerifier(
+                (carPropertyConfig, carPropertyValue) -> {
+                    Integer evChargeState = (Integer) carPropertyValue.getValue();
+                    assertWithMessage("EV_CHARGE_STATE must be a defined charge state: "
+                            + evChargeState).that(evChargeState).isIn(
+                            ImmutableSet.of(/*EvChargeState.UNKNOWN=*/0,
+                                    /*EvChargeState.CHARGING=*/1, /*EvChargeState.FULLY_CHARGED=*/2,
+                                    /*EvChargeState.NOT_CHARGING=*/3, /*EvChargeState.ERROR=*/4));
+                }).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {
