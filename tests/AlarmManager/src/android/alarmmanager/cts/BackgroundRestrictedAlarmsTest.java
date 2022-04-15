@@ -16,12 +16,18 @@
 
 package android.alarmmanager.cts;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_RUN_ANY_IN_BACKGROUND;
+import static android.app.AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
 import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
+import android.alarmmanager.util.Utils;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -39,6 +45,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -60,9 +67,6 @@ public class BackgroundRestrictedAlarmsTest {
     private static final String TAG = BackgroundRestrictedAlarmsTest.class.getSimpleName();
     private static final String TEST_APP_PACKAGE = "android.alarmmanager.alarmtestapp.cts";
     private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestAlarmScheduler";
-    private static final String APP_OP_RUN_ANY_IN_BACKGROUND = "RUN_ANY_IN_BACKGROUND";
-    private static final String APP_OP_MODE_ALLOWED = "allow";
-    private static final String APP_OP_MODE_IGNORED = "ignore";
 
     private static final long DEFAULT_WAIT = 1_000;
     private static final long POLL_INTERVAL = 200;
@@ -99,7 +103,7 @@ public class BackgroundRestrictedAlarmsTest {
         mDeviceConfigStateHelper.set("bg_auto_restricted_bucket_on_bg_restricted", "false");
         SystemUtil.runWithShellPermissionIdentity(() ->
                 DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_UNTIL_REBOOT));
-        setAppOpsMode(APP_OP_MODE_IGNORED);
+        AppOpsUtils.setOpMode(TEST_APP_PACKAGE, OPSTR_RUN_ANY_IN_BACKGROUND, MODE_IGNORED);
         makeUidIdle();
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
@@ -142,7 +146,7 @@ public class BackgroundRestrictedAlarmsTest {
         Thread.sleep(2 * interval);
         assertFalse("Alarm got triggered even under restrictions", waitForAlarms(1, DEFAULT_WAIT));
         Thread.sleep(interval);
-        setAppOpsMode(APP_OP_MODE_ALLOWED);
+        AppOpsUtils.setOpMode(TEST_APP_PACKAGE, OPSTR_RUN_ANY_IN_BACKGROUND, MODE_ALLOWED);
         // The alarm is due to go off about 3 times by now. Adding some tolerance just in case
         // an expiration is due right about now.
         final int minCount = getMinExpectedExpirations(SystemClock.elapsedRealtime(),
@@ -175,6 +179,10 @@ public class BackgroundRestrictedAlarmsTest {
         final long nowRTC = System.currentTimeMillis();
         final long waitInterval = 3_000;
         final long triggerRTC = nowRTC + waitInterval;
+
+        AppOpsUtils.setUidMode(Utils.getPackageUid(TEST_APP_PACKAGE), OPSTR_SCHEDULE_EXACT_ALARM,
+                MODE_ALLOWED);
+
         scheduleAlarmClock(triggerRTC);
         Thread.sleep(waitInterval);
         assertTrue("AlarmClock did not go off as scheduled when under restrictions",
@@ -186,7 +194,7 @@ public class BackgroundRestrictedAlarmsTest {
         SystemUtil.runWithShellPermissionIdentity(() ->
                 DeviceConfig.setSyncDisabledMode(Settings.Config.SYNC_DISABLED_MODE_NONE));
         deleteAlarmManagerConstants();
-        setAppOpsMode(APP_OP_MODE_ALLOWED);
+        AppOpsUtils.reset(TEST_APP_PACKAGE);
         mDeviceConfigStateHelper.restoreOriginalValues();
         // Cancel any leftover alarms
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
@@ -212,16 +220,6 @@ public class BackgroundRestrictedAlarmsTest {
 
     private void setAppStandbyBucket(String bucket) throws IOException {
         mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " " + bucket);
-    }
-
-    private void setAppOpsMode(String mode) throws IOException {
-        StringBuilder commandBuilder = new StringBuilder("appops set ")
-                .append(TEST_APP_PACKAGE)
-                .append(" ")
-                .append(APP_OP_RUN_ANY_IN_BACKGROUND)
-                .append(" ")
-                .append(mode);
-        mUiDevice.executeShellCommand(commandBuilder.toString());
     }
 
     private void makeUidIdle() throws IOException {
