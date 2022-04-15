@@ -140,7 +140,7 @@ SUB_CAMERA_TESTS = {
     ],
 }
 
-_DST_SCENE_DIR = '/mnt/sdcard/Download/'
+_DST_SCENE_DIR = '/sdcard/Download/'
 MOBLY_TEST_SUMMARY_TXT_FILE = 'test_mobly_summary.txt'
 
 
