@@ -24,13 +24,10 @@ import android.service.dreams.DreamService;
 import android.view.ActionMode;
 import android.view.Display;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 public class DreamServiceTest extends ActivityManagerTestBase {
     private static final String DREAM_SERVICE_COMPONENT =
             "android.app.dream.cts.app/.SeparateProcessDreamService";

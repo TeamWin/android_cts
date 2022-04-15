@@ -23,5 +23,6 @@
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="android.time.cts.host.LocationTimeZoneManagerHostTest" />
         <option name="class" value="android.time.cts.host.LocationTimeZoneManagerStatsTest" />
+        <option name="class" value="android.time.cts.host.TimeZoneDetectorStatsTest" />
     </test>
 </configuration>

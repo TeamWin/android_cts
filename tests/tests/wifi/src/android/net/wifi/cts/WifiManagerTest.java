@@ -3472,7 +3472,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             disabledNetworkIds.remove(currentNetwork.getNetworkId());
 
             // PNO should reconnect us back to the network we disconnected from
-            waitForConnection();
+            waitForConnection(WIFI_PNO_CONNECT_TIMEOUT_MILLIS);
         } finally {
             // re-enable disabled networks
             for (int disabledNetworkId : disabledNetworkIds) {

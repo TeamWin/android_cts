@@ -814,6 +814,33 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 Boolean.class).build().verify(mCarPropertyManager);
     }
 
+    @Test
+    public void testEvChargeCurrentDrawLimitIfSupported() {
+        VehiclePropertyVerifier.newBuilder(VehiclePropertyIds.EV_CHARGE_CURRENT_DRAW_LIMIT,
+                CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ_WRITE,
+                VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                Float.class).setConfigArrayVerifier(configArray -> {
+            assertWithMessage("EV_CHARGE_CURRENT_DRAW_LIMIT config array must be size 1").that(
+                    configArray.size()).isEqualTo(1);
+
+            int maxCurrentDrawThresholdAmps = configArray.get(0);
+            assertWithMessage("EV_CHARGE_CURRENT_DRAW_LIMIT config array first element specifies "
+                    + "max current draw allowed by vehicle in amperes.").that(
+                    maxCurrentDrawThresholdAmps).isGreaterThan(0);
+        }).setCarPropertyValueVerifier((carPropertyConfig, carPropertyValue) -> {
+            List<Integer> evChargeCurrentDrawLimitConfigArray = carPropertyConfig.getConfigArray();
+            int maxCurrentDrawThresholdAmps = evChargeCurrentDrawLimitConfigArray.get(0);
+
+            Float evChargeCurrentDrawLimit = (Float) carPropertyValue.getValue();
+            assertWithMessage("EV_CHARGE_CURRENT_DRAW_LIMIT value must be greater than 0").that(
+                    evChargeCurrentDrawLimit).isGreaterThan(0);
+            assertWithMessage("EV_CHARGE_CURRENT_DRAW_LIMIT value must be less than or equal to max"
+                    + " current draw by the vehicle").that(evChargeCurrentDrawLimit).isAtMost(
+                    maxCurrentDrawThresholdAmps);
+        }).build().verify(mCarPropertyManager);
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testGetProperty() {

@@ -16,7 +16,6 @@
 
 package android.service.dreams.cts;
 
-import android.app.DreamManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -51,11 +50,6 @@ public class DreamOverlayTest extends ActivityManagerTestBase {
 
     private static final int TIMEOUT_SECONDS = 5;
 
-    private static final ComponentName DREAM_COMPONENT_NAME = ComponentName.unflattenFromString(
-            DREAM_SERVICE_COMPONENT);
-
-    private DreamManager mDreamManager;
-
     private DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
 
     /**
@@ -78,10 +72,13 @@ public class DreamOverlayTest extends ActivityManagerTestBase {
     @Before
     public void setup() {
         mDreamCoordinator.setup();
+        mDreamCoordinator.setDreamOverlay(ComponentName.unflattenFromString(
+                DREAM_OVERLAY_SERVICE_COMPONENT));
     }
 
     @After
     public void reset()  {
+        mDreamCoordinator.setDreamOverlay(null);
         mDreamCoordinator.restoreDefaults();
     }
 
@@ -96,8 +93,6 @@ public class DreamOverlayTest extends ActivityManagerTestBase {
         final ComponentName dreamService =
                 ComponentName.unflattenFromString(DREAM_SERVICE_COMPONENT);
         final ComponentName dreamActivity = mDreamCoordinator.setActiveDream(dreamService);
-        mDreamCoordinator.setDreamOverlay(ComponentName.unflattenFromString(
-                DREAM_OVERLAY_SERVICE_COMPONENT));
 
         mDreamCoordinator.startDream(dreamService);
         waitAndAssertTopResumedActivity(dreamActivity, Display.DEFAULT_DISPLAY,
