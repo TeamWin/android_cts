@@ -60,6 +60,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.drawable.Icon;
+import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -2350,6 +2352,47 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull(reason = "No broadcast message response stats in instant apps")
+    @Test
+    public void testBroadcastResponseStats_mediaNotification() throws Exception {
+        assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                0 /* broadcastCount */,
+                0 /* notificationPostedCount */,
+                0 /* notificationUpdatedCount */,
+                0 /* notificationCancelledCount */);
+
+        final TestServiceConnection connection = bindToTestServiceAndGetConnection();
+        try {
+            ITestReceiver testReceiver = connection.getITestReceiver();
+            testReceiver.cancelAll();
+
+            // Send a broadcast with a request to record response and verify broadcast-sent
+            // count gets incremented.
+            final BroadcastOptions options = BroadcastOptions.makeBasic();
+            options.recordResponseEventWhileInBackground(TEST_RESPONSE_STATS_ID_1);
+            final Intent intent = new Intent().setComponent(new ComponentName(
+                    TEST_APP_PKG, TEST_APP_CLASS_BROADCAST_RECEIVER));
+            sendBroadcastAndWaitForReceipt(intent, options.toBundle());
+
+            testReceiver.createNotificationChannel(TEST_NOTIFICATION_CHANNEL_ID,
+                    TEST_NOTIFICATION_CHANNEL_NAME,
+                    TEST_NOTIFICATION_CHANNEL_DESC);
+            testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
+                    buildMediaNotification(TEST_NOTIFICATION_CHANNEL_ID, TEST_NOTIFICATION_ID_1,
+                            TEST_NOTIFICATION_TEXT_1));
+
+            assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
+                    1 /* broadcastCount */,
+                    1 /* notificationPostedCount */,
+                    0 /* notificationUpdatedCount */,
+                    0 /* notificationCancelledCount */);
+
+            testReceiver.cancelAll();
+        } finally {
+            connection.unbind();
+        }
+    }
+
     private void updateFlagWithDelay(DeviceConfigStateHelper deviceConfigStateHelper,
             String key, String value) {
         deviceConfigStateHelper.set(key, value);
@@ -2367,6 +2410,31 @@ public class UsageStatsTest {
                 .setSmallIcon(android.R.drawable.ic_info)
                 .setContentTitle(String.format(TEST_NOTIFICATION_TITLE_FMT, notificationId))
                 .setContentText(notificationText)
+                .build();
+    }
+
+    private Notification buildMediaNotification(String channelId, int notificationId,
+            String notificationText) {
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext,
+                0 /* requestCode */, new Intent(mContext, this.getClass()),
+                PendingIntent.FLAG_IMMUTABLE);
+        final MediaSession session = new MediaSession(mContext, "test_media");
+        return new Notification.Builder(mContext, channelId)
+                .setSmallIcon(android.R.drawable.ic_menu_day)
+                .setContentTitle(String.format(TEST_NOTIFICATION_TITLE_FMT, notificationId))
+                .setContentText(notificationText)
+                .addAction(new Notification.Action.Builder(
+                        Icon.createWithResource(mContext, android.R.drawable.ic_media_previous),
+                        "previous", pendingIntent).build())
+                .addAction(new Notification.Action.Builder(
+                        Icon.createWithResource(mContext, android.R.drawable.ic_media_play),
+                        "play", pendingIntent).build())
+                .addAction(new Notification.Action.Builder(
+                        Icon.createWithResource(mContext, android.R.drawable.ic_media_next),
+                        "next", pendingIntent).build())
+                .setStyle(new Notification.MediaStyle()
+                        .setShowActionsInCompactView(0, 1, 2)
+                        .setMediaSession(session.getSessionToken()))
                 .build();
     }
 
