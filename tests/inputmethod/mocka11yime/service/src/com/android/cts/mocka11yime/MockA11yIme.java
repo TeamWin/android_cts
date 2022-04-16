@@ -238,6 +238,14 @@ public final class MockA11yIme extends AccessibilityService {
                         }
                         return getInputMethod().getCurrentInputEditorInfo();
                     }
+                    case "getCurrentInputConnection": {
+                        if (!Looper.getMainLooper().isCurrentThread()) {
+                            return new UnsupportedOperationException(
+                                    "getCurrentInputConnection() can be requested only for the main"
+                                            + " thread.");
+                        }
+                        return getInputMethod().getCurrentInputConnection();
+                    }
 
                     case "commitText": {
                         final CharSequence text = command.getExtras().getCharSequence("text");

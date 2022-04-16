@@ -40,7 +40,9 @@ import java.util.List;
  */
 @CddTest(requirement = "3.16/C-1-2,C-1-3,H-1-1")
 public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity{
-    private static final String LOG_TAG = "=CDMSerivceTestActivity";
+    private static final String LOG_TAG = "=CDMServiceTestActivity";
+    private static final long DEVICE_GONE_BUTTON_ENABLE_WINDOW = 150000; // 2.5 minutes.
+    private static final long DEVICE_PRESENT_BUTTON_ENABLE_WINDOW = 10000; // 10 seconds.
     private static final int REQUEST_CODE_CHOOSER = 0;
 
     private CompanionDeviceManager mCompanionDeviceManager;
@@ -127,21 +129,30 @@ public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity
         }
     }
 
-    private void isGoneTest(String deviceAddress) {
+    /**
+     * Check that if the application receives the CompanionDeviceService.onDeviceDisappeared
+     * callback after press the Device Gone button.
+     */
+    private void isDeviceGoneTest(String deviceAddress) {
         if (Boolean.FALSE.equals(DevicePresenceListener.sDeviceNearBy)) {
-            findViewById(R.id.present_button).setOnClickListener(
-                    v -> isPresentTest(deviceAddress));
-            mHandler.postDelayed(() -> mPresentButton.setEnabled(true), 5000);
+            getPassButton().setEnabled(true);
+            disassociate(deviceAddress);
         } else {
             disassociate(deviceAddress);
             fail("Device " + deviceAddress + " should be gone");
         }
     }
 
-    private void isPresentTest(String deviceAddress) {
+    /**
+     * Check that if the application receives the CompanionDeviceService.onDeviceAppeared
+     * callback after press the Device Present button.
+     */
+    private void isDevicePresetTest(String deviceAddress) {
         if (Boolean.TRUE.equals(DevicePresenceListener.sDeviceNearBy)) {
-            getPassButton().setEnabled(true);
-            disassociate(deviceAddress);
+            findViewById(R.id.gone_button).setOnClickListener(
+                    v -> isDeviceGoneTest(deviceAddress));
+            mHandler.postDelayed(() -> mGoneButton.setEnabled(true),
+                    DEVICE_GONE_BUTTON_ENABLE_WINDOW);
         } else {
             disassociate(deviceAddress);
             fail("Device " + deviceAddress + " should be present");
@@ -160,10 +171,11 @@ public class CompanionDeviceServiceTestActivity extends PassFailButtons.Activity
                     CompanionDeviceManager.EXTRA_DEVICE);
             String deviceAddress = associatedDevice.getAddress();
             if (deviceAddress != null) {
-                findViewById(R.id.gone_button).setOnClickListener(
-                        v -> isGoneTest(deviceAddress));
+                findViewById(R.id.present_button).setOnClickListener(
+                        v -> isDevicePresetTest(deviceAddress));
+                mHandler.postDelayed(() -> mPresentButton.setEnabled(true),
+                        DEVICE_PRESENT_BUTTON_ENABLE_WINDOW);
                 mCompanionDeviceManager.startObservingDevicePresence(deviceAddress);
-                mHandler.postDelayed(() -> mGoneButton.setEnabled(true), 10000);
             } else {
                 fail("The device was present but its address was null");
             }

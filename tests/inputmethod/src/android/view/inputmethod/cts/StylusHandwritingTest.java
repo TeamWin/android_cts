@@ -27,9 +27,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.inputmethodservice.InputMethodService;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -87,6 +89,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_LEANBACK_ONLY));
+
         mHwInitialState = Settings.Global.getInt(mContext.getContentResolver(),
                 STYLUS_HANDWRITING_ENABLED, SETTING_VALUE_OFF);
         if (mHwInitialState != SETTING_VALUE_ON) {
