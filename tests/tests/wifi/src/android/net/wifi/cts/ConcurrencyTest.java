@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static org.junit.Assert.assertNotEquals;
 
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,6 +48,7 @@ import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -92,6 +94,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         // External approver
         public boolean isAttached;
         public boolean isDetached;
+        public int detachReason;
+        public MacAddress targetPeer;
 
         public void reset() {
             valid = false;
@@ -104,6 +108,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
             isAttached = false;
             isDetached = false;
+            targetPeer = null;
         }
     }
 
@@ -795,7 +800,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(mMyResponse.success);
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testRemoveClient() {
         if (!setupWifiP2p()) {
             return;
@@ -831,7 +836,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertTrue(mMyResponse.success);
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testDiscoverPeersOnSpecificFreq() {
         if (!setupWifiP2p()) {
             return;
@@ -893,7 +898,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testDiscoverPeersOnSocialChannelsOnly() {
         if (!setupWifiP2p()) {
             return;
@@ -978,7 +983,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test IEs whose size is greater than the maximum allowed size. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testP2pSetVendorElementsOverMaximumAllowedSize() {
         if (!setupWifiP2p()) {
             return;
@@ -1000,7 +1005,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test that external approver APIs. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
     public void testP2pExternalApprover() {
         final MacAddress peer = MacAddress.fromString("11:22:33:44:55:66");
         if (!setupWifiP2p()) {
@@ -1012,7 +1017,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     @Override
                     public void onAttached(MacAddress deviceAddress) {
                         synchronized (mMyResponse) {
-                            assertEquals(peer, deviceAddress);
+                            mMyResponse.targetPeer = deviceAddress;
                             mMyResponse.valid = true;
                             mMyResponse.isAttached = true;
                             mMyResponse.notify();
@@ -1021,10 +1026,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     @Override
                     public void onDetached(MacAddress deviceAddress, int reason) {
                         synchronized (mMyResponse) {
-                            assertEquals(peer, deviceAddress);
-                            assertEquals(
-                                    ExternalApproverRequestListener.APPROVER_DETACH_REASON_REMOVE,
-                                    reason);
+                            mMyResponse.targetPeer = deviceAddress;
+                            mMyResponse.detachReason = reason;
                             mMyResponse.valid = true;
                             mMyResponse.isDetached = true;
                             mMyResponse.notify();
@@ -1041,29 +1044,32 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
         resetResponse(mMyResponse);
 
-        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
             mWifiP2pManager.addExternalApprover(mWifiP2pChannel, peer, listener);
-        });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.isAttached);
-        assertFalse(mMyResponse.isDetached);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            assertTrue(mMyResponse.isAttached);
+            assertFalse(mMyResponse.isDetached);
+            assertEquals(peer, mMyResponse.targetPeer);
 
-        // Just ignore the result as there is no real incoming request.
-        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            // Just ignore the result as there is no real incoming request.
             mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
                     WifiP2pManager.CONNECTION_REQUEST_ACCEPT, null);
-        });
-        ShellIdentityUtils.invokeWithShellPermissions(() -> {
             mWifiP2pManager.setConnectionRequestResult(mWifiP2pChannel, peer,
                     WifiP2pManager.CONNECTION_REQUEST_ACCEPT, "12345678", null);
-        });
 
-        resetResponse(mMyResponse);
-        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            resetResponse(mMyResponse);
             mWifiP2pManager.removeExternalApprover(mWifiP2pChannel, peer, null);
-        });
-        assertTrue(waitForServiceResponse(mMyResponse));
-        assertTrue(mMyResponse.isDetached);
-        assertFalse(mMyResponse.isAttached);
+            assertTrue(waitForServiceResponse(mMyResponse));
+            assertTrue(mMyResponse.isDetached);
+            assertFalse(mMyResponse.isAttached);
+            assertEquals(peer, mMyResponse.targetPeer);
+            assertEquals(ExternalApproverRequestListener.APPROVER_DETACH_REASON_REMOVE,
+                    mMyResponse.detachReason);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+
     }
 }

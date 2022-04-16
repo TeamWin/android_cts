@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.alarmmanager.alarmtestapp.cts.policy_permission_32">
+          package="android.alarmmanager.alarmtestapp.cts.policy_permission_32">
 
     <uses-sdk android:targetSdkVersion="32" />
 

@@ -382,6 +382,25 @@ public final class MockA11yImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets MockA11yIme call
+     * {@link android.accessibilityservice.AccessibilityService#getInputMethod()} then
+     * {@link android.accessibilityservice.InputMethod#getCurrentInputConnection()}.
+     *
+     * <p>Use {@link MockA11yImeEvent#isNullReturnValue()} for {@link MockA11yImeEvent}
+     * returned from {@link MockA11yImeEventStreamUtils#expectA11yImeCommand(MockA11yImeEventStream,
+     * MockA11yImeCommand, long)} to see the value returned from the API was null or not.</p>
+     *
+     * @return {@link MockA11yImeCommand} object that can be passed to
+     *         {@link MockA11yImeEventStreamUtils#expectA11yImeCommand(MockA11yImeEventStream,
+     *         MockA11yImeCommand, long)} to wait until this event is handled by MockA11yIme.
+     */
+    @NonNull
+    public MockA11yImeCommand callGetCurrentInputConnection() {
+        final Bundle params = new Bundle();
+        return callCommandInternal("getCurrentInputConnection", params);
+    }
+
+    /**
      * Lets MockA11yIme call {@link
      * android.accessibilityservice.InputMethod.AccessibilityInputConnection#commitText(
      * CharSequence, int, TextAttribute)} with the given parameters.

@@ -15,27 +15,33 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.alarmmanager.alarmtestapp.cts">
+          package="android.alarmmanager.alarmtestapp.cts">
 
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
 
     <application>
         <receiver android:name=".TestAlarmScheduler"
                   android:exported="true" />
         <receiver android:name=".TestAlarmReceiver" />
-        <receiver android:name="android.alarmmanager.alarmtestapp.cts.common.PermissionStateChangedReceiver"
-                  android:exported="true"
-                  android:enabled="false" >
+        <receiver
+            android:name=
+                "android.alarmmanager.alarmtestapp.cts.common.PermissionStateChangedReceiver"
+            android:exported="true"
+            android:enabled="false" >
             <!-- Disabled by default so it doesn't cause resource churn or race in tests
              where this is not required -->
             <intent-filter>
-                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+                <action android:name=
+                            "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
                 <action android:name="android.app.action.cts.ACTION_PING" />
             </intent-filter>
         </receiver>
+        <receiver android:name="android.alarmmanager.alarmtestapp.cts.common.RequestReceiver"
+                  android:exported="true"/>
         <service android:name="android.alarmmanager.alarmtestapp.cts.common.TestService"
-            android:exported="false" />
+                 android:exported="false" />
     </application>
 
 </manifest>

@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
+import android.app.Service;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -43,6 +44,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.EditText;
 import android.widget.NumberPicker;
 
@@ -91,7 +93,7 @@ public class NumberPickerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        // Create a UiAutomation, which will enable accessibility and allow us to test a11y events.
+        // Create a UiAutomation, which will enable accessibility and allow us to test ally events.
         mInstrumentation.getUiAutomation();
         mActivity = mActivityRule.getActivity();
         mNumberPicker = (NumberPicker) mActivity.findViewById(R.id.number_picker);
@@ -296,6 +298,8 @@ public class NumberPickerTest {
         final NumberPicker.OnValueChangeListener mockValueChangeListener =
                 mock(NumberPicker.OnValueChangeListener.class);
 
+        waitForAccessibilityEnabled();
+
         mInstrumentation.runOnMainSync(() -> {
             mNumberPicker.setMinValue(20);
             mNumberPicker.setMaxValue(22);
@@ -406,6 +410,8 @@ public class NumberPickerTest {
 
     @Test
     public void testInteractionWithSwipeUp() throws Throwable {
+        waitForAccessibilityEnabled();
+
         mActivityRule.runOnUiThread(() -> {
             mNumberPicker.setMinValue(10);
             mNumberPicker.setMaxValue(12);
@@ -575,5 +581,35 @@ public class NumberPickerTest {
         event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
                 MotionEvent.ACTION_UP, x, y, 0);
         mInstrumentation.sendPointerSync(event);
+    }
+
+    private void waitForAccessibilityEnabled() {
+        AccessibilityManager manager =
+                (AccessibilityManager) mInstrumentation.getContext().getSystemService(
+                        Service.ACCESSIBILITY_SERVICE);
+        if (manager.isEnabled()) {
+            return;
+        }
+
+        Object waitObject = new Object();
+        AccessibilityManager.AccessibilityStateChangeListener listener = (boolean enabled) -> {
+            synchronized (waitObject) {
+                if (enabled) {
+                    waitObject.notify();
+                }
+            }
+        };
+        manager.addAccessibilityStateChangeListener(listener);
+        // Wait a maximum of 5 seconds for accessibility to be enabled.
+        try {
+            synchronized (waitObject) {
+                if (!manager.isEnabled()) {
+                    waitObject.wait(5000);
+                }
+            }
+        } catch (InterruptedException e) {
+        }
+        manager.removeAccessibilityStateChangeListener(listener);
+        assertTrue(manager.isEnabled());
     }
 }

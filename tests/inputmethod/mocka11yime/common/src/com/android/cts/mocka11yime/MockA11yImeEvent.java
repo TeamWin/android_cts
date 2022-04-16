@@ -16,6 +16,7 @@
 
 package com.android.cts.mocka11yime;
 
+import android.accessibilityservice.InputMethod;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -58,7 +59,10 @@ public final class MockA11yImeEvent {
         if (object == RETURN_VALUE_UNAVAILABLE) {
             return ReturnType.Unavailable;
         }
-        if (object instanceof android.accessibilityservice.InputMethod) {
+        if (object instanceof InputMethod) {
+            return ReturnType.KnownUnsupportedType;
+        }
+        if (object instanceof InputMethod.AccessibilityInputConnection) {
             return ReturnType.KnownUnsupportedType;
         }
         if (object instanceof View) {

@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.editorMatcherForA11yIme;
+import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeCommand;
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.expectA11yImeEvent;
 import static com.android.cts.mocka11yime.MockA11yImeEventStreamUtils.notExpectA11yImeEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -59,6 +60,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.cts.mocka11yime.MockA11yImeEventStream;
 import com.android.cts.mocka11yime.MockA11yImeSession;
 import com.android.cts.mocka11yime.MockA11yImeSettings;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -67,6 +69,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
@@ -209,6 +212,148 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
                 // For "onStartInput" because of IMM#restartInput(), "restarting" must be true.
                 return restarting;
             }, TIMEOUT);
+        });
+    }
+
+    private void verifyOnStartInputEventForFallbackInputConnection(
+            @NonNull ImeEvent startInputEvent, boolean restarting) {
+        assertThat(startInputEvent.getEnterState().hasFallbackInputConnection()).isTrue();
+        final boolean actualRestarting = startInputEvent.getArguments().getBoolean("restarting");
+        if (restarting) {
+            assertThat(actualRestarting).isTrue();
+        } else {
+            assertThat(actualRestarting).isFalse();
+        }
+        final var editorInfo = startInputEvent.getArguments().getParcelable("editorInfo",
+                EditorInfo.class);
+        assertThat(editorInfo).isNotNull();
+        assertThat(editorInfo.inputType).isEqualTo(EditorInfo.TYPE_NULL);
+    }
+
+    private void verifyStateAfterFinishInput(
+            @NonNull MockA11yImeSession a11yImeSession,
+            @NonNull MockA11yImeEventStream a11yImeEventStream) throws Exception {
+        final var currentInputStartedEvent = expectA11yImeCommand(a11yImeEventStream,
+                a11yImeSession.callGetCurrentInputStarted(), TIMEOUT);
+        assertThat(currentInputStartedEvent.getReturnBooleanValue()).isFalse();
+        final var getCurrentEditorInfoEvent = expectA11yImeCommand(a11yImeEventStream,
+                a11yImeSession.callGetCurrentInputEditorInfo(), TIMEOUT);
+        assertThat(getCurrentEditorInfoEvent.isNullReturnValue()).isTrue();
+        final var getCurrentInputConnectionEvent = expectA11yImeCommand(a11yImeEventStream,
+                a11yImeSession.callGetCurrentInputConnection(), TIMEOUT);
+        assertThat(getCurrentInputConnectionEvent.isNullReturnValue()).isTrue();
+    }
+
+    @Test
+    public void testNoFallbackInputConnection() throws Exception {
+        final String marker = getTestMarker();
+        testA11yIme((uiAutomation, imeSession, a11yImeSession) -> {
+            final var imeEventStream = imeSession.openEventStream();
+            final var a11yImeEventStream = a11yImeSession.openEventStream();
+
+            final AtomicReference<EditText> editTextForFallbackInputConnectionRef =
+                    new AtomicReference<>();
+            TestActivity.startSync(testActivity -> {
+                final LinearLayout layout = new LinearLayout(testActivity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                final EditText editText = new EditText(testActivity);
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                layout.addView(editText);
+
+                final EditText editTextForFallbackInputConnection = new EditText(testActivity) {
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        return null;
+                    }
+                };
+                editTextForFallbackInputConnectionRef.set(editTextForFallbackInputConnection);
+                layout.addView(editTextForFallbackInputConnection);
+                return layout;
+            });
+
+            expectEvent(imeEventStream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectA11yImeEvent(a11yImeEventStream, editorMatcherForA11yIme("onStartInput", marker),
+                    TIMEOUT);
+
+            // Switch to an EditText that returns null InputConnection.
+            runOnMainSync(() -> editTextForFallbackInputConnectionRef.get().requestFocus());
+
+            // Both IME and A11y IME should receive "onFinishInput".
+            expectEvent(imeEventStream,
+                    event -> "onFinishInput".equals(event.getEventName()), TIMEOUT);
+            expectA11yImeEvent(a11yImeEventStream,
+                    event -> "onFinishInput".equals(event.getEventName()), TIMEOUT);
+
+            // Only IME will receive "onStartInput" with a fallback InputConnection.
+            {
+                final var startInputEvent = expectEvent(imeEventStream,
+                        event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+                verifyOnStartInputEventForFallbackInputConnection(startInputEvent,
+                        false /* restarting */);
+            }
+
+            // A11y IME should never receive "onStartInput" with a fallback InputConnection.
+            {
+                notExpectA11yImeEvent(a11yImeEventStream,
+                        event -> "onStartInput".equals(event.getEventName()), NOT_EXPECT_TIMEOUT);
+                verifyStateAfterFinishInput(a11yImeSession, a11yImeEventStream);
+            }
+        });
+    }
+
+    @Test
+    public void testNoFallbackInputConnectionAfterRestartInput() throws Exception {
+        final String marker = getTestMarker();
+        testA11yIme((uiAutomation, imeSession, a11yImeSession) -> {
+            final var imeEventStream = imeSession.openEventStream();
+            final var a11yImeEventStream = a11yImeSession.openEventStream();
+
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            final AtomicBoolean testFallbackInputConnectionRef = new AtomicBoolean();
+            TestActivity.startSync(testActivity -> {
+                final LinearLayout layout = new LinearLayout(testActivity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                final EditText editText = new EditText(testActivity) {
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        return testFallbackInputConnectionRef.get()
+                                ? null : super.onCreateInputConnection(outAttrs);
+                    }
+                };
+                editTextRef.set(editText);
+                editText.setPrivateImeOptions(marker);
+                editText.requestFocus();
+                layout.addView(editText);
+                return layout;
+            });
+
+            expectEvent(imeEventStream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectA11yImeEvent(a11yImeEventStream, editorMatcherForA11yIme("onStartInput", marker),
+                    TIMEOUT);
+
+            // Trigger restartInput.
+            testFallbackInputConnectionRef.set(true);
+            runOnMainSync(() ->
+                    editTextRef.get().getContext().getSystemService(InputMethodManager.class)
+                            .restartInput(editTextRef.get()));
+
+            // Only IME will receive "onStartInput" with a fallback InputConnection.
+            {
+                final var startInputEvent = expectEvent(imeEventStream,
+                        event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+                verifyOnStartInputEventForFallbackInputConnection(startInputEvent,
+                        true /* restarting */);
+            }
+
+            // A11y IME should never receive "onStartInput" with a fallback InputConnection.
+            {
+                expectA11yImeEvent(a11yImeEventStream,
+                        event -> "onFinishInput".equals(event.getEventName()), TIMEOUT);
+                notExpectA11yImeEvent(a11yImeEventStream,
+                        event -> "onStartInput".equals(event.getEventName()), NOT_EXPECT_TIMEOUT);
+                verifyStateAfterFinishInput(a11yImeSession, a11yImeEventStream);
+            }
         });
     }
 
