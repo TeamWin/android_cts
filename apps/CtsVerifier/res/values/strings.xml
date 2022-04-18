@@ -884,6 +884,7 @@
     <string name="ble_mtu_mismatch_message">MTU is not correct.(Request:%1$d, Actual:%2$d)</string>
     <string name="ble_mtu_fail_message">MTU test: failed to receive data</string>
 
+    <!-- Strings for CompanionDeviceTestActivity -->
     <string name="companion_test">Companion Device Test</string>
     <string name="companion_test_info">
         This test checks that APIs to manage companion devices are working correctly,
@@ -894,30 +895,43 @@
         Once you press the button, wait for a dialog to pop up and select your device from the list.
     </string>
 
+    <!-- Strings for CompanionDeviceServiceTestActivity -->
+    <string name="companion_service_associate_button">Associate</string>
+    <string name="companion_service_associate_title">Device Association</string>
+    <string name="companion_service_associate_text">
+        Press the "Associate" button. Wait for a dialog to pop up and select your device from the
+        list.
+    </string>
+    <string name="companion_service_bluetooth_feature_title">Bluetooth Feature Supported</string>
+    <string name="companion_service_bluetooth_feature_text">
+        PackageManager.FEATURE_BLUETOOTH not supported. This test is not applicable.
+    </string>
+    <string name="companion_service_disassociate_button">Disassociate</string>
+    <string name="companion_service_disassociate_title">Device Disassociation</string>
+    <string name="companion_service_disassociate_text">
+        Press the "Disassociate" button. Wait for the device to disassociate.
+    </string>
+    <string name="companion_service_present_title">Device Present</string>
+    <string name="companion_service_present_text">
+        Make your Bluetooth device reachable (this should already be the case from the previous step).
+        Wait until your Bluetooth device is detected by CDM. This may take up to 2 minutes.
+    </string>
+    <string name="companion_service_gone_title">Device Gone</string>
+    <string name="companion_service_gone_text">
+        Make your Bluetooth device unreachable by placing your bluetooth device inside an RF Bag or
+        powering it off.
+        Wait until your Bluetooth device disappears. This may take up to 2 minutes.
+    </string>
     <string name="companion_service_test">Companion Device Service Test</string>
     <string name="companion_service_test_info">
         This test checks that APIs to notify the companion app of its associated device going in and
-        out of Bluetooth range are working correctly.
-        Before proceeding, make sure you have a Bluetooth LE device nearby and
-        discoverable. Also, make sure that bluetooth is turned on. Note that, the nearby device can
-        not be a phone since it considers advertising as classic device scan.
-        First, press the go button, wait for a dialog to pop up and select your device from the
-        list. Second, make your Bluetooth device reachable then press the Device Present button.
-        Lastly, make sure your bluetooth device is unreachable(you can power off your
-        Bluetooth device or put it into a Faraday bag) and wait up to 2 minutes then press the
-        Device Gone button.
+        out of Bluetooth range are working correctly.\n\n
+        Before proceeding, make sure that you have a Bluetooth LE device nearby and
+        discoverable. Also, make sure that bluetooth is turned on. (Note: the nearby device cannot
+        be a phone)
     </string>
-
-    <string name="companion_service_test_present_text">
-        Now, please make your Bluetooth device is reachable and wait up to 10 to 20 seconds, then
-        press the Device Present button.
-    </string>
-
-    <string name="companion_service_test_gone_text">
-        Now, please make your Bluetooth device unreachable.
-        Put your nearby bluetooth device into an RF Bag or power off your device and wait up to
-        2 minutes, then press the Device Gone button.
-    </string>
+    <string name="companion_service_test_summary_title">Test Complete</string>
+    <string name="companion_service_test_summary">Every test passed successfully.</string>
 
     <!-- Strings for FeatureSummaryActivity -->
     <string name="feature_summary">Hardware/Software Feature Summary</string>
