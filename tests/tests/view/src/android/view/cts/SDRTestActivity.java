@@ -23,12 +23,16 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
 import android.view.ViewGroup.LayoutParams;
+import android.view.WindowInsets.Type;
 import android.widget.FrameLayout;
 
 public class SDRTestActivity extends Activity
         implements SurfaceHolder.Callback, SurfaceTextureListener {
+    private static final long TIME_OUT_MS = 1000;
+    private final Object mLock = new Object();
     private SurfaceView mSurfaceView;
     private TextureView mTextureView;
+    private SurfaceTexture mSurface;
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {}
@@ -55,6 +59,8 @@ public class SDRTestActivity extends Activity
 
         mSurfaceView.getHolder().addCallback(this);
         setContentView(content);
+        getWindow().getInsetsController().hide(Type.statusBars());
+        getWindow().getInsetsController().hide(Type.navigationBars());
     }
 
     @Override
@@ -76,17 +82,38 @@ public class SDRTestActivity extends Activity
     }
 
     @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {}
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+        synchronized (mLock) {
+            mSurface = surface;
+            mLock.notifyAll();
+        }
+    }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        synchronized (mLock) {
+            mSurface = null;
+            mLock.notifyAll();
+        }
         return true;
     }
 
     @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        synchronized (mLock) {
+            mLock.notifyAll();
+        }
+    }
+
+    public void waitForSurface() throws InterruptedException {
+        synchronized (mLock) {
+            while (mSurface == null) {
+                mLock.wait(TIME_OUT_MS);
+            }
+        }
+    }
 }
 

@@ -24,7 +24,6 @@ import static android.opengl.GLES20.glEnable;
 import static android.opengl.GLES20.glScissor;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -260,7 +259,7 @@ public class TextureViewTest {
     }
 
     private static Object[] testDataSpaces() {
-        return new Integer[] {
+        return new Integer[]{
             DataSpace.DATASPACE_SCRGB_LINEAR,
             DataSpace.DATASPACE_SRGB,
             DataSpace.DATASPACE_SCRGB,
@@ -276,59 +275,19 @@ public class TextureViewTest {
     @Test
     @Parameters(method = "testDataSpaces")
     public void testSDRFromSurfaceViewAndTextureView(int dataSpace) throws Throwable {
-        final int tiffanyBlue = 0xFF0ABAB5;
-        Color color = Color.valueOf(tiffanyBlue).convert(ColorSpace.getFromDataSpace(dataSpace));
-        long converted = color.pack();
-        assertNotEquals(Color.valueOf(tiffanyBlue).toArgb(), color);
+        final int grayishYellow = 0xFFBABAB5;
+        long converted = Color.convert(grayishYellow, ColorSpace.getFromDataSpace(dataSpace));
 
         final SDRTestActivity activity =
                 mSDRActivityRule.launchActivity(/*startIntent*/ null);
+        activity.waitForSurface();
 
         TextureView textureView = activity.getTextureView();
+        // SurfaceView and TextureView dimensions are the same so we reuse variables
         int width = textureView.getWidth();
         int height = textureView.getHeight();
 
-        // through textureView, paint left part
-        SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
-        Surface surface = new Surface(surfaceTexture);
-        assertTrue(surface.isValid());
-
-        ImageWriter writer = new ImageWriter
-                .Builder(surface)
-                .setHardwareBufferFormat(PixelFormat.RGBA_8888)
-                .setDataSpace(dataSpace)
-                .build();
-        Image image = writer.dequeueInputImage();
-        assertEquals(dataSpace, image.getDataSpace());
-        Image.Plane plane = image.getPlanes()[0];
-        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
-                Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setAntiAlias(false);
-        paint.setColor(converted);
-        canvas.drawRect(width / 2, 0f, width, height, paint);
-        bitmap.copyPixelsToBuffer(plane.getBuffer());
-        writer.queueInputImage(image);
-
-        final Rect textureViewPos = new Rect();
-        WidgetTestUtils.runOnMainAndDrawSync(mSDRActivityRule,
-                activity.findViewById(android.R.id.content), () -> {
-                int[] outLocation = new int[2];
-                textureView.getLocationInSurface(outLocation);
-                textureViewPos.left = outLocation[0] + width / 2;
-                textureViewPos.top = outLocation[1];
-                textureViewPos.right = textureViewPos.left + width / 2;
-                textureViewPos.bottom = textureViewPos.top + height;
-            });
-
-        Bitmap textureViewScreenshot = Bitmap.createBitmap(
-                textureViewPos.width(), textureViewPos.height(), Bitmap.Config.ARGB_8888);
-        int textureViewResult =
-                new SynchronousPixelCopy().request(surface, textureViewPos, textureViewScreenshot);
-        assertEquals("Copy request failed", PixelCopy.SUCCESS, textureViewResult);
-
-        // through surfaceView, paint right part
+        // paint surfaceView layer
         SurfaceView surfaceView = activity.getSurfaceView();
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
@@ -342,12 +301,12 @@ public class TextureViewTest {
                 assertEquals(dataSpace, image.getDataSpace());
                 Image.Plane plane = image.getPlanes()[0];
                 Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
-                        Bitmap.Config.ARGB_8888);
+                        Bitmap.Config.ARGB_8888, true, ColorSpace.getFromDataSpace(dataSpace));
                 Canvas canvas = new Canvas(bitmap);
                 Paint paint = new Paint();
                 paint.setAntiAlias(false);
                 paint.setColor(converted);
-                canvas.drawRect(0f, 0f, width / 2, height, paint);
+                canvas.drawRect(0f, 0f, width, height, paint);
                 bitmap.copyPixelsToBuffer(plane.getBuffer());
                 writer.queueInputImage(image);
             }
@@ -359,33 +318,55 @@ public class TextureViewTest {
             public void surfaceDestroyed(SurfaceHolder holder) {}
         });
 
-        // wait here to ensure SF has latched the buffer that has been queued in
-        // this is the easiest way to solve copy failure but sacrifice the performance.
-        Thread.sleep(100);
-        final Rect surfaceViewPos = new Rect();
         WidgetTestUtils.runOnMainAndDrawSync(mSDRActivityRule, surfaceView, () -> {
             ((ViewGroup) surfaceView.getParent()).removeView(surfaceView);
             activity.setContentView(surfaceView);
-            int[] outLocation = new int[2];
-            surfaceView.getLocationInSurface(outLocation);
-            surfaceViewPos.left = outLocation[0];
-            surfaceViewPos.top = outLocation[1];
-            surfaceViewPos.right = surfaceViewPos.left + width / 2;
-            surfaceViewPos.bottom = surfaceViewPos.top + height;
         });
 
+        // wait here to ensure SF has latched the buffer that has been queued in
+        // this is the easiest way to solve copy failure but sacrifice the performance.
+        Thread.sleep(100);
         Bitmap surfaceViewScreenshot = mInstrumentation
                 .getUiAutomation()
                 .takeScreenshot(activity.getWindow());
-        // resize screenshot to left part
-        surfaceViewScreenshot.setWidth(surfaceViewPos.width());
-        surfaceViewScreenshot.setHeight(surfaceViewPos.height());
-        assertEquals(ColorSpace.get(ColorSpace.Named.SRGB),
-                surfaceViewScreenshot.getColorSpace());
 
-        int surfaceViewResult = new SynchronousPixelCopy()
-                .request(surfaceView, surfaceViewPos, surfaceViewScreenshot);
-        assertEquals("Copy request failed", PixelCopy.SUCCESS, surfaceViewResult);
+        WidgetTestUtils.runOnMainAndDrawSync(mSDRActivityRule, textureView, () -> {
+            ((ViewGroup) textureView.getParent()).removeView(textureView);
+            activity.setContentView(textureView);
+        });
+
+         // paint textureView layer
+        SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
+        Surface surface = new Surface(surfaceTexture);
+        assertTrue(surface.isValid());
+
+        ImageWriter writer = new ImageWriter
+                .Builder(surface)
+                .setHardwareBufferFormat(PixelFormat.RGBA_8888)
+                .setDataSpace(dataSpace)
+                .build();
+        Image image = writer.dequeueInputImage();
+        assertEquals(dataSpace, image.getDataSpace());
+        Image.Plane plane = image.getPlanes()[0];
+        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
+                Bitmap.Config.ARGB_8888, true, ColorSpace.getFromDataSpace(dataSpace));
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        paint.setColor(converted);
+        canvas.drawRect(0f, 0f, width, height, paint);
+        bitmap.copyPixelsToBuffer(plane.getBuffer());
+        writer.queueInputImage(image);
+
+        final Bitmap textureViewScreenshot =
+                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        // surfaceViewScreenshot colorspace depends on SF colormode selection,
+        // i.e., Display_P3 or sRGB, therefore, change textureViewScreenshot's bitmap
+        // colorspace to be aligned with it
+        textureViewScreenshot.setColorSpace(surfaceViewScreenshot.getColorSpace());
+
+        WidgetTestUtils.runOnMainAndDrawSync(
+                mSDRActivityRule, textureView, () -> textureView.getBitmap(textureViewScreenshot));
 
         assertTrue(textureViewScreenshot.sameAs(surfaceViewScreenshot));
     }
