@@ -52,6 +52,7 @@ android_test_helper_app {
         "gts",
         "general-tests",
     ],
+    min_sdk_version: "27",
 }
 
 android_test_helper_app {

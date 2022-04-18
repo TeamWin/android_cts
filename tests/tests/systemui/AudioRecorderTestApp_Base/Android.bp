@@ -22,4 +22,5 @@ android_library {
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],
     sdk_version: "current",
+    min_sdk_version: "27",
 }
