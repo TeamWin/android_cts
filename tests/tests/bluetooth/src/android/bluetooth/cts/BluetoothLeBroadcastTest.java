@@ -176,7 +176,7 @@ public class BluetoothLeBroadcastTest {
                 mAdapter.isLeAudioBroadcastSourceSupported() == FEATURE_SUPPORTED;
         if (mIsLeBroadcastSupported) {
             boolean isBroadcastSourceEnabledInConfig =
-                    TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO_BROADCAST);
+                    TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO_BROADCAST);
             assertTrue("Config must be true when profile is supported",
                     isBroadcastSourceEnabledInConfig);
         }

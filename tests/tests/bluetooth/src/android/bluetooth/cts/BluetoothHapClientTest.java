@@ -98,7 +98,7 @@ public class BluetoothHapClientTest {
             return;
         }
 
-        mIsHapClientSupported = TestUtils.getProfileConfigValueOrDie(BluetoothProfile.HAP_CLIENT);
+        mIsHapClientSupported = TestUtils.isProfileEnabled(BluetoothProfile.HAP_CLIENT);
         if (!mIsHapClientSupported) {
             return;
         }

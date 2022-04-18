@@ -39,7 +39,6 @@ import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -56,7 +55,6 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
     private static final String TAG = BluetoothHidDevice.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final String PROFILE_SUPPORTED_HID_DEVICE = "profile_supported_hid_device";
 
     private boolean mHasBluetooth;
     private boolean mIsHidSupported;
@@ -76,6 +74,10 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
         mHasBluetooth =
                 getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
         if (!mHasBluetooth) return;
+
+        mIsHidSupported = TestUtils.isProfileEnabled(BluetoothProfile.HID_DEVICE);
+        if (!mIsHidSupported) return;
+
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
@@ -89,13 +91,6 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
         mBluetoothHidDevice = null;
         mExecutor = Executors.newSingleThreadExecutor();
 
-        Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
-        int hidSupportId = bluetoothResources.getIdentifier(PROFILE_SUPPORTED_HID_DEVICE, "bool",
-                "com.android.bluetooth");
-        mIsHidSupported = bluetoothResources.getBoolean(hidSupportId);
-        if (!mIsHidSupported) return;
-
         mAdapter.getProfileProxy(getContext(), new BluetoothHidServiceListener(),
                 BluetoothProfile.HID_DEVICE);
     }
@@ -103,17 +98,20 @@ public class BluetoothHidDeviceTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        if (mHasBluetooth) {
-            if (mAdapter != null && mBluetoothHidDevice != null) {
-                mAdapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, mBluetoothHidDevice);
-                mBluetoothHidDevice = null;
-                mIsProfileReady = false;
-            }
-            mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            mAdapter = null;
-            mUiAutomation.dropShellPermissionIdentity();
+        if (!(mHasBluetooth && mIsHidSupported)) {
+            return;
         }
+        if (mAdapter != null && mBluetoothHidDevice != null) {
+            mAdapter.closeProfileProxy(BluetoothProfile.HID_DEVICE, mBluetoothHidDevice);
+            mBluetoothHidDevice = null;
+            mIsProfileReady = false;
+        }
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
+        mAdapter = null;
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     public void test_getDevicesMatchingConnectionStates() {
