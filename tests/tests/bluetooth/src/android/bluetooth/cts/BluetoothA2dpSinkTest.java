@@ -26,8 +26,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -42,7 +40,6 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
     private static final String TAG = BluetoothA2dpSinkTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final String PROFILE_SUPPORTED_A2DP_SINK = "profile_supported_a2dp_sink";
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
@@ -57,17 +54,11 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
 
+        mHasBluetooth = TestUtils.hasBluetooth();
         if (!mHasBluetooth) return;
 
-        Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
-        int a2dpSinkSupportId = bluetoothResources.getIdentifier(
-                PROFILE_SUPPORTED_A2DP_SINK, "bool", "com.android.bluetooth");
-        assertTrue("resource profile_supported_a2dp not found", a2dpSinkSupportId != 0);
-        mIsA2dpSinkSupported = bluetoothResources.getBoolean(a2dpSinkSupportId);
+        mIsA2dpSinkSupported = TestUtils.isProfileEnabled(BluetoothProfile.A2DP_SINK);
         if (!mIsA2dpSinkSupported) return;
 
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -89,15 +80,18 @@ public class BluetoothA2dpSinkTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        if (!(mHasBluetooth && mIsA2dpSinkSupported)) return;
-
+        if (!(mHasBluetooth && mIsA2dpSinkSupported)) {
+            return;
+        }
         if (mAdapter != null && mBluetoothA2dpSink != null) {
             mAdapter.closeProfileProxy(BluetoothProfile.A2DP_SINK, mBluetoothA2dpSink);
             mBluetoothA2dpSink = null;
             mIsProfileReady = false;
         }
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
         mUiAutomation.dropShellPermissionIdentity();
         mAdapter = null;
     }

@@ -100,9 +100,9 @@ public class BluetoothCsipSetCoordinatorTest extends AndroidTestCase {
             mBluetoothCsipSetCoordinator = null;
 
             boolean isLeAudioSupportedInConfig =
-                     TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO);
+                     TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO);
             boolean isCsipConfigEnabled =
-                     TestUtils.getProfileConfigValueOrDie(BluetoothProfile.CSIP_SET_COORDINATOR);
+                     TestUtils.isProfileEnabled(BluetoothProfile.CSIP_SET_COORDINATOR);
             if (isLeAudioSupportedInConfig) {
                 /* If Le Audio is supported then CSIP shall be supported */
                 assertTrue("Config must be true when profile is supported", isCsipConfigEnabled);
