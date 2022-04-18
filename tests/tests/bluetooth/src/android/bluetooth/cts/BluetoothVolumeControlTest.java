@@ -92,9 +92,9 @@ public class BluetoothVolumeControlTest extends AndroidTestCase {
             mBluetoothVolumeControl = null;
 
             boolean isLeAudioSupportedInConfig =
-                     TestUtils.getProfileConfigValueOrDie(BluetoothProfile.LE_AUDIO);
+                     TestUtils.isProfileEnabled(BluetoothProfile.LE_AUDIO);
             boolean isVolumeControlEnabledInConfig =
-                     TestUtils.getProfileConfigValueOrDie(BluetoothProfile.VOLUME_CONTROL);
+                     TestUtils.isProfileEnabled(BluetoothProfile.VOLUME_CONTROL);
             if (isLeAudioSupportedInConfig) {
                 /* If Le Audio is supported then Volume Control shall be supported */
                 assertTrue("Config must be true when profile is supported",

@@ -21,12 +21,9 @@ import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothCodecConfig;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -41,7 +38,6 @@ public class BluetoothA2dpTest extends AndroidTestCase {
     private static final String TAG = BluetoothA2dpTest.class.getSimpleName();
 
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
-    private static final String PROFILE_SUPPORTED_A2DP = "profile_supported_a2dp";
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
@@ -56,10 +52,13 @@ public class BluetoothA2dpTest extends AndroidTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH);
 
+        mHasBluetooth = TestUtils.hasBluetooth();
         if (!mHasBluetooth) return;
+
+        mIsA2dpSupported = TestUtils.isProfileEnabled(BluetoothProfile.A2DP_SINK);
+        if (!mIsA2dpSupported) return;
+
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
 
@@ -72,14 +71,6 @@ public class BluetoothA2dpTest extends AndroidTestCase {
         mIsProfileReady = false;
         mBluetoothA2dp = null;
 
-        Resources bluetoothResources = mContext.getPackageManager().getResourcesForApplication(
-                "com.android.bluetooth");
-        int a2dpSupportId = bluetoothResources.getIdentifier(
-                PROFILE_SUPPORTED_A2DP, "bool", "com.android.bluetooth");
-        assertTrue("resource profile_supported_a2dp not found", a2dpSupportId != 0);
-        mIsA2dpSupported = bluetoothResources.getBoolean(a2dpSupportId);
-        if (!mIsA2dpSupported) return;
-
         mAdapter.getProfileProxy(getContext(), new BluetoothA2dpServiceListener(),
                 BluetoothProfile.A2DP);
     }
@@ -87,16 +78,19 @@ public class BluetoothA2dpTest extends AndroidTestCase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        if (mHasBluetooth) {
-            if (mAdapter != null && mBluetoothA2dp != null) {
-                mAdapter.closeProfileProxy(BluetoothProfile.A2DP, mBluetoothA2dp);
-                mBluetoothA2dp = null;
-                mIsProfileReady = false;
-            }
-            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-            mAdapter = null;
-            mUiAutomation.dropShellPermissionIdentity();
+        if (!(mHasBluetooth && mIsA2dpSupported)) {
+            return;
         }
+        if (mAdapter != null && mBluetoothA2dp != null) {
+            mAdapter.closeProfileProxy(BluetoothProfile.A2DP, mBluetoothA2dp);
+            mBluetoothA2dp = null;
+            mIsProfileReady = false;
+        }
+        if (mAdapter != null) {
+            assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+        }
+        mAdapter = null;
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     public void test_getConnectedDevices() {
