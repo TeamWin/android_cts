@@ -245,9 +245,9 @@ def decompress_jpeg_to_rgb_image(jpeg_buffer):
   h = img.size[1]
   return numpy.array(img).reshape(h, w, 3) / 255.0
 
+
 def convert_image_to_numpy_array(image_path):
-  """
-  Converts an image at the path image_path to numpy array and returns the array.
+  """Converts image at image_path to numpy array and returns the array.
 
   Args:
     image_path: file path
@@ -255,9 +255,10 @@ def convert_image_to_numpy_array(image_path):
     numpy array
   """
   if not os.path.exists(image_path):
-    raise assertionError(f'{image_path} does not exist.')
+    raise AssertionError(f'{image_path} does not exist.')
   image = Image.open(image_path)
   return numpy.array(image)
+
 
 def convert_capture_to_planes(cap, props=None):
   """Convert a captured image object to separate image planes.
@@ -835,6 +836,7 @@ def compute_image_rms_difference_1d(rgb_x, rgb_y):
   return math.sqrt(sum([pow(rgb_x[i] - rgb_y[i], 2.0)
                         for i in range(len_rgb_x)]) / len_rgb_x)
 
+
 def compute_image_rms_difference_3d(rgb_x, rgb_y):
   """Calculate the RMS difference between 2 RBG images as 3D arrays.
 
@@ -857,8 +859,10 @@ def compute_image_rms_difference_3d(rgb_x, rgb_y):
   for i in range(shape_rgb_x[0]):
     for j in range(shape_rgb_x[1]):
       for k in range(shape_rgb_x[2]):
-        mean_square_sum += pow(rgb_x[i][j][k] - rgb_y[i][j][k], 2.0);
-  return math.sqrt(mean_square_sum / (shape_rgb_x[0] * shape_rgb_x[1] * shape_rgb_x[2]))
+        mean_square_sum += pow(rgb_x[i][j][k] - rgb_y[i][j][k], 2.0)
+  return (math.sqrt(mean_square_sum /
+                    (shape_rgb_x[0] * shape_rgb_x[1] * shape_rgb_x[2])))
+
 
 class ImageProcessingUtilsTest(unittest.TestCase):
   """Unit tests for this module."""
