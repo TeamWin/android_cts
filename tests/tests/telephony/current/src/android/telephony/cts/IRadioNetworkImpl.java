@@ -505,4 +505,14 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             Log.e(TAG, "Failed to getUsageSetting from AIDL. Exception" + ex);
         }
     }
+
+    @Override
+    public String getInterfaceHash() {
+        return IRadioNetwork.HASH;
+    }
+
+    @Override
+    public int getInterfaceVersion() {
+        return IRadioNetwork.VERSION;
+    }
 }
