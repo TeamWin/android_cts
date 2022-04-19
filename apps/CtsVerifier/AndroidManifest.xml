@@ -2814,6 +2814,13 @@
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
+            <meta-data android:name="ApiTest"
+                       android:value="android.hardware.Camera#getNumberOfCameras|
+                               android.hardware.Camera#setPreviewDisplay|
+                               android.hardware.Camera.Parameters#setPictureFormat|
+                               android.hardware.Camera.Parameters#setPictureSize|
+                               android.hardware.Camera#setDisplayOrientation|
+                               android.hardware.Camera#takePicture" />
         </activity>
 
         <activity
