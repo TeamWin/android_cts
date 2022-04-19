@@ -162,7 +162,7 @@ class CompanionTestAppMainActivity : Activity() {
                                 toast("error: $error")
                             }
 
-                            override fun onDeviceFound(chooserLauncher: IntentSender?) {
+                            override fun onDeviceFound(chooserLauncher: IntentSender) {
                                 toast("launching $chooserLauncher")
                                 chooserLauncher?.let {
                                     startIntentSenderForResult(it, REQUEST_CODE_CDM, null, 0, 0, 0)
