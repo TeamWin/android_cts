@@ -91,7 +91,7 @@ public class BluetoothLeBroadcastSubgroupTest {
 
         mIsBroadcastSourceSupported =
                 mAdapter.isLeAudioBroadcastSourceSupported() == FEATURE_SUPPORTED;
-        if (!mIsBroadcastSourceSupported) {
+        if (mIsBroadcastSourceSupported) {
             boolean isBroadcastSourceEnabledInConfig =
                     TestUtils.getProfileConfigValueOrDie(
                             BluetoothProfile.LE_AUDIO_BROADCAST_ASSISTANT);
