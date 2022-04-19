@@ -198,8 +198,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         assumeTrue(supportsLockScreen());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final boolean notSupportsInsecureLock = !supportsInsecureLock();
-        if (notSupportsInsecureLock) {
+        if (!supportsInsecureLock()) {
             lockScreenSession.setLockCredential();
         }
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
@@ -207,11 +206,25 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 true /* useWindowFlags */);
         testTurnScreenOnActivity(lockScreenSession, activityClient,
                 false /* useWindowFlags */);
-        if (notSupportsInsecureLock) {
-            // In the platform without InsecureLock, we just test if the display is on with
-            // TurnScreenOnActivity.
-            mObjectTracker.close(lockScreenSession);
-        }
+
+        // Start TURN_SCREEN_ON_ACTIVITY
+        launchActivity(TURN_SCREEN_ON_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
+        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+
+        // Start another activity on top and put device to sleep
+        final ActivitySession activity = activityClient.startActivity(
+                getLaunchActivityBuilder().setUseInstrumentation()
+                        .setWaitForLaunched(false).setTargetActivity(TOP_ACTIVITY));
+        waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED, "Activity must be stopped.");
+        lockScreenSession.sleepDevice();
+
+        // Finish the top activity and make sure the device still in sleep
+        activity.finish();
+        waitAndAssertActivityState(TURN_SCREEN_ON_ACTIVITY, STATE_STOPPED,
+                "Activity must be stopped");
+        mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, false);
+        assertFalse("Display must be remained OFF", isDisplayOn(DEFAULT_DISPLAY));
     }
 
     @Test

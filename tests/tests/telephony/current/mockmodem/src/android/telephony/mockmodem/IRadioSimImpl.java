@@ -18,6 +18,7 @@ package android.telephony.mockmodem;
 
 import static android.telephony.mockmodem.MockSimService.COMMAND_GET_RESPONSE;
 import static android.telephony.mockmodem.MockSimService.COMMAND_READ_BINARY;
+import static android.telephony.mockmodem.MockSimService.EF_ICCID;
 
 import android.hardware.radio.RadioError;
 import android.hardware.radio.RadioIndicationType;
@@ -26,10 +27,12 @@ import android.hardware.radio.sim.CardStatus;
 import android.hardware.radio.sim.IRadioSim;
 import android.hardware.radio.sim.IRadioSimIndication;
 import android.hardware.radio.sim.IRadioSimResponse;
+import android.hardware.radio.sim.SimRefreshResult;
 import android.os.AsyncResult;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.telephony.mockmodem.MockModemConfigBase.SimInfoChangedResult;
 import android.telephony.mockmodem.MockSimService.SimAppData;
 import android.util.Log;
 
@@ -37,9 +40,6 @@ import java.util.ArrayList;
 
 public class IRadioSimImpl extends IRadioSim.Stub {
     private static final String TAG = "MRSIM";
-
-    private static final int EF_ICCID = 0x2FE2;
-
     private final MockModemService mService;
     private IRadioSimResponse mRadioSimResponse;
     private IRadioSimIndication mRadioSimIndication;
@@ -51,6 +51,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
     // ***** Events
     static final int EVENT_SIM_CARD_STATUS_CHANGED = 1;
     static final int EVENT_SIM_APP_DATA_CHANGED = 2;
+    static final int EVENT_SIM_INFO_CHANGED = 3;
 
     // ***** Cache of modem attributes/status
     private int mNumOfLogicalSim;
@@ -76,6 +77,10 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         // Register events
         sMockModemConfigInterfaces[mSubId].registerForSimAppDataChanged(
                 mHandler, EVENT_SIM_APP_DATA_CHANGED, null);
+
+        // Register events
+        sMockModemConfigInterfaces[mSubId].registerForSimInfoChanged(
+                mHandler, EVENT_SIM_INFO_CHANGED, null);
     }
 
     /** Handler class to handle callbacks */
@@ -106,6 +111,30 @@ public class IRadioSimImpl extends IRadioSim.Stub {
                                 Log.i(TAG, "number of SIM app data: " + mSimAppList.size());
                             } else {
                                 Log.e(TAG, "mSimAppList = null");
+                            }
+                        } else {
+                            Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
+                        }
+                        break;
+
+                    case EVENT_SIM_INFO_CHANGED:
+                        ar = (AsyncResult) msg.obj;
+                        if (ar != null && ar.exception == null) {
+                            SimInfoChangedResult simInfoChangeResult =
+                                    (SimInfoChangedResult) ar.result;
+                            Log.d(TAG, "Received EVENT_SIM_INFO_CHANGED: " + simInfoChangeResult);
+                            SimRefreshResult simRefreshResult = new SimRefreshResult();
+                            switch (simInfoChangeResult.mSimInfoType) {
+                                case SimInfoChangedResult.SIM_INFO_TYPE_MCC_MNC:
+                                case SimInfoChangedResult.SIM_INFO_TYPE_IMSI:
+                                    if (simRefreshResult != null) {
+                                        simRefreshResult.type =
+                                                SimRefreshResult.TYPE_SIM_FILE_UPDATE;
+                                        simRefreshResult.efId = simInfoChangeResult.mEfId;
+                                        simRefreshResult.aid = simInfoChangeResult.mAid;
+                                        simRefresh(simRefreshResult);
+                                    }
+                                    break;
                             }
                         } else {
                             Log.e(TAG, msg.what + " failure. Exception: " + ar.exception);
@@ -853,7 +882,7 @@ public class IRadioSimImpl extends IRadioSim.Stub {
         }
     }
 
-    public void simRefresh(android.hardware.radio.sim.SimRefreshResult refreshResult) {
+    public void simRefresh(SimRefreshResult refreshResult) {
         Log.d(TAG, "simRefresh");
 
         if (mRadioSimIndication != null) {

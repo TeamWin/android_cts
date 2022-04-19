@@ -17,6 +17,7 @@
 package android.telephony.mockmodem;
 
 import android.hardware.radio.RadioError;
+import android.hardware.radio.RadioIndicationType;
 import android.hardware.radio.RadioResponseInfo;
 import android.hardware.radio.data.DataProfileInfo;
 import android.hardware.radio.data.IRadioData;
@@ -49,6 +50,8 @@ public class IRadioDataImpl extends IRadioData.Stub {
         mRadioDataResponse = radioDataResponse;
         mRadioDataIndication = radioDataIndication;
         mService.countDownLatch(MockModemService.LATCH_RADIO_INTERFACES_READY);
+
+        unsolEmptyDataCallList();
     }
 
     @Override
@@ -231,5 +234,22 @@ public class IRadioDataImpl extends IRadioData.Stub {
     @Override
     public int getInterfaceVersion() {
         return IRadioData.VERSION;
+    }
+
+    public void unsolEmptyDataCallList() {
+        Log.d(TAG, "unsolEmptyDataCallList");
+
+        if (mRadioDataIndication != null) {
+            android.hardware.radio.data.SetupDataCallResult[] dcList =
+                    new android.hardware.radio.data.SetupDataCallResult[0];
+
+            try {
+                mRadioDataIndication.dataCallListChanged(RadioIndicationType.UNSOLICITED, dcList);
+            } catch (RemoteException ex) {
+                Log.e(TAG, "Failed to invoke dataCallListChanged change from AIDL. Exception" + ex);
+            }
+        } else {
+            Log.e(TAG, "null mRadioDataIndication");
+        }
     }
 }

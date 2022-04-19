@@ -1010,17 +1010,23 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertFalse(task.mHasChildPipActivity);
     }
 
+    /**
+     * When the activity entering PIP is in a Task with another finishing activity, the Task should
+     * enter PIP instead of reparenting the activity to a new PIP Task.
+     */
     @Test
-    public void testPipFromTaskWithMultipleActivitiesAndFinishOriginalTask() {
-        // Try to enter picture-in-picture from an activity that finished itself and ensure
-        // pinned task is removed when the original task vanishes
+    public void testPipFromTaskWithAnotherFinishingActivity() {
         launchActivity(LAUNCH_ENTER_PIP_ACTIVITY,
                 extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
 
         waitForEnterPip(PIP_ACTIVITY);
-        waitForPinnedStackRemoved();
+        mWmState.waitForActivityRemoved(LAUNCH_ENTER_PIP_ACTIVITY);
 
-        assertPinnedStackDoesNotExist();
+        mWmState.assertNotExist(LAUNCH_ENTER_PIP_ACTIVITY);
+        assertPinnedStackExists();
+        final Task pipTask = mWmState.getTaskByActivity(PIP_ACTIVITY);
+        assertEquals(WINDOWING_MODE_PINNED, pipTask.getWindowingMode());
+        assertEquals(1, pipTask.getActivityCount());
     }
 
     @Test

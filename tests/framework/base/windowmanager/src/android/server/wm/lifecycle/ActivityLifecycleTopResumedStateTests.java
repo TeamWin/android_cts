@@ -332,6 +332,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Switch top between two activities
         getLifecycleLog().clear();
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getPrimarySplitTaskId());
         new Launcher(CallbackTrackingActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK)
                 .setNoInstance()
@@ -346,6 +347,7 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
 
         // Switch top again
         getLifecycleLog().clear();
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
         new Launcher(SingleTopActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK)
                 .setNoInstance()
