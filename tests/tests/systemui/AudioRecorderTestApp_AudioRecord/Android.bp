@@ -29,4 +29,5 @@ android_test_helper_app {
         "general-tests",
     ],
     sdk_version: "current",
+    min_sdk_version: "27",
 }
