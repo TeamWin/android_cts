@@ -436,6 +436,16 @@ public class LifecycleVerifier {
     }
 
     /**
+     * Same as {@link #checkOrderAndReturnError(LifecycleLog, List, String)}, but returns
+     * {@code false} if the order does not match. Otherwise returns {@code true}
+     */
+    public static boolean checkOrder(LifecycleLog lifecycleLog,
+            List<Pair<String, String>> expectedTransitionsOrder) {
+        String result = checkOrderAndReturnError(lifecycleLog, expectedTransitionsOrder, null);
+        return result == null;
+    }
+
+    /**
      * Assert that a transition was not observer, no particular order.
      */
     static void assertTransitionNotObserved(LifecycleLog lifecycleLog,

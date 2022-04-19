@@ -84,7 +84,7 @@ public class LifecycleLog extends ContentProvider {
     }
 
     /** Get logs for all recorded transitions. */
-    List<Pair<String, String>> getLog() {
+    public List<Pair<String, String>> getLog() {
         // Wrap in a new list to prevent concurrent modification
         synchronized (sLog) {
             return new ArrayList<>(sLog);
