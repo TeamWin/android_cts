@@ -1496,8 +1496,8 @@ public class MediaUtils {
 
     /*
      *  Some parts of media CTS verifies device characterization that does not make sense for
-     *  non-production devices (such as GSI). We call these devices 'frankenDevices'. We may
-     *  also limit test duration on these devices.
+     *  non-production devices (such as GSI and cuttlefish). We call these devices 'frankenDevices'.
+     *  We may also limit test duration on these devices.
      */
     public static boolean onFrankenDevice() throws IOException {
         String systemBrand = PropertyUtil.getProperty("ro.product.system.brand");
@@ -1510,12 +1510,23 @@ public class MediaUtils {
             if (systemExtProduct != null) {
                 systemProduct = systemExtProduct;
             }
+            String systemExtModel = PropertyUtil.getProperty("ro.product.system_ext.model");
+            if (systemExtModel != null) {
+                systemModel = systemExtModel;
+            }
         }
 
         if (("Android".equals(systemBrand) || "generic".equals(systemBrand) ||
                 "mainline".equals(systemBrand)) &&
             (systemModel.startsWith("AOSP on ") || systemProduct.startsWith("aosp_") ||
                 systemModel.startsWith("GSI on ") || systemProduct.startsWith("gsi_"))) {
+            return true;
+        }
+
+        // Return true for cuttlefish instances
+        if ((systemBrand.equals("Android") || systemBrand.equals("google")) &&
+                (systemProduct.startsWith("cf_") || systemProduct.startsWith("aosp_cf_") ||
+                        systemModel.startsWith("Cuttlefish "))) {
             return true;
         }
         return false;
