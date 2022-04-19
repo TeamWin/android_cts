@@ -31,4 +31,12 @@ java_test_host {
         "compatibility-host-util",
     ],
     static_libs: ["platform-test-annotations-host"],
+    data: [
+        ":CtsGpuToolsRootlessGpuDebugApp-DEBUG",
+        ":CtsGpuToolsRootlessGpuDebugApp-RELEASE",
+        ":CtsGpuToolsRootlessGpuDebugApp-INJECT",
+        ":CtsGpuToolsRootlessGpuDebugApp-LAYERS",
+        ":CtsGpuToolsRootlessGpuDebugApp-GLES_LAYERS",
+    ],
+    per_testcase_directory: true,
 }
