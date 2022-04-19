@@ -1570,6 +1570,17 @@ public class WindowManagerState {
             return getActivity(activityName) != null;
         }
 
+        public int getActivityCount() {
+            int count = mActivities.size();
+            for (TaskFragment taskFragment : mTaskFragments) {
+                count += taskFragment.getActivityCount();
+            }
+            for (Task task : mTasks) {
+                count += task.getActivityCount();
+            }
+            return count;
+        }
+
         @Override
         int getActivityType() {
             return mTaskType;
@@ -1629,6 +1640,17 @@ public class WindowManagerState {
                 }
             }
             return null;
+        }
+
+        public int getActivityCount() {
+            int count = mActivities.size();
+            for (TaskFragment taskFragment : mTaskFragments) {
+                count += taskFragment.getActivityCount();
+            }
+            for (Task task : mTasks) {
+                count += task.getActivityCount();
+            }
+            return count;
         }
 
         @Override

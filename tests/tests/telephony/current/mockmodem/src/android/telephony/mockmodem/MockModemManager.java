@@ -16,6 +16,8 @@
 
 package android.telephony.mockmodem;
 
+import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT;
+
 import static com.android.internal.telephony.RILConstants.RIL_REQUEST_RADIO_POWER;
 
 import android.content.Context;
@@ -48,7 +50,7 @@ public class MockModemManager {
      * @return boolean true if the operation is successful, otherwise false.
      */
     public boolean connectMockModemService() throws Exception {
-        return connectMockModemService(MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT);
+        return connectMockModemService(MOCK_SIM_PROFILE_ID_DEFAULT);
     }
     /**
      * Bring up Mock Modem Service and connect to it.
@@ -124,7 +126,7 @@ public class MockModemManager {
 
         MockModemConfigInterface[] configInterfaces =
                 mMockModemService.getMockModemConfigInterfaces();
-        return configInterfaces[slotId].isSimCardPresent(TAG);
+        return (configInterfaces != null) ? configInterfaces[slotId].isSimCardPresent(TAG) : false;
     }
 
     /**
@@ -141,8 +143,10 @@ public class MockModemManager {
         if (!isSimCardPresent(slotId)) {
             MockModemConfigInterface[] configInterfaces =
                     mMockModemService.getMockModemConfigInterfaces();
-            configInterfaces[slotId].changeSimProfile(simProfileId, TAG);
-            waitForTelephonyFrameworkDone(1);
+            if (configInterfaces != null) {
+                configInterfaces[slotId].changeSimProfile(simProfileId, TAG);
+                waitForTelephonyFrameworkDone(1);
+            }
         } else {
             Log.d(TAG, "There is a SIM inserted. Need to remove first.");
             result = false;
@@ -163,12 +167,67 @@ public class MockModemManager {
         if (isSimCardPresent(slotId)) {
             MockModemConfigInterface[] configInterfaces =
                     mMockModemService.getMockModemConfigInterfaces();
-            configInterfaces[slotId].changeSimProfile(
-                    MockSimService.MOCK_SIM_PROFILE_ID_DEFAULT, TAG);
-            waitForTelephonyFrameworkDone(1);
+            if (configInterfaces != null) {
+                configInterfaces[slotId].changeSimProfile(MOCK_SIM_PROFILE_ID_DEFAULT, TAG);
+                waitForTelephonyFrameworkDone(1);
+            }
         } else {
             Log.d(TAG, "There is no SIM inserted.");
             result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Modify SIM info of the SIM such as MCC/MNC, IMSI, etc.
+     *
+     * @param slotId for modifying.
+     * @param type the type of SIM info to modify.
+     * @param data to modify for the type of SIM info.
+     * @return boolean true if the operation is successful, otherwise false.
+     */
+    public boolean setSimInfo(int slotId, int type, String[] data) throws Exception {
+        Log.d(TAG, "setSimInfo[" + slotId + "]");
+        boolean result = true;
+
+        if (isSimCardPresent(slotId)) {
+            MockModemConfigInterface[] configInterfaces =
+                    mMockModemService.getMockModemConfigInterfaces();
+            if (configInterfaces != null) {
+                configInterfaces[slotId].setSimInfo(type, data, TAG);
+
+                // Wait for telephony framework refresh data and carrier config
+                waitForTelephonyFrameworkDone(2);
+            } else {
+                Log.e(TAG, "MockModemConfigInterface == null!");
+                result = false;
+            }
+        } else {
+            Log.d(TAG, "There is no SIM inserted.");
+            result = false;
+        }
+        return result;
+    }
+
+    /**
+     * Get SIM info of the SIM slot, e.g. MCC/MNC, IMSI.
+     *
+     * @param slotId for the query.
+     * @param type the type of SIM info.
+     * @return String the SIM info of the queried type.
+     */
+    public String getSimInfo(int slotId, int type) throws Exception {
+        Log.d(TAG, "getSimInfo[" + slotId + "]");
+        String result = "";
+
+        if (isSimCardPresent(slotId)) {
+            MockModemConfigInterface[] configInterfaces =
+                    mMockModemService.getMockModemConfigInterfaces();
+            if (configInterfaces != null) {
+                result = configInterfaces[slotId].getSimInfo(type, TAG);
+            }
+        } else {
+            Log.d(TAG, "There is no SIM inserted.");
         }
         return result;
     }

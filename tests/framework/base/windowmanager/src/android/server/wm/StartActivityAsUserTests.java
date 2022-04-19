@@ -25,11 +25,9 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
@@ -69,13 +67,15 @@ public class StartActivityAsUserTests {
         }
 
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final String output = runShellCommand("pm create-user --profileOf " + context.getUserId()
-                + " user2");
+        final String output = runShellCommand(
+                "pm create-user --user-type android.os.usertype.profile.TEST --profileOf "
+                        + context.getUserId() + " user2");
         sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
         if (sSecondUserId == 0) {
             return;
         }
         runShellCommand("pm install-existing --user " + sSecondUserId + " android.server.wm.cts");
+        runShellCommand("am start-user " + sSecondUserId + " -w ");
     }
 
     @AfterClass
@@ -83,6 +83,7 @@ public class StartActivityAsUserTests {
         if (sSecondUserId == 0) {
             return;
         }
+        runShellCommand("am stop-user " + sSecondUserId + " -w -f");
         runShellCommand("pm remove-user " + sSecondUserId);
         sSecondUserId = 0;
     }
@@ -124,41 +125,23 @@ public class StartActivityAsUserTests {
         final Intent intent = new Intent(mContext, StartActivityAsUserActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(EXTRA_CALLBACK, cb);
-
-        final CountDownLatch returnToOriginalUserLatch = new CountDownLatch(1);
-        mContext.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mContext.unregisterReceiver(this);
-                returnToOriginalUserLatch.countDown();
-            }
-        }, new IntentFilter(Intent.ACTION_USER_FOREGROUND));
-
         UserHandle secondUserHandle = UserHandle.of(sSecondUserId);
 
-        try {
-            runWithShellPermissionIdentity(() -> {
-                if (withOptions) {
-                    mContext.startActivityAsUser(intent, ActivityOptions.makeBasic().toBundle(),
-                            secondUserHandle);
-                } else {
-                    mContext.startActivityAsUser(intent, secondUserHandle);
-                }
-                mAm.switchUser(secondUserHandle);
-                try {
-                    latch.await(5, TimeUnit.SECONDS);
-                } finally {
-                    mAm.switchUser(mContext.getUser());
-                }
-            });
-        } catch (RuntimeException e) {
-            throw e.getCause();
-        }
+        runWithShellPermissionIdentity(() -> {
+            if (withOptions) {
+                mContext.startActivityAsUser(intent, ActivityOptions.makeBasic().toBundle(),
+                        secondUserHandle);
+            } else {
+                mContext.startActivityAsUser(intent, secondUserHandle);
+            }
+        });
 
+        latch.await(5, TimeUnit.SECONDS);
         assertThat(secondUser[0]).isEqualTo(sSecondUserId);
 
-        // Avoid the race between switch-user and remove-user.
-        returnToOriginalUserLatch.await(20, TimeUnit.SECONDS);
+        // The StartActivityAsUserActivity calls finish() in onCreate and here waits for the
+        // activity removed to prevent impacting other tests.
+        mAmWmState.waitForActivityRemoved(intent.getComponent());
     }
 
     private void verifyStartActivityAsInvalidUser(boolean withOptions) {
